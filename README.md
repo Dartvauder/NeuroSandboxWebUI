@@ -2,7 +2,7 @@
 English | [Русский](/README_RU.md)
 ## Description:
 
-Simple and easy interface for chatting with LLM using text or voice input. TTS functions are available here for voice output with a choice of language and voice sample. The goal of the project is to create the easiest possible application for beginners in the topic of neural networks.
+Simple and easy interface for chatting with LLM using text or voice input. TTS functions are available here for voice output with a choice of language and voice sample. The goal of the project - to create the easiest possible application for beginners in the topic of neural networks.
 
 |![Image1](https://github.com/Dartvauder/NeuroChatWebUI/assets/140557322/98e185c1-6011-434c-af9f-885d1c5ded48) |
 |:---:|
