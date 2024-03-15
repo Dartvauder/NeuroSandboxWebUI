@@ -23,7 +23,7 @@ Simple and easy interface for chatting with LLM using text or voice input. TTS f
 
 Optional for future:
 
-* [CUDA](developer.nvidia.com/cuda-downloads)
+* [CUDA](https://developer.nvidia.com/cuda-downloads)
 * [FFMPEG](https://ffmpeg.org/download.html)
 
 ## How to install:
