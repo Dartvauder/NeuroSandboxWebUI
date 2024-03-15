@@ -85,3 +85,9 @@
 * `openai-Whisper` - https://github.com/openai/whisper
 * `torch` - https://github.com/pytorch/pytorch
 * `Soundfile` - https://github.com/bastibe/python-soundfile
+
+## Пожертвование
+
+### Если вам действительно понравился мой проект и вы хотите сделать пожертвование, вот мой криптокошелек.  Заранее большое спасибо!
+
+* BEP-20: 0x3d86bdb5f50b92d0d7Eb44F1a833acC5e91aAEcA
