@@ -50,6 +50,10 @@ To get update, run `update.bat`
 
 To get update, run `git pull`
 
+## How to use:
+
+
+
 ## Roadmap
 
 * https://github.com/Dartvauder/NeuroChatWebUI/wiki/Roadmap
