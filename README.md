@@ -9,16 +9,16 @@ Simple and easy interface for chatting with LLM using text or voice input. TTS f
 
 ## Features:
 
-* Easy intall(Windows only)
+* Easy intall (Windows only)
 * Flexible and optimized interface
 * TTS and STT models
-* Avatar choose(for LLM)
-* Transformers(Llama.cpp in feature)
+* Avatar choose (for LLM)
+* Transformers (Llama.cpp in feature)
 * And much more...
 
 ## Required Dependencies:
 
-* [Python](https://www.python.org/downloads/)(3.10 minimum)
+* [Python](https://www.python.org/downloads/) (3.10 minimum)
 * [Git](https://git-scm.com/downloads)
 
 `Optional for future`
@@ -29,7 +29,7 @@ Simple and easy interface for chatting with LLM using text or voice input. TTS f
 
 * `Windows`
 
-1) Clone or [download](https://github.com/Dartvauder/NeuroChatWebUI/files/14618400/NeuroChatWebUI.zip) the repository.
+1) `Git clone` or [download](https://github.com/Dartvauder/NeuroChatWebUI/files/14618400/NeuroChatWebUI.zip) the repository.
 2) Unzip the archive file to any location
 3) Run the `install.bat` and wait for installation.
 4) After installation, run `start.bat`.
