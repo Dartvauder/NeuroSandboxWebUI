@@ -1,1 +1,3 @@
+@echo off
+
 git pull
