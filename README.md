@@ -27,7 +27,7 @@ Simple and easy interface for chatting with LLM using text or voice input. TTS f
 
 ## How to install:
 
-* `Windows`
+### Windows
 
 1) `Git clone` or [download](https://github.com/Dartvauder/NeuroChatWebUI/files/14618400/NeuroChatWebUI.zip) the repository.
 2) Unzip the archive file to any location
@@ -38,9 +38,9 @@ Simple and easy interface for chatting with LLM using text or voice input. TTS f
 
 To get update, run `update.bat`
 
-* `Linux`
+### Linux
 
-1) Clone or [download](https://github.com/Dartvauder/NeuroChatWebUI/files/14618400/NeuroChatWebUI.zip) the repository.
+1) `Git clone` or [download](https://github.com/Dartvauder/NeuroChatWebUI/files/14618400/NeuroChatWebUI.zip) the repository.
 2) Unzip the archive file to any location
 3) In the terminal, run the `pip install -r requirements.txt` and wait for installation of all dependencies.
 4) After installation, run `py appEN.py` or `py appRU.py`.
