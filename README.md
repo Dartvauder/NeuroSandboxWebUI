@@ -4,14 +4,14 @@ English | [Русский](/README_RU.md)
 
 Simple and easy interface for chatting with LLM using text or voice input. TTS functions are available here for voice output with a choice of language and voice sample. The goal of the project is to create the easiest possible application for beginners in the topic of neural networks.
 
-|![Image1](https://github.com/Dartvauder/NeuroChatWebUI/assets/140557322/98e185c1-6011-434c-af9f-885d1c5ded48) | ![Image2](https://github.com/Dartvauder/NeuroChatWebUI/assets/140557322/aeae98d7-3333-4b50-bcfc-d202e1150524) |
-|:---:|:---:|
+|![Image1](https://github.com/Dartvauder/NeuroChatWebUI/assets/140557322/98e185c1-6011-434c-af9f-885d1c5ded48) |
+|:---:|
 
 ## Features:
 
 * Easy intall(Windows only)
-* Flexible and optimized
-* TTS and STT
+* Flexible and optimized interface
+* TTS and STT models
 * Avatar choose(for LLM)
 * Transformers(Llama.cpp in feature)
 * And much more...
