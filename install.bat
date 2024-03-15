@@ -7,10 +7,10 @@ py -m venv "%CURRENT_DIR%venv"
 
 call "%CURRENT_DIR%venv\Scripts\activate.bat"
 
-echo Python virtual environment activated/Виртуальное окружение Python активировано.
+echo The application is installing, please wait/Приложение устанавливается, пожалуйста подождите.
 
 pip install -r "%CURRENT_DIR%requirements.txt"
 
-echo Packages from requirements.txt were successfully installed/Пакеты из requirements.txt успешно установлены.
+echo The application has been installed successfully. Run start.bat/Приложение успешно установлено. Запустите start.bat.
 
 pause
