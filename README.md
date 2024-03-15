@@ -11,7 +11,7 @@ Simple and easy interface for chatting with LLM using text or voice input. TTS f
 
 ## Features:
 
-* Easy intall (Windows only)
+* Easy install (Windows only)
 * Flexible and optimized interface
 * TTS and STT models
 * Avatar choose (for LLM)
