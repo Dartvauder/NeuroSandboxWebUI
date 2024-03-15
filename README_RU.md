@@ -1,10 +1,10 @@
-# ![icon (1)](https://github.com/Dartvauder/NeuroChatWebUI/assets/140557322/e3c1d95a-828f-4a65-bea6-64c336dbe6fa) НейроЧатWebUI
+# ![icon (1)](https://github.com/Dartvauder/NeuroChatWebUI/assets/140557322/e3c1d95a-828f-4a65-bea6-64c336dbe6fa)  НейроЧатWebUI
 
 ## Описание:
 
 Простой и удобный интерфейс для общения с LLM с помощью текстового или голосового ввода. Здесь доступны функции TTS для вывода голоса с выбором языка и образца голоса. Цель проекта — создать максимально простое приложение для новичков в теме нейронных сетей.
 
-|![Image1](https://github.com/Dartvauder/NeuroChatWebUI/assets/140557322/aeae98d7-3333-4b50-bcfc-d202e1150524) |
+|![Image1](https://github.com/Dartvauder/NeuroChatWebUI/assets/140557322/098c9b93-253d-44e7-9d34-dd4fe3317b41) |
 |:---:|
 
 ## Функции:
