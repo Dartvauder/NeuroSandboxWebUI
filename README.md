@@ -7,7 +7,7 @@ Simple and easy interface for chatting with LLM using text or voice input. TTS f
 |![Image1](https://github.com/Dartvauder/NeuroChatWebUI/assets/140557322/98e185c1-6011-434c-af9f-885d1c5ded48) | ![Image2](https://github.com/Dartvauder/NeuroChatWebUI/assets/140557322/aeae98d7-3333-4b50-bcfc-d202e1150524) |
 |:---:|:---:|
 
-## Features
+## Features:
 
 * Easy intall(Windows only)
 * Flexible and optimized
@@ -16,25 +16,36 @@ Simple and easy interface for chatting with LLM using text or voice input. TTS f
 * Transformers(Llama.cpp in feature)
 * And much more...
 
-## How to install
+## Required Dependencies:
+
+* [Python](https://www.python.org/downloads/)(3.10 minimum)
+* [Git](https://git-scm.com/downloads)
+
+`Optional for future`
+* [CUDA](developer.nvidia.com/cuda-downloads)
+* [FFMPEG](https://ffmpeg.org/download.html)
+
+## How to install:
 
 * `Windows`
 
 1) Clone or [download](https://github.com/Dartvauder/NeuroChatWebUI/files/14618400/NeuroChatWebUI.zip) the repository.
-2) Run the `install.bat` and wait for installation.
-3) After installation, run `start.bat`.
-4) Wait for the application to launch.
-5) Have fun!
+2) Unzip the archive file to any location
+3) Run the `install.bat` and wait for installation.
+4) After installation, run `start.bat`.
+5) Wait for the application to launch.
+6) Have fun!
 
 To get update, run `update.bat`
 
 * `Linux`
 
 1) Clone or [download](https://github.com/Dartvauder/NeuroChatWebUI/files/14618400/NeuroChatWebUI.zip) the repository.
-2) In the terminal, run the `pip install -r requirements.txt` and wait for installation of all dependencies.
-3) After installation, run `py appEN.py` or `py appRU.py`.
-4) Wait for the application to launch.
-5) Have fun!
+2) Unzip the archive file to any location
+3) In the terminal, run the `pip install -r requirements.txt` and wait for installation of all dependencies.
+4) After installation, run `py appEN.py` or `py appRU.py`.
+5) Wait for the application to launch.
+6) Have fun!
 
 To get update, run `git pull`
 
