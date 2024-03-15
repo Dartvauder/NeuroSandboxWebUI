@@ -84,3 +84,9 @@ Thank you very much to these projects for allowing me to create my application:
 * `openai-Whisper` - https://github.com/openai/whisper
 * `torch` - https://github.com/pytorch/pytorch
 * `Soundfile` - https://github.com/bastibe/python-soundfile
+
+## Donation
+
+### If you really liked my project and want to donate, here is my crypto wallet. thank you very much in advance! 
+
+* BEP-20: 0x3d86bdb5f50b92d0d7Eb44F1a833acC5e91aAEcA
