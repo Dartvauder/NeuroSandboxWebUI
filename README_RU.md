@@ -18,18 +18,19 @@
 
 ## Необходимые зависимости:
 
-* [Python](https://www.python.org/downloads/)(3.10 минимум)
+* [Python](https://www.python.org/downloads/) (3.10 минимум)
 * [Git](https://git-scm.com/downloads)
 
-`Опционально на будущее`
+Опционально на будущее:
+
 * [CUDA](developer.nvidia.com/cuda-downloads)
 * [FFMPEG](https://ffmpeg.org/download.html)
 
 ## Как установить:
 
-* `Windows`
+### Windows
 
-1) Клонируйте или [скачайте](https://github.com/Dartvauder/NeuroChatWebUI/files/14618400/NeuroChatWebUI.zip) репозиторий.
+1) `Git clone` или [скачайте](https://github.com/Dartvauder/NeuroChatWebUI/files/14618400/NeuroChatWebUI.zip) репозиторий.
 2) Разархивируйте файл архива в любое место.
 3) Запускаем `install.bat` и ждем установки.
 4) После установки запустите `start.bat`.
@@ -38,9 +39,9 @@
 
 Чтобы получить обновление, запустите `update.bat`
 
-* `Linux`
+### Linux
 
-1) Клонируйте или [скачайте](https://github.com/Dartvauder/NeuroChatWebUI/files/14618400/NeuroChatWebUI.zip) репозиторий.
+1) `Git clone` или [скачайте](https://github.com/Dartvauder/NeuroChatWebUI/files/14618400/NeuroChatWebUI.zip) репозиторий.
 2) Разархивируйте файл архива в любое место.
 3) В терминале запустите `pip install -r requirements.txt` и дождитесь установки всех зависимостей.
 4) После установки запустите `py appEN.py` или `py appRU.py`.
