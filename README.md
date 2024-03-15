@@ -68,6 +68,7 @@ The voice needs to be pre-processed (22050 kHz, mono sound, WAV), avatar should 
 * Language models can be taken from [HuggingFace](https://huggingface.co/models)
 * You can take voices anywhere. Record yours or take a recording from the Internet. The main thing is that it is pre-processed!
 * It’s the same with avatars as with voices. You can download them on the Internet, generate them using neural networks, or take a photo of yourself. The main thing is to comply with the required file format
+* #### TTS and SST models are downloaded automatically
 
 ## Roadmap
 
