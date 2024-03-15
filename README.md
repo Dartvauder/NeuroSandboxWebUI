@@ -61,6 +61,12 @@ To get update, run `git pull`
 
 The voice needs to be pre-processed (22050 kHz, mono sound, WAV), avatar should preferably be PNG or JPG, the LLM model must be Transformers. When you turn on TTS, selecting a language and voice is required, otherwise there will be errors.
 
+## Where can I get models, voices and avatars?
+
+* Language models can be taken from [HuggingFace](https://huggingface.co/models)
+* You can take voices anywhere. Record yours or take a recording from the Internet. The main thing is that it is pre-processed!
+* It’s the same with avatars as with voices. You can download them on the Internet, generate them using neural networks, or take a photo of yourself. The main thing is to comply with the required file format
+
 ## Roadmap
 
 * https://github.com/Dartvauder/NeuroChatWebUI/wiki/Roadmap
