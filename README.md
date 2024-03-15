@@ -33,7 +33,7 @@ Simple and easy interface for chatting with LLM using text or voice input. TTS f
 2) Unzip the archive file to any location
 3) Run the `install.bat` and wait for installation.
 4) After installation, run `start.bat`.
-5) Wait for the application to launch.
+5) Select the file version and wait for the application to launch.
 6) Have fun!
 
 To get update, run `update.bat`
