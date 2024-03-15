@@ -54,7 +54,7 @@ To get update, run `git pull`
 
 ## How to use:
 
-* First download and the models by folders. Model paths: LLM = inputs/text/llm_models
+* First download the models by folders. Model paths: LLM = inputs/text/llm_models
 #### Optional: Voice sample = inputs/audio/voices; Avatars = inputs/image/avatars
 * To begin, select your model in the `LLM` drop-down list, enter (or say) your prompt and press `generate` button and receive your text response. If you want, you can choose an `avatar`
 #### Optional: You can also `enable TTS` mode and select the `voice` and `language` you need to get an audio response
