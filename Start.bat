@@ -1,4 +1,4 @@
-@chcp 65001
+@chcp 65001 > NUL
 @echo off
 
 set CURRENT_DIR=%~dp0
