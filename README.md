@@ -87,6 +87,6 @@ Thank you very much to these projects for allowing me to create my application:
 
 ## Donation
 
-### If you really liked my project and want to donate, here is my crypto wallet. thank you very much in advance! 
+### If you really liked my project and want to donate, here is my crypto wallet. Thank you very much in advance! 
 
 * BEP-20: 0x3d86bdb5f50b92d0d7Eb44F1a833acC5e91aAEcA
