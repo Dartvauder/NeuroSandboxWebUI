@@ -23,7 +23,7 @@
 
 Опционально на будущее:
 
-* [CUDA](developer.nvidia.com/cuda-downloads)
+* [CUDA](https://developer.nvidia.com/cuda-downloads)
 * [FFMPEG](https://ffmpeg.org/download.html)
 
 ## Как установить:
