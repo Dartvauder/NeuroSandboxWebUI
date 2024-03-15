@@ -51,6 +51,10 @@
 
 Чтобы получить обновление, запустите `git pull`
 
+## Как использовать:
+
+
+
 ## Дорожная карта
 
 * https://github.com/Dartvauder/NeuroChatWebUI/wiki/RoadmapRU
