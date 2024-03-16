@@ -28,6 +28,10 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, avatar_nam
     prompt = transcribe_audio(input_audio) if input_audio else input_text
     tokenizer, llm_model = load_model(llm_model_name)
     inputs = tokenizer.encode(prompt, return_tensors="pt")
+
+    device = llm_model.device
+    inputs = inputs.to(device)
+
     outputs = llm_model.generate(inputs, max_length=512, pad_token_id=tokenizer.eos_token_id)
     generated_sequence = outputs[0][inputs.shape[-1]:]
     text = tokenizer.decode(generated_sequence, skip_special_tokens=True)
