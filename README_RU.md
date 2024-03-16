@@ -23,7 +23,7 @@
 
 * [Python](https://www.python.org/downloads/) (3.10 минимум)
 * [Git](https://git-scm.com/downloads)
-* [CUDA](https://developer.nvidia.com/cuda-downloads)
+* [CUDA](https://developer.nvidia.com/cuda-downloads) (Только 12.1)
 * [FFMPEG](https://ffmpeg.org/download.html)
 
 ## Как установить:
