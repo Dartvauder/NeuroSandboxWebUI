@@ -84,6 +84,8 @@
 * `openai-Whisper` - https://github.com/openai/whisper
 * `torch` - https://github.com/pytorch/pytorch
 * `Soundfile` - https://github.com/bastibe/python-soundfile
+* `accelerate` - https://github.com/huggingface/accelerate
+* `cuda-python` - https://github.com/NVIDIA/cuda-python
 
 ## Пожертвование
 
