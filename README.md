@@ -63,6 +63,8 @@ To get update, run `git pull`
 
 The voice needs to be pre-processed (22050 kHz, mono sound, WAV), avatar should preferably be PNG or JPG, the LLM model must be Transformers. When you turn on TTS, selecting a language and voice is required, otherwise there will be errors.
 
+#### Chat history is saved in the outputs folder
+
 ## Where can I get models, voices and avatars?
 
 * Language models can be taken from [HuggingFace](https://huggingface.co/models)
