@@ -89,7 +89,7 @@ Thank you very much to these projects for allowing me to create my application:
 
 ### If you really liked my project and want to donate, here is options to donate. Thank you very much in advance! 
 
-CryptoWallet(BEP-20) - 0x3d86bdb5f50b92d0d7Eb44F1a833acC5e91aAEcA
+* CryptoWallet(BEP-20) - 0x3d86bdb5f50b92d0d7Eb44F1a833acC5e91aAEcA
 
 [!["Buy Me A Coffee"](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/Dartvauder)
 
