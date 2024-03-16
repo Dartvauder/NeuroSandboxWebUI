@@ -1,4 +1,4 @@
-## - [Features](/#Features) | - [Dependencies](/#Required-Dependencies) | - [Install](/How-to-install) | - [Usage](/#How-to-use) | - [Models](/#Where-can-I-get-models-voices-and-avatars) | - [Roadmap](/#Roadmap) | - [Acknowledgment](/#Acknowledgment-to-developers)
+## [Features](/#Features) | [Dependencies](/#Required-Dependencies) | [Install](/How-to-install) | [Usage](/#How-to-use) | [Models](/#Where-can-I-get-models-voices-and-avatars) | [Roadmap](/#Roadmap) | [Acknowledgment](/#Acknowledgment-to-developers)
 
 # ![icon (1)](https://github.com/Dartvauder/NeuroChatWebUI/assets/140557322/e3c1d95a-828f-4a65-bea6-64c336dbe6fa) NeuroChatWebUI
 English | [Русский](/README_RU.md)
@@ -87,6 +87,9 @@ Thank you very much to these projects for allowing me to create my application:
 
 ## Donation
 
-### If you really liked my project and want to donate, here is my crypto wallet. Thank you very much in advance! 
+### If you really liked my project and want to donate, here is options to donate. Thank you very much in advance! 
 
-* BEP-20: 0x3d86bdb5f50b92d0d7Eb44F1a833acC5e91aAEcA
+CryptoWallet(BEP-20) - 0x3d86bdb5f50b92d0d7Eb44F1a833acC5e91aAEcA
+
+[!["Buy Me A Coffee"](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/Dartvauder)
+
