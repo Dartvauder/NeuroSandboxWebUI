@@ -11,12 +11,14 @@ from datetime import datetime
 def load_model(model_name):
     model_path = f"inputs/text/llm_models/{model_name}"
     tokenizer = AutoTokenizer.from_pretrained(model_path)
-    model = AutoModelForCausalLM.from_pretrained(model_path)
-    return tokenizer, model
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    model = AutoModelForCausalLM.from_pretrained(model_path, device_map="auto")
+    return tokenizer, model.to(device)
 
 
 def transcribe_audio(audio_file_path):
-    model = whisper.load_model("medium")
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    model = whisper.load_model("medium", device=device)
     result = model.transcribe(audio_file_path)
     return result["text"]
 
