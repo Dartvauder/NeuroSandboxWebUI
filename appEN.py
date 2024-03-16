@@ -45,7 +45,10 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, avatar_nam
             os.makedirs(os.path.join(chat_dir, 'text'))
             os.makedirs(os.path.join(chat_dir, 'audio'))
 
-        audio_path = os.path.join(chat_dir, 'audio', 'output.wav')
+        now = datetime.now()
+        audio_filename = f"output_{now.strftime('%Y%m%d_%H%M%S')}.wav"
+        audio_path = os.path.join(chat_dir, 'audio', audio_filename)
+
         sf.write(audio_path, wav, 22050)
 
     if not chat_dir:
