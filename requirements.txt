@@ -5,3 +5,5 @@ torch
 TTS
 openai-whisper
 accelerate
+cuda-python
+nvidia-cudnn-cu12
