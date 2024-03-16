@@ -1,0 +1,6 @@
+torch
+gradio
+transformers
+soundfile
+TTS
+openai-whisper
