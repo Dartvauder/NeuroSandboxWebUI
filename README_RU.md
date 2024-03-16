@@ -32,7 +32,7 @@
 
 1) `Git clone` или [скачайте](https://github.com/Dartvauder/NeuroChatWebUI/files/14624717/NeuroChatWebUI.zip) репозиторий.
 2) Разархивируйте файл архива в любое место.
-3) Запускаем `install.bat` и ждем установки.
+3) Запускаем `install.bat` и выбираем версию для установки.
 4) После установки запустите `start.bat`.
 5) Выберите версию файла и дождитесь запуска приложения.
 6) Веселитесь!
@@ -43,7 +43,7 @@
 
 1) `Git clone` или [скачайте](https://github.com/Dartvauder/NeuroChatWebUI/files/14624717/NeuroChatWebUI.zip) репозиторий.
 2) Разархивируйте файл архива в любое место.
-3) В терминале запустите `pip install -r requirements.txt` и дождитесь установки всех зависимостей.
+3) В терминале запустите `pip install -r requirements.txt` или `pip install -r requirementsCPU.txt` и дождитесь установки всех зависимостей.
 4) После установки запустите `py appEN.py` или `py appRU.py`.
 5) Дождитесь запуска приложения.
 6) Веселитесь!
