@@ -22,9 +22,6 @@ Simple and easy interface for chatting with LLM using text or voice input. TTS f
 
 * [Python](https://www.python.org/downloads/) (3.10 minimum)
 * [Git](https://git-scm.com/downloads)
-
-Optional for future:
-
 * [CUDA](https://developer.nvidia.com/cuda-downloads)
 * [FFMPEG](https://ffmpeg.org/download.html)
 
