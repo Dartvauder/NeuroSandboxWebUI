@@ -5,6 +5,7 @@ import os
 import torch
 from TTS.api import TTS
 import whisper
+from datetime import datetime
 
 
 def load_model(model_name):
@@ -35,12 +36,30 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, avatar_nam
         device = "cuda" if torch.cuda.is_available() else "cpu"
         tts = TTS("xtts_v2").to(device)
         wav = tts.tts(text=text, speaker_wav=f"inputs/audio/voices/{speaker_wav}", language=language)
-        sf.write('outputs/audio/output.wav', wav, 22050)
-        audio_path = 'outputs/audio/output.wav'
+
+        now = datetime.now()
+        audio_filename = f"output_{now.strftime('%Y%m%d_%H%M%S')}.wav"
+        audio_path = os.path.join('outputs/audio', audio_filename)
+
+        while os.path.exists(audio_path):
+            now = datetime.now()
+            audio_filename = f"output_{now.strftime('%Y%m%d_%H%M%S')}.wav"
+            audio_path = os.path.join('outputs/audio', audio_filename)
+
+        sf.write(audio_path, wav, 22050)
 
     os.makedirs("outputs/text", exist_ok=True)
 
-    with open("outputs/text/chat_history.txt", "a", encoding="utf-8") as f:
+    now = datetime.now()
+    chat_history_filename = f"chat_history_{now.strftime('%Y%m%d_%H%M%S')}.txt"
+    chat_history_path = os.path.join('outputs/text', chat_history_filename)
+
+    while os.path.exists(chat_history_path):
+        now = datetime.now()
+        chat_history_filename = f"chat_history_{now.strftime('%Y%m%d_%H%M%S')}.txt"
+        chat_history_path = os.path.join('outputs/text', chat_history_filename)
+
+    with open(chat_history_path, "w", encoding="utf-8") as f:
         f.write(f"Human: {prompt}\n")
         f.write(f"AI: {text}\n\n")
 
@@ -50,7 +69,6 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, avatar_nam
 llm_models_list = [model for model in os.listdir("inputs/text/llm_models") if not model.endswith(".txt")]
 avatars_list = [None] + [avatar for avatar in os.listdir("inputs/image/avatars") if not avatar.endswith(".txt")]
 speaker_wavs_list = [wav for wav in os.listdir("inputs/audio/voices") if not wav.endswith(".txt")]
-
 
 iface = gr.Interface(
     fn=generate_text_and_speech,
