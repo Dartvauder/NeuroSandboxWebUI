@@ -23,9 +23,6 @@
 
 * [Python](https://www.python.org/downloads/) (3.10 минимум)
 * [Git](https://git-scm.com/downloads)
-
-Опционально на будущее:
-
 * [CUDA](https://developer.nvidia.com/cuda-downloads)
 * [FFMPEG](https://ffmpeg.org/download.html)
 
