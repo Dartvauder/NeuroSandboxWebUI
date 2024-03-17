@@ -95,9 +95,9 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, avatar_nam
     return text, avatar_path, audio_path, chat_dir
 
 
-llm_models_list = [model for model in os.listdir("inputs/text/llm_models") if not model.endswith(".txt")]
+llm_models_list = [None] +  [model for model in os.listdir("inputs/text/llm_models") if not model.endswith(".txt")]
 avatars_list = [None] + [avatar for avatar in os.listdir("inputs/image/avatars") if not avatar.endswith(".txt")]
-speaker_wavs_list = [wav for wav in os.listdir("inputs/audio/voices") if not wav.endswith(".txt")]
+speaker_wavs_list = [None] +  [wav for wav in os.listdir("inputs/audio/voices") if not wav.endswith(".txt")]
 
 iface = gr.Interface(
     fn=generate_text_and_speech,
