@@ -6,6 +6,11 @@ import torch
 from TTS.api import TTS
 import whisper
 from datetime import datetime
+import warnings
+import logging
+warnings.filterwarnings("ignore")
+logging.getLogger('transformers').setLevel(logging.ERROR)
+logging.getLogger('TTS').setLevel(logging.ERROR)
 
 
 def load_model(model_name):
