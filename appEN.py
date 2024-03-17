@@ -112,7 +112,7 @@ iface = gr.Interface(
         gr.Audio(label="LLM audio response", type="filepath"),
         gr.State()
     ],
-    title="NeuroChatWebUI",
+    title="NeuroChatWebUI (ALPHA)",
     description="This UI allows you to enter any text or audio and get a generated response. You can select the model, "
                 "avatar, voice and language from the dropdowns. Try it out and see what happens!",
     allow_flagging="never",
