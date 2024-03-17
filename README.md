@@ -1,7 +1,8 @@
 ## [Features](/#Features) | [Dependencies](/#Required-Dependencies) | [Install](/How-to-install) | [Usage](/#How-to-use) | [Models](/#Where-can-I-get-models-voices-and-avatars) | [Roadmap](/#Roadmap) | [Acknowledgment](/#Acknowledgment-to-developers)
 
 # ![icon (1)](https://github.com/Dartvauder/NeuroChatWebUI/assets/140557322/e3c1d95a-828f-4a65-bea6-64c336dbe6fa) NeuroChatWebUI (BETA)
-English | [Русский](/README_RU.md)
+* Work in progress!
+* English | [Русский](/README_RU.md)
 ## Description:
 
 Simple and easy interface for chatting with LLM using text or voice input. TTS functions are available here for voice output with a choice of language and voice sample. The goal of the project - to create the easiest possible application for beginners in the topic of neural networks.
