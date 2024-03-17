@@ -31,7 +31,7 @@
 
 ### Windows
 
-1) `Git clone` или [скачайте](https://github.com/Dartvauder/NeuroChatWebUI/files/14628512/NeuroChatWebUI.zip) репозиторий.
+1) `Git clone` или [скачайте](https://github.com/Dartvauder/NeuroChatWebUI/archive/refs/tags/Alpha.zip) репозиторий.
 2) Разархивируйте файл архива в любое место.
 3) Запускаем `install.bat` и выбираем версию для установки.
 4) После установки запустите `start.bat`.
@@ -42,7 +42,7 @@
 
 ### Linux
 
-1) `Git clone` или [скачайте](https://github.com/Dartvauder/NeuroChatWebUI/files/14628512/NeuroChatWebUI.zip) репозиторий.
+1) `Git clone` или [скачайте](https://github.com/Dartvauder/NeuroChatWebUI/archive/refs/tags/Alpha.zip) репозиторий.
 2) Разархивируйте файл архива в любое место.
 3) В терминале запустите `pip install -r requirementsGPU.txt` или `pip install -r requirementsCPU.txt` и дождитесь установки всех зависимостей.
 4) После установки запустите `py appEN.py` или `py appRU.py`.
