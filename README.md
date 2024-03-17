@@ -72,7 +72,7 @@ The voice needs to be pre-processed (22050 kHz, mono sound, WAV), avatar should 
 
 ## Roadmap
 
-* https://github.com/Dartvauder/NeuroChatWebUI/wiki/Roadmap
+* https://github.com/Dartvauder/NeuroChatWebUI/wiki/RoadmapEN
 
 ## Acknowledgment to developers
 
