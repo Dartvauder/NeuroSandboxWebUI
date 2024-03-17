@@ -8,6 +8,7 @@ import whisper
 from datetime import datetime
 import warnings
 import logging
+
 warnings.filterwarnings("ignore")
 logging.getLogger('transformers').setLevel(logging.ERROR)
 logging.getLogger('TTS').setLevel(logging.ERROR)
