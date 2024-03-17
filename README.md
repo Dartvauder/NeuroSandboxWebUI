@@ -43,7 +43,7 @@ To get update, run `update.bat`
 
 1) `Git clone` or [download](https://github.com/Dartvauder/NeuroChatWebUI/files/14628512/NeuroChatWebUI.zip) the repository.
 2) Unzip the archive file to any location
-3) In the terminal, run the `pip install -r requirements.txt` or `pip install -r requirementsCPU.txt` and wait for installation of all dependencies.
+3) In the terminal, run the `pip install -r requirementsGPU.txt` or `pip install -r requirementsCPU.txt` and wait for installation of all dependencies.
 4) After installation, run `py appEN.py` or `py appRU.py`.
 5) Wait for the application to launch.
 6) Have fun!
