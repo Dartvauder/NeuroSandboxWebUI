@@ -6,13 +6,13 @@ py -m venv "%CURRENT_DIR%venv"
 call "%CURRENT_DIR%venv\Scripts\activate.bat"
 
 :choice
-set /p choice="Выберите версию для установки/choose a version for install: 1) requirementsGPU.txt 2) requirementsCPU.txt: "
+set /p choice="Выберите версию для установки/choose a version for install: 1) GPU 2) CPU: "
 
 if "%choice%"=="1" (
-    echo The application is installing, please wait/Приложение устанавливается, пожалуйста подождите.
+    echo GPU version is installing, please wait/GPU версия устанавливается, пожалуйста подождите.
     pip install -r "%CURRENT_DIR%requirementsGPU.txt"
 ) else if "%choice%"=="2" (
-    echo The application is installing, please wait/Приложение устанавливается, пожалуйста подождите.
+    echo CPU version is installing, please wait/CPU версия устанавливается, пожалуйста подождите.
     pip install -r "%CURRENT_DIR%requirementsCPU.txt"
 ) else (
     echo Wronge choose. Try again/Неверный выбор. Попробуйте еще раз.
