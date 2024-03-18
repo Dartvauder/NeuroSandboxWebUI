@@ -100,6 +100,7 @@ llm_models_list = [None] + [model for model in os.listdir("inputs/text/llm_model
 avatars_list = [None] + [avatar for avatar in os.listdir("inputs/image/avatars") if not avatar.endswith(".txt")]
 speaker_wavs_list = [None] + [wav for wav in os.listdir("inputs/audio/voices") if not wav.endswith(".txt")]
 
+
 iface = gr.Interface(
     fn=generate_text_and_speech,
     inputs=[
@@ -122,8 +123,7 @@ iface = gr.Interface(
     description="Этот пользовательский интерфейс позволяет вам вводить любой текст или аудио и получать "
                 "сгенерированный ответ. Вы можете выбрать модель, "
                 "аватар, голос и язык из раскрывающихся списков. Попробуйте и посмотрите, что произойдет!",
-    allow_flagging="never",
-    css=".output-image { width: 100px; height: 100px; }"
+    allow_flagging="never"
 )
 
 iface.launch()
