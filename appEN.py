@@ -9,7 +9,6 @@ from datetime import datetime
 import warnings
 import logging
 from diffusers import StableDiffusionPipeline
-from huggingface_hub import hf_hub_download
 from git import Repo
 
 warnings.filterwarnings("ignore")
@@ -29,9 +28,16 @@ def load_model(model_name):
 
 def transcribe_audio(audio_file_path):
     device = "cuda" if torch.cuda.is_available() else "cpu"
-    model_path = "models/whisper"
-    os.makedirs(model_path, exist_ok=True)
-    model_file = hf_hub_download("openai/whisper-medium", model_path, repo_type="model")
+    whisper_model_path = "models/whisper"
+    whisper_repo_path = os.path.join(whisper_model_path, "whisper-medium")
+    if not os.path.exists(whisper_repo_path):
+        os.makedirs(whisper_model_path, exist_ok=True)
+        Repo.clone_from("https://huggingface.co/openai/whisper-medium", whisper_repo_path)
+    else:
+        repo = Repo(whisper_repo_path)
+        repo.remotes.origin.pull()
+
+    model_file = os.path.join(whisper_repo_path, "pytorch_model.bin")
     model = whisper.load_model(model_file, device=device)
     result = model.transcribe(audio_file_path)
     return result["text"]
@@ -65,10 +71,14 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, max_tokens
         if input_audio:
             device = "cuda" if torch.cuda.is_available() else "cpu"
             whisper_model_path = "models/whisper"
-            os.makedirs(whisper_model_path, exist_ok=True)
-            whisper_model_file = hf_hub_download("openai/whisper-medium", whisper_model_path,
-                                                 cache_dir=whisper_model_path, repo_type="model")
-            whisper_model = whisper.load_model(whisper_model_file, device=device)
+            whisper_repo_path = os.path.join(whisper_model_path, "whisper-medium")
+            if not os.path.exists(whisper_repo_path):
+                os.makedirs(whisper_model_path, exist_ok=True)
+                Repo.clone_from("https://huggingface.co/openai/whisper-medium", whisper_repo_path)
+            else:
+                repo = Repo(whisper_repo_path)
+                repo.remotes.origin.pull()
+            whisper_model = whisper.load_model(os.path.join(whisper_repo_path, "pytorch_model.bin"), device=device)
 
         if enable_stable_diffusion:
             stable_diffusion_model_path = "models/stable-diffusion"
