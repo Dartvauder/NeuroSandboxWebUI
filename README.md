@@ -98,7 +98,6 @@ Thank you very much to these projects for allowing me to create my application:
 * `accelerate` - https://github.com/huggingface/accelerate
 * `cuda-python` - https://github.com/NVIDIA/cuda-python
 * `GitPython` - https://github.com/gitpython-developers/GitPython
-* `huggingface-hub` - https://github.com/huggingface/huggingface_hub
 * `diffusers` - https://github.com/huggingface/diffusers
 
 ## Donation
