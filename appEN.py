@@ -10,6 +10,7 @@ import warnings
 import logging
 from diffusers import StableDiffusionPipeline
 from huggingface_hub import hf_hub_download
+from git import Repo
 
 warnings.filterwarnings("ignore")
 logging.getLogger('transformers').setLevel(logging.ERROR)
@@ -50,10 +51,16 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, max_tokens
         if enable_tts:
             device = "cuda" if torch.cuda.is_available() else "cpu"
             tts_model_path = "models/tts"
-            os.makedirs(tts_model_path, exist_ok=True)
-            tts_model_file = hf_hub_download("coqui/XTTS-v2", tts_model_path, cache_dir=tts_model_path,
-                                             repo_type="model")
-            tts_model = TTS.from_pretrained(tts_model_file).to(device)
+            tts_repo_path = os.path.join(tts_model_path, "XTTS-v2")
+
+            if not os.path.exists(tts_repo_path):
+                os.makedirs(tts_model_path, exist_ok=True)
+                Repo.clone_from("https://huggingface.co/coqui/XTTS-v2", tts_repo_path)
+            else:
+                repo = Repo(tts_repo_path)
+                repo.remotes.origin.pull()
+
+            tts_model = TTS(model_path="models/tts/XTTS-v2", config_path="models/tts/XTTS-v2/config.json").to(device)
 
         if input_audio:
             device = "cuda" if torch.cuda.is_available() else "cpu"
