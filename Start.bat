@@ -14,6 +14,7 @@ echo.
 :input
 set /p choice=Enter number/Введите число:
 if "%choice%"=="1" (
+    cls
     start /b py "%CURRENT_DIR%appEN.py"
     timeout /t 15 > NUL
     start http://localhost:7860
@@ -21,6 +22,7 @@ if "%choice%"=="1" (
 )
 
 if "%choice%"=="2" (
+    cls
     start /b py "%CURRENT_DIR%appRU.py"
     timeout /t 15 > NUL
     start http://localhost:7860
