@@ -9,6 +9,7 @@ from datetime import datetime
 import warnings
 import logging
 from diffusers import StableDiffusionPipeline
+from huggingface_hub import hf_hub_download
 
 warnings.filterwarnings("ignore")
 logging.getLogger('transformers').setLevel(logging.ERROR)
@@ -27,7 +28,10 @@ def load_model(model_name):
 
 def transcribe_audio(audio_file_path):
     device = "cuda" if torch.cuda.is_available() else "cpu"
-    model = whisper.load_model("medium", device=device)
+    model_path = "models/whisper"
+    os.makedirs(model_path, exist_ok=True)
+    model_file = hf_hub_download("openai/whisper-medium", model_path, repo_type="model")
+    model = whisper.load_model(model_file, device=device)
     result = model.transcribe(audio_file_path)
     return result["text"]
 
@@ -45,14 +49,23 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, max_tokens
     try:
         if enable_tts:
             device = "cuda" if torch.cuda.is_available() else "cpu"
-            tts_model = TTS("xtts_v2").to(device)
+            tts_model_path = "models/tts"
+            os.makedirs(tts_model_path, exist_ok=True)
+            tts_model_file = hf_hub_download("coqui/XTTS-v2", tts_model_path, cache_dir=tts_model_path, repo_type="model")
+            tts_model = TTS.from_pretrained(tts_model_file).to(device)
 
         if input_audio:
             device = "cuda" if torch.cuda.is_available() else "cpu"
-            whisper_model = whisper.load_model("medium", device=device)
+            whisper_model_path = "models/whisper"
+            os.makedirs(whisper_model_path, exist_ok=True)
+            whisper_model_file = hf_hub_download("openai/whisper-medium", whisper_model_path, cache_dir=whisper_model_path, repo_type="model")
+            whisper_model = whisper.load_model(whisper_model_file, device=device)
 
         if enable_stable_diffusion:
-            stable_diffusion_model = StableDiffusionPipeline.from_pretrained("runwayml/stable-diffusion-v1-5")
+            stable_diffusion_model_path = "models/stable-diffusion"
+            os.makedirs(stable_diffusion_model_path, exist_ok=True)
+            stable_diffusion_model = StableDiffusionPipeline.from_pretrained("runwayml/stable-diffusion-v1-5",
+                                                                             cache_dir=stable_diffusion_model_path)
             stable_diffusion_model.to("cuda")
 
         text = None
@@ -141,17 +154,17 @@ iface = gr.Interface(
         gr.Slider(minimum=1, maximum=2048, value=512, step=1, label="Max Tokens"),
         gr.Slider(minimum=0.0, maximum=1.0, value=0.7, step=0.1, label="Temperature"),
         gr.Slider(minimum=0.0, maximum=1.0, value=0.9, step=0.1, label="Top P"),
-        gr.Slider(minimum=0, maximum=100, value=0, step=1, label="Top K"),
+        gr.Slider(minimum=0, maximum=100, value=30, step=1, label="Top K"),
         gr.Dropdown(choices=avatars_list, label="Select Avatar", value=None),
         gr.Checkbox(label="Enable TTS", value=False),
         gr.Dropdown(choices=speaker_wavs_list, label="Select Voice", interactive=True),
         gr.Dropdown(choices=["en", "ru"], label="Select Language", interactive=True),
         gr.Checkbox(label="Enable Stable Diffusion", value=False),
-        gr.Slider(minimum=1, maximum=100, value=50, step=1, label="Stable Diffusion Steps"),
-        gr.Slider(minimum=1.0, maximum=30.0, value=7.5, step=0.1, label="Stable Diffusion CFG"),
+        gr.Slider(minimum=1, maximum=100, value=30, step=1, label="Stable Diffusion Steps"),
+        gr.Slider(minimum=1.0, maximum=30.0, value=8, step=0.1, label="Stable Diffusion CFG"),
         gr.Slider(minimum=256, maximum=1024, value=512, step=64, label="Stable Diffusion Width"),
         gr.Slider(minimum=256, maximum=1024, value=512, step=64, label="Stable Diffusion Height"),
-        gr.Slider(minimum=1, maximum=4, value=2, step=1, label="Stable Diffusion Clip Skip"),
+        gr.Slider(minimum=1, maximum=4, value=1, step=1, label="Stable Diffusion Clip Skip"),
         gr.State()
     ],
     outputs=[
