@@ -5,5 +5,4 @@ soundfile
 TTS
 openai-whisper
 GitPython
-huggingface-hub
 diffusers
