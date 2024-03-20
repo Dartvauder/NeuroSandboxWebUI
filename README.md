@@ -5,7 +5,7 @@
 * English | [Русский](/README_RU.md)
 ## Description:
 
-Simple and easy interface for chatting with LLM using text or voice input. TTS functions are available here for voice output with a choice of language and voice sample. The goal of the project - to create the easiest possible application for beginners in the topic of neural networks.
+Simple and easy interface for chatting with LLM using text or voice input and also for generating images. TTS and Whisper functions are available here for voice input or output with a choice of language and voice sample. The goal of the project - to create the easiest possible application for beginners in the topic of neural networks.
 
 |![Image1](https://github.com/Dartvauder/NeuroChatWebUI/assets/140557322/98e185c1-6011-434c-af9f-885d1c5ded48) |
 |:---:|
@@ -17,6 +17,8 @@ Simple and easy interface for chatting with LLM using text or voice input. TTS f
 * TTS and STT models
 * Avatar choose (for LLM)
 * Transformers (Llama.cpp in feature)
+* Stable Diffusion
+* Models settings in interface
 * And much more...
 
 ## Required Dependencies:
@@ -52,6 +54,8 @@ To get update, run `git pull`
 
 ## How to use:
 
+### LLM:
+
 * First download the models by folders. Model paths: LLM = inputs/text/llm_models
 #### Optional: Voice sample = inputs/audio/voices; Avatars = inputs/image/avatars
 * To begin, select your model in the `LLM` drop-down list, enter (or say) your prompt and press `generate` button and receive your text response. If you want, you can choose an `avatar`
@@ -59,7 +63,11 @@ To get update, run `git pull`
 * You can also click the `clear` button to reset your selection.
 #### To close the application, close the terminal
 
-The voice needs to be pre-processed (22050 kHz, mono sound, WAV), avatar should preferably be PNG or JPG, the LLM model must be Transformers. When you turn on TTS, selecting a language and voice is required, otherwise there will be errors.
+### StableDiffusion
+
+
+
+P.S. The voice needs to be pre-processed (22050 kHz, mono sound, WAV), avatar should preferably be PNG or JPG, the LLM model must be Transformers. When you turn on TTS, selecting a language and voice is required, otherwise there will be errors.
 
 #### Chat history is saved in the outputs folder
 
