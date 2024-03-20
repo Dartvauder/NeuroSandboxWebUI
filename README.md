@@ -58,25 +58,26 @@ To get update, run `git pull`
 
 * First download the models by folders. Model paths: LLM = inputs/text/llm_models
 #### Optional: Voice sample = inputs/audio/voices; Avatars = inputs/image/avatars
-* To begin, select your model in the `LLM` drop-down list, enter (or say) your prompt and press `generate` button and receive your text response. If you want, you can choose an `avatar`
+* To begin, select your model in the `LLM` drop-down list, enter (or say) your prompt and press `generate` button to receive your text and audio response. If you want, you can choose an `avatar`
 #### Optional: You can `enable TTS` mode and select the `voice` and `language` you need to get an audio response
 * You can also click the `clear` button to reset your selection.
 #### To close the application, close the terminal
 
 ### StableDiffusion
 
-
+* First enter the text prompt
+* To begin, enable `stable diffusion`press `generate` button to receive your image
 
 P.S. The voice needs to be pre-processed (22050 kHz, mono sound, WAV), avatar should preferably be PNG or JPG, the LLM model must be Transformers. When you turn on TTS, selecting a language and voice is required, otherwise there will be errors.
 
-#### Chat history is saved in the outputs folder
+#### Chat history and generated images is saved in the outputs folder
 
 ## Where can I get models, voices and avatars?
 
 * Language models can be taken from [HuggingFace](https://huggingface.co/models)
 * You can take voices anywhere. Record yours or take a recording from the Internet. The main thing is that it is pre-processed!
 * It’s the same with avatars as with voices. You can download them on the Internet, generate them using neural networks, or take a photo of yourself. The main thing is to comply with the required file format
-* #### TTS and STT models are downloaded automatically
+* #### TTS, STT and Stable Diffusion models are downloaded automatically
 
 ## Roadmap
 
@@ -94,6 +95,9 @@ Thank you very much to these projects for allowing me to create my application:
 * `Soundfile` - https://github.com/bastibe/python-soundfile
 * `accelerate` - https://github.com/huggingface/accelerate
 * `cuda-python` - https://github.com/NVIDIA/cuda-python
+* `GitPython` - https://github.com/gitpython-developers/GitPython
+* `huggingface-hub` - https://github.com/huggingface/huggingface_hub
+* `diffusers` - https://github.com/huggingface/diffusers
 
 ## Donation
 
