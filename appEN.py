@@ -51,14 +51,16 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, max_tokens
             device = "cuda" if torch.cuda.is_available() else "cpu"
             tts_model_path = "models/tts"
             os.makedirs(tts_model_path, exist_ok=True)
-            tts_model_file = hf_hub_download("coqui/XTTS-v2", tts_model_path, cache_dir=tts_model_path, repo_type="model")
+            tts_model_file = hf_hub_download("coqui/XTTS-v2", tts_model_path, cache_dir=tts_model_path,
+                                             repo_type="model")
             tts_model = TTS.from_pretrained(tts_model_file).to(device)
 
         if input_audio:
             device = "cuda" if torch.cuda.is_available() else "cpu"
             whisper_model_path = "models/whisper"
             os.makedirs(whisper_model_path, exist_ok=True)
-            whisper_model_file = hf_hub_download("openai/whisper-medium", whisper_model_path, cache_dir=whisper_model_path, repo_type="model")
+            whisper_model_file = hf_hub_download("openai/whisper-medium", whisper_model_path,
+                                                 cache_dir=whisper_model_path, repo_type="model")
             whisper_model = whisper.load_model(whisper_model_file, device=device)
 
         if enable_stable_diffusion:
