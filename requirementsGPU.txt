@@ -11,5 +11,4 @@ accelerate
 cuda-python
 nvidia-cudnn-cu12
 GitPython
-huggingface-hub
 diffusers
