@@ -66,6 +66,8 @@ To get update, run `git pull`
 
 ### Stable Diffusion:
 
+#### Before generating the image, disable the LLM and TTS models, and also clear the audio input
+
 * First enter the text prompt
 * Сonfigure the model according to the settings you need
 * To begin, enable `stable diffusion` and press `generate` button to receive your image
