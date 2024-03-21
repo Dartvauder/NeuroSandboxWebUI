@@ -82,8 +82,8 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_model_
             whisper_model = whisper.load_model(os.path.join(whisper_model_path, "pytorch_model.bin"), device=device)
 
         if enable_stable_diffusion:
-            stable_diffusion_model_path = f"inputs/image/sd/{stable_diffusion_model_name}.safetensors"
-            base_model_path = "inputs/image/sd/stable-diffusion-v1-5"
+            stable_diffusion_model_path = f"inputs/image/sd_models/{stable_diffusion_model_name}.safetensors"
+            base_model_path = "inputs/image/sd_models/stable-diffusion-v1-5"
             if os.path.exists(base_model_path):
                 stable_diffusion_model = StableDiffusionPipeline.from_pretrained(
                     base_model_path,
