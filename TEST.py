@@ -17,6 +17,7 @@ warnings.filterwarnings("ignore")
 logging.getLogger('transformers').setLevel(logging.ERROR)
 logging.getLogger('TTS').setLevel(logging.ERROR)
 
+
 def load_model(model_name, model_type):
     if model_type == "transformers":
         if model_name:
@@ -32,12 +33,13 @@ def load_model(model_name, model_type):
             return model, None
     return None, None
 
+
 def transcribe_audio(audio_file_path):
     device = "cuda" if torch.cuda.is_available() else "cpu"
     whisper_model_path = "inputs/text/whisper-medium"
     if not os.path.exists(whisper_model_path):
         os.makedirs(whisper_model_path, exist_ok=True)
-        repo = Repo.clone_from("https://huggingface.co/openai/whisper-medium", whisper_model_path)
+        Repo.clone_from("https://huggingface.co/openai/whisper-medium", whisper_model_path)
     else:
         repo = Repo(whisper_model_path)
         repo.remotes.origin.pull()
@@ -47,11 +49,13 @@ def transcribe_audio(audio_file_path):
     result = model.transcribe(audio_file_path)
     return result["text"]
 
-def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_model_type, max_tokens, temperature, top_p, top_k,
-                              avatar_name, enable_tts, speaker_wav, language, enable_stable_diffusion,
-                              stable_diffusion_model_name,
-                              stable_diffusion_steps, stable_diffusion_cfg, stable_diffusion_width,
-                              stable_diffusion_height, stable_diffusion_clip_skip, chat_dir=None, cancel=None):
+
+def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_model_type, max_tokens, temperature, top_p,
+                             top_k,
+                             avatar_name, enable_tts, speaker_wav, language, enable_stable_diffusion,
+                             stable_diffusion_model_name,
+                             stable_diffusion_steps, stable_diffusion_cfg, stable_diffusion_width,
+                             stable_diffusion_height, stable_diffusion_clip_skip, chat_dir=None):
     prompt = transcribe_audio(input_audio) if input_audio else input_text
     tokenizer, llm_model = load_model(llm_model_name, llm_model_type)
     tts_model = None
@@ -108,26 +112,21 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_model_
 
         text = None
         if llm_model:
-            if cancel:
-                return None, None, None, None, None
-
-            if model_type == "transformers":
+            if llm_model_type == "transformers":
                 inputs = tokenizer.encode(prompt, return_tensors="pt")
                 device = llm_model.device
                 inputs = inputs.to(device)
                 outputs = llm_model.generate(inputs, max_length=max_tokens, top_p=top_p, top_k=top_k,
-                                              temperature=temperature, pad_token_id=tokenizer.eos_token_id)
+                                             temperature=temperature, pad_token_id=tokenizer.eos_token_id)
                 generated_sequence = outputs[0][inputs.shape[-1]:]
                 text = tokenizer.decode(generated_sequence, skip_special_tokens=True)
-            elif model_type == "llama":
-                text = llm_model.generate(prompt, max_tokens=max_tokens, temperature=temperature, top_p=top_p, top_k=top_k)
+            elif llm_model_type == "llama":
+                text = llm_model.generate(prompt, max_tokens=max_tokens, temperature=temperature, top_p=top_p,
+                                          top_k=top_k)
 
         avatar_path = f"inputs/image/avatars/{avatar_name}" if avatar_name else None
         audio_path = None
         if enable_tts and text:
-            if cancel:
-                return text, avatar_path, None, None, None
-
             wav = tts_model.tts(text=text, speaker_wav=f"inputs/audio/voices/{speaker_wav}", language=language)
             if not chat_dir:
                 now = datetime.now()
@@ -144,12 +143,9 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_model_
 
         image_path = None
         if enable_stable_diffusion:
-            if cancel:
-                return text, avatar_path, audio_path, None, None
-
             images = stable_diffusion_model(prompt, num_inference_steps=stable_diffusion_steps,
-                                             guidance_scale=stable_diffusion_cfg, height=stable_diffusion_height,
-                                             width=stable_diffusion_width, clip_skip=stable_diffusion_clip_skip)
+                                            guidance_scale=stable_diffusion_cfg, height=stable_diffusion_height,
+                                            width=stable_diffusion_width, clip_skip=stable_diffusion_clip_skip)
             image = images["images"][0]
             if not chat_dir:
                 now = datetime.now()
@@ -193,12 +189,14 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_model_
 
     return text, avatar_path, audio_path, image_path, chat_dir
 
+
 llm_models_list = [None] + [model for model in os.listdir("inputs/text/llm_models") if not model.endswith(".txt")]
 avatars_list = [None] + [avatar for avatar in os.listdir("inputs/image/avatars") if not avatar.endswith(".txt")]
 speaker_wavs_list = [None] + [wav for wav in os.listdir("inputs/audio/voices") if not wav.endswith(".txt")]
-stable_diffusion_models_list = [None] + [model.replace(".safetensors", "") for model in os.listdir("inputs/image/sd") if model.endswith(".safetensors") or not model.endswith(".txt")]
+stable_diffusion_models_list = [None] + [model.replace(".safetensors", "") for model in os.listdir("inputs/image"
+                                                                                                   "/sd_models") if
+                                         model.endswith(".safetensors") or not model.endswith(".txt")]
 
-cancel = gr.State(False)
 iface = gr.Interface(
     fn=generate_text_and_speech,
     inputs=[
@@ -221,7 +219,7 @@ iface = gr.Interface(
         gr.Slider(minimum=256, maximum=1024, value=512, step=64, label="Stable Diffusion Width"),
         gr.Slider(minimum=256, maximum=1024, value=512, step=64, label="Stable Diffusion Height"),
         gr.Slider(minimum=1, maximum=4, value=1, step=1, label="Stable Diffusion Clip Skip"),
-        cancel,
+        gr.State()
     ],
     outputs=[
         gr.Textbox(label="LLM text response", type="text"),
@@ -238,12 +236,4 @@ iface = gr.Interface(
     allow_flagging="never"
 )
 
-cancel_button = gr.Button("Cancel")
-cancel_button.click(
-    fn=None,
-    inputs=None,
-    outputs=cancel,
-    queue=False,
-)
-iface.add_component(cancel_button)
 iface.launch()
