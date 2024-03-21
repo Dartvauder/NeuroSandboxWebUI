@@ -13,4 +13,3 @@ nvidia-cudnn-cu12
 GitPython
 diffusers
 llama-cpp-python
-safetensors
