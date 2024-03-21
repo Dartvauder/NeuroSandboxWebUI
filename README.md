@@ -73,8 +73,8 @@ To get update, run `git pull`
 P.S. The voice needs to be pre-processed (22050 kHz, mono sound, WAV), avatar should preferably be PNG or JPG, the LLM model must be Transformers. When you turn on TTS, selecting a language and voice is required, otherwise there will be errors.
 
 #### Chat history and generated images is saved in the *outputs* folder
-#### To close the application, close the terminal
 #### You can also click the `clear` button to reset your selection.
+#### To close the application, close the terminal
 
 ## Where can I get models, voices and avatars?
 
