@@ -87,7 +87,7 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_model_
 
         if enable_stable_diffusion:
             stable_diffusion_model_path = f"inputs/image/sd_models/{stable_diffusion_model_name}.safetensors"
-            base_model_path = "inputs/image/sd_models/stable-diffusion-v1-5"
+            base_model_path = os.path.join("inputs", "image", "sd_models", "stable-diffusion-v1-5")
             if os.path.exists(base_model_path):
                 stable_diffusion_model = StableDiffusionPipeline.from_pretrained(
                     base_model_path,
@@ -101,6 +101,7 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_model_
                     revision="fp16",
                     torch_dtype=torch.float16,
                     safety_checker=None,
+                    cache_dir=os.path.join("inputs", "image", "sd_models")
                 )
 
             stable_diffusion_model.safety_checker = None  # Отключение фильтра безопасности
