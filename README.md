@@ -104,6 +104,8 @@ Thank you very much to these projects for allowing me to create my application:
 * `cuda-python` - https://github.com/NVIDIA/cuda-python
 * `GitPython` - https://github.com/gitpython-developers/GitPython
 * `diffusers` - https://github.com/huggingface/diffusers
+* `llama.cpp-python` - https://github.com/abetlen/llama-cpp-python
+* `safetensors` - https://github.com/huggingface/safetensors
 
 ## Donation
 
