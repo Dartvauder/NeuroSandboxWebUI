@@ -32,22 +32,22 @@ Simple and easy interface for chatting with LLM using text or voice input and al
 
 ### Windows
 
-1) `Git clone` or [download](https://github.com/Dartvauder/NeuroChatWebUI/archive/refs/tags/Alpha.zip) the repository.
+1) `Git clone` or [download](https://github.com/Dartvauder/NeuroChatWebUI/archive/refs/tags/Alpha.zip) the repository
 2) Unzip the archive file to any location
-3) Run the `install.bat` and choose a version for installation.
-4) After installation, run `start.bat`.
-5) Select the file version and wait for the application to launch.
+3) Run the `install.bat` and choose a version for installation
+4) After installation, run `start.bat`
+5) Select the file version and wait for the application to launch
 6) Have fun!
 
 To get update, run `update.bat`
 
 ### Linux
 
-1) `Git clone` or [download](https://github.com/Dartvauder/NeuroChatWebUI/archive/refs/tags/Alpha.zip) the repository.
+1) `Git clone` or [download](https://github.com/Dartvauder/NeuroChatWebUI/archive/refs/tags/Alpha.zip) the repository
 2) Unzip the archive file to any location
-3) In the terminal, run the `pip install -r requirementsGPU.txt` or `pip install -r requirementsCPU.txt` and wait for installation of all dependencies.
-4) After installation, run `py appEN.py` or `py appRU.py`.
-5) Wait for the application to launch.
+3) In the terminal, run the `pip install -r requirementsGPU.txt` or `pip install -r requirementsCPU.txt` and wait for installation of all dependencies
+4) After installation, run `py appEN.py` or `py appRU.py`
+5) Wait for the application to launch
 6) Have fun!
 
 To get update, run `git pull`
@@ -73,7 +73,7 @@ To get update, run `git pull`
 * Сonfigure the model according to the settings you need
 * After, enable `stable diffusion` and press `generate` button to receive your image
 
-P.S. The voice needs to be pre-processed (22050 kHz, mono sound, WAV), avatar should preferably be PNG or JPG. When you turn on TTS, selecting a language and voice is required, otherwise there will be errors.
+P.S. The voice needs to be pre-processed (22050 kHz, mono sound, WAV), avatar should preferably be PNG or JPG. When you turn on TTS, selecting a language and voice is required, otherwise there will be errors
 
 #### Chat history and generated images is saved in the *outputs* folder
 #### You can also click the `clear` button to reset your selection.
