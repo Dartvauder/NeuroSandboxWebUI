@@ -7,4 +7,3 @@ openai-whisper
 GitPython
 diffusers
 llama-cpp-python
-safetensors
