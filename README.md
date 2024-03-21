@@ -73,7 +73,7 @@ To get update, run `git pull`
 * Сonfigure the model according to the settings you need
 * After, enable `stable diffusion` and press `generate` button to receive your image
 
-P.S. The voice needs to be pre-processed (22050 kHz, mono sound, WAV), avatar should preferably be PNG or JPG, the LLM model must be Transformers. When you turn on TTS, selecting a language and voice is required, otherwise there will be errors.
+P.S. The voice needs to be pre-processed (22050 kHz, mono sound, WAV), avatar should preferably be PNG or JPG. When you turn on TTS, selecting a language and voice is required, otherwise there will be errors.
 
 #### Chat history and generated images is saved in the *outputs* folder
 #### You can also click the `clear` button to reset your selection.
