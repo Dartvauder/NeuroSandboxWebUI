@@ -28,7 +28,7 @@ def load_model(model_name):
 
 def transcribe_audio(audio_file_path):
     device = "cuda" if torch.cuda.is_available() else "cpu"
-    whisper_model_path = "models/whisper"
+    whisper_model_path = "inputs/audio"
     whisper_repo_path = os.path.join(whisper_model_path, "whisper-medium")
     if not os.path.exists(whisper_repo_path):
         os.makedirs(whisper_model_path, exist_ok=True)
@@ -56,7 +56,7 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, max_tokens
     try:
         if enable_tts:
             device = "cuda" if torch.cuda.is_available() else "cpu"
-            tts_model_path = "models/tts"
+            tts_model_path = "inputs/audio"
             tts_repo_path = os.path.join(tts_model_path, "XTTS-v2")
 
             if not os.path.exists(tts_repo_path):
@@ -66,11 +66,11 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, max_tokens
                 repo = Repo(tts_repo_path)
                 repo.remotes.origin.pull()
 
-            tts_model = TTS(model_path="models/tts/XTTS-v2", config_path="models/tts/XTTS-v2/config.json").to(device)
+            tts_model = TTS(model_path="inputs/audio/XTTS-v2", config_path="inputs/audio/XTTS-v2/config.json").to(device)
 
         if input_audio:
             device = "cuda" if torch.cuda.is_available() else "cpu"
-            whisper_model_path = "models/whisper"
+            whisper_model_path = "inputs/audio"
             whisper_repo_path = os.path.join(whisper_model_path, "whisper-medium")
             if not os.path.exists(whisper_repo_path):
                 os.makedirs(whisper_model_path, exist_ok=True)
@@ -81,7 +81,7 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, max_tokens
             whisper_model = whisper.load_model(os.path.join(whisper_repo_path, "pytorch_model.bin"), device=device)
 
         if enable_stable_diffusion:
-            stable_diffusion_model_path = "models/stable-diffusion"
+            stable_diffusion_model_path = "inputs/image"
             os.makedirs(stable_diffusion_model_path, exist_ok=True)
             stable_diffusion_model = StableDiffusionPipeline.from_pretrained("runwayml/stable-diffusion-v1-5",
                                                                              cache_dir=stable_diffusion_model_path)
