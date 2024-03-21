@@ -1,4 +1,4 @@
-## [Features](/#Features) | [Dependencies](/#Required-Dependencies) | [Install](/How-to-install) | [Usage](/#How-to-use) | [Models](/#Where-can-I-get-models-voices-and-avatars) | [Roadmap](/#Roadmap) | [Acknowledgment](/#Acknowledgment-to-developers)
+## [Features](/#Features) | [Dependencies](/#Required-Dependencies) | [SystemRequirements](/#Minimum-System-Requirements) | [Install](/#How-to-install) | [Usage](/#How-to-use) | [Models](/#Where-can-I-get-models-voices-and-avatars) | [Roadmap](/#Roadmap) | [Acknowledgment](/#Acknowledgment-to-developers)
 
 # ![icon (1)](https://github.com/Dartvauder/NeuroChatWebUI/assets/140557322/e3c1d95a-828f-4a65-bea6-64c336dbe6fa) NeuroChatWebUI (ALPHA)
 * Work in progress!
@@ -27,6 +27,14 @@ Simple and easy interface for chatting with LLM using text or voice input and al
 * [Git](https://git-scm.com/downloads)
 * [CUDA](https://developer.nvidia.com/cuda-downloads) (12.1 only)
 * [FFMPEG](https://ffmpeg.org/download.html)
+
+## Minimum System Requirements:
+
+* System: Windows or Linux
+* GPU: 4GB+ or CPU: 8 core 3.2GHZ
+* RAM: 16GB+
+* Disk space: 30GB+
+* Internet for downloading models and installing
 
 ## How to install:
 
