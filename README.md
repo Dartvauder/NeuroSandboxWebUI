@@ -67,7 +67,7 @@ To get update, run `git pull`
 
 #### Before generating the image, disable the LLM and TTS models, and also clear the audio input
 
-* First download the models by folder: *inputs/image/sd*
+* First download the models by folder: *inputs/image/sd_models*
 * Enter your prompt
 * Then select a model from the drop-down list 
 * Сonfigure the model according to the settings you need
