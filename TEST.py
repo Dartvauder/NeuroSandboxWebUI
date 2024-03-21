@@ -10,12 +10,12 @@ import warnings
 import logging
 from diffusers import StableDiffusionPipeline
 from git import Repo
-import safetensors
 from llama_cpp import Llama
 
 warnings.filterwarnings("ignore")
 logging.getLogger('transformers').setLevel(logging.ERROR)
 logging.getLogger('TTS').setLevel(logging.ERROR)
+logging.getLogger('diffusers').setLevel(logging.ERROR)
 
 
 def load_model(model_name, model_type):
@@ -86,30 +86,25 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_model_
             whisper_model = whisper.load_model(os.path.join(whisper_model_path, "pytorch_model.bin"), device=device)
 
         if enable_stable_diffusion:
-            stable_diffusion_model_path = f"inputs/image/sd_models/{stable_diffusion_model_name}.safetensors"
-            base_model_path = os.path.join("inputs", "image", "sd_models", "stable-diffusion-v1-5")
-            if os.path.exists(base_model_path):
-                stable_diffusion_model = StableDiffusionPipeline.from_pretrained(
-                    base_model_path,
-                    revision="fp16",
-                    torch_dtype=torch.float16,
-                    safety_checker=None,
-                )
-            else:
-                stable_diffusion_model = StableDiffusionPipeline.from_pretrained(
-                    "runwayml/stable-diffusion-v1-5",
-                    revision="fp16",
-                    torch_dtype=torch.float16,
-                    safety_checker=None,
-                    cache_dir=os.path.join("inputs", "image", "sd_models")
-                )
+            stable_diffusion_model_path = os.path.join("inputs", "image", "sd_models",
+                                                       f"{stable_diffusion_model_name}.safetensors")
 
-            stable_diffusion_model.safety_checker = None  # Отключение фильтра безопасности
             if os.path.exists(stable_diffusion_model_path):
-                model = safetensors.safe_open(stable_diffusion_model_path, framework="pt", device="cuda")
-                stable_diffusion_model.model.load_state_dict(model.items())
+                stable_diffusion_model = StableDiffusionPipeline.from_single_file(
+                    stable_diffusion_model_path, use_safetensors=True, device_map="auto"
+                )
             else:
                 print(f"Stable Diffusion model not found: {stable_diffusion_model_path}")
+                stable_diffusion_model = StableDiffusionPipeline.from_pretrained(
+                    "runwayml/stable-diffusion-v1-5", use_safetensors=True, device_map="auto"
+                )
+
+            stable_diffusion_model.to("cuda")
+            stable_diffusion_model.text_encoder.to("cuda")
+            stable_diffusion_model.vae.to("cuda")
+            stable_diffusion_model.unet.to("cuda")
+
+            stable_diffusion_model.safety_checker = None
 
         text = None
         if llm_model:
