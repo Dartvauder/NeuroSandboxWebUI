@@ -34,7 +34,7 @@ def load_model(model_name, model_type):
 
 def transcribe_audio(audio_file_path):
     device = "cuda" if torch.cuda.is_available() else "cpu"
-    whisper_model_path = "inputs/audio/whisper-medium"
+    whisper_model_path = "inputs/text/whisper-medium"
     if not os.path.exists(whisper_model_path):
         os.makedirs(whisper_model_path, exist_ok=True)
         repo = Repo.clone_from("https://huggingface.co/openai/whisper-medium", whisper_model_path)
@@ -72,7 +72,7 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_model_
 
         if input_audio:
             device = "cuda" if torch.cuda.is_available() else "cpu"
-            whisper_model_path = "inputs/audio/whisper-medium"
+            whisper_model_path = "inputs/text/whisper-medium"
             if not os.path.exists(whisper_model_path):
                 os.makedirs(whisper_model_path, exist_ok=True)
                 Repo.clone_from("https://huggingface.co/openai/whisper-medium", whisper_model_path)
