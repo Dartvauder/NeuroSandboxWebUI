@@ -193,11 +193,10 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_model_
 
     return text, avatar_path, audio_path, image_path, chat_dir
 
-llm_models_list = [model for model in os.listdir("inputs/text/llm_models") if model.endswith(".ggml") or not model.endswith(".txt")]
-
+llm_models_list = [None] + [model for model in os.listdir("inputs/text/llm_models") if model.endswith(".gguf") or not model.endswith(".txt")]
 avatars_list = [None] + [avatar for avatar in os.listdir("inputs/image/avatars") if not avatar.endswith(".txt")]
 speaker_wavs_list = [None] + [wav for wav in os.listdir("inputs/audio/voices") if not wav.endswith(".txt")]
-stable_diffusion_models_list = [model.replace(".safetensors", "") for model in os.listdir("inputs/image/sd") if model.endswith(".safetensors")]
+stable_diffusion_models_list = [None] + [model.replace(".safetensors", "") for model in os.listdir("inputs/image/sd") if model.endswith(".safetensors")]
 
 cancel = gr.State(False)
 iface = gr.Interface(
