@@ -106,7 +106,6 @@
 * `GitPython` - https://github.com/gitpython-developers/GitPython
 * `diffusers` - https://github.com/huggingface/diffusers
 * `llama.cpp-python` - https://github.com/abetlen/llama-cpp-python
-* `safetensors` - https://github.com/huggingface/safetensors
 
 ## Пожертвование
 
