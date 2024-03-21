@@ -71,7 +71,7 @@ To get update, run `git pull`
 * Enter your prompt
 * Then select a model from the drop-down list 
 * Сonfigure the model according to the settings you need
-* To begin, enable `stable diffusion` and press `generate` button to receive your image
+* After, enable `stable diffusion` and press `generate` button to receive your image
 
 P.S. The voice needs to be pre-processed (22050 kHz, mono sound, WAV), avatar should preferably be PNG or JPG, the LLM model must be Transformers. When you turn on TTS, selecting a language and voice is required, otherwise there will be errors.
 
