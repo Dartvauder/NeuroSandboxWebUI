@@ -60,9 +60,8 @@ To get update, run `git pull`
 #### Optional: Voice sample = *inputs/audio/voices*; Avatars = *inputs/image/avatars*
 * Сonfigure the model according to the settings you need
 * To begin, select your model in the `LLM` drop-down list, enter (or say) your prompt and press `generate` button to receive your text and audio response. If you want, you can choose an `avatar`
-#### Optional: You can `enable TTS` mode and select the `voice` and `language` you need to get an audio response
+#### Optional: You can `enable TTS` mode, select the `voice` and `language` you need to get an audio response
 * You can also click the `clear` button to reset your selection.
-#### To close the application, close the terminal
 
 ### Stable Diffusion:
 
@@ -75,6 +74,7 @@ To get update, run `git pull`
 P.S. The voice needs to be pre-processed (22050 kHz, mono sound, WAV), avatar should preferably be PNG or JPG, the LLM model must be Transformers. When you turn on TTS, selecting a language and voice is required, otherwise there will be errors.
 
 #### Chat history and generated images is saved in the *outputs* folder
+#### To close the application, close the terminal
 
 ## Where can I get models, voices and avatars?
 
