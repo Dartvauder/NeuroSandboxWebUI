@@ -61,7 +61,6 @@ To get update, run `git pull`
 * Сonfigure the model according to the settings you need
 * To begin, select your model in the `LLM` drop-down list, enter (or say) your prompt and press `generate` button to receive your text and audio response. If you want, you can choose an `avatar`
 #### Optional: You can `enable TTS` mode, select the `voice` and `language` you need to get an audio response
-* You can also click the `clear` button to reset your selection.
 
 ### Stable Diffusion:
 
@@ -75,6 +74,7 @@ P.S. The voice needs to be pre-processed (22050 kHz, mono sound, WAV), avatar sh
 
 #### Chat history and generated images is saved in the *outputs* folder
 #### To close the application, close the terminal
+#### You can also click the `clear` button to reset your selection.
 
 ## Where can I get models, voices and avatars?
 
