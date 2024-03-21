@@ -58,6 +58,7 @@ To get update, run `git pull`
 
 * First download the models by folders. Model paths: LLM = *inputs/text/llm_models*
 #### Optional: Voice sample = *inputs/audio/voices*; Avatars = *inputs/image/avatars*
+* Select model type (transformers or llamacpp)
 * Сonfigure the model according to the settings you need
 * To begin, select your model in the `LLM` drop-down list, enter (or say) your prompt and press `generate` button to receive your text and audio response. If you want, you can choose an `avatar`
 #### Optional: You can `enable TTS` mode, select the `voice` and `language` you need to get an audio response
@@ -67,6 +68,7 @@ To get update, run `git pull`
 #### Before generating the image, disable the LLM and TTS models, and also clear the audio input
 
 * First enter the text prompt
+* Then select a model from the drop-down list 
 * Сonfigure the model according to the settings you need
 * To begin, enable `stable diffusion` and press `generate` button to receive your image
 
