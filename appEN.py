@@ -28,7 +28,7 @@ def load_model(model_name):
 
 def transcribe_audio(audio_file_path):
     device = "cuda" if torch.cuda.is_available() else "cpu"
-    whisper_model_path = "inputs/audio"
+    whisper_model_path = "inputs/text"
     whisper_repo_path = os.path.join(whisper_model_path, "whisper-medium")
     if not os.path.exists(whisper_repo_path):
         os.makedirs(whisper_model_path, exist_ok=True)
@@ -70,7 +70,7 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, max_tokens
 
         if input_audio:
             device = "cuda" if torch.cuda.is_available() else "cpu"
-            whisper_model_path = "inputs/audio"
+            whisper_model_path = "inputs/text"
             whisper_repo_path = os.path.join(whisper_model_path, "whisper-medium")
             if not os.path.exists(whisper_repo_path):
                 os.makedirs(whisper_model_path, exist_ok=True)
