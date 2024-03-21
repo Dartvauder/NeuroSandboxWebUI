@@ -14,10 +14,10 @@ Simple and easy interface for chatting with LLM using text or voice input and al
 
 * Easy install (Windows only)
 * Flexible and optimized interface
-* TTS and STT models
-* Avatar choose (for LLM)
-* Transformers (Llama.cpp in feature)
-* Stable Diffusion
+* TTS and STT models (For LLM)
+* Avatar choose (For LLM)
+* Transformers and llama.cpp (For LLM)
+* Diffusers and safetensors (For Stable Diffusion)
 * Models settings in interface
 * And much more...
 
