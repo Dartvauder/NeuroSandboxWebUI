@@ -8,8 +8,8 @@
 
 Простой и удобный интерфейс для общения с LLM с использованием текстового или голосового ввода, а также для создания изображений с помощью Stable Diffusion. Здесь доступны функции TTS и Whisper для голосового ввода или вывода с выбором языка и образца голоса. Цель проекта — создать максимально простое приложение для новичков в теме нейронных сетей.
 
-|![Image1](https://github.com/Dartvauder/NeuroChatWebUI/assets/140557322/098c9b93-253d-44e7-9d34-dd4fe3317b41) |
-|:---:|
+|![Image1](https://github.com/Dartvauder/NeuroChatWebUI/assets/140557322/e9fb3fe0-7ed7-4c2d-9bab-3efc0599efb6) | ![Image2](https://github.com/Dartvauder/NeuroChatWebUI/assets/140557322/8b1a12cc-c5c8-4796-87a1-1903257833c8)
+|:---:|:---:|
 
 ## Функции:
 
