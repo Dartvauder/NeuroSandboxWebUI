@@ -192,9 +192,9 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_model_
 llm_models_list = [None] + [model for model in os.listdir("inputs/text/llm_models") if not model.endswith(".txt")]
 avatars_list = [None] + [avatar for avatar in os.listdir("inputs/image/avatars") if not avatar.endswith(".txt")]
 speaker_wavs_list = [None] + [wav for wav in os.listdir("inputs/audio/voices") if not wav.endswith(".txt")]
-stable_diffusion_models_list = [None] + [model.replace(".safetensors", "") for model in os.listdir("inputs/image"
-                                                                                                   "/sd_models") if
-                                         model.endswith(".safetensors") or not model.endswith(".txt")]
+stable_diffusion_models_list = [None] + [model.replace(".safetensors", "") for model in os.listdir("inputs/image/sd_models")
+                                         if (model.endswith(".safetensors") or not model.endswith(".txt")) 
+                                         and os.path.isfile(os.path.join("inputs/image/sd_models", model))]
 
 iface = gr.Interface(
     fn=generate_text_and_speech,
