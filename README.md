@@ -33,7 +33,7 @@ Simple and easy interface for chatting with LLM using text or voice input and al
 * System: Windows or Linux
 * GPU: 4GB+ or CPU: 8 core 3.2GHZ
 * RAM: 16GB+
-* Disk space: 30GB+
+* Disk space: 20GB+
 * Internet for downloading models and installing
 
 ## How to install:
