@@ -41,23 +41,21 @@
 
 ### Windows
 
-1) `Git clone` или [скачайте](https://github.com/Dartvauder/NeuroChatWebUI/archive/refs/heads/main.zip) репозиторий
-2) Разархивируйте файл архива в любое место
-3) Запускаем `install.bat` и выбираем версию для установки
-4) После установки запустите `start.bat`
-5) Выберите версию файла и дождитесь запуска приложения
-6) Веселитесь!
+1) `Git clone https://github.com/Dartvauder/NeuroChatWebUI.git` в любое место (Без кириллицы)
+2) Запускаем `install.bat` и выбираем версию для установки
+3) После установки запустите `start.bat`
+4) Выберите версию файла и дождитесь запуска приложения
+5) Веселитесь!
 
 Чтобы получить обновление, запустите `update.bat`
 
 ### Linux
 
-1) `Git clone` или [скачайте](https://github.com/Dartvauder/NeuroChatWebUI/archive/refs/heads/main.zip) репозиторий
-2) Разархивируйте файл архива в любое место
-3) В терминале запустите `pip install -r requirementsGPU.txt` или `pip install -r requirementsCPU.txt` и дождитесь установки всех зависимостей
-4) После установки запустите `py appEN.py` или `py appRU.py`
-5) Дождитесь запуска приложения
-6) Веселитесь!
+1) `Git clone https://github.com/Dartvauder/NeuroChatWebUI.git` в любое место (Без кириллицы)
+2) В терминале запустите `pip install -r requirementsGPU.txt` или `pip install -r requirementsCPU.txt` и дождитесь установки всех зависимостей
+3) После установки запустите `py appEN.py` или `py appRU.py`
+4) Дождитесь запуска приложения
+5) Веселитесь!
 
 Чтобы получить обновление, запустите `git pull`
 
