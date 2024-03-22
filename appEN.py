@@ -15,8 +15,12 @@ import requests
 
 warnings.filterwarnings("ignore")
 logging.getLogger('transformers').setLevel(logging.ERROR)
+logging.getLogger('llama_cpp').setLevel(logging.ERROR)
+logging.getLogger('whisper').setLevel(logging.ERROR)
 logging.getLogger('TTS').setLevel(logging.ERROR)
 logging.getLogger('diffusers').setLevel(logging.ERROR)
+logging.getLogger('h11').setLevel(logging.ERROR)
+logging.getLogger('uvicorn').setLevel(logging.ERROR)
 
 
 def load_model(model_name, model_type):
