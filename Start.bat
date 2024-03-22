@@ -29,7 +29,7 @@ if "%choice%"=="2" (
     goto end
 )
 
-echo Invalid choice, please try again/Неверный выбор, попробуйте еще раз.
+echo Invalid choice, please try again/Неверный выбор, попробуйте еще раз
 goto input
 
 :end
