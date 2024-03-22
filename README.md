@@ -44,7 +44,7 @@ Simple and easy interface for chatting with LLM using text or voice input and al
 2) Run the `install.bat` and choose a version for installation
 3) After installation, run `start.bat`
 4) Select the file version and wait for the application to launch
-5) Have fun!
+5) Now you can start generating!
 
 To get update, run `update.bat`
 
@@ -54,7 +54,7 @@ To get update, run `update.bat`
 2) In the terminal, run the `pip install -r requirementsGPU.txt` or `pip install -r requirementsCPU.txt` and wait for installation of all dependencies
 3) After installation, run `py appEN.py` or `py appRU.py`
 4) Wait for the application to launch
-5) Have fun!
+5) Now you can start generating!
 
 To get update, run `git pull`
 
@@ -63,10 +63,10 @@ To get update, run `git pull`
 ### LLM:
 
 1) First upload your models to the folder: *inputs/text/llm_models*
-2) Select model type (`transformers` or `llama`)
-3) Set up the model according to the parameters you need
-4) Select your model from the `LLM` drop-down list
-5) Type (or say) your request
+2) Select your model from the `LLM` drop-down list
+3) Select model type (`transformers` or `llama`)
+4) Set up the model according to the parameters you need
+5) Type (or speak) your request
 6) Click the `Generate` button to receive text and audio response
 #### Optional: you can enable `TTS` mode, select the `voice` and `language` needed to receive an audio response. You can also select `avatar`
 #### Voice samples = *inputs/audio/voices*;
@@ -78,10 +78,10 @@ To get update, run `git pull`
 #### Before generating the image, disable the `LLM` and `TTS` models, and also clear the audio input
 
 1) First upload your models to the folder: *inputs/image/sd_models*
-2) Enter your prompt
+2) Enable `Stable Diffusion`
 3) Select a model from the drop-down list
 4) Set up the model according to the parameters you need
-5) Enable `Stable Diffusion`
+5) Enter your prompt
 6) Click the `generate` button to get the image
 
 ### General:
