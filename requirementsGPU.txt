@@ -10,3 +10,6 @@ openai-whisper
 accelerate
 cuda-python
 nvidia-cudnn-cu12
+GitPython
+diffusers
+llama-cpp-python
