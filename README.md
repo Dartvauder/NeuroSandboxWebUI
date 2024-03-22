@@ -90,6 +90,7 @@ P.S. The voice needs to be pre-processed (22050 kHz, mono sound, WAV), avatar sh
 ## Where can I get models, voices and avatars?
 
 * Language models can be taken from [HuggingFace](https://huggingface.co/models)
+* Stable Diffusion models can be taken from [CivitAI](https://civitai.com/models)
 * You can take voices anywhere. Record yours or take a recording from the Internet. The main thing is that it is pre-processed!
 * It’s the same with avatars as with voices. You can download them on the Internet, generate them using neural networks, or take a photo of yourself. The main thing is to comply with the required file format
 * #### `TTS` and `STT` models are downloaded automatically in *inputs* folder. The base `diffusers` model of `Stable Diffusion` is also downloaded there 
