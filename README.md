@@ -62,27 +62,32 @@ To get update, run `git pull`
 
 ### LLM:
 
-* First download the models by folder: *inputs/text/llm_models*
-#### Optional: Voice sample = *inputs/audio/voices*; Avatars = *inputs/image/avatars*
-* Select model type (`transformers` or `llamacpp`)
-* Сonfigure the model according to the settings you need
-* To begin, select your model in the `LLM` drop-down list, enter (or say) your prompt and press `generate` button to receive your text and audio response. If you want, you can choose an `avatar`
-#### Optional: You can `enable TTS` mode, select the `voice` and `language` you need to get an audio response
+1) First upload your models to the folder: *inputs/text/llm_models*
+2) Select model type (`transformers` or `llama`)
+3) Set up the model according to the parameters you need
+4) Select your model from the `LLM` drop-down list
+5) Type (or say) your request
+6) Click the `Generate` button to receive text and audio response
+#### Optional: you can enable `TTS` mode, select the `voice` and `language` needed to receive an audio response. You can also select `avatar`
+#### Voice samples = *inputs/audio/voices*;
+#### Avatars = *inputs/image/avatars*
+#### The voice must be pre-processed (22050 kHz, mono, WAV), the avatar should preferably be `PNG` or `JPG`. When you enable `TTS`, you need to select a language and voice, otherwise there will be errors
 
 ### Stable Diffusion:
 
 #### Before generating the image, disable the `LLM` and `TTS` models, and also clear the audio input
 
-* First download the models by folder: *inputs/image/sd_models*
-* Enter your prompt
-* Then select a model from the drop-down list 
-* Сonfigure the model according to the settings you need
-* After, enable `stable diffusion` and press `generate` button to receive your image
+1) First upload your models to the folder: *inputs/image/sd_models*
+2) Enter your prompt
+3) Select a model from the drop-down list
+4) Set up the model according to the parameters you need
+5) Enable `Stable Diffusion`
+6) Click the `generate` button to get the image
 
-P.S. The voice needs to be pre-processed (22050 kHz, mono sound, WAV), avatar should preferably be `PNG` or `JPG`. When you turn on `TTS`, selecting a `language` and `voice` is required, otherwise there will be errors
+### General:
 
-#### Chat history and generated images is saved in the *outputs* folder
-#### You can also click the `clear` button to reset your selection.
+#### Chat history and generated images are saved in the *outputs* folder
+#### You can also press the `Clear` button to clear the selection
 #### To close the application, close the terminal
 
 ## Where can I get models, voices and avatars?
