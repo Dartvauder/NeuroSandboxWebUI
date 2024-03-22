@@ -11,6 +11,7 @@ import logging
 from diffusers import StableDiffusionPipeline
 from git import Repo
 from llama_cpp import Llama
+import requests
 
 warnings.filterwarnings("ignore")
 logging.getLogger('transformers').setLevel(logging.ERROR)
@@ -37,27 +38,30 @@ def load_model(model_name, model_type):
 def transcribe_audio(audio_file_path):
     device = "cuda" if torch.cuda.is_available() else "cpu"
     whisper_model_path = "inputs/text/whisper-medium"
+
+    # Download the medium.pt file from the provided URL
     if not os.path.exists(whisper_model_path):
         os.makedirs(whisper_model_path, exist_ok=True)
-        Repo.clone_from("https://huggingface.co/openai/whisper-medium", whisper_model_path)
-    else:
-        repo = Repo(whisper_model_path)
-        repo.remotes.origin.pull()
+        url = ("https://openaipublic.azureedge.net/main/whisper/models"
+               "/345ae4da62f9b3d59415adc60127b97c714f32e89e936602e85993674d08dcb1/medium.pt")
+        r = requests.get(url, allow_redirects=True)
+        open(os.path.join(whisper_model_path, "medium.pt"), "wb").write(r.content)
 
-    model_file = os.path.join(whisper_model_path, "pytorch_model.bin")
+    model_file = os.path.join(whisper_model_path, "medium.pt")
     model = whisper.load_model(model_file, device=device)
     result = model.transcribe(audio_file_path)
     return result["text"]
 
 
 def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_model_type, max_tokens, temperature, top_p,
-                             top_k,
-                             avatar_name, enable_tts, speaker_wav, language, enable_stable_diffusion,
-                             stable_diffusion_model_name,
-                             stable_diffusion_steps, stable_diffusion_cfg, stable_diffusion_width,
-                             stable_diffusion_height, stable_diffusion_clip_skip, chat_dir=None):
+                             top_k, avatar_name, enable_tts, speaker_wav, language, enable_stable_diffusion,
+                             stable_diffusion_model_name, stable_diffusion_steps, stable_diffusion_cfg,
+                             stable_diffusion_width, stable_diffusion_height, stable_diffusion_clip_skip,
+                             chat_dir=None):
     prompt = transcribe_audio(input_audio) if input_audio else input_text
+
     tokenizer, llm_model = load_model(llm_model_name, llm_model_type)
+
     tts_model = None
     whisper_model = None
     stable_diffusion_model = None
@@ -77,18 +81,21 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_model_
         if input_audio:
             device = "cuda" if torch.cuda.is_available() else "cpu"
             whisper_model_path = "inputs/text/whisper-medium"
+
+            # Download the medium.pt file from the provided URL
             if not os.path.exists(whisper_model_path):
                 os.makedirs(whisper_model_path, exist_ok=True)
-                Repo.clone_from("https://huggingface.co/openai/whisper-medium", whisper_model_path)
-            else:
-                repo = Repo(whisper_model_path)
-                repo.remotes.origin.pull()
-            whisper_model = whisper.load_model(os.path.join(whisper_model_path, "pytorch_model.bin"), device=device)
+                url = ("https://openaipublic.azureedge.net/main/whisper/models"
+                       "/345ae4da62f9b3d59415adc60127b97c714f32e89e936602e85993674d08dcb1/medium.pt")
+                r = requests.get(url, allow_redirects=True)
+                open(os.path.join(whisper_model_path, "medium.pt"), "wb").write(r.content)
+
+            model_file = os.path.join(whisper_model_path, "medium.pt")
+            whisper_model = whisper.load_model(model_file, device=device)
 
         if enable_stable_diffusion:
             stable_diffusion_model_path = os.path.join("inputs", "image", "sd_models",
                                                        f"{stable_diffusion_model_name}.safetensors")
-
             if os.path.exists(stable_diffusion_model_path):
                 stable_diffusion_model = StableDiffusionPipeline.from_single_file(
                     stable_diffusion_model_path, use_safetensors=True, device_map="auto"
@@ -98,12 +105,10 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_model_
                 stable_diffusion_model = StableDiffusionPipeline.from_pretrained(
                     "runwayml/stable-diffusion-v1-5", use_safetensors=True, device_map="auto"
                 )
-
             stable_diffusion_model.to("cuda")
             stable_diffusion_model.text_encoder.to("cuda")
             stable_diffusion_model.vae.to("cuda")
             stable_diffusion_model.unet.to("cuda")
-
             stable_diffusion_model.safety_checker = None
 
         text = None
@@ -117,8 +122,8 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_model_
                 generated_sequence = outputs[0][inputs.shape[-1]:]
                 text = tokenizer.decode(generated_sequence, skip_special_tokens=True)
             elif llm_model_type == "llama":
-                text = llm_model.generate(prompt, max_tokens=max_tokens, temperature=temperature, top_p=top_p,
-                                          top_k=top_k)
+                text = llm_model(prompt, max_tokens=max_tokens, temperature=temperature, top_p=top_p,
+                                 top_k=top_k)
 
         avatar_path = f"inputs/image/avatars/{avatar_name}" if avatar_name else None
         audio_path = None
@@ -131,7 +136,6 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_model_
                 os.makedirs(os.path.join(chat_dir, 'text'))
                 os.makedirs(os.path.join(chat_dir, 'audio'))
                 os.makedirs(os.path.join(chat_dir, 'image'))
-
             now = datetime.now()
             audio_filename = f"output_{now.strftime('%Y%m%d_%H%M%S')}.wav"
             audio_path = os.path.join(chat_dir, 'audio', audio_filename)
@@ -150,7 +154,6 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_model_
                 os.makedirs(os.path.join(chat_dir, 'text'))
                 os.makedirs(os.path.join(chat_dir, 'audio'))
                 os.makedirs(os.path.join(chat_dir, 'image'))
-
             now = datetime.now()
             image_filename = f"output_{now.strftime('%Y%m%d_%H%M%S')}.png"
             image_path = os.path.join(chat_dir, 'image', image_filename)
