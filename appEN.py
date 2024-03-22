@@ -64,6 +64,9 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_model_
                              chat_dir=None):
     prompt = transcribe_audio(input_audio) if input_audio else input_text
 
+    if not llm_model_name:
+        return "Please select a language model.", None, None, None, None
+
     tokenizer, llm_model = load_model(llm_model_name, llm_model_type)
 
     tts_model = None
@@ -72,6 +75,9 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_model_
 
     try:
         if enable_tts:
+            if not speaker_wav or not language:
+                return "Please select a voice and language for TTS.", None, None, None, None
+
             device = "cuda" if torch.cuda.is_available() else "cpu"
             tts_model_path = "inputs/audio/XTTS-v2"
             if not os.path.exists(tts_model_path):
@@ -98,6 +104,9 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_model_
             whisper_model = whisper.load_model(model_file, device=device)
 
         if enable_stable_diffusion:
+            if not stable_diffusion_model_name:
+                return "Please select a Stable Diffusion model.", None, None, None, None
+
             stable_diffusion_model_path = os.path.join("inputs", "image", "sd_models",
                                                        f"{stable_diffusion_model_name}.safetensors")
             if os.path.exists(stable_diffusion_model_path):
@@ -197,7 +206,7 @@ llm_models_list = [None] + [model for model in os.listdir("inputs/text/llm_model
 avatars_list = [None] + [avatar for avatar in os.listdir("inputs/image/avatars") if not avatar.endswith(".txt")]
 speaker_wavs_list = [None] + [wav for wav in os.listdir("inputs/audio/voices") if not wav.endswith(".txt")]
 stable_diffusion_models_list = [None] + [model.replace(".safetensors", "") for model in os.listdir("inputs/image/sd_models")
-                                         if (model.endswith(".safetensors") or not model.endswith(".txt")) 
+                                         if (model.endswith(".safetensors") or not model.endswith(".txt"))
                                          and os.path.isfile(os.path.join("inputs/image/sd_models", model))]
 
 iface = gr.Interface(
