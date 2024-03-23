@@ -65,7 +65,7 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_model_
     prompt = transcribe_audio(input_audio) if input_audio else input_text
 
     if not llm_model_name:
-        return "Please select a language model.", None, None, None
+        return "Please select a language model", None, None, None
 
     tokenizer, llm_model = load_model(llm_model_name, llm_model_type)
 
@@ -75,7 +75,7 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_model_
     try:
         if enable_tts:
             if not speaker_wav or not language:
-                return "Please select a voice and language for TTS.", None, None, None
+                return "Please select a voice and language for TTS", None, None, None
 
             device = "cuda" if torch.cuda.is_available() else "cpu"
             tts_model_path = "inputs/audio/XTTS-v2"
@@ -161,7 +161,7 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_model_
 def generate_image(prompt, stable_diffusion_model_name, stable_diffusion_steps, stable_diffusion_cfg,
                    stable_diffusion_width, stable_diffusion_height, stable_diffusion_clip_skip):
     if not stable_diffusion_model_name:
-        return "Please select a Stable Diffusion model.", None
+        return "Please select a Stable Diffusion model", None
 
     stable_diffusion_model_path = os.path.join("inputs", "image", "sd_models",
                                                f"{stable_diffusion_model_name}.safetensors")
@@ -205,7 +205,6 @@ speaker_wavs_list = [None] + [wav for wav in os.listdir("inputs/audio/voices") i
 stable_diffusion_models_list = [None] + [model.replace(".safetensors", "") for model in
                                          os.listdir("inputs/image/sd_models")
                                          if (model.endswith(".safetensors") or not model.endswith(".txt"))
-                                         and os.path.isfile(os.path.join("inputs/image/sd_models", model))]
 
 
 chat_interface = gr.Interface(
