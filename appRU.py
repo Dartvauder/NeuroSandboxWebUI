@@ -43,7 +43,6 @@ def transcribe_audio(audio_file_path):
     device = "cuda" if torch.cuda.is_available() else "cpu"
     whisper_model_path = "inputs/text/whisper-medium"
 
-    # Download the medium.pt file from the provided URL
     if not os.path.exists(whisper_model_path):
         os.makedirs(whisper_model_path, exist_ok=True)
         url = ("https://openaipublic.azureedge.net/main/whisper/models"
@@ -58,25 +57,24 @@ def transcribe_audio(audio_file_path):
 
 
 def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_model_type, max_tokens, temperature, top_p,
-                             top_k, avatar_name, enable_tts, speaker_wav, language, enable_stable_diffusion,
-                             stable_diffusion_model_name, stable_diffusion_steps, stable_diffusion_cfg,
-                             stable_diffusion_width, stable_diffusion_height, stable_diffusion_clip_skip,
-                             chat_dir=None):
+                             top_k, avatar_name, enable_tts, speaker_wav, language, chat_dir=None):
+    if not input_text and not input_audio:
+        return "Пожалуйста введите ваш запрос", None, None, None
+
     prompt = transcribe_audio(input_audio) if input_audio else input_text
 
     if not llm_model_name:
-        return "Please select a language model.", None, None, None, None
+        return "Пожалуйста выберите модель LLM", None, None, None
 
     tokenizer, llm_model = load_model(llm_model_name, llm_model_type)
 
     tts_model = None
     whisper_model = None
-    stable_diffusion_model = None
 
     try:
         if enable_tts:
             if not speaker_wav or not language:
-                return "Please select a voice and language for TTS.", None, None, None, None
+                return "Пожалуйста выберите язык и голос для TTS", None, None, None
 
             device = "cuda" if torch.cuda.is_available() else "cpu"
             tts_model_path = "inputs/audio/XTTS-v2"
@@ -92,7 +90,6 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_model_
             device = "cuda" if torch.cuda.is_available() else "cpu"
             whisper_model_path = "inputs/text/whisper-medium"
 
-            # Download the medium.pt file from the provided URL
             if not os.path.exists(whisper_model_path):
                 os.makedirs(whisper_model_path, exist_ok=True)
                 url = ("https://openaipublic.azureedge.net/main/whisper/models"
@@ -102,29 +99,6 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_model_
 
             model_file = os.path.join(whisper_model_path, "medium.pt")
             whisper_model = whisper.load_model(model_file, device=device)
-
-        if enable_stable_diffusion:
-            if not stable_diffusion_model_name:
-                return "Please select a Stable Diffusion model.", None, None, None, None
-
-            stable_diffusion_model_path = os.path.join("inputs", "image", "sd_models",
-                                                       f"{stable_diffusion_model_name}.safetensors")
-            if os.path.exists(stable_diffusion_model_path):
-                stable_diffusion_model = StableDiffusionPipeline.from_single_file(
-                    stable_diffusion_model_path, use_safetensors=True, device_map="auto"
-                )
-            else:
-                print(f"Stable Diffusion model not found: {stable_diffusion_model_path}")
-                stable_diffusion_model = StableDiffusionPipeline.from_pretrained(
-                    "runwayml/stable-diffusion-v1-5", use_safetensors=True, device_map="auto"
-                )
-            device = "cuda" if torch.cuda.is_available() else "cpu"
-
-            stable_diffusion_model.to(device)
-            stable_diffusion_model.text_encoder.to(device)
-            stable_diffusion_model.vae.to(device)
-            stable_diffusion_model.unet.to(device)
-            stable_diffusion_model.safety_checker = None
 
         text = None
         if llm_model:
@@ -150,29 +124,10 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_model_
                 os.makedirs(chat_dir)
                 os.makedirs(os.path.join(chat_dir, 'text'))
                 os.makedirs(os.path.join(chat_dir, 'audio'))
-                os.makedirs(os.path.join(chat_dir, 'image'))
             now = datetime.now()
             audio_filename = f"output_{now.strftime('%Y%m%d_%H%M%S')}.wav"
             audio_path = os.path.join(chat_dir, 'audio', audio_filename)
             sf.write(audio_path, wav, 22050)
-
-        image_path = None
-        if enable_stable_diffusion:
-            images = stable_diffusion_model(prompt, num_inference_steps=stable_diffusion_steps,
-                                            guidance_scale=stable_diffusion_cfg, height=stable_diffusion_height,
-                                            width=stable_diffusion_width, clip_skip=stable_diffusion_clip_skip)
-            image = images["images"][0]
-            if not chat_dir:
-                now = datetime.now()
-                chat_dir = os.path.join('outputs', f"chat_{now.strftime('%Y%m%d_%H%M%S')}")
-                os.makedirs(chat_dir)
-                os.makedirs(os.path.join(chat_dir, 'text'))
-                os.makedirs(os.path.join(chat_dir, 'audio'))
-                os.makedirs(os.path.join(chat_dir, 'image'))
-            now = datetime.now()
-            image_filename = f"output_{now.strftime('%Y%m%d_%H%M%S')}.png"
-            image_path = os.path.join(chat_dir, 'image', image_filename)
-            image.save(image_path, format="PNG")
 
         if not chat_dir:
             now = datetime.now()
@@ -180,7 +135,6 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_model_
             os.makedirs(chat_dir)
             os.makedirs(os.path.join(chat_dir, 'text'))
             os.makedirs(os.path.join(chat_dir, 'audio'))
-            os.makedirs(os.path.join(chat_dir, 'image'))
 
         chat_history_path = os.path.join(chat_dir, 'text', 'chat_history.txt')
         with open(chat_history_path, "a", encoding="utf-8") as f:
@@ -197,11 +151,50 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_model_
             del tts_model
         if whisper_model is not None:
             del whisper_model
-        if stable_diffusion_model is not None:
-            del stable_diffusion_model
         torch.cuda.empty_cache()
 
-    return text, avatar_path, audio_path, image_path, chat_dir
+    return text, audio_path, avatar_path, chat_dir
+
+
+def generate_image(prompt, stable_diffusion_model_name, stable_diffusion_steps, stable_diffusion_cfg,
+                   stable_diffusion_width, stable_diffusion_height, stable_diffusion_clip_skip):
+    if not stable_diffusion_model_name:
+        return None, "Пожалуйста, выберите модель Stable Diffusion",
+
+    stable_diffusion_model_path = os.path.join("inputs", "image", "sd_models",
+                                               f"{stable_diffusion_model_name}.safetensors")
+    if os.path.exists(stable_diffusion_model_path):
+        stable_diffusion_model = StableDiffusionPipeline.from_single_file(
+            stable_diffusion_model_path, use_safetensors=True, device_map="auto"
+        )
+    else:
+        print(f"Не найдена модель Stable Diffusion: {stable_diffusion_model_path}")
+        stable_diffusion_model = StableDiffusionPipeline.from_pretrained(
+            "runwayml/stable-diffusion-v1-5", use_safetensors=True, device_map="auto"
+        )
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+
+    stable_diffusion_model.to(device)
+    stable_diffusion_model.text_encoder.to(device)
+    stable_diffusion_model.vae.to(device)
+    stable_diffusion_model.unet.to(device)
+    stable_diffusion_model.safety_checker = None
+
+    try:
+        images = stable_diffusion_model(prompt, num_inference_steps=stable_diffusion_steps,
+                                        guidance_scale=stable_diffusion_cfg, height=stable_diffusion_height,
+                                        width=stable_diffusion_width, clip_skip=stable_diffusion_clip_skip)
+        image = images["images"][0]
+        now = datetime.now()
+        image_dir = os.path.join('outputs', f"image_{now.strftime('%Y%m%d_%H%M%S')}")
+        os.makedirs(image_dir)
+        image_filename = f"output_{now.strftime('%Y%m%d_%H%M%S')}.png"
+        image_path = os.path.join(image_dir, image_filename)
+        image.save(image_path, format="PNG")
+        return image_path, None
+    finally:
+        del stable_diffusion_model
+        torch.cuda.empty_cache()
 
 
 llm_models_list = [None] + [model for model in os.listdir("inputs/text/llm_models") if not model.endswith(".txt")]
@@ -209,8 +202,7 @@ avatars_list = [None] + [avatar for avatar in os.listdir("inputs/image/avatars")
 speaker_wavs_list = [None] + [wav for wav in os.listdir("inputs/audio/voices") if not wav.endswith(".txt")]
 stable_diffusion_models_list = [None] + [model.replace(".safetensors", "") for model in
                                          os.listdir("inputs/image/sd_models")
-                                         if (model.endswith(".safetensors") or not model.endswith(".txt"))
-                                         and os.path.isfile(os.path.join("inputs/image/sd_models", model))]
+                                         if (model.endswith(".safetensors") or not model.endswith(".txt"))]
 
 
 chat_interface = gr.Interface(
@@ -231,23 +223,22 @@ chat_interface = gr.Interface(
     ],
     outputs=[
         gr.Textbox(label="Текстовый ответ от LLM", type="text"),
-        gr.Image(type="filepath", label="Аватар"),
         gr.Audio(label="Аудио ответ от LLM", type="filepath"),
+        gr.Image(type="filepath", label="Аватар"),
     ],
-    title="NeuroChatWebUI (ALPHA) - Chat",
+    title="НейроЧатWebUI (АЛЬФА) - LLM",
     description="Этот пользовательский интерфейс позволяет вам вводить любой текст или аудио и получать "
-                "сгенерирован ответ. Вы можете выбрать модель LLM, "
+                "сгенерированный ответ. Вы можете выбрать модель LLM, "
                 "аватар, голос и язык из раскрывающихся списков. Вы также можете настроить параметры модели с "
-                "помощью слайдеров. Попробуйте и посмотрите, что получится!",
+                "помощью ползунков. Попробуйте и посмотрите, что получится!",
     allow_flagging="never"
 )
 
 image_interface = gr.Interface(
-    fn=generate_text_and_speech,
+    fn=generate_image,
     inputs=[
-        gr.Textbox(label="Введите ваш запрос"),
-        gr.Checkbox(label="Включить Stable Diffusion", value=False),
-        gr.Dropdown(choices=stable_diffusion_models_list, label="Выберите модель Stable Diffusion", interactive=True),
+        gr.Textbox(label="Введите ваш промт"),
+        gr.Dropdown(choices=stable_diffusion_models_list, label="Выберите модель Stable Diffusion", value=None),
         gr.Slider(minimum=1, maximum=100, value=30, step=1, label="Шаги"),
         gr.Slider(minimum=1.0, maximum=30.0, value=8, step=0.1, label="CFG"),
         gr.Slider(minimum=256, maximum=1024, value=512, step=64, label="Ширина"),
@@ -256,8 +247,9 @@ image_interface = gr.Interface(
     ],
     outputs=[
         gr.Image(type="filepath", label="Сгенерированное изображение"),
+        gr.Textbox(label="Сообщение", type="text"),
     ],
-    title="NeuroChatWebUI (ALPHA) - Image",
+    title="НейроЧатWebUI (АЛЬФА) - Stable Diffusion",
     description="Этот пользовательский интерфейс позволяет вам вводить любой текст и генерировать изображение с помощью Stable Diffusion. "
                 "Вы можете выбрать модель Stable Diffusion и настроить параметры генерации с помощью ползунков. "
                 "Попробуйте и посмотрите, что получится!",
