@@ -185,10 +185,10 @@ def generate_image(prompt, negative_prompt, stable_diffusion_model_name, stable_
                                         guidance_scale=stable_diffusion_cfg, height=stable_diffusion_height,
                                         width=stable_diffusion_width, clip_skip=stable_diffusion_clip_skip)
         image = images["images"][0]
-        now = datetime.now()
-        image_dir = os.path.join('outputs', f"image_{now.strftime('%Y%m%d_%H%M%S')}")
-        os.makedirs(image_dir)
-        image_filename = f"output_{now.strftime('%Y%m%d_%H%M%S')}.png"
+        today = datetime.now().date()
+        image_dir = os.path.join('outputs', f"images_{today.strftime('%Y%m%d')}")
+        os.makedirs(image_dir, exist_ok=True)
+        image_filename = f"output_{datetime.now().strftime('%Y%m%d_%H%M%S')}.png"
         image_path = os.path.join(image_dir, image_filename)
         image.save(image_path, format="PNG")
         return image_path, None
