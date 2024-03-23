@@ -208,8 +208,8 @@ stable_diffusion_models_list = [None] + [model.replace(".safetensors", "") for m
 chat_interface = gr.Interface(
     fn=generate_text_and_speech,
     inputs=[
-        gr.Textbox(label="Enter your prompt"),
-        gr.Audio(type="filepath", label="Record your prompt"),
+        gr.Textbox(label="Enter your request"),
+        gr.Audio(type="filepath", label="Record your request"),
         gr.Dropdown(choices=llm_models_list, label="Select LLM Model", value=None),
         gr.Dropdown(choices=["transformers", "llama"], label="Select Model Type", value="transformers"),
         gr.Slider(minimum=1, maximum=2048, value=512, step=1, label="Max Tokens"),
