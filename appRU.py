@@ -207,11 +207,13 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_model_
 llm_models_list = [None] + [model for model in os.listdir("inputs/text/llm_models") if not model.endswith(".txt")]
 avatars_list = [None] + [avatar for avatar in os.listdir("inputs/image/avatars") if not avatar.endswith(".txt")]
 speaker_wavs_list = [None] + [wav for wav in os.listdir("inputs/audio/voices") if not wav.endswith(".txt")]
-stable_diffusion_models_list = [None] + [model.replace(".safetensors", "") for model in os.listdir("inputs/image/sd_models")
+stable_diffusion_models_list = [None] + [model.replace(".safetensors", "") for model in
+                                         os.listdir("inputs/image/sd_models")
                                          if (model.endswith(".safetensors") or not model.endswith(".txt"))
                                          and os.path.isfile(os.path.join("inputs/image/sd_models", model))]
 
-iface = gr.Interface(
+
+chat_interface = gr.Interface(
     fn=generate_text_and_speech,
     inputs=[
         gr.Textbox(label="Введите ваш запрос"),
@@ -226,6 +228,24 @@ iface = gr.Interface(
         gr.Checkbox(label="Включить TTS", value=False),
         gr.Dropdown(choices=speaker_wavs_list, label="Выберите голос", interactive=True),
         gr.Dropdown(choices=["en", "ru"], label="Выберите язык голоса", interactive=True),
+    ],
+    outputs=[
+        gr.Textbox(label="Текстовый ответ от LLM", type="text"),
+        gr.Image(type="filepath", label="Аватар"),
+        gr.Audio(label="Аудио ответ от LLM", type="filepath"),
+    ],
+    title="NeuroChatWebUI (ALPHA) - Chat",
+    description="Этот пользовательский интерфейс позволяет вам вводить любой текст или аудио и получать "
+                "сгенерирован ответ. Вы можете выбрать модель LLM, "
+                "аватар, голос и язык из раскрывающихся списков. Вы также можете настроить параметры модели с "
+                "помощью слайдеров. Попробуйте и посмотрите, что получится!",
+    allow_flagging="never"
+)
+
+image_interface = gr.Interface(
+    fn=generate_text_and_speech,
+    inputs=[
+        gr.Textbox(label="Введите ваш запрос"),
         gr.Checkbox(label="Включить Stable Diffusion", value=False),
         gr.Dropdown(choices=stable_diffusion_models_list, label="Выберите модель Stable Diffusion", interactive=True),
         gr.Slider(minimum=1, maximum=100, value=30, step=1, label="Шаги"),
@@ -233,21 +253,16 @@ iface = gr.Interface(
         gr.Slider(minimum=256, maximum=1024, value=512, step=64, label="Ширина"),
         gr.Slider(minimum=256, maximum=1024, value=512, step=64, label="Высота"),
         gr.Slider(minimum=1, maximum=4, value=1, step=1, label="Пропуск клипа"),
-        gr.State()
     ],
     outputs=[
-        gr.Textbox(label="Текстовый ответ от LLM", type="text"),
-        gr.Image(type="filepath", label="Аватар"),
-        gr.Audio(label="Аудио ответ от LLM", type="filepath"),
         gr.Image(type="filepath", label="Сгенерированное изображение"),
-        gr.State()
     ],
-    title="НейроЧатWebUI (АЛЬФА)",
-    description="Этот пользовательский интерфейс позволяет вам вводить любой текст или аудио и получать "
-                "сгенерированный ответ или изображение. Вы можете выбрать модель, "
-                "аватар, голос и язык из раскрывающихся списков. А так же вы можете настраивать настройки моделей с "
-                "помощью слайдеров. Попробуйте и посмотрите, что произойдет!",
+    title="NeuroChatWebUI (ALPHA) - Image",
+    description="Этот пользовательский интерфейс позволяет вам вводить любой текст и генерировать изображение с помощью Stable Diffusion. "
+                "Вы можете выбрать модель Stable Diffusion и настроить параметры генерации с помощью ползунков. "
+                "Попробуйте и посмотрите, что получится!",
     allow_flagging="never"
 )
 
-iface.launch()
+with gr.TabbedInterface([chat_interface, image_interface]) as app:
+    app.launch()
