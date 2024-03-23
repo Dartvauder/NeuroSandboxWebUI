@@ -159,7 +159,7 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_model_
 def generate_image(prompt, stable_diffusion_model_name, stable_diffusion_steps, stable_diffusion_cfg,
                    stable_diffusion_width, stable_diffusion_height, stable_diffusion_clip_skip):
     if not stable_diffusion_model_name:
-        return "Please select a Stable Diffusion model", None
+        return None, "Please select a Stable Diffusion model",
 
     stable_diffusion_model_path = os.path.join("inputs", "image", "sd_models",
                                                f"{stable_diffusion_model_name}.safetensors")
@@ -191,7 +191,7 @@ def generate_image(prompt, stable_diffusion_model_name, stable_diffusion_steps, 
         image_filename = f"output_{now.strftime('%Y%m%d_%H%M%S')}.png"
         image_path = os.path.join(image_dir, image_filename)
         image.save(image_path, format="PNG")
-        return None, image_path
+        return image_path, None
     finally:
         del stable_diffusion_model
         torch.cuda.empty_cache()
@@ -246,8 +246,8 @@ image_interface = gr.Interface(
         gr.Slider(minimum=1, maximum=4, value=1, step=1, label="Clip Skip"),
     ],
     outputs=[
-        gr.Textbox(label="Message", type="text"),
         gr.Image(type="filepath", label="Generated Image"),
+        gr.Textbox(label="Message", type="text"),
     ],
     title="NeuroChatWebUI (ALPHA) - Image",
     description="This user interface allows you to enter any text and generate images using Stable Diffusion. "
