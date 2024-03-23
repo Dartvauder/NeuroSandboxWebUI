@@ -59,7 +59,7 @@ def transcribe_audio(audio_file_path):
 def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_model_type, max_tokens, temperature, top_p,
                              top_k, avatar_name, enable_tts, speaker_wav, language, chat_dir=None):
     if not input_text and not input_audio:
-        return "Please enter your prompt", None, None, None
+        return "Please enter your request", None, None, None
 
     prompt = transcribe_audio(input_audio) if input_audio else input_text
 
@@ -226,7 +226,7 @@ chat_interface = gr.Interface(
         gr.Audio(label="LLM audio response", type="filepath"),
         gr.Image(type="filepath", label="Avatar"),
     ],
-    title="NeuroChatWebUI (ALPHA) - Chat",
+    title="NeuroChatWebUI (ALPHA) - LLM",
     description="This user interface allows you to enter any text or audio and receive "
                 "generated response. You can select the LLM model, "
                 "avatar, voice and language from the drop-down lists. You can also customize the model settings from "
@@ -249,7 +249,7 @@ image_interface = gr.Interface(
         gr.Image(type="filepath", label="Generated Image"),
         gr.Textbox(label="Message", type="text"),
     ],
-    title="NeuroChatWebUI (ALPHA) - Image",
+    title="NeuroChatWebUI (ALPHA) - Stable Diffusion",
     description="This user interface allows you to enter any text and generate images using Stable Diffusion. "
                 "You can select the Stable Diffusion model and customize the generation settings from the sliders. "
                 "Try it and see what happens!",
