@@ -60,6 +60,8 @@ To get update, run `git pull`
 
 ## How to use:
 
+#### The interface has two tabs, LLM and Stable Diffusion. Select the one you need and follow the instructions
+
 ### LLM:
 
 1) First upload your models to the folder: *inputs/text/llm_models*
