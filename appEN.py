@@ -125,7 +125,7 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_model_
             stable_diffusion_model.vae.to(device)
             stable_diffusion_model.unet.to(device)
             stable_diffusion_model.safety_checker = None
-            
+
         text = None
         if llm_model:
             if llm_model_type == "transformers":
@@ -207,11 +207,13 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_model_
 llm_models_list = [None] + [model for model in os.listdir("inputs/text/llm_models") if not model.endswith(".txt")]
 avatars_list = [None] + [avatar for avatar in os.listdir("inputs/image/avatars") if not avatar.endswith(".txt")]
 speaker_wavs_list = [None] + [wav for wav in os.listdir("inputs/audio/voices") if not wav.endswith(".txt")]
-stable_diffusion_models_list = [None] + [model.replace(".safetensors", "") for model in os.listdir("inputs/image/sd_models")
+stable_diffusion_models_list = [None] + [model.replace(".safetensors", "") for model in
+                                         os.listdir("inputs/image/sd_models")
                                          if (model.endswith(".safetensors") or not model.endswith(".txt"))
                                          and os.path.isfile(os.path.join("inputs/image/sd_models", model))]
 
-iface = gr.Interface(
+
+chat_interface = gr.Interface(
     fn=generate_text_and_speech,
     inputs=[
         gr.Textbox(label="Enter your prompt"),
@@ -226,6 +228,24 @@ iface = gr.Interface(
         gr.Checkbox(label="Enable TTS", value=False),
         gr.Dropdown(choices=speaker_wavs_list, label="Select Voice", interactive=True),
         gr.Dropdown(choices=["en", "ru"], label="Select Language", interactive=True),
+    ],
+    outputs=[
+        gr.Textbox(label="LLM text response", type="text"),
+        gr.Image(type="filepath", label="Avatar"),
+        gr.Audio(label="LLM audio response", type="filepath"),
+    ],
+    title="NeuroChatWebUI (ALPHA) - Chat",
+    description="This user interface allows you to enter any text or audio and receive "
+                "generated response. You can select the LLM model, "
+                "avatar, voice and language from the drop-down lists. You can also customize the model settings from "
+                "using sliders. Try it and see what happens!",
+    allow_flagging="never"
+)
+
+image_interface = gr.Interface(
+    fn=generate_text_and_speech,
+    inputs=[
+        gr.Textbox(label="Enter your prompt"),
         gr.Checkbox(label="Enable Stable Diffusion", value=False),
         gr.Dropdown(choices=stable_diffusion_models_list, label="Select Stable Diffusion Model", interactive=True),
         gr.Slider(minimum=1, maximum=100, value=30, step=1, label="Steps"),
@@ -233,21 +253,16 @@ iface = gr.Interface(
         gr.Slider(minimum=256, maximum=1024, value=512, step=64, label="Width"),
         gr.Slider(minimum=256, maximum=1024, value=512, step=64, label="Height"),
         gr.Slider(minimum=1, maximum=4, value=1, step=1, label="Clip Skip"),
-        gr.State()
     ],
     outputs=[
-        gr.Textbox(label="LLM text response", type="text"),
-        gr.Image(type="filepath", label="Avatar"),
-        gr.Audio(label="LLM audio response", type="filepath"),
         gr.Image(type="filepath", label="Generated Image"),
-        gr.State()
     ],
-    title="NeuroChatWebUI (ALPHA)",
-    description="This user interface allows you to enter any text or audio and receive "
-                "generated response or image. You can select the model, "
-                "avatar, voice and language from the drop-down lists. You can also customize the model settings from "
-                "using sliders. Try it and see what happens!",
+    title="NeuroChatWebUI (ALPHA) - Image",
+    description="This user interface allows you to enter any text and generate images using Stable Diffusion. "
+                "You can select the Stable Diffusion model and customize the generation settings from the sliders. "
+                "Try it and see what happens!",
     allow_flagging="never"
 )
 
-iface.launch()
+with gr.TabbedInterface([chat_interface, image_interface]) as app:
+    app.launch()
