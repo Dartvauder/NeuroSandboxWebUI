@@ -43,6 +43,7 @@ def transcribe_audio(audio_file_path):
     device = "cuda" if torch.cuda.is_available() else "cpu"
     whisper_model_path = "inputs/text/whisper-medium"
 
+    # Download the medium.pt file from the provided URL
     if not os.path.exists(whisper_model_path):
         os.makedirs(whisper_model_path, exist_ok=True)
         url = ("https://openaipublic.azureedge.net/main/whisper/models"
@@ -58,6 +59,9 @@ def transcribe_audio(audio_file_path):
 
 def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_model_type, max_tokens, temperature, top_p,
                              top_k, avatar_name, enable_tts, speaker_wav, language, chat_dir=None):
+    if not input_text and not input_audio:
+        return "Please enter your prompt", None, None, None
+
     prompt = transcribe_audio(input_audio) if input_audio else input_text
 
     if not llm_model_name:
@@ -154,13 +158,10 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_model_
     return text, avatar_path, audio_path, chat_dir
 
 
-def generate_image(prompt, enable_stable_diffusion, stable_diffusion_model_name, stable_diffusion_steps,
-                   stable_diffusion_cfg, stable_diffusion_width, stable_diffusion_height, stable_diffusion_clip_skip):
-    if not enable_stable_diffusion:
-        return None
-
+def generate_image(prompt, stable_diffusion_model_name, stable_diffusion_steps, stable_diffusion_cfg,
+                   stable_diffusion_width, stable_diffusion_height, stable_diffusion_clip_skip):
     if not stable_diffusion_model_name:
-        return "Please select a Stable Diffusion model."
+        return "Please select a Stable Diffusion model.", None
 
     stable_diffusion_model_path = os.path.join("inputs", "image", "sd_models",
                                                f"{stable_diffusion_model_name}.safetensors")
@@ -192,7 +193,7 @@ def generate_image(prompt, enable_stable_diffusion, stable_diffusion_model_name,
         image_filename = f"output_{now.strftime('%Y%m%d_%H%M%S')}.png"
         image_path = os.path.join(image_dir, image_filename)
         image.save(image_path, format="PNG")
-        return image_path
+        return None, image_path
     finally:
         del stable_diffusion_model
         torch.cuda.empty_cache()
@@ -225,8 +226,8 @@ chat_interface = gr.Interface(
     ],
     outputs=[
         gr.Textbox(label="LLM text response", type="text"),
-        gr.Image(type="filepath", label="Avatar"),
         gr.Audio(label="LLM audio response", type="filepath"),
+        gr.Image(type="filepath", label="Avatar"),
     ],
     title="NeuroChatWebUI (ALPHA) - Chat",
     description="This user interface allows you to enter any text or audio and receive "
@@ -240,8 +241,7 @@ image_interface = gr.Interface(
     fn=generate_image,
     inputs=[
         gr.Textbox(label="Enter your prompt"),
-        gr.Checkbox(label="Enable Stable Diffusion", value=False),
-        gr.Dropdown(choices=stable_diffusion_models_list, label="Select Stable Diffusion Model", interactive=True),
+        gr.Dropdown(choices=stable_diffusion_models_list, label="Select Stable Diffusion Model", value=None),
         gr.Slider(minimum=1, maximum=100, value=30, step=1, label="Steps"),
         gr.Slider(minimum=1.0, maximum=30.0, value=8, step=0.1, label="CFG"),
         gr.Slider(minimum=256, maximum=1024, value=512, step=64, label="Width"),
@@ -250,6 +250,7 @@ image_interface = gr.Interface(
     ],
     outputs=[
         gr.Image(type="filepath", label="Generated Image"),
+        gr.Textbox(label="Message", type="text"),
     ],
     title="NeuroChatWebUI (ALPHA) - Image",
     description="This user interface allows you to enter any text and generate images using Stable Diffusion. "
