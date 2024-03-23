@@ -218,7 +218,7 @@ chat_interface = gr.Interface(
     inputs=[
         gr.Textbox(label="Enter your prompt"),
         gr.Audio(type="filepath", label="Record your prompt"),
-        gr.Dropdown(choices=llm_models_list, label="Select Language Model", value=None),
+        gr.Dropdown(choices=llm_models_list, label="Select LLM Model", value=None),
         gr.Dropdown(choices=["transformers", "llama"], label="Select Model Type", value="transformers"),
         gr.Slider(minimum=1, maximum=2048, value=512, step=1, label="Max Tokens"),
         gr.Slider(minimum=0.0, maximum=1.0, value=0.7, step=0.1, label="Temperature"),
