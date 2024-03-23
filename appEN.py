@@ -156,10 +156,10 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_model_
     return text, audio_path, avatar_path, chat_dir
 
 
-def generate_image(prompt, stable_diffusion_model_name, stable_diffusion_steps, stable_diffusion_cfg,
+def generate_image(prompt, negative_prompt, stable_diffusion_model_name, stable_diffusion_steps, stable_diffusion_cfg,
                    stable_diffusion_width, stable_diffusion_height, stable_diffusion_clip_skip):
     if not stable_diffusion_model_name:
-        return None, "Please select a Stable Diffusion model",
+        return None, "Please select a Stable Diffusion model"
 
     stable_diffusion_model_path = os.path.join("inputs", "image", "sd_models",
                                                f"{stable_diffusion_model_name}.safetensors")
@@ -181,7 +181,7 @@ def generate_image(prompt, stable_diffusion_model_name, stable_diffusion_steps, 
     stable_diffusion_model.safety_checker = None
 
     try:
-        images = stable_diffusion_model(prompt, num_inference_steps=stable_diffusion_steps,
+        images = stable_diffusion_model(prompt, negative_prompt=negative_prompt, num_inference_steps=stable_diffusion_steps,
                                         guidance_scale=stable_diffusion_cfg, height=stable_diffusion_height,
                                         width=stable_diffusion_width, clip_skip=stable_diffusion_clip_skip)
         image = images["images"][0]
@@ -238,6 +238,7 @@ image_interface = gr.Interface(
     fn=generate_image,
     inputs=[
         gr.Textbox(label="Enter your prompt"),
+        gr.Textbox(label="Enter your negative prompt", value=""),
         gr.Dropdown(choices=stable_diffusion_models_list, label="Select Stable Diffusion Model", value=None),
         gr.Slider(minimum=1, maximum=100, value=30, step=1, label="Steps"),
         gr.Slider(minimum=1.0, maximum=30.0, value=8, step=0.1, label="CFG"),
