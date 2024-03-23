@@ -118,10 +118,12 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_model_
                 stable_diffusion_model = StableDiffusionPipeline.from_pretrained(
                     "runwayml/stable-diffusion-v1-5", use_safetensors=True, device_map="auto"
                 )
-            stable_diffusion_model.to("cuda")
-            stable_diffusion_model.text_encoder.to("cuda")
-            stable_diffusion_model.vae.to("cuda")
-            stable_diffusion_model.unet.to("cuda")
+            device = "cuda" if torch.cuda.is_available() else "cpu"
+
+            stable_diffusion_model.to(device)
+            stable_diffusion_model.text_encoder.to(device)
+            stable_diffusion_model.vae.to(device)
+            stable_diffusion_model.unet.to(device)
             stable_diffusion_model.safety_checker = None
 
         text = None
