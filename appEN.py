@@ -43,7 +43,6 @@ def transcribe_audio(audio_file_path):
     device = "cuda" if torch.cuda.is_available() else "cpu"
     whisper_model_path = "inputs/text/whisper-medium"
 
-    # Download the medium.pt file from the provided URL
     if not os.path.exists(whisper_model_path):
         os.makedirs(whisper_model_path, exist_ok=True)
         url = ("https://openaipublic.azureedge.net/main/whisper/models"
@@ -91,7 +90,6 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_model_
             device = "cuda" if torch.cuda.is_available() else "cpu"
             whisper_model_path = "inputs/text/whisper-medium"
 
-            # Download the medium.pt file from the provided URL
             if not os.path.exists(whisper_model_path):
                 os.makedirs(whisper_model_path, exist_ok=True)
                 url = ("https://openaipublic.azureedge.net/main/whisper/models"
@@ -155,7 +153,7 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_model_
             del whisper_model
         torch.cuda.empty_cache()
 
-    return text, avatar_path, audio_path, chat_dir
+    return text, audio_path, avatar_path, chat_dir
 
 
 def generate_image(prompt, stable_diffusion_model_name, stable_diffusion_steps, stable_diffusion_cfg,
@@ -248,8 +246,8 @@ image_interface = gr.Interface(
         gr.Slider(minimum=1, maximum=4, value=1, step=1, label="Clip Skip"),
     ],
     outputs=[
-        gr.Image(type="filepath", label="Generated Image"),
         gr.Textbox(label="Message", type="text"),
+        gr.Image(type="filepath", label="Generated Image"),
     ],
     title="NeuroChatWebUI (ALPHA) - Image",
     description="This user interface allows you to enter any text and generate images using Stable Diffusion. "
