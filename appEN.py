@@ -65,7 +65,7 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_model_
     prompt = transcribe_audio(input_audio) if input_audio else input_text
 
     if not llm_model_name:
-        return "Please select a language model", None, None, None
+        return "Please select a LLM model", None, None, None
 
     tokenizer, llm_model = load_model(llm_model_name, llm_model_type)
 
