@@ -22,6 +22,8 @@ logging.getLogger('diffusers').setLevel(logging.ERROR)
 logging.getLogger('h11').setLevel(logging.ERROR)
 logging.getLogger('uvicorn').setLevel(logging.ERROR)
 
+chat_dir = None
+
 
 def load_model(model_name, model_type):
     if model_type == "transformers":
@@ -57,7 +59,9 @@ def transcribe_audio(audio_file_path):
 
 
 def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_model_type, max_tokens, temperature, top_p,
-                             top_k, avatar_name, enable_tts, speaker_wav, language, chat_dir=None):
+                             top_k, avatar_name, enable_tts, speaker_wav, language):
+    global chat_dir
+
     if not input_text and not input_audio:
         return "Please enter your request", None, None, None
 
@@ -129,18 +133,12 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_model_
             audio_path = os.path.join(chat_dir, 'audio', audio_filename)
             sf.write(audio_path, wav, 22050)
 
-        if not chat_dir:
-            now = datetime.now()
-            chat_dir = os.path.join('outputs', f"chat_{now.strftime('%Y%m%d_%H%M%S')}")
-            os.makedirs(chat_dir)
-            os.makedirs(os.path.join(chat_dir, 'text'))
-            os.makedirs(os.path.join(chat_dir, 'audio'))
-
-        chat_history_path = os.path.join(chat_dir, 'text', 'chat_history.txt')
-        with open(chat_history_path, "a", encoding="utf-8") as f:
-            f.write(f"Human: {prompt}\n")
-            if text:
-                f.write(f"AI: {text}\n\n")
+        if chat_dir:
+            chat_history_path = os.path.join(chat_dir, 'text', 'chat_history.txt')
+            with open(chat_history_path, "a", encoding="utf-8") as f:
+                f.write(f"Human: {prompt}\n")
+                if text:
+                    f.write(f"AI: {text}\n\n")
 
     finally:
         if tokenizer is not None:
@@ -181,7 +179,8 @@ def generate_image(prompt, negative_prompt, stable_diffusion_model_name, stable_
     stable_diffusion_model.safety_checker = None
 
     try:
-        images = stable_diffusion_model(prompt, negative_prompt=negative_prompt, num_inference_steps=stable_diffusion_steps,
+        images = stable_diffusion_model(prompt, negative_prompt=negative_prompt,
+                                        num_inference_steps=stable_diffusion_steps,
                                         guidance_scale=stable_diffusion_cfg, height=stable_diffusion_height,
                                         width=stable_diffusion_width, clip_skip=stable_diffusion_clip_skip)
         image = images["images"][0]
@@ -203,7 +202,6 @@ speaker_wavs_list = [None] + [wav for wav in os.listdir("inputs/audio/voices") i
 stable_diffusion_models_list = [None] + [model.replace(".safetensors", "") for model in
                                          os.listdir("inputs/image/sd_models")
                                          if (model.endswith(".safetensors") or not model.endswith(".txt"))]
-
 
 chat_interface = gr.Interface(
     fn=generate_text_and_speech,
