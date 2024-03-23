@@ -77,19 +77,16 @@ To get update, run `git pull`
 
 ### Stable Diffusion:
 
-#### Before generating the image, disable the `LLM` and `TTS` models, and also clear the audio input
-
 1) First upload your models to the folder: *inputs/image/sd_models*
-2) Enable `Stable Diffusion`
-3) Select a model from the drop-down list
-4) Set up the model according to the parameters you need
-5) Enter your prompt
-6) Click the `generate` button to get the image
+2) Select a model from the drop-down list
+3) Set up the model according to the parameters you need
+4) Enter your prompt
+5) Click the `generate` button to get the image
 
 ### General:
 
-#### Chat history and generated images are saved in the *outputs* folder
-#### You can also press the `Clear` button to clear the selection
+1) Chat history and generated images are saved in the *outputs* folder
+2) You can also press the `Clear` button to clear the selection
 #### To close the application, close the terminal
 
 ## Where can I get models, voices and avatars?
