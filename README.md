@@ -83,7 +83,7 @@ To get update, run `git pull`
 4) Enter your prompt
 5) Click the `generate` button to get the image
 
-### General:
+### Additional Information:
 
 1) Chat history and generated images are saved in the *outputs* folder
 2) You can also press the `Clear` button to clear the selection
