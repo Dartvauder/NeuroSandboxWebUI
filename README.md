@@ -60,7 +60,7 @@ To get update, run `git pull`
 
 ## How to use:
 
-#### The interface has two tabs, LLM and Stable Diffusion. Select the one you need and follow the instructions
+#### Interface has two tabs: LLM and Stable Diffusion. Select the one you need and follow the instructions below 
 
 ### LLM:
 
