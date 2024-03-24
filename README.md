@@ -5,7 +5,7 @@
 * English | [Русский](/README_RU.md)
 ## Description:
 
-Simple and easy interface for chatting with LLM using text or voice input and also Stable Diffusion for generating images. TTS and Whisper functions are available here for voice input or output with a choice of language and voice sample. The goal of the project - to create the easiest possible application for beginners in the topic of neural networks.
+Simple and easy interface for chatting with LLM using text or voice input and also Stable Diffusion for generating images. TTS and Whisper functions are available here for voice input and output with a choice of language and voice sample. The goal of the project - to create the easiest possible application for beginners in the topic of neural networks.
 
 |![Image1](https://github.com/Dartvauder/NeuroChatWebUI/assets/140557322/49cf82fc-29c0-4bdf-8291-c74beb8cace2) | ![Image2](https://github.com/Dartvauder/NeuroChatWebUI/assets/140557322/c46d10a8-832b-4f9f-9a1d-b2ad9dec0d8f) |
 |:---:|:---:|
@@ -71,9 +71,9 @@ To get update, run `git pull`
 5) Type (or speak) your request
 6) Click the `Submit` button to receive text and audio response
 #### Optional: you can enable `TTS` mode, select the `voice` and `language` needed to receive an audio response. You can also select `avatar`
-#### Voice samples = *inputs/audio/voices*;
+#### Voice samples = *inputs/audio/voices*
 #### Avatars = *inputs/image/avatars*
-#### The voice must be pre-processed (22050 kHz, mono, WAV), the avatar should preferably be `PNG` or `JPG`. When you enable `TTS`, you need to select a language and voice, otherwise there will be errors
+#### The voice must be pre-processed (22050 kHz, mono, WAV), the avatar should preferably be `PNG` or `JPG`
 
 ### Stable Diffusion:
 
