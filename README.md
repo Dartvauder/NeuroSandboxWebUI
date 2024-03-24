@@ -5,7 +5,9 @@
 * English | [Русский](/README_RU.md)
 ## Description:
 
-Simple and easy interface for chatting with LLM using text or voice input and also Stable Diffusion for generating images. TTS and Whisper functions are available here for voice input and output with a choice of language and voice sample. The goal of the project - to create the easiest possible application for beginners in the topic of neural networks.
+Simple and easy interface for use of different neural network models. You can chat with LLM using text or voice input and also Stable Diffusion for generating images. TTS and Whisper functions are available here for voice input and output with a choice of language and voice sample
+
+The goal of the project - to create the easiest possible application to use neural network models.
 
 |![Image1](https://github.com/Dartvauder/NeuroChatWebUI/assets/140557322/49cf82fc-29c0-4bdf-8291-c74beb8cace2) | ![Image2](https://github.com/Dartvauder/NeuroChatWebUI/assets/140557322/c46d10a8-832b-4f9f-9a1d-b2ad9dec0d8f) |
 |:---:|:---:|
