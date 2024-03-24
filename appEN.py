@@ -19,8 +19,6 @@ logging.getLogger('llama_cpp').setLevel(logging.ERROR)
 logging.getLogger('whisper').setLevel(logging.ERROR)
 logging.getLogger('TTS').setLevel(logging.ERROR)
 logging.getLogger('diffusers').setLevel(logging.ERROR)
-logging.getLogger('h11').setLevel(logging.ERROR)
-logging.getLogger('uvicorn').setLevel(logging.ERROR)
 
 chat_dir = None
 
@@ -63,22 +61,25 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_model_
     global chat_dir
 
     if not input_text and not input_audio:
-        return "Please enter your request", None, None, None
+        return "Please enter your request", None, None, None, None
 
     prompt = transcribe_audio(input_audio) if input_audio else input_text
 
     if not llm_model_name:
-        return "Please select a LLM model", None, None, None
+        return "Please select a LLM model", None, None, None, None
 
     tokenizer, llm_model = load_model(llm_model_name, llm_model_type)
 
     tts_model = None
     whisper_model = None
+    text = None
+    audio_path = None
+    avatar_path = None
 
     try:
         if enable_tts:
             if not speaker_wav or not language:
-                return "Please select a voice and language for TTS", None, None, None
+                return "Please select a voice and language for TTS", None, None, None, None
 
             device = "cuda" if torch.cuda.is_available() else "cpu"
             tts_model_path = "inputs/audio/XTTS-v2"
@@ -104,7 +105,6 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_model_
             model_file = os.path.join(whisper_model_path, "medium.pt")
             whisper_model = whisper.load_model(model_file, device=device)
 
-        text = None
         if llm_model:
             if llm_model_type == "transformers":
                 inputs = tokenizer.encode(prompt, return_tensors="pt")
@@ -118,27 +118,26 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_model_
                 text = llm_model(prompt, max_tokens=max_tokens, temperature=temperature, top_p=top_p,
                                  top_k=top_k)
 
+        if not chat_dir:
+            now = datetime.now()
+            chat_dir = os.path.join('outputs', f"chat_{now.strftime('%Y%m%d_%H%M%S')}")
+            os.makedirs(chat_dir)
+            os.makedirs(os.path.join(chat_dir, 'text'))
+            os.makedirs(os.path.join(chat_dir, 'audio'))
+
+        chat_history_path = os.path.join(chat_dir, 'text', 'chat_history.txt')
+        with open(chat_history_path, "a", encoding="utf-8") as f:
+            f.write(f"Human: {prompt}\n")
+            if text:
+                f.write(f"AI: {text}\n\n")
+
         avatar_path = f"inputs/image/avatars/{avatar_name}" if avatar_name else None
-        audio_path = None
         if enable_tts and text:
             wav = tts_model.tts(text=text, speaker_wav=f"inputs/audio/voices/{speaker_wav}", language=language)
-            if not chat_dir:
-                now = datetime.now()
-                chat_dir = os.path.join('outputs', f"chat_{now.strftime('%Y%m%d_%H%M%S')}")
-                os.makedirs(chat_dir)
-                os.makedirs(os.path.join(chat_dir, 'text'))
-                os.makedirs(os.path.join(chat_dir, 'audio'))
             now = datetime.now()
             audio_filename = f"output_{now.strftime('%Y%m%d_%H%M%S')}.wav"
             audio_path = os.path.join(chat_dir, 'audio', audio_filename)
             sf.write(audio_path, wav, 22050)
-
-        if chat_dir:
-            chat_history_path = os.path.join(chat_dir, 'text', 'chat_history.txt')
-            with open(chat_history_path, "a", encoding="utf-8") as f:
-                f.write(f"Human: {prompt}\n")
-                if text:
-                    f.write(f"AI: {text}\n\n")
 
     finally:
         if tokenizer is not None:
