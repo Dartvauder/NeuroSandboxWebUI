@@ -255,5 +255,5 @@ image_interface = gr.Interface(
     allow_flagging="never"
 )
 
-with gr.TabbedInterface([chat_interface, image_interface]) as app:
+with gr.TabbedInterface([chat_interface, image_interface], tab_names=["LLM", "Stable Diffusion"]) as app:
     app.launch()
