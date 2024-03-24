@@ -33,9 +33,9 @@ def load_model(model_name, model_type):
             return tokenizer, model.to(device)
     elif model_type == "llama":
         if model_name:
-            model_path = f"inputs/text/llm_models/{model_name}"
+            model_path = os.path.join("inputs/text/llm_models", model_name)
             model = Llama(model_path)
-            return model, None
+            return None, model
     return None, None
 
 
@@ -115,8 +115,8 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_model_
                 generated_sequence = outputs[0][inputs.shape[-1]:]
                 text = tokenizer.decode(generated_sequence, skip_special_tokens=True)
             elif llm_model_type == "llama":
-                text = llm_model(prompt, max_tokens=max_tokens, temperature=temperature, top_p=top_p,
-                                 top_k=top_k)
+                outputs = llm_model(prompt)
+                text = outputs['choices'][0]['text']
 
         if not chat_dir:
             now = datetime.now()
