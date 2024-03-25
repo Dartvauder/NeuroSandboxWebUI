@@ -19,8 +19,6 @@ logging.getLogger('llama_cpp').setLevel(logging.ERROR)
 logging.getLogger('whisper').setLevel(logging.ERROR)
 logging.getLogger('TTS').setLevel(logging.ERROR)
 logging.getLogger('diffusers').setLevel(logging.ERROR)
-logging.getLogger('h11').setLevel(logging.ERROR)
-logging.getLogger('uvicorn').setLevel(logging.ERROR)
 
 chat_dir = None
 
@@ -35,9 +33,9 @@ def load_model(model_name, model_type):
             return tokenizer, model.to(device)
     elif model_type == "llama":
         if model_name:
-            model_path = f"inputs/text/llm_models/{model_name}"
+            model_path = os.path.join("inputs/text/llm_models", model_name)
             model = Llama(model_path)
-            return model, None
+            return None, model
     return None, None
 
 
@@ -63,22 +61,25 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_model_
     global chat_dir
 
     if not input_text and not input_audio:
-        return "Пожалуйста введите ваш запрос", None, None, None
+        return "Please enter your request", None, None, None, None
 
     prompt = transcribe_audio(input_audio) if input_audio else input_text
 
     if not llm_model_name:
-        return "Пожалуйста выберите модель LLM", None, None, None
+        return "Please select a LLM model", None, None, None, None
 
     tokenizer, llm_model = load_model(llm_model_name, llm_model_type)
 
     tts_model = None
     whisper_model = None
+    text = None
+    audio_path = None
+    avatar_path = None
 
     try:
         if enable_tts:
             if not speaker_wav or not language:
-                return "Пожалуйста выберите язык и голос для TTS", None, None, None
+                return "Please select a voice and language for TTS", None, None, None, None
 
             device = "cuda" if torch.cuda.is_available() else "cpu"
             tts_model_path = "inputs/audio/XTTS-v2"
@@ -104,7 +105,6 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_model_
             model_file = os.path.join(whisper_model_path, "medium.pt")
             whisper_model = whisper.load_model(model_file, device=device)
 
-        text = None
         if llm_model:
             if llm_model_type == "transformers":
                 inputs = tokenizer.encode(prompt, return_tensors="pt")
@@ -115,30 +115,29 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_model_
                 generated_sequence = outputs[0][inputs.shape[-1]:]
                 text = tokenizer.decode(generated_sequence, skip_special_tokens=True)
             elif llm_model_type == "llama":
-                text = llm_model(prompt, max_tokens=max_tokens, temperature=temperature, top_p=top_p,
-                                 top_k=top_k)
+                outputs = llm_model(prompt)
+                text = outputs['choices'][0]['text']
+
+        if not chat_dir:
+            now = datetime.now()
+            chat_dir = os.path.join('outputs', f"chat_{now.strftime('%Y%m%d_%H%M%S')}")
+            os.makedirs(chat_dir)
+            os.makedirs(os.path.join(chat_dir, 'text'))
+            os.makedirs(os.path.join(chat_dir, 'audio'))
+
+        chat_history_path = os.path.join(chat_dir, 'text', 'chat_history.txt')
+        with open(chat_history_path, "a", encoding="utf-8") as f:
+            f.write(f"Human: {prompt}\n")
+            if text:
+                f.write(f"AI: {text}\n\n")
 
         avatar_path = f"inputs/image/avatars/{avatar_name}" if avatar_name else None
-        audio_path = None
         if enable_tts and text:
             wav = tts_model.tts(text=text, speaker_wav=f"inputs/audio/voices/{speaker_wav}", language=language)
-            if not chat_dir:
-                now = datetime.now()
-                chat_dir = os.path.join('outputs', f"chat_{now.strftime('%Y%m%d_%H%M%S')}")
-                os.makedirs(chat_dir)
-                os.makedirs(os.path.join(chat_dir, 'text'))
-                os.makedirs(os.path.join(chat_dir, 'audio'))
             now = datetime.now()
             audio_filename = f"output_{now.strftime('%Y%m%d_%H%M%S')}.wav"
             audio_path = os.path.join(chat_dir, 'audio', audio_filename)
             sf.write(audio_path, wav, 22050)
-
-        if chat_dir:
-            chat_history_path = os.path.join(chat_dir, 'text', 'chat_history.txt')
-            with open(chat_history_path, "a", encoding="utf-8") as f:
-                f.write(f"Human: {prompt}\n")
-                if text:
-                    f.write(f"AI: {text}\n\n")
 
     finally:
         if tokenizer is not None:
@@ -157,7 +156,7 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_model_
 def generate_image(prompt, negative_prompt, stable_diffusion_model_name, stable_diffusion_steps, stable_diffusion_cfg,
                    stable_diffusion_width, stable_diffusion_height, stable_diffusion_clip_skip):
     if not stable_diffusion_model_name:
-        return None, "Пожалуйста, выберите модель Stable Diffusion"
+        return None, "Please select a Stable Diffusion model"
 
     stable_diffusion_model_path = os.path.join("inputs", "image", "sd_models",
                                                f"{stable_diffusion_model_name}.safetensors")
@@ -166,7 +165,7 @@ def generate_image(prompt, negative_prompt, stable_diffusion_model_name, stable_
             stable_diffusion_model_path, use_safetensors=True, device_map="auto"
         )
     else:
-        print(f"Не найдена модель Stable Diffusion: {stable_diffusion_model_path}")
+        print(f"Stable Diffusion model not found: {stable_diffusion_model_path}")
         stable_diffusion_model = StableDiffusionPipeline.from_pretrained(
             "runwayml/stable-diffusion-v1-5", use_safetensors=True, device_map="auto"
         )
