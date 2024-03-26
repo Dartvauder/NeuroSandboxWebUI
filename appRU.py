@@ -61,12 +61,12 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_model_
     global chat_dir
 
     if not input_text and not input_audio:
-        return "Please enter your request", None, None, None, None
+        return "Пожалуйста, введите ваш запрос!", None, None, None, None
 
     prompt = transcribe_audio(input_audio) if input_audio else input_text
 
     if not llm_model_name:
-        return "Please select a LLM model", None, None, None, None
+        return "Пожалуйста, выберите модель LLM!", None, None, None, None
 
     tokenizer, llm_model = load_model(llm_model_name, llm_model_type)
 
@@ -79,7 +79,7 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_model_
     try:
         if enable_tts:
             if not speaker_wav or not language:
-                return "Please select a voice and language for TTS", None, None, None, None
+                return "Пожалуйста, выберите язык и голос для TTS!", None, None, None, None
 
             device = "cuda" if torch.cuda.is_available() else "cpu"
             tts_model_path = "inputs/audio/XTTS-v2"
@@ -156,7 +156,7 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_model_
 def generate_image(prompt, negative_prompt, stable_diffusion_model_name, stable_diffusion_steps, stable_diffusion_cfg,
                    stable_diffusion_width, stable_diffusion_height, stable_diffusion_clip_skip):
     if not stable_diffusion_model_name:
-        return None, "Please select a Stable Diffusion model"
+        return None, "Пожалуйста, выберите модель Stable Diffusion!"
 
     stable_diffusion_model_path = os.path.join("inputs", "image", "sd_models",
                                                f"{stable_diffusion_model_name}.safetensors")
@@ -205,54 +205,54 @@ stable_diffusion_models_list = [None] + [model.replace(".safetensors", "") for m
 chat_interface = gr.Interface(
     fn=generate_text_and_speech,
     inputs=[
-        gr.Textbox(label="Enter your request"),
-        gr.Audio(type="filepath", label="Record your request"),
-        gr.Dropdown(choices=llm_models_list, label="Select LLM Model", value=None),
-        gr.Dropdown(choices=["transformers", "llama"], label="Select Model Type", value="transformers"),
-        gr.Slider(minimum=1, maximum=2048, value=512, step=1, label="Max Tokens"),
-        gr.Slider(minimum=0.0, maximum=1.0, value=0.7, step=0.1, label="Temperature"),
+        gr.Textbox(label="Введите ваш запрос"),
+        gr.Audio(type="filepath", label="Запишите ваш запрос"),
+        gr.Dropdown(choices=llm_models_list, label="Выберите LLM модель", value=None),
+        gr.Dropdown(choices=["transformers", "llama"], label="Выберите тип модели", value="transformers"),
+        gr.Slider(minimum=1, maximum=2048, value=512, step=1, label="Максимум токенов"),
+        gr.Slider(minimum=0.0, maximum=1.0, value=0.7, step=0.1, label="Температура"),
         gr.Slider(minimum=0.0, maximum=1.0, value=0.9, step=0.1, label="Top P"),
         gr.Slider(minimum=0, maximum=100, value=30, step=1, label="Top K"),
-        gr.Dropdown(choices=avatars_list, label="Select Avatar", value=None),
-        gr.Checkbox(label="Enable TTS", value=False),
-        gr.Dropdown(choices=speaker_wavs_list, label="Select Voice", interactive=True),
-        gr.Dropdown(choices=["en", "ru"], label="Select Language", interactive=True),
+        gr.Dropdown(choices=avatars_list, label="Выберите аватар", value=None),
+        gr.Checkbox(label="Включить TTS", value=False),
+        gr.Dropdown(choices=speaker_wavs_list, label="Выберите голос", interactive=True),
+        gr.Dropdown(choices=["en", "ru"], label="Выберите язык голоса", interactive=True),
     ],
     outputs=[
-        gr.Textbox(label="LLM text response", type="text"),
-        gr.Audio(label="LLM audio response", type="filepath"),
-        gr.Image(type="filepath", label="Avatar"),
+        gr.Textbox(label="Текстовый ответ от LLM", type="text"),
+        gr.Audio(label="Аудио ответ от LLM", type="filepath"),
+        gr.Image(type="filepath", label="Аватар"),
     ],
-    title="NeuroChatWebUI (ALPHA) - LLM",
-    description="This user interface allows you to enter any text or audio and receive "
-                "generated response. You can select the LLM model, "
-                "avatar, voice and language from the drop-down lists. You can also customize the model settings from "
-                "using sliders. Try it and see what happens!",
+    title="НейроЧатWebUI (АЛЬФА) - LLM",
+    description="Этот пользовательский интерфейс позволяет вам вводить любой текст или аудио и получать "
+                "сгенерированный ответ. Вы можете выбрать модель LLM, "
+                "аватар, голос и язык из раскрывающихся списков. Вы также можете настроить параметры модели с "
+                "помощью ползунков. Попробуйте и посмотрите, что получится!",
     allow_flagging="never"
 )
 
 image_interface = gr.Interface(
     fn=generate_image,
     inputs=[
-        gr.Textbox(label="Enter your prompt"),
-        gr.Textbox(label="Enter your negative prompt", value=""),
-        gr.Dropdown(choices=stable_diffusion_models_list, label="Select Stable Diffusion Model", value=None),
-        gr.Slider(minimum=1, maximum=100, value=30, step=1, label="Steps"),
+        gr.Textbox(label="Введите ваш промт"),
+        gr.Textbox(label="Введите ваш отрицательный промт", value=""),
+        gr.Dropdown(choices=stable_diffusion_models_list, label="Выберите модель Stable Diffusion", value=None),
+        gr.Slider(minimum=1, maximum=100, value=30, step=1, label="Шаги"),
         gr.Slider(minimum=1.0, maximum=30.0, value=8, step=0.1, label="CFG"),
-        gr.Slider(minimum=256, maximum=1024, value=512, step=64, label="Width"),
-        gr.Slider(minimum=256, maximum=1024, value=512, step=64, label="Height"),
-        gr.Slider(minimum=1, maximum=4, value=1, step=1, label="Clip Skip"),
+        gr.Slider(minimum=256, maximum=1024, value=512, step=64, label="Ширина"),
+        gr.Slider(minimum=256, maximum=1024, value=512, step=64, label="Высота"),
+        gr.Slider(minimum=1, maximum=4, value=1, step=1, label="Пропуск клипа"),
     ],
     outputs=[
-        gr.Image(type="filepath", label="Generated Image"),
-        gr.Textbox(label="Message", type="text"),
+        gr.Image(type="filepath", label="Сгенерированное изображение"),
+        gr.Textbox(label="Сообщение", type="text"),
     ],
-    title="NeuroChatWebUI (ALPHA) - Stable Diffusion",
-    description="This user interface allows you to enter any text and generate images using Stable Diffusion. "
-                "You can select the Stable Diffusion model and customize the generation settings from the sliders. "
-                "Try it and see what happens!",
+    title="НейроЧатWebUI (АЛЬФА) - Stable Diffusion",
+    description="Этот пользовательский интерфейс позволяет вам вводить любой текст и генерировать изображение с помощью Stable Diffusion. "
+                "Вы можете выбрать модель Stable Diffusion и настроить параметры генерации с помощью ползунков. "
+                "Попробуйте и посмотрите, что получится!",
     allow_flagging="never"
 )
 
-with gr.TabbedInterface([chat_interface, image_interface], tab_names=["LLM", "Stable Diffusion"]) as app:
+with gr.TabbedInterface([chat_interface, image_interface]) as app:
     app.launch()
