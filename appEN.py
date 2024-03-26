@@ -61,12 +61,12 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_model_
     global chat_dir
 
     if not input_text and not input_audio:
-        return "Please enter your request", None, None, None, None
+        return "Please, enter your request!", None, None, None, None
 
     prompt = transcribe_audio(input_audio) if input_audio else input_text
 
     if not llm_model_name:
-        return "Please select a LLM model", None, None, None, None
+        return "Please, select a LLM model!", None, None, None, None
 
     tokenizer, llm_model = load_model(llm_model_name, llm_model_type)
 
@@ -79,7 +79,7 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_model_
     try:
         if enable_tts:
             if not speaker_wav or not language:
-                return "Please select a voice and language for TTS", None, None, None, None
+                return "Please, select a voice and language for TTS!", None, None, None, None
 
             device = "cuda" if torch.cuda.is_available() else "cpu"
             tts_model_path = "inputs/audio/XTTS-v2"
@@ -156,7 +156,7 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_model_
 def generate_image(prompt, negative_prompt, stable_diffusion_model_name, stable_diffusion_steps, stable_diffusion_cfg,
                    stable_diffusion_width, stable_diffusion_height, stable_diffusion_clip_skip):
     if not stable_diffusion_model_name:
-        return None, "Please select a Stable Diffusion model"
+        return None, "Please, select a Stable Diffusion model!"
 
     stable_diffusion_model_path = os.path.join("inputs", "image", "sd_models",
                                                f"{stable_diffusion_model_name}.safetensors")
