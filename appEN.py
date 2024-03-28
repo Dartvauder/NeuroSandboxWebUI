@@ -245,7 +245,11 @@ def generate_audio(prompt, input_audio=None, model_name=None, model_type="musicg
             audio_write(audio_path, one_wav.cpu(), model.sample_rate, strategy="loudness", loudness_compressor=True)
             audio_paths.append(audio_path)
 
-        return audio_paths, None
+        # Возвращаем только первый сгенерированный аудиофайл
+        if audio_paths:
+            return audio_paths[0], None
+        else:
+            return None, "Не удалось сгенерировать аудио"
 
     finally:
         del model
@@ -327,7 +331,7 @@ audiocraft_interface = gr.Interface(
     ],
     title="NeuroChatWebUI (ALPHA) - AudioCraft",
     description="This user interface allows you to generate music and audio using AudioCraft models. "
-                "You can enter a prompt, optionally provide a seed audio file for musicgen melody, "
+                "You can enter a prompt, optionally provide a melody audio file for musicgen melody, "
                 "select the model from the list, and adjust the generation duration using the slider. "
                 "The generated audio will be saved in the outputs/audio folder.",
     allow_flagging="never"
