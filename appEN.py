@@ -198,13 +198,14 @@ def generate_image(prompt, negative_prompt, stable_diffusion_model_name, stable_
         del stable_diffusion_model
         torch.cuda.empty_cache()
 
-def generate_audio(prompt, input_audio, model_name, model_type, duration):
+def generate_audio(prompt, input_audio=None, model_name=None, model_type="musicgen", duration=10):
     if not model_name:
         return None, "Please, select an AudioCraft model!"
 
     audiocraft_model_path = os.path.join("inputs", "audio", "audiocraft", model_name)
     if not os.path.exists(audiocraft_model_path):
         os.makedirs(audiocraft_model_path, exist_ok=True)
+        # Clone the model repository
         if model_name == "musicgen-stereo-medium":
             Repo.clone_from("https://huggingface.co/facebook/musicgen-stereo-medium", audiocraft_model_path)
         elif model_name == "audiogen-medium":
@@ -244,6 +245,7 @@ def generate_audio(prompt, input_audio, model_name, model_type, duration):
             audio_paths.append(audio_path)
 
         return audio_paths, None
+
     finally:
         del model
         torch.cuda.empty_cache()
