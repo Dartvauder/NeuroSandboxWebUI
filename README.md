@@ -5,7 +5,7 @@
 * English | [Русский](/README_RU.md)
 ## Description:
 
-Simple and easy interface for use of different neural network models. You can chat with LLM using text or voice input and also Stable Diffusion for generating images. TTS and Whisper functions are available here for voice input and output with a choice of language and voice sample
+Simple and easy interface for use of different neural network models. You can chat with LLM using text or voice input, Stable Diffusion for generating images and AudioCraft for generating audio. TTS and Whisper functions are available here for voice input and output with a choice of language and voice sample
 
 The goal of the project - to create the easiest possible application to use neural network models.
 
@@ -18,6 +18,7 @@ The goal of the project - to create the easiest possible application to use neur
 * Flexible and optimized interface
 * Transformers and llama.cpp (LLM)
 * Diffusers and safetensors (Stable Diffusion)
+* AudioCraft
 * TTS and STT models (For LLM)
 * Avatar selection (For LLM)
 * Models settings in interface
@@ -102,7 +103,7 @@ To get update, run `git pull`
 * Stable Diffusion models can be taken from [CivitAI](https://civitai.com/models)
 * You can take voices anywhere. Record yours or take a recording from the Internet. The main thing is that it is pre-processed!
 * It’s the same with avatars as with voices. You can download them on the Internet, generate them using neural networks, or take a photo of yourself. The main thing is to comply with the required file format
-* #### `TTS`, `STT` and `AudioCraft` models are downloaded automatically in *inputs* folder. The base `diffusers` model of `Stable Diffusion` is also downloaded there 
+* #### `TTS` and `STT` models are downloaded automatically in *inputs* folder. The base `diffusers` model of `Stable Diffusion` is also downloaded there 
 
 ## Roadmap
 
