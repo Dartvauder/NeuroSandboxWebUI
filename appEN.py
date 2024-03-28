@@ -13,7 +13,6 @@ from git import Repo
 from llama_cpp import Llama
 import requests
 import torchaudio
-import audiocraft
 from audiocraft.models import MusicGen, AudioGen
 from audiocraft.data.audio import audio_write
 
@@ -199,6 +198,7 @@ def generate_image(prompt, negative_prompt, stable_diffusion_model_name, stable_
         del stable_diffusion_model
         torch.cuda.empty_cache()
 
+
 def generate_audio(prompt, input_audio=None, model_name=None, model_type="musicgen", duration=10):
     if not model_name:
         return None, "Please, select an AudioCraft model!"
@@ -215,10 +215,10 @@ def generate_audio(prompt, input_audio=None, model_name=None, model_type="musicg
             Repo.clone_from("https://huggingface.co/facebook/musicgen-stereo-melody", audiocraft_model_path)
 
     if model_type == "musicgen":
-        model = MusicGen.from_pretrained(audiocraft_model_path)
+        model = MusicGen.get_pretrained(audiocraft_model_path)
         model.set_generation_params(duration=duration)
     elif model_type == "audiogen":
-        model = AudioGen.from_pretrained(audiocraft_model_path)
+        model = AudioGen.get_pretrained(audiocraft_model_path)
         model.set_generation_params(duration=duration)
     else:
         return None, "Invalid model type!"
