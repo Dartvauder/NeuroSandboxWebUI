@@ -317,7 +317,7 @@ audiocraft_interface = gr.Interface(
     fn=generate_audio,
     inputs=[
         gr.Textbox(label="Enter your prompt"),
-        gr.Audio(type="filepath", label="Seed audio (optional)", interactive=True),
+        gr.Audio(type="filepath", label="Melody audio (optional)", interactive=True),
         gr.Dropdown(choices=audiocraft_models_list, label="Select AudioCraft Model", value=None),
         gr.Dropdown(choices=["musicgen", "audiogen"], label="Select Model Type", value="musicgen"),
         gr.Slider(minimum=1, maximum=120, value=10, step=1, label="Duration (seconds)"),
