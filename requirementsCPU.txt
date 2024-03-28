@@ -1,5 +1,4 @@
 audiocraft
-xformers
 torch
 gradio
 transformers
