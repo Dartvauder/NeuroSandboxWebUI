@@ -206,7 +206,6 @@ def generate_audio(prompt, input_audio=None, model_name=None, model_type="musicg
     audiocraft_model_path = os.path.join("inputs", "audio", "audiocraft", model_name)
     if not os.path.exists(audiocraft_model_path):
         os.makedirs(audiocraft_model_path, exist_ok=True)
-        # Clone the model repository
         if model_name == "musicgen-stereo-medium":
             Repo.clone_from("https://huggingface.co/facebook/musicgen-stereo-medium", audiocraft_model_path)
         elif model_name == "audiogen-medium":
@@ -223,7 +222,6 @@ def generate_audio(prompt, input_audio=None, model_name=None, model_type="musicg
     else:
         return None, "Invalid model type!"
 
-    audio_path = None
     audio_paths = []
 
     try:
@@ -245,11 +243,10 @@ def generate_audio(prompt, input_audio=None, model_name=None, model_type="musicg
             audio_write(audio_path, one_wav.cpu(), model.sample_rate, strategy="loudness", loudness_compressor=True)
             audio_paths.append(audio_path)
 
-        # Возвращаем только первый сгенерированный аудиофайл
         if audio_paths:
             return audio_paths[0], None
         else:
-            return None, "Не удалось сгенерировать аудио"
+            return None, "Failed to generate audio"
 
     finally:
         del model
@@ -330,10 +327,9 @@ audiocraft_interface = gr.Interface(
         gr.Textbox(label="Message", type="text"),
     ],
     title="NeuroChatWebUI (ALPHA) - AudioCraft",
-    description="This user interface allows you to generate music and audio using AudioCraft models. "
-                "You can enter a prompt, optionally provide a melody audio file for musicgen melody, "
-                "select the model from the list, and adjust the generation duration using the slider. "
-                "The generated audio will be saved in the outputs/audio folder.",
+    description="This user interface allows you to enter any text and generate audio using AudioCraft. "
+                "You can select the AudioCraft model and customize the generation settings from the sliders. "
+                "Try it and see what happens!",
     allow_flagging="never"
 )
 
