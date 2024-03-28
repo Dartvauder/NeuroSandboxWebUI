@@ -121,6 +121,8 @@
 * `GitPython` - https://github.com/gitpython-developers/GitPython
 * `diffusers` - https://github.com/huggingface/diffusers
 * `llama.cpp-python` - https://github.com/abetlen/llama-cpp-python
+* `AudioCraft` - https://github.com/facebookresearch/audiocraft
+* `xformers` - https://github.com/facebookresearch/xformers
 
 ## Пожертвование
 
