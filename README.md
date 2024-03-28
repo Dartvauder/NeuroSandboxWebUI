@@ -88,8 +88,9 @@ To get update, run `git pull`
 ### AudioCraft:
 
 1) Select a model from the drop-down list
-2) Enter your prompt
-3) Click the `Submit` button to get the audio
+2) Set up the model according to the parameters you need
+3) Enter your prompt
+4) Click the `Submit` button to get the audio
 
 ### Additional Information:
 
@@ -101,6 +102,7 @@ To get update, run `git pull`
 
 * LLM models can be taken from [HuggingFace](https://huggingface.co/models)
 * Stable Diffusion models can be taken from [CivitAI](https://civitai.com/models)
+* AudioCraft models are downloads automatically when you select a model and press the submit button 
 * You can take voices anywhere. Record yours or take a recording from the Internet. The main thing is that it is pre-processed!
 * It’s the same with avatars as with voices. You can download them on the Internet, generate them using neural networks, or take a photo of yourself. The main thing is to comply with the required file format
 * #### `TTS` and `STT` models are downloaded automatically in *inputs* folder. The base `diffusers` model of `Stable Diffusion` is also downloaded there 
@@ -124,6 +126,8 @@ Thank you very much to these projects for allowing me to create my application:
 * `GitPython` - https://github.com/gitpython-developers/GitPython
 * `diffusers` - https://github.com/huggingface/diffusers
 * `llama.cpp-python` - https://github.com/abetlen/llama-cpp-python
+* `AudioCraft` - https://github.com/facebookresearch/audiocraft
+* `xformers` - https://github.com/facebookresearch/xformers
 
 ## Donation
 
