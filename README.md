@@ -61,7 +61,7 @@ To get update, run `git pull`
 
 ## How to use:
 
-#### Interface has two tabs: LLM and Stable Diffusion. Select the one you need and follow the instructions below 
+#### Interface has three tabs: LLM, Stable Diffusion and AudioCraft. Select the one you need and follow the instructions below 
 
 ### LLM:
 
@@ -84,6 +84,12 @@ To get update, run `git pull`
 4) Enter your prompt
 5) Click the `Submit` button to get the image
 
+### AudioCraft:
+
+1) Select a model from the drop-down list
+2) Enter your prompt
+3) Click the `Submit` button to get the audio
+
 ### Additional Information:
 
 1) Chat history and generated images are saved in the *outputs* folder
@@ -96,7 +102,7 @@ To get update, run `git pull`
 * Stable Diffusion models can be taken from [CivitAI](https://civitai.com/models)
 * You can take voices anywhere. Record yours or take a recording from the Internet. The main thing is that it is pre-processed!
 * It’s the same with avatars as with voices. You can download them on the Internet, generate them using neural networks, or take a photo of yourself. The main thing is to comply with the required file format
-* #### `TTS` and `STT` models are downloaded automatically in *inputs* folder. The base `diffusers` model of `Stable Diffusion` is also downloaded there 
+* #### `TTS`, `STT` and `AudioCraft` models are downloaded automatically in *inputs* folder. The base `diffusers` model of `Stable Diffusion` is also downloaded there 
 
 ## Roadmap
 
