@@ -336,3 +336,4 @@ audiocraft_interface = gr.Interface(
 with gr.TabbedInterface([chat_interface, image_interface, audiocraft_interface],
                         tab_names=["LLM", "Stable Diffusion", "AudioCraft"]) as app:
     app.launch()
+    
