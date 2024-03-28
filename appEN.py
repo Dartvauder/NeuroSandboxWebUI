@@ -12,6 +12,10 @@ from diffusers import StableDiffusionPipeline
 from git import Repo
 from llama_cpp import Llama
 import requests
+import torchaudio
+import audiocraft
+from audiocraft.models import MusicGen, AudioGen
+from audiocraft.data.audio import audio_write
 
 warnings.filterwarnings("ignore")
 logging.getLogger('transformers').setLevel(logging.ERROR)
@@ -194,6 +198,56 @@ def generate_image(prompt, negative_prompt, stable_diffusion_model_name, stable_
         del stable_diffusion_model
         torch.cuda.empty_cache()
 
+def generate_audio(prompt, input_audio, model_name, model_type, duration):
+    if not model_name:
+        return None, "Please, select an AudioCraft model!"
+
+    audiocraft_model_path = os.path.join("inputs", "audio", "audiocraft", model_name)
+    if not os.path.exists(audiocraft_model_path):
+        os.makedirs(audiocraft_model_path, exist_ok=True)
+        if model_name == "musicgen-stereo-medium":
+            Repo.clone_from("https://huggingface.co/facebook/musicgen-stereo-medium", audiocraft_model_path)
+        elif model_name == "audiogen-medium":
+            Repo.clone_from("https://huggingface.co/facebook/audiogen-medium", audiocraft_model_path)
+        elif model_name == "musicgen-stereo-melody":
+            Repo.clone_from("https://huggingface.co/facebook/musicgen-stereo-melody", audiocraft_model_path)
+
+    if model_type == "musicgen":
+        model = MusicGen.from_pretrained(audiocraft_model_path)
+        model.set_generation_params(duration=duration)
+    elif model_type == "audiogen":
+        model = AudioGen.from_pretrained(audiocraft_model_path)
+        model.set_generation_params(duration=duration)
+    else:
+        return None, "Invalid model type!"
+
+    audio_path = None
+    audio_paths = []
+
+    try:
+        if input_audio and model_type == "musicgen":
+            audio_path = input_audio
+            melody, sr = torchaudio.load(audio_path)
+            wav = model.generate_with_chroma([prompt], melody[None].expand(1, -1, -1), sr)
+        else:
+            descriptions = [prompt]
+            wav = model.generate(descriptions)
+
+        today = datetime.now().date()
+        audio_dir = os.path.join('outputs', f"audio_{today.strftime('%Y%m%d')}")
+        os.makedirs(audio_dir, exist_ok=True)
+
+        for idx, one_wav in enumerate(wav):
+            audio_filename = f"output_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{idx}.wav"
+            audio_path = os.path.join(audio_dir, audio_filename)
+            audio_write(audio_path, one_wav.cpu(), model.sample_rate, strategy="loudness", loudness_compressor=True)
+            audio_paths.append(audio_path)
+
+        return audio_paths, None
+    finally:
+        del model
+        torch.cuda.empty_cache()
+
 
 llm_models_list = [None] + [model for model in os.listdir("inputs/text/llm_models") if not model.endswith(".txt")]
 avatars_list = [None] + [avatar for avatar in os.listdir("inputs/image/avatars") if not avatar.endswith(".txt")]
@@ -201,6 +255,7 @@ speaker_wavs_list = [None] + [wav for wav in os.listdir("inputs/audio/voices") i
 stable_diffusion_models_list = [None] + [model.replace(".safetensors", "") for model in
                                          os.listdir("inputs/image/sd_models")
                                          if (model.endswith(".safetensors") or not model.endswith(".txt"))]
+audiocraft_models_list = ["musicgen-stereo-medium", "audiogen-medium", "musicgen-stereo-melody"]
 
 chat_interface = gr.Interface(
     fn=generate_text_and_speech,
@@ -254,5 +309,27 @@ image_interface = gr.Interface(
     allow_flagging="never"
 )
 
-with gr.TabbedInterface([chat_interface, image_interface], tab_names=["LLM", "Stable Diffusion"]) as app:
+audiocraft_interface = gr.Interface(
+    fn=generate_audio,
+    inputs=[
+        gr.Textbox(label="Enter your prompt"),
+        gr.Audio(type="filepath", label="Seed audio (optional)", interactive=True),
+        gr.Dropdown(choices=audiocraft_models_list, label="Select AudioCraft Model", value=None),
+        gr.Dropdown(choices=["musicgen", "audiogen"], label="Select Model Type", value="musicgen"),
+        gr.Slider(minimum=1, maximum=120, value=10, step=1, label="Duration (seconds)"),
+    ],
+    outputs=[
+        gr.Audio(label="Generated Audio", type="filepath"),
+        gr.Textbox(label="Message", type="text"),
+    ],
+    title="NeuroChatWebUI (ALPHA) - AudioCraft",
+    description="This user interface allows you to generate music and audio using AudioCraft models. "
+                "You can enter a prompt, optionally provide a seed audio file for musicgen melody, "
+                "select the model from the list, and adjust the generation duration using the slider. "
+                "The generated audio will be saved in the outputs/audio folder.",
+    allow_flagging="never"
+)
+
+with gr.TabbedInterface([chat_interface, image_interface, audiocraft_interface],
+                        tab_names=["LLM", "Stable Diffusion", "AudioCraft"]) as app:
     app.launch()
