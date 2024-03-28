@@ -23,6 +23,7 @@ logging.getLogger('llama_cpp').setLevel(logging.ERROR)
 logging.getLogger('whisper').setLevel(logging.ERROR)
 logging.getLogger('TTS').setLevel(logging.ERROR)
 logging.getLogger('diffusers').setLevel(logging.ERROR)
+logging.getLogger('audiocraft').setLevel(logging.ERROR)
 
 chat_dir = None
 
