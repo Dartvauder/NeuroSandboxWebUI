@@ -8,4 +8,4 @@ GitPython==3.1.42
 diffusers==0.27.2
 llama-cpp-python==0.2.57
 python-ffmpeg==2.0.10
-torch==2.2.1
+torch==2.1.0
