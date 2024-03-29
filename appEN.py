@@ -81,21 +81,21 @@ def transcribe_audio(audio_file_path):
 
 
 def load_tts_model():
-    print("Загрузка модели TTS...")
+    print("Downloading TTS...")
     tts_model_path = "inputs/audio/XTTS-v2"
     if not os.path.exists(tts_model_path):
         os.makedirs(tts_model_path, exist_ok=True)
         Repo.clone_from("https://huggingface.co/coqui/XTTS-v2", tts_model_path)
     else:
-        print("Обновление репозитория TTS...")
+        print("Updating TTS...")
         repo = Repo(tts_model_path)
         repo.remotes.origin.pull()
-    print("Модель TTS загружена.")
+    print("TTS model downloaded")
     return TTS(model_path=tts_model_path, config_path=f"{tts_model_path}/config.json")
 
 
 def load_whisper_model():
-    print("Загрузка модели Whisper...")
+    print("Downloading Whisper...")
     whisper_model_path = "inputs/text/whisper-medium"
     if not os.path.exists(whisper_model_path):
         os.makedirs(whisper_model_path, exist_ok=True)
@@ -103,13 +103,13 @@ def load_whisper_model():
                "/345ae4da62f9b3d59415adc60127b97c714f32e89e936602e85993674d08dcb1/medium.pt")
         r = requests.get(url, allow_redirects=True)
         open(os.path.join(whisper_model_path, "medium.pt"), "wb").write(r.content)
-    print("Модель Whisper загружена.")
+    print("Whisper downloaded")
     model_file = os.path.join(whisper_model_path, "medium.pt")
     return whisper.load_model(model_file)
 
 
 def load_audiocraft_model(model_name):
-    print(f"Загрузка модели AudioCraft: {model_name}...")
+    print(f"Downloading AudioCraft model: {model_name}...")
     audiocraft_model_path = os.path.join("inputs", "audio", "audiocraft", model_name)
     if not os.path.exists(audiocraft_model_path):
         os.makedirs(audiocraft_model_path, exist_ok=True)
@@ -119,7 +119,7 @@ def load_audiocraft_model(model_name):
             Repo.clone_from("https://huggingface.co/facebook/audiogen-medium", audiocraft_model_path)
         elif model_name == "musicgen-stereo-melody":
             Repo.clone_from("https://huggingface.co/facebook/musicgen-stereo-melody", audiocraft_model_path)
-    print(f"Модель AudioCraft {model_name} загружена.")
+    print(f"AudioCraft model {model_name} downloaded")
     return audiocraft_model_path
 
 
