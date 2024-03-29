@@ -8,7 +8,7 @@ import whisper
 from datetime import datetime
 import warnings
 import logging
-from diffusers import StableDiffusionPipeline
+from diffusers import StableDiffusionPipeline, StableDiffusionXLPipeline
 from git import Repo
 from llama_cpp import Llama
 import requests
@@ -207,22 +207,35 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_model_
     return text, audio_path, avatar_path, chat_dir
 
 
-def generate_image(prompt, negative_prompt, stable_diffusion_model_name, stable_diffusion_steps, stable_diffusion_cfg,
+def generate_image(prompt, negative_prompt, stable_diffusion_model_name, stable_diffusion_sampler, stable_diffusion_steps, stable_diffusion_cfg,
                    stable_diffusion_width, stable_diffusion_height, stable_diffusion_clip_skip):
     if not stable_diffusion_model_name:
         return None, "Please, select a Stable Diffusion model!"
 
-    stable_diffusion_model_path = os.path.join("inputs", "image", "sd_models",
-                                               f"{stable_diffusion_model_name}.safetensors")
+    stable_diffusion_model_path = os.path.join("inputs", "image", "sd_models", f"{stable_diffusion_model_name}.safetensors")
+
+    is_sdxl = "SDXL" in stable_diffusion_model_name
+
     if os.path.exists(stable_diffusion_model_path):
-        stable_diffusion_model = StableDiffusionPipeline.from_single_file(
-            stable_diffusion_model_path, use_safetensors=True, device_map="auto"
-        )
+        if is_sdxl:
+            stable_diffusion_model = StableDiffusionXLPipeline.from_single_file(
+                stable_diffusion_model_path, use_safetensors=True, device_map="auto", attention_slice=1
+            )
+        else:
+            stable_diffusion_model = StableDiffusionPipeline.from_single_file(
+                stable_diffusion_model_path, use_safetensors=True, device_map="auto"
+            )
     else:
         print(f"Stable Diffusion model not found: {stable_diffusion_model_path}")
-        stable_diffusion_model = StableDiffusionPipeline.from_pretrained(
-            "runwayml/stable-diffusion-v1-5", use_safetensors=True, device_map="auto"
-        )
+        if is_sdxl:
+            stable_diffusion_model = StableDiffusionXLPipeline.from_pretrained(
+                "stabilityai/stable-diffusion-xl-base-1.0", use_safetensors=True, device_map="auto", attention_slice=1
+            )
+        else:
+            stable_diffusion_model = StableDiffusionPipeline.from_pretrained(
+                "runwayml/stable-diffusion-v1-5", use_safetensors=True, device_map="auto"
+            )
+
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
     if XFORMERS_AVAILABLE:
@@ -238,7 +251,8 @@ def generate_image(prompt, negative_prompt, stable_diffusion_model_name, stable_
         images = stable_diffusion_model(prompt, negative_prompt=negative_prompt,
                                         num_inference_steps=stable_diffusion_steps,
                                         guidance_scale=stable_diffusion_cfg, height=stable_diffusion_height,
-                                        width=stable_diffusion_width, clip_skip=stable_diffusion_clip_skip)
+                                        width=stable_diffusion_width, clip_skip=stable_diffusion_clip_skip,
+                                        sampler=stable_diffusion_sampler)
         image = images["images"][0]
         today = datetime.now().date()
         image_dir = os.path.join('outputs', f"images_{today.strftime('%Y%m%d')}")
@@ -252,7 +266,7 @@ def generate_image(prompt, negative_prompt, stable_diffusion_model_name, stable_
         torch.cuda.empty_cache()
 
 
-def generate_audio(prompt, input_audio=None, model_name=None, model_type="musicgen", duration=10):
+def generate_audio(prompt, input_audio=None, model_name=None, model_type="musicgen", duration=10, temperature=0.7, top_p=0.9, top_k=30, cfg=8):
     global audiocraft_model_path
 
     if not model_name:
@@ -276,10 +290,10 @@ def generate_audio(prompt, input_audio=None, model_name=None, model_type="musicg
         if input_audio and model_type == "musicgen":
             audio_path = input_audio
             melody, sr = torchaudio.load(audio_path)
-            wav = model.generate_with_chroma([prompt], melody[None].expand(1, -1, -1), sr)
+            wav = model.generate_with_chroma([prompt], melody[None].expand(1, -1, -1), sr, temperature=temperature, top_p=top_p, top_k=top_k, cfg=cfg)
         else:
             descriptions = [prompt]
-            wav = model.generate(descriptions)
+            wav = model.generate(descriptions, temperature=temperature, top_p=top_p, top_k=top_k, cfg=cfg)
 
         today = datetime.now().date()
         audio_dir = os.path.join('outputs', f"audio_{today.strftime('%Y%m%d')}")
@@ -344,6 +358,8 @@ image_interface = gr.Interface(
         gr.Textbox(label="Enter your prompt"),
         gr.Textbox(label="Enter your negative prompt", value=""),
         gr.Dropdown(choices=stable_diffusion_models_list, label="Select Stable Diffusion Model", value=None),
+        gr.Dropdown(choices=["euler_ancestral", "euler", "lms", "heun", "dpm", "dpm_solver", "dpm_solver++"],
+                    label="Select Sampler", value="euler_ancestral"),
         gr.Slider(minimum=1, maximum=100, value=30, step=1, label="Steps"),
         gr.Slider(minimum=1.0, maximum=30.0, value=8, step=0.1, label="CFG"),
         gr.Slider(minimum=256, maximum=1024, value=512, step=64, label="Width"),
@@ -369,6 +385,10 @@ audiocraft_interface = gr.Interface(
         gr.Dropdown(choices=audiocraft_models_list, label="Select AudioCraft Model", value=None),
         gr.Dropdown(choices=["musicgen", "audiogen"], label="Select Model Type", value="musicgen"),
         gr.Slider(minimum=1, maximum=120, value=10, step=1, label="Duration (seconds)"),
+        gr.Slider(minimum=0.0, maximum=1.0, value=0.7, step=0.1, label="Temperature"),
+        gr.Slider(minimum=0.0, maximum=1.0, value=0.9, step=0.1, label="Top P"),
+        gr.Slider(minimum=0, maximum=100, value=30, step=1, label="Top K"),
+        gr.Slider(minimum=1.0, maximum=30.0, value=8, step=0.1, label="CFG"),
     ],
     outputs=[
         gr.Audio(label="Generated Audio", type="filepath"),
