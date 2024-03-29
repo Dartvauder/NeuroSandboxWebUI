@@ -164,7 +164,7 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_model_
                 inputs = tokenizer.encode(prompt, return_tensors="pt")
                 device = llm_model.device
                 inputs = inputs.to(device)
-                outputs = llm_model.generate(inputs, max_length=max_tokens, top_p=top_p, top_k=top_k,
+                outputs = llm_model.generate(inputs, max_new_tokens=max_tokens, top_p=top_p, top_k=top_k,
                                              temperature=temperature, pad_token_id=tokenizer.eos_token_id)
                 generated_sequence = outputs[0][inputs.shape[-1]:]
                 text = tokenizer.decode(generated_sequence, skip_special_tokens=True)
