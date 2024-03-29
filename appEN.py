@@ -16,6 +16,14 @@ import torchaudio
 from audiocraft.models import MusicGen, AudioGen
 from audiocraft.data.audio import audio_write
 
+try:
+    import xformers
+    import xformers.ops
+
+    XFORMERS_AVAILABLE = True
+except ImportError:
+    XFORMERS_AVAILABLE = False
+
 warnings.filterwarnings("ignore")
 logging.getLogger('transformers').setLevel(logging.ERROR)
 logging.getLogger('llama_cpp').setLevel(logging.ERROR)
@@ -25,6 +33,9 @@ logging.getLogger('diffusers').setLevel(logging.ERROR)
 logging.getLogger('audiocraft').setLevel(logging.ERROR)
 
 chat_dir = None
+tts_model = None
+whisper_model = None
+audiocraft_model_path = None
 
 
 def load_model(model_name, model_type):
@@ -34,6 +45,15 @@ def load_model(model_name, model_type):
             tokenizer = AutoTokenizer.from_pretrained(model_path)
             device = "cuda" if torch.cuda.is_available() else "cpu"
             model = AutoModelForCausalLM.from_pretrained(model_path)
+            if XFORMERS_AVAILABLE:
+                try:
+                    model = model.with_xformers()
+                except (AttributeError, ImportError):
+                    try:
+                        model.decoder.enable_xformers_memory_efficient_attention()
+                        model.encoder.enable_xformers_memory_efficient_attention()
+                    except AttributeError:
+                        pass
             return tokenizer, model.to(device)
     elif model_type == "llama":
         if model_name:
@@ -60,9 +80,52 @@ def transcribe_audio(audio_file_path):
     return result["text"]
 
 
+def load_tts_model():
+    print("Загрузка модели TTS...")
+    tts_model_path = "inputs/audio/XTTS-v2"
+    if not os.path.exists(tts_model_path):
+        os.makedirs(tts_model_path, exist_ok=True)
+        Repo.clone_from("https://huggingface.co/coqui/XTTS-v2", tts_model_path)
+    else:
+        print("Обновление репозитория TTS...")
+        repo = Repo(tts_model_path)
+        repo.remotes.origin.pull()
+    print("Модель TTS загружена.")
+    return TTS(model_path=tts_model_path, config_path=f"{tts_model_path}/config.json")
+
+
+def load_whisper_model():
+    print("Загрузка модели Whisper...")
+    whisper_model_path = "inputs/text/whisper-medium"
+    if not os.path.exists(whisper_model_path):
+        os.makedirs(whisper_model_path, exist_ok=True)
+        url = ("https://openaipublic.azureedge.net/main/whisper/models"
+               "/345ae4da62f9b3d59415adc60127b97c714f32e89e936602e85993674d08dcb1/medium.pt")
+        r = requests.get(url, allow_redirects=True)
+        open(os.path.join(whisper_model_path, "medium.pt"), "wb").write(r.content)
+    print("Модель Whisper загружена.")
+    model_file = os.path.join(whisper_model_path, "medium.pt")
+    return whisper.load_model(model_file)
+
+
+def load_audiocraft_model(model_name):
+    print(f"Загрузка модели AudioCraft: {model_name}...")
+    audiocraft_model_path = os.path.join("inputs", "audio", "audiocraft", model_name)
+    if not os.path.exists(audiocraft_model_path):
+        os.makedirs(audiocraft_model_path, exist_ok=True)
+        if model_name == "musicgen-stereo-medium":
+            Repo.clone_from("https://huggingface.co/facebook/musicgen-stereo-medium", audiocraft_model_path)
+        elif model_name == "audiogen-medium":
+            Repo.clone_from("https://huggingface.co/facebook/audiogen-medium", audiocraft_model_path)
+        elif model_name == "musicgen-stereo-melody":
+            Repo.clone_from("https://huggingface.co/facebook/musicgen-stereo-melody", audiocraft_model_path)
+    print(f"Модель AudioCraft {model_name} загружена.")
+    return audiocraft_model_path
+
+
 def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_model_type, max_tokens, temperature, top_p,
                              top_k, avatar_name, enable_tts, speaker_wav, language):
-    global chat_dir
+    global chat_dir, tts_model, whisper_model
 
     if not input_text and not input_audio:
         return "Please, enter your request!", None, None, None, None
@@ -82,32 +145,19 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_model_
 
     try:
         if enable_tts:
+            if not tts_model:
+                tts_model = load_tts_model()
             if not speaker_wav or not language:
                 return "Please, select a voice and language for TTS!", None, None, None, None
 
             device = "cuda" if torch.cuda.is_available() else "cpu"
-            tts_model_path = "inputs/audio/XTTS-v2"
-            if not os.path.exists(tts_model_path):
-                os.makedirs(tts_model_path, exist_ok=True)
-                Repo.clone_from("https://huggingface.co/coqui/XTTS-v2", tts_model_path)
-            else:
-                repo = Repo(tts_model_path)
-                repo.remotes.origin.pull()
-            tts_model = TTS(model_path=tts_model_path, config_path=f"{tts_model_path}/config.json").to(device)
+            tts_model = tts_model.to(device)
 
         if input_audio:
+            if not whisper_model:
+                whisper_model = load_whisper_model()
             device = "cuda" if torch.cuda.is_available() else "cpu"
-            whisper_model_path = "inputs/text/whisper-medium"
-
-            if not os.path.exists(whisper_model_path):
-                os.makedirs(whisper_model_path, exist_ok=True)
-                url = ("https://openaipublic.azureedge.net/main/whisper/models"
-                       "/345ae4da62f9b3d59415adc60127b97c714f32e89e936602e85993674d08dcb1/medium.pt")
-                r = requests.get(url, allow_redirects=True)
-                open(os.path.join(whisper_model_path, "medium.pt"), "wb").write(r.content)
-
-            model_file = os.path.join(whisper_model_path, "medium.pt")
-            whisper_model = whisper.load_model(model_file, device=device)
+            whisper_model = whisper_model
 
         if llm_model:
             if llm_model_type == "transformers":
@@ -175,6 +225,9 @@ def generate_image(prompt, negative_prompt, stable_diffusion_model_name, stable_
         )
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
+    if XFORMERS_AVAILABLE:
+        stable_diffusion_model.unet.enable_xformers_memory_efficient_attention()
+
     stable_diffusion_model.to(device)
     stable_diffusion_model.text_encoder.to(device)
     stable_diffusion_model.vae.to(device)
@@ -200,18 +253,13 @@ def generate_image(prompt, negative_prompt, stable_diffusion_model_name, stable_
 
 
 def generate_audio(prompt, input_audio=None, model_name=None, model_type="musicgen", duration=10):
+    global audiocraft_model_path
+
     if not model_name:
         return None, "Please, select an AudioCraft model!"
 
-    audiocraft_model_path = os.path.join("inputs", "audio", "audiocraft", model_name)
-    if not os.path.exists(audiocraft_model_path):
-        os.makedirs(audiocraft_model_path, exist_ok=True)
-        if model_name == "musicgen-stereo-medium":
-            Repo.clone_from("https://huggingface.co/facebook/musicgen-stereo-medium", audiocraft_model_path)
-        elif model_name == "audiogen-medium":
-            Repo.clone_from("https://huggingface.co/facebook/audiogen-medium", audiocraft_model_path)
-        elif model_name == "musicgen-stereo-melody":
-            Repo.clone_from("https://huggingface.co/facebook/musicgen-stereo-melody", audiocraft_model_path)
+    if not audiocraft_model_path:
+        audiocraft_model_path = load_audiocraft_model(model_name)
 
     if model_type == "musicgen":
         model = MusicGen.get_pretrained(audiocraft_model_path)
@@ -336,4 +384,3 @@ audiocraft_interface = gr.Interface(
 with gr.TabbedInterface([chat_interface, image_interface, audiocraft_interface],
                         tab_names=["LLM", "Stable Diffusion", "AudioCraft"]) as app:
     app.launch()
-    
