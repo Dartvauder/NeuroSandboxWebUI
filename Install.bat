@@ -2,7 +2,7 @@
 chcp 65001 > NUL
 
 set CURRENT_DIR=%~dp0
-echo Creating virtual environment.../Создание виртуальной среды
+echo Creating virtual environment.../Создание виртуальной среды...
 py -m venv "%CURRENT_DIR%venv"
 call "%CURRENT_DIR%venv\Scripts\activate.bat"
 cls
