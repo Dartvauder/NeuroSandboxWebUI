@@ -1,5 +1,4 @@
 AudioCraft==1.2.0
-xformers==0.0.25
 gradio==4.24.0
 transformers==4.39.2
 soundfile==0.12.1
@@ -13,6 +12,7 @@ diffusers==0.27.2
 llama-cpp-python==0.2.57
 python-ffmpeg==2.0.10
 --extra-index-url https://download.pytorch.org/whl/cu121
-torch==2.1.0+cu121
-torchaudio==2.1.0+cu121
-torchvision==0.16.0+cu121
+torch==2.2.2+cu121
+torchaudio==2.2.2+cu121
+torchvision==0.17.2+cu121
+xformers==0.0.25
