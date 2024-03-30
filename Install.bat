@@ -17,5 +17,5 @@ echo Installing dependencies.../Установка зависимостей...
 pip install --no-deps -r "%CURRENT_DIR%requirements.txt"
 cls
 
-echo The application has been installed successfully. Run start.bat/Приложение успешно установлено. Запустите start.bat
+echo Application has been installed successfully. Run start.bat/Приложение успешно установлено. Запустите start.bat
 pause
