@@ -263,7 +263,7 @@ def generate_image(prompt, negative_prompt, stable_diffusion_model_name, stable_
         torch.cuda.empty_cache()
 
 
-def generate_audio(prompt, input_audio=None, model_name=None, model_type="musicgen", duration=10):
+def generate_audio(prompt, input_audio=None, model_name=None, model_type="musicgen", duration=10, top_k=250, top_p=0.0, temperature=1.0, cfg_coef=4.0):
     global audiocraft_model_path
 
     if not model_name:
@@ -287,9 +287,13 @@ def generate_audio(prompt, input_audio=None, model_name=None, model_type="musicg
         if input_audio and model_type == "musicgen":
             audio_path = input_audio
             melody, sr = torchaudio.load(audio_path)
+            model.set_generation_params(duration=duration, top_k=top_k, top_p=top_p, temperature=temperature,
+                                        cfg_coef=cfg_coef)
             wav = model.generate_with_chroma([prompt], melody[None].expand(1, -1, -1), sr)
         else:
             descriptions = [prompt]
+            model.set_generation_params(duration=duration, top_k=top_k, top_p=top_p, temperature=temperature,
+                                        cfg_coef=cfg_coef)
             wav = model.generate(descriptions)
 
         today = datetime.now().date()
@@ -318,7 +322,7 @@ speaker_wavs_list = [None] + [wav for wav in os.listdir("inputs/audio/voices") i
 stable_diffusion_models_list = [None] + [model.replace(".safetensors", "") for model in
                                          os.listdir("inputs/image/sd_models")
                                          if (model.endswith(".safetensors") or not model.endswith(".txt"))]
-audiocraft_models_list = ["musicgen-stereo-medium", "audiogen-medium", "musicgen-stereo-melody"]
+audiocraft_models_list = [None] + ["musicgen-stereo-medium", "audiogen-medium", "musicgen-stereo-melody"]
 
 chat_interface = gr.Interface(
     fn=generate_text_and_speech,
@@ -382,6 +386,10 @@ audiocraft_interface = gr.Interface(
         gr.Dropdown(choices=audiocraft_models_list, label="Выберите модель AudioCraft", value=None),
         gr.Dropdown(choices=["musicgen", "audiogen"], label="Выберите тип модели", value="musicgen"),
         gr.Slider(minimum=1, maximum=120, value=10, step=1, label="Длительность (секунды)"),
+        gr.Slider(minimum=1, maximum=1000, value=250, step=1, label="Top K"),
+        gr.Slider(minimum=0.0, maximum=1.0, value=0.0, step=0.1, label="Top P"),
+        gr.Slider(minimum=0.1, maximum=2.0, value=1.0, step=0.1, label="Температура"),
+        gr.Slider(minimum=1.0, maximum=10.0, value=4.0, step=0.1, label="CFG"),
     ],
     outputs=[
         gr.Audio(label="Сгенерированное аудио", type="filepath"),
@@ -397,3 +405,4 @@ audiocraft_interface = gr.Interface(
 with gr.TabbedInterface([chat_interface, image_interface, audiocraft_interface],
                         tab_names=["LLM", "Stable Diffusion", "AudioCraft"]) as app:
     app.launch()
+    
