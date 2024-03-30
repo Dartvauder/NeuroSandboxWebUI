@@ -73,8 +73,8 @@ To get update, run `git pull`
 5) Type (or speak) your request
 6) Click the `Submit` button to receive text and audio response
 #### Optional: you can enable `TTS` mode, select the `voice` and `language` needed to receive an audio response. You can also select `avatar`
-#### Voice samples = *inputs/audio/voices*
 #### Avatars = *inputs/image/avatars*
+#### Voice samples = *inputs/audio/voices*
 #### The voice must be pre-processed (22050 kHz, mono, WAV), the avatar should preferably be `PNG` or `JPG`
 
 ### Stable Diffusion:
@@ -94,7 +94,7 @@ To get update, run `git pull`
 
 ### Additional Information:
 
-1) Chat history and generated images are saved in the *outputs* folder
+1) Chat history, generated images and generated audio, are saved in the *outputs* folder
 2) You can also press the `Clear` button to clear the selection
 #### To close the application, close the terminal
 
@@ -102,10 +102,10 @@ To get update, run `git pull`
 
 * LLM models can be taken from [HuggingFace](https://huggingface.co/models)
 * Stable Diffusion models can be taken from [CivitAI](https://civitai.com/models)
-* AudioCraft models are downloads automatically when you select a model and press the submit button 
+* AudioCraft models are downloads automatically in *inputs* folder, when you select a model and press the submit button
+* TTS and `STT models are downloaded automatically in *inputs* folder 
 * You can take voices anywhere. Record yours or take a recording from the Internet. The main thing is that it is pre-processed!
 * It’s the same with avatars as with voices. You can download them on the Internet, generate them using neural networks, or take a photo of yourself. The main thing is to comply with the required file format
-* #### `TTS` and `STT` models are downloaded automatically in *inputs* folder. The base `diffusers` model of `Stable Diffusion` is also downloaded there 
 
 ## Roadmap
 
