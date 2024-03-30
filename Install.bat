@@ -16,4 +16,7 @@ pip install --no-deps -r "%CURRENT_DIR%requirements.txt"
 cls
 
 echo Application has been installed successfully. Run start.bat/Приложение успешно установлено. Запустите start.bat
+
+call "%CURRENT_DIR%venv\Scripts\deactivate.bat"
+
 pause
