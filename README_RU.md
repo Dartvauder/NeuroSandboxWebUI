@@ -56,7 +56,7 @@
 ### Linux
 
 1) `Git clone https://github.com/Dartvauder/NeuroChatWebUI.git` в любое место (Без кириллицы)
-2) В терминале запустите `pip install --no-deps -r requirementsGPU.txt` и дождитесь установки всех зависимостей
+2) В терминале запустите `pip install --no-deps -r requirements.txt` и дождитесь установки всех зависимостей
 3) После установки, в терминале запустите `py appEN.py` или `py appRU.py`
 4) Дождитесь запуска приложения
 5) Теперь можете приступать к генерациям!
