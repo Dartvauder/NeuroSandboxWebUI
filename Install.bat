@@ -5,6 +5,10 @@ set CURRENT_DIR=%~dp0
 py -m venv "%CURRENT_DIR%venv"
 call "%CURRENT_DIR%venv\Scripts\activate.bat"
 
+REM Upgrade pip and setuptools
+echo Upgrading pip and setuptools...
+py -m pip install --upgrade pip setuptools
+
 :choice
 set /p choice="Выберите версию для установки/choose a version for install: 1) GPU 2) CPU: "
 
