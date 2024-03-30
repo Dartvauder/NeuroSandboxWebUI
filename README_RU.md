@@ -12,8 +12,8 @@
 
  
 
-|![Image1](https://github.com/Dartvauder/NeuroChatWebUI/assets/140557322/654c39bd-c952-47c8-b2a0-957368fc36be) | ![Image2](https://github.com/Dartvauder/NeuroChatWebUI/assets/140557322/76fa5cd8-e2b0-4025-8d06-480d61a47e11)
-|:---:|:---:|
+![Image1](https://github.com/Dartvauder/NeuroChatWebUI/assets/140557322/a22ed2b3-f839-4c3e-943b-d71b367eb69a) ![Image2](https://github.com/Dartvauder/NeuroChatWebUI/assets/140557322/13f208f7-5dc9-47ed-9bc9-e01b3e1293e5) ![Image3](https://github.com/Dartvauder/NeuroChatWebUI/assets/140557322/f2e715fd-bf11-4ee0-944e-1d68f057e068)
+
 
 ## Функции:
 
