@@ -9,7 +9,8 @@ Simple and easy interface for use of different neural network models. You can ch
 
 The goal of the project - to create the easiest possible application to use neural network models.
 
-![Image1](https://github.com/Dartvauder/NeuroChatWebUI/assets/140557322/e279e713-2f12-46f9-aa20-3dfe45996de6) ![Image2](https://github.com/Dartvauder/NeuroChatWebUI/assets/140557322/2619024d-5dca-43d8-b44e-76e78936643e) ![Image3](https://github.com/Dartvauder/NeuroChatWebUI/assets/140557322/82db782c-730b-4e88-9a7d-b5d07472abb7)
+![Image1](https://github.com/Dartvauder/NeuroChatWebUI/assets/140557322/e279e713-2f12-46f9-aa20-3dfe45996de6) ![Image2](https://github.com/Dartvauder/NeuroChatWebUI/assets/140557322/2619024d-5dca-43d8-b44e-76e78936643e) ![Image3](https://github.com/Dartvauder/NeuroChatWebUI/assets/140557322/c205b515-8f03-4c68-a1e7-4a1d2f897da4)
+
 
 ## Features:
 
