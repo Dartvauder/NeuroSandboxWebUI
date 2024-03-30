@@ -31,6 +31,7 @@ logging.getLogger('whisper').setLevel(logging.ERROR)
 logging.getLogger('TTS').setLevel(logging.ERROR)
 logging.getLogger('diffusers').setLevel(logging.ERROR)
 logging.getLogger('audiocraft').setLevel(logging.ERROR)
+logging.getLogger('xformers').setLevel(logging.ERROR)
 
 chat_dir = None
 tts_model = None
@@ -262,7 +263,7 @@ def generate_image(prompt, negative_prompt, stable_diffusion_model_name, stable_
         torch.cuda.empty_cache()
 
 
-def generate_audio(prompt, input_audio=None, model_name=None, model_type="musicgen", duration=10, temperature=0.7, top_p=0.9, top_k=30, cfg=8):
+def generate_audio(prompt, input_audio=None, model_name=None, model_type="musicgen", duration=10):
     global audiocraft_model_path
 
     if not model_name:
@@ -286,10 +287,10 @@ def generate_audio(prompt, input_audio=None, model_name=None, model_type="musicg
         if input_audio and model_type == "musicgen":
             audio_path = input_audio
             melody, sr = torchaudio.load(audio_path)
-            wav = model.generate_with_chroma([prompt], melody[None].expand(1, -1, -1), sr, temperature=temperature, top_p=top_p, top_k=top_k, cfg=cfg)
+            wav = model.generate_with_chroma([prompt], melody[None].expand(1, -1, -1), sr)
         else:
             descriptions = [prompt]
-            wav = model.generate(descriptions, temperature=temperature, top_p=top_p, top_k=top_k, cfg=cfg)
+            wav = model.generate(descriptions)
 
         today = datetime.now().date()
         audio_dir = os.path.join('outputs', f"audio_{today.strftime('%Y%m%d')}")
@@ -381,10 +382,6 @@ audiocraft_interface = gr.Interface(
         gr.Dropdown(choices=audiocraft_models_list, label="Выберите модель AudioCraft", value=None),
         gr.Dropdown(choices=["musicgen", "audiogen"], label="Выберите тип модели", value="musicgen"),
         gr.Slider(minimum=1, maximum=120, value=10, step=1, label="Длительность (секунды)"),
-        gr.Slider(minimum=0.0, maximum=1.0, value=0.7, step=0.1, label="Температура"),
-        gr.Slider(minimum=0.0, maximum=1.0, value=0.9, step=0.1, label="Top P"),
-        gr.Slider(minimum=0, maximum=100, value=30, step=1, label="Top K"),
-        gr.Slider(minimum=1.0, maximum=30.0, value=8, step=0.1, label="CFG"),
     ],
     outputs=[
         gr.Audio(label="Сгенерированное аудио", type="filepath"),
