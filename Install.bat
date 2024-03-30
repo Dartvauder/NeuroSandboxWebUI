@@ -15,7 +15,7 @@ set /p choice="Выберите версию для установки/choose a 
 if "%choice%"=="1" (
     cls
     echo GPU version is installing, please wait/GPU версия устанавливается, пожалуйста подождите:
-    pip install -r "%CURRENT_DIR%requirementsGPU.txt"
+    pip install --no-deps -r "%CURRENT_DIR%requirements.txt"
 ) else if "%choice%"=="2" (
     cls
     echo CPU version is installing, please wait/CPU версия устанавливается, пожалуйста подождите:
