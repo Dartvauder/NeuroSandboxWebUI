@@ -7,4 +7,12 @@ set CURRENT_DIR=%~dp0
 
 call "%CURRENT_DIR%venv\Scripts\activate.bat"
 
+REM Update dependencies
+echo Updating dependencies.../Обновление зависимостей...
+pip install --no-deps -r "%CURRENT_DIR%requirements.txt"
+cls
+
+echo Application has been updated successfully. Run start.bat/Приложение успешно обновлено. Запустите start.bat
+pause
+
 pause
