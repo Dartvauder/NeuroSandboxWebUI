@@ -86,10 +86,6 @@ def load_tts_model():
     if not os.path.exists(tts_model_path):
         os.makedirs(tts_model_path, exist_ok=True)
         Repo.clone_from("https://huggingface.co/coqui/XTTS-v2", tts_model_path)
-    else:
-        print("Обновление TTS...")
-        repo = Repo(tts_model_path)
-        repo.remotes.origin.pull()
     print("TTS установлен")
     return TTS(model_path=tts_model_path, config_path=f"{tts_model_path}/config.json")
 
