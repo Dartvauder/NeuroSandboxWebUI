@@ -15,6 +15,8 @@ import requests
 import torchaudio
 from audiocraft.models import MusicGen, AudioGen, MultiBandDiffusion
 from audiocraft.data.audio import audio_write
+import signal
+import threading
 
 try:
     import xformers
@@ -404,6 +406,31 @@ audiocraft_models_list = [None] + ["musicgen-stereo-medium", "audiogen-medium", 
 vae_models_list = [None] + [model.replace(".safetensors", "") for model in os.listdir("inputs/image/sd_models/vae") if
                             model.endswith(".safetensors")]
 
+
+def interrupt_llm():
+    os.kill(os.getpid(), signal.SIGINT)
+
+
+def interrupt_sd():
+    os.kill(os.getpid(), signal.SIGINT)
+
+
+def interrupt_audiocraft():
+    os.kill(os.getpid(), signal.SIGINT)
+
+
+llm_interrupt_thread = threading.Thread(target=interrupt_llm)
+sd_interrupt_thread = threading.Thread(target=interrupt_sd)
+audiocraft_interrupt_thread = threading.Thread(target=interrupt_audiocraft)
+
+
+def cancel_function(interrupt_thread):
+    def inner():
+        interrupt_thread.start()
+
+    return inner
+
+
 chat_interface = gr.Interface(
     fn=generate_text_and_speech,
     inputs=[
@@ -420,6 +447,7 @@ chat_interface = gr.Interface(
         gr.Checkbox(label="Enable TTS", value=False),
         gr.Dropdown(choices=speaker_wavs_list, label="Select Voice", interactive=True),
         gr.Dropdown(choices=["en", "ru"], label="Select Language", interactive=True),
+        gr.Button("Cancel LLM", variant="stop")
     ],
     outputs=[
         gr.Textbox(label="LLM text response", type="text"),
@@ -449,6 +477,7 @@ txt2img_interface = gr.Interface(
         gr.Slider(minimum=256, maximum=1024, value=512, step=64, label="Height"),
         gr.Slider(minimum=1, maximum=4, value=1, step=1, label="Clip Skip"),
         gr.Dropdown(choices=vae_models_list, label="Select VAE Model", value=None),
+        gr.Button("Cancel Stable Diffusion", variant="stop")
     ],
     outputs=[
         gr.Image(type="filepath", label="Generated Image"),
@@ -475,6 +504,7 @@ img2img_interface = gr.Interface(
         gr.Image(label="Initial Image", type="filepath"),
         gr.Slider(minimum=0.0, maximum=1.0, value=0.5, step=0.01, label="Strength"),
         gr.Dropdown(choices=vae_models_list, label="Select VAE Model", value=None),
+        gr.Button("Cancel Stable Diffusion", variant="stop")
     ],
     outputs=[
         gr.Image(type="filepath", label="Generated Image"),
@@ -497,6 +527,7 @@ audiocraft_interface = gr.Interface(
         gr.Slider(minimum=0.1, maximum=2.0, value=1.0, step=0.1, label="Temperature"),
         gr.Slider(minimum=1.0, maximum=10.0, value=4.0, step=0.1, label="CFG"),
         gr.Checkbox(label="Enable Multiband Diffusion", value=False),
+        gr.Button("Cancel AudioCraft", variant="stop")
     ],
     outputs=[
         gr.Audio(label="Generated Audio", type="filepath"),
