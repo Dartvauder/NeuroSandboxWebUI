@@ -463,7 +463,7 @@ img2img_interface = gr.Interface(
     inputs=[
         gr.Textbox(label="Enter your prompt"),
         gr.Textbox(label="Enter your negative prompt", value=""),
-        gr.Image(label="Initial Image", type="pil"),
+        gr.Image(label="Initial Image", type="filepath"),
         gr.Slider(minimum=0.0, maximum=1.0, value=0.5, step=0.01, label="Strength"),
         gr.Dropdown(choices=stable_diffusion_models_list, label="Select Stable Diffusion Model", value=None),
         gr.Dropdown(choices=vae_models_list, label="Select VAE Model", value=None),
