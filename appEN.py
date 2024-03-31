@@ -200,7 +200,7 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_model_
     return text, audio_path, avatar_path, chat_dir
 
 
-def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name, stable_diffusion_model_type, stable_diffusion_sampler, stable_diffusion_steps, stable_diffusion_cfg, stable_diffusion_width, stable_diffusion_height, stable_diffusion_clip_skip, vae_model_name):
+def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name, vae_model_name, stable_diffusion_model_type, stable_diffusion_sampler, stable_diffusion_steps, stable_diffusion_cfg, stable_diffusion_width, stable_diffusion_height, stable_diffusion_clip_skip):
     if not stable_diffusion_model_name:
         return None, "Please, select a Stable Diffusion model!"
     stable_diffusion_model_path = os.path.join("inputs", "image", "sd_models", f"{stable_diffusion_model_name}.safetensors")
@@ -238,7 +238,7 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
         vae_model_path = os.path.join("inputs", "image", "sd_models", "vae", f"{vae_model_name}.safetensors")
         if os.path.exists(vae_model_path):
             vae = AutoencoderKL.from_single_file(vae_model_path, device_map="auto")
-            stable_diffusion_model.vae = vae
+            stable_diffusion_model.vae = vae.to(device)
         else:
             print(f"VAE model not found: {vae_model_path}")
     try:
@@ -260,10 +260,10 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
         torch.cuda.empty_cache()
 
 
-def generate_image_img2img(prompt, negative_prompt, stable_diffusion_model_name, stable_diffusion_model_type,
+def generate_image_img2img(prompt, negative_prompt, init_image,
+                           strength, stable_diffusion_model_name, vae_model_name, stable_diffusion_model_type,
                            stable_diffusion_sampler, stable_diffusion_steps, stable_diffusion_cfg,
-                           stable_diffusion_width, stable_diffusion_height, stable_diffusion_clip_skip, init_image,
-                           strength, vae_model_name):
+                           stable_diffusion_width, stable_diffusion_height, stable_diffusion_clip_skip):
     if not stable_diffusion_model_name:
         return None, "Please, select a Stable Diffusion model!"
     if not init_image:
@@ -304,7 +304,7 @@ def generate_image_img2img(prompt, negative_prompt, stable_diffusion_model_name,
         vae_model_path = os.path.join("inputs", "image", "sd_models", "vae", f"{vae_model_name}.safetensors")
         if os.path.exists(vae_model_path):
             vae = AutoencoderKL.from_single_file(vae_model_path, device_map=device)
-            stable_diffusion_model.vae = vae
+            stable_diffusion_model.vae = vae.to(device)
         else:
             print(f"VAE model not found: {vae_model_path}")
     try:
@@ -436,6 +436,7 @@ txt2img_interface = gr.Interface(
         gr.Textbox(label="Enter your prompt"),
         gr.Textbox(label="Enter your negative prompt", value=""),
         gr.Dropdown(choices=stable_diffusion_models_list, label="Select Stable Diffusion Model", value=None),
+        gr.Dropdown(choices=vae_models_list, label="Select VAE Model", value=None),
         gr.Dropdown(choices=["SD", "SDXL"], label="Select Model Type", value="SD"),
         gr.Dropdown(choices=["euler_ancestral", "euler", "lms", "heun", "dpm", "dpm_solver", "dpm_solver++"],
                     label="Select Sampler", value="euler_ancestral"),
@@ -444,13 +445,15 @@ txt2img_interface = gr.Interface(
         gr.Slider(minimum=256, maximum=1024, value=512, step=64, label="Width"),
         gr.Slider(minimum=256, maximum=1024, value=512, step=64, label="Height"),
         gr.Slider(minimum=1, maximum=4, value=1, step=1, label="Clip Skip"),
-        gr.Dropdown(choices=vae_models_list, label="Select VAE Model", value=None),
     ],
     outputs=[
         gr.Image(type="filepath", label="Generated Image"),
         gr.Textbox(label="Message", type="text"),
     ],
     title="NeuroChatWebUI (ALPHA) - Stable Diffusion (txt2img)",
+    description="This user interface allows you to enter any text and generate images using Stable Diffusion. "
+                "You can select the Stable Diffusion model and customize the generation settings from the sliders. "
+                "Try it and see what happens!",
     allow_flagging="never"
 )
 
@@ -459,7 +462,10 @@ img2img_interface = gr.Interface(
     inputs=[
         gr.Textbox(label="Enter your prompt"),
         gr.Textbox(label="Enter your negative prompt", value=""),
+        gr.Image(label="Initial Image", type="filepath"),
+        gr.Slider(minimum=0.0, maximum=1.0, value=0.5, step=0.01, label="Strength"),
         gr.Dropdown(choices=stable_diffusion_models_list, label="Select Stable Diffusion Model", value=None),
+        gr.Dropdown(choices=vae_models_list, label="Select VAE Model", value=None),
         gr.Dropdown(choices=["SD", "SDXL"], label="Select Model Type", value="SD"),
         gr.Dropdown(choices=["euler_ancestral", "euler", "lms", "heun", "dpm", "dpm_solver", "dpm_solver++"],
                     label="Select Sampler", value="euler_ancestral"),
@@ -468,15 +474,15 @@ img2img_interface = gr.Interface(
         gr.Slider(minimum=256, maximum=1024, value=512, step=64, label="Width"),
         gr.Slider(minimum=256, maximum=1024, value=512, step=64, label="Height"),
         gr.Slider(minimum=1, maximum=4, value=1, step=1, label="Clip Skip"),
-        gr.Image(label="Initial Image", type="filepath"),
-        gr.Slider(minimum=0.0, maximum=1.0, value=0.5, step=0.01, label="Strength"),
-        gr.Dropdown(choices=vae_models_list, label="Select VAE Model", value=None),
     ],
     outputs=[
         gr.Image(type="filepath", label="Generated Image"),
         gr.Textbox(label="Message", type="text"),
     ],
     title="NeuroChatWebUI (ALPHA) - Stable Diffusion (img2img)",
+    description="This user interface allows you to enter any text and image to generate new images using Stable Diffusion. "
+                "You can select the Stable Diffusion model and customize the generation settings from the sliders. "
+                "Try it and see what happens!",
     allow_flagging="never"
 )
 
