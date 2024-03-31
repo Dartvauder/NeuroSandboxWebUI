@@ -10,6 +10,7 @@ import warnings
 import logging
 from diffusers import StableDiffusionPipeline, StableDiffusionXLPipeline, AutoencoderKL
 from git import Repo
+from PIL import Image
 from llama_cpp import Llama
 import requests
 import torchaudio
@@ -308,7 +309,7 @@ def generate_image_img2img(prompt, negative_prompt, init_image,
         else:
             print(f"VAE model not found: {vae_model_path}")
     try:
-        init_image = init_image.convert("RGB")
+        init_image = Image.open(init_image).convert("RGB")
         images = stable_diffusion_model(prompt, negative_prompt=negative_prompt,
                                         num_inference_steps=stable_diffusion_steps,
                                         guidance_scale=stable_diffusion_cfg, height=stable_diffusion_height,
