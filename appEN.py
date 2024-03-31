@@ -8,7 +8,7 @@ import whisper
 from datetime import datetime
 import warnings
 import logging
-from diffusers import StableDiffusionPipeline, StableDiffusionXLPipeline, AutoencoderKL
+from diffusers import StableDiffusionPipeline, StableDiffusionXLPipeline, StableDiffusionImg2ImgPipeline, AutoencoderKL
 from git import Repo
 from PIL import Image
 from llama_cpp import Llama
@@ -273,22 +273,22 @@ def generate_image_img2img(prompt, negative_prompt, init_image,
                                                f"{stable_diffusion_model_name}.safetensors")
     if stable_diffusion_model_type == "SD":
         if os.path.exists(stable_diffusion_model_path):
-            stable_diffusion_model = StableDiffusionPipeline.from_single_file(
+            stable_diffusion_model = StableDiffusionImg2ImgPipeline.from_single_file(
                 stable_diffusion_model_path, use_safetensors=True, device_map="auto"
             )
         else:
             print(f"Stable Diffusion model not found: {stable_diffusion_model_path}")
-            stable_diffusion_model = StableDiffusionPipeline.from_pretrained(
+            stable_diffusion_model = StableDiffusionImg2ImgPipeline.from_pretrained(
                 "runwayml/stable-diffusion-v1-5", use_safetensors=True, device_map="auto"
             )
     elif stable_diffusion_model_type == "SDXL":
         if os.path.exists(stable_diffusion_model_path):
-            stable_diffusion_model = StableDiffusionXLPipeline.from_single_file(
+            stable_diffusion_model = StableDiffusionImg2ImgPipeline.from_single_file(
                 stable_diffusion_model_path, use_safetensors=True, device_map="auto", attention_slice=1
             )
         else:
             print(f"Stable Diffusion XL model not found: {stable_diffusion_model_path}")
-            stable_diffusion_model = StableDiffusionXLPipeline.from_pretrained(
+            stable_diffusion_model = StableDiffusionImg2ImgPipeline.from_pretrained(
                 "stabilityai/stable-diffusion-xl-base-1.0", use_safetensors=True, device_map="auto", attention_slice=1
             )
     else:
