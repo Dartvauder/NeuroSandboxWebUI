@@ -131,16 +131,22 @@ def load_multiband_diffusion_model():
 def load_upscale_model(upscale_factor):
     upscale_model_name = "stabilityai/stable-diffusion-x4-upscaler"
     upscale_model_path = os.path.join("inputs", "image", "sd_models", "upscale", f"{upscale_model_name}.safetensors")
+    
+    print(f"Downloading Upscale model: {upscale_model_name}...")
+    
     if not os.path.exists(upscale_model_path):
         os.makedirs(os.path.dirname(upscale_model_path), exist_ok=True)
         Repo.clone_from(f"https://huggingface.co/{upscale_model_name}", os.path.dirname(upscale_model_path))
-    print(f"Upscale model {upscale_model_name} downloaded")
+    
     upscaler = StableDiffusionUpscalePipeline.from_single_file(
         upscale_model_path,
         revision="upscale",
         use_safetensors=True,
         device_map="auto",
     )
+    
+    print(f"Upscale model {upscale_model_name} downloaded")
+    
     upscaler.upscale_factor = upscale_factor
     return upscaler
 
