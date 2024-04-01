@@ -20,8 +20,8 @@
 * Простая установка (Только для Windows)
 * Гибкий и оптимизированный интерфейс
 * Transformers и llama.cpp (LLM)
-* Diffusers и safetensors (Stable Diffusion)
-* AudioCraft
+* Diffusers и safetensors (Stable Diffusion) - txt2img и img2img
+* AudioCraft (musicgen, audiogen и multiband diffusion)
 * TTS и STT модели (Для LLM)
 * Выбор аватара (Для LLM)
 * Настройка моделей в интерфейсе
