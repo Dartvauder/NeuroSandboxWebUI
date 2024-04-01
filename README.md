@@ -19,7 +19,7 @@ The goal of the project - to create the easiest possible application to use neur
 * Transformers and llama.cpp (LLM)
 * Diffusers and safetensors (Stable Diffusion) - txt2img and img2img
 * AudioCraft (musicgen, audiogen and multiband diffusion)
-* TTS and STT models (For LLM)
+* TTS and Whisper models (For LLM)
 * Avatar selection (For LLM)
 * Models settings in interface
 
@@ -72,7 +72,7 @@ To get update, run `git pull`
 4) Set up the model according to the parameters you need
 5) Type (or speak) your request
 6) Click the `Submit` button to receive generated text and audio response
-#### Optional: you can enable `TTS` mode, select the `voice` and `language` needed to receive an audio response. You can also select `avatar`
+#### Optional: you can enable `TTS` mode, select the `voice` and `language` needed to receive an audio response. You can also select `avatar`. When you make an audio request, the Whisper model is downloads and uses
 #### Avatars = *inputs/image/avatars*
 #### Voice samples = *inputs/audio/voices*
 #### The voice must be pre-processed (22050 kHz, mono, WAV), the avatar should preferably be `PNG` or `JPG`
