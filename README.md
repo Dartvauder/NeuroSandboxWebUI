@@ -105,7 +105,8 @@ To get update, run `git pull`
 1) Select a model from the drop-down list
 2) Set up the model according to the parameters you need
 3) Enter your prompt
-4) Click the `Submit` button to get the audio
+4) (Optional) upload the initial audio if you are using melody model 
+5) Click the `Submit` button to get the audio
 #### Optional: You can enable multiband diffusion to improve the generated audio
 
 ### Additional Information:
