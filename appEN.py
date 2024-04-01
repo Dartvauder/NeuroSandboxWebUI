@@ -128,6 +128,22 @@ def load_multiband_diffusion_model():
         print("Multiband Diffusion model downloaded")
     return multiband_diffusion_path
 
+def load_upscale_model(upscale_factor):
+    upscale_model_name = "stabilityai/stable-diffusion-x4-upscaler"
+    upscale_model_path = os.path.join("inputs", "image", "sd_models", "upscale", f"{upscale_model_name}.safetensors")
+    if not os.path.exists(upscale_model_path):
+        os.makedirs(os.path.dirname(upscale_model_path), exist_ok=True)
+        Repo.clone_from(f"https://huggingface.co/{upscale_model_name}", os.path.dirname(upscale_model_path))
+    print(f"Upscale model {upscale_model_name} downloaded")
+    upscaler = StableDiffusionUpscalePipeline.from_single_file(
+        upscale_model_path,
+        revision="upscale",
+        use_safetensors=True,
+        device_map="auto",
+    )
+    upscaler.upscale_factor = upscale_factor
+    return upscaler
+
 
 def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_model_type, max_tokens, n_ctx, temperature,
                              top_p,
@@ -201,7 +217,7 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_model_
     return text, audio_path, avatar_path, chat_dir
 
 
-def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name, vae_model_name, stable_diffusion_model_type, stable_diffusion_sampler, stable_diffusion_steps, stable_diffusion_cfg, stable_diffusion_width, stable_diffusion_height, stable_diffusion_clip_skip):
+def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name, vae_model_name, stable_diffusion_model_type, stable_diffusion_sampler, stable_diffusion_steps, stable_diffusion_cfg, stable_diffusion_width, stable_diffusion_height, stable_diffusion_clip_skip, enable_upscale=False, upscale_factor=4):
     if not stable_diffusion_model_name:
         return None, "Please, select a Stable Diffusion model!"
     stable_diffusion_model_path = os.path.join("inputs", "image", "sd_models", f"{stable_diffusion_model_name}.safetensors")
@@ -249,6 +265,11 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
                                         width=stable_diffusion_width, clip_skip=stable_diffusion_clip_skip,
                                         sampler=stable_diffusion_sampler)
         image = images["images"][0]
+        if enable_upscale:
+            upscaler = load_upscale_model(upscale_factor)
+            if upscaler:
+                upscaled_image = upscaler(images=image)["images"][0]
+                image = upscaled_image
         today = datetime.now().date()
         image_dir = os.path.join('outputs', f"images_{today.strftime('%Y%m%d')}")
         os.makedirs(image_dir, exist_ok=True)
