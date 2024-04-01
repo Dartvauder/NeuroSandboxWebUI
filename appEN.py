@@ -217,7 +217,7 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_model_
     return text, audio_path, avatar_path, chat_dir
 
 
-def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name, vae_model_name, stable_diffusion_model_type, stable_diffusion_sampler, stable_diffusion_steps, stable_diffusion_cfg, stable_diffusion_width, stable_diffusion_height, stable_diffusion_clip_skip, enable_upscale=False, upscale_factor=4):
+def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name, vae_model_name, stable_diffusion_model_type, stable_diffusion_sampler, stable_diffusion_steps, stable_diffusion_cfg, stable_diffusion_width, stable_diffusion_height, stable_diffusion_clip_skip, enable_upscale=False, upscale_factor=2):
     if not stable_diffusion_model_name:
         return None, "Please, select a Stable Diffusion model!"
     stable_diffusion_model_path = os.path.join("inputs", "image", "sd_models", f"{stable_diffusion_model_name}.safetensors")
@@ -467,6 +467,8 @@ txt2img_interface = gr.Interface(
         gr.Slider(minimum=256, maximum=1024, value=512, step=64, label="Width"),
         gr.Slider(minimum=256, maximum=1024, value=512, step=64, label="Height"),
         gr.Slider(minimum=1, maximum=4, value=1, step=1, label="Clip Skip"),
+gr.Checkbox(label="Enable Upscale", value=False),
+        gr.Slider(minimum=2, maximum=4, value=2, step=1, label="Upscale Factor"),
     ],
     outputs=[
         gr.Image(type="filepath", label="Generated Image"),
