@@ -71,7 +71,7 @@ To get update, run `git pull`
 3) Select model type (`transformers` or `llama`)
 4) Set up the model according to the parameters you need
 5) Type (or speak) your request
-6) Click the `Submit` button to receive generated text and audio response
+6) Click the `Submit` button to receive the generated text and audio response
 #### Optional: you can enable `TTS` mode, select the `voice` and `language` needed to receive an audio response. You can also select `avatar`
 #### Avatars = *inputs/image/avatars*
 #### Voice samples = *inputs/audio/voices*
