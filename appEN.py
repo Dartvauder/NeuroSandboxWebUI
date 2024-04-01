@@ -226,14 +226,12 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_model_
     return text, audio_path, avatar_path, chat_dir
 
 
-def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name, vae_model_name,
-                           stable_diffusion_model_type, stable_diffusion_sampler, stable_diffusion_steps,
-                           stable_diffusion_cfg, stable_diffusion_width, stable_diffusion_height,
-                           stable_diffusion_clip_skip, enable_upscale=False, upscale_factor=2):
+def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name, vae_model_name, stable_diffusion_model_type, stable_diffusion_sampler, stable_diffusion_steps, stable_diffusion_cfg, stable_diffusion_width, stable_diffusion_height, stable_diffusion_clip_skip, enable_upscale=False, upscale_factor=2):
     if not stable_diffusion_model_name:
         return None, "Please, select a Stable Diffusion model!"
-    stable_diffusion_model_path = os.path.join("inputs", "image", "sd_models",
-                                               f"{stable_diffusion_model_name}.safetensors")
+
+    stable_diffusion_model_path = os.path.join("inputs", "image", "sd_models", f"{stable_diffusion_model_name}.safetensors")
+
     if stable_diffusion_model_type == "SD":
         if os.path.exists(stable_diffusion_model_path):
             stable_diffusion_model = StableDiffusionPipeline.from_single_file(
@@ -256,14 +254,17 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
             )
     else:
         return None, "Invalid Stable Diffusion model type!"
+
     device = "cuda" if torch.cuda.is_available() else "cpu"
     if XFORMERS_AVAILABLE:
         stable_diffusion_model.unet.enable_xformers_memory_efficient_attention()
+
     stable_diffusion_model.to(device)
     stable_diffusion_model.text_encoder.to(device)
     stable_diffusion_model.vae.to(device)
     stable_diffusion_model.unet.to(device)
     stable_diffusion_model.safety_checker = None
+
     if vae_model_name is not None:
         vae_model_path = os.path.join("inputs", "image", "sd_models", "vae", f"{vae_model_name}.safetensors")
         if os.path.exists(vae_model_path):
@@ -271,6 +272,7 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
             stable_diffusion_model.vae = vae.to(device)
         else:
             print(f"VAE model not found: {vae_model_path}")
+
     try:
         images = stable_diffusion_model(prompt, negative_prompt=negative_prompt,
                                         num_inference_steps=stable_diffusion_steps,
@@ -278,11 +280,13 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
                                         width=stable_diffusion_width, clip_skip=stable_diffusion_clip_skip,
                                         sampler=stable_diffusion_sampler)
         image = images["images"][0]
+
         if enable_upscale:
             upscaler = load_upscale_model(upscale_factor)
             if upscaler:
-                upscaled_image = upscaler(images=image)["images"][0]
+                upscaled_image = upscaler(prompt=prompt, image=image)["images"][0]
                 image = upscaled_image
+
         today = datetime.now().date()
         image_dir = os.path.join('outputs', f"images_{today.strftime('%Y%m%d')}")
         os.makedirs(image_dir, exist_ok=True)
@@ -290,6 +294,7 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
         image_path = os.path.join(image_dir, image_filename)
         image.save(image_path, format="PNG")
         return image_path, None
+
     finally:
         del stable_diffusion_model
         torch.cuda.empty_cache()
@@ -430,7 +435,8 @@ avatars_list = [None] + [avatar for avatar in os.listdir("inputs/image/avatars")
 speaker_wavs_list = [None] + [wav for wav in os.listdir("inputs/audio/voices") if not wav.endswith(".txt")]
 stable_diffusion_models_list = [None] + [model.replace(".safetensors", "") for model in
                                          os.listdir("inputs/image/sd_models")
-                                         if (model.endswith(".safetensors") or not model.endswith(".txt") and not os.path.isdir(os.path.join("inputs/image/sd_models")))]
+                                         if (model.endswith(".safetensors") or not model.endswith(
+        ".txt") and not os.path.isdir(os.path.join("inputs/image/sd_models")))]
 audiocraft_models_list = [None] + ["musicgen-stereo-medium", "audiogen-medium", "musicgen-stereo-melody"]
 vae_models_list = [None] + [model.replace(".safetensors", "") for model in os.listdir("inputs/image/sd_models/vae") if
                             model.endswith(".safetensors") or not model.endswith(".txt")]
