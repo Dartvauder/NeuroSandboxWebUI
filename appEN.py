@@ -467,7 +467,7 @@ txt2img_interface = gr.Interface(
         gr.Slider(minimum=256, maximum=1024, value=512, step=64, label="Width"),
         gr.Slider(minimum=256, maximum=1024, value=512, step=64, label="Height"),
         gr.Slider(minimum=1, maximum=4, value=1, step=1, label="Clip Skip"),
-gr.Checkbox(label="Enable Upscale", value=False),
+        gr.Checkbox(label="Enable Upscale", value=False),
         gr.Slider(minimum=2, maximum=4, value=2, step=1, label="Upscale Factor"),
     ],
     outputs=[
