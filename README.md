@@ -67,7 +67,7 @@ To get update, run `git pull`
 ### LLM:
 
 1) First upload your models to the folder: *inputs/text/llm_models*
-2) Select your model from the `LLM` drop-down list
+2) Select your model from the drop-down list
 3) Select model type (`transformers` or `llama`)
 4) Set up the model according to the parameters you need
 5) Type (or speak) your request
@@ -82,32 +82,35 @@ To get update, run `git pull`
 #### txt2img:
 
 1) First upload your models to the folder: *inputs/image/sd_models*
-2) Select a model from the drop-down list
-3) Set up the model according to the parameters you need
-4) Enter your prompt
-5) Click the `Submit` button to get the image
-#### Optional: You can select your vae model and enable upscale to increase the size of the generated image 
+2) Select your model from the drop-down list
+3) Select model type (`SD` or `SDXL`)
+4) Set up the model according to the parameters you need
+5) Enter your request
+6) Click the `Submit` button to get the image
+#### Optional: You can select your `vae` model and enable `upscale` to increase the size of the generated image 
 #### vae = *inputs/image/sd_models/vae*
 
 #### img2img:
 
 1) First upload your models to the folder: *inputs/image/sd_models*
-2) Select a model from the drop-down list
-3) Set up the model according to the parameters you need
-4) Upload the initial image with which the generation will take place
-5) Enter your prompt
-6) Click the `Submit` button to get the image
-#### Optional: You can select your vae model
+2) Select your model from the drop-down list
+3) Select model type (`SD` or `SDXL`)
+4) Set up the model according to the parameters you need
+5) Upload the initial image with which the generation will take place
+6) Enter your request
+7) Click the `Submit` button to get the image
+#### Optional: You can select your `vae` model
 #### vae = *inputs/image/sd_models/vae*
 
 ### AudioCraft:
 
 1) Select a model from the drop-down list
-2) Set up the model according to the parameters you need
-3) Enter your prompt
-4) (Optional) upload the initial audio if you are using melody model 
-5) Click the `Submit` button to get the audio
-#### Optional: You can enable multiband diffusion to improve the generated audio
+2) Select model type (`musicgen` or `audiogen`)
+3) Set up the model according to the parameters you need
+4) Enter your request
+5) (Optional) upload the initial audio if you are using `melody` model 
+6) Click the `Submit` button to get the audio
+#### Optional: You can enable `multiband diffusion` to improve the generated audio
 
 ### Additional Information:
 
