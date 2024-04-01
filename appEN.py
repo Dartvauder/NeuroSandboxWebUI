@@ -8,7 +8,8 @@ import whisper
 from datetime import datetime
 import warnings
 import logging
-from diffusers import StableDiffusionPipeline, StableDiffusionXLPipeline, StableDiffusionImg2ImgPipeline, AutoencoderKL, StableDiffusionUpscalePipeline
+from diffusers import StableDiffusionPipeline, StableDiffusionXLPipeline, StableDiffusionImg2ImgPipeline, AutoencoderKL, \
+    StableDiffusionUpscalePipeline
 from git import Repo
 from PIL import Image
 from llama_cpp import Llama
@@ -128,25 +129,26 @@ def load_multiband_diffusion_model():
         print("Multiband Diffusion model downloaded")
     return multiband_diffusion_path
 
+
 def load_upscale_model(upscale_factor):
     upscale_model_name = "stabilityai/stable-diffusion-x4-upscaler"
     upscale_model_path = os.path.join("inputs", "image", "sd_models", "upscale", f"{upscale_model_name}.safetensors")
-    
+
     print(f"Downloading Upscale model: {upscale_model_name}...")
-    
+
     if not os.path.exists(upscale_model_path):
         os.makedirs(os.path.dirname(upscale_model_path), exist_ok=True)
         Repo.clone_from(f"https://huggingface.co/{upscale_model_name}", os.path.dirname(upscale_model_path))
-    
+
     upscaler = StableDiffusionUpscalePipeline.from_single_file(
         upscale_model_path,
         revision="upscale",
         use_safetensors=True,
         device_map="auto",
     )
-    
+
     print(f"Upscale model {upscale_model_name} downloaded")
-    
+
     upscaler.upscale_factor = upscale_factor
     return upscaler
 
@@ -223,10 +225,14 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_model_
     return text, audio_path, avatar_path, chat_dir
 
 
-def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name, vae_model_name, stable_diffusion_model_type, stable_diffusion_sampler, stable_diffusion_steps, stable_diffusion_cfg, stable_diffusion_width, stable_diffusion_height, stable_diffusion_clip_skip, enable_upscale=False, upscale_factor=2):
+def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name, vae_model_name,
+                           stable_diffusion_model_type, stable_diffusion_sampler, stable_diffusion_steps,
+                           stable_diffusion_cfg, stable_diffusion_width, stable_diffusion_height,
+                           stable_diffusion_clip_skip, enable_upscale=False, upscale_factor=2):
     if not stable_diffusion_model_name:
         return None, "Please, select a Stable Diffusion model!"
-    stable_diffusion_model_path = os.path.join("inputs", "image", "sd_models", f"{stable_diffusion_model_name}.safetensors")
+    stable_diffusion_model_path = os.path.join("inputs", "image", "sd_models",
+                                               f"{stable_diffusion_model_name}.safetensors")
     if stable_diffusion_model_type == "SD":
         if os.path.exists(stable_diffusion_model_path):
             stable_diffusion_model = StableDiffusionPipeline.from_single_file(
@@ -377,7 +383,7 @@ def generate_audio(prompt, input_audio=None, model_name=None, model_type="musicg
     multiband_diffusion_model = None
     if enable_multiband:
         multiband_diffusion_path = load_multiband_diffusion_model()
-        multiband_diffusion_model = MultiBandDiffusion.get_pretrained(multiband_diffusion_path)
+        multiband_diffusion_model = MultiBandDiffusion.get_mbd_musicgen(multiband_diffusion_path)
 
     audio_paths = []
 
@@ -423,7 +429,7 @@ avatars_list = [None] + [avatar for avatar in os.listdir("inputs/image/avatars")
 speaker_wavs_list = [None] + [wav for wav in os.listdir("inputs/audio/voices") if not wav.endswith(".txt")]
 stable_diffusion_models_list = [None] + [model.replace(".safetensors", "") for model in
                                          os.listdir("inputs/image/sd_models")
-                                         if (model.endswith(".safetensors") or not model.endswith(".txt"))] and not os.path.isdir(os.path.join("inputs/image/sd_models", model))))]
+                                         if (model.endswith(".safetensors") or not model.endswith(".txt") and not os.path.isdir(os.path.join("inputs/image/sd_models")))]
 audiocraft_models_list = [None] + ["musicgen-stereo-medium", "audiogen-medium", "musicgen-stereo-melody"]
 vae_models_list = [None] + [model.replace(".safetensors", "") for model in os.listdir("inputs/image/sd_models/vae") if
                             model.endswith(".safetensors")]
