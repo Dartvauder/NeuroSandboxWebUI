@@ -71,7 +71,7 @@ To get update, run `git pull`
 3) Select model type (`transformers` or `llama`)
 4) Set up the model according to the parameters you need
 5) Type (or speak) your request
-6) Click the `Submit` button to receive text and audio response
+6) Click the `Submit` button to receive generated text and audio response
 #### Optional: you can enable `TTS` mode, select the `voice` and `language` needed to receive an audio response. You can also select `avatar`
 #### Avatars = *inputs/image/avatars*
 #### Voice samples = *inputs/audio/voices*
@@ -86,7 +86,7 @@ To get update, run `git pull`
 3) Select model type (`SD` or `SDXL`)
 4) Set up the model according to the parameters you need
 5) Enter your request
-6) Click the `Submit` button to get the image
+6) Click the `Submit` button to get the generated image
 #### Optional: You can select your `vae` model and enable `upscale` to increase the size of the generated image 
 #### vae = *inputs/image/sd_models/vae*
 
@@ -98,7 +98,7 @@ To get update, run `git pull`
 4) Set up the model according to the parameters you need
 5) Upload the initial image with which the generation will take place
 6) Enter your request
-7) Click the `Submit` button to get the image
+7) Click the `Submit` button to get the generated image
 #### Optional: You can select your `vae` model
 #### vae = *inputs/image/sd_models/vae*
 
@@ -109,7 +109,7 @@ To get update, run `git pull`
 3) Set up the model according to the parameters you need
 4) Enter your request
 5) (Optional) upload the initial audio if you are using `melody` model 
-6) Click the `Submit` button to get the audio
+6) Click the `Submit` button to get the generated audio
 #### Optional: You can enable `multiband diffusion` to improve the generated audio
 
 ### Additional Information:
