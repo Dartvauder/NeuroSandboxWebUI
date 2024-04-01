@@ -94,7 +94,7 @@ To get update, run `git pull`
 1) First upload your models to the folder: *inputs/image/sd_models*
 2) Select a model from the drop-down list
 3) Set up the model according to the parameters you need
-4) Upload the source image with which the generation will take place
+4) Upload the initial image with which the generation will take place
 5) Enter your prompt
 6) Click the `Submit` button to get the image
 #### Optional: You can select your vae model
