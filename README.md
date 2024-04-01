@@ -7,7 +7,7 @@
 
 Simple and easy interface for use of different neural network models. You can chat with LLM using text or voice input, Stable Diffusion for generating images and AudioCraft for generating audio. TTS and Whisper functions are available here for voice input and output with a choice of language and voice sample
 
-The goal of the project - to create the easiest possible application to use neural network models.
+The goal of the project - to create the easiest possible application to use neural network models
 
 ![Image1](https://github.com/Dartvauder/NeuroChatWebUI/assets/140557322/e279e713-2f12-46f9-aa20-3dfe45996de6) ![Image2](https://github.com/Dartvauder/NeuroChatWebUI/assets/140557322/2619024d-5dca-43d8-b44e-76e78936643e) ![Image3](https://github.com/Dartvauder/NeuroChatWebUI/assets/140557322/c205b515-8f03-4c68-a1e7-4a1d2f897da4)
 
