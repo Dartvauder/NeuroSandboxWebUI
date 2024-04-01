@@ -33,7 +33,7 @@ The goal of the project - to create the easiest possible application to use neur
 ## Minimum System Requirements:
 
 * System: Windows or Linux
-* GPU: 4GB+ or CPU: 8 core 3.2GHZ
+* GPU: 6GB+ or CPU: 8 core 3.2GHZ
 * RAM: 16GB+
 * Disk space: 20GB+
 * Internet for downloading models and installing
