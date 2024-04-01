@@ -79,11 +79,15 @@ To get update, run `git pull`
 
 ### Stable Diffusion:
 
+#### txt2img
+
 1) First upload your models to the folder: *inputs/image/sd_models*
 2) Select a model from the drop-down list
 3) Set up the model according to the parameters you need
 4) Enter your prompt
 5) Click the `Submit` button to get the image
+#### Optional: You can select your vae model and enable upscale to increase the size of the generated image 
+#### vae = *inputs/image/sd_models/vae*
 
 ### AudioCraft:
 
@@ -91,6 +95,7 @@ To get update, run `git pull`
 2) Set up the model according to the parameters you need
 3) Enter your prompt
 4) Click the `Submit` button to get the audio
+#### Optional: You can enable multiband diffusion to improve the generated audio
 
 ### Additional Information:
 
