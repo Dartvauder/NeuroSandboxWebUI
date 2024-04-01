@@ -432,7 +432,7 @@ stable_diffusion_models_list = [None] + [model.replace(".safetensors", "") for m
                                          if (model.endswith(".safetensors") or not model.endswith(".txt") and not os.path.isdir(os.path.join("inputs/image/sd_models")))]
 audiocraft_models_list = [None] + ["musicgen-stereo-medium", "audiogen-medium", "musicgen-stereo-melody"]
 vae_models_list = [None] + [model.replace(".safetensors", "") for model in os.listdir("inputs/image/sd_models/vae") if
-                            model.endswith(".safetensors")]
+                            model.endswith(".safetensors") or not model.endswith(".txt")]
 
 chat_interface = gr.Interface(
     fn=generate_text_and_speech,
