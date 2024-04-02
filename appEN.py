@@ -270,7 +270,10 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
     if XFORMERS_AVAILABLE:
-        stable_diffusion_model.unet.enable_xformers_memory_efficient_attention()
+
+stable_diffusion_model.enable_xformers_memory_efficient_attention()
+stable_diffusion_model.text_encoder.enable_xformers_memory_efficient_attention()
+stable_diffusion_model.vae.enable_xformers_memory_efficient_attention()        stable_diffusion_model.unet.enable_xformers_memory_efficient_attention()
 
     stable_diffusion_model.to(device)
     stable_diffusion_model.text_encoder.to(device)
