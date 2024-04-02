@@ -8,7 +8,7 @@ import whisper
 from datetime import datetime
 import warnings
 import logging
-from diffusers import StableDiffusionPipeline, StableDiffusionXLPipeline, StableDiffusionImg2ImgPipeline, AutoencoderKL, StableDiffusionUpscalePipeline
+from diffusers import StableDiffusionPipeline, StableDiffusionXLPipeline, StableDiffusionImg2ImgPipeline, AutoencoderKL, StableDiffusionLatentUpscalePipeline, StableDiffusionUpscalePipeline
 from git import Repo
 from PIL import Image
 from llama_cpp import Llama
@@ -130,26 +130,36 @@ def load_multiband_diffusion_model():
 
 
 def load_upscale_model(upscale_factor):
-    upscale_model_name = "stabilityai/stable-diffusion-x4-upscaler"
-    upscale_model_path = os.path.join("inputs", "image", "sd_models", "upscale", "stabilityai",
-                                      "x4-upscaler-ema.safetensors")
-    original_config_file = "configs/sd/x4-upscaling.yaml"
+    if upscale_factor == 2:
+        upscale_model_name = "stabilityai/sd-x2-latent-upscaler"
+        upscale_model_path = os.path.join("inputs", "image", "sd_models", "upscale", "x2-upscaler")
+    else:
+        upscale_model_name = "stabilityai/stable-diffusion-x4-upscaler"
+        upscale_model_path = os.path.join("inputs", "image", "sd_models", "upscale", "x4-upscaler")
+        original_config_file = "configs/sd/x4-upscaling.yaml"
 
     print(f"Downloading Upscale model: {upscale_model_name}")
 
     if not os.path.exists(upscale_model_path):
-        os.makedirs(os.path.dirname(upscale_model_path), exist_ok=True)
-        Repo.clone_from(f"https://huggingface.co/{upscale_model_name}",
-                        os.path.dirname(os.path.dirname(upscale_model_path)))
+        os.makedirs(upscale_model_path, exist_ok=True)
+        Repo.clone_from(f"https://huggingface.co/{upscale_model_name}", upscale_model_path)
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
-    upscaler = StableDiffusionUpscalePipeline.from_single_file(
-        upscale_model_path,
-        use_safetensors=True,
-        device_map="auto",
-        original_config_file=original_config_file,
-        torch_dtype=torch.float16 if device == "cuda" else torch.float32
-    )
+
+    if upscale_factor == 2:
+        upscaler = StableDiffusionLatentUpscalePipeline.from_pretrained(
+            upscale_model_path,
+            torch_dtype=torch.float16 if device == "cuda" else torch.float32,
+            device_map="auto"
+        )
+    else:
+        upscaler = StableDiffusionUpscalePipeline.from_pretrained(
+            upscale_model_path,
+            original_config_file=original_config_file,
+            revision="fp16",
+            torch_dtype=torch.float16 if device == "cuda" else torch.float32,
+            device_map="auto"
+        )
 
     upscaler.to(device)
     upscaler.enable_attention_slicing()
@@ -159,7 +169,6 @@ def load_upscale_model(upscale_factor):
     print(f"Upscale model {upscale_model_name} downloaded")
 
     upscaler.upscale_factor = upscale_factor
-    upscaler.vae_scale_factor = upscale_factor
     return upscaler
 
 
@@ -235,7 +244,7 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_model_
     return text, audio_path, avatar_path, chat_dir
 
 
-def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name, vae_model_name, stable_diffusion_model_type, stable_diffusion_sampler, stable_diffusion_steps, stable_diffusion_cfg, stable_diffusion_width, stable_diffusion_height, stable_diffusion_clip_skip, enable_upscale=False, upscale_factor=2):
+def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name, vae_model_name, stable_diffusion_model_type, stable_diffusion_sampler, stable_diffusion_steps, stable_diffusion_cfg, stable_diffusion_width, stable_diffusion_height, stable_diffusion_clip_skip, enable_upscale=False, upscale_factor="x2"):
     if not stable_diffusion_model_name:
         return None, "Please, select a Stable Diffusion model!"
 
@@ -286,9 +295,14 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
         image = images["images"][0]
 
         if enable_upscale:
-            upscaler = load_upscale_model(upscale_factor)
+            upscale_factor_value = 2 if upscale_factor == "x2" else 4
+            upscaler = load_upscale_model(upscale_factor_value)
             if upscaler:
-                upscaled_image = upscaler(prompt=prompt, image=image)["images"][0]
+                if upscale_factor == "x2":
+                    upscaled_image = \
+                    upscaler(prompt=prompt, image=image, num_inference_steps=20, guidance_scale=0.3).images[0]
+                else:
+                    upscaled_image = upscaler(prompt=prompt, image=image)["images"][0]
                 image = upscaled_image
 
         today = datetime.now().date()
@@ -487,7 +501,7 @@ txt2img_interface = gr.Interface(
         gr.Slider(minimum=256, maximum=1024, value=512, step=64, label="Height"),
         gr.Slider(minimum=1, maximum=4, value=1, step=1, label="Clip Skip"),
         gr.Checkbox(label="Enable Upscale", value=False),
-        gr.Slider(minimum=2, maximum=4, value=2, step=1, label="Upscale Factor"),
+        gr.Radio(choices=["x2", "x4"], label="Upscale Factor", value="x2"),
     ],
     outputs=[
         gr.Image(type="filepath", label="Generated Image"),
