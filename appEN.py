@@ -133,6 +133,7 @@ def load_upscale_model(upscale_factor):
     upscale_model_name = "stabilityai/stable-diffusion-x4-upscaler"
     upscale_model_path = os.path.join("inputs", "image", "sd_models", "upscale", "stabilityai",
                                       "x4-upscaler-ema.safetensors")
+    original_config_file = "configs/sd/x4-upscaling.yaml"
 
     print(f"Downloading Upscale model: {upscale_model_name}")
 
@@ -141,12 +142,19 @@ def load_upscale_model(upscale_factor):
         Repo.clone_from(f"https://huggingface.co/{upscale_model_name}",
                         os.path.dirname(os.path.dirname(upscale_model_path)))
 
+    device = "cuda" if torch.cuda.is_available() else "cpu"
     upscaler = StableDiffusionUpscalePipeline.from_single_file(
         upscale_model_path,
-        revision="upscale",
         use_safetensors=True,
         device_map="auto",
+        original_config_file=original_config_file,
+        torch_dtype=torch.float16 if device == "cuda" else torch.float32
     )
+
+    upscaler.to(device)
+    upscaler.enable_attention_slicing()
+    if XFORMERS_AVAILABLE:
+        upscaler.enable_xformers_memory_efficient_attention()
 
     print(f"Upscale model {upscale_model_name} downloaded")
 
@@ -232,26 +240,21 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
 
     stable_diffusion_model_path = os.path.join("inputs", "image", "sd_models", f"{stable_diffusion_model_name}.safetensors")
 
+    if not os.path.exists(stable_diffusion_model_path):
+        return None, f"Stable Diffusion model not found: {stable_diffusion_model_path}"
+
     if stable_diffusion_model_type == "SD":
-        if os.path.exists(stable_diffusion_model_path):
-            stable_diffusion_model = StableDiffusionPipeline.from_single_file(
-                stable_diffusion_model_path, use_safetensors=True, device_map="auto"
-            )
-        else:
-            print(f"Stable Diffusion model not found: {stable_diffusion_model_path}")
-            stable_diffusion_model = StableDiffusionPipeline.from_pretrained(
-                "runwayml/stable-diffusion-v1-5", use_safetensors=True, device_map="auto"
-            )
+        original_config_file = "configs/sd/v1-inference.yaml"
+        vae_config_file = "configs/sd/v1-inference.yaml"
+        stable_diffusion_model = StableDiffusionPipeline.from_single_file(
+            stable_diffusion_model_path, use_safetensors=True, device_map="auto", original_config_file=original_config_file
+        )
     elif stable_diffusion_model_type == "SDXL":
-        if os.path.exists(stable_diffusion_model_path):
-            stable_diffusion_model = StableDiffusionXLPipeline.from_single_file(
-                stable_diffusion_model_path, use_safetensors=True, device_map="auto", attention_slice=1
-            )
-        else:
-            print(f"Stable Diffusion XL model not found: {stable_diffusion_model_path}")
-            stable_diffusion_model = StableDiffusionXLPipeline.from_pretrained(
-                "stabilityai/stable-diffusion-xl-base-1.0", use_safetensors=True, device_map="auto", attention_slice=1
-            )
+        original_config_file = "configs/sd/sd_xl_base.yaml"
+        vae_config_file = "configs/sd/sd_xl_base.yaml"
+        stable_diffusion_model = StableDiffusionXLPipeline.from_single_file(
+            stable_diffusion_model_path, use_safetensors=True, device_map="auto", attention_slice=1, original_config_file=original_config_file
+        )
     else:
         return None, "Invalid Stable Diffusion model type!"
 
@@ -268,7 +271,7 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
     if vae_model_name is not None:
         vae_model_path = os.path.join("inputs", "image", "sd_models", "vae", f"{vae_model_name}.safetensors")
         if os.path.exists(vae_model_path):
-            vae = AutoencoderKL.from_single_file(vae_model_path, device_map="auto")
+            vae = AutoencoderKL.from_single_file(vae_model_path, device_map="auto", original_config_file=vae_config_file)
             stable_diffusion_model.vae = vae.to(device)
         else:
             print(f"VAE model not found: {vae_model_path}")
@@ -310,26 +313,22 @@ def generate_image_img2img(prompt, negative_prompt, init_image,
         return None, "Please, upload an initial image!"
     stable_diffusion_model_path = os.path.join("inputs", "image", "sd_models",
                                                f"{stable_diffusion_model_name}.safetensors")
+
+    if not os.path.exists(stable_diffusion_model_path):
+        return None, f"Stable Diffusion model not found: {stable_diffusion_model_path}"
+
     if stable_diffusion_model_type == "SD":
-        if os.path.exists(stable_diffusion_model_path):
-            stable_diffusion_model = StableDiffusionImg2ImgPipeline.from_single_file(
-                stable_diffusion_model_path, use_safetensors=True, device_map="auto"
-            )
-        else:
-            print(f"Stable Diffusion model not found: {stable_diffusion_model_path}")
-            stable_diffusion_model = StableDiffusionImg2ImgPipeline.from_pretrained(
-                "runwayml/stable-diffusion-v1-5", use_safetensors=True, device_map="auto"
-            )
+        original_config_file = "configs/sd/v1-inference.yaml"
+        vae_config_file = "configs/sd/v1-inference.yaml"
+        stable_diffusion_model = StableDiffusionImg2ImgPipeline.from_single_file(
+            stable_diffusion_model_path, use_safetensors=True, device_map="auto", original_config_file=original_config_file
+        )
     elif stable_diffusion_model_type == "SDXL":
-        if os.path.exists(stable_diffusion_model_path):
-            stable_diffusion_model = StableDiffusionImg2ImgPipeline.from_single_file(
-                stable_diffusion_model_path, use_safetensors=True, device_map="auto", attention_slice=1
-            )
-        else:
-            print(f"Stable Diffusion XL model not found: {stable_diffusion_model_path}")
-            stable_diffusion_model = StableDiffusionImg2ImgPipeline.from_pretrained(
-                "stabilityai/stable-diffusion-xl-base-1.0", use_safetensors=True, device_map="auto", attention_slice=1
-            )
+        original_config_file = "configs/sd/sd_xl_base.yaml"
+        vae_config_file = "configs/sd/sd_xl_base.yaml"
+        stable_diffusion_model = StableDiffusionImg2ImgPipeline.from_single_file(
+            stable_diffusion_model_path, use_safetensors=True, device_map="auto", attention_slice=1, original_config_file=original_config_file
+        )
     else:
         return None, "Invalid Stable Diffusion model type!"
     device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -343,7 +342,7 @@ def generate_image_img2img(prompt, negative_prompt, init_image,
     if vae_model_name is not None:
         vae_model_path = os.path.join("inputs", "image", "sd_models", "vae", f"{vae_model_name}.safetensors")
         if os.path.exists(vae_model_path):
-            vae = AutoencoderKL.from_single_file(vae_model_path, device_map=device)
+            vae = AutoencoderKL.from_single_file(vae_model_path, device_map=device, original_config_file=vae_config_file)
             stable_diffusion_model.vae = vae.to(device)
         else:
             print(f"VAE model not found: {vae_model_path}")
