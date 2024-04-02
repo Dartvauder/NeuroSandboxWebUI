@@ -159,6 +159,7 @@ def load_upscale_model(upscale_factor):
     print(f"Upscale model {upscale_model_name} downloaded")
 
     upscaler.upscale_factor = upscale_factor
+    upscaler.vae_scale_factor = upscale_factor
     return upscaler
 
 
