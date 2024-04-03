@@ -179,8 +179,7 @@ def load_upscale_model(upscale_factor):
 
 
 def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_model_type, max_tokens, n_ctx, temperature,
-                             top_p,
-                             top_k, avatar_name, enable_tts, speaker_wav, language):
+                             top_p, top_k, avatar_name, enable_tts, speaker_wav, language):
     global chat_dir, tts_model, whisper_model
     if not input_text and not input_audio:
         return "Please, enter your request!", None, None, None, None
@@ -217,8 +216,11 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_model_
                 generated_sequence = outputs[0][inputs.shape[-1]:]
                 text = tokenizer.decode(generated_sequence, skip_special_tokens=True)
             elif llm_model_type == "llama":
-                outputs = llm_model(prompt)
-                text = outputs['choices'][0]['text']
+                n_ctx = llm_model.n_ctx if llm_model.n_ctx else n_ctx
+                output = llm_model(prompt, max_tokens=max_tokens, stop=None, echo=False,
+                                   temperature=temperature, top_p=top_p, top_k=top_k,
+                                   repeat_penalty=1.1, n_ctx=n_ctx)
+                text = output['choices'][0]['text']
         if not chat_dir:
             now = datetime.now()
             chat_dir = os.path.join('outputs', f"chat_{now.strftime('%Y%m%d_%H%M%S')}")
