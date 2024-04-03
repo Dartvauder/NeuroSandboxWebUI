@@ -503,6 +503,8 @@ def generate_audio(prompt, input_audio=None, model_name=None, model_type="musicg
             model.set_generation_params(duration=duration, top_k=top_k, top_p=top_p, temperature=temperature,
                                         cfg_coef=cfg_coef)
             wav = model.generate(descriptions)
+            if wav.ndim > 2:
+                wav = wav.squeeze()
             if stop_signal:
                 return None, "Process stopped by user."
 
@@ -517,9 +519,6 @@ def generate_audio(prompt, input_audio=None, model_name=None, model_type="musicg
         audio_write(audio_path, wav.cpu(), model.sample_rate, strategy="loudness", loudness_compressor=True)
 
         return audio_path, None
-
-    except Exception as e:
-        return None, str(e)
 
     finally:
         del model
