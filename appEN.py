@@ -376,7 +376,7 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
 def generate_image_img2img(prompt, negative_prompt, init_image,
                            strength, stable_diffusion_model_name, vae_model_name, stable_diffusion_model_type,
                            stable_diffusion_sampler, stable_diffusion_steps, stable_diffusion_cfg,
-                           stable_diffusion_width, stable_diffusion_height, stable_diffusion_clip_skip):
+                           stable_diffusion_clip_skip):
     global stop_signal
     stop_signal = False
 
@@ -434,11 +434,12 @@ def generate_image_img2img(prompt, negative_prompt, init_image,
 
     try:
         init_image = Image.open(init_image).convert("RGB")
+        init_image = stable_diffusion_model.image_processor.preprocess(init_image)
+
         images = stable_diffusion_model(prompt, negative_prompt=negative_prompt,
                                         num_inference_steps=stable_diffusion_steps,
-                                        guidance_scale=stable_diffusion_cfg, height=stable_diffusion_height,
-                                        width=stable_diffusion_width, clip_skip=stable_diffusion_clip_skip,
-                                        sampler=stable_diffusion_sampler, init_image=init_image, strength=strength)
+                                        guidance_scale=stable_diffusion_cfg, clip_skip=stable_diffusion_clip_skip,
+                                        sampler=stable_diffusion_sampler, image=init_image, strength=strength)
         if stop_signal:
             return None, "Process stopped by user."
         image = images["images"][0]
@@ -451,6 +452,9 @@ def generate_image_img2img(prompt, negative_prompt, init_image,
         image.save(image_path, format="PNG")
 
         return image_path, None
+
+    except Exception as e:
+        return None, str(e)
 
     finally:
         del stable_diffusion_model
@@ -613,8 +617,6 @@ img2img_interface = gr.Interface(
                     label="Select Sampler", value="euler_ancestral"),
         gr.Slider(minimum=1, maximum=100, value=30, step=1, label="Steps"),
         gr.Slider(minimum=1.0, maximum=30.0, value=8, step=0.1, label="CFG"),
-        gr.Slider(minimum=256, maximum=1024, value=512, step=64, label="Width"),
-        gr.Slider(minimum=256, maximum=1024, value=512, step=64, label="Height"),
         gr.Slider(minimum=1, maximum=4, value=1, step=1, label="Clip Skip"),
     ],
     outputs=[
