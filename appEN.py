@@ -496,6 +496,8 @@ def generate_audio(prompt, input_audio=None, model_name=None, model_type="musicg
             model.set_generation_params(duration=duration, top_k=top_k, top_p=top_p, temperature=temperature,
                                         cfg_coef=cfg_coef)
             wav = model.generate_with_chroma([prompt], melody[None].expand(1, -1, -1), sr)
+            if wav.ndim > 2:
+                wav = wav.squeeze()
             if stop_signal:
                 return None, "Process stopped by user."
         else:
