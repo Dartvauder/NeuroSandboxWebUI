@@ -414,9 +414,10 @@ def generate_audio(prompt, input_audio=None, model_name=None, model_type="musicg
     multiband_diffusion_model = None
     if enable_multiband:
         multiband_diffusion_path = load_multiband_diffusion_model()
-        multiband_diffusion_model = MultiBandDiffusion.get_mbd_musicgen(multiband_diffusion_path)
-
-    audio_paths = []
+        if model_type == "musicgen":
+            multiband_diffusion_model = MultiBandDiffusion.get_mbd_musicgen(multiband_diffusion_path)
+        elif model_type == "audiogen":
+            multiband_diffusion_model = MultiBandDiffusion.get_mbd_audiogen(multiband_diffusion_path)
 
     try:
         if input_audio and model_type == "musicgen":
@@ -437,17 +438,14 @@ def generate_audio(prompt, input_audio=None, model_name=None, model_type="musicg
         today = datetime.now().date()
         audio_dir = os.path.join('outputs', f"audio_{today.strftime('%Y%m%d')}")
         os.makedirs(audio_dir, exist_ok=True)
-        for idx, one_wav in enumerate(wav):
-            audio_filename = f"output_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{idx}"
-            audio_path = os.path.join(audio_dir, audio_filename)
-            audio_write(audio_path, one_wav.cpu(), model.sample_rate, strategy="loudness", loudness_compressor=True)
-            audio_paths.append(audio_path)
 
-        if audio_paths:
-            return audio_paths[0], None
-        else:
-            return None, "Failed to generate audio"
+        audio_filename = f"output_{datetime.now().strftime('%Y%m%d_%H%M%S')}.wav"
+        audio_path = os.path.join(audio_dir, audio_filename)
+        audio_write(audio_path, wav.cpu(), model.sample_rate, strategy="loudness", loudness_compressor=True)
 
+        return audio_path, None
+    except Exception as e:
+        return None, str(e)
     finally:
         del model
         if multiband_diffusion_model:
