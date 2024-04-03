@@ -41,27 +41,33 @@ audiocraft_model_path = None
 
 
 def load_model(model_name, model_type, n_ctx=None):
-    if model_type == "transformers":
-        if model_name:
-            model_path = f"inputs/text/llm_models/{model_name}"
+    if model_name:
+        model_path = f"inputs/text/llm_models/{model_name}"
+        if model_type == "transformers":
             tokenizer = AutoTokenizer.from_pretrained(model_path)
             device = "cuda" if torch.cuda.is_available() else "cpu"
             model = AutoModelForCausalLM.from_pretrained(model_path)
-            if XFORMERS_AVAILABLE:
+        elif model_type == "llama":
+            device = "cuda" if torch.cuda.is_available() else "cpu"
+            model = Llama(model_path, n_gpu_layers=-1 if device == "cuda" else 0)
+            model.n_ctx = n_ctx
+            tokenizer = None
+        
+        if XFORMERS_AVAILABLE:
+            try:
+                model = model.with_xformers()
+            except (AttributeError, ImportError):
                 try:
-                    model = model.with_xformers()
-                except (AttributeError, ImportError):
-                    try:
-                        model.decoder.enable_xformers_memory_efficient_attention()
-                        model.encoder.enable_xformers_memory_efficient_attention()
-                    except AttributeError:
-                        pass
+                    model.decoder.enable_xformers_memory_efficient_attention()
+                    model.encoder.enable_xformers_memory_efficient_attention()
+                except AttributeError:
+                    pass
+        
+        if model_type == "transformers":
             return tokenizer, model.to(device)
-    elif model_type == "llama":
-        if model_name:
-            model_path = os.path.join("inputs/text/llm_models", model_name)
-            model = Llama(model_path, n_ctx=n_ctx)
+        else:
             return None, model
+    
     return None, None
 
 
