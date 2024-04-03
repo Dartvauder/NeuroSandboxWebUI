@@ -8,7 +8,8 @@ import whisper
 from datetime import datetime
 import warnings
 import logging
-from diffusers import StableDiffusionPipeline, StableDiffusionXLPipeline, StableDiffusionImg2ImgPipeline, AutoencoderKL, StableDiffusionLatentUpscalePipeline, StableDiffusionUpscalePipeline
+from diffusers import StableDiffusionPipeline, StableDiffusionXLPipeline, StableDiffusionImg2ImgPipeline, AutoencoderKL, \
+    StableDiffusionLatentUpscalePipeline, StableDiffusionUpscalePipeline
 from git import Repo
 from PIL import Image
 from llama_cpp import Llama
@@ -16,6 +17,14 @@ import requests
 import torchaudio
 from audiocraft.models import MusicGen, AudioGen, MultiBandDiffusion
 from audiocraft.data.audio import audio_write
+
+XFORMERS_AVAILABLE = False
+try:
+    import xformers
+    import xformers.ops
+    XFORMERS_AVAILABLE = True
+except ImportError:
+    print("Xformers is not installed. Proceeding without it.")
 
 if XFORMERS_AVAILABLE and torch.cuda.is_available():
     try:
@@ -52,7 +61,7 @@ def load_model(model_name, model_type, n_ctx=None):
             model = Llama(model_path, n_gpu_layers=-1 if device == "cuda" else 0)
             model.n_ctx = n_ctx
             tokenizer = None
-        
+
         if XFORMERS_AVAILABLE:
             try:
                 model = model.with_xformers()
@@ -62,12 +71,12 @@ def load_model(model_name, model_type, n_ctx=None):
                     model.encoder.enable_xformers_memory_efficient_attention()
                 except AttributeError:
                     pass
-        
+
         if model_type == "transformers":
             return tokenizer, model.to(device)
         else:
             return None, model
-    
+
     return None, None
 
 
@@ -180,6 +189,7 @@ def load_upscale_model(upscale_factor):
 
 stop_signal = False
 
+
 def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_model_type, max_tokens, n_ctx, temperature,
                              top_p, top_k, avatar_name, enable_tts, speaker_wav, language):
     global chat_dir, tts_model, whisper_model, stop_signal
@@ -221,21 +231,19 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_model_
                 inputs = tokenizer.encode(prompt, return_tensors="pt")
                 device = llm_model.device
                 inputs = inputs.to(device)
-                while not stop_signal:
-                    outputs = llm_model.generate(inputs, max_new_tokens=max_tokens, top_p=top_p, top_k=top_k,
-                                                 temperature=temperature, pad_token_id=tokenizer.eos_token_id)
-                    if stop_signal:
-                        return "Process stopped by user.", None, None, None
+                outputs = llm_model.generate(inputs, max_new_tokens=max_tokens, top_p=top_p, top_k=top_k,
+                                             temperature=temperature, pad_token_id=tokenizer.eos_token_id)
+                if stop_signal:
+                    return "Process stopped by user.", None, None, None
                 generated_sequence = outputs[0][inputs.shape[-1]:]
                 text = tokenizer.decode(generated_sequence, skip_special_tokens=True)
             elif llm_model_type == "llama":
-                n_ctx = llm_model.n_ctx if llm_model.n_ctx else n_ctx
-                while not stop_signal:
-                    output = llm_model(prompt, max_tokens=max_tokens, stop=None, echo=False,
-                                       temperature=temperature, top_p=top_p, top_k=top_k,
-                                       repeat_penalty=1.1, n_ctx=n_ctx)
-                    if stop_signal:
-                        return "Process stopped by user.", None, None, None
+                llm_model.n_ctx = n_ctx
+                output = llm_model(prompt, max_tokens=max_tokens, stop=None, echo=False,
+                                   temperature=temperature, top_p=top_p, top_k=top_k,
+                                   repeat_penalty=1.1)
+                if stop_signal:
+                    return "Process stopped by user.", None, None, None
                 text = output['choices'][0]['text']
 
         if not chat_dir:
@@ -273,14 +281,19 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_model_
 
     return text, audio_path, avatar_path, chat_dir
 
-def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name, vae_model_name, stable_diffusion_model_type, stable_diffusion_sampler, stable_diffusion_steps, stable_diffusion_cfg, stable_diffusion_width, stable_diffusion_height, stable_diffusion_clip_skip, enable_upscale=False, upscale_factor="x2"):
+
+def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name, vae_model_name,
+                           stable_diffusion_model_type, stable_diffusion_sampler, stable_diffusion_steps,
+                           stable_diffusion_cfg, stable_diffusion_width, stable_diffusion_height,
+                           stable_diffusion_clip_skip, enable_upscale=False, upscale_factor="x2"):
     global stop_signal
     stop_signal = False
 
     if not stable_diffusion_model_name:
         return None, "Please, select a Stable Diffusion model!"
 
-    stable_diffusion_model_path = os.path.join("inputs", "image", "sd_models", f"{stable_diffusion_model_name}.safetensors")
+    stable_diffusion_model_path = os.path.join("inputs", "image", "sd_models",
+                                               f"{stable_diffusion_model_name}.safetensors")
 
     if not os.path.exists(stable_diffusion_model_path):
         return None, f"Stable Diffusion model not found: {stable_diffusion_model_path}"
@@ -289,13 +302,15 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
         original_config_file = "configs/sd/v1-inference.yaml"
         vae_config_file = "configs/sd/v1-inference.yaml"
         stable_diffusion_model = StableDiffusionPipeline.from_single_file(
-            stable_diffusion_model_path, use_safetensors=True, device_map="auto", original_config_file=original_config_file
+            stable_diffusion_model_path, use_safetensors=True, device_map="auto",
+            original_config_file=original_config_file
         )
     elif stable_diffusion_model_type == "SDXL":
         original_config_file = "configs/sd/sd_xl_base.yaml"
         vae_config_file = "configs/sd/sd_xl_base.yaml"
         stable_diffusion_model = StableDiffusionXLPipeline.from_single_file(
-            stable_diffusion_model_path, use_safetensors=True, device_map="auto", attention_slice=1, original_config_file=original_config_file
+            stable_diffusion_model_path, use_safetensors=True, device_map="auto", attention_slice=1,
+            original_config_file=original_config_file
         )
     else:
         return None, "Invalid Stable Diffusion model type!"
@@ -304,7 +319,6 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
 
     if XFORMERS_AVAILABLE:
         stable_diffusion_model.enable_xformers_memory_efficient_attention()
-        stable_diffusion_model.text_encoder.enable_xformers_memory_efficient_attention()
         stable_diffusion_model.vae.enable_xformers_memory_efficient_attention()
         stable_diffusion_model.unet.enable_xformers_memory_efficient_attention()
 
@@ -318,20 +332,20 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
     if vae_model_name is not None:
         vae_model_path = os.path.join("inputs", "image", "sd_models", "vae", f"{vae_model_name}.safetensors")
         if os.path.exists(vae_model_path):
-            vae = AutoencoderKL.from_single_file(vae_model_path, device_map="auto", original_config_file=vae_config_file)
+            vae = AutoencoderKL.from_single_file(vae_model_path, device_map="auto",
+                                                 original_config_file=vae_config_file)
             stable_diffusion_model.vae = vae.to(device)
         else:
             print(f"VAE model not found: {vae_model_path}")
 
     try:
-        while not stop_signal:
-            images = stable_diffusion_model(prompt, negative_prompt=negative_prompt,
-                                            num_inference_steps=stable_diffusion_steps,
-                                            guidance_scale=stable_diffusion_cfg, height=stable_diffusion_height,
-                                            width=stable_diffusion_width, clip_skip=stable_diffusion_clip_skip,
-                                            sampler=stable_diffusion_sampler)
-            if stop_signal:
-                return None, "Process stopped by user."
+        images = stable_diffusion_model(prompt, negative_prompt=negative_prompt,
+                                        num_inference_steps=stable_diffusion_steps,
+                                        guidance_scale=stable_diffusion_cfg, height=stable_diffusion_height,
+                                        width=stable_diffusion_width, clip_skip=stable_diffusion_clip_skip,
+                                        sampler=stable_diffusion_sampler)
+        if stop_signal:
+            return None, "Process stopped by user."
         image = images["images"][0]
 
         if enable_upscale:
@@ -340,7 +354,7 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
             if upscaler:
                 if upscale_factor == "x2":
                     upscaled_image = \
-                    upscaler(prompt=prompt, image=image, num_inference_steps=30, guidance_scale=0).images[0]
+                        upscaler(prompt=prompt, image=image, num_inference_steps=30, guidance_scale=0).images[0]
                 else:
                     upscaled_image = upscaler(prompt=prompt, image=image)["images"][0]
                 image = upscaled_image
@@ -357,6 +371,7 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
     finally:
         del stable_diffusion_model
         torch.cuda.empty_cache()
+
 
 def generate_image_img2img(prompt, negative_prompt, init_image,
                            strength, stable_diffusion_model_name, vae_model_name, stable_diffusion_model_type,
@@ -381,13 +396,15 @@ def generate_image_img2img(prompt, negative_prompt, init_image,
         original_config_file = "configs/sd/v1-inference.yaml"
         vae_config_file = "configs/sd/v1-inference.yaml"
         stable_diffusion_model = StableDiffusionImg2ImgPipeline.from_single_file(
-            stable_diffusion_model_path, use_safetensors=True, device_map="auto", original_config_file=original_config_file
+            stable_diffusion_model_path, use_safetensors=True, device_map="auto",
+            original_config_file=original_config_file
         )
     elif stable_diffusion_model_type == "SDXL":
         original_config_file = "configs/sd/sd_xl_base.yaml"
         vae_config_file = "configs/sd/sd_xl_base.yaml"
         stable_diffusion_model = StableDiffusionImg2ImgPipeline.from_single_file(
-            stable_diffusion_model_path, use_safetensors=True, device_map="auto", attention_slice=1, original_config_file=original_config_file
+            stable_diffusion_model_path, use_safetensors=True, device_map="auto", attention_slice=1,
+            original_config_file=original_config_file
         )
     else:
         return None, "Invalid Stable Diffusion model type!"
@@ -395,32 +412,35 @@ def generate_image_img2img(prompt, negative_prompt, init_image,
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
     if XFORMERS_AVAILABLE:
+        stable_diffusion_model.enable_xformers_memory_efficient_attention()
+        stable_diffusion_model.vae.enable_xformers_memory_efficient_attention()
         stable_diffusion_model.unet.enable_xformers_memory_efficient_attention()
-        stable_diffusion_model.to(device)
-        stable_diffusion_model.text_encoder.to(device)
-        stable_diffusion_model.vae.to(device)
-        stable_diffusion_model.unet.to(device)
+
+    stable_diffusion_model.to(device)
+    stable_diffusion_model.text_encoder.to(device)
+    stable_diffusion_model.vae.to(device)
+    stable_diffusion_model.unet.to(device)
 
     stable_diffusion_model.safety_checker = None
 
     if vae_model_name is not None:
         vae_model_path = os.path.join("inputs", "image", "sd_models", "vae", f"{vae_model_name}.safetensors")
         if os.path.exists(vae_model_path):
-            vae = AutoencoderKL.from_single_file(vae_model_path, device_map=device, original_config_file=vae_config_file)
+            vae = AutoencoderKL.from_single_file(vae_model_path, device_map=device,
+                                                 original_config_file=vae_config_file)
             stable_diffusion_model.vae = vae.to(device)
         else:
             print(f"VAE model not found: {vae_model_path}")
 
     try:
         init_image = Image.open(init_image).convert("RGB")
-        while not stop_signal:
-            images = stable_diffusion_model(prompt, negative_prompt=negative_prompt,
-                                            num_inference_steps=stable_diffusion_steps,
-                                            guidance_scale=stable_diffusion_cfg, height=stable_diffusion_height,
-                                            width=stable_diffusion_width, clip_skip=stable_diffusion_clip_skip,
-                                            sampler=stable_diffusion_sampler, init_image=init_image, strength=strength)
-            if stop_signal:
-                return None, "Process stopped by user."
+        images = stable_diffusion_model(prompt, negative_prompt=negative_prompt,
+                                        num_inference_steps=stable_diffusion_steps,
+                                        guidance_scale=stable_diffusion_cfg, height=stable_diffusion_height,
+                                        width=stable_diffusion_width, clip_skip=stable_diffusion_clip_skip,
+                                        sampler=stable_diffusion_sampler, init_image=init_image, strength=strength)
+        if stop_signal:
+            return None, "Process stopped by user."
         image = images["images"][0]
 
         today = datetime.now().date()
@@ -435,6 +455,7 @@ def generate_image_img2img(prompt, negative_prompt, init_image,
     finally:
         del stable_diffusion_model
         torch.cuda.empty_cache()
+
 
 def generate_audio(prompt, input_audio=None, model_name=None, model_type="musicgen", duration=10, top_k=250, top_p=0.0,
                    temperature=1.0, cfg_coef=4.0, enable_multiband=False):
@@ -470,18 +491,16 @@ def generate_audio(prompt, input_audio=None, model_name=None, model_type="musicg
             melody, sr = torchaudio.load(audio_path)
             model.set_generation_params(duration=duration, top_k=top_k, top_p=top_p, temperature=temperature,
                                         cfg_coef=cfg_coef)
-            while not stop_signal:
-                wav = model.generate_with_chroma([prompt], melody[None].expand(1, -1, -1), sr)
-                if stop_signal:
-                    return None, "Process stopped by user."
+            wav = model.generate_with_chroma([prompt], melody[None].expand(1, -1, -1), sr)
+            if stop_signal:
+                return None, "Process stopped by user."
         else:
             descriptions = [prompt]
             model.set_generation_params(duration=duration, top_k=top_k, top_p=top_p, temperature=temperature,
                                         cfg_coef=cfg_coef)
-            while not stop_signal:
-                wav = model.generate(descriptions)
-                if stop_signal:
-                    return None, "Process stopped by user."
+            wav = model.generate(descriptions)
+            if stop_signal:
+                return None, "Process stopped by user."
 
         if multiband_diffusion_model:
             wav = multiband_diffusion_model.enhance(wav)
@@ -503,6 +522,7 @@ def generate_audio(prompt, input_audio=None, model_name=None, model_type="musicg
         if multiband_diffusion_model:
             del multiband_diffusion_model
         torch.cuda.empty_cache()
+
 
 def stop_all_processes():
     global stop_signal
@@ -548,7 +568,6 @@ chat_interface = gr.Interface(
                 "avatar, voice and language from the drop-down lists. You can also customize the model settings from "
                 "using sliders. Try it and see what happens!",
     allow_flagging="never",
-    stop_button=gr.Button(value="Stop generation", interactive=True),
 )
 
 txt2img_interface = gr.Interface(
@@ -578,7 +597,6 @@ txt2img_interface = gr.Interface(
                 "You can select the Stable Diffusion model and customize the generation settings from the sliders. "
                 "Try it and see what happens!",
     allow_flagging="never",
-    stop_button=gr.Button(value="Stop generation", interactive=True),
 )
 
 img2img_interface = gr.Interface(
@@ -608,7 +626,6 @@ img2img_interface = gr.Interface(
                 "You can select the Stable Diffusion model and customize the generation settings from the sliders. "
                 "Try it and see what happens!",
     allow_flagging="never",
-    stop_button=gr.Button(value="Stop generation", interactive=True),
 )
 
 audiocraft_interface = gr.Interface(
@@ -634,7 +651,6 @@ audiocraft_interface = gr.Interface(
                 "You can select the AudioCraft model and customize the generation settings from the sliders. "
                 "Try it and see what happens!",
     allow_flagging="never",
-    stop_button=gr.Button(value="Stop generation", interactive=True),
 )
 
 with gr.TabbedInterface(
@@ -642,9 +658,7 @@ with gr.TabbedInterface(
      audiocraft_interface],
     tab_names=["LLM", "Stable Diffusion", "AudioCraft"]
 ) as app:
-    chat_interface.stop_button.click(stop_all_processes, [], [], queue=False)
-    txt2img_interface.stop_button.click(stop_all_processes, [], [], queue=False)
-    img2img_interface.stop_button.click(stop_all_processes, [], [], queue=False)
-    audiocraft_interface.stop_button.click(stop_all_processes, [], [], queue=False)
+    stop_button = gr.Button(value="Stop generation", interactive=True)
+    stop_button.click(stop_all_processes, [], [], queue=False)
 
     app.launch()
