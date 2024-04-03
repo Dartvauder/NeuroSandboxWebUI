@@ -514,7 +514,7 @@ def generate_audio(prompt, input_audio=None, model_name=None, model_type="musicg
         today = datetime.now().date()
         audio_dir = os.path.join('outputs', f"audio_{today.strftime('%Y%m%d')}")
         os.makedirs(audio_dir, exist_ok=True)
-        audio_filename = f"output_{datetime.now().strftime('%Y%m%d_%H%M%S')}.wav"
+        audio_filename = f"output_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
         audio_path = os.path.join(audio_dir, audio_filename)
         audio_write(audio_path, wav.cpu(), model.sample_rate, strategy="loudness", loudness_compressor=True)
 
