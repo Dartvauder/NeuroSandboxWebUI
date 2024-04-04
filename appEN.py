@@ -17,14 +17,6 @@ import torchaudio
 from audiocraft.models import MusicGen, AudioGen, MultiBandDiffusion
 from audiocraft.data.audio import audio_write
 
-XFORMERS_AVAILABLE = False
-try:
-    import xformers
-    import xformers.ops
-    XFORMERS_AVAILABLE = True
-except ImportError:
-    print("Xformers is not installed. Proceeding without it.")
-
 if XFORMERS_AVAILABLE and torch.cuda.is_available():
     try:
         import xformers
