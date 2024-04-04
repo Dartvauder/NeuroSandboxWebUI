@@ -475,6 +475,8 @@ def generate_audio(prompt, input_audio=None, model_name=None, model_type="musicg
     global audiocraft_model_path, stop_signal
     stop_signal = False
 
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+
     if not model_name:
         return None, "Please, select an AudioCraft model!"
 
@@ -494,12 +496,15 @@ def generate_audio(prompt, input_audio=None, model_name=None, model_type="musicg
         return None, "The selected model is not compatible with the chosen model type"
 
     multiband_diffusion_model = None
+
     if enable_multiband:
         multiband_diffusion_path = load_multiband_diffusion_model()
         if model_type == "musicgen":
             multiband_diffusion_model = MultiBandDiffusion.get_mbd_musicgen(multiband_diffusion_path)
+            multiband_diffusion_model.to(device)
         elif model_type == "audiogen":
             multiband_diffusion_model = MultiBandDiffusion.get_mbd_audiogen(multiband_diffusion_path)
+            multiband_diffusion_model.to(device)
 
     try:
         if input_audio and model_type == "musicgen":
@@ -523,7 +528,10 @@ def generate_audio(prompt, input_audio=None, model_name=None, model_type="musicg
                 return None, "Process stopped by user."
 
         if multiband_diffusion_model:
-            wav = multiband_diffusion_model.enhance(wav)
+            wav = wav.unsqueeze(0)
+            wav = wav.to(device)
+            wav = multiband_diffusion_model.compress_and_decompress(wav)
+            wav = wav.squeeze(0)
 
         today = datetime.now().date()
         audio_dir = os.path.join('outputs', f"audio_{today.strftime('%Y%m%d')}")
@@ -563,7 +571,7 @@ chat_interface = gr.Interface(
         gr.Textbox(label="Enter your request"),
         gr.Audio(type="filepath", label="Record your request"),
         gr.Dropdown(choices=llm_models_list, label="Select LLM Model", value=None),
-        gr.Dropdown(choices=["transformers", "llama"], label="Select Model Type", value="transformers"),
+        gr.Radio(choices=["transformers", "llama"], label="Select Model Type", value="transformers"),
         gr.Slider(minimum=1, maximum=2048, value=512, step=1, label="Max Tokens"),
         gr.Slider(minimum=0, maximum=4096, value=2048, step=1, label="n_ctx (for llama models only)", interactive=True),
         gr.Slider(minimum=0.0, maximum=1.0, value=0.7, step=0.1, label="Temperature"),
@@ -594,7 +602,7 @@ txt2img_interface = gr.Interface(
         gr.Textbox(label="Enter your negative prompt", value=""),
         gr.Dropdown(choices=stable_diffusion_models_list, label="Select Stable Diffusion Model", value=None),
         gr.Dropdown(choices=vae_models_list, label="Select VAE Model", value=None),
-        gr.Dropdown(choices=["SD", "SDXL"], label="Select Model Type", value="SD"),
+        gr.Radio(choices=["SD", "SDXL"], label="Select Model Type", value="SD"),
         gr.Dropdown(choices=["euler_ancestral", "euler", "lms", "heun", "dpm", "dpm_solver", "dpm_solver++"],
                     label="Select Sampler", value="euler_ancestral"),
         gr.Slider(minimum=1, maximum=100, value=30, step=1, label="Steps"),
@@ -625,7 +633,7 @@ img2img_interface = gr.Interface(
         gr.Slider(minimum=0.0, maximum=1.0, value=0.5, step=0.01, label="Strength"),
         gr.Dropdown(choices=stable_diffusion_models_list, label="Select Stable Diffusion Model", value=None),
         gr.Dropdown(choices=vae_models_list, label="Select VAE Model", value=None),
-        gr.Dropdown(choices=["SD", "SDXL"], label="Select Model Type", value="SD"),
+        gr.Radio(choices=["SD", "SDXL"], label="Select Model Type", value="SD"),
         gr.Dropdown(choices=["euler_ancestral", "euler", "lms", "heun", "dpm", "dpm_solver", "dpm_solver++"],
                     label="Select Sampler", value="euler_ancestral"),
         gr.Slider(minimum=1, maximum=100, value=30, step=1, label="Steps"),
@@ -649,7 +657,7 @@ audiocraft_interface = gr.Interface(
         gr.Textbox(label="Enter your prompt"),
         gr.Audio(type="filepath", label="Melody audio (optional)", interactive=True),
         gr.Dropdown(choices=audiocraft_models_list, label="Select AudioCraft Model", value=None),
-        gr.Dropdown(choices=["musicgen", "audiogen"], label="Select Model Type", value="musicgen"),
+        gr.Radio(choices=["musicgen", "audiogen"], label="Select Model Type", value="musicgen"),
         gr.Slider(minimum=1, maximum=120, value=10, step=1, label="Duration (seconds)"),
         gr.Slider(minimum=1, maximum=1000, value=250, step=1, label="Top K"),
         gr.Slider(minimum=0.0, maximum=1.0, value=0.0, step=0.1, label="Top P"),
