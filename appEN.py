@@ -52,14 +52,22 @@ def load_model(model_name, model_type, n_ctx=None):
     if model_name:
         model_path = f"inputs/text/llm_models/{model_name}"
         if model_type == "transformers":
-            tokenizer = AutoTokenizer.from_pretrained(model_path)
-            device = "cuda" if torch.cuda.is_available() else "cpu"
-            model = AutoModelForCausalLM.from_pretrained(model_path)
+            try:
+                tokenizer = AutoTokenizer.from_pretrained(model_path)
+                device = "cuda" if torch.cuda.is_available() else "cpu"
+                model = AutoModelForCausalLM.from_pretrained(model_path)
+            except (ValueError, OSError):
+                return None, None, "The selected model is not compatible with the 'transformers' model type"
         elif model_type == "llama":
-            device = "cuda" if torch.cuda.is_available() else "cpu"
-            model = Llama(model_path, n_gpu_layers=-1 if device == "cuda" else 0)
-            model.n_ctx = n_ctx
-            tokenizer = None
+            try:
+                device = "cuda" if torch.cuda.is_available() else "cpu"
+                model = Llama(model_path, n_gpu_layers=-1 if device == "cuda" else 0)
+                model.n_ctx = n_ctx
+                tokenizer = None
+            except (ValueError, RuntimeError):
+                return None, None, "The selected model is not compatible with the 'llama' model type"
+        else:
+            return None, None, "Invalid model type selected"
 
         if XFORMERS_AVAILABLE:
             try:
@@ -72,11 +80,11 @@ def load_model(model_name, model_type, n_ctx=None):
                     pass
 
         if model_type == "transformers":
-            return tokenizer, model.to(device)
+            return tokenizer, model.to(device), None
         else:
-            return None, model
+            return None, model, None
 
-    return None, None
+    return None, None, None
 
 
 def transcribe_audio(audio_file_path):
@@ -202,8 +210,11 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_model_
     if not llm_model_name:
         return "Please, select a LLM model!", None, None, None, None
 
-    tokenizer, llm_model = load_model(llm_model_name, llm_model_type,
-                                      n_ctx=n_ctx if llm_model_type == "llama" else None)
+    tokenizer, llm_model, error_message = load_model(llm_model_name, llm_model_type,
+                                                     n_ctx=n_ctx if llm_model_type == "llama" else None)
+    if error_message:
+        return error_message, None, None, None, None
+
     tts_model = None
     whisper_model = None
     text = None
@@ -297,22 +308,25 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
     if not os.path.exists(stable_diffusion_model_path):
         return None, f"Stable Diffusion model not found: {stable_diffusion_model_path}"
 
-    if stable_diffusion_model_type == "SD":
-        original_config_file = "configs/sd/v1-inference.yaml"
-        vae_config_file = "configs/sd/v1-inference.yaml"
-        stable_diffusion_model = StableDiffusionPipeline.from_single_file(
-            stable_diffusion_model_path, use_safetensors=True, device_map="auto",
-            original_config_file=original_config_file
-        )
-    elif stable_diffusion_model_type == "SDXL":
-        original_config_file = "configs/sd/sd_xl_base.yaml"
-        vae_config_file = "configs/sd/sd_xl_base.yaml"
-        stable_diffusion_model = StableDiffusionXLPipeline.from_single_file(
-            stable_diffusion_model_path, use_safetensors=True, device_map="auto", attention_slice=1,
-            original_config_file=original_config_file
-        )
-    else:
-        return None, "Invalid Stable Diffusion model type!"
+    try:
+        if stable_diffusion_model_type == "SD":
+            original_config_file = "configs/sd/v1-inference.yaml"
+            vae_config_file = "configs/sd/v1-inference.yaml"
+            stable_diffusion_model = StableDiffusionPipeline.from_single_file(
+                stable_diffusion_model_path, use_safetensors=True, device_map="auto",
+                original_config_file=original_config_file
+            )
+        elif stable_diffusion_model_type == "SDXL":
+            original_config_file = "configs/sd/sd_xl_base.yaml"
+            vae_config_file = "configs/sd/sd_xl_base.yaml"
+            stable_diffusion_model = StableDiffusionXLPipeline.from_single_file(
+                stable_diffusion_model_path, use_safetensors=True, device_map="auto", attention_slice=1,
+                original_config_file=original_config_file
+            )
+        else:
+            return None, "Invalid Stable Diffusion model type!"
+    except (ValueError, KeyError):
+        return None, "The selected model is not compatible with the chosen model type"
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -391,22 +405,25 @@ def generate_image_img2img(prompt, negative_prompt, init_image,
     if not os.path.exists(stable_diffusion_model_path):
         return None, f"Stable Diffusion model not found: {stable_diffusion_model_path}"
 
-    if stable_diffusion_model_type == "SD":
-        original_config_file = "configs/sd/v1-inference.yaml"
-        vae_config_file = "configs/sd/v1-inference.yaml"
-        stable_diffusion_model = StableDiffusionImg2ImgPipeline.from_single_file(
-            stable_diffusion_model_path, use_safetensors=True, device_map="auto",
-            original_config_file=original_config_file
-        )
-    elif stable_diffusion_model_type == "SDXL":
-        original_config_file = "configs/sd/sd_xl_base.yaml"
-        vae_config_file = "configs/sd/sd_xl_base.yaml"
-        stable_diffusion_model = StableDiffusionImg2ImgPipeline.from_single_file(
-            stable_diffusion_model_path, use_safetensors=True, device_map="auto", attention_slice=1,
-            original_config_file=original_config_file
-        )
-    else:
-        return None, "Invalid Stable Diffusion model type!"
+    try:
+        if stable_diffusion_model_type == "SD":
+            original_config_file = "configs/sd/v1-inference.yaml"
+            vae_config_file = "configs/sd/v1-inference.yaml"
+            stable_diffusion_model = StableDiffusionImg2ImgPipeline.from_single_file(
+                stable_diffusion_model_path, use_safetensors=True, device_map="auto",
+                original_config_file=original_config_file
+            )
+        elif stable_diffusion_model_type == "SDXL":
+            original_config_file = "configs/sd/sd_xl_base.yaml"
+            vae_config_file = "configs/sd/sd_xl_base.yaml"
+            stable_diffusion_model = StableDiffusionImg2ImgPipeline.from_single_file(
+                stable_diffusion_model_path, use_safetensors=True, device_map="auto", attention_slice=1,
+                original_config_file=original_config_file
+            )
+        else:
+            return None, "Invalid Stable Diffusion model type!"
+    except (ValueError, KeyError):
+        return None, "The selected model is not compatible with the chosen model type"
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -471,14 +488,17 @@ def generate_audio(prompt, input_audio=None, model_name=None, model_type="musicg
     if not audiocraft_model_path:
         audiocraft_model_path = load_audiocraft_model(model_name)
 
-    if model_type == "musicgen":
-        model = MusicGen.get_pretrained(audiocraft_model_path)
-        model.set_generation_params(duration=duration)
-    elif model_type == "audiogen":
-        model = AudioGen.get_pretrained(audiocraft_model_path)
-        model.set_generation_params(duration=duration)
-    else:
-        return None, "Invalid model type!"
+    try:
+        if model_type == "musicgen":
+            model = MusicGen.get_pretrained(audiocraft_model_path)
+            model.set_generation_params(duration=duration)
+        elif model_type == "audiogen":
+            model = AudioGen.get_pretrained(audiocraft_model_path)
+            model.set_generation_params(duration=duration)
+        else:
+            return None, "Invalid model type!"
+    except (ValueError, AssertionError):
+        return None, "The selected model is not compatible with the chosen model type"
 
     multiband_diffusion_model = None
     if enable_multiband:
