@@ -105,7 +105,7 @@ To get update, run `git pull`
 
 #### Extra:
 
-
+* For now, only simple upscale of any of your images is available here
 
 ### AudioCraft:
 
