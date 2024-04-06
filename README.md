@@ -103,6 +103,10 @@ To get update, run `git pull`
 #### Optional: You can select your `vae` model
 #### vae = *inputs/image/sd_models/vae*
 
+#### Extra:
+
+* For now, only simple upscale of any of your images is available now
+
 ### AudioCraft:
 
 1) Select a model from the drop-down list
