@@ -103,6 +103,10 @@ To get update, run `git pull`
 #### Optional: You can select your `vae` model
 #### vae = *inputs/image/sd_models/vae*
 
+#### Extra:
+
+
+
 ### AudioCraft:
 
 1) Select a model from the drop-down list
