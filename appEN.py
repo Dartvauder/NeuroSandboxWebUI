@@ -227,7 +227,7 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_model_
             if not whisper_model:
                 whisper_model = load_whisper_model()
             device = "cuda" if torch.cuda.is_available() else "cpu"
-            whisper_model = whisper_model
+            whisper_model = whisper_model.to(device)
 
         if llm_model:
             if llm_model_type == "transformers":
