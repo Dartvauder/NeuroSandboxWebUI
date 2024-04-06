@@ -237,7 +237,7 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_model_
                 outputs = llm_model.generate(inputs, max_new_tokens=max_tokens, top_p=top_p, top_k=top_k,
                                              temperature=temperature, pad_token_id=tokenizer.eos_token_id)
                 if stop_signal:
-                    return "Process stopped by user.", None, None, None
+                    return "Generation stopped", None, None, None
                 generated_sequence = outputs[0][inputs.shape[-1]:]
                 text = tokenizer.decode(generated_sequence, skip_special_tokens=True)
             elif llm_model_type == "llama":
@@ -246,7 +246,7 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_model_
                                    temperature=temperature, top_p=top_p, top_k=top_k,
                                    repeat_penalty=1.1)
                 if stop_signal:
-                    return "Process stopped by user.", None, None, None
+                    return "Generation stopped", None, None, None
                 text = output['choices'][0]['text']
 
         if not chat_dir:
@@ -351,7 +351,7 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
                                         width=stable_diffusion_width, clip_skip=stable_diffusion_clip_skip,
                                         sampler=stable_diffusion_sampler)
         if stop_signal:
-            return None, "Process stopped by user."
+            return None, "Generation stopped"
         image = images["images"][0]
 
         if enable_upscale:
@@ -450,7 +450,7 @@ def generate_image_img2img(prompt, negative_prompt, init_image,
                                         guidance_scale=stable_diffusion_cfg, clip_skip=stable_diffusion_clip_skip,
                                         sampler=stable_diffusion_sampler, image=init_image, strength=strength)
         if stop_signal:
-            return None, "Process stopped by user."
+            return None, "Generation stopped"
         image = images["images"][0]
 
         today = datetime.now().date()
@@ -516,7 +516,7 @@ def generate_audio(prompt, input_audio=None, model_name=None, model_type="musicg
             if wav.ndim > 2:
                 wav = wav.squeeze()
             if stop_signal:
-                return None, "Process stopped by user."
+                return None, "Generation stopped"
         else:
             descriptions = [prompt]
             model.set_generation_params(duration=duration, top_k=top_k, top_p=top_p, temperature=temperature,
@@ -525,7 +525,7 @@ def generate_audio(prompt, input_audio=None, model_name=None, model_type="musicg
             if wav.ndim > 2:
                 wav = wav.squeeze()
             if stop_signal:
-                return None, "Process stopped by user."
+                return None, "Generation stopped"
 
         if multiband_diffusion_model:
             wav = wav.unsqueeze(0)
@@ -570,17 +570,17 @@ chat_interface = gr.Interface(
     inputs=[
         gr.Textbox(label="Enter your request"),
         gr.Audio(type="filepath", label="Record your request (optional)"),
-        gr.Dropdown(choices=llm_models_list, label="Select LLM Model", value=None),
-        gr.Radio(choices=["transformers", "llama"], label="Select Model Type", value="transformers"),
-        gr.Slider(minimum=1, maximum=2048, value=512, step=1, label="Max Tokens"),
+        gr.Dropdown(choices=llm_models_list, label="Select LLM model", value=None),
+        gr.Radio(choices=["transformers", "llama"], label="Select model type", value="transformers"),
+        gr.Slider(minimum=1, maximum=2048, value=512, step=1, label="Max tokens"),
         gr.Slider(minimum=0, maximum=4096, value=2048, step=1, label="n_ctx (for llama models only)", interactive=True),
         gr.Slider(minimum=0.0, maximum=1.0, value=0.7, step=0.1, label="Temperature"),
         gr.Slider(minimum=0.0, maximum=1.0, value=0.9, step=0.1, label="Top P"),
         gr.Slider(minimum=0, maximum=100, value=30, step=1, label="Top K"),
-        gr.Dropdown(choices=avatars_list, label="Select Avatar", value=None),
+        gr.Dropdown(choices=avatars_list, label="Select avatar", value=None),
         gr.Checkbox(label="Enable TTS", value=False),
-        gr.Dropdown(choices=speaker_wavs_list, label="Select Voice", interactive=True),
-        gr.Dropdown(choices=["en", "ru"], label="Select Language", interactive=True),
+        gr.Dropdown(choices=speaker_wavs_list, label="Select voice", interactive=True),
+        gr.Dropdown(choices=["en", "ru"], label="Select language", interactive=True),
     ],
     outputs=[
         gr.Textbox(label="LLM text response", type="text"),
@@ -600,21 +600,21 @@ txt2img_interface = gr.Interface(
     inputs=[
         gr.Textbox(label="Enter your prompt"),
         gr.Textbox(label="Enter your negative prompt", value=""),
-        gr.Dropdown(choices=stable_diffusion_models_list, label="Select Stable Diffusion Model", value=None),
-        gr.Dropdown(choices=vae_models_list, label="Select VAE Model (optional)", value=None),
-        gr.Radio(choices=["SD", "SDXL"], label="Select Model Type", value="SD"),
+        gr.Dropdown(choices=stable_diffusion_models_list, label="Select Stable Diffusion model", value=None),
+        gr.Dropdown(choices=vae_models_list, label="Select VAE model (optional)", value=None),
+        gr.Radio(choices=["SD", "SDXL"], label="Select model type", value="SD"),
         gr.Dropdown(choices=["euler_ancestral", "euler", "lms", "heun", "dpm", "dpm_solver", "dpm_solver++"],
-                    label="Select Sampler", value="euler_ancestral"),
+                    label="Select sampler", value="euler_ancestral"),
         gr.Slider(minimum=1, maximum=100, value=30, step=1, label="Steps"),
         gr.Slider(minimum=1.0, maximum=30.0, value=8, step=0.1, label="CFG"),
         gr.Slider(minimum=256, maximum=1024, value=512, step=64, label="Width"),
         gr.Slider(minimum=256, maximum=1024, value=512, step=64, label="Height"),
-        gr.Slider(minimum=1, maximum=4, value=1, step=1, label="Clip Skip"),
-        gr.Checkbox(label="Enable Upscale", value=False),
-        gr.Radio(choices=["x2", "x4"], label="Upscale Factor", value="x2"),
+        gr.Slider(minimum=1, maximum=4, value=1, step=1, label="Clip skip"),
+        gr.Checkbox(label="Enable upscale", value=False),
+        gr.Radio(choices=["x2", "x4"], label="Upscale size", value="x2"),
     ],
     outputs=[
-        gr.Image(type="filepath", label="Generated Image"),
+        gr.Image(type="filepath", label="Generated image"),
         gr.Textbox(label="Message", type="text"),
     ],
     title="NeuroChatWebUI (ALPHA) - Stable Diffusion (txt2img)",
@@ -629,19 +629,19 @@ img2img_interface = gr.Interface(
     inputs=[
         gr.Textbox(label="Enter your prompt"),
         gr.Textbox(label="Enter your negative prompt", value=""),
-        gr.Image(label="Initial Image", type="filepath"),
+        gr.Image(label="Initial image", type="filepath"),
         gr.Slider(minimum=0.0, maximum=1.0, value=0.5, step=0.01, label="Strength"),
-        gr.Dropdown(choices=stable_diffusion_models_list, label="Select Stable Diffusion Model", value=None),
-        gr.Dropdown(choices=vae_models_list, label="Select VAE Model (optional)", value=None),
-        gr.Radio(choices=["SD", "SDXL"], label="Select Model Type", value="SD"),
+        gr.Dropdown(choices=stable_diffusion_models_list, label="Select Stable Diffusion model", value=None),
+        gr.Dropdown(choices=vae_models_list, label="Select VAE model (optional)", value=None),
+        gr.Radio(choices=["SD", "SDXL"], label="Select model type", value="SD"),
         gr.Dropdown(choices=["euler_ancestral", "euler", "lms", "heun", "dpm", "dpm_solver", "dpm_solver++"],
-                    label="Select Sampler", value="euler_ancestral"),
+                    label="Select sampler", value="euler_ancestral"),
         gr.Slider(minimum=1, maximum=100, value=30, step=1, label="Steps"),
         gr.Slider(minimum=1.0, maximum=30.0, value=8, step=0.1, label="CFG"),
-        gr.Slider(minimum=1, maximum=4, value=1, step=1, label="Clip Skip"),
+        gr.Slider(minimum=1, maximum=4, value=1, step=1, label="Clip skip"),
     ],
     outputs=[
-        gr.Image(type="filepath", label="Generated Image"),
+        gr.Image(type="filepath", label="Generated image"),
         gr.Textbox(label="Message", type="text"),
     ],
     title="NeuroChatWebUI (ALPHA) - Stable Diffusion (img2img)",
@@ -656,8 +656,8 @@ audiocraft_interface = gr.Interface(
     inputs=[
         gr.Textbox(label="Enter your prompt"),
         gr.Audio(type="filepath", label="Melody audio (optional)", interactive=True),
-        gr.Dropdown(choices=audiocraft_models_list, label="Select AudioCraft Model", value=None),
-        gr.Radio(choices=["musicgen", "audiogen"], label="Select Model Type", value="musicgen"),
+        gr.Dropdown(choices=audiocraft_models_list, label="Select AudioCraft model", value=None),
+        gr.Radio(choices=["musicgen", "audiogen"], label="Select model type", value="musicgen"),
         gr.Slider(minimum=1, maximum=120, value=10, step=1, label="Duration (seconds)"),
         gr.Slider(minimum=1, maximum=1000, value=250, step=1, label="Top K"),
         gr.Slider(minimum=0.0, maximum=1.0, value=0.0, step=0.1, label="Top P"),
@@ -666,7 +666,7 @@ audiocraft_interface = gr.Interface(
         gr.Checkbox(label="Enable Multiband Diffusion", value=False),
     ],
     outputs=[
-        gr.Audio(label="Generated Audio", type="filepath"),
+        gr.Audio(label="Generated audio", type="filepath"),
         gr.Textbox(label="Message", type="text"),
     ],
     title="NeuroChatWebUI (ALPHA) - AudioCraft",
