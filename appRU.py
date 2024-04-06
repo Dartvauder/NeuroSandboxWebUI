@@ -619,7 +619,7 @@ txt2img_interface = gr.Interface(
     ],
     title="НейроЧатWebUI (АЛЬФА) - Stable Diffusion (txt2img)",
     description="Этот пользовательский интерфейс позволяет вводить любой текст и генерировать изображения с помощью Stable Diffusion. "
-                "Вы можете выбрать модель стабильной диффузии и настроить параметры генерации с помощью ползунков. "
+                "Вы можете выбрать модель Stable Diffusion и настроить параметры генерации с помощью ползунков. "
                 "Попробуйте и посмотрите, что получится!",
     allow_flagging="never",
 )
@@ -627,27 +627,27 @@ txt2img_interface = gr.Interface(
 img2img_interface = gr.Interface(
     fn=generate_image_img2img,
     inputs=[
-        gr.Textbox(label="Введите ваш запрос"),
-        gr.Textbox(label="Enter your negative prompt", value=""),
-        gr.Image(label="Initial Image", type="filepath"),
-        gr.Slider(minimum=0.0, maximum=1.0, value=0.5, step=0.01, label="Strength"),
-        gr.Dropdown(choices=stable_diffusion_models_list, label="Select Stable Diffusion Model", value=None),
+        gr.Textbox(label="Ввести ваш запрос"),
+        gr.Textbox(label="Ввести ваш негативный запрос", value=""),
+        gr.Image(label="Исходное изображение", type="filepath"),
+        gr.Slider(minimum=0.0, maximum=1.0, value=0.5, step=0.01, label="Сила"),
+        gr.Dropdown(choices=stable_diffusion_models_list, label="Выбрать модель Stable Diffusion", value=None),
         gr.Dropdown(choices=vae_models_list, label="Выбрать модель VAE (опционально)", value=None),
-        gr.Radio(choices=["SD", "SDXL"], label="Выберите тип модели", value="SD"),
+        gr.Radio(choices=["SD", "SDXL"], label="Выбрать тип модели", value="SD"),
         gr.Dropdown(choices=["euler_ancestral", "euler", "lms", "heun", "dpm", "dpm_solver", "dpm_solver++"],
-                    label="Select Sampler", value="euler_ancestral"),
-        gr.Slider(minimum=1, maximum=100, value=30, step=1, label="Steps"),
+                    label="Выбрать Sampler", value="euler_ancestral"),
+        gr.Slider(minimum=1, maximum=100, value=30, step=1, label="Шаги"),
         gr.Slider(minimum=1.0, maximum=30.0, value=8, step=0.1, label="CFG"),
-        gr.Slider(minimum=1, maximum=4, value=1, step=1, label="Clip Skip"),
+        gr.Slider(minimum=1, maximum=4, value=1, step=1, label="Пропуск клипа"),
     ],
     outputs=[
-        gr.Image(type="filepath", label="Generated Image"),
-        gr.Textbox(label="Message", type="text"),
+        gr.Image(type="filepath", label="Сгенерированное изображение"),
+        gr.Textbox(label="Сообщение", type="text"),
     ],
     title="НейроЧатWebUI (АЛЬФА) - Stable Diffusion (img2img)",
-    description="This user interface allows you to enter any text and image to generate new images using Stable Diffusion. "
-                "You can select the Stable Diffusion model and customize the generation settings from the sliders. "
-                "Try it and see what happens!",
+    description="Этот пользовательский интерфейс позволяет вам вводить любой текст и изображение для создания новых изображений с помощью Stable Diffusion. "
+                "Вы можете выбрать модель Stable Diffusion и настроить параметры генерации с помощью ползунков. "
+                "Попробуйте и посмотрите, что получится!",
     allow_flagging="never",
 )
 
@@ -655,24 +655,24 @@ audiocraft_interface = gr.Interface(
     fn=generate_audio,
     inputs=[
         gr.Textbox(label="Введите ваш запрос"),
-        gr.Audio(type="filepath", label="Melody audio (optional)", interactive=True),
-        gr.Dropdown(choices=audiocraft_models_list, label="Select AudioCraft Model", value=None),
-        gr.Radio(choices=["musicgen", "audiogen"], label="Выберите тип модели", value="musicgen"),
-        gr.Slider(minimum=1, maximum=120, value=10, step=1, label="Duration (seconds)"),
+        gr.Audio(type="filepath", label="Аудио мелодии (опционально)", interactive=True),
+        gr.Dropdown(choices=audiocraft_models_list, label="Выбрать модель AudioCraft", value=None),
+        gr.Radio(choices=["musicgen", "audiogen"], label="Выбрать тип модели", value="musicgen"),
+        gr.Slider(minimum=1, maximum=120, value=10, step=1, label="Длительность (секунды)"),
         gr.Slider(minimum=1, maximum=1000, value=250, step=1, label="Top K"),
         gr.Slider(minimum=0.0, maximum=1.0, value=0.0, step=0.1, label="Top P"),
-        gr.Slider(minimum=0.1, maximum=2.0, value=1.0, step=0.1, label="Temperature"),
+        gr.Slider(minimum=0.1, maximum=2.0, value=1.0, step=0.1, label="Температура"),
         gr.Slider(minimum=1.0, maximum=10.0, value=4.0, step=0.1, label="CFG"),
-        gr.Checkbox(label="Enable Multiband Diffusion", value=False),
+        gr.Checkbox(label="Включить Multiband Diffusion", value=False),
     ],
     outputs=[
-        gr.Audio(label="Generated Audio", type="filepath"),
-        gr.Textbox(label="Message", type="text"),
+        gr.Audio(label="Сгенерированное аудио", type="filepath"),
+        gr.Textbox(label="Сообщение", type="text"),
     ],
     title="НейроЧатWebUI (АЛЬФА) - AudioCraft",
-    description="This user interface allows you to enter any text and generate audio using AudioCraft. "
-                "You can select the AudioCraft model and customize the generation settings from the sliders. "
-                "Try it and see what happens!",
+    description="Этот пользовательский интерфейс позволяет вам вводить любой текст и генерировать аудио с помощью AudioCraft. "
+                "Вы можете выбрать модель AudioCraft и настроить параметры генерации с помощью ползунков. "
+                "Попробуйте и посмотрите, что получится!",
     allow_flagging="never",
 )
 
