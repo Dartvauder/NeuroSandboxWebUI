@@ -548,6 +548,24 @@ def generate_audio(prompt, input_audio=None, model_name=None, model_type="musicg
             del multiband_diffusion_model
         torch.cuda.empty_cache()
 
+def upscale_image(image_path):
+    upscale_factor = 2
+    upscaler = load_upscale_model(upscale_factor)
+    if upscaler:
+        image = Image.open(image_path).convert("RGB")
+        upscaled_image = upscaler(prompt="", image=image, num_inference_steps=30, guidance_scale=0).images[0]
+
+        today = datetime.now().date()
+        image_dir = os.path.join('outputs', f"images_{today.strftime('%Y%m%d')}")
+        os.makedirs(image_dir, exist_ok=True)
+        image_filename = f"upscaled_{datetime.now().strftime('%Y%m%d_%H%M%S')}.png"
+        image_path = os.path.join(image_dir, image_filename)
+        upscaled_image.save(image_path, format="PNG")
+
+        return image_path, None
+    else:
+        return None, "Не удалось загрузить модель Upscale"
+
 
 def stop_all_processes():
     global stop_signal
@@ -650,6 +668,20 @@ img2img_interface = gr.Interface(
     allow_flagging="never",
 )
 
+extras_interface = gr.Interface(
+    fn=upscale_image,
+    inputs=[
+        gr.Image(label="Изображение для upscale", type="filepath"),
+    ],
+    outputs=[
+        gr.Image(type="filepath", label="Увеличенное изображение"),
+        gr.Textbox(label="Сообщение", type="text"),
+    ],
+    title="НейроЧатWebUI (АЛЬФА) - Stable Diffusion (Дополнительно)",
+    description="Этот пользовательский интерфейс позволяет загружать изображение и выполнять масштабирование в 2 раза.",
+    allow_flagging="never",
+)
+
 audiocraft_interface = gr.Interface(
     fn=generate_audio,
     inputs=[
@@ -676,9 +708,10 @@ audiocraft_interface = gr.Interface(
 )
 
 with gr.TabbedInterface(
-    [chat_interface, gr.TabbedInterface([txt2img_interface, img2img_interface], tab_names=["txt2img", "img2img"]),
-     audiocraft_interface],
-    tab_names=["LLM", "Stable Diffusion", "AudioCraft"]
+        [chat_interface, gr.TabbedInterface([txt2img_interface, img2img_interface, extras_interface],
+                                            tab_names=["txt2img", "img2img", "Дополнительно"]),
+         audiocraft_interface],
+        tab_names=["LLM", "Stable Diffusion", "AudioCraft"]
 ) as app:
     stop_button = gr.Button(value="Stop generation", interactive=True)
     stop_button.click(stop_all_processes, [], [], queue=False)
