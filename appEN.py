@@ -569,7 +569,7 @@ chat_interface = gr.Interface(
     fn=generate_text_and_speech,
     inputs=[
         gr.Textbox(label="Enter your request"),
-        gr.Audio(type="filepath", label="Record your request"),
+        gr.Audio(type="filepath", label="Record your request (optional)"),
         gr.Dropdown(choices=llm_models_list, label="Select LLM Model", value=None),
         gr.Radio(choices=["transformers", "llama"], label="Select Model Type", value="transformers"),
         gr.Slider(minimum=1, maximum=2048, value=512, step=1, label="Max Tokens"),
