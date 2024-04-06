@@ -10,10 +10,9 @@
 
 Цель проекта — создать максимально простое приложение для использования нейросетевых моделей
 
- 
-
-![Image1](https://github.com/Dartvauder/NeuroChatWebUI/assets/140557322/a22ed2b3-f839-4c3e-943b-d71b367eb69a) ![Image2](https://github.com/Dartvauder/NeuroChatWebUI/assets/140557322/13f208f7-5dc9-47ed-9bc9-e01b3e1293e5) ![Image3](https://github.com/Dartvauder/NeuroChatWebUI/assets/140557322/f2e715fd-bf11-4ee0-944e-1d68f057e068)
-
+|![Image1](https://github.com/Dartvauder/NeuroChatWebUI/assets/140557322/2dcdb3bb-f54b-4e7d-87cf-136448dd9595) |![Image2](https://github.com/Dartvauder/NeuroChatWebUI/assets/140557322/08764b57-e983-46cc-b961-53669daf73bb)
+|:---:|:---:|
+|![Image1](https://github.com/Dartvauder/NeuroChatWebUI/assets/140557322/312b4873-52bd-41f8-9652-6c0989e33889) |![Image2](https://github.com/Dartvauder/NeuroChatWebUI/assets/140557322/7ffdef33-90b9-40db-9f2f-620d04445022)
 
 ## Функции:
 
