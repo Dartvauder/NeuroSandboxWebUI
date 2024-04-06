@@ -472,6 +472,23 @@ def generate_image_img2img(prompt, negative_prompt, init_image,
         del stable_diffusion_model
         torch.cuda.empty_cache()
 
+def upscale_image(image):
+    upscale_factor = 2
+    upscaler = load_upscale_model(upscale_factor)
+    if upscaler:
+        upscaled_image = upscaler(image=image, num_inference_steps=30, guidance_scale=0).images[0]
+
+        today = datetime.now().date()
+        image_dir = os.path.join('outputs', f"images_{today.strftime('%Y%m%d')}")
+        os.makedirs(image_dir, exist_ok=True)
+        image_filename = f"upscaled_{datetime.now().strftime('%Y%m%d_%H%M%S')}.png"
+        image_path = os.path.join(image_dir, image_filename)
+        upscaled_image.save(image_path, format="PNG")
+
+        return image_path, None
+    else:
+        return None, "Failed to load upscale model"
+
 
 def generate_audio(prompt, input_audio=None, model_name=None, model_type="musicgen", duration=10, top_k=250, top_p=0.0,
                    temperature=1.0, cfg_coef=4.0, enable_multiband=False):
@@ -650,6 +667,20 @@ img2img_interface = gr.Interface(
     allow_flagging="never",
 )
 
+extras_interface = gr.Interface(
+    fn=upscale_image,
+    inputs=[
+        gr.Image(label="Image to upscale", type="filepath"),
+    ],
+    outputs=[
+        gr.Image(type="filepath", label="Upscaled image"),
+        gr.Textbox(label="Message", type="text"),
+    ],
+    title="NeuroChatWebUI (ALPHA) - Stable Diffusion (Extras)",
+    description="This user interface allows you to upload an image and perform x2 upscaling without using a prompt.",
+    allow_flagging="never",
+)
+
 audiocraft_interface = gr.Interface(
     fn=generate_audio,
     inputs=[
@@ -676,7 +707,7 @@ audiocraft_interface = gr.Interface(
 )
 
 with gr.TabbedInterface(
-    [chat_interface, gr.TabbedInterface([txt2img_interface, img2img_interface], tab_names=["txt2img", "img2img"]),
+    [chat_interface, gr.TabbedInterface([txt2img_interface, img2img_interface, extras_interface], tab_names=["txt2img", "img2img", "Extras"]),
      audiocraft_interface],
     tab_names=["LLM", "Stable Diffusion", "AudioCraft"]
 ) as app:
@@ -684,3 +715,4 @@ with gr.TabbedInterface(
     stop_button.click(stop_all_processes, [], [], queue=False)
 
     app.launch()
+    
