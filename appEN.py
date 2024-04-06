@@ -540,7 +540,7 @@ def generate_audio(prompt, input_audio=None, model_name=None, model_type="musicg
         audio_path = os.path.join(audio_dir, audio_filename)
         audio_write(audio_path, wav.cpu(), model.sample_rate, strategy="loudness", loudness_compressor=True)
 
-        return audio_path, None
+        return audio_path + ".wav", None
 
     finally:
         del model
