@@ -120,6 +120,7 @@ def load_whisper_model():
 
 
 def load_audiocraft_model(model_name):
+    global audiocraft_model_path
     print(f"Downloading AudioCraft model: {model_name}...")
     audiocraft_model_path = os.path.join("inputs", "audio", "audiocraft", model_name)
     if not os.path.exists(audiocraft_model_path):
@@ -145,6 +146,8 @@ def load_multiband_diffusion_model():
 
 
 def load_upscale_model(upscale_factor):
+    original_config_file = None
+
     if upscale_factor == 2:
         upscale_model_name = "stabilityai/sd-x2-latent-upscaler"
         upscale_model_path = os.path.join("inputs", "image", "sd_models", "upscale", "x2-upscaler")
@@ -502,9 +505,6 @@ def generate_audio(prompt, input_audio=None, model_name=None, model_type="musicg
         if model_type == "musicgen":
             multiband_diffusion_model = MultiBandDiffusion.get_mbd_musicgen(multiband_diffusion_path)
             multiband_diffusion_model.to(device)
-        elif model_type == "audiogen":
-            multiband_diffusion_model = MultiBandDiffusion.get_mbd_audiogen(multiband_diffusion_path)
-            multiband_diffusion_model.to(device)
 
     try:
         if input_audio and model_type == "musicgen":
@@ -559,8 +559,7 @@ avatars_list = [None] + [avatar for avatar in os.listdir("inputs/image/avatars")
 speaker_wavs_list = [None] + [wav for wav in os.listdir("inputs/audio/voices") if not wav.endswith(".txt")]
 stable_diffusion_models_list = [None] + [model.replace(".safetensors", "") for model in
                                          os.listdir("inputs/image/sd_models")
-                                         if (model.endswith(".safetensors") or not model.endswith(
-        ".txt") and not os.path.isdir(os.path.join("inputs/image/sd_models")))]
+                                         if (model.endswith(".safetensors") or not model.endswith(".txt") and not os.path.isdir(os.path.join("inputs/image/sd_models")))]
 audiocraft_models_list = [None] + ["musicgen-stereo-medium", "audiogen-medium", "musicgen-stereo-melody"]
 vae_models_list = [None] + [model.replace(".safetensors", "") for model in os.listdir("inputs/image/sd_models/vae") if
                             model.endswith(".safetensors") or not model.endswith(".txt")]
