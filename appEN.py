@@ -24,7 +24,7 @@ try:
     import xformers.ops
     XFORMERS_AVAILABLE = True
 except ImportError:
-    print("Xformers is not installed. Proceeding without it.")
+    print("Xformers is not installed. Proceeding without it")
 
 warnings.filterwarnings("ignore")
 logging.getLogger('transformers').setLevel(logging.ERROR)
