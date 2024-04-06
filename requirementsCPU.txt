@@ -1,9 +1,0 @@
-torch
-gradio
-transformers
-soundfile
-TTS
-openai-whisper
-GitPython
-diffusers
-llama-cpp-python

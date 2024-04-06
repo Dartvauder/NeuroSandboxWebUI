@@ -5,20 +5,22 @@
 * English | [Русский](/README_RU.md)
 ## Description:
 
-Simple and easy interface for use of different neural network models. You can chat with LLM using text or voice input and also Stable Diffusion for generating images. TTS and Whisper functions are available here for voice input and output with a choice of language and voice sample
+Simple and easy interface for use of different neural network models. You can chat with LLM using text or voice input, Stable Diffusion for generating images and AudioCraft for generating audio. TTS and Whisper functions are available here for voice input and output with a choice of language and voice sample
 
-The goal of the project - to create the easiest possible application to use neural network models.
+The goal of the project - to create the easiest possible application to use neural network models
 
-|![Image1](https://github.com/Dartvauder/NeuroChatWebUI/assets/140557322/49cf82fc-29c0-4bdf-8291-c74beb8cace2) | ![Image2](https://github.com/Dartvauder/NeuroChatWebUI/assets/140557322/c46d10a8-832b-4f9f-9a1d-b2ad9dec0d8f) |
+|![Image1](https://github.com/Dartvauder/NeuroChatWebUI/assets/140557322/666aeffa-911b-45de-8984-897aa1c5e9f2) | ![Image2](https://github.com/Dartvauder/NeuroChatWebUI/assets/140557322/e5bee701-beb7-4816-b418-f021d5898d97)
 |:---:|:---:|
+|![Image1](https://github.com/Dartvauder/NeuroChatWebUI/assets/140557322/d849b1d7-f9bf-4ebd-aaf0-ed4378b434eb) | ![Image2](https://github.com/Dartvauder/NeuroChatWebUI/assets/140557322/b844fce1-a1c1-40cf-81ab-9d80380ab583) |
 
 ## Features:
 
 * Easy installation (Windows only)
 * Flexible and optimized interface
 * Transformers and llama.cpp (LLM)
-* Diffusers and safetensors (Stable Diffusion)
-* TTS and STT models (For LLM)
+* Diffusers and safetensors (Stable Diffusion) - txt2img and img2img
+* AudioCraft (musicgen, audiogen and multiband diffusion)
+* TTS and Whisper models (For LLM)
 * Avatar selection (For LLM)
 * Models settings in interface
 
@@ -32,7 +34,7 @@ The goal of the project - to create the easiest possible application to use neur
 ## Minimum System Requirements:
 
 * System: Windows or Linux
-* GPU: 4GB+ or CPU: 8 core 3.2GHZ
+* GPU: 6GB+ or CPU: 8 core 3.2GHZ
 * RAM: 16GB+
 * Disk space: 20GB+
 * Internet for downloading models and installing
@@ -42,7 +44,7 @@ The goal of the project - to create the easiest possible application to use neur
 ### Windows
 
 1) `Git clone https://github.com/Dartvauder/NeuroChatWebUI.git` to any location
-2) Run the `install.bat` and choose a version for installation
+2) Run the `install.bat` and wait for installation
 3) After installation, run `start.bat`
 4) Select the file version and wait for the application to launch
 5) Now you can start generating!
@@ -52,7 +54,7 @@ To get update, run `update.bat`
 ### Linux
 
 1) `Git clone https://github.com/Dartvauder/NeuroChatWebUI.git` to any location
-2) In the terminal, run the `pip install -r requirementsGPU.txt` or `pip install -r requirementsCPU.txt` and wait for installation of all dependencies
+2) In the terminal, run the `pip install --no-deps -r requirements.txt`and wait for installation of all dependencies
 3) After installation, run `py appEN.py` or `py appRU.py`
 4) Wait for the application to launch
 5) Now you can start generating!
@@ -61,42 +63,70 @@ To get update, run `git pull`
 
 ## How to use:
 
-#### Interface has two tabs: LLM and Stable Diffusion. Select the one you need and follow the instructions below 
+#### Interface has three tabs: LLM, Stable Diffusion and AudioCraft. Select the one you need and follow the instructions below 
 
 ### LLM:
 
 1) First upload your models to the folder: *inputs/text/llm_models*
-2) Select your model from the `LLM` drop-down list
+2) Select your model from the drop-down list
 3) Select model type (`transformers` or `llama`)
 4) Set up the model according to the parameters you need
 5) Type (or speak) your request
-6) Click the `Submit` button to receive text and audio response
+6) Click the `Submit` button to receive the generated text and audio response
 #### Optional: you can enable `TTS` mode, select the `voice` and `language` needed to receive an audio response. You can also select `avatar`
-#### Voice samples = *inputs/audio/voices*
 #### Avatars = *inputs/image/avatars*
+#### Voice samples = *inputs/audio/voices*
 #### The voice must be pre-processed (22050 kHz, mono, WAV), the avatar should preferably be `PNG` or `JPG`
 
 ### Stable Diffusion:
 
+#### txt2img:
+
 1) First upload your models to the folder: *inputs/image/sd_models*
-2) Select a model from the drop-down list
+2) Select your model from the drop-down list
+3) Select model type (`SD` or `SDXL`)
+4) Set up the model according to the parameters you need
+5) Enter your request
+6) Click the `Submit` button to get the generated image
+#### Optional: You can select your `vae` model and enable `upscale` to increase the size of the generated image 
+#### vae = *inputs/image/sd_models/vae*
+
+#### img2img:
+
+1) First upload your models to the folder: *inputs/image/sd_models*
+2) Select your model from the drop-down list
+3) Select model type (`SD` or `SDXL`)
+4) Set up the model according to the parameters you need
+5) Upload the initial image with which the generation will take place
+6) Enter your request
+7) Click the `Submit` button to get the generated image
+#### Optional: You can select your `vae` model
+#### vae = *inputs/image/sd_models/vae*
+
+### AudioCraft:
+
+1) Select a model from the drop-down list
+2) Select model type (`musicgen` or `audiogen`)
 3) Set up the model according to the parameters you need
-4) Enter your prompt
-5) Click the `Submit` button to get the image
+4) Enter your request
+5) (Optional) upload the initial audio if you are using `melody` model 
+6) Click the `Submit` button to get the generated audio
+#### Optional: You can enable `multiband diffusion` to improve the generated audio
 
 ### Additional Information:
 
-1) Chat history and generated images are saved in the *outputs* folder
-2) You can also press the `Clear` button to clear the selection
+1) Chat history, generated images and generated audio, are saved in the *outputs* folder
+2) You can also press the `Clear` button to clear your selection
 #### To close the application, close the terminal
 
 ## Where can I get models, voices and avatars?
 
 * LLM models can be taken from [HuggingFace](https://huggingface.co/models)
-* Stable Diffusion models can be taken from [CivitAI](https://civitai.com/models)
+* Stable Diffusion and vae models can be taken from [CivitAI](https://civitai.com/models)
+* AudioCraft models are downloads automatically in *inputs* folder, when you select a model and press the submit button
+* TTS and Whisper models are downloads automatically in *inputs* folder when are they used 
 * You can take voices anywhere. Record yours or take a recording from the Internet. The main thing is that it is pre-processed!
 * It’s the same with avatars as with voices. You can download them on the Internet, generate them using neural networks, or take a photo of yourself. The main thing is to comply with the required file format
-* #### `TTS` and `STT` models are downloaded automatically in *inputs* folder. The base `diffusers` model of `Stable Diffusion` is also downloaded there 
 
 ## Roadmap
 
@@ -117,6 +147,8 @@ Thank you very much to these projects for allowing me to create my application:
 * `GitPython` - https://github.com/gitpython-developers/GitPython
 * `diffusers` - https://github.com/huggingface/diffusers
 * `llama.cpp-python` - https://github.com/abetlen/llama-cpp-python
+* `AudioCraft` - https://github.com/facebookresearch/audiocraft
+* `xformers` - https://github.com/facebookresearch/xformers
 
 ## Donation
 

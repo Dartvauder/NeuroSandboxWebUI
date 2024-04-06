@@ -8,10 +8,21 @@ import whisper
 from datetime import datetime
 import warnings
 import logging
-from diffusers import StableDiffusionPipeline
+from diffusers import StableDiffusionPipeline, StableDiffusionXLPipeline
 from git import Repo
 from llama_cpp import Llama
 import requests
+import torchaudio
+from audiocraft.models import MusicGen, AudioGen
+from audiocraft.data.audio import audio_write
+
+try:
+    import xformers
+    import xformers.ops
+
+    XFORMERS_AVAILABLE = True
+except ImportError:
+    XFORMERS_AVAILABLE = False
 
 warnings.filterwarnings("ignore")
 logging.getLogger('transformers').setLevel(logging.ERROR)
@@ -19,8 +30,13 @@ logging.getLogger('llama_cpp').setLevel(logging.ERROR)
 logging.getLogger('whisper').setLevel(logging.ERROR)
 logging.getLogger('TTS').setLevel(logging.ERROR)
 logging.getLogger('diffusers').setLevel(logging.ERROR)
+logging.getLogger('audiocraft').setLevel(logging.ERROR)
+logging.getLogger('xformers').setLevel(logging.ERROR)
 
 chat_dir = None
+tts_model = None
+whisper_model = None
+audiocraft_model_path = None
 
 
 def load_model(model_name, model_type):
@@ -30,6 +46,15 @@ def load_model(model_name, model_type):
             tokenizer = AutoTokenizer.from_pretrained(model_path)
             device = "cuda" if torch.cuda.is_available() else "cpu"
             model = AutoModelForCausalLM.from_pretrained(model_path)
+            if XFORMERS_AVAILABLE:
+                try:
+                    model = model.with_xformers()
+                except (AttributeError, ImportError):
+                    try:
+                        model.decoder.enable_xformers_memory_efficient_attention()
+                        model.encoder.enable_xformers_memory_efficient_attention()
+                    except AttributeError:
+                        pass
             return tokenizer, model.to(device)
     elif model_type == "llama":
         if model_name:
@@ -56,9 +81,48 @@ def transcribe_audio(audio_file_path):
     return result["text"]
 
 
+def load_tts_model():
+    print("Скачивание TTS...")
+    tts_model_path = "inputs/audio/XTTS-v2"
+    if not os.path.exists(tts_model_path):
+        os.makedirs(tts_model_path, exist_ok=True)
+        Repo.clone_from("https://huggingface.co/coqui/XTTS-v2", tts_model_path)
+    print("TTS установлен")
+    return TTS(model_path=tts_model_path, config_path=f"{tts_model_path}/config.json")
+
+
+def load_whisper_model():
+    print("Скачивание Whisper...")
+    whisper_model_path = "inputs/text/whisper-medium"
+    if not os.path.exists(whisper_model_path):
+        os.makedirs(whisper_model_path, exist_ok=True)
+        url = ("https://openaipublic.azureedge.net/main/whisper/models"
+               "/345ae4da62f9b3d59415adc60127b97c714f32e89e936602e85993674d08dcb1/medium.pt")
+        r = requests.get(url, allow_redirects=True)
+        open(os.path.join(whisper_model_path, "medium.pt"), "wb").write(r.content)
+    print("Whisper установлен")
+    model_file = os.path.join(whisper_model_path, "medium.pt")
+    return whisper.load_model(model_file)
+
+
+def load_audiocraft_model(model_name):
+    print(f"Скачивание AudioCraft модели: {model_name}...")
+    audiocraft_model_path = os.path.join("inputs", "audio", "audiocraft", model_name)
+    if not os.path.exists(audiocraft_model_path):
+        os.makedirs(audiocraft_model_path, exist_ok=True)
+        if model_name == "musicgen-stereo-medium":
+            Repo.clone_from("https://huggingface.co/facebook/musicgen-stereo-medium", audiocraft_model_path)
+        elif model_name == "audiogen-medium":
+            Repo.clone_from("https://huggingface.co/facebook/audiogen-medium", audiocraft_model_path)
+        elif model_name == "musicgen-stereo-melody":
+            Repo.clone_from("https://huggingface.co/facebook/musicgen-stereo-melody", audiocraft_model_path)
+    print(f"AudioCraft модель {model_name} установлена")
+    return audiocraft_model_path
+
+
 def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_model_type, max_tokens, temperature, top_p,
                              top_k, avatar_name, enable_tts, speaker_wav, language):
-    global chat_dir
+    global chat_dir, tts_model, whisper_model
 
     if not input_text and not input_audio:
         return "Пожалуйста, введите ваш запрос!", None, None, None, None
@@ -78,39 +142,26 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_model_
 
     try:
         if enable_tts:
+            if not tts_model:
+                tts_model = load_tts_model()
             if not speaker_wav or not language:
-                return "Пожалуйста, выберите язык и голос для TTS!", None, None, None, None
+                return "Пожалуйста выберите голос и язык для TTS!", None, None, None, None
 
             device = "cuda" if torch.cuda.is_available() else "cpu"
-            tts_model_path = "inputs/audio/XTTS-v2"
-            if not os.path.exists(tts_model_path):
-                os.makedirs(tts_model_path, exist_ok=True)
-                Repo.clone_from("https://huggingface.co/coqui/XTTS-v2", tts_model_path)
-            else:
-                repo = Repo(tts_model_path)
-                repo.remotes.origin.pull()
-            tts_model = TTS(model_path=tts_model_path, config_path=f"{tts_model_path}/config.json").to(device)
+            tts_model = tts_model.to(device)
 
         if input_audio:
+            if not whisper_model:
+                whisper_model = load_whisper_model()
             device = "cuda" if torch.cuda.is_available() else "cpu"
-            whisper_model_path = "inputs/text/whisper-medium"
-
-            if not os.path.exists(whisper_model_path):
-                os.makedirs(whisper_model_path, exist_ok=True)
-                url = ("https://openaipublic.azureedge.net/main/whisper/models"
-                       "/345ae4da62f9b3d59415adc60127b97c714f32e89e936602e85993674d08dcb1/medium.pt")
-                r = requests.get(url, allow_redirects=True)
-                open(os.path.join(whisper_model_path, "medium.pt"), "wb").write(r.content)
-
-            model_file = os.path.join(whisper_model_path, "medium.pt")
-            whisper_model = whisper.load_model(model_file, device=device)
+            whisper_model = whisper_model
 
         if llm_model:
             if llm_model_type == "transformers":
                 inputs = tokenizer.encode(prompt, return_tensors="pt")
                 device = llm_model.device
                 inputs = inputs.to(device)
-                outputs = llm_model.generate(inputs, max_length=max_tokens, top_p=top_p, top_k=top_k,
+                outputs = llm_model.generate(inputs, max_new_tokens=max_tokens, top_p=top_p, top_k=top_k,
                                              temperature=temperature, pad_token_id=tokenizer.eos_token_id)
                 generated_sequence = outputs[0][inputs.shape[-1]:]
                 text = tokenizer.decode(generated_sequence, skip_special_tokens=True)
@@ -153,23 +204,39 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_model_
     return text, audio_path, avatar_path, chat_dir
 
 
-def generate_image(prompt, negative_prompt, stable_diffusion_model_name, stable_diffusion_steps, stable_diffusion_cfg,
+def generate_image(prompt, negative_prompt, stable_diffusion_model_name, stable_diffusion_sampler, stable_diffusion_steps, stable_diffusion_cfg,
                    stable_diffusion_width, stable_diffusion_height, stable_diffusion_clip_skip):
     if not stable_diffusion_model_name:
         return None, "Пожалуйста, выберите модель Stable Diffusion!"
 
-    stable_diffusion_model_path = os.path.join("inputs", "image", "sd_models",
-                                               f"{stable_diffusion_model_name}.safetensors")
+    stable_diffusion_model_path = os.path.join("inputs", "image", "sd_models", f"{stable_diffusion_model_name}.safetensors")
+
+    is_sdxl = "SDXL" in stable_diffusion_model_name
+
     if os.path.exists(stable_diffusion_model_path):
-        stable_diffusion_model = StableDiffusionPipeline.from_single_file(
-            stable_diffusion_model_path, use_safetensors=True, device_map="auto"
-        )
+        if is_sdxl:
+            stable_diffusion_model = StableDiffusionXLPipeline.from_single_file(
+                stable_diffusion_model_path, use_safetensors=True, device_map="auto", attention_slice=1
+            )
+        else:
+            stable_diffusion_model = StableDiffusionPipeline.from_single_file(
+                stable_diffusion_model_path, use_safetensors=True, device_map="auto"
+            )
     else:
-        print(f"Stable Diffusion model not found: {stable_diffusion_model_path}")
-        stable_diffusion_model = StableDiffusionPipeline.from_pretrained(
-            "runwayml/stable-diffusion-v1-5", use_safetensors=True, device_map="auto"
-        )
+        print(f"Модель Stable Diffusion не найдена: {stable_diffusion_model_path}")
+        if is_sdxl:
+            stable_diffusion_model = StableDiffusionXLPipeline.from_pretrained(
+                "stabilityai/stable-diffusion-xl-base-1.0", use_safetensors=True, device_map="auto", attention_slice=1
+            )
+        else:
+            stable_diffusion_model = StableDiffusionPipeline.from_pretrained(
+                "runwayml/stable-diffusion-v1-5", use_safetensors=True, device_map="auto"
+            )
+
     device = "cuda" if torch.cuda.is_available() else "cpu"
+
+    if XFORMERS_AVAILABLE:
+        stable_diffusion_model.unet.enable_xformers_memory_efficient_attention()
 
     stable_diffusion_model.to(device)
     stable_diffusion_model.text_encoder.to(device)
@@ -181,7 +248,8 @@ def generate_image(prompt, negative_prompt, stable_diffusion_model_name, stable_
         images = stable_diffusion_model(prompt, negative_prompt=negative_prompt,
                                         num_inference_steps=stable_diffusion_steps,
                                         guidance_scale=stable_diffusion_cfg, height=stable_diffusion_height,
-                                        width=stable_diffusion_width, clip_skip=stable_diffusion_clip_skip)
+                                        width=stable_diffusion_width, clip_skip=stable_diffusion_clip_skip,
+                                        sampler=stable_diffusion_sampler)
         image = images["images"][0]
         today = datetime.now().date()
         image_dir = os.path.join('outputs', f"images_{today.strftime('%Y%m%d')}")
@@ -195,12 +263,66 @@ def generate_image(prompt, negative_prompt, stable_diffusion_model_name, stable_
         torch.cuda.empty_cache()
 
 
+def generate_audio(prompt, input_audio=None, model_name=None, model_type="musicgen", duration=10, top_k=250, top_p=0.0, temperature=1.0, cfg_coef=4.0):
+    global audiocraft_model_path
+
+    if not model_name:
+        return None, "Пожалуйста, выберите модель AudioCraft!"
+
+    if not audiocraft_model_path:
+        audiocraft_model_path = load_audiocraft_model(model_name)
+
+    if model_type == "musicgen":
+        model = MusicGen.get_pretrained(audiocraft_model_path)
+        model.set_generation_params(duration=duration)
+    elif model_type == "audiogen":
+        model = AudioGen.get_pretrained(audiocraft_model_path)
+        model.set_generation_params(duration=duration)
+    else:
+        return None, "Неверный тип модели!"
+
+    audio_paths = []
+
+    try:
+        if input_audio and model_type == "musicgen":
+            audio_path = input_audio
+            melody, sr = torchaudio.load(audio_path)
+            model.set_generation_params(duration=duration, top_k=top_k, top_p=top_p, temperature=temperature,
+                                        cfg_coef=cfg_coef)
+            wav = model.generate_with_chroma([prompt], melody[None].expand(1, -1, -1), sr)
+        else:
+            descriptions = [prompt]
+            model.set_generation_params(duration=duration, top_k=top_k, top_p=top_p, temperature=temperature,
+                                        cfg_coef=cfg_coef)
+            wav = model.generate(descriptions)
+
+        today = datetime.now().date()
+        audio_dir = os.path.join('outputs', f"audio_{today.strftime('%Y%m%d')}")
+        os.makedirs(audio_dir, exist_ok=True)
+
+        for idx, one_wav in enumerate(wav):
+            audio_filename = f"output_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{idx}"
+            audio_path = os.path.join(audio_dir, audio_filename)
+            audio_write(audio_path, one_wav.cpu(), model.sample_rate, strategy="loudness", loudness_compressor=True)
+            audio_paths.append(audio_path)
+
+        if audio_paths:
+            return audio_paths[0], None
+        else:
+            return None, "Не получилось сгенерировать аудио!"
+
+    finally:
+        del model
+        torch.cuda.empty_cache()
+
+
 llm_models_list = [None] + [model for model in os.listdir("inputs/text/llm_models") if not model.endswith(".txt")]
 avatars_list = [None] + [avatar for avatar in os.listdir("inputs/image/avatars") if not avatar.endswith(".txt")]
 speaker_wavs_list = [None] + [wav for wav in os.listdir("inputs/audio/voices") if not wav.endswith(".txt")]
 stable_diffusion_models_list = [None] + [model.replace(".safetensors", "") for model in
                                          os.listdir("inputs/image/sd_models")
                                          if (model.endswith(".safetensors") or not model.endswith(".txt"))]
+audiocraft_models_list = [None] + ["musicgen-stereo-medium", "audiogen-medium", "musicgen-stereo-melody"]
 
 chat_interface = gr.Interface(
     fn=generate_text_and_speech,
@@ -237,6 +359,8 @@ image_interface = gr.Interface(
         gr.Textbox(label="Введите ваш промт"),
         gr.Textbox(label="Введите ваш отрицательный промт", value=""),
         gr.Dropdown(choices=stable_diffusion_models_list, label="Выберите модель Stable Diffusion", value=None),
+        gr.Dropdown(choices=["euler_ancestral", "euler", "lms", "heun", "dpm", "dpm_solver", "dpm_solver++"],
+                    label="Выберите Sampler", value="euler_ancestral"),
         gr.Slider(minimum=1, maximum=100, value=30, step=1, label="Шаги"),
         gr.Slider(minimum=1.0, maximum=30.0, value=8, step=0.1, label="CFG"),
         gr.Slider(minimum=256, maximum=1024, value=512, step=64, label="Ширина"),
@@ -254,5 +378,31 @@ image_interface = gr.Interface(
     allow_flagging="never"
 )
 
-with gr.TabbedInterface([chat_interface, image_interface]) as app:
+audiocraft_interface = gr.Interface(
+    fn=generate_audio,
+    inputs=[
+        gr.Textbox(label="Введите ваш промт"),
+        gr.Audio(type="filepath", label="Аудио мелодия (опционально)", interactive=True),
+        gr.Dropdown(choices=audiocraft_models_list, label="Выберите модель AudioCraft", value=None),
+        gr.Dropdown(choices=["musicgen", "audiogen"], label="Выберите тип модели", value="musicgen"),
+        gr.Slider(minimum=1, maximum=120, value=10, step=1, label="Длительность (секунды)"),
+        gr.Slider(minimum=1, maximum=1000, value=250, step=1, label="Top K"),
+        gr.Slider(minimum=0.0, maximum=1.0, value=0.0, step=0.1, label="Top P"),
+        gr.Slider(minimum=0.1, maximum=2.0, value=1.0, step=0.1, label="Температура"),
+        gr.Slider(minimum=1.0, maximum=10.0, value=4.0, step=0.1, label="CFG"),
+    ],
+    outputs=[
+        gr.Audio(label="Сгенерированное аудио", type="filepath"),
+        gr.Textbox(label="Сообщение", type="text"),
+    ],
+    title="НейроЧатWebUI (АЛЬФА) - AudioCraft",
+    description="Этот пользовательский интерфейс позволяет вам вводить любой текст и генерировать аудио с помощью AudioCraft. "
+                "Вы можете выбрать модель AudioCraft и настроить параметры генерации с помощью ползунков. "
+                "Попробуйте и посмотрите, что получится!",
+    allow_flagging="never"
+)
+
+with gr.TabbedInterface([chat_interface, image_interface, audiocraft_interface],
+                        tab_names=["LLM", "Stable Diffusion", "AudioCraft"]) as app:
     app.launch()
+    
