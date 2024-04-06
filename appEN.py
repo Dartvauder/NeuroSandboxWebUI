@@ -472,11 +472,12 @@ def generate_image_img2img(prompt, negative_prompt, init_image,
         del stable_diffusion_model
         torch.cuda.empty_cache()
 
-def upscale_image(image):
+def upscale_image(image_path):
     upscale_factor = 2
     upscaler = load_upscale_model(upscale_factor)
     if upscaler:
-        upscaled_image = upscaler(image=image, num_inference_steps=30, guidance_scale=0).images[0]
+        image = Image.open(image_path).convert("RGB")
+        upscaled_image = upscaler(prompt="", image=image, num_inference_steps=30, guidance_scale=0).images[0]
 
         today = datetime.now().date()
         image_dir = os.path.join('outputs', f"images_{today.strftime('%Y%m%d')}")
