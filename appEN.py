@@ -42,6 +42,9 @@ audiocraft_model_path = None
 
 
 def load_model(model_name, model_type, n_ctx=None):
+    global stop_signal
+    if stop_signal:
+        return None, None, "Generation stopped"
     if model_name:
         model_path = f"inputs/text/llm_models/{model_name}"
         if model_type == "transformers":
@@ -81,6 +84,9 @@ def load_model(model_name, model_type, n_ctx=None):
 
 
 def transcribe_audio(audio_file_path):
+    global stop_signal
+    if stop_signal:
+        return "Generation stopped"
     device = "cuda" if torch.cuda.is_available() else "cpu"
     whisper_model_path = "inputs/text/whisper-medium"
     if not os.path.exists(whisper_model_path):
@@ -96,6 +102,9 @@ def transcribe_audio(audio_file_path):
 
 
 def load_tts_model():
+    global stop_signal
+    if stop_signal:
+        return "Generation stopped"
     print("Downloading TTS...")
     tts_model_path = "inputs/audio/XTTS-v2"
     if not os.path.exists(tts_model_path):
@@ -106,6 +115,9 @@ def load_tts_model():
 
 
 def load_whisper_model():
+    global stop_signal
+    if stop_signal:
+        return "Generation stopped"
     print("Downloading Whisper...")
     whisper_model_path = "inputs/text/whisper-medium"
     if not os.path.exists(whisper_model_path):
@@ -120,6 +132,9 @@ def load_whisper_model():
 
 
 def load_audiocraft_model(model_name):
+    global stop_signal
+    if stop_signal:
+        return "Generation stopped"
     global audiocraft_model_path
     print(f"Downloading AudioCraft model: {model_name}...")
     audiocraft_model_path = os.path.join("inputs", "audio", "audiocraft", model_name)
@@ -136,6 +151,9 @@ def load_audiocraft_model(model_name):
 
 
 def load_multiband_diffusion_model():
+    global stop_signal
+    if stop_signal:
+        return "Generation stopped"
     print(f"Downloading Multiband Diffusion model")
     multiband_diffusion_path = os.path.join("inputs", "audio", "audiocraft", "multiband-diffusion")
     if not os.path.exists(multiband_diffusion_path):
@@ -146,6 +164,9 @@ def load_multiband_diffusion_model():
 
 
 def load_upscale_model(upscale_factor):
+    global stop_signal
+    if stop_signal:
+        return None, "Generation stopped"
     original_config_file = None
 
     if upscale_factor == 2:
@@ -268,6 +289,8 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_model_
         avatar_path = f"inputs/image/avatars/{avatar_name}" if avatar_name else None
 
         if enable_tts and text:
+            if stop_signal:
+                return text, None, avatar_path, chat_dir, "Generation stopped"
             wav = tts_model.tts(text=text, speaker_wav=f"inputs/audio/voices/{speaker_wav}", language=language)
             now = datetime.now()
             audio_filename = f"output_{now.strftime('%Y%m%d_%H%M%S')}.wav"
@@ -473,6 +496,9 @@ def generate_image_img2img(prompt, negative_prompt, init_image,
         torch.cuda.empty_cache()
 
 def upscale_image(image_path):
+    global stop_signal
+    if stop_signal:
+        return None, "Generation stopped"
     upscale_factor = 2
     upscaler = load_upscale_model(upscale_factor)
     if upscaler:
@@ -546,6 +572,8 @@ def generate_audio(prompt, input_audio=None, model_name=None, model_type="musicg
                 return None, "Generation stopped"
 
         if multiband_diffusion_model:
+            if stop_signal:
+                return None, "Generation stopped"
             wav = wav.unsqueeze(0)
             wav = wav.to(device)
             wav = multiband_diffusion_model.compress_and_decompress(wav)
