@@ -740,6 +740,15 @@ with gr.TabbedInterface(
      audiocraft_interface],
     tab_names=["LLM", "Stable Diffusion", "AudioCraft"]
 ) as app:
+    github_link = gr.HTML(
+        '<div style="text-align: center; margin-top: 20px;">'
+        '<a href="https://github.com/Dartvauder/NeuroChatWebUI" target="_blank" style="color: blue; text-decoration: none; font-size: 16px;">'
+        'GitHub'
+        '</a>'
+        '</div>'
+    )
+
+    app.launch()
     stop_button = gr.Button(value="Stop generation", interactive=True)
     stop_button.click(stop_all_processes, [], [], queue=False)
 
