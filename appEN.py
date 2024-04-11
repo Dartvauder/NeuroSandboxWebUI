@@ -629,6 +629,10 @@ chat_interface = gr.Interface(
         gr.Checkbox(label="Enable TTS", value=False),
         gr.Dropdown(choices=speaker_wavs_list, label="Select voice", interactive=True),
         gr.Dropdown(choices=["en", "ru"], label="Select language", interactive=True),
+        gr.Slider(minimum=0.0, maximum=1.0, value=1.0, step=0.1, label="TTS Temperature", interactive=True),
+        gr.Slider(minimum=0.0, maximum=1.0, value=0.9, step=0.1, label="TTS Top P", interactive=True),
+        gr.Slider(minimum=0, maximum=100, value=30, step=1, label="TTS Top K", interactive=True),
+        gr.Slider(minimum=0.5, maximum=2.0, value=1.0, step=0.1, label="TTS Speed", interactive=True),
     ],
     outputs=[
         gr.Textbox(label="LLM text response", type="text"),
