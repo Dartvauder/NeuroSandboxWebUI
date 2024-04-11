@@ -631,6 +631,7 @@ chat_interface = gr.Interface(
         gr.Textbox(label="Текстовый ответ от LLM", type="text"),
         gr.Audio(label="Аудио ответ от LLM", type="filepath"),
         gr.Image(type="filepath", label="Аватар"),
+        gr.Button(value="Stop generation", interactive=True, variant="danger"),
     ],
     title="НейроЧатWebUI (АЛЬФА) - LLM",
     description="Этот пользовательский интерфейс позволяет вам вводить любой текст или аудио и получать "
@@ -661,6 +662,7 @@ txt2img_interface = gr.Interface(
     outputs=[
         gr.Image(type="filepath", label="Сгенерированное изображение"),
         gr.Textbox(label="Сообщение", type="text"),
+        gr.Button(value="Stop generation", interactive=True, variant="danger"),
     ],
     title="НейроЧатWebUI (АЛЬФА) - Stable Diffusion (txt2img)",
     description="Этот пользовательский интерфейс позволяет вводить любой текст и генерировать изображения с помощью Stable Diffusion. "
@@ -688,6 +690,7 @@ img2img_interface = gr.Interface(
     outputs=[
         gr.Image(type="filepath", label="Сгенерированное изображение"),
         gr.Textbox(label="Сообщение", type="text"),
+        gr.Button(value="Stop generation", interactive=True, variant="danger"),
     ],
     title="НейроЧатWebUI (АЛЬФА) - Stable Diffusion (img2img)",
     description="Этот пользовательский интерфейс позволяет вам вводить любой текст и изображение для создания новых изображений с помощью Stable Diffusion. "
@@ -704,6 +707,7 @@ extras_interface = gr.Interface(
     outputs=[
         gr.Image(type="filepath", label="Увеличенное изображение"),
         gr.Textbox(label="Сообщение", type="text"),
+        gr.Button(value="Stop generation", interactive=True, variant="danger"),
     ],
     title="НейроЧатWebUI (АЛЬФА) - Stable Diffusion (Дополнительно)",
     description="Этот пользовательский интерфейс позволяет загружать изображение и выполнять масштабирование в 2 раза.",
@@ -727,6 +731,7 @@ audiocraft_interface = gr.Interface(
     outputs=[
         gr.Audio(label="Сгенерированное аудио", type="filepath"),
         gr.Textbox(label="Сообщение", type="text"),
+        gr.Button(value="Stop generation", interactive=True, variant="danger"),
     ],
     title="НейроЧатWebUI (АЛЬФА) - AudioCraft",
     description="Этот пользовательский интерфейс позволяет вам вводить любой текст и генерировать аудио с помощью AudioCraft. "
