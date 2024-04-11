@@ -736,11 +736,18 @@ audiocraft_interface = gr.Interface(
 )
 
 with gr.TabbedInterface(
-        [chat_interface, gr.TabbedInterface([txt2img_interface, img2img_interface, extras_interface],
-                                            tab_names=["txt2img", "img2img", "Дополнительно"]),
-         audiocraft_interface],
-        tab_names=["LLM", "Stable Diffusion", "AudioCraft"]
+    [chat_interface, gr.TabbedInterface([txt2img_interface, img2img_interface, extras_interface], tab_names=["txt2img", "img2img", "Extras"]),
+     audiocraft_interface],
+    tab_names=["LLM", "Stable Diffusion", "AudioCraft"]
 ) as app:
+    github_link = gr.HTML(
+        '<div style="text-align: center; margin-top: 20px;">'
+        '<a href="https://github.com/Dartvauder/NeuroChatWebUI" target="_blank" style="color: blue; text-decoration: none; font-size: 16px;">'
+        'GitHub'
+        '</a>'
+        '</div>'
+    )
+
     stop_button = gr.Button(value="Stop generation", interactive=True)
     stop_button.click(stop_all_processes, [], [], queue=False)
 
