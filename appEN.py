@@ -631,6 +631,7 @@ chat_interface = gr.Interface(
         gr.Textbox(label="LLM text response", type="text"),
         gr.Audio(label="LLM audio response", type="filepath"),
         gr.Image(type="filepath", label="Avatar"),
+        gr.Button(value="Stop generation", interactive=True, variant="danger"),
     ],
     title="NeuroChatWebUI (ALPHA) - LLM",
     description="This user interface allows you to enter any text or audio and receive "
@@ -661,6 +662,7 @@ txt2img_interface = gr.Interface(
     outputs=[
         gr.Image(type="filepath", label="Generated image"),
         gr.Textbox(label="Message", type="text"),
+        gr.Button(value="Stop generation", interactive=True, variant="danger"),
     ],
     title="NeuroChatWebUI (ALPHA) - Stable Diffusion (txt2img)",
     description="This user interface allows you to enter any text and generate images using Stable Diffusion. "
@@ -688,6 +690,7 @@ img2img_interface = gr.Interface(
     outputs=[
         gr.Image(type="filepath", label="Generated image"),
         gr.Textbox(label="Message", type="text"),
+        gr.Button(value="Stop generation", interactive=True, variant="danger"),
     ],
     title="NeuroChatWebUI (ALPHA) - Stable Diffusion (img2img)",
     description="This user interface allows you to enter any text and image to generate new images using Stable Diffusion. "
@@ -704,6 +707,7 @@ extras_interface = gr.Interface(
     outputs=[
         gr.Image(type="filepath", label="Upscaled image"),
         gr.Textbox(label="Message", type="text"),
+        gr.Button(value="Stop generation", interactive=True, variant="danger"),
     ],
     title="NeuroChatWebUI (ALPHA) - Stable Diffusion (Extras)",
     description="This user interface allows you to upload an image and perform x2 upscaling without using a prompt.",
@@ -727,6 +731,7 @@ audiocraft_interface = gr.Interface(
     outputs=[
         gr.Audio(label="Generated audio", type="filepath"),
         gr.Textbox(label="Message", type="text"),
+        gr.Button(value="Stop generation", interactive=True, variant="danger"),
     ],
     title="NeuroChatWebUI (ALPHA) - AudioCraft",
     description="This user interface allows you to enter any text and generate audio using AudioCraft. "
@@ -747,9 +752,6 @@ with gr.TabbedInterface(
         '</a>'
         '</div>'
     )
-
-    stop_button = gr.Button(value="Stop generation", interactive=True)
-    stop_button.click(stop_all_processes, [], [], queue=False)
 
     app.launch()
     
