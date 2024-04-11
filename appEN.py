@@ -640,6 +640,7 @@ chat_interface = gr.Interface(
                 "using sliders. Try it and see what happens!",
     allow_flagging="never",
 )
+chat_interface.outputs[-1].click(stop_all_processes, [], [], queue=False)
 
 txt2img_interface = gr.Interface(
     fn=generate_image_txt2img,
@@ -670,6 +671,7 @@ txt2img_interface = gr.Interface(
                 "Try it and see what happens!",
     allow_flagging="never",
 )
+txt2img_interface.outputs[-1].click(stop_all_processes, [], [], queue=False)
 
 img2img_interface = gr.Interface(
     fn=generate_image_img2img,
@@ -698,6 +700,7 @@ img2img_interface = gr.Interface(
                 "Try it and see what happens!",
     allow_flagging="never",
 )
+img2img_interface.outputs[-1].click(stop_all_processes, [], [], queue=False)
 
 extras_interface = gr.Interface(
     fn=upscale_image,
@@ -713,6 +716,7 @@ extras_interface = gr.Interface(
     description="This user interface allows you to upload an image and perform x2 upscaling without using a prompt.",
     allow_flagging="never",
 )
+extras_interface.outputs[-1].click(stop_all_processes, [], [], queue=False)
 
 audiocraft_interface = gr.Interface(
     fn=generate_audio,
@@ -739,6 +743,7 @@ audiocraft_interface = gr.Interface(
                 "Try it and see what happens!",
     allow_flagging="never",
 )
+audiocraft_interface.outputs[-1].click(stop_all_processes, [], [], queue=False)
 
 with gr.TabbedInterface(
     [chat_interface, gr.TabbedInterface([txt2img_interface, img2img_interface, extras_interface], tab_names=["txt2img", "img2img", "Extras"]),
