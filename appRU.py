@@ -602,6 +602,12 @@ def stop_all_processes():
     global stop_signal
     stop_signal = True
 
+def reload_ui():
+    os._exit(0)
+
+def close_terminal():
+    os._exit(1)
+
 
 llm_models_list = [None] + [model for model in os.listdir("inputs/text/llm_models") if not model.endswith(".txt")]
 avatars_list = [None] + [avatar for avatar in os.listdir("inputs/image/avatars") if not avatar.endswith(".txt")]
@@ -757,6 +763,12 @@ with gr.TabbedInterface(
      audiocraft_interface],
     tab_names=["LLM", "Stable Diffusion", "AudioCraft"]
 ) as app:
+    reload_button = gr.Button("ReloadUI")
+    reload_button.click(reload_ui, [], [], queue=False)
+
+    close_button = gr.Button("Close terminal")
+    close_button.click(close_terminal, [], [], queue=False)
+
     github_link = gr.HTML(
         '<div style="text-align: center; margin-top: 20px;">'
         '<a href="https://github.com/Dartvauder/NeuroChatWebUI" target="_blank" style="color: blue; text-decoration: none; font-size: 16px;">'
