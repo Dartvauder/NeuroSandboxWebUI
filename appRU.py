@@ -753,7 +753,4 @@ with gr.TabbedInterface(
         '</div>'
     )
 
-    stop_button = gr.Button(value="Stop generation", interactive=True)
-    stop_button.click(stop_all_processes, [], [], queue=False)
-
     app.launch()
