@@ -215,44 +215,37 @@ stop_signal = False
 
 
 def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_model_type, max_tokens, n_ctx, temperature,
-                             top_p, top_k, avatar_name, enable_tts, speaker_wav, language):
+                             top_p, top_k, avatar_name, enable_tts, speaker_wav, language, tts_temperature, tts_top_p,
+                             tts_top_k, tts_speed):
     global chat_dir, tts_model, whisper_model, stop_signal
     stop_signal = False
-
     if not input_text and not input_audio:
-        return "Пожалуйста, введите ваш запрос!", None, None, None, None
-
+        return "Please, enter your request!", None, None, None, None
     prompt = transcribe_audio(input_audio) if input_audio else input_text
-
     if not llm_model_name:
-        return "Пожалуйста, выберите LLM модель!", None, None, None, None
-
+        return "Please, select a LLM model!", None, None, None, None
     tokenizer, llm_model, error_message = load_model(llm_model_name, llm_model_type,
                                                      n_ctx=n_ctx if llm_model_type == "llama" else None)
     if error_message:
         return error_message, None, None, None, None
-
     tts_model = None
     whisper_model = None
     text = None
     audio_path = None
     avatar_path = None
-
     try:
         if enable_tts:
             if not tts_model:
                 tts_model = load_tts_model()
             if not speaker_wav or not language:
-                return "Пожалуйста, выберите голос и язык для TTS!", None, None, None, None
+                return "Please, select a voice and language for TTS!", None, None, None, None
             device = "cuda" if torch.cuda.is_available() else "cpu"
             tts_model = tts_model.to(device)
-
         if input_audio:
             if not whisper_model:
                 whisper_model = load_whisper_model()
             device = "cuda" if torch.cuda.is_available() else "cpu"
             whisper_model = whisper_model.to(device)
-
         if llm_model:
             if llm_model_type == "transformers":
                 inputs = tokenizer.encode(prompt, return_tensors="pt")
@@ -261,7 +254,7 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_model_
                 outputs = llm_model.generate(inputs, max_new_tokens=max_tokens, top_p=top_p, top_k=top_k,
                                              temperature=temperature, pad_token_id=tokenizer.eos_token_id)
                 if stop_signal:
-                    return "Генерация остановлена", None, None, None
+                    return "Generation stopped", None, None, None
                 generated_sequence = outputs[0][inputs.shape[-1]:]
                 text = tokenizer.decode(generated_sequence, skip_special_tokens=True)
             elif llm_model_type == "llama":
@@ -270,33 +263,44 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_model_
                                    temperature=temperature, top_p=top_p, top_k=top_k,
                                    repeat_penalty=1.1)
                 if stop_signal:
-                    return "Генерация остановлена", None, None, None
+                    return "Generation stopped", None, None, None
                 text = output['choices'][0]['text']
-
         if not chat_dir:
             now = datetime.now()
             chat_dir = os.path.join('outputs', f"chat_{now.strftime('%Y%m%d_%H%M%S')}")
             os.makedirs(chat_dir)
             os.makedirs(os.path.join(chat_dir, 'text'))
             os.makedirs(os.path.join(chat_dir, 'audio'))
-
         chat_history_path = os.path.join(chat_dir, 'text', 'chat_history.txt')
         with open(chat_history_path, "a", encoding="utf-8") as f:
             f.write(f"Human: {prompt}\n")
             if text:
                 f.write(f"AI: {text}\n\n")
-
         avatar_path = f"inputs/image/avatars/{avatar_name}" if avatar_name else None
-
         if enable_tts and text:
             if stop_signal:
-                return text, None, avatar_path, chat_dir, "Генерация остановлена"
-            wav = tts_model.tts(text=text, speaker_wav=f"inputs/audio/voices/{speaker_wav}", language=language)
-            now = datetime.now()
-            audio_filename = f"output_{now.strftime('%Y%m%d_%H%M%S')}.wav"
-            audio_path = os.path.join(chat_dir, 'audio', audio_filename)
-            sf.write(audio_path, wav, 22050)
-
+                return text, None, avatar_path, chat_dir, "Generation stopped"
+            enable_text_splitting = True
+            repetition_penalty = 2.0
+            length_penalty = 1.0
+            if enable_text_splitting:
+                text_parts = text.split(".")
+                for part in text_parts:
+                    wav = tts_model.tts(text=part.strip(), speaker_wav=f"inputs/audio/voices/{speaker_wav}", language=language,
+                                        temperature=tts_temperature, top_p=tts_top_p, top_k=tts_top_k, speed=tts_speed,
+                                        repetition_penalty=repetition_penalty, length_penalty=length_penalty)
+                    now = datetime.now()
+                    audio_filename = f"output_{now.strftime('%Y%m%d_%H%M%S')}.wav"
+                    audio_path = os.path.join(chat_dir, 'audio', audio_filename)
+                    sf.write(audio_path, wav, 22050)
+            else:
+                wav = tts_model.tts(text=text, speaker_wav=f"inputs/audio/voices/{speaker_wav}", language=language,
+                                    temperature=tts_temperature, top_p=tts_top_p, top_k=tts_top_k, speed=tts_speed,
+                                    repetition_penalty=repetition_penalty, length_penalty=length_penalty)
+                now = datetime.now()
+                audio_filename = f"output_{now.strftime('%Y%m%d_%H%M%S')}.wav"
+                audio_path = os.path.join(chat_dir, 'audio', audio_filename)
+                sf.write(audio_path, wav, 22050)
     finally:
         if tokenizer is not None:
             del tokenizer
@@ -307,7 +311,6 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_model_
         if whisper_model is not None:
             del whisper_model
         torch.cuda.empty_cache()
-
     return text, audio_path, avatar_path, chat_dir
 
 
