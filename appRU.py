@@ -507,7 +507,7 @@ def generate_audio(prompt, input_audio=None, model_name=None, model_type="musicg
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
     if not model_name:
-        return None, "Пожалуйста, выберите модель AudioCraft!"
+        return None, "Please, select an AudioCraft model!"
 
     if not audiocraft_model_path:
         audiocraft_model_path = load_audiocraft_model(model_name)
@@ -520,9 +520,9 @@ def generate_audio(prompt, input_audio=None, model_name=None, model_type="musicg
             model = AudioGen.get_pretrained(audiocraft_model_path)
             model.set_generation_params(duration=duration)
         else:
-            return None, "Неверный тип модели!"
+            return None, "Invalid model type!"
     except (ValueError, AssertionError):
-        return None, "Выбранная модель несовместима с выбранным типом модели"
+        return None, "The selected model is not compatible with the chosen model type"
 
     multiband_diffusion_model = None
 
@@ -542,7 +542,7 @@ def generate_audio(prompt, input_audio=None, model_name=None, model_type="musicg
             if wav.ndim > 2:
                 wav = wav.squeeze()
             if stop_signal:
-                return None, "Генерация остановлена"
+                return None, "Generation stopped"
         else:
             descriptions = [prompt]
             model.set_generation_params(duration=duration, top_k=top_k, top_p=top_p, temperature=temperature,
@@ -551,11 +551,11 @@ def generate_audio(prompt, input_audio=None, model_name=None, model_type="musicg
             if wav.ndim > 2:
                 wav = wav.squeeze()
             if stop_signal:
-                return None, "Генерация остановлена"
+                return None, "Generation stopped"
 
         if multiband_diffusion_model:
             if stop_signal:
-                return None, "Генерация остановлена"
+                return None, "Generation stopped"
             wav = wav.unsqueeze(0)
             wav = wav.to(device)
             wav = multiband_diffusion_model.compress_and_decompress(wav)
