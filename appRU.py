@@ -551,6 +551,8 @@ def generate_audio(prompt, input_audio=None, model_name=None, model_type="musicg
                 return None, "Генерация остановлена"
 
         if multiband_diffusion_model:
+            if stop_signal:
+                return None, "Генерация остановлена"
             wav = wav.unsqueeze(0)
             wav = wav.to(device)
             wav = multiband_diffusion_model.compress_and_decompress(wav)
