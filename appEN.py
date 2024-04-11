@@ -8,7 +8,8 @@ import whisper
 from datetime import datetime
 import warnings
 import logging
-from diffusers import StableDiffusionPipeline, StableDiffusionXLPipeline, StableDiffusionImg2ImgPipeline, AutoencoderKL, StableDiffusionLatentUpscalePipeline, StableDiffusionUpscalePipeline
+from diffusers import StableDiffusionPipeline, StableDiffusionXLPipeline, StableDiffusionImg2ImgPipeline, AutoencoderKL, \
+    StableDiffusionLatentUpscalePipeline, StableDiffusionUpscalePipeline
 from git import Repo
 from PIL import Image
 from llama_cpp import Llama
@@ -22,6 +23,7 @@ torch.cuda.is_available()
 try:
     import xformers
     import xformers.ops
+
     XFORMERS_AVAILABLE = True
 except ImportError:
     print("Xformers is not installed. Proceeding without it")
@@ -286,7 +288,8 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_model_
             if enable_text_splitting:
                 text_parts = text.split(".")
                 for part in text_parts:
-                    wav = tts_model.tts(text=part.strip(), speaker_wav=f"inputs/audio/voices/{speaker_wav}", language=language,
+                    wav = tts_model.tts(text=part.strip(), speaker_wav=f"inputs/audio/voices/{speaker_wav}",
+                                        language=language,
                                         temperature=tts_temperature, top_p=tts_top_p, top_k=tts_top_k, speed=tts_speed,
                                         repetition_penalty=repetition_penalty, length_penalty=length_penalty)
                     now = datetime.now()
@@ -388,8 +391,7 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
             upscaler = load_upscale_model(upscale_factor_value)
             if upscaler:
                 if upscale_factor == "x2":
-                    upscaled_image = \
-                        upscaler(prompt=prompt, image=image, num_inference_steps=30, guidance_scale=0).images[0]
+                    upscaled_image = upscaler(prompt=prompt, image=image, num_inference_steps=30, guidance_scale=0).images[0]
                 else:
                     upscaled_image = upscaler(prompt=prompt, image=image)["images"][0]
                 image = upscaled_image
@@ -498,6 +500,7 @@ def generate_image_img2img(prompt, negative_prompt, init_image,
         del stable_diffusion_model
         torch.cuda.empty_cache()
 
+
 def upscale_image(image_path):
     global stop_signal
     if stop_signal:
@@ -602,8 +605,10 @@ def stop_all_processes():
     global stop_signal
     stop_signal = True
 
+
 def reload_ui():
     os._exit(0)
+
 
 def close_terminal():
     os._exit(1)
@@ -644,7 +649,7 @@ chat_interface = gr.Interface(
         gr.Textbox(label="LLM text response", type="text"),
         gr.Audio(label="LLM audio response", type="filepath"),
         gr.Image(type="filepath", label="Avatar"),
-        gr.Button(value="Stop generation", interactive=True, variant="danger"),
+        gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
     title="NeuroChatWebUI (ALPHA) - LLM",
     description="This user interface allows you to enter any text or audio and receive "
@@ -653,7 +658,6 @@ chat_interface = gr.Interface(
                 "using sliders. Try it and see what happens!",
     allow_flagging="never",
 )
-chat_interface.outputs[-1].click(stop_all_processes, [], [], queue=False)
 
 txt2img_interface = gr.Interface(
     fn=generate_image_txt2img,
@@ -676,7 +680,7 @@ txt2img_interface = gr.Interface(
     outputs=[
         gr.Image(type="filepath", label="Generated image"),
         gr.Textbox(label="Message", type="text"),
-        gr.Button(value="Stop generation", interactive=True, variant="danger"),
+        gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
     title="NeuroChatWebUI (ALPHA) - Stable Diffusion (txt2img)",
     description="This user interface allows you to enter any text and generate images using Stable Diffusion. "
@@ -684,7 +688,6 @@ txt2img_interface = gr.Interface(
                 "Try it and see what happens!",
     allow_flagging="never",
 )
-txt2img_interface.outputs[-1].click(stop_all_processes, [], [], queue=False)
 
 img2img_interface = gr.Interface(
     fn=generate_image_img2img,
@@ -705,7 +708,7 @@ img2img_interface = gr.Interface(
     outputs=[
         gr.Image(type="filepath", label="Generated image"),
         gr.Textbox(label="Message", type="text"),
-        gr.Button(value="Stop generation", interactive=True, variant="danger"),
+        gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
     title="NeuroChatWebUI (ALPHA) - Stable Diffusion (img2img)",
     description="This user interface allows you to enter any text and image to generate new images using Stable Diffusion. "
@@ -713,7 +716,6 @@ img2img_interface = gr.Interface(
                 "Try it and see what happens!",
     allow_flagging="never",
 )
-img2img_interface.outputs[-1].click(stop_all_processes, [], [], queue=False)
 
 extras_interface = gr.Interface(
     fn=upscale_image,
@@ -723,13 +725,12 @@ extras_interface = gr.Interface(
     outputs=[
         gr.Image(type="filepath", label="Upscaled image"),
         gr.Textbox(label="Message", type="text"),
-        gr.Button(value="Stop generation", interactive=True, variant="danger"),
+        gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
     title="NeuroChatWebUI (ALPHA) - Stable Diffusion (Extras)",
     description="This user interface allows you to upload an image and perform x2 upscaling without using a prompt.",
     allow_flagging="never",
 )
-extras_interface.outputs[-1].click(stop_all_processes, [], [], queue=False)
 
 audiocraft_interface = gr.Interface(
     fn=generate_audio,
@@ -748,7 +749,7 @@ audiocraft_interface = gr.Interface(
     outputs=[
         gr.Audio(label="Generated audio", type="filepath"),
         gr.Textbox(label="Message", type="text"),
-        gr.Button(value="Stop generation", interactive=True, variant="danger"),
+        gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
     title="NeuroChatWebUI (ALPHA) - AudioCraft",
     description="This user interface allows you to enter any text and generate audio using AudioCraft. "
@@ -756,13 +757,19 @@ audiocraft_interface = gr.Interface(
                 "Try it and see what happens!",
     allow_flagging="never",
 )
-audiocraft_interface.outputs[-1].click(stop_all_processes, [], [], queue=False)
 
 with gr.TabbedInterface(
-    [chat_interface, gr.TabbedInterface([txt2img_interface, img2img_interface, extras_interface], tab_names=["txt2img", "img2img", "Extras"]),
-     audiocraft_interface],
-    tab_names=["LLM", "Stable Diffusion", "AudioCraft"]
+        [chat_interface, gr.TabbedInterface([txt2img_interface, img2img_interface, extras_interface],
+                                            tab_names=["txt2img", "img2img", "Extras"]),
+         audiocraft_interface],
+        tab_names=["LLM", "Stable Diffusion", "AudioCraft"]
 ) as app:
+    chat_interface.output_components[-1].click(stop_all_processes, [], [], queue=False)
+    txt2img_interface.output_components[-1].click(stop_all_processes, [], [], queue=False)
+    img2img_interface.output_components[-1].click(stop_all_processes, [], [], queue=False)
+    extras_interface.output_components[-1].click(stop_all_processes, [], [], queue=False)
+    audiocraft_interface.output_components[-1].click(stop_all_processes, [], [], queue=False)
+
     reload_button = gr.Button("ReloadUI")
     reload_button.click(reload_ui, [], [], queue=False)
 
