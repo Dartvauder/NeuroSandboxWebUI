@@ -199,8 +199,10 @@ def load_upscale_model(upscale_factor):
 stop_signal = False
 
 
-def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_settings_html, llm_model_type, max_tokens, n_ctx, temperature,
-                             top_p, top_k, avatar_html, avatar_name, enable_tts, tts_settings_html, speaker_wav, language, tts_temperature, tts_top_p,
+def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_settings_html, llm_model_type, max_tokens,
+                             n_ctx, temperature,
+                             top_p, top_k, avatar_html, avatar_name, enable_tts, tts_settings_html, speaker_wav,
+                             language, tts_temperature, tts_top_p,
                              tts_top_k, tts_speed, stop_generation):
     global chat_dir, tts_model, whisper_model, stop_signal
     stop_signal = False
@@ -301,7 +303,8 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_settin
     return text, audio_path, avatar_path
 
 
-def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name, vae_model_name, stable_diffusion_settings_html,
+def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name, vae_model_name,
+                           stable_diffusion_settings_html,
                            stable_diffusion_model_type, stable_diffusion_sampler, stable_diffusion_steps,
                            stable_diffusion_cfg, stable_diffusion_width, stable_diffusion_height,
                            stable_diffusion_clip_skip, enable_upscale=False, upscale_factor="x2", stop_generation=None):
@@ -395,7 +398,8 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
 
 
 def generate_image_img2img(prompt, negative_prompt, init_image,
-                           strength, stable_diffusion_model_name, vae_model_name, stable_diffusion_settings_html, stable_diffusion_model_type,
+                           strength, stable_diffusion_model_name, vae_model_name, stable_diffusion_settings_html,
+                           stable_diffusion_model_type,
                            stable_diffusion_sampler, stable_diffusion_steps, stable_diffusion_cfg,
                            stable_diffusion_clip_skip, stop_generation):
     global stop_signal
@@ -507,7 +511,8 @@ def upscale_image(image_path):
         return None, "Failed to load upscale model"
 
 
-def generate_audio(prompt, input_audio=None, model_name=None, audiocraft_settings_html=None, model_type="musicgen", duration=10, top_k=250, top_p=0.0,
+def generate_audio(prompt, input_audio=None, model_name=None, audiocraft_settings_html=None, model_type="musicgen",
+                   duration=10, top_k=250, top_p=0.0,
                    temperature=1.0, cfg_coef=4.0, enable_multiband=False, stop_generation=None):
     global audiocraft_model_path, stop_signal
     stop_signal = False
@@ -588,10 +593,6 @@ def generate_audio(prompt, input_audio=None, model_name=None, audiocraft_setting
 def stop_all_processes():
     global stop_signal
     stop_signal = True
-
-
-def reload_ui():
-    os._exit(0)
 
 
 def close_terminal():
@@ -759,9 +760,6 @@ with gr.TabbedInterface(
     img2img_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     extras_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     audiocraft_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
-
-    reload_button = gr.Button("ReloadUI")
-    reload_button.click(reload_ui, [], [], queue=False)
 
     close_button = gr.Button("Close terminal")
     close_button.click(close_terminal, [], [], queue=False)
