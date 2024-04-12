@@ -8,8 +8,7 @@ import whisper
 from datetime import datetime
 import warnings
 import logging
-from diffusers import StableDiffusionPipeline, StableDiffusionXLPipeline, StableDiffusionImg2ImgPipeline, AutoencoderKL, \
-    StableDiffusionLatentUpscalePipeline, StableDiffusionUpscalePipeline
+from diffusers import StableDiffusionPipeline, StableDiffusionXLPipeline, StableDiffusionImg2ImgPipeline, AutoencoderKL, StableDiffusionLatentUpscalePipeline, StableDiffusionUpscalePipeline
 from git import Repo
 from PIL import Image
 from llama_cpp import Llama
@@ -235,6 +234,7 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_model_
     text = None
     audio_path = None
     avatar_path = None
+
     try:
         if enable_tts:
             if not tts_model:
@@ -403,7 +403,7 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
         image_path = os.path.join(image_dir, image_filename)
         image.save(image_path, format="PNG")
 
-        return image_path, None
+        return image_path, "", None
 
     finally:
         del stable_diffusion_model
@@ -518,7 +518,7 @@ def upscale_image(image_path):
         image_path = os.path.join(image_dir, image_filename)
         upscaled_image.save(image_path, format="PNG")
 
-        return image_path, None
+        return image_path, "", None
     else:
         return None, "Failed to load upscale model"
 
