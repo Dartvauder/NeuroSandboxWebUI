@@ -123,7 +123,7 @@ To get update, run `git pull`
 2) You can also press the `Clear` button to clear your selection
 3) To stop the generation process, click the `Stop generation` button
 4) You can also turn off and restart the application using the buttons `Close terminal` and `ReloadUI`
-#### To completely close the application,just close the terminal
+#### To completely close the application, just close the terminal
 
 ## Where can I get models, voices and avatars?
 
