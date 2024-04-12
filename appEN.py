@@ -217,7 +217,7 @@ stop_signal = False
 
 def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_model_type, max_tokens, n_ctx, temperature,
                              top_p, top_k, avatar_name, enable_tts, speaker_wav, language, tts_temperature, tts_top_p,
-                             tts_top_k, tts_speed):
+                             tts_top_k, tts_speed, llm_settings_html, avatar_html, tts_settings_html):
     global chat_dir, tts_model, whisper_model, stop_signal
     stop_signal = False
     if not input_text and not input_audio:
@@ -314,13 +314,13 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_model_
         if whisper_model is not None:
             del whisper_model
         torch.cuda.empty_cache()
-    return text, audio_path, avatar_path, chat_dir
+    return text, audio_path, avatar_path
 
 
-def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name, vae_model_name,
+def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name, vae_model_name, stable_diffusion_settings_html,
                            stable_diffusion_model_type, stable_diffusion_sampler, stable_diffusion_steps,
                            stable_diffusion_cfg, stable_diffusion_width, stable_diffusion_height,
-                           stable_diffusion_clip_skip, enable_upscale=False, upscale_factor="x2"):
+                           stable_diffusion_clip_skip, enable_upscale=False, upscale_factor="x2",):
     global stop_signal
     stop_signal = False
 
@@ -403,7 +403,7 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
         image_path = os.path.join(image_dir, image_filename)
         image.save(image_path, format="PNG")
 
-        return image_path, "", None
+        return image_path, None
 
     finally:
         del stable_diffusion_model
@@ -411,7 +411,7 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
 
 
 def generate_image_img2img(prompt, negative_prompt, init_image,
-                           strength, stable_diffusion_model_name, vae_model_name, stable_diffusion_model_type,
+                           strength, stable_diffusion_model_name, vae_model_name, stable_diffusion_settings_html, stable_diffusion_model_type,
                            stable_diffusion_sampler, stable_diffusion_steps, stable_diffusion_cfg,
                            stable_diffusion_clip_skip):
     global stop_signal
@@ -518,12 +518,12 @@ def upscale_image(image_path):
         image_path = os.path.join(image_dir, image_filename)
         upscaled_image.save(image_path, format="PNG")
 
-        return image_path, "", None
+        return image_path, None
     else:
         return None, "Failed to load upscale model"
 
 
-def generate_audio(prompt, input_audio=None, model_name=None, model_type="musicgen", duration=10, top_k=250, top_p=0.0,
+def generate_audio(prompt, input_audio=None, model_name=None, audiocraft_settings_html=None, model_type="musicgen", duration=10, top_k=250, top_p=0.0,
                    temperature=1.0, cfg_coef=4.0, enable_multiband=False):
     global audiocraft_model_path, stop_signal
     stop_signal = False
@@ -630,14 +630,17 @@ chat_interface = gr.Interface(
         gr.Textbox(label="Enter your request"),
         gr.Audio(type="filepath", label="Record your request (optional)"),
         gr.Dropdown(choices=llm_models_list, label="Select LLM model", value=None),
+        gr.HTML("<h3>LLM Settings</h3>"),
         gr.Radio(choices=["transformers", "llama"], label="Select model type", value="transformers"),
         gr.Slider(minimum=1, maximum=2048, value=512, step=1, label="Max tokens"),
         gr.Slider(minimum=0, maximum=4096, value=2048, step=1, label="n_ctx (for llama models only)", interactive=True),
         gr.Slider(minimum=0.0, maximum=1.0, value=0.7, step=0.1, label="Temperature"),
         gr.Slider(minimum=0.0, maximum=1.0, value=0.9, step=0.1, label="Top P"),
         gr.Slider(minimum=0, maximum=100, value=30, step=1, label="Top K"),
+        gr.HTML("<br>"),
         gr.Dropdown(choices=avatars_list, label="Select avatar", value=None),
         gr.Checkbox(label="Enable TTS", value=False),
+        gr.HTML("<h3>TTS Settings</h3>"),
         gr.Dropdown(choices=speaker_wavs_list, label="Select voice", interactive=True),
         gr.Dropdown(choices=["en", "ru"], label="Select language", interactive=True),
         gr.Slider(minimum=0.0, maximum=1.0, value=1.0, step=0.1, label="TTS Temperature", interactive=True),
@@ -666,6 +669,7 @@ txt2img_interface = gr.Interface(
         gr.Textbox(label="Enter your negative prompt", value=""),
         gr.Dropdown(choices=stable_diffusion_models_list, label="Select Stable Diffusion model", value=None),
         gr.Dropdown(choices=vae_models_list, label="Select VAE model (optional)", value=None),
+        gr.HTML("<h3>Stable Diffusion Settings</h3>"),
         gr.Radio(choices=["SD", "SDXL"], label="Select model type", value="SD"),
         gr.Dropdown(choices=["euler_ancestral", "euler", "lms", "heun", "dpm", "dpm_solver", "dpm_solver++"],
                     label="Select sampler", value="euler_ancestral"),
@@ -698,6 +702,7 @@ img2img_interface = gr.Interface(
         gr.Slider(minimum=0.0, maximum=1.0, value=0.5, step=0.01, label="Strength"),
         gr.Dropdown(choices=stable_diffusion_models_list, label="Select Stable Diffusion model", value=None),
         gr.Dropdown(choices=vae_models_list, label="Select VAE model (optional)", value=None),
+        gr.HTML("<h3>Stable Diffusion Settings</h3>"),
         gr.Radio(choices=["SD", "SDXL"], label="Select model type", value="SD"),
         gr.Dropdown(choices=["euler_ancestral", "euler", "lms", "heun", "dpm", "dpm_solver", "dpm_solver++"],
                     label="Select sampler", value="euler_ancestral"),
@@ -738,6 +743,7 @@ audiocraft_interface = gr.Interface(
         gr.Textbox(label="Enter your prompt"),
         gr.Audio(type="filepath", label="Melody audio (optional)", interactive=True),
         gr.Dropdown(choices=audiocraft_models_list, label="Select AudioCraft model", value=None),
+        gr.HTML("<h3>AudioCraft Settings</h3>"),
         gr.Radio(choices=["musicgen", "audiogen"], label="Select model type", value="musicgen"),
         gr.Slider(minimum=1, maximum=120, value=10, step=1, label="Duration (seconds)"),
         gr.Slider(minimum=1, maximum=1000, value=250, step=1, label="Top K"),
