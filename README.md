@@ -103,7 +103,7 @@ To get update, run `git pull`
 #### Optional: You can select your `vae` model
 #### vae = *inputs/image/sd_models/vae*
 
-#### Extra:
+#### Extras:
 
 * For now, only simple upscale of any of your images is available now
 
