@@ -53,6 +53,7 @@ def load_model(model_name, model_type, n_ctx=None):
                 tokenizer = AutoTokenizer.from_pretrained(model_path)
                 device = "cuda" if torch.cuda.is_available() else "cpu"
                 model = AutoModelForCausalLM.from_pretrained(model_path)
+                return tokenizer, model.to(device), None
             except (ValueError, OSError):
                 return None, None, "The selected model is not compatible with the 'transformers' model type"
         elif model_type == "llama":
@@ -61,26 +62,9 @@ def load_model(model_name, model_type, n_ctx=None):
                 model = Llama(model_path, n_gpu_layers=-1 if device == "cuda" else 0)
                 model.n_ctx = n_ctx
                 tokenizer = None
+                return None, model, None
             except (ValueError, RuntimeError):
                 return None, None, "The selected model is not compatible with the 'llama' model type"
-        else:
-            return None, None, "Invalid model type selected"
-
-        if XFORMERS_AVAILABLE:
-            try:
-                model = model.with_xformers()
-            except (AttributeError, ImportError):
-                try:
-                    model.decoder.enable_xformers_memory_efficient_attention()
-                    model.encoder.enable_xformers_memory_efficient_attention()
-                except AttributeError:
-                    pass
-
-        if model_type == "transformers":
-            return tokenizer, model.to(device), None
-        else:
-            return None, model, None
-
     return None, None, None
 
 
@@ -215,9 +199,9 @@ def load_upscale_model(upscale_factor):
 stop_signal = False
 
 
-def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_model_type, max_tokens, n_ctx, temperature,
-                             top_p, top_k, avatar_name, enable_tts, speaker_wav, language, tts_temperature, tts_top_p,
-                             tts_top_k, tts_speed, llm_settings_html, avatar_html, tts_settings_html, stop_generation):
+def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_settings_html, llm_model_type, max_tokens, n_ctx, temperature,
+                             top_p, top_k, avatar_html, avatar_name, enable_tts, tts_settings_html, speaker_wav, language, tts_temperature, tts_top_p,
+                             tts_top_k, tts_speed, stop_generation):
     global chat_dir, tts_model, whisper_model, stop_signal
     stop_signal = False
     if not input_text and not input_audio:
