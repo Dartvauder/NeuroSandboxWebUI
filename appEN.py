@@ -217,7 +217,7 @@ stop_signal = False
 
 def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_model_type, max_tokens, n_ctx, temperature,
                              top_p, top_k, avatar_name, enable_tts, speaker_wav, language, tts_temperature, tts_top_p,
-                             tts_top_k, tts_speed, llm_settings_html, avatar_html, tts_settings_html):
+                             tts_top_k, tts_speed, llm_settings_html, avatar_html, tts_settings_html, stop_generation):
     global chat_dir, tts_model, whisper_model, stop_signal
     stop_signal = False
     if not input_text and not input_audio:
@@ -320,7 +320,7 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_model_
 def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name, vae_model_name, stable_diffusion_settings_html,
                            stable_diffusion_model_type, stable_diffusion_sampler, stable_diffusion_steps,
                            stable_diffusion_cfg, stable_diffusion_width, stable_diffusion_height,
-                           stable_diffusion_clip_skip, enable_upscale=False, upscale_factor="x2",):
+                           stable_diffusion_clip_skip, enable_upscale=False, upscale_factor="x2", stop_generation=None):
     global stop_signal
     stop_signal = False
 
@@ -413,7 +413,7 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
 def generate_image_img2img(prompt, negative_prompt, init_image,
                            strength, stable_diffusion_model_name, vae_model_name, stable_diffusion_settings_html, stable_diffusion_model_type,
                            stable_diffusion_sampler, stable_diffusion_steps, stable_diffusion_cfg,
-                           stable_diffusion_clip_skip):
+                           stable_diffusion_clip_skip, stop_generation):
     global stop_signal
     stop_signal = False
 
@@ -524,7 +524,7 @@ def upscale_image(image_path):
 
 
 def generate_audio(prompt, input_audio=None, model_name=None, audiocraft_settings_html=None, model_type="musicgen", duration=10, top_k=250, top_p=0.0,
-                   temperature=1.0, cfg_coef=4.0, enable_multiband=False):
+                   temperature=1.0, cfg_coef=4.0, enable_multiband=False, stop_generation=None):
     global audiocraft_model_path, stop_signal
     stop_signal = False
 
@@ -647,12 +647,12 @@ chat_interface = gr.Interface(
         gr.Slider(minimum=0.0, maximum=1.0, value=0.9, step=0.1, label="TTS Top P", interactive=True),
         gr.Slider(minimum=0, maximum=100, value=30, step=1, label="TTS Top K", interactive=True),
         gr.Slider(minimum=0.5, maximum=2.0, value=1.0, step=0.1, label="TTS Speed", interactive=True),
+        gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
     outputs=[
         gr.Textbox(label="LLM text response", type="text"),
         gr.Audio(label="LLM audio response", type="filepath"),
         gr.Image(type="filepath", label="Avatar"),
-        gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
     title="NeuroChatWebUI (ALPHA) - LLM",
     description="This user interface allows you to enter any text or audio and receive "
@@ -680,11 +680,11 @@ txt2img_interface = gr.Interface(
         gr.Slider(minimum=1, maximum=4, value=1, step=1, label="Clip skip"),
         gr.Checkbox(label="Enable upscale", value=False),
         gr.Radio(choices=["x2", "x4"], label="Upscale size", value="x2"),
+        gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
     outputs=[
         gr.Image(type="filepath", label="Generated image"),
         gr.Textbox(label="Message", type="text"),
-        gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
     title="NeuroChatWebUI (ALPHA) - Stable Diffusion (txt2img)",
     description="This user interface allows you to enter any text and generate images using Stable Diffusion. "
@@ -709,11 +709,11 @@ img2img_interface = gr.Interface(
         gr.Slider(minimum=1, maximum=100, value=30, step=1, label="Steps"),
         gr.Slider(minimum=1.0, maximum=30.0, value=8, step=0.1, label="CFG"),
         gr.Slider(minimum=1, maximum=4, value=1, step=1, label="Clip skip"),
+        gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
     outputs=[
         gr.Image(type="filepath", label="Generated image"),
         gr.Textbox(label="Message", type="text"),
-        gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
     title="NeuroChatWebUI (ALPHA) - Stable Diffusion (img2img)",
     description="This user interface allows you to enter any text and image to generate new images using Stable Diffusion. "
@@ -726,11 +726,11 @@ extras_interface = gr.Interface(
     fn=upscale_image,
     inputs=[
         gr.Image(label="Image to upscale", type="filepath"),
+        gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
     outputs=[
         gr.Image(type="filepath", label="Upscaled image"),
         gr.Textbox(label="Message", type="text"),
-        gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
     title="NeuroChatWebUI (ALPHA) - Stable Diffusion (Extras)",
     description="This user interface allows you to upload an image and perform x2 upscaling without using a prompt.",
@@ -751,11 +751,11 @@ audiocraft_interface = gr.Interface(
         gr.Slider(minimum=0.1, maximum=2.0, value=1.0, step=0.1, label="Temperature"),
         gr.Slider(minimum=1.0, maximum=10.0, value=4.0, step=0.1, label="CFG"),
         gr.Checkbox(label="Enable Multiband Diffusion", value=False),
+        gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
     outputs=[
         gr.Audio(label="Generated audio", type="filepath"),
         gr.Textbox(label="Message", type="text"),
-        gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
     title="NeuroChatWebUI (ALPHA) - AudioCraft",
     description="This user interface allows you to enter any text and generate audio using AudioCraft. "
@@ -770,11 +770,11 @@ with gr.TabbedInterface(
          audiocraft_interface],
         tab_names=["LLM", "Stable Diffusion", "AudioCraft"]
 ) as app:
-    chat_interface.output_components[-1].click(stop_all_processes, [], [], queue=False)
-    txt2img_interface.output_components[-1].click(stop_all_processes, [], [], queue=False)
-    img2img_interface.output_components[-1].click(stop_all_processes, [], [], queue=False)
-    extras_interface.output_components[-1].click(stop_all_processes, [], [], queue=False)
-    audiocraft_interface.output_components[-1].click(stop_all_processes, [], [], queue=False)
+    chat_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
+    txt2img_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
+    img2img_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
+    extras_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
+    audiocraft_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
 
     reload_button = gr.Button("ReloadUI")
     reload_button.click(reload_ui, [], [], queue=False)
