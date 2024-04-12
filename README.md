@@ -78,7 +78,7 @@ To get update, run `git pull`
 #### Voice samples = *inputs/audio/voices*
 #### The voice must be pre-processed (22050 kHz, mono, WAV), the avatar should preferably be `PNG` or `JPG`
 
-### Stable Diffusion:
+### Stable Diffusion - has three sub-tabs:
 
 #### txt2img:
 
