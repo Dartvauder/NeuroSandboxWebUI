@@ -120,9 +120,9 @@ To get update, run `git pull`
 ### Additional Information:
 
 1) Chat history, generated images and generated audio, are saved in the *outputs* folder
-2) You can also press the `Clear` button to clear your selection
+2) You can press the `Clear` button to reset your selection
 3) To stop the generation process, click the `Stop generation` button
-4) You can also turn off the application using the button `Close terminal`
+4) You can turn off the application using the `Close terminal` button
 
 ## Where can I get models, voices and avatars?
 
