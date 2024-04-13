@@ -514,10 +514,14 @@ def generate_image_img2img(prompt, negative_prompt, init_image,
         torch.cuda.empty_cache()
 
 
-def upscale_image(image_path):
+def upscale_image(image_path, stop_generation):
     global stop_signal
     if stop_signal:
         return None, "Generation stopped"
+
+    if not image_path:
+        return None, "Please, upload an initial image!"
+    
     upscale_factor = 2
     upscaler = load_upscale_model(upscale_factor)
     if upscaler:
