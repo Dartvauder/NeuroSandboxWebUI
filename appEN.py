@@ -151,7 +151,7 @@ def load_multiband_diffusion_model():
         os.makedirs(multiband_diffusion_path, exist_ok=True)
         Repo.clone_from("https://huggingface.co/facebook/multiband-diffusion", multiband_diffusion_path)
         print("Multiband Diffusion model downloaded")
-    return multiband_diffusion_path
+    return "cuda" if torch.cuda.is_available() else "cpu"
 
 
 def load_upscale_model(upscale_factor):
@@ -521,7 +521,7 @@ def upscale_image(image_path, stop_generation):
 
     if not image_path:
         return None, "Please, upload an initial image!"
-    
+
     upscale_factor = 2
     upscaler = load_upscale_model(upscale_factor)
     if upscaler:
@@ -569,13 +569,10 @@ def generate_audio(prompt, input_audio=None, model_name=None, audiocraft_setting
     except (ValueError, AssertionError):
         return None, "The selected model is not compatible with the chosen model type"
 
-    multiband_diffusion_model = None
+    mbd = None
 
     if enable_multiband:
-        multiband_diffusion_path = load_multiband_diffusion_model()
-        if model_type == "musicgen":
-            multiband_diffusion_model = MultiBandDiffusion.get_mbd_musicgen(multiband_diffusion_path)
-            multiband_diffusion_model.to(device)
+        mbd = MultiBandDiffusion.get_mbd_musicgen()
 
     try:
         if input_audio and model_type == "musicgen":
@@ -583,7 +580,7 @@ def generate_audio(prompt, input_audio=None, model_name=None, audiocraft_setting
             melody, sr = torchaudio.load(audio_path)
             model.set_generation_params(duration=duration, top_k=top_k, top_p=top_p, temperature=temperature,
                                         cfg_coef=cfg_coef)
-            wav = model.generate_with_chroma([prompt], melody[None].expand(1, -1, -1), sr)
+            wav, tokens = model.generate_with_chroma([prompt], melody[None].expand(1, -1, -1), sr, return_tokens=True)
             if wav.ndim > 2:
                 wav = wav.squeeze()
             if stop_signal:
@@ -592,19 +589,20 @@ def generate_audio(prompt, input_audio=None, model_name=None, audiocraft_setting
             descriptions = [prompt]
             model.set_generation_params(duration=duration, top_k=top_k, top_p=top_p, temperature=temperature,
                                         cfg_coef=cfg_coef)
-            wav = model.generate(descriptions)
+            wav, tokens = model.generate(descriptions, return_tokens=True)
             if wav.ndim > 2:
                 wav = wav.squeeze()
             if stop_signal:
                 return None, "Generation stopped"
 
-        if multiband_diffusion_model:
+        if mbd:
             if stop_signal:
                 return None, "Generation stopped"
-            wav = wav.unsqueeze(0)
-            wav = wav.to(device)
-            wav = multiband_diffusion_model.compress_and_decompress(wav)
-            wav = wav.squeeze(0)
+            print(f"Tokens shape: {tokens.shape}")
+            wav_diffusion = mbd.tokens_to_wav(tokens)
+            wav_diffusion = wav_diffusion.squeeze(0)
+        else:
+            wav_diffusion = None
 
         today = datetime.now().date()
         audio_dir = os.path.join('outputs', f"audio_{today.strftime('%Y%m%d')}")
@@ -613,12 +611,18 @@ def generate_audio(prompt, input_audio=None, model_name=None, audiocraft_setting
         audio_path = os.path.join(audio_dir, audio_filename)
         audio_write(audio_path, wav.cpu(), model.sample_rate, strategy="loudness", loudness_compressor=True)
 
+        if wav_diffusion is not None:
+            audio_filename_diffusion = f"output_{datetime.now().strftime('%Y%m%d_%H%M%S')}_diffusion"
+            audio_path_diffusion = os.path.join(audio_dir, audio_filename_diffusion)
+            audio_write(audio_path_diffusion, wav_diffusion.cpu(), model.sample_rate, strategy="loudness",
+                        loudness_compressor=True)
+
         return audio_path + ".wav", None
 
     finally:
         del model
-        if multiband_diffusion_model:
-            del multiband_diffusion_model
+        if mbd:
+            del mbd
         torch.cuda.empty_cache()
 
 
