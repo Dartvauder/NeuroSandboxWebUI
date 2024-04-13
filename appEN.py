@@ -3,6 +3,7 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 import soundfile as sf
 import os
 import torch
+from einops import rearrange
 from TTS.api import TTS
 import whisper
 from datetime import datetime
@@ -599,12 +600,9 @@ def generate_audio(prompt, input_audio=None, model_name=None, audiocraft_setting
             if stop_signal:
                 return None, "Generation stopped"
             print(f"Tokens shape: {tokens.shape}")
-            if len(tokens.shape) == 3:
-                tokens = tokens.unsqueeze(0)
+            tokens = rearrange(tokens, "b n d -> n b d")  # Изменение формы тензора
             wav_diffusion = mbd.tokens_to_wav(tokens)
             wav_diffusion = wav_diffusion.squeeze(0)
-        else:
-            wav_diffusion = None
 
         today = datetime.now().date()
         audio_dir = os.path.join('outputs', f"audio_{today.strftime('%Y%m%d')}")
