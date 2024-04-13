@@ -14,7 +14,7 @@ from PIL import Image
 from llama_cpp import Llama
 import requests
 import torchaudio
-from audiocraft.models import MusicGen, AudioGen, MultiBandDiffusion, MAGNeT
+from audiocraft.models import MusicGen, AudioGen, MultiBandDiffusion  # MAGNeT
 from audiocraft.data.audio import audio_write
 
 XFORMERS_AVAILABLE = False
@@ -557,9 +557,9 @@ def generate_audio(prompt, input_audio=None, model_name=None, audiocraft_setting
         elif model_type == "audiogen":
             model = AudioGen.get_pretrained(audiocraft_model_path)
             model.set_generation_params(duration=duration)
-        elif model_type == "magnet":
-            model = MAGNeT.get_pretrained(audiocraft_model_path)
-            model.set_generation_params()
+        #        elif model_type == "magnet":
+        #            model = MAGNeT.get_pretrained(audiocraft_model_path)
+        #            model.set_generation_params()
         else:
             return None, "Invalid model type!"
     except (ValueError, AssertionError):
@@ -633,10 +633,13 @@ speaker_wavs_list = [None] + [wav for wav in os.listdir("inputs/audio/voices") i
 stable_diffusion_models_list = [None] + [model.replace(".safetensors", "") for model in
                                          os.listdir("inputs/image/sd_models")
                                          if (model.endswith(".safetensors") or not model.endswith(".txt") and not os.path.isdir(os.path.join("inputs/image/sd_models")))]
-audiocraft_models_list = [None] + ["musicgen-stereo-medium", "audiogen-medium", "musicgen-stereo-melody", "magnet-medium-30sec", "magnet-medium-10sec", "audio-magnet-medium"]
+audiocraft_models_list = [None] + ["musicgen-stereo-medium", "audiogen-medium", "musicgen-stereo-melody",
+                                   "magnet-medium-30sec", "magnet-medium-10sec", "audio-magnet-medium"]
 vae_models_list = [None] + [model.replace(".safetensors", "") for model in os.listdir("inputs/image/sd_models/vae") if
                             model.endswith(".safetensors") or not model.endswith(".txt")]
-lora_models_list = [None] + [model for model in os.listdir("inputs/image/sd_models/lora") if model.endswith(".safetensors")]
+lora_models_list = [None] + [model for model in os.listdir("inputs/image/sd_models/lora") if
+                             model.endswith(".safetensors")]
+
 
 chat_interface = gr.Interface(
     fn=generate_text_and_speech,
