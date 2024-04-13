@@ -14,7 +14,7 @@ from PIL import Image
 from llama_cpp import Llama
 import requests
 import torchaudio
-from audiocraft.models import MusicGen, AudioGen, MultiBandDiffusion
+from audiocraft.models import MusicGen, AudioGen, MultiBandDiffusion, MAGNeT
 from audiocraft.data.audio import audio_write
 
 XFORMERS_AVAILABLE = False
@@ -131,6 +131,12 @@ def load_audiocraft_model(model_name):
             Repo.clone_from("https://huggingface.co/facebook/audiogen-medium", audiocraft_model_path)
         elif model_name == "musicgen-stereo-melody":
             Repo.clone_from("https://huggingface.co/facebook/musicgen-stereo-melody", audiocraft_model_path)
+        elif model_name == "magnet-medium-30sec":
+            Repo.clone_from("https://huggingface.co/facebook/magnet-medium-30secs", audiocraft_model_path)
+        elif model_name == "magnet-medium-10sec":
+            Repo.clone_from("https://huggingface.co/facebook/magnet-medium-10secs", audiocraft_model_path)
+        elif model_name == "audio-magnet-medium":
+            Repo.clone_from("https://huggingface.co/facebook/audio-magnet-medium", audiocraft_model_path)
     print(f"AudioCraft model {model_name} downloaded")
     return audiocraft_model_path
 
@@ -268,7 +274,7 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_settin
         if enable_tts and text:
             if stop_signal:
                 return text, None, avatar_path, chat_dir, "Generation stopped"
-            enable_text_splitting = True
+            enable_text_splitting = False
             repetition_penalty = 2.0
             length_penalty = 1.0
             if enable_text_splitting:
@@ -303,7 +309,7 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_settin
     return text, audio_path, avatar_path
 
 
-def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name, vae_model_name,
+def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name, vae_model_name, lora_model_names,
                            stable_diffusion_settings_html,
                            stable_diffusion_model_type, stable_diffusion_sampler, stable_diffusion_steps,
                            stable_diffusion_cfg, stable_diffusion_width, stable_diffusion_height,
@@ -324,6 +330,13 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
         if stable_diffusion_model_type == "SD":
             original_config_file = "configs/sd/v1-inference.yaml"
             vae_config_file = "configs/sd/v1-inference.yaml"
+            stable_diffusion_model = StableDiffusionPipeline.from_single_file(
+                stable_diffusion_model_path, use_safetensors=True, device_map="auto",
+                original_config_file=original_config_file
+            )
+        elif stable_diffusion_model_type == "SD2":
+            original_config_file = "configs/sd/v2-inference.yaml"
+            vae_config_file = "configs/sd/v2-inference.yaml"
             stable_diffusion_model = StableDiffusionPipeline.from_single_file(
                 stable_diffusion_model_path, use_safetensors=True, device_map="auto",
                 original_config_file=original_config_file
@@ -362,6 +375,11 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
             stable_diffusion_model.vae = vae.to(device)
         else:
             print(f"VAE model not found: {vae_model_path}")
+
+    if lora_model_names is not None:
+        for lora_model_name in lora_model_names:
+            lora_model_path = os.path.join("inputs", "image", "sd_models", "lora", lora_model_name)
+            stable_diffusion_model.load_lora_weights(lora_model_path)
 
     try:
         images = stable_diffusion_model(prompt, negative_prompt=negative_prompt,
@@ -422,6 +440,13 @@ def generate_image_img2img(prompt, negative_prompt, init_image,
             original_config_file = "configs/sd/v1-inference.yaml"
             vae_config_file = "configs/sd/v1-inference.yaml"
             stable_diffusion_model = StableDiffusionImg2ImgPipeline.from_single_file(
+                stable_diffusion_model_path, use_safetensors=True, device_map="auto",
+                original_config_file=original_config_file
+            )
+        elif stable_diffusion_model_type == "SD2":
+            original_config_file = "configs/sd/v2-inference.yaml"
+            vae_config_file = "configs/sd/v2-inference.yaml"
+            stable_diffusion_model = StableDiffusionPipeline.from_single_file(
                 stable_diffusion_model_path, use_safetensors=True, device_map="auto",
                 original_config_file=original_config_file
             )
@@ -532,6 +557,9 @@ def generate_audio(prompt, input_audio=None, model_name=None, audiocraft_setting
         elif model_type == "audiogen":
             model = AudioGen.get_pretrained(audiocraft_model_path)
             model.set_generation_params(duration=duration)
+        elif model_type == "magnet":
+            model = MAGNeT.get_pretrained(audiocraft_model_path)
+            model.set_generation_params()
         else:
             return None, "Invalid model type!"
     except (ValueError, AssertionError):
@@ -605,9 +633,10 @@ speaker_wavs_list = [None] + [wav for wav in os.listdir("inputs/audio/voices") i
 stable_diffusion_models_list = [None] + [model.replace(".safetensors", "") for model in
                                          os.listdir("inputs/image/sd_models")
                                          if (model.endswith(".safetensors") or not model.endswith(".txt") and not os.path.isdir(os.path.join("inputs/image/sd_models")))]
-audiocraft_models_list = [None] + ["musicgen-stereo-medium", "audiogen-medium", "musicgen-stereo-melody"]
+audiocraft_models_list = [None] + ["musicgen-stereo-medium", "audiogen-medium", "musicgen-stereo-melody", "magnet-medium-30sec", "magnet-medium-10sec", "audio-magnet-medium"]
 vae_models_list = [None] + [model.replace(".safetensors", "") for model in os.listdir("inputs/image/sd_models/vae") if
                             model.endswith(".safetensors") or not model.endswith(".txt")]
+lora_models_list = [None] + [model for model in os.listdir("inputs/image/sd_models/lora") if model.endswith(".safetensors")]
 
 chat_interface = gr.Interface(
     fn=generate_text_and_speech,
@@ -654,8 +683,9 @@ txt2img_interface = gr.Interface(
         gr.Textbox(label="Enter your negative prompt", value=""),
         gr.Dropdown(choices=stable_diffusion_models_list, label="Select Stable Diffusion model", value=None),
         gr.Dropdown(choices=vae_models_list, label="Select VAE model (optional)", value=None),
+        gr.Dropdown(choices=lora_models_list, label="Select LORA models", value=None, multiselect=True),
         gr.HTML("<h3>Stable Diffusion Settings</h3>"),
-        gr.Radio(choices=["SD", "SDXL"], label="Select model type", value="SD"),
+        gr.Radio(choices=["SD", "SD2", "SDXL"], label="Select model type", value="SD"),
         gr.Dropdown(choices=["euler_ancestral", "euler", "lms", "heun", "dpm", "dpm_solver", "dpm_solver++"],
                     label="Select sampler", value="euler_ancestral"),
         gr.Slider(minimum=1, maximum=100, value=30, step=1, label="Steps"),
@@ -688,7 +718,7 @@ img2img_interface = gr.Interface(
         gr.Dropdown(choices=stable_diffusion_models_list, label="Select Stable Diffusion model", value=None),
         gr.Dropdown(choices=vae_models_list, label="Select VAE model (optional)", value=None),
         gr.HTML("<h3>Stable Diffusion Settings</h3>"),
-        gr.Radio(choices=["SD", "SDXL"], label="Select model type", value="SD"),
+        gr.Radio(choices=["SD", "SD2", "SDXL"], label="Select model type", value="SD"),
         gr.Dropdown(choices=["euler_ancestral", "euler", "lms", "heun", "dpm", "dpm_solver", "dpm_solver++"],
                     label="Select sampler", value="euler_ancestral"),
         gr.Slider(minimum=1, maximum=100, value=30, step=1, label="Steps"),
@@ -729,7 +759,7 @@ audiocraft_interface = gr.Interface(
         gr.Audio(type="filepath", label="Melody audio (optional)", interactive=True),
         gr.Dropdown(choices=audiocraft_models_list, label="Select AudioCraft model", value=None),
         gr.HTML("<h3>AudioCraft Settings</h3>"),
-        gr.Radio(choices=["musicgen", "audiogen"], label="Select model type", value="musicgen"),
+        gr.Radio(choices=["musicgen", "audiogen", "magnet"], label="Select model type", value="musicgen"),
         gr.Slider(minimum=1, maximum=120, value=10, step=1, label="Duration (seconds)"),
         gr.Slider(minimum=1, maximum=1000, value=250, step=1, label="Top K"),
         gr.Slider(minimum=0.0, maximum=1.0, value=0.0, step=0.1, label="Top P"),
