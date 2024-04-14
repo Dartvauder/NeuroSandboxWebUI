@@ -555,6 +555,10 @@ def generate_audio(prompt, input_audio=None, model_name=None, audiocraft_setting
     if not audiocraft_model_path:
         audiocraft_model_path = load_audiocraft_model(model_name)
 
+    today = datetime.now().date()
+    audio_dir = os.path.join('outputs', f"audio_{today.strftime('%Y%m%d')}")
+    os.makedirs(audio_dir, exist_ok=True)
+
     try:
         if model_type == "musicgen":
             model = MusicGen.get_pretrained(audiocraft_model_path)
@@ -600,22 +604,22 @@ def generate_audio(prompt, input_audio=None, model_name=None, audiocraft_setting
             if stop_signal:
                 return None, "Generation stopped"
             print(f"Tokens shape: {tokens.shape}")
-            tokens = rearrange(tokens, "b n d -> n b d")
+            tokens = rearrange(tokens, "b n d -> n b d")  # Изменение формы тензора
             wav_diffusion = mbd.tokens_to_wav(tokens)
-            wav_diffusion = wav_diffusion.squeeze(0)
+            wav_diffusion = wav_diffusion.squeeze()
+            if wav_diffusion.ndim == 1:
+                wav_diffusion = wav_diffusion.unsqueeze(0)
+            max_val = wav_diffusion.abs().max()
+            if max_val > 1:
+                wav_diffusion = wav_diffusion / max_val
+            wav_diffusion = wav_diffusion * 0.99
+            audio_filename_diffusion = f"output_{datetime.now().strftime('%Y%m%d_%H%M%S')}_diffusion.wav"
+            audio_path_diffusion = os.path.join(audio_dir, audio_filename_diffusion)
+            torchaudio.save(audio_path_diffusion, wav_diffusion.cpu().detach(), model.sample_rate)
 
-        today = datetime.now().date()
-        audio_dir = os.path.join('outputs', f"audio_{today.strftime('%Y%m%d')}")
-        os.makedirs(audio_dir, exist_ok=True)
         audio_filename = f"output_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
         audio_path = os.path.join(audio_dir, audio_filename)
         audio_write(audio_path, wav.cpu(), model.sample_rate, strategy="loudness", loudness_compressor=True)
-
-        if wav_diffusion is not None:
-            audio_filename_diffusion = f"output_{datetime.now().strftime('%Y%m%d_%H%M%S')}_diffusion"
-            audio_path_diffusion = os.path.join(audio_dir, audio_filename_diffusion)
-            audio_write(audio_path_diffusion, wav_diffusion.cpu(), model.sample_rate, strategy="loudness",
-                        loudness_compressor=True)
 
         return audio_path + ".wav", None
 
