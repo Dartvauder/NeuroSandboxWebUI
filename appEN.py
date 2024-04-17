@@ -53,9 +53,14 @@ def load_model(model_name, model_type, n_ctx=None):
             try:
                 tokenizer = AutoTokenizer.from_pretrained(model_path)
                 device = "cuda" if torch.cuda.is_available() else "cpu"
-                model = AutoModelForCausalLM.from_pretrained(model_path)
-                return tokenizer, model.to(device), None
-            except (ValueError, OSError):
+                model = AutoModelForCausalLM.from_pretrained(
+                    model_path,
+                    device_map="auto",
+                    torch_dtype=torch.float16,
+                    low_cpu_mem_usage=True
+                )
+                return tokenizer, model, None
+            except (ValueError, RuntimeError):
                 return None, None, "The selected model is not compatible with the 'transformers' model type"
         elif model_type == "llama":
             try:
@@ -207,10 +212,9 @@ stop_signal = False
 
 
 def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_settings_html, llm_model_type, max_tokens,
-                             n_ctx, temperature,
-                             top_p, top_k, avatar_html, avatar_name, enable_tts, tts_settings_html, speaker_wav,
-                             language, tts_temperature, tts_top_p,
-                             tts_top_k, tts_speed, stop_generation):
+                             n_ctx, temperature, top_p, top_k, avatar_html, avatar_name, enable_tts, tts_settings_html,
+                             speaker_wav, language, tts_temperature, tts_top_p, tts_top_k, tts_speed, stop_generation,
+                             history=None):
     global chat_dir, tts_model, whisper_model, stop_signal
     stop_signal = False
     if not input_text and not input_audio:
@@ -228,6 +232,15 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_settin
     audio_path = None
     avatar_path = None
 
+    if history is None:
+        history = []
+
+    history.append(("user", prompt))
+
+    context = ""
+    for speaker, text in history:
+        context += f"{speaker}: {text}\n"
+
     try:
         if enable_tts:
             if not tts_model:
@@ -243,7 +256,7 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_settin
             whisper_model = whisper_model.to(device)
         if llm_model:
             if llm_model_type == "transformers":
-                inputs = tokenizer.encode(prompt, return_tensors="pt")
+                inputs = tokenizer.encode(context, return_tensors="pt")
                 device = llm_model.device
                 inputs = inputs.to(device)
                 outputs = llm_model.generate(inputs, max_new_tokens=max_tokens, top_p=top_p, top_k=top_k,
@@ -254,12 +267,15 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_settin
                 text = tokenizer.decode(generated_sequence, skip_special_tokens=True)
             elif llm_model_type == "llama":
                 llm_model.n_ctx = n_ctx
-                output = llm_model(prompt, max_tokens=max_tokens, stop=None, echo=False,
+                output = llm_model(context, max_tokens=max_tokens, stop=None, echo=False,
                                    temperature=temperature, top_p=top_p, top_k=top_k,
                                    repeat_penalty=1.1)
                 if stop_signal:
                     return "Generation stopped", None, None, None
                 text = output['choices'][0]['text']
+
+        history.append(("assistant", text))
+
         if not chat_dir:
             now = datetime.now()
             chat_dir = os.path.join('outputs', f"chat_{now.strftime('%Y%m%d_%H%M%S')}")
@@ -307,7 +323,7 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_settin
         if whisper_model is not None:
             del whisper_model
         torch.cuda.empty_cache()
-    return text, audio_path, avatar_path
+    return text, audio_path, avatar_path, history
 
 
 def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name, vae_model_name, lora_model_names,
@@ -677,11 +693,13 @@ chat_interface = gr.Interface(
         gr.Slider(minimum=0, maximum=100, value=30, step=1, label="TTS Top K", interactive=True),
         gr.Slider(minimum=0.5, maximum=2.0, value=1.0, step=0.1, label="TTS Speed", interactive=True),
         gr.Button(value="Stop generation", interactive=True, variant="stop"),
+        gr.State(value=[])
     ],
     outputs=[
         gr.Textbox(label="LLM text response", type="text"),
         gr.Audio(label="LLM audio response", type="filepath"),
         gr.Image(type="filepath", label="Avatar"),
+        gr.State(value=[])
     ],
     title="NeuroChatWebUI (ALPHA) - LLM",
     description="This user interface allows you to enter any text or audio and receive "
@@ -800,7 +818,7 @@ with gr.TabbedInterface(
          audiocraft_interface],
         tab_names=["LLM", "Stable Diffusion", "AudioCraft"]
 ) as app:
-    chat_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
+    chat_interface.input_components[-2].click(stop_all_processes, [], [], queue=False)
     txt2img_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     img2img_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     extras_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
