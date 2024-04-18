@@ -68,7 +68,7 @@ def load_model(model_name, model_type, n_ctx=None):
                 model = Llama(model_path, n_gpu_layers=-1 if device == "cuda" else 0)
                 model.n_ctx = n_ctx
                 tokenizer = None
-                return None, model, None
+                return tokenizer, model, None
             except (ValueError, RuntimeError):
                 return None, None, "The selected model is not compatible with the 'llama' model type"
     return None, None, None
