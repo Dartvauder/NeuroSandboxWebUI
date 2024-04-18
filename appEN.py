@@ -257,7 +257,7 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_settin
                 text = tokenizer.decode(generated_sequence, skip_special_tokens=True)
             elif llm_model_type == "llama":
                 llm_model.n_ctx = n_ctx
-                output = llm_model(context, max_tokens=max_tokens, stop=None, echo=False,
+                output = llm_model(prompt, max_tokens=max_tokens, stop=None, echo=False,
                                    temperature=temperature, top_p=top_p, top_k=top_k,
                                    repeat_penalty=1.1)
                 if stop_signal:
@@ -313,7 +313,7 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_settin
         if whisper_model is not None:
             del whisper_model
         torch.cuda.empty_cache()
-    return text, audio_path, avatar_path, history
+    return text, audio_path, avatar_path
 
 
 def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name, vae_model_name, lora_model_names,
@@ -683,13 +683,11 @@ chat_interface = gr.Interface(
         gr.Slider(minimum=0, maximum=100, value=30, step=1, label="TTS Top K", interactive=True),
         gr.Slider(minimum=0.5, maximum=2.0, value=1.0, step=0.1, label="TTS Speed", interactive=True),
         gr.Button(value="Stop generation", interactive=True, variant="stop"),
-        gr.State(value=[])
     ],
     outputs=[
         gr.Textbox(label="LLM text response", type="text"),
         gr.Audio(label="LLM audio response", type="filepath"),
         gr.Image(type="filepath", label="Avatar"),
-        gr.State(value=[])
     ],
     title="NeuroChatWebUI (ALPHA) - LLM",
     description="This user interface allows you to enter any text or audio and receive "
@@ -808,7 +806,7 @@ with gr.TabbedInterface(
          audiocraft_interface],
         tab_names=["LLM", "Stable Diffusion", "AudioCraft"]
 ) as app:
-    chat_interface.input_components[-2].click(stop_all_processes, [], [], queue=False)
+    chat_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     txt2img_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     img2img_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     extras_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
