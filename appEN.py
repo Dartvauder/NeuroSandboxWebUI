@@ -264,8 +264,6 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_settin
                     return "Generation stopped", None, None, None
                 text = output['choices'][0]['text']
 
-        history.append(("assistant", text))
-
         if not chat_dir:
             now = datetime.now()
             chat_dir = os.path.join('outputs', f"chat_{now.strftime('%Y%m%d_%H%M%S')}")
