@@ -105,7 +105,9 @@ To get update, run `git pull`
 
 #### Extras:
 
-* For now, only simple upscale of any of your images is available now
+1) Select the options you need
+2) Upload the initial image
+3) Click the `Submit` button to get the modified image
 
 ### AudioCraft:
 
