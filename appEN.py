@@ -781,7 +781,7 @@ extras_interface = gr.Interface(
         gr.Textbox(label="Message", type="text"),
     ],
     title="NeuroChatWebUI (ALPHA) - Stable Diffusion (Extras)",
-    description="This user interface allows you to upload an image and perform ",
+    description="This user interface allows you to upload an image and transform it using different options",
     allow_flagging="never",
 )
 
