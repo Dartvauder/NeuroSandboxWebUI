@@ -213,8 +213,7 @@ stop_signal = False
 
 def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_settings_html, llm_model_type, max_tokens,
                              n_ctx, temperature, top_p, top_k, avatar_html, avatar_name, enable_tts, tts_settings_html,
-                             speaker_wav, language, tts_temperature, tts_top_p, tts_top_k, tts_speed, stop_generation,
-                             history=None):
+                             speaker_wav, language, tts_temperature, tts_top_p, tts_top_k, tts_speed, stop_generation):
     global chat_dir, tts_model, whisper_model, stop_signal
     stop_signal = False
     if not input_text and not input_audio:
@@ -232,15 +231,6 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_settin
     audio_path = None
     avatar_path = None
 
-    if history is None:
-        history = []
-
-    history.append(("user", prompt))
-
-    context = ""
-    for speaker, text in history:
-        context += f"{speaker}: {text}\n"
-
     try:
         if enable_tts:
             if not tts_model:
@@ -256,7 +246,7 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_settin
             whisper_model = whisper_model.to(device)
         if llm_model:
             if llm_model_type == "transformers":
-                inputs = tokenizer.encode(context, return_tensors="pt")
+                inputs = tokenizer.encode(prompt, return_tensors="pt")
                 device = llm_model.device
                 inputs = inputs.to(device)
                 outputs = llm_model.generate(inputs, max_new_tokens=max_tokens, top_p=top_p, top_k=top_k,
