@@ -10,9 +10,14 @@
 
 Цель проекта — создать максимально простое приложение для использования нейросетевых моделей
 
-|![Image1](https://github.com/Dartvauder/NeuroChatWebUI/assets/140557322/2dcdb3bb-f54b-4e7d-87cf-136448dd9595) |![Image2](https://github.com/Dartvauder/NeuroChatWebUI/assets/140557322/08764b57-e983-46cc-b961-53669daf73bb)
-|:---:|:---:|
-|![Image1](https://github.com/Dartvauder/NeuroChatWebUI/assets/140557322/312b4873-52bd-41f8-9652-6c0989e33889) |![Image2](https://github.com/Dartvauder/NeuroChatWebUI/assets/140557322/7ffdef33-90b9-40db-9f2f-620d04445022)
+### LLM: ![1](https://github.com/Dartvauder/NeuroChatWebUI/assets/140557322/165b8b01-03f6-4be1-8424-544c3a000bf3)
+
+### Stable Diffusion: 
+ #### txt2img: ![2](https://github.com/Dartvauder/NeuroChatWebUI/assets/140557322/1c147103-daf4-458d-b956-1843ee6ef989)
+ #### img2img: ![3](https://github.com/Dartvauder/NeuroChatWebUI/assets/140557322/03c9edf7-9742-47c4-a2cd-da097fc79abf)
+ #### Extras: ![4](https://github.com/Dartvauder/NeuroChatWebUI/assets/140557322/c4a25d9f-a68a-42ad-ba72-074725de34a8)
+
+### AudioCraft: ![5](https://github.com/Dartvauder/NeuroChatWebUI/assets/140557322/33be43dd-c3e3-45e0-8769-51f5e9b9f24d)
 
 ## Функции:
 
