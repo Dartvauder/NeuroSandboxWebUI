@@ -21,6 +21,8 @@ The goal of the project - to create the easiest possible application to use neur
 * Diffusers and safetensors (Stable Diffusion) - txt2img and img2img
 * AudioCraft (musicgen, audiogen and multiband diffusion)
 * TTS and Whisper models (For LLM)
+* Lora, Vae and Upscale models (For Stable Diffusion)
+* Multiband Diffusion model (For AudioCraft)
 * Avatar selection (For LLM)
 * Models settings in interface
 
