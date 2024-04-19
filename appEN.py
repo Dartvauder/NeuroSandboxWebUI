@@ -3,6 +3,7 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 import soundfile as sf
 import os
 import torch
+from einops import rearrange
 from TTS.api import TTS
 import whisper
 from datetime import datetime
@@ -11,10 +12,11 @@ import logging
 from diffusers import StableDiffusionPipeline, StableDiffusionXLPipeline, StableDiffusionImg2ImgPipeline, AutoencoderKL, StableDiffusionLatentUpscalePipeline, StableDiffusionUpscalePipeline
 from git import Repo
 from PIL import Image
+from tqdm import tqdm
 from llama_cpp import Llama
 import requests
 import torchaudio
-from audiocraft.models import MusicGen, AudioGen, MultiBandDiffusion
+from audiocraft.models import MusicGen, AudioGen, MultiBandDiffusion  # MAGNeT
 from audiocraft.data.audio import audio_write
 
 XFORMERS_AVAILABLE = False
@@ -22,6 +24,7 @@ torch.cuda.is_available()
 try:
     import xformers
     import xformers.ops
+
     XFORMERS_AVAILABLE = True
 except ImportError:
     print("Xformers is not installed. Proceeding without it")
@@ -42,14 +45,22 @@ audiocraft_model_path = None
 
 
 def load_model(model_name, model_type, n_ctx=None):
+    global stop_signal
+    if stop_signal:
+        return None, None, "Generation stopped"
     if model_name:
         model_path = f"inputs/text/llm_models/{model_name}"
         if model_type == "transformers":
             try:
                 tokenizer = AutoTokenizer.from_pretrained(model_path)
                 device = "cuda" if torch.cuda.is_available() else "cpu"
-                model = AutoModelForCausalLM.from_pretrained(model_path)
-            except (ValueError, OSError):
+                model = AutoModelForCausalLM.from_pretrained(
+                    model_path,
+                    device_map=device,
+                    torch_dtype=torch.float16,
+                )
+                return tokenizer, model, None
+            except (ValueError, RuntimeError):
                 return None, None, "The selected model is not compatible with the 'transformers' model type"
         elif model_type == "llama":
             try:
@@ -57,30 +68,16 @@ def load_model(model_name, model_type, n_ctx=None):
                 model = Llama(model_path, n_gpu_layers=-1 if device == "cuda" else 0)
                 model.n_ctx = n_ctx
                 tokenizer = None
+                return tokenizer, model, None
             except (ValueError, RuntimeError):
                 return None, None, "The selected model is not compatible with the 'llama' model type"
-        else:
-            return None, None, "Invalid model type selected"
-
-        if XFORMERS_AVAILABLE:
-            try:
-                model = model.with_xformers()
-            except (AttributeError, ImportError):
-                try:
-                    model.decoder.enable_xformers_memory_efficient_attention()
-                    model.encoder.enable_xformers_memory_efficient_attention()
-                except AttributeError:
-                    pass
-
-        if model_type == "transformers":
-            return tokenizer, model.to(device), None
-        else:
-            return None, model, None
-
     return None, None, None
 
 
 def transcribe_audio(audio_file_path):
+    global stop_signal
+    if stop_signal:
+        return "Generation stopped"
     device = "cuda" if torch.cuda.is_available() else "cpu"
     whisper_model_path = "inputs/text/whisper-medium"
     if not os.path.exists(whisper_model_path):
@@ -96,6 +93,9 @@ def transcribe_audio(audio_file_path):
 
 
 def load_tts_model():
+    global stop_signal
+    if stop_signal:
+        return "Generation stopped"
     print("Downloading TTS...")
     tts_model_path = "inputs/audio/XTTS-v2"
     if not os.path.exists(tts_model_path):
@@ -106,6 +106,9 @@ def load_tts_model():
 
 
 def load_whisper_model():
+    global stop_signal
+    if stop_signal:
+        return "Generation stopped"
     print("Downloading Whisper...")
     whisper_model_path = "inputs/text/whisper-medium"
     if not os.path.exists(whisper_model_path):
@@ -120,6 +123,9 @@ def load_whisper_model():
 
 
 def load_audiocraft_model(model_name):
+    global stop_signal
+    if stop_signal:
+        return "Generation stopped"
     global audiocraft_model_path
     print(f"Downloading AudioCraft model: {model_name}...")
     audiocraft_model_path = os.path.join("inputs", "audio", "audiocraft", model_name)
@@ -131,21 +137,33 @@ def load_audiocraft_model(model_name):
             Repo.clone_from("https://huggingface.co/facebook/audiogen-medium", audiocraft_model_path)
         elif model_name == "musicgen-stereo-melody":
             Repo.clone_from("https://huggingface.co/facebook/musicgen-stereo-melody", audiocraft_model_path)
+        elif model_name == "magnet-medium-30sec":
+            Repo.clone_from("https://huggingface.co/facebook/magnet-medium-30secs", audiocraft_model_path)
+        elif model_name == "magnet-medium-10sec":
+            Repo.clone_from("https://huggingface.co/facebook/magnet-medium-10secs", audiocraft_model_path)
+        elif model_name == "audio-magnet-medium":
+            Repo.clone_from("https://huggingface.co/facebook/audio-magnet-medium", audiocraft_model_path)
     print(f"AudioCraft model {model_name} downloaded")
     return audiocraft_model_path
 
 
 def load_multiband_diffusion_model():
+    global stop_signal
+    if stop_signal:
+        return "Generation stopped"
     print(f"Downloading Multiband Diffusion model")
     multiband_diffusion_path = os.path.join("inputs", "audio", "audiocraft", "multiband-diffusion")
     if not os.path.exists(multiband_diffusion_path):
         os.makedirs(multiband_diffusion_path, exist_ok=True)
         Repo.clone_from("https://huggingface.co/facebook/multiband-diffusion", multiband_diffusion_path)
         print("Multiband Diffusion model downloaded")
-    return multiband_diffusion_path
+    return "cuda" if torch.cuda.is_available() else "cpu"
 
 
 def load_upscale_model(upscale_factor):
+    global stop_signal
+    if stop_signal:
+        return None, "Generation stopped"
     original_config_file = None
 
     if upscale_factor == 2:
@@ -193,24 +211,24 @@ def load_upscale_model(upscale_factor):
 stop_signal = False
 
 
-def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_model_type, max_tokens, n_ctx, temperature,
-                             top_p, top_k, avatar_name, enable_tts, speaker_wav, language):
+def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_settings_html, llm_model_type, chat_template, max_tokens, max_length,
+                             n_ctx, temperature, top_p, top_k, avatar_html, avatar_name, enable_tts, tts_settings_html,
+                             speaker_wav, language, tts_temperature, tts_top_p, tts_top_k, tts_speed, stop_generation):
     global chat_dir, tts_model, whisper_model, stop_signal
     stop_signal = False
-
     if not input_text and not input_audio:
         return "Please, enter your request!", None, None, None, None
-
     prompt = transcribe_audio(input_audio) if input_audio else input_text
-
     if not llm_model_name:
         return "Please, select a LLM model!", None, None, None, None
-
     tokenizer, llm_model, error_message = load_model(llm_model_name, llm_model_type,
                                                      n_ctx=n_ctx if llm_model_type == "llama" else None)
     if error_message:
         return error_message, None, None, None, None
-
+    if chat_template:
+        chat_template_path = os.path.join("configs", "LLM", chat_template)
+        with open(chat_template_path, "r") as f:
+            prompt = f.read().replace("{input}", prompt)
     tts_model = None
     whisper_model = None
     text = None
@@ -225,31 +243,71 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_model_
                 return "Please, select a voice and language for TTS!", None, None, None, None
             device = "cuda" if torch.cuda.is_available() else "cpu"
             tts_model = tts_model.to(device)
-
         if input_audio:
             if not whisper_model:
                 whisper_model = load_whisper_model()
             device = "cuda" if torch.cuda.is_available() else "cpu"
             whisper_model = whisper_model.to(device)
-
         if llm_model:
             if llm_model_type == "transformers":
                 inputs = tokenizer.encode(prompt, return_tensors="pt")
                 device = llm_model.device
                 inputs = inputs.to(device)
-                outputs = llm_model.generate(inputs, max_new_tokens=max_tokens, top_p=top_p, top_k=top_k,
-                                             temperature=temperature, pad_token_id=tokenizer.eos_token_id)
+
+                progress_bar = tqdm(total=max_tokens, desc="Generating text")
+                progress_tokens = 0
+
+                outputs = llm_model.generate(
+                    inputs,
+                    max_new_tokens=max_tokens,
+                    max_length=max_length,
+                    top_p=top_p,
+                    top_k=top_k,
+                    temperature=temperature,
+                    pad_token_id=tokenizer.eos_token_id,
+                    output_scores=True,
+                    return_dict_in_generate=True,
+                    num_return_sequences=1,
+                )
+
+                for i in range(len(outputs.sequences)):
+                    generated_sequence = outputs.sequences[i][inputs.shape[-1]:]
+                    progress_tokens += len(generated_sequence)
+                    progress_bar.update(progress_tokens - progress_bar.n)
+
                 if stop_signal:
                     return "Generation stopped", None, None, None
-                generated_sequence = outputs[0][inputs.shape[-1]:]
+
+                progress_bar.close()
+
+                generated_sequence = outputs.sequences[0][inputs.shape[-1]:]
                 text = tokenizer.decode(generated_sequence, skip_special_tokens=True)
+
             elif llm_model_type == "llama":
                 llm_model.n_ctx = n_ctx
-                output = llm_model(prompt, max_tokens=max_tokens, stop=None, echo=False,
-                                   temperature=temperature, top_p=top_p, top_k=top_k,
-                                   repeat_penalty=1.1)
+
+                progress_bar = tqdm(total=max_tokens, desc="Generating text")
+                progress_tokens = 0
+
+                output = llm_model(
+                    prompt,
+                    max_tokens=max_tokens,
+                    stop=None,
+                    echo=False,
+                    temperature=temperature,
+                    top_p=top_p,
+                    top_k=top_k,
+                    repeat_penalty=1.1
+                )
+
+                progress_tokens = max_tokens
+                progress_bar.update(progress_tokens - progress_bar.n)
+
                 if stop_signal:
                     return "Generation stopped", None, None, None
+
+                progress_bar.close()
+
                 text = output['choices'][0]['text']
 
         if not chat_dir:
@@ -258,22 +316,37 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_model_
             os.makedirs(chat_dir)
             os.makedirs(os.path.join(chat_dir, 'text'))
             os.makedirs(os.path.join(chat_dir, 'audio'))
-
         chat_history_path = os.path.join(chat_dir, 'text', 'chat_history.txt')
         with open(chat_history_path, "a", encoding="utf-8") as f:
             f.write(f"Human: {prompt}\n")
             if text:
                 f.write(f"AI: {text}\n\n")
-
         avatar_path = f"inputs/image/avatars/{avatar_name}" if avatar_name else None
-
         if enable_tts and text:
-            wav = tts_model.tts(text=text, speaker_wav=f"inputs/audio/voices/{speaker_wav}", language=language)
-            now = datetime.now()
-            audio_filename = f"output_{now.strftime('%Y%m%d_%H%M%S')}.wav"
-            audio_path = os.path.join(chat_dir, 'audio', audio_filename)
-            sf.write(audio_path, wav, 22050)
-
+            if stop_signal:
+                return text, None, avatar_path, chat_dir, "Generation stopped"
+            enable_text_splitting = False
+            repetition_penalty = 2.0
+            length_penalty = 1.0
+            if enable_text_splitting:
+                text_parts = text.split(".")
+                for part in text_parts:
+                    wav = tts_model.tts(text=part.strip(), speaker_wav=f"inputs/audio/voices/{speaker_wav}",
+                                        language=language,
+                                        temperature=tts_temperature, top_p=tts_top_p, top_k=tts_top_k, speed=tts_speed,
+                                        repetition_penalty=repetition_penalty, length_penalty=length_penalty)
+                    now = datetime.now()
+                    audio_filename = f"output_{now.strftime('%Y%m%d_%H%M%S')}.wav"
+                    audio_path = os.path.join(chat_dir, 'audio', audio_filename)
+                    sf.write(audio_path, wav, 22050)
+            else:
+                wav = tts_model.tts(text=text, speaker_wav=f"inputs/audio/voices/{speaker_wav}", language=language,
+                                    temperature=tts_temperature, top_p=tts_top_p, top_k=tts_top_k, speed=tts_speed,
+                                    repetition_penalty=repetition_penalty, length_penalty=length_penalty)
+                now = datetime.now()
+                audio_filename = f"output_{now.strftime('%Y%m%d_%H%M%S')}.wav"
+                audio_path = os.path.join(chat_dir, 'audio', audio_filename)
+                sf.write(audio_path, wav, 22050)
     finally:
         if tokenizer is not None:
             del tokenizer
@@ -284,14 +357,14 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_model_
         if whisper_model is not None:
             del whisper_model
         torch.cuda.empty_cache()
+    return text, audio_path, avatar_path
 
-    return text, audio_path, avatar_path, chat_dir
 
-
-def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name, vae_model_name,
+def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name, vae_model_name, lora_model_names,
+                           stable_diffusion_settings_html,
                            stable_diffusion_model_type, stable_diffusion_sampler, stable_diffusion_steps,
                            stable_diffusion_cfg, stable_diffusion_width, stable_diffusion_height,
-                           stable_diffusion_clip_skip, enable_upscale=False, upscale_factor="x2"):
+                           stable_diffusion_clip_skip, enable_upscale=False, upscale_factor="x2", stop_generation=None):
     global stop_signal
     stop_signal = False
 
@@ -310,14 +383,21 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
             vae_config_file = "configs/sd/v1-inference.yaml"
             stable_diffusion_model = StableDiffusionPipeline.from_single_file(
                 stable_diffusion_model_path, use_safetensors=True, device_map="auto",
-                original_config_file=original_config_file
+                original_config_file=original_config_file, torch_dtype=torch.float16
+            )
+        elif stable_diffusion_model_type == "SD2":
+            original_config_file = "configs/sd/v2-inference.yaml"
+            vae_config_file = "configs/sd/v2-inference.yaml"
+            stable_diffusion_model = StableDiffusionPipeline.from_single_file(
+                stable_diffusion_model_path, use_safetensors=True, device_map="auto",
+                original_config_file=original_config_file, torch_dtype=torch.float16
             )
         elif stable_diffusion_model_type == "SDXL":
             original_config_file = "configs/sd/sd_xl_base.yaml"
             vae_config_file = "configs/sd/sd_xl_base.yaml"
             stable_diffusion_model = StableDiffusionXLPipeline.from_single_file(
                 stable_diffusion_model_path, use_safetensors=True, device_map="auto", attention_slice=1,
-                original_config_file=original_config_file
+                original_config_file=original_config_file, torch_dtype=torch.float16
             )
         else:
             return None, "Invalid Stable Diffusion model type!"
@@ -347,6 +427,11 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
         else:
             print(f"VAE model not found: {vae_model_path}")
 
+    if lora_model_names is not None:
+        for lora_model_name in lora_model_names:
+            lora_model_path = os.path.join("inputs", "image", "sd_models", "lora", lora_model_name)
+            stable_diffusion_model.load_lora_weights(lora_model_path)
+
     try:
         images = stable_diffusion_model(prompt, negative_prompt=negative_prompt,
                                         num_inference_steps=stable_diffusion_steps,
@@ -362,8 +447,7 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
             upscaler = load_upscale_model(upscale_factor_value)
             if upscaler:
                 if upscale_factor == "x2":
-                    upscaled_image = \
-                        upscaler(prompt=prompt, image=image, num_inference_steps=30, guidance_scale=0).images[0]
+                    upscaled_image = upscaler(prompt=prompt, image=image, num_inference_steps=30, guidance_scale=0).images[0]
                 else:
                     upscaled_image = upscaler(prompt=prompt, image=image)["images"][0]
                 image = upscaled_image
@@ -383,9 +467,10 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
 
 
 def generate_image_img2img(prompt, negative_prompt, init_image,
-                           strength, stable_diffusion_model_name, vae_model_name, stable_diffusion_model_type,
+                           strength, stable_diffusion_model_name, vae_model_name, stable_diffusion_settings_html,
+                           stable_diffusion_model_type,
                            stable_diffusion_sampler, stable_diffusion_steps, stable_diffusion_cfg,
-                           stable_diffusion_clip_skip):
+                           stable_diffusion_clip_skip, stop_generation):
     global stop_signal
     stop_signal = False
 
@@ -407,14 +492,21 @@ def generate_image_img2img(prompt, negative_prompt, init_image,
             vae_config_file = "configs/sd/v1-inference.yaml"
             stable_diffusion_model = StableDiffusionImg2ImgPipeline.from_single_file(
                 stable_diffusion_model_path, use_safetensors=True, device_map="auto",
-                original_config_file=original_config_file
+                original_config_file=original_config_file, torch_dtype=torch.float16
+            )
+        elif stable_diffusion_model_type == "SD2":
+            original_config_file = "configs/sd/v2-inference.yaml"
+            vae_config_file = "configs/sd/v2-inference.yaml"
+            stable_diffusion_model = StableDiffusionPipeline.from_single_file(
+                stable_diffusion_model_path, use_safetensors=True, device_map="auto",
+                original_config_file=original_config_file, torch_dtype=torch.float16
             )
         elif stable_diffusion_model_type == "SDXL":
             original_config_file = "configs/sd/sd_xl_base.yaml"
             vae_config_file = "configs/sd/sd_xl_base.yaml"
             stable_diffusion_model = StableDiffusionImg2ImgPipeline.from_single_file(
                 stable_diffusion_model_path, use_safetensors=True, device_map="auto", attention_slice=1,
-                original_config_file=original_config_file
+                original_config_file=original_config_file, torch_dtype=torch.float16
             )
         else:
             return None, "Invalid Stable Diffusion model type!"
@@ -472,7 +564,18 @@ def generate_image_img2img(prompt, negative_prompt, init_image,
         del stable_diffusion_model
         torch.cuda.empty_cache()
 
-def upscale_image(image_path):
+
+def upscale_image(image_path, enable_upscale, stop_generation):
+    global stop_signal
+    if stop_signal:
+        return None, "Generation stopped"
+
+    if not enable_upscale:
+        return None, "Please enable upscale to generate an image!"
+
+    if not image_path:
+        return None, "Please, upload an initial image!"
+
     upscale_factor = 2
     upscaler = load_upscale_model(upscale_factor)
     if upscaler:
@@ -491,8 +594,9 @@ def upscale_image(image_path):
         return None, "Failed to load upscale model"
 
 
-def generate_audio(prompt, input_audio=None, model_name=None, model_type="musicgen", duration=10, top_k=250, top_p=0.0,
-                   temperature=1.0, cfg_coef=4.0, enable_multiband=False):
+def generate_audio(prompt, input_audio=None, model_name=None, audiocraft_settings_html=None, model_type="musicgen",
+                   duration=10, top_k=250, top_p=0.0,
+                   temperature=1.0, cfg_coef=4.0, enable_multiband=False, stop_generation=None):
     global audiocraft_model_path, stop_signal
     stop_signal = False
 
@@ -501,8 +605,18 @@ def generate_audio(prompt, input_audio=None, model_name=None, model_type="musicg
     if not model_name:
         return None, "Please, select an AudioCraft model!"
 
+    if enable_multiband and model_type in ["audiogen", "magnet"]:
+        return None, "Multiband Diffusion is not supported with 'audiogen' or 'magnet' model types. Please select 'musicgen' or disable Multiband Diffusion"
+
+    if model_type == "magnet":
+        return None, "The 'magnet' model type is currently not supported, but it will be available in a future update. Please select another model type for now"
+
     if not audiocraft_model_path:
         audiocraft_model_path = load_audiocraft_model(model_name)
+
+    today = datetime.now().date()
+    audio_dir = os.path.join('outputs', f"audio_{today.strftime('%Y%m%d')}")
+    os.makedirs(audio_dir, exist_ok=True)
 
     try:
         if model_type == "musicgen":
@@ -511,26 +625,28 @@ def generate_audio(prompt, input_audio=None, model_name=None, model_type="musicg
         elif model_type == "audiogen":
             model = AudioGen.get_pretrained(audiocraft_model_path)
             model.set_generation_params(duration=duration)
+        #        elif model_type == "magnet":
+        #            model = MAGNeT.get_pretrained(audiocraft_model_path)
+        #            model.set_generation_params()
         else:
             return None, "Invalid model type!"
     except (ValueError, AssertionError):
         return None, "The selected model is not compatible with the chosen model type"
 
-    multiband_diffusion_model = None
+    mbd = None
 
     if enable_multiband:
-        multiband_diffusion_path = load_multiband_diffusion_model()
-        if model_type == "musicgen":
-            multiband_diffusion_model = MultiBandDiffusion.get_mbd_musicgen(multiband_diffusion_path)
-            multiband_diffusion_model.to(device)
+        mbd = MultiBandDiffusion.get_mbd_musicgen()
 
     try:
+        progress_bar = tqdm(total=duration, desc="Generating audio")
         if input_audio and model_type == "musicgen":
             audio_path = input_audio
             melody, sr = torchaudio.load(audio_path)
             model.set_generation_params(duration=duration, top_k=top_k, top_p=top_p, temperature=temperature,
                                         cfg_coef=cfg_coef)
-            wav = model.generate_with_chroma([prompt], melody[None].expand(1, -1, -1), sr)
+            wav, tokens = model.generate_with_chroma([prompt], melody[None].expand(1, -1, -1), sr, return_tokens=True)
+            progress_bar.update(duration)
             if wav.ndim > 2:
                 wav = wav.squeeze()
             if stop_signal:
@@ -539,21 +655,31 @@ def generate_audio(prompt, input_audio=None, model_name=None, model_type="musicg
             descriptions = [prompt]
             model.set_generation_params(duration=duration, top_k=top_k, top_p=top_p, temperature=temperature,
                                         cfg_coef=cfg_coef)
-            wav = model.generate(descriptions)
+            wav, tokens = model.generate(descriptions, return_tokens=True)
+            progress_bar.update(duration)
             if wav.ndim > 2:
                 wav = wav.squeeze()
             if stop_signal:
                 return None, "Generation stopped"
+        progress_bar.close()
 
-        if multiband_diffusion_model:
-            wav = wav.unsqueeze(0)
-            wav = wav.to(device)
-            wav = multiband_diffusion_model.compress_and_decompress(wav)
-            wav = wav.squeeze(0)
+        if mbd:
+            if stop_signal:
+                return None, "Generation stopped"
+            print(f"Tokens shape: {tokens.shape}")
+            tokens = rearrange(tokens, "b n d -> n b d")  # Изменение формы тензора
+            wav_diffusion = mbd.tokens_to_wav(tokens)
+            wav_diffusion = wav_diffusion.squeeze()
+            if wav_diffusion.ndim == 1:
+                wav_diffusion = wav_diffusion.unsqueeze(0)
+            max_val = wav_diffusion.abs().max()
+            if max_val > 1:
+                wav_diffusion = wav_diffusion / max_val
+            wav_diffusion = wav_diffusion * 0.99
+            audio_filename_diffusion = f"output_{datetime.now().strftime('%Y%m%d_%H%M%S')}_diffusion.wav"
+            audio_path_diffusion = os.path.join(audio_dir, audio_filename_diffusion)
+            torchaudio.save(audio_path_diffusion, wav_diffusion.cpu().detach(), model.sample_rate)
 
-        today = datetime.now().date()
-        audio_dir = os.path.join('outputs', f"audio_{today.strftime('%Y%m%d')}")
-        os.makedirs(audio_dir, exist_ok=True)
         audio_filename = f"output_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
         audio_path = os.path.join(audio_dir, audio_filename)
         audio_write(audio_path, wav.cpu(), model.sample_rate, strategy="loudness", loudness_compressor=True)
@@ -562,8 +688,8 @@ def generate_audio(prompt, input_audio=None, model_name=None, model_type="musicg
 
     finally:
         del model
-        if multiband_diffusion_model:
-            del multiband_diffusion_model
+        if mbd:
+            del mbd
         torch.cuda.empty_cache()
 
 
@@ -572,15 +698,28 @@ def stop_all_processes():
     stop_signal = True
 
 
+def close_terminal():
+    os._exit(1)
+
+
+def get_chat_templates():
+    chat_templates_dir = "configs/llm"
+    return [None] + [template for template in os.listdir(chat_templates_dir) if template.endswith(".yaml")]
+
+
 llm_models_list = [None] + [model for model in os.listdir("inputs/text/llm_models") if not model.endswith(".txt")]
 avatars_list = [None] + [avatar for avatar in os.listdir("inputs/image/avatars") if not avatar.endswith(".txt")]
 speaker_wavs_list = [None] + [wav for wav in os.listdir("inputs/audio/voices") if not wav.endswith(".txt")]
 stable_diffusion_models_list = [None] + [model.replace(".safetensors", "") for model in
                                          os.listdir("inputs/image/sd_models")
                                          if (model.endswith(".safetensors") or not model.endswith(".txt") and not os.path.isdir(os.path.join("inputs/image/sd_models")))]
-audiocraft_models_list = [None] + ["musicgen-stereo-medium", "audiogen-medium", "musicgen-stereo-melody"]
+audiocraft_models_list = [None] + ["musicgen-stereo-medium", "audiogen-medium", "musicgen-stereo-melody",
+                                   "magnet-medium-30sec", "magnet-medium-10sec", "audio-magnet-medium"]
 vae_models_list = [None] + [model.replace(".safetensors", "") for model in os.listdir("inputs/image/sd_models/vae") if
                             model.endswith(".safetensors") or not model.endswith(".txt")]
+lora_models_list = [None] + [model for model in os.listdir("inputs/image/sd_models/lora") if
+                             model.endswith(".safetensors")]
+
 
 chat_interface = gr.Interface(
     fn=generate_text_and_speech,
@@ -588,16 +727,26 @@ chat_interface = gr.Interface(
         gr.Textbox(label="Enter your request"),
         gr.Audio(type="filepath", label="Record your request (optional)"),
         gr.Dropdown(choices=llm_models_list, label="Select LLM model", value=None),
+        gr.HTML("<h3>LLM Settings</h3>"),
         gr.Radio(choices=["transformers", "llama"], label="Select model type", value="transformers"),
+        gr.Dropdown(choices=get_chat_templates(), label="Select chat template", value=None),
         gr.Slider(minimum=1, maximum=2048, value=512, step=1, label="Max tokens"),
+        gr.Slider(minimum=1, maximum=2048, value=1024, step=1, label="Max length"),
         gr.Slider(minimum=0, maximum=4096, value=2048, step=1, label="n_ctx (for llama models only)", interactive=True),
         gr.Slider(minimum=0.0, maximum=1.0, value=0.7, step=0.1, label="Temperature"),
         gr.Slider(minimum=0.0, maximum=1.0, value=0.9, step=0.1, label="Top P"),
         gr.Slider(minimum=0, maximum=100, value=30, step=1, label="Top K"),
+        gr.HTML("<br>"),
         gr.Dropdown(choices=avatars_list, label="Select avatar", value=None),
         gr.Checkbox(label="Enable TTS", value=False),
+        gr.HTML("<h3>TTS Settings</h3>"),
         gr.Dropdown(choices=speaker_wavs_list, label="Select voice", interactive=True),
         gr.Dropdown(choices=["en", "ru"], label="Select language", interactive=True),
+        gr.Slider(minimum=0.0, maximum=1.0, value=1.0, step=0.1, label="TTS Temperature", interactive=True),
+        gr.Slider(minimum=0.0, maximum=1.0, value=0.9, step=0.1, label="TTS Top P", interactive=True),
+        gr.Slider(minimum=0, maximum=100, value=30, step=1, label="TTS Top K", interactive=True),
+        gr.Slider(minimum=0.5, maximum=2.0, value=1.0, step=0.1, label="TTS Speed", interactive=True),
+        gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
     outputs=[
         gr.Textbox(label="LLM text response", type="text"),
@@ -619,7 +768,9 @@ txt2img_interface = gr.Interface(
         gr.Textbox(label="Enter your negative prompt", value=""),
         gr.Dropdown(choices=stable_diffusion_models_list, label="Select Stable Diffusion model", value=None),
         gr.Dropdown(choices=vae_models_list, label="Select VAE model (optional)", value=None),
-        gr.Radio(choices=["SD", "SDXL"], label="Select model type", value="SD"),
+        gr.Dropdown(choices=lora_models_list, label="Select LORA models", value=None, multiselect=True),
+        gr.HTML("<h3>Stable Diffusion Settings</h3>"),
+        gr.Radio(choices=["SD", "SD2", "SDXL"], label="Select model type", value="SD"),
         gr.Dropdown(choices=["euler_ancestral", "euler", "lms", "heun", "dpm", "dpm_solver", "dpm_solver++"],
                     label="Select sampler", value="euler_ancestral"),
         gr.Slider(minimum=1, maximum=100, value=30, step=1, label="Steps"),
@@ -629,6 +780,7 @@ txt2img_interface = gr.Interface(
         gr.Slider(minimum=1, maximum=4, value=1, step=1, label="Clip skip"),
         gr.Checkbox(label="Enable upscale", value=False),
         gr.Radio(choices=["x2", "x4"], label="Upscale size", value="x2"),
+        gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
     outputs=[
         gr.Image(type="filepath", label="Generated image"),
@@ -650,12 +802,14 @@ img2img_interface = gr.Interface(
         gr.Slider(minimum=0.0, maximum=1.0, value=0.5, step=0.01, label="Strength"),
         gr.Dropdown(choices=stable_diffusion_models_list, label="Select Stable Diffusion model", value=None),
         gr.Dropdown(choices=vae_models_list, label="Select VAE model (optional)", value=None),
-        gr.Radio(choices=["SD", "SDXL"], label="Select model type", value="SD"),
+        gr.HTML("<h3>Stable Diffusion Settings</h3>"),
+        gr.Radio(choices=["SD", "SD2", "SDXL"], label="Select model type", value="SD"),
         gr.Dropdown(choices=["euler_ancestral", "euler", "lms", "heun", "dpm", "dpm_solver", "dpm_solver++"],
                     label="Select sampler", value="euler_ancestral"),
         gr.Slider(minimum=1, maximum=100, value=30, step=1, label="Steps"),
         gr.Slider(minimum=1.0, maximum=30.0, value=8, step=0.1, label="CFG"),
         gr.Slider(minimum=1, maximum=4, value=1, step=1, label="Clip skip"),
+        gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
     outputs=[
         gr.Image(type="filepath", label="Generated image"),
@@ -672,13 +826,15 @@ extras_interface = gr.Interface(
     fn=upscale_image,
     inputs=[
         gr.Image(label="Image to upscale", type="filepath"),
+        gr.Checkbox(label="Enable upscale", value=False),
+        gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
     outputs=[
         gr.Image(type="filepath", label="Upscaled image"),
         gr.Textbox(label="Message", type="text"),
     ],
     title="NeuroChatWebUI (ALPHA) - Stable Diffusion (Extras)",
-    description="This user interface allows you to upload an image and perform x2 upscaling without using a prompt.",
+    description="This user interface allows you to upload an image and transform it using different options",
     allow_flagging="never",
 )
 
@@ -688,13 +844,15 @@ audiocraft_interface = gr.Interface(
         gr.Textbox(label="Enter your prompt"),
         gr.Audio(type="filepath", label="Melody audio (optional)", interactive=True),
         gr.Dropdown(choices=audiocraft_models_list, label="Select AudioCraft model", value=None),
-        gr.Radio(choices=["musicgen", "audiogen"], label="Select model type", value="musicgen"),
+        gr.HTML("<h3>AudioCraft Settings</h3>"),
+        gr.Radio(choices=["musicgen", "audiogen", "magnet"], label="Select model type", value="musicgen"),
         gr.Slider(minimum=1, maximum=120, value=10, step=1, label="Duration (seconds)"),
         gr.Slider(minimum=1, maximum=1000, value=250, step=1, label="Top K"),
         gr.Slider(minimum=0.0, maximum=1.0, value=0.0, step=0.1, label="Top P"),
         gr.Slider(minimum=0.1, maximum=2.0, value=1.0, step=0.1, label="Temperature"),
         gr.Slider(minimum=1.0, maximum=10.0, value=4.0, step=0.1, label="CFG"),
         gr.Checkbox(label="Enable Multiband Diffusion", value=False),
+        gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
     outputs=[
         gr.Audio(label="Generated audio", type="filepath"),
@@ -708,12 +866,26 @@ audiocraft_interface = gr.Interface(
 )
 
 with gr.TabbedInterface(
-    [chat_interface, gr.TabbedInterface([txt2img_interface, img2img_interface, extras_interface], tab_names=["txt2img", "img2img", "Extras"]),
-     audiocraft_interface],
-    tab_names=["LLM", "Stable Diffusion", "AudioCraft"]
+        [chat_interface, gr.TabbedInterface([txt2img_interface, img2img_interface, extras_interface],
+                                            tab_names=["txt2img", "img2img", "Extras"]),
+         audiocraft_interface],
+        tab_names=["LLM", "Stable Diffusion", "AudioCraft"]
 ) as app:
-    stop_button = gr.Button(value="Stop generation", interactive=True)
-    stop_button.click(stop_all_processes, [], [], queue=False)
+    chat_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
+    txt2img_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
+    img2img_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
+    extras_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
+    audiocraft_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
+
+    close_button = gr.Button("Close terminal")
+    close_button.click(close_terminal, [], [], queue=False)
+
+    github_link = gr.HTML(
+        '<div style="text-align: center; margin-top: 20px;">'
+        '<a href="https://github.com/Dartvauder/NeuroChatWebUI" target="_blank" style="color: blue; text-decoration: none; font-size: 16px;">'
+        'GitHub'
+        '</a>'
+        '</div>'
+    )
 
     app.launch()
-    

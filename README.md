@@ -78,7 +78,7 @@ To get update, run `git pull`
 #### Voice samples = *inputs/audio/voices*
 #### The voice must be pre-processed (22050 kHz, mono, WAV), the avatar should preferably be `PNG` or `JPG`
 
-### Stable Diffusion:
+### Stable Diffusion - has three sub-tabs:
 
 #### txt2img:
 
@@ -103,9 +103,11 @@ To get update, run `git pull`
 #### Optional: You can select your `vae` model
 #### vae = *inputs/image/sd_models/vae*
 
-#### Extra:
+#### Extras:
 
-* For now, only simple upscale of any of your images is available now
+1) Select the options you need
+2) Upload the initial image
+3) Click the `Submit` button to get the modified image
 
 ### AudioCraft:
 
@@ -120,9 +122,9 @@ To get update, run `git pull`
 ### Additional Information:
 
 1) Chat history, generated images and generated audio, are saved in the *outputs* folder
-2) You can also press the `Clear` button to clear your selection
-3) To stop the generation process, click the `Stop generation` button 
-#### To close the application, close the terminal
+2) You can press the `Clear` button to reset your selection
+3) To stop the generation process, click the `Stop generation` button
+4) You can turn off the application using the `Close terminal` button
 
 ## Where can I get models, voices and avatars?
 
