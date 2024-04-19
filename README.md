@@ -5,7 +5,7 @@
 * English | [Русский](/README_RU.md)
 ## Description:
 
-Simple and easy interface for use of different neural network models. You can chat with LLM using text or voice input, Stable Diffusion for generating images and AudioCraft for generating audio. TTS and Whisper functions are available here for voice input and output with a choice of language and voice sample
+Simple and easy interface for use of different neural network models. You can chat with LLM using text or voice input, Stable Diffusion for generating images and AudioCraft for generating audio
 
 The goal of the project - to create the easiest possible application to use neural network models
 
