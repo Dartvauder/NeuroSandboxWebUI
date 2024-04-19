@@ -18,7 +18,7 @@ The goal of the project - to create the easiest possible application to use neur
 * Easy installation (Windows only)
 * Flexible and optimized interface
 * Transformers and llama.cpp (LLM)
-* Diffusers and safetensors (Stable Diffusion) - txt2img and img2img
+* Diffusers and safetensors (Stable Diffusion) - txt2img, img2img and Extras
 * AudioCraft (musicgen, audiogen and multiband diffusion)
 * TTS and Whisper models (For LLM)
 * Lora, Vae and Upscale models (For Stable Diffusion)
