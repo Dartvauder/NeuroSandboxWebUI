@@ -55,9 +55,8 @@ def load_model(model_name, model_type, n_ctx=None):
                 device = "cuda" if torch.cuda.is_available() else "cpu"
                 model = AutoModelForCausalLM.from_pretrained(
                     model_path,
-                    device_map="auto",
+                    device_map=device,
                     torch_dtype=torch.float16,
-                    low_cpu_mem_usage=True
                 )
                 return tokenizer, model, None
             except (ValueError, RuntimeError):
@@ -211,7 +210,7 @@ def load_upscale_model(upscale_factor):
 stop_signal = False
 
 
-def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_settings_html, llm_model_type, chat_template, max_tokens,
+def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_settings_html, llm_model_type, chat_template, max_tokens, max_length,
                              n_ctx, temperature, top_p, top_k, avatar_html, avatar_name, enable_tts, tts_settings_html,
                              speaker_wav, language, tts_temperature, tts_top_p, tts_top_k, tts_speed, stop_generation):
     global chat_dir, tts_model, whisper_model, stop_signal
@@ -253,12 +252,24 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_settin
                 inputs = tokenizer.encode(prompt, return_tensors="pt")
                 device = llm_model.device
                 inputs = inputs.to(device)
-                outputs = llm_model.generate(inputs, max_new_tokens=max_tokens, top_p=top_p, top_k=top_k,
+                outputs = llm_model.generate(inputs, max_new_tokens=max_tokens, max_length=max_length, top_p=top_p,
+                                             top_k=top_k,
                                              temperature=temperature, pad_token_id=tokenizer.eos_token_id)
                 if stop_signal:
                     return "Generation stopped", None, None, None
                 generated_sequence = outputs[0][inputs.shape[-1]:]
                 text = tokenizer.decode(generated_sequence, skip_special_tokens=True)
+                prev_text = ""
+                while text != prev_text:
+                    prev_text = text
+                    inputs = tokenizer.encode(text, return_tensors="pt").to(device)
+                    outputs = llm_model.generate(inputs, max_new_tokens=50, max_length=max_length, top_p=top_p,
+                                                 top_k=top_k,
+                                                 temperature=temperature, pad_token_id=tokenizer.eos_token_id)
+                    generated_sequence = outputs[0][inputs.shape[-1]:]
+                    text = tokenizer.decode(generated_sequence, skip_special_tokens=True)
+                    if text.endswith((".", "!", "?")) or len(text.split()) >= max_tokens:
+                        break
             elif llm_model_type == "llama":
                 llm_model.n_ctx = n_ctx
                 output = llm_model(prompt, max_tokens=max_tokens, stop=None, echo=False,
@@ -267,6 +278,15 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_settin
                 if stop_signal:
                     return "Generation stopped", None, None, None
                 text = output['choices'][0]['text']
+                prev_text = ""
+                while text != prev_text:
+                    prev_text = text
+                    output = llm_model(text, max_tokens=50, stop=None, echo=False,
+                                       temperature=temperature, top_p=top_p, top_k=top_k,
+                                       repeat_penalty=1.1)
+                    text = output['choices'][0]['text']
+                    if text.endswith((".", "!", "?")) or len(text.split()) >= max_tokens:
+                        break
 
         if not chat_dir:
             now = datetime.now()
@@ -341,21 +361,21 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
             vae_config_file = "configs/sd/v1-inference.yaml"
             stable_diffusion_model = StableDiffusionPipeline.from_single_file(
                 stable_diffusion_model_path, use_safetensors=True, device_map="auto",
-                original_config_file=original_config_file
+                original_config_file=original_config_file, torch_dtype=torch.float16
             )
         elif stable_diffusion_model_type == "SD2":
             original_config_file = "configs/sd/v2-inference.yaml"
             vae_config_file = "configs/sd/v2-inference.yaml"
             stable_diffusion_model = StableDiffusionPipeline.from_single_file(
                 stable_diffusion_model_path, use_safetensors=True, device_map="auto",
-                original_config_file=original_config_file
+                original_config_file=original_config_file, torch_dtype=torch.float16
             )
         elif stable_diffusion_model_type == "SDXL":
             original_config_file = "configs/sd/sd_xl_base.yaml"
             vae_config_file = "configs/sd/sd_xl_base.yaml"
             stable_diffusion_model = StableDiffusionXLPipeline.from_single_file(
                 stable_diffusion_model_path, use_safetensors=True, device_map="auto", attention_slice=1,
-                original_config_file=original_config_file
+                original_config_file=original_config_file, torch_dtype=torch.float16
             )
         else:
             return None, "Invalid Stable Diffusion model type!"
@@ -450,21 +470,21 @@ def generate_image_img2img(prompt, negative_prompt, init_image,
             vae_config_file = "configs/sd/v1-inference.yaml"
             stable_diffusion_model = StableDiffusionImg2ImgPipeline.from_single_file(
                 stable_diffusion_model_path, use_safetensors=True, device_map="auto",
-                original_config_file=original_config_file
+                original_config_file=original_config_file, torch_dtype=torch.float16
             )
         elif stable_diffusion_model_type == "SD2":
             original_config_file = "configs/sd/v2-inference.yaml"
             vae_config_file = "configs/sd/v2-inference.yaml"
             stable_diffusion_model = StableDiffusionPipeline.from_single_file(
                 stable_diffusion_model_path, use_safetensors=True, device_map="auto",
-                original_config_file=original_config_file
+                original_config_file=original_config_file, torch_dtype=torch.float16
             )
         elif stable_diffusion_model_type == "SDXL":
             original_config_file = "configs/sd/sd_xl_base.yaml"
             vae_config_file = "configs/sd/sd_xl_base.yaml"
             stable_diffusion_model = StableDiffusionImg2ImgPipeline.from_single_file(
                 stable_diffusion_model_path, use_safetensors=True, device_map="auto", attention_slice=1,
-                original_config_file=original_config_file
+                original_config_file=original_config_file, torch_dtype=torch.float16
             )
         else:
             return None, "Invalid Stable Diffusion model type!"
@@ -685,6 +705,7 @@ chat_interface = gr.Interface(
         gr.Radio(choices=["transformers", "llama"], label="Select model type", value="transformers"),
         gr.Dropdown(choices=get_chat_templates(), label="Select chat template", value=None),
         gr.Slider(minimum=1, maximum=2048, value=512, step=1, label="Max tokens"),
+        gr.Slider(minimum=1, maximum=2048, value=1024, step=1, label="Max length"),
         gr.Slider(minimum=0, maximum=4096, value=2048, step=1, label="n_ctx (for llama models only)", interactive=True),
         gr.Slider(minimum=0.0, maximum=1.0, value=0.7, step=0.1, label="Temperature"),
         gr.Slider(minimum=0.0, maximum=1.0, value=0.9, step=0.1, label="Top P"),
