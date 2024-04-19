@@ -1,5 +1,7 @@
 # Contributor Covenant Code of Conduct
 
+![3](https://github.com/Dartvauder/NeuroChatWebUI/assets/140557322/87397844-0add-4f59-a278-cf10578c0037)
+
 ## Our Pledge
 
 We as members, contributors, and leaders pledge to make participation in our

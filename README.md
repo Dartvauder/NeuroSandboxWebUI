@@ -1,28 +1,35 @@
 ## [Features](/#Features) | [Dependencies](/#Required-Dependencies) | [SystemRequirements](/#Minimum-System-Requirements) | [Install](/#How-to-install) | [Usage](/#How-to-use) | [Models](/#Where-can-I-get-models-voices-and-avatars) | [Roadmap](/#Roadmap) | [Acknowledgment](/#Acknowledgment-to-developers)
 
-# ![icon (1)](https://github.com/Dartvauder/NeuroChatWebUI/assets/140557322/e3c1d95a-828f-4a65-bea6-64c336dbe6fa) NeuroChatWebUI (ALPHA)
-* Work in progress!
+# ![1](https://github.com/Dartvauder/NeuroChatWebUI/assets/140557322/4dce21a9-3964-498e-b0f2-f36ab98e2d5d)
+* Work in progress! (ALPHA)
 * English | [Русский](/README_RU.md)
 ## Description:
 
-Simple and easy interface for use of different neural network models. You can chat with LLM using text or voice input, Stable Diffusion for generating images and AudioCraft for generating audio. TTS and Whisper functions are available here for voice input and output with a choice of language and voice sample
+Simple and easy interface for use of different neural network models. You can chat with LLM using text or voice input, Stable Diffusion for generating images and AudioCraft for generating audio
 
 The goal of the project - to create the easiest possible application to use neural network models
 
-|![Image1](https://github.com/Dartvauder/NeuroChatWebUI/assets/140557322/4dea603f-ca1b-4f63-bfdd-c85c28f2587c) |![Image2](https://github.com/Dartvauder/NeuroChatWebUI/assets/140557322/99797c8d-e183-4203-82b9-2ee276101347)
-|:---:|:---:|
-|![Image1](https://github.com/Dartvauder/NeuroChatWebUI/assets/140557322/ab9d0eed-04da-4943-adf1-6003234d5725) |![Image2](https://github.com/Dartvauder/NeuroChatWebUI/assets/140557322/4f9378b8-25f2-4c49-89b3-3fbd1e004ae0)
+### LLM: ![1](https://github.com/Dartvauder/NeuroChatWebUI/assets/140557322/165b8b01-03f6-4be1-8424-544c3a000bf3)
+
+### Stable Diffusion: 
+ #### txt2img: ![2](https://github.com/Dartvauder/NeuroChatWebUI/assets/140557322/1c147103-daf4-458d-b956-1843ee6ef989)
+ #### img2img: ![3](https://github.com/Dartvauder/NeuroChatWebUI/assets/140557322/03c9edf7-9742-47c4-a2cd-da097fc79abf)
+ #### Extras: ![4](https://github.com/Dartvauder/NeuroChatWebUI/assets/140557322/c4a25d9f-a68a-42ad-ba72-074725de34a8)
+
+### AudioCraft: ![5](https://github.com/Dartvauder/NeuroChatWebUI/assets/140557322/33be43dd-c3e3-45e0-8769-51f5e9b9f24d)
 
 ## Features:
 
-* Easy installation (Windows only)
-* Flexible and optimized interface
-* Transformers and llama.cpp (LLM)
-* Diffusers and safetensors (Stable Diffusion) - txt2img and img2img
-* AudioCraft (musicgen, audiogen and multiband diffusion)
-* TTS and Whisper models (For LLM)
-* Avatar selection (For LLM)
-* Models settings in interface
+* Easy installation via install.bat (Windows only)
+* Flexible and optimized interface (By Gradio)
+* Support for Transformers and llama.cpp models (LLM)
+* Support for diffusers (safetensors) models (Stable Diffusion) - txt2img, img2img and Extras tabs
+* AudioCraft support (Models: musicgen, audiogen and magnet)
+* Supports TTS and Whisper models (For LLM)
+* Support for Lora, Vae and Upscale models (For Stable Diffusion)
+* Support Multiband Diffusion model (For AudioCraft)
+* Ability to select an avatar (For LLM)
+* Model settings inside the interface
 
 ## Required Dependencies:
 
@@ -84,18 +91,19 @@ To get update, run `git pull`
 
 1) First upload your models to the folder: *inputs/image/sd_models*
 2) Select your model from the drop-down list
-3) Select model type (`SD` or `SDXL`)
+3) Select model type (`SD`, `SD2` or `SDXL`)
 4) Set up the model according to the parameters you need
 5) Enter your request
 6) Click the `Submit` button to get the generated image
-#### Optional: You can select your `vae` model and enable `upscale` to increase the size of the generated image 
+#### Optional: You can select your `vae` and `lora` models to improve the generation method, also you can enable `upscale` to increase the size of the generated image 
 #### vae = *inputs/image/sd_models/vae*
+#### lora = *inputs/image/sd_models/lora*
 
 #### img2img:
 
 1) First upload your models to the folder: *inputs/image/sd_models*
 2) Select your model from the drop-down list
-3) Select model type (`SD` or `SDXL`)
+3) Select model type (`SD`, `SD2` or `SDXL`)
 4) Set up the model according to the parameters you need
 5) Upload the initial image with which the generation will take place
 6) Enter your request
@@ -129,9 +137,9 @@ To get update, run `git pull`
 ## Where can I get models, voices and avatars?
 
 * LLM models can be taken from [HuggingFace](https://huggingface.co/models)
-* Stable Diffusion and vae models can be taken from [CivitAI](https://civitai.com/models)
+* Stable Diffusion, vae and lora models can be taken from [CivitAI](https://civitai.com/models)
 * AudioCraft models are downloads automatically in *inputs* folder, when you select a model and press the submit button
-* TTS and Whisper models are downloads automatically in *inputs* folder when are they used 
+* TTS, Whisper, Upscale and Multiband diffusion models are downloads automatically in *inputs* folder when are they used 
 * You can take voices anywhere. Record yours or take a recording from the Internet. The main thing is that it is pre-processed!
 * It’s the same with avatars as with voices. You can download them on the Internet, generate them using neural networks, or take a photo of yourself. The main thing is to comply with the required file format
 

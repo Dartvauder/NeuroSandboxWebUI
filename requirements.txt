@@ -1,4 +1,4 @@
-﻿absl-py==2.1.0
+absl-py==2.1.0
 accelerate==0.28.0
 aiofiles==23.2.1
 aiohttp==3.9.3
@@ -15,6 +15,7 @@ audioread==3.0.1
 av==12.0.0
 Babel==2.14.0
 bangla==0.0.2
+bitsandbytes==0.43.1
 blinker==1.7.0
 blis==0.7.11
 bnnumerizer==0.0.2
@@ -117,6 +118,7 @@ openunmix==1.2.1
 orjson==3.10.0
 packaging==24.0
 pandas==1.5.3
+peft==0.10.0
 pillow==10.2.0
 platformdirs==4.2.0
 pooch==1.8.1
@@ -197,14 +199,8 @@ websockets==11.0.3
 Werkzeug==3.0.1
 yarl==1.9.4
 zipp==3.18.1
-bitsandbytes==0.43.1
-peft==0.10.0
-psutil==5.9.8
-datasets==2.18.0
-pyyaml==6.0.1
-pytest==8.1.1
 --extra-index-url https://download.pytorch.org/whl/cu121
 torch==2.2.2+cu121
 torchaudio==2.2.2+cu121
 torchvision==0.17.2+cu121
-xformers==0.0.25
+xformers==0.0.25.post1
