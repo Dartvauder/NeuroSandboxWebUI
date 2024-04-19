@@ -16,16 +16,16 @@
 
 ## Функции:
 
-* Простая установка (Только для Windows)
-* Гибкий и оптимизированный интерфейс
-* Transformers и llama.cpp (LLM)
-* Diffusers и safetensors (Stable Diffusion) - txt2img, img2img и Extras
-* AudioCraft (musicgen, audiogen и magnet)
+* Простая установка через install.bat (Только для Windows)
+* Гибкий и оптимизированный интерфейс (От Gradio)
+* Поддержка Transformers и llama.cpp моделей (LLM)
+* Поддержка diffusers (safetensors) моделей (Stable Diffusion) - Вкладки txt2img, img2img и Extras
+* Поддержка AudioCraft (Модели: musicgen, audiogen и magnet)
 * Поддержка TTS и Whisper моделей (Для LLM)
 * Поддержка Lora, Vae и Upscale моделей (Для Stable Diffusion)
 * Поддержка Multiband Diffusion модели (Для AudioCraft)
-* Выбор аватара (Для LLM)
-* Настройка моделей в интерфейсе
+* Возможность выбора аватара (Для LLM)
+* Настройки моделей внутри интерфейса
 
 ## Необходимые зависимости:
 
