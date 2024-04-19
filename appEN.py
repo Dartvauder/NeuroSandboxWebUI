@@ -830,7 +830,7 @@ extras_interface = gr.Interface(
         gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
     outputs=[
-        gr.Image(type="filepath", label="Upscaled image"),
+        gr.Image(type="filepath", label="Modified Image"),
         gr.Textbox(label="Message", type="text"),
     ],
     title="NeuroChatWebUI (ALPHA) - Stable Diffusion (Extras)",
