@@ -253,25 +253,62 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_settin
                 inputs = tokenizer.encode(prompt, return_tensors="pt")
                 device = llm_model.device
                 inputs = inputs.to(device)
-                outputs = llm_model.generate(inputs, max_new_tokens=max_tokens, max_length=max_length, top_p=top_p,
-                                             top_k=top_k,
-                                             temperature=temperature, pad_token_id=tokenizer.eos_token_id)
+
+                progress_bar = tqdm(total=max_tokens, desc="Generating text")
+                progress_tokens = 0
+
+                outputs = llm_model.generate(
+                    inputs,
+                    max_new_tokens=max_tokens,
+                    max_length=max_length,
+                    top_p=top_p,
+                    top_k=top_k,
+                    temperature=temperature,
+                    pad_token_id=tokenizer.eos_token_id,
+                    output_scores=True,
+                    return_dict_in_generate=True,
+                    num_return_sequences=1,
+                )
+
+                for i in range(len(outputs.sequences)):
+                    generated_sequence = outputs.sequences[i][inputs.shape[-1]:]
+                    progress_tokens += len(generated_sequence)
+                    progress_bar.update(progress_tokens - progress_bar.n)
+
                 if stop_signal:
                     return "Generation stopped", None, None, None
-                generated_sequence = outputs[0][inputs.shape[-1]:]
-                text = tokenizer.decode(generated_sequence, skip_special_tokens=True)
-                progress_bar = tqdm(total=max_tokens, desc="Generating text")
+
                 progress_bar.close()
+
+                generated_sequence = outputs.sequences[0][inputs.shape[-1]:]
+                text = tokenizer.decode(generated_sequence, skip_special_tokens=True)
+
             elif llm_model_type == "llama":
                 llm_model.n_ctx = n_ctx
-                output = llm_model(prompt, max_tokens=max_tokens, stop=None, echo=False,
-                                   temperature=temperature, top_p=top_p, top_k=top_k,
-                                   repeat_penalty=1.1)
+
+                progress_bar = tqdm(total=max_tokens, desc="Generating text")
+                progress_tokens = 0
+
+                output = llm_model(
+                    prompt,
+                    max_tokens=max_tokens,
+                    stop=None,
+                    echo=False,
+                    temperature=temperature,
+                    top_p=top_p,
+                    top_k=top_k,
+                    repeat_penalty=1.1
+                )
+
+                progress_tokens = max_tokens
+                progress_bar.update(progress_tokens - progress_bar.n)
+
                 if stop_signal:
                     return "Generation stopped", None, None, None
-                text = output['choices'][0]['text']
-                progress_bar = tqdm(total=max_tokens, desc="Generating text")
+
                 progress_bar.close()
+
+                text = output['choices'][0]['text']
 
         if not chat_dir:
             now = datetime.now()
@@ -404,6 +441,10 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
         if stop_signal:
             return None, "Generation stopped"
         image = images["images"][0]
+
+        for i, image in enumerate(images["images"]):
+            if stop_signal:
+                return None, "Generation stopped"
 
         if enable_upscale:
             upscale_factor_value = 2 if upscale_factor == "x2" else 4
