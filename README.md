@@ -86,7 +86,7 @@ To get update, run `git pull`
 
 1) First upload your models to the folder: *inputs/image/sd_models*
 2) Select your model from the drop-down list
-3) Select model type (`SD` or `SDXL`)
+3) Select model type (`SD`, `SD2` or `SDXL`)
 4) Set up the model according to the parameters you need
 5) Enter your request
 6) Click the `Submit` button to get the generated image
@@ -98,7 +98,7 @@ To get update, run `git pull`
 
 1) First upload your models to the folder: *inputs/image/sd_models*
 2) Select your model from the drop-down list
-3) Select model type (`SD` or `SDXL`)
+3) Select model type (`SD`, `SD2` or `SDXL`)
 4) Set up the model according to the parameters you need
 5) Upload the initial image with which the generation will take place
 6) Enter your request
