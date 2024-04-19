@@ -88,7 +88,7 @@ To get update, run `git pull`
 4) Set up the model according to the parameters you need
 5) Enter your request
 6) Click the `Submit` button to get the generated image
-#### Optional: You can select your `vae` model and enable `upscale` to increase the size of the generated image 
+#### Optional: You can select your `vae` and `lora` models and enable `upscale` to increase the size of the generated image 
 #### vae = *inputs/image/sd_models/vae*
 
 #### img2img:
@@ -129,9 +129,9 @@ To get update, run `git pull`
 ## Where can I get models, voices and avatars?
 
 * LLM models can be taken from [HuggingFace](https://huggingface.co/models)
-* Stable Diffusion and vae models can be taken from [CivitAI](https://civitai.com/models)
+* Stable Diffusion, vae and lora models can be taken from [CivitAI](https://civitai.com/models)
 * AudioCraft models are downloads automatically in *inputs* folder, when you select a model and press the submit button
-* TTS and Whisper models are downloads automatically in *inputs* folder when are they used 
+* TTS, Whisper, Upscale and Multiband diffusion models are downloads automatically in *inputs* folder when are they used 
 * You can take voices anywhere. Record yours or take a recording from the Internet. The main thing is that it is pre-processed!
 * It’s the same with avatars as with voices. You can download them on the Internet, generate them using neural networks, or take a photo of yourself. The main thing is to comply with the required file format
 
