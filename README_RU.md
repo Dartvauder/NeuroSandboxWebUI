@@ -6,7 +6,7 @@
 
 ## Описание:
 
-Простой и удобный интерфейс для использования различных моделей нейросетей. Вы можете общаться с LLM используя текстовый или голосовой ввод, Stable Diffusion для генерации изображений и AudioCraft для генерации аудио. Здесь доступны функции TTS и Whisper для голосового ввода и вывода с выбором языка и образца голоса
+Простой и удобный интерфейс для использования различных моделей нейросетей. Вы можете общаться с LLM используя текстовый или голосовой ввод, Stable Diffusion для генерации изображений и AudioCraft для генерации аудио
 
 Цель проекта — создать максимально простое приложение для использования нейросетевых моделей
 
@@ -19,9 +19,11 @@
 * Простая установка (Только для Windows)
 * Гибкий и оптимизированный интерфейс
 * Transformers и llama.cpp (LLM)
-* Diffusers и safetensors (Stable Diffusion) - txt2img и img2img
-* AudioCraft (musicgen, audiogen и multiband diffusion)
-* TTS и Whisper модели (Для LLM)
+* Diffusers и safetensors (Stable Diffusion) - txt2img, img2img и Extras
+* AudioCraft (musicgen, audiogen и magnet)
+* Поддержка TTS и Whisper моделей (Для LLM)
+* Поддержка Lora, Vae и Upscale моделей (Для Stable Diffusion)
+* Поддержка Multiband Diffusion модели (Для AudioCraft)
 * Выбор аватара (Для LLM)
 * Настройка моделей в интерфейсе
 
