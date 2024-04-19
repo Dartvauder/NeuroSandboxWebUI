@@ -15,16 +15,16 @@ The goal of the project - to create the easiest possible application to use neur
 
 ## Features:
 
-* Easy installation (Windows only)
-* Flexible and optimized interface
-* Transformers and llama.cpp (LLM)
-* Diffusers and safetensors (Stable Diffusion) - txt2img, img2img and Extras
-* AudioCraft (musicgen, audiogen and multiband diffusion)
-* TTS and Whisper models (For LLM)
-* Lora, Vae and Upscale models (For Stable Diffusion)
-* Multiband Diffusion model (For AudioCraft)
-* Avatar selection (For LLM)
-* Models settings in interface
+* Easy installation via install.bat (Windows only)
+* Flexible and optimized interface (By Gradio)
+* Support for Transformers and llama.cpp models (LLM)
+* Support for diffusers (safetensors) models (Stable Diffusion) - txt2img, img2img and Extras tabs
+* AudioCraft support (Models: musicgen, audiogen and magnet)
+* Supports TTS and Whisper models (For LLM)
+* Support for Lora, Vae and Upscale models (For Stable Diffusion)
+* Support Multiband Diffusion model (For AudioCraft)
+* Ability to select an avatar (For LLM)
+* Model settings inside the interface
 
 ## Required Dependencies:
 
