@@ -260,19 +260,7 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_settin
                     return "Generation stopped", None, None, None
                 generated_sequence = outputs[0][inputs.shape[-1]:]
                 text = tokenizer.decode(generated_sequence, skip_special_tokens=True)
-                prev_text = ""
                 progress_bar = tqdm(total=max_tokens, desc="Generating text")
-                while text != prev_text:
-                    prev_text = text
-                    inputs = tokenizer.encode(text, return_tensors="pt").to(device)
-                    outputs = llm_model.generate(inputs, max_new_tokens=50, max_length=max_length, top_p=top_p,
-                                                 top_k=top_k,
-                                                 temperature=temperature, pad_token_id=tokenizer.eos_token_id)
-                    generated_sequence = outputs[0][inputs.shape[-1]:]
-                    text = tokenizer.decode(generated_sequence, skip_special_tokens=True)
-                    progress_bar.update(len(text.split()) - len(prev_text.split()))
-                    if text.endswith((".", "!", "?")) or len(text.split()) >= max_tokens:
-                        break
                 progress_bar.close()
             elif llm_model_type == "llama":
                 llm_model.n_ctx = n_ctx
@@ -282,17 +270,7 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_settin
                 if stop_signal:
                     return "Generation stopped", None, None, None
                 text = output['choices'][0]['text']
-                prev_text = ""
                 progress_bar = tqdm(total=max_tokens, desc="Generating text")
-                while text != prev_text:
-                    prev_text = text
-                    output = llm_model(text, max_tokens=50, stop=None, echo=False,
-                                       temperature=temperature, top_p=top_p, top_k=top_k,
-                                       repeat_penalty=1.1)
-                    text = output['choices'][0]['text']
-                    progress_bar.update(len(text.split()) - len(prev_text.split()))
-                    if text.endswith((".", "!", "?")) or len(text.split()) >= max_tokens:
-                        break
                 progress_bar.close()
 
         if not chat_dir:
