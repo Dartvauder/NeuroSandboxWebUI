@@ -442,10 +442,6 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
             return None, "Generation stopped"
         image = images["images"][0]
 
-        for i, image in enumerate(images["images"]):
-            if stop_signal:
-                return None, "Generation stopped"
-
         if enable_upscale:
             upscale_factor_value = 2 if upscale_factor == "x2" else 4
             upscaler = load_upscale_model(upscale_factor_value)
