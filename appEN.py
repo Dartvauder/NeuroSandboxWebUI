@@ -12,6 +12,7 @@ import logging
 from diffusers import StableDiffusionPipeline, StableDiffusionXLPipeline, StableDiffusionImg2ImgPipeline, AutoencoderKL, StableDiffusionLatentUpscalePipeline, StableDiffusionUpscalePipeline
 from git import Repo
 from PIL import Image
+from tqdm import tqdm
 from llama_cpp import Llama
 import requests
 import torchaudio
