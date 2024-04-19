@@ -261,6 +261,7 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_settin
                 generated_sequence = outputs[0][inputs.shape[-1]:]
                 text = tokenizer.decode(generated_sequence, skip_special_tokens=True)
                 prev_text = ""
+                progress_bar = tqdm(total=max_tokens, desc="Generating text")
                 while text != prev_text:
                     prev_text = text
                     inputs = tokenizer.encode(text, return_tensors="pt").to(device)
@@ -269,8 +270,10 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_settin
                                                  temperature=temperature, pad_token_id=tokenizer.eos_token_id)
                     generated_sequence = outputs[0][inputs.shape[-1]:]
                     text = tokenizer.decode(generated_sequence, skip_special_tokens=True)
+                    progress_bar.update(len(text.split()) - len(prev_text.split()))
                     if text.endswith((".", "!", "?")) or len(text.split()) >= max_tokens:
                         break
+                progress_bar.close()
             elif llm_model_type == "llama":
                 llm_model.n_ctx = n_ctx
                 output = llm_model(prompt, max_tokens=max_tokens, stop=None, echo=False,
@@ -280,14 +283,17 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_settin
                     return "Generation stopped", None, None, None
                 text = output['choices'][0]['text']
                 prev_text = ""
+                progress_bar = tqdm(total=max_tokens, desc="Generating text")
                 while text != prev_text:
                     prev_text = text
                     output = llm_model(text, max_tokens=50, stop=None, echo=False,
                                        temperature=temperature, top_p=top_p, top_k=top_k,
                                        repeat_penalty=1.1)
                     text = output['choices'][0]['text']
+                    progress_bar.update(len(text.split()) - len(prev_text.split()))
                     if text.endswith((".", "!", "?")) or len(text.split()) >= max_tokens:
                         break
+                progress_bar.close()
 
         if not chat_dir:
             now = datetime.now()
@@ -618,12 +624,14 @@ def generate_audio(prompt, input_audio=None, model_name=None, audiocraft_setting
         mbd = MultiBandDiffusion.get_mbd_musicgen()
 
     try:
+        progress_bar = tqdm(total=duration, desc="Generating audio")
         if input_audio and model_type == "musicgen":
             audio_path = input_audio
             melody, sr = torchaudio.load(audio_path)
             model.set_generation_params(duration=duration, top_k=top_k, top_p=top_p, temperature=temperature,
                                         cfg_coef=cfg_coef)
             wav, tokens = model.generate_with_chroma([prompt], melody[None].expand(1, -1, -1), sr, return_tokens=True)
+            progress_bar.update(duration)
             if wav.ndim > 2:
                 wav = wav.squeeze()
             if stop_signal:
@@ -633,10 +641,12 @@ def generate_audio(prompt, input_audio=None, model_name=None, audiocraft_setting
             model.set_generation_params(duration=duration, top_k=top_k, top_p=top_p, temperature=temperature,
                                         cfg_coef=cfg_coef)
             wav, tokens = model.generate(descriptions, return_tokens=True)
+            progress_bar.update(duration)
             if wav.ndim > 2:
                 wav = wav.squeeze()
             if stop_signal:
                 return None, "Generation stopped"
+        progress_bar.close()
 
         if mbd:
             if stop_signal:
