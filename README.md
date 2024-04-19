@@ -90,7 +90,7 @@ To get update, run `git pull`
 4) Set up the model according to the parameters you need
 5) Enter your request
 6) Click the `Submit` button to get the generated image
-#### Optional: You can select your `vae` and `lora` models and enable `upscale` to increase the size of the generated image 
+#### Optional: You can select your `vae` and `lora` models to improve the generation method, also you can enable `upscale` to increase the size of the generated image 
 #### vae = *inputs/image/sd_models/vae*
 #### lora = *inputs/image/sd_models/lora*
 
