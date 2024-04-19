@@ -9,9 +9,14 @@ Simple and easy interface for use of different neural network models. You can ch
 
 The goal of the project - to create the easiest possible application to use neural network models
 
-|![Image1](https://github.com/Dartvauder/NeuroChatWebUI/assets/140557322/4dea603f-ca1b-4f63-bfdd-c85c28f2587c) |![Image2](https://github.com/Dartvauder/NeuroChatWebUI/assets/140557322/99797c8d-e183-4203-82b9-2ee276101347)
-|:---:|:---:|
-|![Image1](https://github.com/Dartvauder/NeuroChatWebUI/assets/140557322/ab9d0eed-04da-4943-adf1-6003234d5725) |![Image2](https://github.com/Dartvauder/NeuroChatWebUI/assets/140557322/4f9378b8-25f2-4c49-89b3-3fbd1e004ae0)
+### LLM: ![1](https://github.com/Dartvauder/NeuroChatWebUI/assets/140557322/165b8b01-03f6-4be1-8424-544c3a000bf3)
+
+### Stable Diffusion: 
+ #### txt2img: ![2](https://github.com/Dartvauder/NeuroChatWebUI/assets/140557322/1c147103-daf4-458d-b956-1843ee6ef989)
+ #### img2img: ![3](https://github.com/Dartvauder/NeuroChatWebUI/assets/140557322/03c9edf7-9742-47c4-a2cd-da097fc79abf)
+ #### Extras: ![4](https://github.com/Dartvauder/NeuroChatWebUI/assets/140557322/c4a25d9f-a68a-42ad-ba72-074725de34a8)
+
+### AudioCraft: ![5](https://github.com/Dartvauder/NeuroChatWebUI/assets/140557322/33be43dd-c3e3-45e0-8769-51f5e9b9f24d)
 
 ## Features:
 
