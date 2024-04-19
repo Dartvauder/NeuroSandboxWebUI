@@ -825,7 +825,7 @@ img2img_interface = gr.Interface(
 extras_interface = gr.Interface(
     fn=upscale_image,
     inputs=[
-        gr.Image(label="Image to upscale", type="filepath"),
+        gr.Image(label="Image to modify", type="filepath"),
         gr.Checkbox(label="Enable upscale", value=False),
         gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
