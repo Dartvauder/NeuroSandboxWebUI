@@ -185,6 +185,7 @@ def load_upscale_model(upscale_factor):
     if upscale_factor == 2:
         upscaler = StableDiffusionLatentUpscalePipeline.from_pretrained(
             upscale_model_path,
+            revision="fp16",
             torch_dtype=torch.float16 if device == "cuda" else torch.float32,
             device_map="auto"
         )
@@ -200,7 +201,7 @@ def load_upscale_model(upscale_factor):
     upscaler.to(device)
     upscaler.enable_attention_slicing()
     if XFORMERS_AVAILABLE:
-        upscaler.enable_xformers_memory_efficient_attention()
+        upscaler.enable_xformers_memory_efficient_attention(attention_op=None)
 
     print(f"Upscale model {upscale_model_name} downloaded")
 
@@ -379,21 +380,21 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
             vae_config_file = "configs/sd/v1-inference.yaml"
             stable_diffusion_model = StableDiffusionPipeline.from_single_file(
                 stable_diffusion_model_path, use_safetensors=True, device_map="auto",
-                original_config_file=original_config_file, torch_dtype=torch.float16
+                original_config_file=original_config_file, torch_dtype=torch.float16, variant="fp16"
             )
         elif stable_diffusion_model_type == "SD2":
             original_config_file = "configs/sd/v2-inference.yaml"
             vae_config_file = "configs/sd/v2-inference.yaml"
             stable_diffusion_model = StableDiffusionPipeline.from_single_file(
                 stable_diffusion_model_path, use_safetensors=True, device_map="auto",
-                original_config_file=original_config_file, torch_dtype=torch.float16
+                original_config_file=original_config_file, torch_dtype=torch.float16, variant="fp16"
             )
         elif stable_diffusion_model_type == "SDXL":
             original_config_file = "configs/sd/sd_xl_base.yaml"
             vae_config_file = "configs/sd/sd_xl_base.yaml"
             stable_diffusion_model = StableDiffusionXLPipeline.from_single_file(
                 stable_diffusion_model_path, use_safetensors=True, device_map="auto", attention_slice=1,
-                original_config_file=original_config_file, torch_dtype=torch.float16
+                original_config_file=original_config_file, torch_dtype=torch.float16, variant="fp16"
             )
         else:
             return None, "Invalid Stable Diffusion model type!"
@@ -403,9 +404,9 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
     if XFORMERS_AVAILABLE:
-        stable_diffusion_model.enable_xformers_memory_efficient_attention()
-        stable_diffusion_model.vae.enable_xformers_memory_efficient_attention()
-        stable_diffusion_model.unet.enable_xformers_memory_efficient_attention()
+        stable_diffusion_model.enable_xformers_memory_efficient_attention(attention_op=None)
+        stable_diffusion_model.vae.enable_xformers_memory_efficient_attention(attention_op=None)
+        stable_diffusion_model.unet.enable_xformers_memory_efficient_attention(attention_op=None)
 
     stable_diffusion_model.to(device)
     stable_diffusion_model.text_encoder.to(device)
@@ -418,7 +419,7 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
         vae_model_path = os.path.join("inputs", "image", "sd_models", "vae", f"{vae_model_name}.safetensors")
         if os.path.exists(vae_model_path):
             vae = AutoencoderKL.from_single_file(vae_model_path, device_map="auto",
-                                                 original_config_file=vae_config_file)
+                                                 original_config_file=vae_config_file, torch_dtype=torch.float16, variant="fp16")
             stable_diffusion_model.vae = vae.to(device)
         else:
             print(f"VAE model not found: {vae_model_path}")
@@ -488,21 +489,21 @@ def generate_image_img2img(prompt, negative_prompt, init_image,
             vae_config_file = "configs/sd/v1-inference.yaml"
             stable_diffusion_model = StableDiffusionImg2ImgPipeline.from_single_file(
                 stable_diffusion_model_path, use_safetensors=True, device_map="auto",
-                original_config_file=original_config_file, torch_dtype=torch.float16
+                original_config_file=original_config_file, torch_dtype=torch.float16, variant="fp16"
             )
         elif stable_diffusion_model_type == "SD2":
             original_config_file = "configs/sd/v2-inference.yaml"
             vae_config_file = "configs/sd/v2-inference.yaml"
             stable_diffusion_model = StableDiffusionPipeline.from_single_file(
                 stable_diffusion_model_path, use_safetensors=True, device_map="auto",
-                original_config_file=original_config_file, torch_dtype=torch.float16
+                original_config_file=original_config_file, torch_dtype=torch.float16, variant="fp16"
             )
         elif stable_diffusion_model_type == "SDXL":
             original_config_file = "configs/sd/sd_xl_base.yaml"
             vae_config_file = "configs/sd/sd_xl_base.yaml"
             stable_diffusion_model = StableDiffusionImg2ImgPipeline.from_single_file(
                 stable_diffusion_model_path, use_safetensors=True, device_map="auto", attention_slice=1,
-                original_config_file=original_config_file, torch_dtype=torch.float16
+                original_config_file=original_config_file, torch_dtype=torch.float16, variant="fp16"
             )
         else:
             return None, "Invalid Stable Diffusion model type!"
@@ -512,9 +513,9 @@ def generate_image_img2img(prompt, negative_prompt, init_image,
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
     if XFORMERS_AVAILABLE:
-        stable_diffusion_model.enable_xformers_memory_efficient_attention()
-        stable_diffusion_model.vae.enable_xformers_memory_efficient_attention()
-        stable_diffusion_model.unet.enable_xformers_memory_efficient_attention()
+        stable_diffusion_model.enable_xformers_memory_efficient_attention(attention_op=None)
+        stable_diffusion_model.vae.enable_xformers_memory_efficient_attention(attention_op=None)
+        stable_diffusion_model.unet.enable_xformers_memory_efficient_attention(attention_op=None)
 
     stable_diffusion_model.to(device)
     stable_diffusion_model.text_encoder.to(device)
@@ -527,7 +528,7 @@ def generate_image_img2img(prompt, negative_prompt, init_image,
         vae_model_path = os.path.join("inputs", "image", "sd_models", "vae", f"{vae_model_name}.safetensors")
         if os.path.exists(vae_model_path):
             vae = AutoencoderKL.from_single_file(vae_model_path, device_map=device,
-                                                 original_config_file=vae_config_file)
+                                                 original_config_file=vae_config_file, torch_dtype=torch.float16, variant="fp16")
             stable_diffusion_model.vae = vae.to(device)
         else:
             print(f"VAE model not found: {vae_model_path}")
@@ -767,7 +768,7 @@ txt2img_interface = gr.Interface(
         gr.Textbox(label="Enter your negative prompt", value=""),
         gr.Dropdown(choices=stable_diffusion_models_list, label="Select Stable Diffusion model", value=None),
         gr.Dropdown(choices=vae_models_list, label="Select VAE model (optional)", value=None),
-        gr.Dropdown(choices=lora_models_list, label="Select LORA models", value=None, multiselect=True),
+        gr.Dropdown(choices=lora_models_list, label="Select LORA models (optional)", value=None, multiselect=True),
         gr.HTML("<h3>Stable Diffusion Settings</h3>"),
         gr.Radio(choices=["SD", "SD2", "SDXL"], label="Select model type", value="SD"),
         gr.Dropdown(choices=["euler_ancestral", "euler", "lms", "heun", "dpm", "dpm_solver", "dpm_solver++"],
