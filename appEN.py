@@ -900,4 +900,4 @@ with gr.TabbedInterface(
         '</div>'
     )
 
-    app.launch()
+    app.launch(share=False, server_name="localhost")
