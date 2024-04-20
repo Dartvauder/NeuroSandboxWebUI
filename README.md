@@ -134,6 +134,7 @@ To get update, run `git pull`
 2) You can press the `Clear` button to reset your selection
 3) To stop the generation process, click the `Stop generation` button
 4) You can turn off the application using the `Close terminal` button
+5) You can open the *outputs* folder by clicking on the 'Folder` button 
 
 ## Where can I get models, voices and avatars?
 
