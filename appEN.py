@@ -211,7 +211,7 @@ def load_upscale_model(upscale_factor):
 stop_signal = False
 
 
-def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_settings_html, llm_model_type, chat_template, max_tokens, max_length,
+def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_settings_html, llm_model_type, max_tokens, max_length,
                              n_ctx, temperature, top_p, top_k, avatar_html, avatar_name, enable_tts, tts_settings_html,
                              speaker_wav, language, tts_temperature, tts_top_p, tts_top_k, tts_speed, stop_generation):
     global chat_dir, tts_model, whisper_model, stop_signal
@@ -225,10 +225,6 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_settin
                                                      n_ctx=n_ctx if llm_model_type == "llama" else None)
     if error_message:
         return error_message, None, None, None, None
-    if chat_template:
-        chat_template_path = os.path.join("configs", "LLM", chat_template)
-        with open(chat_template_path, "r") as f:
-            prompt = f.read().replace("{input}", prompt)
     tts_model = None
     whisper_model = None
     text = None
@@ -711,11 +707,6 @@ def open_outputs_folder():
             os.system(f'open "{outputs_folder}"' if os.name == "darwin" else f'xdg-open "{outputs_folder}"')
 
 
-def get_chat_templates():
-    chat_templates_dir = "configs/llm"
-    return [None] + [template for template in os.listdir(chat_templates_dir) if template.endswith(".yaml")]
-
-
 llm_models_list = [None] + [model for model in os.listdir("inputs/text/llm_models") if not model.endswith(".txt")]
 avatars_list = [None] + [avatar for avatar in os.listdir("inputs/image/avatars") if not avatar.endswith(".txt")]
 speaker_wavs_list = [None] + [wav for wav in os.listdir("inputs/audio/voices") if not wav.endswith(".txt")]
@@ -738,7 +729,6 @@ chat_interface = gr.Interface(
         gr.Dropdown(choices=llm_models_list, label="Select LLM model", value=None),
         gr.HTML("<h3>LLM Settings</h3>"),
         gr.Radio(choices=["transformers", "llama"], label="Select model type", value="transformers"),
-        gr.Dropdown(choices=get_chat_templates(), label="Select chat template", value=None),
         gr.Slider(minimum=1, maximum=2048, value=512, step=1, label="Max tokens"),
         gr.Slider(minimum=1, maximum=2048, value=1024, step=1, label="Max length"),
         gr.Slider(minimum=0, maximum=4096, value=2048, step=1, label="n_ctx (for llama models only)", interactive=True),
