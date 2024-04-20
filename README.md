@@ -14,7 +14,7 @@ The goal of the project - to create the easiest possible application to use neur
 ### Stable Diffusion: 
  #### txt2img: ![2](https://github.com/Dartvauder/NeuroChatWebUI/assets/140557322/1c147103-daf4-458d-b956-1843ee6ef989)
  #### img2img: ![3](https://github.com/Dartvauder/NeuroChatWebUI/assets/140557322/03c9edf7-9742-47c4-a2cd-da097fc79abf)
- #### Extras: ![4](https://github.com/Dartvauder/NeuroChatWebUI/assets/140557322/c4a25d9f-a68a-42ad-ba72-074725de34a8)
+ #### Extras: ![4](https://github.com/Dartvauder/NeuroChatWebUI/assets/140557322/4931f00a-b025-4d4a-8705-418fb0c5a257)
 
 ### AudioCraft: ![5](https://github.com/Dartvauder/NeuroChatWebUI/assets/140557322/33be43dd-c3e3-45e0-8769-51f5e9b9f24d)
 
