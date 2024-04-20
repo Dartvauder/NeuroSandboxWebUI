@@ -21,6 +21,7 @@ The goal of the project - to create the easiest possible application to use neur
 ## Features:
 
 * Easy installation via install.bat (Windows only)
+* You can use the application via your mobile device in localhost (Via IPv4)
 * Flexible and optimized interface (By Gradio)
 * Support for Transformers and llama.cpp models (LLM)
 * Support for diffusers (safetensors) models (Stable Diffusion) - txt2img, img2img and Extras tabs
