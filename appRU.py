@@ -702,6 +702,15 @@ def close_terminal():
     os._exit(1)
 
 
+def open_outputs_folder():
+    outputs_folder = "outputs"
+    if os.path.exists(outputs_folder):
+        if os.name == "nt":
+            os.startfile(outputs_folder)
+        else:
+            os.system(f'open "{outputs_folder}"' if os.name == "darwin" else f'xdg-open "{outputs_folder}"')
+
+
 def get_chat_templates():
     chat_templates_dir = "configs/llm"
     return [None] + [template for template in os.listdir(chat_templates_dir) if template.endswith(".yaml")]
@@ -880,6 +889,9 @@ with gr.TabbedInterface(
     close_button = gr.Button("Close terminal")
     close_button.click(close_terminal, [], [], queue=False)
 
+    folder_button = gr.Button("Folder")
+    folder_button.click(open_outputs_folder, [], [], queue=False)
+
     github_link = gr.HTML(
         '<div style="text-align: center; margin-top: 20px;">'
         '<a href="https://github.com/Dartvauder/NeuroChatWebUI" target="_blank" style="color: blue; text-decoration: none; font-size: 16px;">'
@@ -889,4 +901,3 @@ with gr.TabbedInterface(
     )
 
     app.launch()
-    
