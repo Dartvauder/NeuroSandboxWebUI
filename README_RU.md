@@ -22,6 +22,7 @@
 ## Функции:
 
 * Простая установка через install.bat (Только для Windows)
+* Вы можете использовать приложение через мобильное устройство в localhost (Через IPv4)
 * Гибкий и оптимизированный интерфейс (От Gradio)
 * Поддержка Transformers и llama.cpp моделей (LLM)
 * Поддержка diffusers (safetensors) моделей (Stable Diffusion) - Вкладки txt2img, img2img и Extras
