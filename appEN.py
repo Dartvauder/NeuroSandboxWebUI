@@ -562,7 +562,7 @@ def generate_image_img2img(prompt, negative_prompt, init_image,
         torch.cuda.empty_cache()
 
 
-def upscale_image(image_path, enable_upscale, stop_generation):
+def generate_image_extras(image_path, enable_upscale, stop_generation):
     global stop_signal
     if stop_signal:
         return None, "Generation stopped"
@@ -823,7 +823,7 @@ img2img_interface = gr.Interface(
 )
 
 extras_interface = gr.Interface(
-    fn=upscale_image,
+    fn=generate_image_extras,
     inputs=[
         gr.Image(label="Image to modify", type="filepath"),
         gr.Checkbox(label="Enable upscale", value=False),
