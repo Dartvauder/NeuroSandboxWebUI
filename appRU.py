@@ -11,6 +11,7 @@ import warnings
 import logging
 from diffusers import StableDiffusionPipeline, StableDiffusionXLPipeline, StableDiffusionImg2ImgPipeline, AutoencoderKL, StableDiffusionLatentUpscalePipeline, StableDiffusionUpscalePipeline, StableDiffusionInpaintPipeline
 from git import Repo
+import numpy as np
 from PIL import Image
 from tqdm import tqdm
 from llama_cpp import Llama
@@ -623,17 +624,35 @@ def generate_image_inpaint(prompt, init_image, mask_image, stable_diffusion_mode
         vae_model_path = os.path.join("inputs", "image", "sd_models", "vae", f"{vae_model_name}.safetensors")
         if os.path.exists(vae_model_path):
             vae = AutoencoderKL.from_single_file(vae_model_path, device_map="auto",
-                                                 original_config_file=vae_config_file,
-                                                 torch_dtype=torch.float16, variant="fp16")
+                                                 original_config_file=vae_config_file, torch_dtype=torch.float16,
+                                                 variant="fp16")
             stable_diffusion_model.vae = vae.to(device)
         else:
             print(f"VAE model not found: {vae_model_path}")
 
     try:
-        init_image = Image.open(init_image).convert("RGB")
-        mask_image = Image.open(mask_image).convert("L")
+        print("mask_image type:", type(mask_image))
+        print("mask_image content:", mask_image)
 
-        images = stable_diffusion_model(prompt=prompt, image=init_image, mask_image=mask_image,
+        if isinstance(mask_image, dict):
+            composite_path = mask_image.get('composite', None)
+            if composite_path is None:
+                raise ValueError("Invalid mask image data: missing 'composite' key")
+
+            mask_image = Image.open(composite_path).convert("L")
+        elif isinstance(mask_image, str):
+            mask_image = Image.open(mask_image).convert("L")
+        else:
+            raise ValueError("Invalid mask image format")
+
+        init_image = Image.open(init_image).convert("RGB")
+
+        mask_array = np.array(mask_image)
+        mask_array = np.where(mask_array > 127, 255, 0).astype(np.uint8)
+
+        mask_array = Image.fromarray(mask_array).resize(init_image.size, resample=Image.NEAREST)
+
+        images = stable_diffusion_model(prompt=prompt, image=init_image, mask_image=mask_array,
                                         num_inference_steps=stable_diffusion_steps,
                                         guidance_scale=stable_diffusion_cfg, sampler=stable_diffusion_sampler)
 
@@ -781,6 +800,21 @@ def generate_audio(prompt, input_audio=None, model_name=None, audiocraft_setting
         if mbd:
             del mbd
         torch.cuda.empty_cache()
+
+
+def settings_interface(share_value):
+    global share_mode
+    share_mode = share_value == "True"
+    message = f"Settings updated successfully!"
+
+    stop_all_processes()
+
+    app.launch(share=share_mode, server_name="localhost")
+
+    return message
+
+
+share_mode = False
 
 
 def stop_all_processes():
@@ -988,11 +1022,24 @@ audiocraft_interface = gr.Interface(
     allow_flagging="never",
 )
 
+settings_interface = gr.Interface(
+    fn=settings_interface,
+    inputs=[
+        gr.Radio(choices=["False", "True"], label="Share Mode", value="False")
+    ],
+    outputs=[
+        gr.Textbox(label="Message", type="text")
+    ],
+    title="NeuroChatWebUI (ALPHA) - Settings",
+    description="This user interface allows you to change settings of application",
+    allow_flagging="never",
+)
+
 with gr.TabbedInterface(
         [chat_interface, gr.TabbedInterface([txt2img_interface, img2img_interface, inpaint_interface, extras_interface],
                                             tab_names=["txt2img", "img2img", "Inpaint", "Extras"]),
-         audiocraft_interface],
-        tab_names=["LLM", "Stable Diffusion", "AudioCraft"]
+         audiocraft_interface, settings_interface],
+        tab_names=["LLM", "Stable Diffusion", "AudioCraft", "Settings"]
 ) as app:
     chat_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     txt2img_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
@@ -1015,5 +1062,5 @@ with gr.TabbedInterface(
         '</div>'
     )
 
-    app.launch(share=False, server_name="localhost")
+    app.launch(share=share_mode, server_name="localhost")
     
