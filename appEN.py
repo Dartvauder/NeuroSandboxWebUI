@@ -970,6 +970,7 @@ inpaint_interface = gr.Interface(
     fn=generate_image_inpaint,
     inputs=[
         gr.Textbox(label="Enter your prompt"),
+        gr.Textbox(label="Enter your negative prompt", value=""),
         gr.Image(label="Initial image", type="filepath"),
         gr.ImageEditor(label="Mask image", type="filepath"),
         gr.Dropdown(choices=inpaint_models_list, label="Select Inpaint model", value=None),
