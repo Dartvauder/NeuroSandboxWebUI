@@ -11,6 +11,7 @@ import warnings
 import logging
 from diffusers import StableDiffusionPipeline, StableDiffusionXLPipeline, StableDiffusionImg2ImgPipeline, AutoencoderKL, StableDiffusionLatentUpscalePipeline, StableDiffusionUpscalePipeline, StableDiffusionInpaintPipeline
 from git import Repo
+import numpy as np
 from PIL import Image
 from tqdm import tqdm
 from llama_cpp import Llama
@@ -623,17 +624,35 @@ def generate_image_inpaint(prompt, init_image, mask_image, stable_diffusion_mode
         vae_model_path = os.path.join("inputs", "image", "sd_models", "vae", f"{vae_model_name}.safetensors")
         if os.path.exists(vae_model_path):
             vae = AutoencoderKL.from_single_file(vae_model_path, device_map="auto",
-                                                 original_config_file=vae_config_file,
-                                                 torch_dtype=torch.float16, variant="fp16")
+                                                 original_config_file=vae_config_file, torch_dtype=torch.float16,
+                                                 variant="fp16")
             stable_diffusion_model.vae = vae.to(device)
         else:
             print(f"VAE model not found: {vae_model_path}")
 
     try:
-        init_image = Image.open(init_image).convert("RGB")
-        mask_image = Image.open(mask_image).convert("L")
+        print("mask_image type:", type(mask_image))
+        print("mask_image content:", mask_image)
 
-        images = stable_diffusion_model(prompt=prompt, image=init_image, mask_image=mask_image,
+        if isinstance(mask_image, dict):
+            composite_path = mask_image.get('composite', None)
+            if composite_path is None:
+                raise ValueError("Invalid mask image data: missing 'composite' key")
+
+            mask_image = Image.open(composite_path).convert("L")
+        elif isinstance(mask_image, str):
+            mask_image = Image.open(mask_image).convert("L")
+        else:
+            raise ValueError("Invalid mask image format")
+
+        init_image = Image.open(init_image).convert("RGB")
+
+        mask_array = np.array(mask_image)
+        mask_array = np.where(mask_array > 127, 255, 0).astype(np.uint8)
+
+        mask_array = Image.fromarray(mask_array).resize(init_image.size, resample=Image.NEAREST)
+
+        images = stable_diffusion_model(prompt=prompt, image=init_image, mask_image=mask_array,
                                         num_inference_steps=stable_diffusion_steps,
                                         guidance_scale=stable_diffusion_cfg, sampler=stable_diffusion_sampler)
 
@@ -1016,4 +1035,3 @@ with gr.TabbedInterface(
     )
 
     app.launch(share=False, server_name="localhost")
-    
