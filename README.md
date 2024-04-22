@@ -14,7 +14,7 @@ The goal of the project - to create the easiest possible application to use neur
 ### Stable Diffusion: 
  #### txt2img: ![2](https://github.com/Dartvauder/NeuroChatWebUI/assets/140557322/1c147103-daf4-458d-b956-1843ee6ef989)
  #### img2img: ![3](https://github.com/Dartvauder/NeuroChatWebUI/assets/140557322/03c9edf7-9742-47c4-a2cd-da097fc79abf)
- #### inpaint: ![4](https://github.com/Dartvauder/NeuroChatWebUI/assets/140557322/687295ac-e807-483c-aded-f8a589a900bf)
+ #### inpaint: ![4](https://github.com/Dartvauder/NeuroChatWebUI/assets/140557322/d7a7515c-d94e-4e14-8d54-395d3ec1d9a3)
  #### extras: ![5](https://github.com/Dartvauder/NeuroChatWebUI/assets/140557322/6878f076-ee6a-411f-b31a-d708fdbdaef8)
 
 ### AudioCraft: ![5](https://github.com/Dartvauder/NeuroChatWebUI/assets/140557322/33be43dd-c3e3-45e0-8769-51f5e9b9f24d)
@@ -123,7 +123,7 @@ To get update, run `git pull`
 3) Select model type (`SD`, `SD2` or `SDXL`)
 4) Set up the model according to the parameters you need
 5) Upload the image with which the generation will take place to `initial image` and `mask image`
-6) In `mask image`, select the brush, then the palette and change the color to FFFFFF
+6) In `mask image`, select the brush, then the palette and change the color to `#FFFFFF`
 7) Draw a place for generation and enter your request
 8) Click the `Submit` button to get the inpainted image
 #### Optional: You can select your `vae` model
