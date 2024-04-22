@@ -34,6 +34,7 @@ The goal of the project - to create the easiest possible application to use neur
 * Support Multiband Diffusion model (For AudioCraft)
 * Ability to select an avatar (For LLM)
 * Model settings inside the interface
+* Application settings
 
 ## Required Dependencies:
 
@@ -74,7 +75,7 @@ To get update, run `git pull`
 
 ## How to use:
 
-#### Interface has three tabs: LLM, Stable Diffusion and AudioCraft. Select the one you need and follow the instructions below 
+#### Interface has four tabs: LLM, Stable Diffusion, AudioCraft and Settings. Select the one you need and follow the instructions below 
 
 ### LLM:
 
@@ -117,7 +118,16 @@ To get update, run `git pull`
 
 #### inpaint:
 
-
+1) First upload your models to the folder: *inputs/image/sd_models/inpaint*
+2) Select your model from the drop-down list
+3) Select model type (`SD`, `SD2` or `SDXL`)
+4) Set up the model according to the parameters you need
+5) Upload the image with which the generation will take place to `initial image` and `mask image`
+6) In `mask image`, select the brush, then the palette and change the color to FFFFFF
+7) Draw a place for generation and enter your request
+8) Click the `Submit` button to get the inpainted image
+#### Optional: You can select your `vae` model
+#### vae = *inputs/image/sd_models/vae*
 
 #### extras:
 
@@ -134,6 +144,10 @@ To get update, run `git pull`
 5) (Optional) upload the initial audio if you are using `melody` model 
 6) Click the `Submit` button to get the generated audio
 #### Optional: You can enable `multiband diffusion` to improve the generated audio
+
+### Settings: 
+
+* Here you can change the application settings. For now you can only change Share mode to True or False
 
 ### Additional Information:
 
