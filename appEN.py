@@ -802,6 +802,21 @@ def generate_audio(prompt, input_audio=None, model_name=None, audiocraft_setting
         torch.cuda.empty_cache()
 
 
+def settings_interface(share_value):
+    global share_mode
+    share_mode = share_value == "True"
+    message = f"Settings updated successfully!"
+
+    stop_all_processes()
+
+    app.launch(share=share_mode, server_name="localhost")
+
+    return message
+
+
+share_mode = False
+
+
 def stop_all_processes():
     global stop_signal
     stop_signal = True
@@ -1007,11 +1022,24 @@ audiocraft_interface = gr.Interface(
     allow_flagging="never",
 )
 
+settings_interface = gr.Interface(
+    fn=settings_interface,
+    inputs=[
+        gr.Radio(choices=["False", "True"], label="Share Mode", value="False")
+    ],
+    outputs=[
+        gr.Textbox(label="Message", type="text")
+    ],
+    title="NeuroChatWebUI (ALPHA) - Settings",
+    description="This user interface allows you to change settings of application",
+    allow_flagging="never",
+)
+
 with gr.TabbedInterface(
         [chat_interface, gr.TabbedInterface([txt2img_interface, img2img_interface, inpaint_interface, extras_interface],
                                             tab_names=["txt2img", "img2img", "Inpaint", "Extras"]),
-         audiocraft_interface],
-        tab_names=["LLM", "Stable Diffusion", "AudioCraft"]
+         audiocraft_interface, settings_interface],
+        tab_names=["LLM", "Stable Diffusion", "AudioCraft", "Settings"]
 ) as app:
     chat_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     txt2img_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
@@ -1034,4 +1062,4 @@ with gr.TabbedInterface(
         '</div>'
     )
 
-    app.launch(share=False, server_name="localhost")
+    app.launch(share=share_mode, server_name="localhost")
