@@ -9,7 +9,7 @@ import whisper
 from datetime import datetime
 import warnings
 import logging
-from diffusers import StableDiffusionPipeline, StableDiffusionXLPipeline, StableDiffusionImg2ImgPipeline, AutoencoderKL, StableDiffusionLatentUpscalePipeline, StableDiffusionUpscalePipeline
+from diffusers import StableDiffusionPipeline, StableDiffusionXLPipeline, StableDiffusionImg2ImgPipeline, AutoencoderKL, StableDiffusionLatentUpscalePipeline, StableDiffusionUpscalePipeline, StableDiffusionInpaintPipeline
 from git import Repo
 from PIL import Image
 from tqdm import tqdm
@@ -212,20 +212,26 @@ def load_upscale_model(upscale_factor):
 stop_signal = False
 
 
+chat_history = []
+
+
 def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_settings_html, llm_model_type, max_tokens, max_length,
                              n_ctx, temperature, top_p, top_k, avatar_html, avatar_name, enable_tts, tts_settings_html,
                              speaker_wav, language, tts_temperature, tts_top_p, tts_top_k, tts_speed, stop_generation):
-    global chat_dir, tts_model, whisper_model, stop_signal
+    global chat_history, chat_dir, tts_model, whisper_model, stop_signal
     stop_signal = False
     if not input_text and not input_audio:
-        return "Please, enter your request!", None, None, None, None
+        chat_history.append(["Please, enter your request!", None])
+        return chat_history, None, None, None, None
     prompt = transcribe_audio(input_audio) if input_audio else input_text
     if not llm_model_name:
-        return "Please, select a LLM model!", None, None, None, None
+        chat_history.append([None, "Please, select a LLM model!"])
+        return chat_history, None, None, None, None
     tokenizer, llm_model, error_message = load_model(llm_model_name, llm_model_type,
                                                      n_ctx=n_ctx if llm_model_type == "llama" else None)
     if error_message:
-        return error_message, None, None, None, None
+        chat_history.append([None, error_message])
+        return chat_history, None, None, None, None
     tts_model = None
     whisper_model = None
     text = None
@@ -237,7 +243,8 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_settin
             if not tts_model:
                 tts_model = load_tts_model()
             if not speaker_wav or not language:
-                return "Please, select a voice and language for TTS!", None, None, None, None
+                chat_history.append([None, "Please, select a voice and language for TTS!"])
+                return chat_history, None, None, None, None
             device = "cuda" if torch.cuda.is_available() else "cpu"
             tts_model = tts_model.to(device)
         if input_audio:
@@ -273,7 +280,8 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_settin
                     progress_bar.update(progress_tokens - progress_bar.n)
 
                 if stop_signal:
-                    return "Generation stopped", None, None, None
+                    chat_history.append([prompt, "Generation stopped"])
+                    return chat_history, None, None, None
 
                 progress_bar.close()
 
@@ -301,7 +309,8 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_settin
                 progress_bar.update(progress_tokens - progress_bar.n)
 
                 if stop_signal:
-                    return "Generation stopped", None, None, None
+                    chat_history.append([prompt, "Generation stopped"])
+                    return chat_history, None, None, None
 
                 progress_bar.close()
 
@@ -321,7 +330,8 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_settin
         avatar_path = f"inputs/image/avatars/{avatar_name}" if avatar_name else None
         if enable_tts and text:
             if stop_signal:
-                return text, None, avatar_path, chat_dir, "Generation stopped"
+                chat_history.append([prompt, text])
+                return chat_history, None, avatar_path, chat_dir, "Generation stopped"
             enable_text_splitting = False
             repetition_penalty = 2.0
             length_penalty = 1.0
@@ -354,7 +364,9 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_settin
         if whisper_model is not None:
             del whisper_model
         torch.cuda.empty_cache()
-    return text, audio_path, avatar_path
+
+    chat_history.append([prompt, text])
+    return chat_history, audio_path, avatar_path, chat_dir, None
 
 
 def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name, vae_model_name, lora_model_names,
@@ -749,7 +761,7 @@ chat_interface = gr.Interface(
         gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
     outputs=[
-        gr.Textbox(label="LLM text response", type="text"),
+        gr.Chatbot(label="LLM text response", value=[]),
         gr.Audio(label="LLM audio response", type="filepath"),
         gr.Image(type="filepath", label="Avatar"),
     ],
