@@ -14,20 +14,20 @@ The goal of the project - to create the easiest possible application to use neur
 ### Stable Diffusion: 
  #### txt2img: ![2](https://github.com/Dartvauder/NeuroChatWebUI/assets/140557322/1c147103-daf4-458d-b956-1843ee6ef989)
  #### img2img: ![3](https://github.com/Dartvauder/NeuroChatWebUI/assets/140557322/03c9edf7-9742-47c4-a2cd-da097fc79abf)
- #### Extras: ![4](https://github.com/Dartvauder/NeuroChatWebUI/assets/140557322/4931f00a-b025-4d4a-8705-418fb0c5a257)
+ #### inpaint:
+ #### extras: ![4](https://github.com/Dartvauder/NeuroChatWebUI/assets/140557322/c4a25d9f-a68a-42ad-ba72-074725de34a8)
 
 ### AudioCraft: ![5](https://github.com/Dartvauder/NeuroChatWebUI/assets/140557322/33be43dd-c3e3-45e0-8769-51f5e9b9f24d)
 
 ## Features:
 
 * Easy installation via install.bat (Windows only)
-* You can use the application via your mobile device in localhost (Via IPv4)
 * Flexible and optimized interface (By Gradio)
 * Support for Transformers and llama.cpp models (LLM)
-* Support for diffusers (safetensors) models (Stable Diffusion) - txt2img, img2img and Extras tabs
+* Support for diffusers (safetensors) models (Stable Diffusion) - txt2img, img2img, inpaint and extras tabs
 * AudioCraft support (Models: musicgen, audiogen and magnet)
 * Supports TTS and Whisper models (For LLM)
-* Support for Lora, Vae and Upscale models (For Stable Diffusion)
+* Support for Lora, Vae, Inpaint and Upscale models (For Stable Diffusion)
 * Support Multiband Diffusion model (For AudioCraft)
 * Ability to select an avatar (For LLM)
 * Model settings inside the interface
@@ -86,7 +86,7 @@ To get update, run `git pull`
 #### Voice samples = *inputs/audio/voices*
 #### The voice must be pre-processed (22050 kHz, mono, WAV), the avatar should preferably be `PNG` or `JPG`
 
-### Stable Diffusion - has three sub-tabs:
+### Stable Diffusion - has four sub-tabs:
 
 #### txt2img:
 
@@ -112,7 +112,11 @@ To get update, run `git pull`
 #### Optional: You can select your `vae` model
 #### vae = *inputs/image/sd_models/vae*
 
-#### Extras:
+#### inpaint:
+
+
+
+#### extras:
 
 1) Select the options you need
 2) Upload the initial image
@@ -134,12 +138,12 @@ To get update, run `git pull`
 2) You can press the `Clear` button to reset your selection
 3) To stop the generation process, click the `Stop generation` button
 4) You can turn off the application using the `Close terminal` button
-5) You can open the *outputs* folder by clicking on the `Folder` button 
+5)
 
 ## Where can I get models, voices and avatars?
 
 * LLM models can be taken from [HuggingFace](https://huggingface.co/models)
-* Stable Diffusion, vae and lora models can be taken from [CivitAI](https://civitai.com/models)
+* Stable Diffusion, vae, inpaint and lora models can be taken from [CivitAI](https://civitai.com/models)
 * AudioCraft models are downloads automatically in *inputs* folder, when you select a model and press the submit button
 * TTS, Whisper, Upscale and Multiband diffusion models are downloads automatically in *inputs* folder when are they used 
 * You can take voices anywhere. Record yours or take a recording from the Internet. The main thing is that it is pre-processed!
