@@ -575,7 +575,7 @@ def generate_image_img2img(prompt, negative_prompt, init_image,
         torch.cuda.empty_cache()
 
 
-def generate_image_inpaint(prompt, init_image, mask_image, stable_diffusion_model_name, vae_model_name,
+def generate_image_inpaint(prompt, negative_prompt, init_image, mask_image, stable_diffusion_model_name, vae_model_name,
                            stable_diffusion_settings_html, stable_diffusion_model_type, stable_diffusion_sampler,
                            stable_diffusion_steps, stable_diffusion_cfg, stop_generation):
     global stop_signal
@@ -599,6 +599,20 @@ def generate_image_inpaint(prompt, init_image, mask_image, stable_diffusion_mode
             vae_config_file = "configs/sd/v1-inference.yaml"
             stable_diffusion_model = StableDiffusionInpaintPipeline.from_single_file(
                 stable_diffusion_model_path, use_safetensors=True, device_map="auto",
+                original_config_file=original_config_file, torch_dtype=torch.float16, variant="fp16"
+            )
+        elif stable_diffusion_model_type == "SD2":
+            original_config_file = "configs/sd/v2-inference.yaml"
+            vae_config_file = "configs/sd/v2-inference.yaml"
+            stable_diffusion_model = StableDiffusionInpaintPipeline.from_single_file(
+                stable_diffusion_model_path, use_safetensors=True, device_map="auto",
+                original_config_file=original_config_file, torch_dtype=torch.float16, variant="fp16"
+            )
+        elif stable_diffusion_model_type == "SDXL":
+            original_config_file = "configs/sd/sd_xl_base.yaml"
+            vae_config_file = "configs/sd/sd_xl_base.yaml"
+            stable_diffusion_model = StableDiffusionInpaintPipeline.from_single_file(
+                stable_diffusion_model_path, use_safetensors=True, device_map="auto", attention_slice=1,
                 original_config_file=original_config_file, torch_dtype=torch.float16, variant="fp16"
             )
         else:
@@ -652,7 +666,7 @@ def generate_image_inpaint(prompt, init_image, mask_image, stable_diffusion_mode
 
         mask_array = Image.fromarray(mask_array).resize(init_image.size, resample=Image.NEAREST)
 
-        images = stable_diffusion_model(prompt=prompt, image=init_image, mask_image=mask_array,
+        images = stable_diffusion_model(prompt=prompt, negative_prompt=negative_prompt, image=init_image, mask_image=mask_array,
                                         num_inference_steps=stable_diffusion_steps,
                                         guidance_scale=stable_diffusion_cfg, sampler=stable_diffusion_sampler)
 
@@ -961,7 +975,7 @@ inpaint_interface = gr.Interface(
         gr.Dropdown(choices=inpaint_models_list, label="Select Inpaint model", value=None),
         gr.Dropdown(choices=vae_models_list, label="Select VAE model (optional)", value=None),
         gr.HTML("<h3>Stable Diffusion Settings</h3>"),
-        gr.Radio(choices=["SD"], label="Select model type", value="SD"),
+        gr.Radio(choices=["SD", "SD2", "SDXL"], label="Select model type", value="SD"),
         gr.Dropdown(choices=["euler_ancestral", "euler", "lms", "heun", "dpm", "dpm_solver", "dpm_solver++"],
                     label="Select sampler", value="euler_ancestral"),
         gr.Slider(minimum=1, maximum=100, value=30, step=1, label="Steps"),
@@ -972,7 +986,7 @@ inpaint_interface = gr.Interface(
         gr.Image(type="filepath", label="Inpainted image"),
         gr.Textbox(label="Message", type="text"),
     ],
-    title="NeuroChatWebUI (ALPHA) - Stable Diffusion (Inpaint)",
+    title="NeuroChatWebUI (ALPHA) - Stable Diffusion (inpaint)",
     description="This user interface allows you to enter a prompt, an initial image, and a mask image to inpaint using Stable Diffusion. "
                 "You can select the Inpaint model and customize the generation settings. "
                 "Try it and see what happens!",
@@ -990,7 +1004,7 @@ extras_interface = gr.Interface(
         gr.Image(type="filepath", label="Modified Image"),
         gr.Textbox(label="Message", type="text"),
     ],
-    title="NeuroChatWebUI (ALPHA) - Stable Diffusion (Extras)",
+    title="NeuroChatWebUI (ALPHA) - Stable Diffusion (extras)",
     description="This user interface allows you to upload an image and transform it using different options",
     allow_flagging="never",
 )
@@ -1037,7 +1051,7 @@ settings_interface = gr.Interface(
 
 with gr.TabbedInterface(
         [chat_interface, gr.TabbedInterface([txt2img_interface, img2img_interface, inpaint_interface, extras_interface],
-                                            tab_names=["txt2img", "img2img", "Inpaint", "Extras"]),
+                                            tab_names=["txt2img", "img2img", "inpaint", "extras"]),
          audiocraft_interface, settings_interface],
         tab_names=["LLM", "Stable Diffusion", "AudioCraft", "Settings"]
 ) as app:
