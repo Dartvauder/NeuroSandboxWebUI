@@ -9,19 +9,22 @@ Simple and easy interface for use of different neural network models. You can ch
 
 The goal of the project - to create the easiest possible application to use neural network models
 
-### LLM: ![1](https://github.com/Dartvauder/NeuroChatWebUI/assets/140557322/165b8b01-03f6-4be1-8424-544c3a000bf3)
+### LLM: ![1](https://github.com/Dartvauder/NeuroChatWebUI/assets/140557322/3aae7818-309d-4b5a-b145-603cd30ce3c9)
 
 ### Stable Diffusion: 
  #### txt2img: ![2](https://github.com/Dartvauder/NeuroChatWebUI/assets/140557322/1c147103-daf4-458d-b956-1843ee6ef989)
  #### img2img: ![3](https://github.com/Dartvauder/NeuroChatWebUI/assets/140557322/03c9edf7-9742-47c4-a2cd-da097fc79abf)
- #### inpaint:
- #### extras: ![4](https://github.com/Dartvauder/NeuroChatWebUI/assets/140557322/c4a25d9f-a68a-42ad-ba72-074725de34a8)
+ #### inpaint: ![4](https://github.com/Dartvauder/NeuroChatWebUI/assets/140557322/d7a7515c-d94e-4e14-8d54-395d3ec1d9a3)
+ #### extras: ![5](https://github.com/Dartvauder/NeuroChatWebUI/assets/140557322/f6fae1c8-2467-4da7-94ec-4b2a8d085e4d)
 
 ### AudioCraft: ![5](https://github.com/Dartvauder/NeuroChatWebUI/assets/140557322/33be43dd-c3e3-45e0-8769-51f5e9b9f24d)
+
+### Settings: ![6](https://github.com/Dartvauder/NeuroChatWebUI/assets/140557322/97d392ce-ebd0-4486-9ab9-9f053ca18795)
 
 ## Features:
 
 * Easy installation via install.bat (Windows only)
+* You can use the application via your mobile device in localhost (Via IPv4)
 * Flexible and optimized interface (By Gradio)
 * Support for Transformers and llama.cpp models (LLM)
 * Support for diffusers (safetensors) models (Stable Diffusion) - txt2img, img2img, inpaint and extras tabs
@@ -31,6 +34,7 @@ The goal of the project - to create the easiest possible application to use neur
 * Support Multiband Diffusion model (For AudioCraft)
 * Ability to select an avatar (For LLM)
 * Model settings inside the interface
+* Application settings
 
 ## Required Dependencies:
 
@@ -71,7 +75,7 @@ To get update, run `git pull`
 
 ## How to use:
 
-#### Interface has three tabs: LLM, Stable Diffusion and AudioCraft. Select the one you need and follow the instructions below 
+#### Interface has four tabs: LLM, Stable Diffusion, AudioCraft and Settings. Select the one you need and follow the instructions below 
 
 ### LLM:
 
@@ -114,7 +118,16 @@ To get update, run `git pull`
 
 #### inpaint:
 
-
+1) First upload your models to the folder: *inputs/image/sd_models/inpaint*
+2) Select your model from the drop-down list
+3) Select model type (`SD`, `SD2` or `SDXL`)
+4) Set up the model according to the parameters you need
+5) Upload the image with which the generation will take place to `initial image` and `mask image`
+6) In `mask image`, select the brush, then the palette and change the color to `#FFFFFF`
+7) Draw a place for generation and enter your request
+8) Click the `Submit` button to get the inpainted image
+#### Optional: You can select your `vae` model
+#### vae = *inputs/image/sd_models/vae*
 
 #### extras:
 
@@ -132,13 +145,18 @@ To get update, run `git pull`
 6) Click the `Submit` button to get the generated audio
 #### Optional: You can enable `multiband diffusion` to improve the generated audio
 
+### Settings: 
+
+* Here you can change the application settings. For now you can only change `Share` mode to `True` or `False`
+
 ### Additional Information:
 
 1) Chat history, generated images and generated audio, are saved in the *outputs* folder
 2) You can press the `Clear` button to reset your selection
 3) To stop the generation process, click the `Stop generation` button
 4) You can turn off the application using the `Close terminal` button
-5)
+5) You can open the *outputs* folder by clicking on the `Folder` button
+
 
 ## Where can I get models, voices and avatars?
 

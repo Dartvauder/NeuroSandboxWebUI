@@ -9,8 +9,9 @@ import whisper
 from datetime import datetime
 import warnings
 import logging
-from diffusers import StableDiffusionPipeline, StableDiffusionXLPipeline, StableDiffusionImg2ImgPipeline, AutoencoderKL, StableDiffusionLatentUpscalePipeline, StableDiffusionUpscalePipeline
+from diffusers import StableDiffusionPipeline, StableDiffusionXLPipeline, StableDiffusionImg2ImgPipeline, AutoencoderKL, StableDiffusionLatentUpscalePipeline, StableDiffusionUpscalePipeline, StableDiffusionInpaintPipeline
 from git import Repo
+import numpy as np
 from PIL import Image
 from tqdm import tqdm
 from llama_cpp import Llama
@@ -185,6 +186,7 @@ def load_upscale_model(upscale_factor):
     if upscale_factor == 2:
         upscaler = StableDiffusionLatentUpscalePipeline.from_pretrained(
             upscale_model_path,
+            revision="fp16",
             torch_dtype=torch.float16 if device == "cuda" else torch.float32,
             device_map="auto"
         )
@@ -200,7 +202,7 @@ def load_upscale_model(upscale_factor):
     upscaler.to(device)
     upscaler.enable_attention_slicing()
     if XFORMERS_AVAILABLE:
-        upscaler.enable_xformers_memory_efficient_attention()
+        upscaler.enable_xformers_memory_efficient_attention(attention_op=None)
 
     print(f"Upscale model {upscale_model_name} downloaded")
 
@@ -211,24 +213,26 @@ def load_upscale_model(upscale_factor):
 stop_signal = False
 
 
-def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_settings_html, llm_model_type, chat_template, max_tokens, max_length,
+chat_history = []
+
+
+def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_settings_html, llm_model_type, max_tokens, max_length,
                              n_ctx, temperature, top_p, top_k, avatar_html, avatar_name, enable_tts, tts_settings_html,
                              speaker_wav, language, tts_temperature, tts_top_p, tts_top_k, tts_speed, stop_generation):
-    global chat_dir, tts_model, whisper_model, stop_signal
+    global chat_history, chat_dir, tts_model, whisper_model, stop_signal
     stop_signal = False
     if not input_text and not input_audio:
-        return "Please, enter your request!", None, None, None, None
+        chat_history.append(["Please, enter your request!", None])
+        return chat_history, None, None, None, None
     prompt = transcribe_audio(input_audio) if input_audio else input_text
     if not llm_model_name:
-        return "Please, select a LLM model!", None, None, None, None
+        chat_history.append([None, "Please, select a LLM model!"])
+        return chat_history, None, None, None, None
     tokenizer, llm_model, error_message = load_model(llm_model_name, llm_model_type,
                                                      n_ctx=n_ctx if llm_model_type == "llama" else None)
     if error_message:
-        return error_message, None, None, None, None
-    if chat_template:
-        chat_template_path = os.path.join("configs", "LLM", chat_template)
-        with open(chat_template_path, "r") as f:
-            prompt = f.read().replace("{input}", prompt)
+        chat_history.append([None, error_message])
+        return chat_history, None, None, None, None
     tts_model = None
     whisper_model = None
     text = None
@@ -240,7 +244,8 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_settin
             if not tts_model:
                 tts_model = load_tts_model()
             if not speaker_wav or not language:
-                return "Please, select a voice and language for TTS!", None, None, None, None
+                chat_history.append([None, "Please, select a voice and language for TTS!"])
+                return chat_history, None, None, None, None
             device = "cuda" if torch.cuda.is_available() else "cpu"
             tts_model = tts_model.to(device)
         if input_audio:
@@ -276,7 +281,8 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_settin
                     progress_bar.update(progress_tokens - progress_bar.n)
 
                 if stop_signal:
-                    return "Generation stopped", None, None, None
+                    chat_history.append([prompt, "Generation stopped"])
+                    return chat_history, None, None, None
 
                 progress_bar.close()
 
@@ -304,7 +310,8 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_settin
                 progress_bar.update(progress_tokens - progress_bar.n)
 
                 if stop_signal:
-                    return "Generation stopped", None, None, None
+                    chat_history.append([prompt, "Generation stopped"])
+                    return chat_history, None, None, None
 
                 progress_bar.close()
 
@@ -324,7 +331,8 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_settin
         avatar_path = f"inputs/image/avatars/{avatar_name}" if avatar_name else None
         if enable_tts and text:
             if stop_signal:
-                return text, None, avatar_path, chat_dir, "Generation stopped"
+                chat_history.append([prompt, text])
+                return chat_history, None, avatar_path, chat_dir, "Generation stopped"
             enable_text_splitting = False
             repetition_penalty = 2.0
             length_penalty = 1.0
@@ -357,7 +365,9 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_settin
         if whisper_model is not None:
             del whisper_model
         torch.cuda.empty_cache()
-    return text, audio_path, avatar_path
+
+    chat_history.append([prompt, text])
+    return chat_history, audio_path, avatar_path, chat_dir, None
 
 
 def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name, vae_model_name, lora_model_names,
@@ -383,21 +393,21 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
             vae_config_file = "configs/sd/v1-inference.yaml"
             stable_diffusion_model = StableDiffusionPipeline.from_single_file(
                 stable_diffusion_model_path, use_safetensors=True, device_map="auto",
-                original_config_file=original_config_file, torch_dtype=torch.float16
+                original_config_file=original_config_file, torch_dtype=torch.float16, variant="fp16"
             )
         elif stable_diffusion_model_type == "SD2":
             original_config_file = "configs/sd/v2-inference.yaml"
             vae_config_file = "configs/sd/v2-inference.yaml"
             stable_diffusion_model = StableDiffusionPipeline.from_single_file(
                 stable_diffusion_model_path, use_safetensors=True, device_map="auto",
-                original_config_file=original_config_file, torch_dtype=torch.float16
+                original_config_file=original_config_file, torch_dtype=torch.float16, variant="fp16"
             )
         elif stable_diffusion_model_type == "SDXL":
             original_config_file = "configs/sd/sd_xl_base.yaml"
             vae_config_file = "configs/sd/sd_xl_base.yaml"
             stable_diffusion_model = StableDiffusionXLPipeline.from_single_file(
                 stable_diffusion_model_path, use_safetensors=True, device_map="auto", attention_slice=1,
-                original_config_file=original_config_file, torch_dtype=torch.float16
+                original_config_file=original_config_file, torch_dtype=torch.float16, variant="fp16"
             )
         else:
             return None, "Invalid Stable Diffusion model type!"
@@ -407,9 +417,9 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
     if XFORMERS_AVAILABLE:
-        stable_diffusion_model.enable_xformers_memory_efficient_attention()
-        stable_diffusion_model.vae.enable_xformers_memory_efficient_attention()
-        stable_diffusion_model.unet.enable_xformers_memory_efficient_attention()
+        stable_diffusion_model.enable_xformers_memory_efficient_attention(attention_op=None)
+        stable_diffusion_model.vae.enable_xformers_memory_efficient_attention(attention_op=None)
+        stable_diffusion_model.unet.enable_xformers_memory_efficient_attention(attention_op=None)
 
     stable_diffusion_model.to(device)
     stable_diffusion_model.text_encoder.to(device)
@@ -422,7 +432,7 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
         vae_model_path = os.path.join("inputs", "image", "sd_models", "vae", f"{vae_model_name}.safetensors")
         if os.path.exists(vae_model_path):
             vae = AutoencoderKL.from_single_file(vae_model_path, device_map="auto",
-                                                 original_config_file=vae_config_file)
+                                                 original_config_file=vae_config_file, torch_dtype=torch.float16, variant="fp16")
             stable_diffusion_model.vae = vae.to(device)
         else:
             print(f"VAE model not found: {vae_model_path}")
@@ -492,21 +502,21 @@ def generate_image_img2img(prompt, negative_prompt, init_image,
             vae_config_file = "configs/sd/v1-inference.yaml"
             stable_diffusion_model = StableDiffusionImg2ImgPipeline.from_single_file(
                 stable_diffusion_model_path, use_safetensors=True, device_map="auto",
-                original_config_file=original_config_file, torch_dtype=torch.float16
+                original_config_file=original_config_file, torch_dtype=torch.float16, variant="fp16"
             )
         elif stable_diffusion_model_type == "SD2":
             original_config_file = "configs/sd/v2-inference.yaml"
             vae_config_file = "configs/sd/v2-inference.yaml"
             stable_diffusion_model = StableDiffusionPipeline.from_single_file(
                 stable_diffusion_model_path, use_safetensors=True, device_map="auto",
-                original_config_file=original_config_file, torch_dtype=torch.float16
+                original_config_file=original_config_file, torch_dtype=torch.float16, variant="fp16"
             )
         elif stable_diffusion_model_type == "SDXL":
             original_config_file = "configs/sd/sd_xl_base.yaml"
             vae_config_file = "configs/sd/sd_xl_base.yaml"
             stable_diffusion_model = StableDiffusionImg2ImgPipeline.from_single_file(
                 stable_diffusion_model_path, use_safetensors=True, device_map="auto", attention_slice=1,
-                original_config_file=original_config_file, torch_dtype=torch.float16
+                original_config_file=original_config_file, torch_dtype=torch.float16, variant="fp16"
             )
         else:
             return None, "Invalid Stable Diffusion model type!"
@@ -516,9 +526,9 @@ def generate_image_img2img(prompt, negative_prompt, init_image,
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
     if XFORMERS_AVAILABLE:
-        stable_diffusion_model.enable_xformers_memory_efficient_attention()
-        stable_diffusion_model.vae.enable_xformers_memory_efficient_attention()
-        stable_diffusion_model.unet.enable_xformers_memory_efficient_attention()
+        stable_diffusion_model.enable_xformers_memory_efficient_attention(attention_op=None)
+        stable_diffusion_model.vae.enable_xformers_memory_efficient_attention(attention_op=None)
+        stable_diffusion_model.unet.enable_xformers_memory_efficient_attention(attention_op=None)
 
     stable_diffusion_model.to(device)
     stable_diffusion_model.text_encoder.to(device)
@@ -531,7 +541,7 @@ def generate_image_img2img(prompt, negative_prompt, init_image,
         vae_model_path = os.path.join("inputs", "image", "sd_models", "vae", f"{vae_model_name}.safetensors")
         if os.path.exists(vae_model_path):
             vae = AutoencoderKL.from_single_file(vae_model_path, device_map=device,
-                                                 original_config_file=vae_config_file)
+                                                 original_config_file=vae_config_file, torch_dtype=torch.float16, variant="fp16")
             stable_diffusion_model.vae = vae.to(device)
         else:
             print(f"VAE model not found: {vae_model_path}")
@@ -565,7 +575,120 @@ def generate_image_img2img(prompt, negative_prompt, init_image,
         torch.cuda.empty_cache()
 
 
-def upscale_image(image_path, enable_upscale, stop_generation):
+def generate_image_inpaint(prompt, negative_prompt, init_image, mask_image, stable_diffusion_model_name, vae_model_name,
+                           stable_diffusion_settings_html, stable_diffusion_model_type, stable_diffusion_sampler,
+                           stable_diffusion_steps, stable_diffusion_cfg, stop_generation):
+    global stop_signal
+    stop_signal = False
+
+    if not stable_diffusion_model_name:
+        return None, "Please, select a Stable Diffusion model!"
+
+    if not init_image or not mask_image:
+        return None, "Please, upload an initial image and a mask image!"
+
+    stable_diffusion_model_path = os.path.join("inputs", "image", "sd_models", "inpaint",
+                                               f"{stable_diffusion_model_name}.safetensors")
+
+    if not os.path.exists(stable_diffusion_model_path):
+        return None, f"Stable Diffusion model not found: {stable_diffusion_model_path}"
+
+    try:
+        if stable_diffusion_model_type == "SD":
+            original_config_file = "configs/sd/v1-inference.yaml"
+            vae_config_file = "configs/sd/v1-inference.yaml"
+            stable_diffusion_model = StableDiffusionInpaintPipeline.from_single_file(
+                stable_diffusion_model_path, use_safetensors=True, device_map="auto",
+                original_config_file=original_config_file, torch_dtype=torch.float16, variant="fp16"
+            )
+        elif stable_diffusion_model_type == "SD2":
+            original_config_file = "configs/sd/v2-inference.yaml"
+            vae_config_file = "configs/sd/v2-inference.yaml"
+            stable_diffusion_model = StableDiffusionInpaintPipeline.from_single_file(
+                stable_diffusion_model_path, use_safetensors=True, device_map="auto",
+                original_config_file=original_config_file, torch_dtype=torch.float16, variant="fp16"
+            )
+        elif stable_diffusion_model_type == "SDXL":
+            original_config_file = "configs/sd/sd_xl_base.yaml"
+            vae_config_file = "configs/sd/sd_xl_base.yaml"
+            stable_diffusion_model = StableDiffusionInpaintPipeline.from_single_file(
+                stable_diffusion_model_path, use_safetensors=True, device_map="auto", attention_slice=1,
+                original_config_file=original_config_file, torch_dtype=torch.float16, variant="fp16"
+            )
+        else:
+            return None, "Invalid Stable Diffusion model type!"
+    except (ValueError, KeyError):
+        return None, "The selected model is not compatible with the chosen model type"
+
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+
+    if XFORMERS_AVAILABLE:
+        stable_diffusion_model.enable_xformers_memory_efficient_attention(attention_op=None)
+        stable_diffusion_model.vae.enable_xformers_memory_efficient_attention(attention_op=None)
+        stable_diffusion_model.unet.enable_xformers_memory_efficient_attention(attention_op=None)
+
+    stable_diffusion_model.to(device)
+    stable_diffusion_model.text_encoder.to(device)
+    stable_diffusion_model.vae.to(device)
+    stable_diffusion_model.unet.to(device)
+
+    stable_diffusion_model.safety_checker = None
+
+    if vae_model_name is not None:
+        vae_model_path = os.path.join("inputs", "image", "sd_models", "vae", f"{vae_model_name}.safetensors")
+        if os.path.exists(vae_model_path):
+            vae = AutoencoderKL.from_single_file(vae_model_path, device_map="auto",
+                                                 original_config_file=vae_config_file, torch_dtype=torch.float16,
+                                                 variant="fp16")
+            stable_diffusion_model.vae = vae.to(device)
+        else:
+            print(f"VAE model not found: {vae_model_path}")
+
+    try:
+        print("mask_image type:", type(mask_image))
+        print("mask_image content:", mask_image)
+
+        if isinstance(mask_image, dict):
+            composite_path = mask_image.get('composite', None)
+            if composite_path is None:
+                raise ValueError("Invalid mask image data: missing 'composite' key")
+
+            mask_image = Image.open(composite_path).convert("L")
+        elif isinstance(mask_image, str):
+            mask_image = Image.open(mask_image).convert("L")
+        else:
+            raise ValueError("Invalid mask image format")
+
+        init_image = Image.open(init_image).convert("RGB")
+
+        mask_array = np.array(mask_image)
+        mask_array = np.where(mask_array > 127, 255, 0).astype(np.uint8)
+
+        mask_array = Image.fromarray(mask_array).resize(init_image.size, resample=Image.NEAREST)
+
+        images = stable_diffusion_model(prompt=prompt, negative_prompt=negative_prompt, image=init_image, mask_image=mask_array,
+                                        num_inference_steps=stable_diffusion_steps,
+                                        guidance_scale=stable_diffusion_cfg, sampler=stable_diffusion_sampler)
+
+        if stop_signal:
+            return None, "Generation stopped"
+        image = images["images"][0]
+
+        today = datetime.now().date()
+        image_dir = os.path.join('outputs', f"images_{today.strftime('%Y%m%d')}")
+        os.makedirs(image_dir, exist_ok=True)
+        image_filename = f"output_{datetime.now().strftime('%Y%m%d_%H%M%S')}.png"
+        image_path = os.path.join(image_dir, image_filename)
+        image.save(image_path, format="PNG")
+
+        return image_path, None
+
+    finally:
+        del stable_diffusion_model
+        torch.cuda.empty_cache()
+
+
+def generate_image_extras(image_path, enable_upscale, stop_generation):
     global stop_signal
     if stop_signal:
         return None, "Generation stopped"
@@ -693,6 +816,21 @@ def generate_audio(prompt, input_audio=None, model_name=None, audiocraft_setting
         torch.cuda.empty_cache()
 
 
+def settings_interface(share_value):
+    global share_mode
+    share_mode = share_value == "True"
+    message = f"Settings updated successfully!"
+
+    stop_all_processes()
+
+    app.launch(share=share_mode, server_name="localhost")
+
+    return message
+
+
+share_mode = False
+
+
 def stop_all_processes():
     global stop_signal
     stop_signal = True
@@ -702,9 +840,13 @@ def close_terminal():
     os._exit(1)
 
 
-def get_chat_templates():
-    chat_templates_dir = "configs/llm"
-    return [None] + [template for template in os.listdir(chat_templates_dir) if template.endswith(".yaml")]
+def open_outputs_folder():
+    outputs_folder = "outputs"
+    if os.path.exists(outputs_folder):
+        if os.name == "nt":
+            os.startfile(outputs_folder)
+        else:
+            os.system(f'open "{outputs_folder}"' if os.name == "darwin" else f'xdg-open "{outputs_folder}"')
 
 
 llm_models_list = [None] + [model for model in os.listdir("inputs/text/llm_models") if not model.endswith(".txt")]
@@ -719,6 +861,9 @@ vae_models_list = [None] + [model.replace(".safetensors", "") for model in os.li
                             model.endswith(".safetensors") or not model.endswith(".txt")]
 lora_models_list = [None] + [model for model in os.listdir("inputs/image/sd_models/lora") if
                              model.endswith(".safetensors")]
+inpaint_models_list = [None] + [model.replace(".safetensors", "") for model in
+                                os.listdir("inputs/image/sd_models/inpaint")
+                                if model.endswith(".safetensors") or not model.endswith(".txt")]
 
 
 chat_interface = gr.Interface(
@@ -729,7 +874,6 @@ chat_interface = gr.Interface(
         gr.Dropdown(choices=llm_models_list, label="Select LLM model", value=None),
         gr.HTML("<h3>LLM Settings</h3>"),
         gr.Radio(choices=["transformers", "llama"], label="Select model type", value="transformers"),
-        gr.Dropdown(choices=get_chat_templates(), label="Select chat template", value=None),
         gr.Slider(minimum=1, maximum=2048, value=512, step=1, label="Max tokens"),
         gr.Slider(minimum=1, maximum=2048, value=1024, step=1, label="Max length"),
         gr.Slider(minimum=0, maximum=4096, value=2048, step=1, label="n_ctx (for llama models only)", interactive=True),
@@ -749,7 +893,7 @@ chat_interface = gr.Interface(
         gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
     outputs=[
-        gr.Textbox(label="LLM text response", type="text"),
+        gr.Chatbot(label="LLM text response", value=[]),
         gr.Audio(label="LLM audio response", type="filepath"),
         gr.Image(type="filepath", label="Avatar"),
     ],
@@ -768,7 +912,7 @@ txt2img_interface = gr.Interface(
         gr.Textbox(label="Enter your negative prompt", value=""),
         gr.Dropdown(choices=stable_diffusion_models_list, label="Select Stable Diffusion model", value=None),
         gr.Dropdown(choices=vae_models_list, label="Select VAE model (optional)", value=None),
-        gr.Dropdown(choices=lora_models_list, label="Select LORA models", value=None, multiselect=True),
+        gr.Dropdown(choices=lora_models_list, label="Select LORA models (optional)", value=None, multiselect=True),
         gr.HTML("<h3>Stable Diffusion Settings</h3>"),
         gr.Radio(choices=["SD", "SD2", "SDXL"], label="Select model type", value="SD"),
         gr.Dropdown(choices=["euler_ancestral", "euler", "lms", "heun", "dpm", "dpm_solver", "dpm_solver++"],
@@ -822,8 +966,36 @@ img2img_interface = gr.Interface(
     allow_flagging="never",
 )
 
+inpaint_interface = gr.Interface(
+    fn=generate_image_inpaint,
+    inputs=[
+        gr.Textbox(label="Enter your prompt"),
+        gr.Textbox(label="Enter your negative prompt", value=""),
+        gr.Image(label="Initial image", type="filepath"),
+        gr.ImageEditor(label="Mask image", type="filepath"),
+        gr.Dropdown(choices=inpaint_models_list, label="Select Inpaint model", value=None),
+        gr.Dropdown(choices=vae_models_list, label="Select VAE model (optional)", value=None),
+        gr.HTML("<h3>Stable Diffusion Settings</h3>"),
+        gr.Radio(choices=["SD", "SD2", "SDXL"], label="Select model type", value="SD"),
+        gr.Dropdown(choices=["euler_ancestral", "euler", "lms", "heun", "dpm", "dpm_solver", "dpm_solver++"],
+                    label="Select sampler", value="euler_ancestral"),
+        gr.Slider(minimum=1, maximum=100, value=30, step=1, label="Steps"),
+        gr.Slider(minimum=1.0, maximum=30.0, value=8, step=0.1, label="CFG"),
+        gr.Button(value="Stop generation", interactive=True, variant="stop"),
+    ],
+    outputs=[
+        gr.Image(type="filepath", label="Inpainted image"),
+        gr.Textbox(label="Message", type="text"),
+    ],
+    title="NeuroChatWebUI (ALPHA) - Stable Diffusion (inpaint)",
+    description="This user interface allows you to enter a prompt, an initial image, and a mask image to inpaint using Stable Diffusion. "
+                "You can select the Inpaint model and customize the generation settings. "
+                "Try it and see what happens!",
+    allow_flagging="never",
+)
+
 extras_interface = gr.Interface(
-    fn=upscale_image,
+    fn=generate_image_extras,
     inputs=[
         gr.Image(label="Image to modify", type="filepath"),
         gr.Checkbox(label="Enable upscale", value=False),
@@ -833,7 +1005,7 @@ extras_interface = gr.Interface(
         gr.Image(type="filepath", label="Modified Image"),
         gr.Textbox(label="Message", type="text"),
     ],
-    title="NeuroChatWebUI (ALPHA) - Stable Diffusion (Extras)",
+    title="NeuroChatWebUI (ALPHA) - Stable Diffusion (extras)",
     description="This user interface allows you to upload an image and transform it using different options",
     allow_flagging="never",
 )
@@ -865,20 +1037,37 @@ audiocraft_interface = gr.Interface(
     allow_flagging="never",
 )
 
+settings_interface = gr.Interface(
+    fn=settings_interface,
+    inputs=[
+        gr.Radio(choices=["False", "True"], label="Share Mode", value="False")
+    ],
+    outputs=[
+        gr.Textbox(label="Message", type="text")
+    ],
+    title="NeuroChatWebUI (ALPHA) - Settings",
+    description="This user interface allows you to change settings of application",
+    allow_flagging="never",
+)
+
 with gr.TabbedInterface(
-        [chat_interface, gr.TabbedInterface([txt2img_interface, img2img_interface, extras_interface],
-                                            tab_names=["txt2img", "img2img", "Extras"]),
-         audiocraft_interface],
-        tab_names=["LLM", "Stable Diffusion", "AudioCraft"]
+        [chat_interface, gr.TabbedInterface([txt2img_interface, img2img_interface, inpaint_interface, extras_interface],
+                                            tab_names=["txt2img", "img2img", "inpaint", "extras"]),
+         audiocraft_interface, settings_interface],
+        tab_names=["LLM", "Stable Diffusion", "AudioCraft", "Settings"]
 ) as app:
     chat_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     txt2img_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     img2img_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
+    inpaint_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     extras_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     audiocraft_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
 
     close_button = gr.Button("Close terminal")
     close_button.click(close_terminal, [], [], queue=False)
+
+    folder_button = gr.Button("Folder")
+    folder_button.click(open_outputs_folder, [], [], queue=False)
 
     github_link = gr.HTML(
         '<div style="text-align: center; margin-top: 20px;">'
@@ -888,5 +1077,4 @@ with gr.TabbedInterface(
         '</div>'
     )
 
-    app.launch()
-    
+    app.launch(share=share_mode, server_name="localhost")

@@ -10,27 +10,32 @@
 
 Цель проекта — создать максимально простое приложение для использования нейросетевых моделей
 
-### LLM: ![1](https://github.com/Dartvauder/NeuroChatWebUI/assets/140557322/165b8b01-03f6-4be1-8424-544c3a000bf3)
+### LLM: ![1](https://github.com/Dartvauder/NeuroChatWebUI/assets/140557322/3aae7818-309d-4b5a-b145-603cd30ce3c9)
 
 ### Stable Diffusion: 
  #### txt2img: ![2](https://github.com/Dartvauder/NeuroChatWebUI/assets/140557322/1c147103-daf4-458d-b956-1843ee6ef989)
  #### img2img: ![3](https://github.com/Dartvauder/NeuroChatWebUI/assets/140557322/03c9edf7-9742-47c4-a2cd-da097fc79abf)
- #### Extras: ![4](https://github.com/Dartvauder/NeuroChatWebUI/assets/140557322/c4a25d9f-a68a-42ad-ba72-074725de34a8)
+ #### inpaint: ![4](https://github.com/Dartvauder/NeuroChatWebUI/assets/140557322/d7a7515c-d94e-4e14-8d54-395d3ec1d9a3)
+ #### extras: ![5](https://github.com/Dartvauder/NeuroChatWebUI/assets/140557322/f6fae1c8-2467-4da7-94ec-4b2a8d085e4d)
 
 ### AudioCraft: ![5](https://github.com/Dartvauder/NeuroChatWebUI/assets/140557322/33be43dd-c3e3-45e0-8769-51f5e9b9f24d)
+
+### Settings: ![6](https://github.com/Dartvauder/NeuroChatWebUI/assets/140557322/97d392ce-ebd0-4486-9ab9-9f053ca18795)
 
 ## Функции:
 
 * Простая установка через install.bat (Только для Windows)
+* Вы можете использовать приложение через мобильное устройство в localhost (Через IPv4)
 * Гибкий и оптимизированный интерфейс (От Gradio)
 * Поддержка Transformers и llama.cpp моделей (LLM)
-* Поддержка diffusers (safetensors) моделей (Stable Diffusion) - Вкладки txt2img, img2img и Extras
+* Поддержка diffusers (safetensors) моделей (Stable Diffusion) - Вкладки txt2img, img2img, inpaint и extras
 * Поддержка AudioCraft (Модели: musicgen, audiogen и magnet)
 * Поддержка TTS и Whisper моделей (Для LLM)
-* Поддержка Lora, Vae и Upscale моделей (Для Stable Diffusion)
+* Поддержка Lora, Vae, Inpaint и Upscale моделей (Для Stable Diffusion)
 * Поддержка Multiband Diffusion модели (Для AudioCraft)
 * Возможность выбора аватара (Для LLM)
 * Настройки моделей внутри интерфейса
+* Настройки приложения
 
 ## Необходимые зависимости:
 
@@ -71,7 +76,7 @@
 
 ## Как использовать:
 
-#### Интерфейс имеет три вкладки: LLM, Stable Diffusion и AudioCraft. Выберите ту, которая вам нужна и следуйте инструкциям ниже
+#### Интерфейс имеет четыре вкладки: LLM, Stable Diffusion, AudioCraft и Settings. Выберите ту которая вам нужна и следуйте инструкциям ниже
 
 ### LLM:
 
@@ -86,7 +91,7 @@
 #### Образцы голоса = *inputs/audio/voices*
 #### Голос должен быть предварительно обработан (22050 кГц, монозвук, WAV), аватар предпочтительно должен быть `PNG` или `JPG`
 
-### Stable Diffusion - имеет три под-вкладки:
+### Stable Diffusion - имеет четыре под-вкладки:
 
 #### txt2img:
 
@@ -112,6 +117,17 @@
 #### Необязательно: вы можете выбрать свою модель `vae`
 #### vae = *inputs/image/sd_models/vae*
 
+#### inpaint:
+
+1) Сначала загрузите ваши модели в папку: *inputs/image/sd_models/inpaint*
+2) Выберите вашу модель из выпадающего списка
+3) Выберите тип модели (`SD`, `SD2` или `SDXL`)
+4) Настройте модель по нужным вам параметрам
+5) Загрузите изображение, с которым будет происходить генерация, в `initial image` и `mask image`
+6) В `mask image` выберите кисть, затем палитру и измените цвет на `#FFFFFF`
+7) Нарисуйте место для генерации и введите ваш запрос
+8) Нажмите кнопку `Submit`, чтобы получить измененное изображение
+
 #### Extras:
 
 1) Выберите нужные вам опции
@@ -128,17 +144,22 @@
 6) Нажмите кнопку `Submit`, чтобы получить сгенерированный звук
 #### Необязательно: вы можете включить `multiband diffusion`, чтобы улучшить генерируемый звук
 
+### Settings:
+
+* Здесь вы можете изменить настройки приложения. На данный момент вы можете изменить только режим `Share` на `True` или `False`
+
 ### Общее:
 
 1) История чата, сгенерированные изображения и сгенерированные аудио сохраняются в папке *outputs*
 2) Вы также можете нажать кнопку `Clear`, чтобы сбросить ваш выбор
 3) Чтобы остановить процесс генерации, нажмите кнопку `Stop generation`
 4) Вы также можете выключить приложение с помощью кнопки `Close terminal`
+5) Вы можете открыть папку *outputs* нажав на кнопку `Folder`
 
 ## Где я могу взять модели, голоса и аватары?
 
 * LLM модели можно взять с сайта [HuggingFace](https://huggingface.co/models)
-* Модели Stable Diffusion, vae и lora можно взять с сайта [CivitAI](https://civitai.com/models)
+* Модели Stable Diffusion, vae, inpaint и lora можно взять с сайта [CivitAI](https://civitai.com/models)
 * Модели AudioCraft загружаются автоматически в папку *inputs*, когда вы выбираете модель и нажимаете кнопку `submit`
 * TTS, Whisper, Upscale и Multiband diffusion модели скачиваються автоматически в папку *inputs* при их использовании
 * Вы можете использовать голоса откуда угодно. Запишите свой или возьмите запись из интернета. Главное, чтобы оно было предварительно обработано!
