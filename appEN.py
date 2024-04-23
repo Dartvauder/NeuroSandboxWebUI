@@ -269,6 +269,8 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_settin
                     top_p=top_p,
                     top_k=top_k,
                     temperature=temperature,
+                    repetition_penalty=1.1,
+                    early_stopping=True,
                     pad_token_id=tokenizer.eos_token_id,
                     output_scores=True,
                     return_dict_in_generate=True,
@@ -303,7 +305,8 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_settin
                     temperature=temperature,
                     top_p=top_p,
                     top_k=top_k,
-                    repeat_penalty=1.1
+                    repeat_penalty=1.1,
+                    early_stopping=True
                 )
 
                 progress_tokens = max_tokens
