@@ -897,7 +897,7 @@ chat_interface = gr.Interface(
         gr.Audio(label="LLM audio response", type="filepath"),
         gr.Image(type="filepath", label="Avatar"),
     ],
-    title="NeuroChatWebUI (ALPHA) - LLM",
+    title="NeuroSandboxWebUI (ALPHA) - LLM",
     description="This user interface allows you to enter any text or audio and receive "
                 "generated response. You can select the LLM model, "
                 "avatar, voice and language from the drop-down lists. You can also customize the model settings from "
@@ -930,7 +930,7 @@ txt2img_interface = gr.Interface(
         gr.Image(type="filepath", label="Generated image"),
         gr.Textbox(label="Message", type="text"),
     ],
-    title="NeuroChatWebUI (ALPHA) - Stable Diffusion (txt2img)",
+    title="NeuroSandboxWebUI (ALPHA) - Stable Diffusion (txt2img)",
     description="This user interface allows you to enter any text and generate images using Stable Diffusion. "
                 "You can select the Stable Diffusion model and customize the generation settings from the sliders. "
                 "Try it and see what happens!",
@@ -959,7 +959,7 @@ img2img_interface = gr.Interface(
         gr.Image(type="filepath", label="Generated image"),
         gr.Textbox(label="Message", type="text"),
     ],
-    title="NeuroChatWebUI (ALPHA) - Stable Diffusion (img2img)",
+    title="NeuroSandboxWebUI (ALPHA) - Stable Diffusion (img2img)",
     description="This user interface allows you to enter any text and image to generate new images using Stable Diffusion. "
                 "You can select the Stable Diffusion model and customize the generation settings from the sliders. "
                 "Try it and see what happens!",
@@ -987,7 +987,7 @@ inpaint_interface = gr.Interface(
         gr.Image(type="filepath", label="Inpainted image"),
         gr.Textbox(label="Message", type="text"),
     ],
-    title="NeuroChatWebUI (ALPHA) - Stable Diffusion (inpaint)",
+    title="NeuroSandboxWebUI (ALPHA) - Stable Diffusion (inpaint)",
     description="This user interface allows you to enter a prompt, an initial image, and a mask image to inpaint using Stable Diffusion. "
                 "You can select the Inpaint model and customize the generation settings. "
                 "Try it and see what happens!",
@@ -1005,7 +1005,7 @@ extras_interface = gr.Interface(
         gr.Image(type="filepath", label="Modified Image"),
         gr.Textbox(label="Message", type="text"),
     ],
-    title="NeuroChatWebUI (ALPHA) - Stable Diffusion (extras)",
+    title="NeuroSandboxWebUI (ALPHA) - Stable Diffusion (extras)",
     description="This user interface allows you to upload an image and transform it using different options",
     allow_flagging="never",
 )
@@ -1030,7 +1030,7 @@ audiocraft_interface = gr.Interface(
         gr.Audio(label="Generated audio", type="filepath"),
         gr.Textbox(label="Message", type="text"),
     ],
-    title="NeuroChatWebUI (ALPHA) - AudioCraft",
+    title="NeuroSandboxWebUI (ALPHA) - AudioCraft",
     description="This user interface allows you to enter any text and generate audio using AudioCraft. "
                 "You can select the AudioCraft model and customize the generation settings from the sliders. "
                 "Try it and see what happens!",
@@ -1045,7 +1045,7 @@ settings_interface = gr.Interface(
     outputs=[
         gr.Textbox(label="Message", type="text")
     ],
-    title="NeuroChatWebUI (ALPHA) - Settings",
+    title="NeuroSandboxWebUI (ALPHA) - Settings",
     description="This user interface allows you to change settings of application",
     allow_flagging="never",
 )
@@ -1071,7 +1071,7 @@ with gr.TabbedInterface(
 
     github_link = gr.HTML(
         '<div style="text-align: center; margin-top: 20px;">'
-        '<a href="https://github.com/Dartvauder/NeuroChatWebUI" target="_blank" style="color: blue; text-decoration: none; font-size: 16px;">'
+        '<a href="https://github.com/Dartvauder/NeuroSandboxWebUI" target="_blank" style="color: blue; text-decoration: none; font-size: 16px;">'
         'GitHub'
         '</a>'
         '</div>'
