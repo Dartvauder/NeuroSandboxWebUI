@@ -56,7 +56,7 @@
 
 ### Windows
 
-1) `Git clone https://github.com/Dartvauder/NeuroChatWebUI.git` в любое место (Без кириллицы)
+1) `Git clone https://github.com/Dartvauder/NeuroSandboxWebUI.git` в любое место (Без кириллицы)
 2) Запускаем `install.bat` и ждем когда все установиться
 3) После установки запустите `start.bat`
 4) Выберите версию файла и дождитесь запуска приложения
@@ -66,7 +66,7 @@
 
 ### Linux
 
-1) `Git clone https://github.com/Dartvauder/NeuroChatWebUI.git` в любое место (Без кириллицы)
+1) `Git clone https://github.com/Dartvauder/NeuroSandboxWebUI.git` в любое место (Без кириллицы)
 2) В терминале запустите `pip install --no-deps -r requirements.txt` и дождитесь установки всех зависимостей
 3) После установки, в терминале запустите `py appEN.py` или `py appRU.py`
 4) Дождитесь запуска приложения
@@ -167,7 +167,7 @@
 
 ## Дорожная карта
 
-* https://github.com/Dartvauder/NeuroChatWebUI/wiki/RoadmapRU
+* https://github.com/Dartvauder/NeuroSandboxWebUI/wiki/RoadmapRU
 
 ## Благодарность разработчикам
 
