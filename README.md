@@ -56,7 +56,7 @@ The goal of the project - to create the easiest possible application to use neur
 
 ### Windows
 
-1) `Git clone https://github.com/Dartvauder/NeuroChatWebUI.git` to any location
+1) `Git clone https://github.com/Dartvauder/NeuroSandboxWebUI.git` to any location
 2) Run the `install.bat` and wait for installation
 3) After installation, run `start.bat`
 4) Select the file version and wait for the application to launch
@@ -66,7 +66,7 @@ To get update, run `update.bat`
 
 ### Linux
 
-1) `Git clone https://github.com/Dartvauder/NeuroChatWebUI.git` to any location
+1) `Git clone https://github.com/Dartvauder/NeuroSandboxWebUI.git` to any location
 2) In the terminal, run the `pip install --no-deps -r requirements.txt`and wait for installation of all dependencies
 3) After installation, run `py appEN.py` or `py appRU.py`
 4) Wait for the application to launch
@@ -170,7 +170,7 @@ To get update, run `git pull`
 
 ## Roadmap
 
-* https://github.com/Dartvauder/NeuroChatWebUI/wiki/RoadmapEN
+* https://github.com/Dartvauder/NeuroSandboxWebUI/wiki/RoadmapEN
 
 ## Acknowledgment to developers
 
