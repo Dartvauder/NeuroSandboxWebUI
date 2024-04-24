@@ -302,15 +302,17 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_settin
             elif llm_model_type == "llama":
                 detect_lang = langdetect.detect(prompt)
                 if detect_lang == "en":
-                    prompt = "I am a chatbot created to help with any questions. I use my knowledge and abilities to provide useful and meaningful answers in any language\n\nHuman: " + prompt + "\nAssistant: "
+                    instruction = "I am a chatbot created to help with any questions. I use my knowledge and abilities to provide useful and meaningful answers in any language\n\nHuman: "
                 else:
-                    prompt = "Я чат-бот, созданный для помощи по любым вопросам. Я использую свои знания и способности, чтобы давать полезные и содержательные ответы на любом языке\n\nЧеловек: " + prompt + "\nАссистент: "
+                    instruction = "Я чат-бот, созданный для помощи по любым вопросам. Я использую свои знания и способности, чтобы давать полезные и содержательные ответы на любом языке\n\nЧеловек: "
+
+                prompt_with_instruction = instruction + prompt + "\nAssistant: "
 
                 progress_bar = tqdm(total=max_tokens, desc="Generating text")
                 progress_tokens = 0
 
                 output = llm_model(
-                    prompt,
+                    prompt_with_instruction,
                     max_tokens=max_tokens,
                     stop=["Q:", "\n"],
                     echo=False,
