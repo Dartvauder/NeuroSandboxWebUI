@@ -62,7 +62,7 @@ def load_model(model_name, model_type, n_ctx=None):
                     torch_dtype=torch.float16,
                 )
                 return tokenizer, model, None
-            except (ValueError, RuntimeError):
+            except (OSError, RuntimeError):
                 return None, None, "The selected model is not compatible with the 'transformers' model type"
         elif model_type == "llama":
             try:
