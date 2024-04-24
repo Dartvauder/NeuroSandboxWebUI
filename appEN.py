@@ -1,4 +1,5 @@
 import gradio as gr
+import langdetect
 from transformers import AutoModelForCausalLM, AutoTokenizer
 import soundfile as sf
 import os
@@ -255,7 +256,11 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_settin
             whisper_model = whisper_model.to(device)
         if llm_model:
             if llm_model_type == "transformers":
-                bot_instruction = "I am a chatbot created to help with any questions. I use my knowledge and abilities to provide useful and meaningful answers in any language"
+                detect_lang = langdetect.detect(prompt)
+                if detect_lang == "en":
+                    bot_instruction = "I am a chatbot created to help with any questions. I use my knowledge and abilities to provide useful and meaningful answers in any language"
+                else:
+                    bot_instruction = "Я чат-бот, созданный для помощи по любым вопросам. Я использую свои знания и способности, чтобы давать полезные и содержательные ответы на любом языке"
                 inputs = tokenizer.encode(bot_instruction + prompt, return_tensors="pt", truncation=True)
                 device = llm_model.device
                 inputs = inputs.to(device)
