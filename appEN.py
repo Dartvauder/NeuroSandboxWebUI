@@ -265,7 +265,7 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_settin
                 device = llm_model.device
                 inputs = inputs.to(device)
 
-                progress_bar = tqdm(total=max_tokens, desc="Generating text")
+                progress_bar = tqdm(total=max_length, desc="Generating text")
                 progress_tokens = 0
 
                 outputs = llm_model.generate(
