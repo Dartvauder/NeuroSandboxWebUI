@@ -217,8 +217,8 @@ stop_signal = False
 chat_history = []
 
 
-def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_settings_html, llm_model_type, max_tokens, max_length,
-                             n_ctx, temperature, top_p, top_k, avatar_html, avatar_name, enable_tts, tts_settings_html,
+def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_settings_html, llm_model_type, max_length, max_tokens,
+                            temperature, top_p, top_k, avatar_html, avatar_name, enable_tts, tts_settings_html,
                              speaker_wav, language, tts_temperature, tts_top_p, tts_top_k, tts_speed, stop_generation):
     global chat_history, chat_dir, tts_model, whisper_model, stop_signal
     stop_signal = False
@@ -302,6 +302,11 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_settin
 
             elif llm_model_type == "llama":
                 llm_model.n_ctx = n_ctx
+                detect_lang = langdetect.detect(prompt)
+                if detect_lang == "en":
+                    prompt = "I am a chatbot created to help with any questions. I use my knowledge and abilities to provide useful and meaningful answers in any language\n\nHuman: " + prompt + "\nAssistant: "
+                else:
+                    prompt = "Я чат-бот, созданный для помощи по любым вопросам. Я использую свои знания и способности, чтобы давать полезные и содержательные ответы на любом языке\n\nЧеловек: " + prompt + "\nАссистент: "
 
                 progress_bar = tqdm(total=max_tokens, desc="Generating text")
                 progress_tokens = 0
@@ -885,9 +890,8 @@ chat_interface = gr.Interface(
         gr.Dropdown(choices=llm_models_list, label="Select LLM model", value=None),
         gr.HTML("<h3>LLM Settings</h3>"),
         gr.Radio(choices=["transformers", "llama"], label="Select model type", value="transformers"),
-        gr.Slider(minimum=1, maximum=2048, value=512, step=1, label="Max tokens"),
-        gr.Slider(minimum=1, maximum=2048, value=1024, step=1, label="Max length"),
-        gr.Slider(minimum=0, maximum=4096, value=2048, step=1, label="n_ctx (for llama models only)", interactive=True),
+        gr.Slider(minimum=1, maximum=2048, value=512, step=1, label="Max length (for transformers type models)"),
+        gr.Slider(minimum=1, maximum=4096, value=512, step=1, label="Max tokens (for llama type models)"),
         gr.Slider(minimum=0.0, maximum=1.0, value=0.7, step=0.1, label="Temperature"),
         gr.Slider(minimum=0.0, maximum=1.0, value=0.9, step=0.1, label="Top P"),
         gr.Slider(minimum=0, maximum=100, value=30, step=1, label="Top K"),
