@@ -1,4 +1,5 @@
 import gradio as gr
+import langdetect
 from transformers import AutoModelForCausalLM, AutoTokenizer
 import soundfile as sf
 import os
@@ -61,7 +62,7 @@ def load_model(model_name, model_type, n_ctx=None):
                     torch_dtype=torch.float16,
                 )
                 return tokenizer, model, None
-            except (ValueError, RuntimeError):
+            except (OSError, RuntimeError):
                 return None, None, "The selected model is not compatible with the 'transformers' model type"
         elif model_type == "llama":
             try:
@@ -216,8 +217,8 @@ stop_signal = False
 chat_history = []
 
 
-def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_settings_html, llm_model_type, max_tokens, max_length,
-                             n_ctx, temperature, top_p, top_k, avatar_html, avatar_name, enable_tts, tts_settings_html,
+def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_settings_html, llm_model_type, max_length, max_tokens,
+                             temperature, top_p, top_k, avatar_html, avatar_name, enable_tts, tts_settings_html,
                              speaker_wav, language, tts_temperature, tts_top_p, tts_top_k, tts_speed, stop_generation):
     global chat_history, chat_dir, tts_model, whisper_model, stop_signal
     stop_signal = False
@@ -228,8 +229,7 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_settin
     if not llm_model_name:
         chat_history.append([None, "Please, select a LLM model!"])
         return chat_history, None, None, None, None
-    tokenizer, llm_model, error_message = load_model(llm_model_name, llm_model_type,
-                                                     n_ctx=n_ctx if llm_model_type == "llama" else None)
+    tokenizer, llm_model, error_message = load_model(llm_model_name, llm_model_type)
     if error_message:
         chat_history.append([None, error_message])
         return chat_history, None, None, None, None
@@ -255,22 +255,32 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_settin
             whisper_model = whisper_model.to(device)
         if llm_model:
             if llm_model_type == "transformers":
-                inputs = tokenizer.encode(prompt, return_tensors="pt")
+                detect_lang = langdetect.detect(prompt)
+                if detect_lang == "en":
+                    bot_instruction = "I am a chatbot created to help with any questions. I use my knowledge and abilities to provide useful and meaningful answers in any language"
+                else:
+                    bot_instruction = "Я чат-бот, созданный для помощи по любым вопросам. Я использую свои знания и способности, чтобы давать полезные и содержательные ответы на любом языке"
+                inputs = tokenizer.encode(bot_instruction + prompt, return_tensors="pt", truncation=True)
                 device = llm_model.device
                 inputs = inputs.to(device)
 
-                progress_bar = tqdm(total=max_tokens, desc="Generating text")
+                progress_bar = tqdm(total=max_length, desc="Generating text")
                 progress_tokens = 0
 
                 outputs = llm_model.generate(
                     inputs,
-                    max_new_tokens=max_tokens,
+                    max_new_tokens=None,
                     max_length=max_length,
                     top_p=top_p,
                     top_k=top_k,
                     temperature=temperature,
+                    repetition_penalty=1.15,
+                    early_stopping=True,
+                    num_beams=5,
+                    no_repeat_ngram_size=2,
+                    do_sample=True,
+                    use_cache=True,
                     pad_token_id=tokenizer.eos_token_id,
-                    output_scores=True,
                     return_dict_in_generate=True,
                     num_return_sequences=1,
                 )
@@ -290,20 +300,26 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_settin
                 text = tokenizer.decode(generated_sequence, skip_special_tokens=True)
 
             elif llm_model_type == "llama":
-                llm_model.n_ctx = n_ctx
+                detect_lang = langdetect.detect(prompt)
+                if detect_lang == "en":
+                    instruction = "I am a chatbot created to help with any questions. I use my knowledge and abilities to provide useful and meaningful answers in any language\n\nHuman: "
+                else:
+                    instruction = "Я чат-бот, созданный для помощи по любым вопросам. Я использую свои знания и способности, чтобы давать полезные и содержательные ответы на любом языке\n\nЧеловек: "
+
+                prompt_with_instruction = instruction + prompt + "\nAssistant: "
 
                 progress_bar = tqdm(total=max_tokens, desc="Generating text")
                 progress_tokens = 0
 
                 output = llm_model(
-                    prompt,
+                    prompt_with_instruction,
                     max_tokens=max_tokens,
-                    stop=None,
+                    stop=["Q:", "\n"],
                     echo=False,
                     temperature=temperature,
                     top_p=top_p,
                     top_k=top_k,
-                    repeat_penalty=1.1
+                    repeat_penalty=1.15,
                 )
 
                 progress_tokens = max_tokens
@@ -874,12 +890,11 @@ chat_interface = gr.Interface(
         gr.Dropdown(choices=llm_models_list, label="Select LLM model", value=None),
         gr.HTML("<h3>LLM Settings</h3>"),
         gr.Radio(choices=["transformers", "llama"], label="Select model type", value="transformers"),
-        gr.Slider(minimum=1, maximum=2048, value=512, step=1, label="Max tokens"),
-        gr.Slider(minimum=1, maximum=2048, value=1024, step=1, label="Max length"),
-        gr.Slider(minimum=0, maximum=4096, value=2048, step=1, label="n_ctx (for llama models only)", interactive=True),
+        gr.Slider(minimum=1, maximum=2048, value=512, step=1, label="Max length (for transformers type models)"),
+        gr.Slider(minimum=1, maximum=4096, value=512, step=1, label="Max tokens (for llama type models)"),
         gr.Slider(minimum=0.0, maximum=1.0, value=0.7, step=0.1, label="Temperature"),
         gr.Slider(minimum=0.0, maximum=1.0, value=0.9, step=0.1, label="Top P"),
-        gr.Slider(minimum=0, maximum=100, value=30, step=1, label="Top K"),
+        gr.Slider(minimum=0, maximum=100, value=20, step=1, label="Top K"),
         gr.HTML("<br>"),
         gr.Dropdown(choices=avatars_list, label="Select avatar", value=None),
         gr.Checkbox(label="Enable TTS", value=False),
@@ -888,7 +903,7 @@ chat_interface = gr.Interface(
         gr.Dropdown(choices=["en", "ru"], label="Select language", interactive=True),
         gr.Slider(minimum=0.0, maximum=1.0, value=1.0, step=0.1, label="TTS Temperature", interactive=True),
         gr.Slider(minimum=0.0, maximum=1.0, value=0.9, step=0.1, label="TTS Top P", interactive=True),
-        gr.Slider(minimum=0, maximum=100, value=30, step=1, label="TTS Top K", interactive=True),
+        gr.Slider(minimum=0, maximum=100, value=20, step=1, label="TTS Top K", interactive=True),
         gr.Slider(minimum=0.5, maximum=2.0, value=1.0, step=0.1, label="TTS Speed", interactive=True),
         gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
@@ -919,8 +934,8 @@ txt2img_interface = gr.Interface(
                     label="Select sampler", value="euler_ancestral"),
         gr.Slider(minimum=1, maximum=100, value=30, step=1, label="Steps"),
         gr.Slider(minimum=1.0, maximum=30.0, value=8, step=0.1, label="CFG"),
-        gr.Slider(minimum=256, maximum=1024, value=512, step=64, label="Width"),
-        gr.Slider(minimum=256, maximum=1024, value=512, step=64, label="Height"),
+        gr.Slider(minimum=256, maximum=2048, value=512, step=64, label="Width"),
+        gr.Slider(minimum=256, maximum=2048, value=512, step=64, label="Height"),
         gr.Slider(minimum=1, maximum=4, value=1, step=1, label="Clip skip"),
         gr.Checkbox(label="Enable upscale", value=False),
         gr.Radio(choices=["x2", "x4"], label="Upscale size", value="x2"),
@@ -1021,8 +1036,8 @@ audiocraft_interface = gr.Interface(
         gr.Slider(minimum=1, maximum=120, value=10, step=1, label="Duration (seconds)"),
         gr.Slider(minimum=1, maximum=1000, value=250, step=1, label="Top K"),
         gr.Slider(minimum=0.0, maximum=1.0, value=0.0, step=0.1, label="Top P"),
-        gr.Slider(minimum=0.1, maximum=2.0, value=1.0, step=0.1, label="Temperature"),
-        gr.Slider(minimum=1.0, maximum=10.0, value=4.0, step=0.1, label="CFG"),
+        gr.Slider(minimum=0.0, maximum=2.0, value=1.0, step=0.1, label="Temperature"),
+        gr.Slider(minimum=1.0, maximum=10.0, value=3.0, step=0.1, label="CFG"),
         gr.Checkbox(label="Enable Multiband Diffusion", value=False),
         gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
@@ -1078,3 +1093,4 @@ with gr.TabbedInterface(
     )
 
     app.launch(share=share_mode, server_name="localhost")
+    
