@@ -255,7 +255,8 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_settin
             whisper_model = whisper_model.to(device)
         if llm_model:
             if llm_model_type == "transformers":
-                inputs = tokenizer.encode(prompt, return_tensors="pt")
+                bot_instruction = "I am a chatbot created to help with any questions. I use my knowledge and abilities to provide useful and meaningful answers in any language"
+                inputs = tokenizer.encode(bot_instruction + prompt, return_tensors="pt", truncation=True)
                 device = llm_model.device
                 inputs = inputs.to(device)
 
