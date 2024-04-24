@@ -218,7 +218,7 @@ chat_history = []
 
 
 def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_settings_html, llm_model_type, max_length, max_tokens,
-                            temperature, top_p, top_k, avatar_html, avatar_name, enable_tts, tts_settings_html,
+                             temperature, top_p, top_k, avatar_html, avatar_name, enable_tts, tts_settings_html,
                              speaker_wav, language, tts_temperature, tts_top_p, tts_top_k, tts_speed, stop_generation):
     global chat_history, chat_dir, tts_model, whisper_model, stop_signal
     stop_signal = False
@@ -229,8 +229,7 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_settin
     if not llm_model_name:
         chat_history.append([None, "Please, select a LLM model!"])
         return chat_history, None, None, None, None
-    tokenizer, llm_model, error_message = load_model(llm_model_name, llm_model_type,
-                                                     n_ctx=n_ctx if llm_model_type == "llama" else None)
+    tokenizer, llm_model, error_message = load_model(llm_model_name, llm_model_type)
     if error_message:
         chat_history.append([None, error_message])
         return chat_history, None, None, None, None
@@ -301,7 +300,6 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_settin
                 text = tokenizer.decode(generated_sequence, skip_special_tokens=True)
 
             elif llm_model_type == "llama":
-                llm_model.n_ctx = n_ctx
                 detect_lang = langdetect.detect(prompt)
                 if detect_lang == "en":
                     prompt = "I am a chatbot created to help with any questions. I use my knowledge and abilities to provide useful and meaningful answers in any language\n\nHuman: " + prompt + "\nAssistant: "
@@ -894,7 +892,7 @@ chat_interface = gr.Interface(
         gr.Slider(minimum=1, maximum=4096, value=512, step=1, label="Max tokens (for llama type models)"),
         gr.Slider(minimum=0.0, maximum=1.0, value=0.7, step=0.1, label="Temperature"),
         gr.Slider(minimum=0.0, maximum=1.0, value=0.9, step=0.1, label="Top P"),
-        gr.Slider(minimum=0, maximum=100, value=30, step=1, label="Top K"),
+        gr.Slider(minimum=0, maximum=100, value=20, step=1, label="Top K"),
         gr.HTML("<br>"),
         gr.Dropdown(choices=avatars_list, label="Select avatar", value=None),
         gr.Checkbox(label="Enable TTS", value=False),
@@ -903,7 +901,7 @@ chat_interface = gr.Interface(
         gr.Dropdown(choices=["en", "ru"], label="Select language", interactive=True),
         gr.Slider(minimum=0.0, maximum=1.0, value=1.0, step=0.1, label="TTS Temperature", interactive=True),
         gr.Slider(minimum=0.0, maximum=1.0, value=0.9, step=0.1, label="TTS Top P", interactive=True),
-        gr.Slider(minimum=0, maximum=100, value=30, step=1, label="TTS Top K", interactive=True),
+        gr.Slider(minimum=0, maximum=100, value=20, step=1, label="TTS Top K", interactive=True),
         gr.Slider(minimum=0.5, maximum=2.0, value=1.0, step=0.1, label="TTS Speed", interactive=True),
         gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
@@ -934,8 +932,8 @@ txt2img_interface = gr.Interface(
                     label="Select sampler", value="euler_ancestral"),
         gr.Slider(minimum=1, maximum=100, value=30, step=1, label="Steps"),
         gr.Slider(minimum=1.0, maximum=30.0, value=8, step=0.1, label="CFG"),
-        gr.Slider(minimum=256, maximum=1024, value=512, step=64, label="Width"),
-        gr.Slider(minimum=256, maximum=1024, value=512, step=64, label="Height"),
+        gr.Slider(minimum=256, maximum=2048, value=512, step=64, label="Width"),
+        gr.Slider(minimum=256, maximum=2048, value=512, step=64, label="Height"),
         gr.Slider(minimum=1, maximum=4, value=1, step=1, label="Clip skip"),
         gr.Checkbox(label="Enable upscale", value=False),
         gr.Radio(choices=["x2", "x4"], label="Upscale size", value="x2"),
@@ -1036,8 +1034,8 @@ audiocraft_interface = gr.Interface(
         gr.Slider(minimum=1, maximum=120, value=10, step=1, label="Duration (seconds)"),
         gr.Slider(minimum=1, maximum=1000, value=250, step=1, label="Top K"),
         gr.Slider(minimum=0.0, maximum=1.0, value=0.0, step=0.1, label="Top P"),
-        gr.Slider(minimum=0.1, maximum=2.0, value=1.0, step=0.1, label="Temperature"),
-        gr.Slider(minimum=1.0, maximum=10.0, value=4.0, step=0.1, label="CFG"),
+        gr.Slider(minimum=0.0, maximum=2.0, value=1.0, step=0.1, label="Temperature"),
+        gr.Slider(minimum=1.0, maximum=10.0, value=3.0, step=0.1, label="CFG"),
         gr.Checkbox(label="Enable Multiband Diffusion", value=False),
         gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
@@ -1093,3 +1091,4 @@ with gr.TabbedInterface(
     )
 
     app.launch(share=share_mode, server_name="localhost")
+    
