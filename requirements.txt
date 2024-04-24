@@ -199,6 +199,7 @@ websockets==11.0.3
 Werkzeug==3.0.1
 yarl==1.9.4
 zipp==3.18.1
+langdetect==1.0.9
 --extra-index-url https://download.pytorch.org/whl/cu121
 torch==2.2.2+cu121
 torchaudio==2.2.2+cu121
