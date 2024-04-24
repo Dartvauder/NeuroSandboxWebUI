@@ -264,19 +264,18 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_settin
 
                 outputs = llm_model.generate(
                     inputs,
-                    max_new_tokens=max_tokens,
+                    max_new_tokens=None,
                     max_length=max_length,
                     top_p=top_p,
                     top_k=top_k,
                     temperature=temperature,
-                    repetition_penalty=1.1,
+                    repetition_penalty=1.15,
                     early_stopping=True,
                     num_beams=5,
                     no_repeat_ngram_size=2,
                     do_sample=True,
                     use_cache=True,
                     pad_token_id=tokenizer.eos_token_id,
-                    output_scores=True,
                     return_dict_in_generate=True,
                     num_return_sequences=1,
                 )
@@ -304,13 +303,12 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_settin
                 output = llm_model(
                     prompt,
                     max_tokens=max_tokens,
-                    stop=None,
+                    stop=["Q:", "\n"],
                     echo=False,
                     temperature=temperature,
                     top_p=top_p,
                     top_k=top_k,
-                    repeat_penalty=1.1,
-                    early_stopping=True
+                    repeat_penalty=1.15,
                 )
 
                 progress_tokens = max_tokens
