@@ -595,7 +595,7 @@ def generate_image_img2img(prompt, negative_prompt, init_image,
 
 def generate_image_inpaint(prompt, negative_prompt, init_image, mask_image, stable_diffusion_model_name, vae_model_name,
                            stable_diffusion_settings_html, stable_diffusion_model_type, stable_diffusion_sampler,
-                           stable_diffusion_steps, stable_diffusion_cfg, stop_generation):
+                           stable_diffusion_steps, stable_diffusion_cfg, width, height, stop_generation):
     global stop_signal
     stop_signal = False
 
@@ -682,7 +682,7 @@ def generate_image_inpaint(prompt, negative_prompt, init_image, mask_image, stab
         mask_array = Image.fromarray(mask_array).resize(init_image.size, resample=Image.NEAREST)
 
         images = stable_diffusion_model(prompt=prompt, negative_prompt=negative_prompt, image=init_image,
-                                        mask_image=mask_array,
+                                        mask_image=mask_array, width=width, height=height,
                                         num_inference_steps=stable_diffusion_steps,
                                         guidance_scale=stable_diffusion_cfg, sampler=stable_diffusion_sampler)
 
@@ -995,6 +995,8 @@ inpaint_interface = gr.Interface(
                     label="Select sampler", value="euler_ancestral"),
         gr.Slider(minimum=1, maximum=100, value=30, step=1, label="Steps"),
         gr.Slider(minimum=1.0, maximum=30.0, value=8, step=0.1, label="CFG"),
+        gr.Slider(minimum=256, maximum=2048, value=512, step=64, label="Width"),
+        gr.Slider(minimum=256, maximum=2048, value=512, step=64, label="Height"),
         gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
     outputs=[
