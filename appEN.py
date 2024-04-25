@@ -188,7 +188,7 @@ def load_upscale_model(upscale_factor):
         upscaler = StableDiffusionLatentUpscalePipeline.from_pretrained(
             upscale_model_path,
             revision="fp16",
-            torch_dtype=torch.float16 if device == "cuda" else torch.float32,
+            torch_dtype=torch.float16,
             device_map="auto"
         )
     else:
@@ -196,7 +196,7 @@ def load_upscale_model(upscale_factor):
             upscale_model_path,
             original_config_file=original_config_file,
             revision="fp16",
-            torch_dtype=torch.float16 if device == "cuda" else torch.float32,
+            torch_dtype=torch.float16,
             device_map="auto"
         )
 
@@ -216,8 +216,7 @@ stop_signal = False
 chat_history = []
 
 
-def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_settings_html, llm_model_type, max_length,
-                             max_tokens,
+def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_settings_html, llm_model_type, max_length, max_tokens,
                              temperature, top_p, top_k, avatar_html, avatar_name, enable_tts, tts_settings_html,
                              speaker_wav, language, tts_temperature, tts_top_p, tts_top_k, tts_speed, stop_generation):
     global chat_history, chat_dir, tts_model, whisper_model, stop_signal
@@ -386,8 +385,7 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_settin
     return chat_history, audio_path, avatar_path, chat_dir, None
 
 
-def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name, vae_model_name, lora_model_names,
-                           stable_diffusion_settings_html,
+def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name, vae_model_name, lora_model_names, stable_diffusion_settings_html,
                            stable_diffusion_model_type, stable_diffusion_sampler, stable_diffusion_steps,
                            stable_diffusion_cfg, stable_diffusion_width, stable_diffusion_height,
                            stable_diffusion_clip_skip, enable_upscale=False, upscale_factor="x2", stop_generation=None):
@@ -451,8 +449,6 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
                                                  original_config_file=vae_config_file, torch_dtype=torch.float16,
                                                  variant="fp16")
             stable_diffusion_model.vae = vae.to(device)
-        else:
-            print(f"VAE model not found: {vae_model_path}")
 
     if lora_model_names is not None:
         for lora_model_name in lora_model_names:
@@ -561,8 +557,6 @@ def generate_image_img2img(prompt, negative_prompt, init_image,
                                                  original_config_file=vae_config_file, torch_dtype=torch.float16,
                                                  variant="fp16")
             stable_diffusion_model.vae = vae.to(device)
-        else:
-            print(f"VAE model not found: {vae_model_path}")
 
     try:
         init_image = Image.open(init_image).convert("RGB")
@@ -659,8 +653,6 @@ def generate_image_inpaint(prompt, negative_prompt, init_image, mask_image, stab
                                                  original_config_file=vae_config_file, torch_dtype=torch.float16,
                                                  variant="fp16")
             stable_diffusion_model.vae = vae.to(device)
-        else:
-            print(f"VAE model not found: {vae_model_path}")
 
     try:
         if isinstance(mask_image, dict):
@@ -805,7 +797,6 @@ def generate_audio(prompt, input_audio=None, model_name=None, audiocraft_setting
         if mbd:
             if stop_signal:
                 return None, "Generation stopped"
-            print(f"Tokens shape: {tokens.shape}")
             tokens = rearrange(tokens, "b n d -> n b d")  # Изменение формы тензора
             wav_diffusion = mbd.tokens_to_wav(tokens)
             wav_diffusion = wav_diffusion.squeeze()
