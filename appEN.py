@@ -10,7 +10,8 @@ import whisper
 from datetime import datetime
 import warnings
 import logging
-from diffusers import StableDiffusionPipeline, StableDiffusionXLPipeline, StableDiffusionImg2ImgPipeline, AutoencoderKL, StableDiffusionLatentUpscalePipeline, StableDiffusionUpscalePipeline, StableDiffusionInpaintPipeline
+from diffusers import StableDiffusionPipeline, StableDiffusionXLPipeline, StableDiffusionImg2ImgPipeline, AutoencoderKL, \
+    StableDiffusionLatentUpscalePipeline, StableDiffusionUpscalePipeline, StableDiffusionInpaintPipeline
 from git import Repo
 import numpy as np
 from PIL import Image
@@ -213,11 +214,11 @@ def load_upscale_model(upscale_factor):
 
 stop_signal = False
 
-
 chat_history = []
 
 
-def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_settings_html, llm_model_type, max_length, max_tokens,
+def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_settings_html, llm_model_type, max_length,
+                             max_tokens,
                              temperature, top_p, top_k, avatar_html, avatar_name, enable_tts, tts_settings_html,
                              speaker_wav, language, tts_temperature, tts_top_p, tts_top_k, tts_speed, stop_generation):
     global chat_history, chat_dir, tts_model, whisper_model, stop_signal
@@ -335,7 +336,7 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_settin
 
         if not chat_dir:
             now = datetime.now()
-            chat_dir = os.path.join('outputs', f"chat_{now.strftime('%Y%m%d_%H%M%S')}")
+            chat_dir = os.path.join('outputs', f"LLM_{now.strftime('%Y%m%d_%H%M%S')}")
             os.makedirs(chat_dir)
             os.makedirs(os.path.join(chat_dir, 'text'))
             os.makedirs(os.path.join(chat_dir, 'audio'))
@@ -360,7 +361,7 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_settin
                                         temperature=tts_temperature, top_p=tts_top_p, top_k=tts_top_k, speed=tts_speed,
                                         repetition_penalty=repetition_penalty, length_penalty=length_penalty)
                     now = datetime.now()
-                    audio_filename = f"output_{now.strftime('%Y%m%d_%H%M%S')}.wav"
+                    audio_filename = f"TTS_{now.strftime('%Y%m%d_%H%M%S')}.wav"
                     audio_path = os.path.join(chat_dir, 'audio', audio_filename)
                     sf.write(audio_path, wav, 22050)
             else:
@@ -368,7 +369,7 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_settin
                                     temperature=tts_temperature, top_p=tts_top_p, top_k=tts_top_k, speed=tts_speed,
                                     repetition_penalty=repetition_penalty, length_penalty=length_penalty)
                 now = datetime.now()
-                audio_filename = f"output_{now.strftime('%Y%m%d_%H%M%S')}.wav"
+                audio_filename = f"TTS_{now.strftime('%Y%m%d_%H%M%S')}.wav"
                 audio_path = os.path.join(chat_dir, 'audio', audio_filename)
                 sf.write(audio_path, wav, 22050)
     finally:
@@ -448,7 +449,8 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
         vae_model_path = os.path.join("inputs", "image", "sd_models", "vae", f"{vae_model_name}.safetensors")
         if os.path.exists(vae_model_path):
             vae = AutoencoderKL.from_single_file(vae_model_path, device_map="auto",
-                                                 original_config_file=vae_config_file, torch_dtype=torch.float16, variant="fp16")
+                                                 original_config_file=vae_config_file, torch_dtype=torch.float16,
+                                                 variant="fp16")
             stable_diffusion_model.vae = vae.to(device)
         else:
             print(f"VAE model not found: {vae_model_path}")
@@ -473,15 +475,16 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
             upscaler = load_upscale_model(upscale_factor_value)
             if upscaler:
                 if upscale_factor == "x2":
-                    upscaled_image = upscaler(prompt=prompt, image=image, num_inference_steps=30, guidance_scale=0).images[0]
+                    upscaled_image = \
+                    upscaler(prompt=prompt, image=image, num_inference_steps=50, guidance_scale=8).images[0]
                 else:
-                    upscaled_image = upscaler(prompt=prompt, image=image)["images"][0]
+                    upscaled_image = upscaler(prompt=prompt, image=image, num_inference_steps=50, guidance_scale=8)["images"][0]
                 image = upscaled_image
 
         today = datetime.now().date()
-        image_dir = os.path.join('outputs', f"images_{today.strftime('%Y%m%d')}")
+        image_dir = os.path.join('outputs', f"StableDiffusion_{today.strftime('%Y%m%d')}")
         os.makedirs(image_dir, exist_ok=True)
-        image_filename = f"output_{datetime.now().strftime('%Y%m%d_%H%M%S')}.png"
+        image_filename = f"txt2img_{datetime.now().strftime('%Y%m%d_%H%M%S')}.png"
         image_path = os.path.join(image_dir, image_filename)
         image.save(image_path, format="PNG")
 
@@ -557,7 +560,8 @@ def generate_image_img2img(prompt, negative_prompt, init_image,
         vae_model_path = os.path.join("inputs", "image", "sd_models", "vae", f"{vae_model_name}.safetensors")
         if os.path.exists(vae_model_path):
             vae = AutoencoderKL.from_single_file(vae_model_path, device_map=device,
-                                                 original_config_file=vae_config_file, torch_dtype=torch.float16, variant="fp16")
+                                                 original_config_file=vae_config_file, torch_dtype=torch.float16,
+                                                 variant="fp16")
             stable_diffusion_model.vae = vae.to(device)
         else:
             print(f"VAE model not found: {vae_model_path}")
@@ -575,9 +579,9 @@ def generate_image_img2img(prompt, negative_prompt, init_image,
         image = images["images"][0]
 
         today = datetime.now().date()
-        image_dir = os.path.join('outputs', f"images_{today.strftime('%Y%m%d')}")
+        image_dir = os.path.join('outputs', f"StableDiffusion_{today.strftime('%Y%m%d')}")
         os.makedirs(image_dir, exist_ok=True)
-        image_filename = f"output_{datetime.now().strftime('%Y%m%d_%H%M%S')}.png"
+        image_filename = f"img2img_{datetime.now().strftime('%Y%m%d_%H%M%S')}.png"
         image_path = os.path.join(image_dir, image_filename)
         image.save(image_path, format="PNG")
 
@@ -682,7 +686,8 @@ def generate_image_inpaint(prompt, negative_prompt, init_image, mask_image, stab
 
         mask_array = Image.fromarray(mask_array).resize(init_image.size, resample=Image.NEAREST)
 
-        images = stable_diffusion_model(prompt=prompt, negative_prompt=negative_prompt, image=init_image, mask_image=mask_array,
+        images = stable_diffusion_model(prompt=prompt, negative_prompt=negative_prompt, image=init_image,
+                                        mask_image=mask_array,
                                         num_inference_steps=stable_diffusion_steps,
                                         guidance_scale=stable_diffusion_cfg, sampler=stable_diffusion_sampler)
 
@@ -691,9 +696,9 @@ def generate_image_inpaint(prompt, negative_prompt, init_image, mask_image, stab
         image = images["images"][0]
 
         today = datetime.now().date()
-        image_dir = os.path.join('outputs', f"images_{today.strftime('%Y%m%d')}")
+        image_dir = os.path.join('outputs', f"StableDiffusion_{today.strftime('%Y%m%d')}")
         os.makedirs(image_dir, exist_ok=True)
-        image_filename = f"output_{datetime.now().strftime('%Y%m%d_%H%M%S')}.png"
+        image_filename = f"inpaint_{datetime.now().strftime('%Y%m%d_%H%M%S')}.png"
         image_path = os.path.join(image_dir, image_filename)
         image.save(image_path, format="PNG")
 
@@ -719,12 +724,12 @@ def generate_image_extras(image_path, enable_upscale, stop_generation):
     upscaler = load_upscale_model(upscale_factor)
     if upscaler:
         image = Image.open(image_path).convert("RGB")
-        upscaled_image = upscaler(prompt="", image=image, num_inference_steps=30, guidance_scale=0).images[0]
+        upscaled_image = upscaler(prompt="", image=image, num_inference_steps=50, guidance_scale=8).images[0]
 
         today = datetime.now().date()
-        image_dir = os.path.join('outputs', f"images_{today.strftime('%Y%m%d')}")
+        image_dir = os.path.join('outputs', f"StableDiffusion_{today.strftime('%Y%m%d')}")
         os.makedirs(image_dir, exist_ok=True)
-        image_filename = f"upscaled_{datetime.now().strftime('%Y%m%d_%H%M%S')}.png"
+        image_filename = f"extras_{datetime.now().strftime('%Y%m%d_%H%M%S')}.png"
         image_path = os.path.join(image_dir, image_filename)
         upscaled_image.save(image_path, format="PNG")
 
@@ -735,7 +740,7 @@ def generate_image_extras(image_path, enable_upscale, stop_generation):
 
 def generate_audio(prompt, input_audio=None, model_name=None, audiocraft_settings_html=None, model_type="musicgen",
                    duration=10, top_k=250, top_p=0.0,
-                   temperature=1.0, cfg_coef=4.0, enable_multiband=False, stop_generation=None):
+                   temperature=1.0, cfg_coef=3.0, enable_multiband=False, stop_generation=None):
     global audiocraft_model_path, stop_signal
     stop_signal = False
 
@@ -754,7 +759,7 @@ def generate_audio(prompt, input_audio=None, model_name=None, audiocraft_setting
         audiocraft_model_path = load_audiocraft_model(model_name)
 
     today = datetime.now().date()
-    audio_dir = os.path.join('outputs', f"audio_{today.strftime('%Y%m%d')}")
+    audio_dir = os.path.join('outputs', f"AudioCraft_{today.strftime('%Y%m%d')}")
     os.makedirs(audio_dir, exist_ok=True)
 
     try:
@@ -819,7 +824,7 @@ def generate_audio(prompt, input_audio=None, model_name=None, audiocraft_setting
             audio_path_diffusion = os.path.join(audio_dir, audio_filename_diffusion)
             torchaudio.save(audio_path_diffusion, wav_diffusion.cpu().detach(), model.sample_rate)
 
-        audio_filename = f"output_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+        audio_filename = f"audio_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
         audio_path = os.path.join(audio_dir, audio_filename)
         audio_write(audio_path, wav.cpu(), model.sample_rate, strategy="loudness", loudness_compressor=True)
 
@@ -870,7 +875,8 @@ avatars_list = [None] + [avatar for avatar in os.listdir("inputs/image/avatars")
 speaker_wavs_list = [None] + [wav for wav in os.listdir("inputs/audio/voices") if not wav.endswith(".txt")]
 stable_diffusion_models_list = [None] + [model.replace(".safetensors", "") for model in
                                          os.listdir("inputs/image/sd_models")
-                                         if (model.endswith(".safetensors") or not model.endswith(".txt") and not os.path.isdir(os.path.join("inputs/image/sd_models")))]
+                                         if (model.endswith(".safetensors") or not model.endswith(
+        ".txt") and not os.path.isdir(os.path.join("inputs/image/sd_models")))]
 audiocraft_models_list = [None] + ["musicgen-stereo-medium", "audiogen-medium", "musicgen-stereo-melody",
                                    "magnet-medium-30sec", "magnet-medium-10sec", "audio-magnet-medium"]
 vae_models_list = [None] + [model.replace(".safetensors", "") for model in os.listdir("inputs/image/sd_models/vae") if
@@ -880,7 +886,6 @@ lora_models_list = [None] + [model for model in os.listdir("inputs/image/sd_mode
 inpaint_models_list = [None] + [model.replace(".safetensors", "") for model in
                                 os.listdir("inputs/image/sd_models/inpaint")
                                 if model.endswith(".safetensors") or not model.endswith(".txt")]
-
 
 chat_interface = gr.Interface(
     fn=generate_text_and_speech,
@@ -1093,4 +1098,3 @@ with gr.TabbedInterface(
     )
 
     app.launch(share=share_mode, server_name="localhost")
-    
