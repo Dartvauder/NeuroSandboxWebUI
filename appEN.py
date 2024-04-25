@@ -682,7 +682,7 @@ def generate_image_inpaint(prompt, negative_prompt, init_image, mask_image, stab
         init_image = Image.open(init_image).convert("RGB")
 
         mask_array = np.array(mask_image)
-        mask_array = np.where(mask_array > 127, 255, 0).astype(np.uint8)
+        mask_array = np.where(mask_array < 255, 0, 255).astype(np.uint8)
 
         mask_array = Image.fromarray(mask_array).resize(init_image.size, resample=Image.NEAREST)
 
