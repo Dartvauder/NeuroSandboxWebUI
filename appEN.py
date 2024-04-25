@@ -474,8 +474,7 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
             upscaler = load_upscale_model(upscale_factor_value)
             if upscaler:
                 if upscale_factor == "x2":
-                    upscaled_image = \
-                    upscaler(prompt=prompt, image=image, num_inference_steps=50, guidance_scale=8).images[0]
+                    upscaled_image = upscaler(prompt=prompt, image=image, num_inference_steps=50, guidance_scale=8).images[0]
                 else:
                     upscaled_image = upscaler(prompt=prompt, image=image, num_inference_steps=50, guidance_scale=8)["images"][0]
                 image = upscaled_image
