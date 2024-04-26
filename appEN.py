@@ -1058,7 +1058,7 @@ video_interface = gr.Interface(
         gr.HTML("<h3>Video Settings</h3>"),
         gr.Slider(minimum=0, maximum=720, value=180, step=1, label="Motion Bucket ID"),
         gr.Slider(minimum=0.0, maximum=1.0, value=0.1, step=0.01, label="Noise Augmentation Strength"),
-        gr.Slider(minimum=1, maximum=60, value=7, step=1, label="FPS"),
+        gr.Slider(minimum=1, maximum=60, value=10, step=1, label="FPS"),
         gr.Slider(minimum=1, maximum=32, value=8, step=1, label="Decode Chunk Size"),
         gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
