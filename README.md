@@ -6,26 +6,26 @@
 
 ## Description:
 
-Simple and easy interface for use of different neural network models. You can chat with LLM using text or voice input, use StableDiffusion for generating images and videos, and also AudioCraft for generating audio
+Simple and easy interface for use of different neural network models. You can chat with LLM using text or voice input, use StableDiffusion for generating images and videos, AudioCraft for generating audio, CoquiTTS for text to speech and OpenAI-Whisper for speech to text. Also you can download LLM and StableDiffusion models and change application settings inside interface
 
 The goal of the project - to create the easiest possible application to use neural network models
 
-### LLM: 
+### LLM: ![1](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/9f6c7c86-03fe-400d-9f28-4824a93100f0)
 
-### TTS-STT: 
+### TTS-STT: ![2](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/b327c698-66a8-4649-a754-98830c2cbf27)
 
-### StableDiffusion: 
- #### txt2img: 
- #### img2img: 
- #### inpaint: 
- #### video: 
- #### extras: 
+### StableDiffusion:
+ #### txt2img: ![3](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/a27878cd-ba13-451a-8181-994148f6919c)
+ #### img2img: ![4](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/d51168e6-29ab-4a58-ac0e-b83a8f7c40e0)
+ #### inpaint: ![5](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/953ab08c-30ff-4b6e-9590-1037b4ffa8f4)
+ #### video: ![6](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/d1966c3e-df35-47ae-9cf7-d69f7155a454)
+ #### extras: ![7](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/32a72376-9450-44d8-9e81-7d4085c7754f)
 
-### AudioCraft: 
+### AudioCraft: ![8](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/382ca556-1a14-4099-af36-936c212048f3)
 
-### ModelDownloader: 
+### ModelDownloader: ![9](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/ff98c1f1-33df-4018-981c-32671700659f)
 
-### Settings: 
+### Settings: ![10](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/40b38b60-0e32-4a04-a278-fdb0aa15c224)
 
 ## Features:
 
