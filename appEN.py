@@ -393,13 +393,13 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
     stop_signal = False
 
     if not stable_diffusion_model_name:
-        return None, "Please, select a Stable Diffusion model!"
+        return None, "Please, select a StableDiffusion model!"
 
     stable_diffusion_model_path = os.path.join("inputs", "image", "sd_models",
                                                f"{stable_diffusion_model_name}.safetensors")
 
     if not os.path.exists(stable_diffusion_model_path):
-        return None, f"Stable Diffusion model not found: {stable_diffusion_model_path}"
+        return None, f"StableDiffusion model not found: {stable_diffusion_model_path}"
 
     try:
         if stable_diffusion_model_type == "SD":
@@ -424,7 +424,7 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
                 original_config_file=original_config_file, torch_dtype=torch.float16, variant="fp16"
             )
         else:
-            return None, "Invalid Stable Diffusion model type!"
+            return None, "Invalid StableDiffusion model type!"
     except (ValueError, KeyError):
         return None, "The selected model is not compatible with the chosen model type"
 
@@ -498,7 +498,7 @@ def generate_image_img2img(prompt, negative_prompt, init_image,
     stop_signal = False
 
     if not stable_diffusion_model_name:
-        return None, "Please, select a Stable Diffusion model!"
+        return None, "Please, select a StableDiffusion model!"
 
     if not init_image:
         return None, "Please, upload an initial image!"
@@ -507,7 +507,7 @@ def generate_image_img2img(prompt, negative_prompt, init_image,
                                                f"{stable_diffusion_model_name}.safetensors")
 
     if not os.path.exists(stable_diffusion_model_path):
-        return None, f"Stable Diffusion model not found: {stable_diffusion_model_path}"
+        return None, f"StableDiffusion model not found: {stable_diffusion_model_path}"
 
     try:
         if stable_diffusion_model_type == "SD":
@@ -532,7 +532,7 @@ def generate_image_img2img(prompt, negative_prompt, init_image,
                 original_config_file=original_config_file, torch_dtype=torch.float16, variant="fp16"
             )
         else:
-            return None, "Invalid Stable Diffusion model type!"
+            return None, "Invalid StableDiffusion model type!"
     except (ValueError, KeyError):
         return None, "The selected model is not compatible with the chosen model type"
 
@@ -594,7 +594,7 @@ def generate_image_inpaint(prompt, negative_prompt, init_image, mask_image, stab
     stop_signal = False
 
     if not stable_diffusion_model_name:
-        return None, "Please, select a Stable Diffusion model!"
+        return None, "Please, select a StableDiffusion model!"
 
     if not init_image or not mask_image:
         return None, "Please, upload an initial image and a mask image!"
@@ -603,7 +603,7 @@ def generate_image_inpaint(prompt, negative_prompt, init_image, mask_image, stab
                                                f"{stable_diffusion_model_name}.safetensors")
 
     if not os.path.exists(stable_diffusion_model_path):
-        return None, f"Stable Diffusion model not found: {stable_diffusion_model_path}"
+        return None, f"StableDiffusion model not found: {stable_diffusion_model_path}"
 
     try:
         if stable_diffusion_model_type == "SD":
@@ -628,7 +628,7 @@ def generate_image_inpaint(prompt, negative_prompt, init_image, mask_image, stab
                 original_config_file=original_config_file, torch_dtype=torch.float16, variant="fp16"
             )
         else:
-            return None, "Invalid Stable Diffusion model type!"
+            return None, "Invalid StableDiffusion model type!"
     except (ValueError, KeyError):
         return None, "The selected model is not compatible with the chosen model type"
 
@@ -915,10 +915,10 @@ txt2img_interface = gr.Interface(
     inputs=[
         gr.Textbox(label="Enter your prompt"),
         gr.Textbox(label="Enter your negative prompt", value=""),
-        gr.Dropdown(choices=stable_diffusion_models_list, label="Select Stable Diffusion model", value=None),
+        gr.Dropdown(choices=stable_diffusion_models_list, label="Select StableDiffusion model", value=None),
         gr.Dropdown(choices=vae_models_list, label="Select VAE model (optional)", value=None),
         gr.Dropdown(choices=lora_models_list, label="Select LORA models (optional)", value=None, multiselect=True),
-        gr.HTML("<h3>Stable Diffusion Settings</h3>"),
+        gr.HTML("<h3>StableDiffusion Settings</h3>"),
         gr.Radio(choices=["SD", "SD2", "SDXL"], label="Select model type", value="SD"),
         gr.Dropdown(choices=["euler_ancestral", "euler", "lms", "heun", "dpm", "dpm_solver", "dpm_solver++"],
                     label="Select sampler", value="euler_ancestral"),
@@ -935,7 +935,7 @@ txt2img_interface = gr.Interface(
         gr.Image(type="filepath", label="Generated image"),
         gr.Textbox(label="Message", type="text"),
     ],
-    title="NeuroSandboxWebUI (ALPHA) - Stable Diffusion (txt2img)",
+    title="NeuroSandboxWebUI (ALPHA) - StableDiffusion (txt2img)",
     description="This user interface allows you to enter any text and generate images using Stable Diffusion. "
                 "You can select the Stable Diffusion model and customize the generation settings from the sliders. "
                 "Try it and see what happens!",
@@ -949,9 +949,9 @@ img2img_interface = gr.Interface(
         gr.Textbox(label="Enter your negative prompt", value=""),
         gr.Image(label="Initial image", type="filepath"),
         gr.Slider(minimum=0.0, maximum=1.0, value=0.5, step=0.01, label="Strength"),
-        gr.Dropdown(choices=stable_diffusion_models_list, label="Select Stable Diffusion model", value=None),
+        gr.Dropdown(choices=stable_diffusion_models_list, label="Select StableDiffusion model", value=None),
         gr.Dropdown(choices=vae_models_list, label="Select VAE model (optional)", value=None),
-        gr.HTML("<h3>Stable Diffusion Settings</h3>"),
+        gr.HTML("<h3>StableDiffusion Settings</h3>"),
         gr.Radio(choices=["SD", "SD2", "SDXL"], label="Select model type", value="SD"),
         gr.Dropdown(choices=["euler_ancestral", "euler", "lms", "heun", "dpm", "dpm_solver", "dpm_solver++"],
                     label="Select sampler", value="euler_ancestral"),
@@ -964,7 +964,7 @@ img2img_interface = gr.Interface(
         gr.Image(type="filepath", label="Generated image"),
         gr.Textbox(label="Message", type="text"),
     ],
-    title="NeuroSandboxWebUI (ALPHA) - Stable Diffusion (img2img)",
+    title="NeuroSandboxWebUI (ALPHA) - StableDiffusion (img2img)",
     description="This user interface allows you to enter any text and image to generate new images using Stable Diffusion. "
                 "You can select the Stable Diffusion model and customize the generation settings from the sliders. "
                 "Try it and see what happens!",
@@ -980,7 +980,7 @@ inpaint_interface = gr.Interface(
         gr.ImageEditor(label="Mask image", type="filepath"),
         gr.Dropdown(choices=inpaint_models_list, label="Select Inpaint model", value=None),
         gr.Dropdown(choices=vae_models_list, label="Select VAE model (optional)", value=None),
-        gr.HTML("<h3>Stable Diffusion Settings</h3>"),
+        gr.HTML("<h3>StableDiffusion Settings</h3>"),
         gr.Radio(choices=["SD", "SD2", "SDXL"], label="Select model type", value="SD"),
         gr.Dropdown(choices=["euler_ancestral", "euler", "lms", "heun", "dpm", "dpm_solver", "dpm_solver++"],
                     label="Select sampler", value="euler_ancestral"),
@@ -994,7 +994,7 @@ inpaint_interface = gr.Interface(
         gr.Image(type="filepath", label="Inpainted image"),
         gr.Textbox(label="Message", type="text"),
     ],
-    title="NeuroSandboxWebUI (ALPHA) - Stable Diffusion (inpaint)",
+    title="NeuroSandboxWebUI (ALPHA) - StableDiffusion (inpaint)",
     description="This user interface allows you to enter a prompt, an initial image, and a mask image to inpaint using Stable Diffusion. "
                 "You can select the Inpaint model and customize the generation settings. "
                 "Try it and see what happens!",
@@ -1012,7 +1012,7 @@ extras_interface = gr.Interface(
         gr.Image(type="filepath", label="Modified Image"),
         gr.Textbox(label="Message", type="text"),
     ],
-    title="NeuroSandboxWebUI (ALPHA) - Stable Diffusion (extras)",
+    title="NeuroSandboxWebUI (ALPHA) - StableDiffusion (extras)",
     description="This user interface allows you to upload an image and transform it using different options",
     allow_flagging="never",
 )
@@ -1061,7 +1061,7 @@ with gr.TabbedInterface(
         [chat_interface, gr.TabbedInterface([txt2img_interface, img2img_interface, inpaint_interface, extras_interface],
                                             tab_names=["txt2img", "img2img", "inpaint", "extras"]),
          audiocraft_interface, settings_interface],
-        tab_names=["LLM", "Stable Diffusion", "AudioCraft", "Settings"]
+        tab_names=["LLM", "StableDiffusion", "AudioCraft", "Settings"]
 ) as app:
     chat_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     txt2img_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
@@ -1085,4 +1085,3 @@ with gr.TabbedInterface(
     )
 
     app.launch(share=share_mode, server_name="localhost")
-    
