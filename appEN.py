@@ -932,7 +932,7 @@ chat_interface = gr.Interface(
         gr.Dropdown(choices=llm_models_list, label="Select LLM model", value=None),
         gr.HTML("<h3>LLM Settings</h3>"),
         gr.Radio(choices=["transformers", "llama"], label="Select model type", value="transformers"),
-        gr.Slider(minimum=1, maximum=2048, value=512, step=1, label="Max length (for transformers type models)"),
+        gr.Slider(minimum=1, maximum=4096, value=512, step=1, label="Max length (for transformers type models)"),
         gr.Slider(minimum=1, maximum=4096, value=512, step=1, label="Max tokens (for llama type models)"),
         gr.Slider(minimum=0.0, maximum=2.0, value=0.7, step=0.1, label="Temperature"),
         gr.Slider(minimum=0.0, maximum=1.0, value=0.9, step=0.1, label="Top P"),
@@ -943,7 +943,7 @@ chat_interface = gr.Interface(
         gr.HTML("<h3>TTS Settings</h3>"),
         gr.Dropdown(choices=speaker_wavs_list, label="Select voice", interactive=True),
         gr.Dropdown(choices=["en", "ru"], label="Select language", interactive=True),
-        gr.Slider(minimum=0.0, maximum=1.0, value=1.0, step=0.1, label="TTS Temperature", interactive=True),
+        gr.Slider(minimum=0.0, maximum=2.0, value=1.0, step=0.1, label="TTS Temperature", interactive=True),
         gr.Slider(minimum=0.0, maximum=1.0, value=0.9, step=0.1, label="TTS Top P", interactive=True),
         gr.Slider(minimum=0, maximum=100, value=20, step=1, label="TTS Top K", interactive=True),
         gr.Slider(minimum=0.5, maximum=2.0, value=1.0, step=0.1, label="TTS Speed", interactive=True),
@@ -955,10 +955,9 @@ chat_interface = gr.Interface(
         gr.Image(type="filepath", label="Avatar"),
     ],
     title="NeuroSandboxWebUI (ALPHA) - LLM",
-    description="This user interface allows you to enter any text or audio and receive "
-                "generated response. You can select the LLM model, "
-                "avatar, voice and language from the drop-down lists. You can also customize the model settings from "
-                "using sliders. Try it and see what happens!",
+    description="This user interface allows you to enter any text or audio and receive generated response. You can select the LLM model, "
+                "avatar, voice and language for tts from the drop-down lists. You can also customize the model settings from the sliders. "
+                "Try it and see what happens!",
     allow_flagging="never",
 )
 
@@ -988,8 +987,8 @@ txt2img_interface = gr.Interface(
         gr.Textbox(label="Message", type="text"),
     ],
     title="NeuroSandboxWebUI (ALPHA) - StableDiffusion (txt2img)",
-    description="This user interface allows you to enter any text and generate images using Stable Diffusion. "
-                "You can select the Stable Diffusion model and customize the generation settings from the sliders. "
+    description="This user interface allows you to enter any text and generate images using StableDiffusion. "
+                "You can select the model and customize the generation settings from the sliders. "
                 "Try it and see what happens!",
     allow_flagging="never",
 )
@@ -1017,8 +1016,8 @@ img2img_interface = gr.Interface(
         gr.Textbox(label="Message", type="text"),
     ],
     title="NeuroSandboxWebUI (ALPHA) - StableDiffusion (img2img)",
-    description="This user interface allows you to enter any text and image to generate new images using Stable Diffusion. "
-                "You can select the Stable Diffusion model and customize the generation settings from the sliders. "
+    description="This user interface allows you to enter any text and image to generate new images using StableDiffusion. "
+                "You can select the model and customize the generation settings from the sliders. "
                 "Try it and see what happens!",
     allow_flagging="never",
 )
@@ -1047,8 +1046,8 @@ inpaint_interface = gr.Interface(
         gr.Textbox(label="Message", type="text"),
     ],
     title="NeuroSandboxWebUI (ALPHA) - StableDiffusion (inpaint)",
-    description="This user interface allows you to enter a prompt, an initial image, and a mask image to inpaint using Stable Diffusion. "
-                "You can select the Inpaint model and customize the generation settings. "
+    description="This user interface allows you to enter a prompt, an initial image, and a mask image to inpaint using StableDiffusion. "
+                "You can select the model and customize the generation settings from the sliders. "
                 "Try it and see what happens!",
     allow_flagging="never",
 )
@@ -1058,10 +1057,10 @@ video_interface = gr.Interface(
     inputs=[
         gr.Image(label="Initial image", type="filepath"),
         gr.HTML("<h3>Video Settings</h3>"),
-        gr.Slider(minimum=0, maximum=1000, value=180, step=1, label="Motion Bucket ID"),
+        gr.Slider(minimum=0, maximum=720, value=180, step=1, label="Motion Bucket ID"),
         gr.Slider(minimum=0.0, maximum=1.0, value=0.1, step=0.01, label="Noise Augmentation Strength"),
-        gr.Slider(minimum=1, maximum=30, value=7, step=1, label="FPS"),
-        gr.Slider(minimum=1, maximum=16, value=8, step=1, label="Decode Chunk Size"),
+        gr.Slider(minimum=1, maximum=60, value=7, step=1, label="FPS"),
+        gr.Slider(minimum=1, maximum=32, value=8, step=1, label="Decode Chunk Size"),
         gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
     outputs=[
@@ -1069,8 +1068,8 @@ video_interface = gr.Interface(
         gr.Textbox(label="Message", type="text"),
     ],
     title="NeuroSandboxWebUI (ALPHA) - StableDiffusion (video)",
-    description="This user interface allows you to enter an initial image and generate a video using Stable Video Diffusion. "
-                "You can select the Video model and customize the generation settings. "
+    description="This user interface allows you to enter an initial image and generate a video using StableVideoDiffusion. "
+                "You can customize the generation settings from the sliders. "
                 "Try it and see what happens!",
     allow_flagging="never",
 )
@@ -1113,7 +1112,7 @@ audiocraft_interface = gr.Interface(
     ],
     title="NeuroSandboxWebUI (ALPHA) - AudioCraft",
     description="This user interface allows you to enter any text and generate audio using AudioCraft. "
-                "You can select the AudioCraft model and customize the generation settings from the sliders. "
+                "You can select the model and customize the generation settings from the sliders. "
                 "Try it and see what happens!",
     allow_flagging="never",
 )
