@@ -842,7 +842,7 @@ def generate_image_extras(image_path, enable_upscale, stop_generation):
 
 def generate_audio(prompt, input_audio=None, model_name=None, audiocraft_settings_html=None, model_type="musicgen",
                    duration=10, top_k=250, top_p=0.0,
-                   temperature=1.0, cfg_coef=3.0, enable_multiband=False, stop_generation=None):
+                   temperature=1.0, cfg_coef=3.0, enable_multiband=False, output_format="mp3", stop_generation=None):
     global audiocraft_model_path, stop_signal
     stop_signal = False
 
@@ -925,11 +925,24 @@ def generate_audio(prompt, input_audio=None, model_name=None, audiocraft_setting
             audio_path_diffusion = os.path.join(audio_dir, audio_filename_diffusion)
             torchaudio.save(audio_path_diffusion, wav_diffusion.cpu().detach(), model.sample_rate)
 
-        audio_filename = f"audio_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+        audio_filename = f"audio_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
         audio_path = os.path.join(audio_dir, audio_filename)
-        audio_write(audio_path, wav.cpu(), model.sample_rate, strategy="loudness", loudness_compressor=True)
+        if output_format == "mp3":
+            audio_write(audio_path, wav.cpu(), model.sample_rate, strategy="loudness", loudness_compressor=True,
+                        format='mp3')
+        elif output_format == "ogg":
+            audio_write(audio_path, wav.cpu(), model.sample_rate, strategy="loudness", loudness_compressor=True,
+                        format='ogg')
+        else:
+            audio_write(audio_path, wav.cpu(), model.sample_rate, strategy="loudness", loudness_compressor=True)
 
-        return audio_path + ".wav", None
+        if output_format == "mp3":
+            return audio_path + ".mp3", None
+        elif output_format == "ogg":
+            return audio_path + ".ogg", None
+        else:
+            return audio_path + ".wav", None
+
 
     finally:
         del model
@@ -1237,6 +1250,7 @@ audiocraft_interface = gr.Interface(
         gr.Slider(minimum=0.0, maximum=1.9, value=1.0, step=0.1, label="Temperature"),
         gr.Slider(minimum=1.0, maximum=10.0, value=3.0, step=0.1, label="CFG"),
         gr.Checkbox(label="Enable Multiband Diffusion", value=False),
+        gr.Dropdown(choices=["mp3", "wav", "ogg"], label="Select output format (Works only without MD)", value="mp3", interactive=True),
         gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
     outputs=[
