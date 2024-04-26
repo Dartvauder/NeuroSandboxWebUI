@@ -374,13 +374,13 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_settin
                                     repetition_penalty=repetition_penalty, length_penalty=length_penalty)
                 now = datetime.now()
                 audio_filename = f"TTS_{now.strftime('%Y%m%d_%H%M%S')}.{output_format}"
-                    audio_path = os.path.join(chat_dir, 'audio', audio_filename)
-                    if output_format == "mp3":
-                        sf.write(audio_path, wav, 22050, format='mp3')
-                    elif output_format == "ogg":
-                        sf.write(audio_path, wav, 22050, format='ogg')
-                    else:
-                        sf.write(audio_path, wav, 22050)
+                audio_path = os.path.join(chat_dir, 'audio', audio_filename)
+                if output_format == "mp3":
+                    sf.write(audio_path, wav, 22050, format='mp3')
+                elif output_format == "ogg":
+                    sf.write(audio_path, wav, 22050, format='ogg')
+                else:
+                    sf.write(audio_path, wav, 22050)
     finally:
         if tokenizer is not None:
             del tokenizer
@@ -421,7 +421,7 @@ def generate_tts_stt(text, audio, tts_settings_html, speaker_wav, language, tts_
         os.makedirs(audio_dir, exist_ok=True)
         audio_filename = f"tts_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
         tts_output = os.path.join(audio_dir, audio_filename)
-        
+
         if output_format == "mp3":
             sf.write(tts_output, wav, 22050, format='mp3')
         elif output_format == "ogg":
