@@ -219,7 +219,7 @@ chat_history = []
 
 def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_settings_html, llm_model_type, max_length, max_tokens,
                              temperature, top_p, top_k, avatar_html, avatar_name, enable_tts, tts_settings_html,
-                             speaker_wav, language, tts_temperature, tts_top_p, tts_top_k, tts_speed, stop_generation):
+                             speaker_wav, language, tts_temperature, tts_top_p, tts_top_k, tts_speed, output_format, stop_generation):
     global chat_history, chat_dir, tts_model, whisper_model, stop_signal
     stop_signal = False
     if not input_text and not input_audio:
@@ -360,17 +360,27 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_settin
                                         temperature=tts_temperature, top_p=tts_top_p, top_k=tts_top_k, speed=tts_speed,
                                         repetition_penalty=repetition_penalty, length_penalty=length_penalty)
                     now = datetime.now()
-                    audio_filename = f"TTS_{now.strftime('%Y%m%d_%H%M%S')}.wav"
+                    audio_filename = f"TTS_{now.strftime('%Y%m%d_%H%M%S')}.{output_format}"
                     audio_path = os.path.join(chat_dir, 'audio', audio_filename)
-                    sf.write(audio_path, wav, 22050)
+                    if output_format == "mp3":
+                        sf.write(audio_path, wav, 22050, format='mp3')
+                    elif output_format == "ogg":
+                        sf.write(audio_path, wav, 22050, format='ogg')
+                    else:
+                        sf.write(audio_path, wav, 22050)
             else:
                 wav = tts_model.tts(text=text, speaker_wav=f"inputs/audio/voices/{speaker_wav}", language=language,
                                     temperature=tts_temperature, top_p=tts_top_p, top_k=tts_top_k, speed=tts_speed,
                                     repetition_penalty=repetition_penalty, length_penalty=length_penalty)
                 now = datetime.now()
-                audio_filename = f"TTS_{now.strftime('%Y%m%d_%H%M%S')}.wav"
-                audio_path = os.path.join(chat_dir, 'audio', audio_filename)
-                sf.write(audio_path, wav, 22050)
+                audio_filename = f"TTS_{now.strftime('%Y%m%d_%H%M%S')}.{output_format}"
+                    audio_path = os.path.join(chat_dir, 'audio', audio_filename)
+                    if output_format == "mp3":
+                        sf.write(audio_path, wav, 22050, format='mp3')
+                    elif output_format == "ogg":
+                        sf.write(audio_path, wav, 22050, format='ogg')
+                    else:
+                        sf.write(audio_path, wav, 22050)
     finally:
         if tokenizer is not None:
             del tokenizer
@@ -1043,6 +1053,7 @@ chat_interface = gr.Interface(
         gr.Slider(minimum=0.0, maximum=1.0, value=0.9, step=0.1, label="TTS Top P", interactive=True),
         gr.Slider(minimum=0, maximum=100, value=20, step=1, label="TTS Top K", interactive=True),
         gr.Slider(minimum=0.5, maximum=2.0, value=1.0, step=0.1, label="TTS Speed", interactive=True),
+        gr.Dropdown(choices=["mp3", "wav", "ogg"], label="Select output format", value="mp3", interactive=True),
         gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
     outputs=[
