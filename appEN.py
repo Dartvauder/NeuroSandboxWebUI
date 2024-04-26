@@ -386,7 +386,7 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_settin
     return chat_history, audio_path, avatar_path, chat_dir, None
 
 
-def generate_tts_stt(text, audio, tts_settings_html, speaker_wav, language, tts_temperature, tts_top_p, tts_top_k, tts_speed):
+def generate_tts_stt(text, audio, tts_settings_html, speaker_wav, language, tts_temperature, tts_top_p, tts_top_k, tts_speed, output_format):
     global tts_model, whisper_model
 
     tts_output = None
@@ -409,9 +409,15 @@ def generate_tts_stt(text, audio, tts_settings_html, speaker_wav, language, tts_
         today = datetime.now().date()
         audio_dir = os.path.join('outputs', f"TTS_{today.strftime('%Y%m%d')}")
         os.makedirs(audio_dir, exist_ok=True)
-        audio_filename = f"tts_{datetime.now().strftime('%Y%m%d_%H%M%S')}.wav"
+        audio_filename = f"tts_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
         tts_output = os.path.join(audio_dir, audio_filename)
-        sf.write(tts_output, wav, 22050)
+        
+        if output_format == "mp3":
+            sf.write(tts_output, wav, 22050, format='mp3')
+        elif output_format == "ogg":
+            sf.write(tts_output, wav, 22050, format='ogg')
+        else:
+            sf.write(tts_output, wav, 22050)
 
     if audio:
         if not whisper_model:
@@ -1063,6 +1069,7 @@ tts_stt_interface = gr.Interface(
         gr.Slider(minimum=0.0, maximum=1.0, value=0.9, step=0.1, label="TTS Top P", interactive=True),
         gr.Slider(minimum=0, maximum=100, value=20, step=1, label="TTS Top K", interactive=True),
         gr.Slider(minimum=0.5, maximum=2.0, value=1.0, step=0.1, label="TTS Speed", interactive=True),
+        gr.Dropdown(choices=["mp3", "wav", "ogg"], label="Select output format", value="mp3", interactive=True),
     ],
     outputs=[
         gr.Audio(label="TTS Audio", type="filepath"),
