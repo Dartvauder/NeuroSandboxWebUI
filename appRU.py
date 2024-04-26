@@ -875,6 +875,49 @@ def generate_audio(prompt, input_audio=None, model_name=None, audiocraft_setting
         torch.cuda.empty_cache()
 
 
+def download_model(model_name_llm, model_name_sd):
+    if not model_name_llm and not model_name_sd:
+        return "Please select a model to download"
+
+    if model_name_llm and model_name_sd:
+        return "Please select one model type for downloading"
+
+    if model_name_llm:
+        model_url = ""
+        if model_name_llm == "Phi3(Transformers3B)":
+            model_url = "https://huggingface.co/microsoft/Phi-3-mini-4k-instruct"
+        elif model_name_llm == "OpenChat(Llama7B.Q4)":
+            model_url = "https://huggingface.co/TheBloke/openchat-3.5-0106-GGUF/resolve/main/openchat-3.5-0106.Q4_K_M.gguf"
+        model_path = os.path.join("inputs", "text", "llm_models", model_name_llm)
+
+        if model_url:
+            if model_name_llm == "Phi3(Transformers3B)":
+                Repo.clone_from(model_url, model_path)
+            else:
+                response = requests.get(model_url, allow_redirects=True)
+                with open(model_path, "wb") as file:
+                    file.write(response.content)
+            return f"LLM model {model_name_llm} downloaded successfully!"
+        else:
+            return "Invalid LLM model name"
+
+    if model_name_sd:
+        model_url = ""
+        if model_name_sd == "Dreamshaper8(SD1.5)":
+            model_url = "https://huggingface.co/Lykon/DreamShaper/resolve/main/DreamShaper_8_pruned.safetensors"
+        elif model_name_sd == "RealisticVisionV4.0(SDXL)":
+            model_url = "https://huggingface.co/SG161222/RealVisXL_V4.0/blob/main/RealVisXL_V4.0.safetensors"
+        model_path = os.path.join("inputs", "image", "sd_models", f"{model_name_sd}.safetensors")
+
+        if model_url:
+            response = requests.get(model_url, allow_redirects=True)
+            with open(model_path, "wb") as file:
+                file.write(response.content)
+            return f"StableDiffusion model {model_name_sd} downloaded successfully!"
+        else:
+            return "Invalid StableDiffusion model name"
+
+
 def settings_interface(share_value):
     global share_mode
     share_mode = share_value == "True"
@@ -1117,6 +1160,20 @@ audiocraft_interface = gr.Interface(
     allow_flagging="never",
 )
 
+model_downloader_interface = gr.Interface(
+    fn=download_model,
+    inputs=[
+        gr.Dropdown(choices=[None, "Phi3(Transformers3B)", "OpenChat(Llama7B.Q4)"], label="Download LLM model", value=None),
+        gr.Dropdown(choices=[None, "Dreamshaper8(SD1.5)", "RealisticVisionV4.0(SDXL)"], label="Download StableDiffusion model", value=None),
+    ],
+    outputs=[
+        gr.Textbox(label="Message", type="text"),
+    ],
+    title="NeuroSandboxWebUI (ALPHA) - ModelDownloader",
+    description="This user interface allows you to download LLM and StableDiffusion models",
+    allow_flagging="never",
+)
+
 settings_interface = gr.Interface(
     fn=settings_interface,
     inputs=[
@@ -1133,8 +1190,8 @@ settings_interface = gr.Interface(
 with gr.TabbedInterface(
         [chat_interface, gr.TabbedInterface([txt2img_interface, img2img_interface, inpaint_interface, video_interface, extras_interface],
                                             tab_names=["txt2img", "img2img", "inpaint", "video", "extras"]),
-         audiocraft_interface, settings_interface],
-        tab_names=["LLM", "StableDiffusion", "AudioCraft", "Settings"]
+         audiocraft_interface, model_downloader_interface, settings_interface],
+        tab_names=["LLM", "StableDiffusion", "AudioCraft", "ModelDownloader", "Settings"]
 ) as app:
     chat_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     txt2img_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)

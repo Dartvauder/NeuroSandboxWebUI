@@ -21,6 +21,8 @@ The goal of the project - to create the easiest possible application to use neur
 
 ### AudioCraft: ![7](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/2be4caa2-ebb8-45c8-9b88-a4c7d5d1bdfe)
 
+### ModelDownloader: ![8](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/8807fcc6-046c-4f3f-b50e-e8ba4430c37e)
+
 ### Settings: ![8](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/52b0b01e-e6cf-49b0-8680-836ed30cf780)
 
 ## Features:
@@ -32,10 +34,11 @@ The goal of the project - to create the easiest possible application to use neur
 * Support for diffusers (safetensors) models (StableDiffusion) - txt2img, img2img, inpaint, video and extras tabs
 * AudioCraft support (Models: musicgen, audiogen and magnet)
 * Supports TTS and Whisper models (For LLM)
-* Support for Lora, Vae, Inpaint, Upscale and Video models (For Stable Diffusion)
+* Support for Lora, Vae, Inpaint, Upscale and Video models (For StableDiffusion)
 * Support Multiband Diffusion model (For AudioCraft)
 * Ability to select an avatar (For LLM)
 * Model settings inside the interface
+* ModelDownloader (For LLM and StableDiffusion)
 * Application settings
 
 ## Required Dependencies:
@@ -77,7 +80,7 @@ To get update, run `git pull`
 
 ## How to use:
 
-#### Interface has four tabs: LLM, StableDiffusion, AudioCraft and Settings. Select the one you need and follow the instructions below 
+#### Interface has five tabs: LLM, StableDiffusion, AudioCraft, ModelDownloader and Settings. Select the one you need and follow the instructions below 
 
 ### LLM:
 
@@ -153,6 +156,10 @@ To get update, run `git pull`
 6) Click the `Submit` button to get the generated audio
 #### Optional: You can enable `multiband diffusion` to improve the generated audio
 
+### ModelDownloader:
+
+* Here you can download `LLM` and `StableDiffusion models`. Just choose the model from the drop-down list and click the `Submit` button
+
 ### Settings: 
 
 * Here you can change the application settings. For now you can only change `Share` mode to `True` or `False`
@@ -168,8 +175,8 @@ To get update, run `git pull`
 
 ## Where can I get models, voices and avatars?
 
-* LLM models can be taken from [HuggingFace](https://huggingface.co/models)
-* StableDiffusion, vae, inpaint and lora models can be taken from [CivitAI](https://civitai.com/models)
+* LLM models can be taken from [HuggingFace](https://huggingface.co/models) or from ModelDownloader inside interface
+* StableDiffusion, vae, inpaint and lora models can be taken from [CivitAI](https://civitai.com/models) or from ModelDownloader inside interface
 * AudioCraft models are downloads automatically in *inputs* folder, when you select a model and press the submit button
 * TTS, Whisper, Upscale and Multiband diffusion models are downloads automatically in *inputs* folder when are they used 
 * You can take voices anywhere. Record yours or take a recording from the Internet. The main thing is that it is pre-processed!

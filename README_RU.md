@@ -21,6 +21,8 @@
 
 ### AudioCraft: ![7](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/2be4caa2-ebb8-45c8-9b88-a4c7d5d1bdfe)
 
+### ModelDownloader: ![8](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/8807fcc6-046c-4f3f-b50e-e8ba4430c37e)
+
 ### Settings: ![8](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/52b0b01e-e6cf-49b0-8680-836ed30cf780)
 
 ## Функции:
@@ -32,10 +34,11 @@
 * Поддержка diffusers (safetensors) моделей (StableDiffusion) - Вкладки txt2img, img2img, inpaint, video и extras
 * Поддержка AudioCraft (Модели: musicgen, audiogen и magnet)
 * Поддержка TTS и Whisper моделей (Для LLM)
-* Поддержка Lora, Vae, Inpaint, Upscale и Video моделей (Для Stable Diffusion)
+* Поддержка Lora, Vae, Inpaint, Upscale и Video моделей (Для StableDiffusion)
 * Поддержка Multiband Diffusion модели (Для AudioCraft)
 * Возможность выбора аватара (Для LLM)
 * Настройки моделей внутри интерфейса
+* ModelDownloader (Для LLM и StableDiffusion)
 * Настройки приложения
 
 ## Необходимые зависимости:
@@ -77,7 +80,7 @@
 
 ## Как использовать:
 
-#### Интерфейс имеет четыре вкладки: LLM, StableDiffusion, AudioCraft и Settings. Выберите ту которая вам нужна и следуйте инструкциям ниже
+#### Интерфейс имеет пять вкладок: LLM, StableDiffusion, AudioCraft, ModelDownloader и Settings. Выберите ту которая вам нужна и следуйте инструкциям ниже
 
 ### LLM:
 
@@ -151,6 +154,10 @@
 6) Нажмите кнопку `Submit`, чтобы получить сгенерированный звук
 #### Необязательно: вы можете включить `multiband diffusion`, чтобы улучшить генерируемый звук
 
+### ModelDownloader:
+
+* Здесь вы можете скачать модели `LLM` и `StableDiffusion`. Просто выберите модель из выпадающего списка и нажмите кнопку `Submit`
+
 ### Settings:
 
 * Здесь вы можете изменить настройки приложения. На данный момент вы можете изменить только режим `Share` на `True` или `False`
@@ -165,8 +172,8 @@
 
 ## Где я могу взять модели, голоса и аватары?
 
-* LLM модели можно взять с сайта [HuggingFace](https://huggingface.co/models)
-* Модели StableDiffusion, vae, inpaint и lora можно взять с сайта [CivitAI](https://civitai.com/models)
+* LLM модели можно взять с сайта [HuggingFace](https://huggingface.co/models) или из внутреннего интерфейса ModelDownloader
+* Модели StableDiffusion, vae, inpaint и lora можно взять с сайта [CivitAI](https://civitai.com/models) или из внутреннего интерфейса ModelDownloader
 * Модели AudioCraft загружаются автоматически в папку *inputs*, когда вы выбираете модель и нажимаете кнопку `submit`
 * TTS, Whisper, Upscale и Multiband diffusion модели скачиваються автоматически в папку *inputs* при их использовании
 * Вы можете использовать голоса откуда угодно. Запишите свой или возьмите запись из интернета. Главное, чтобы оно было предварительно обработано!
