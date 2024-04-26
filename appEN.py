@@ -452,7 +452,7 @@ def generate_tts_stt(text, audio, tts_settings_html, speaker_wav, language, tts_
 def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name, vae_model_name, lora_model_names, stable_diffusion_settings_html,
                            stable_diffusion_model_type, stable_diffusion_sampler, stable_diffusion_steps,
                            stable_diffusion_cfg, stable_diffusion_width, stable_diffusion_height,
-                           stable_diffusion_clip_skip, enable_upscale=False, upscale_factor="x2", stop_generation=None):
+                           stable_diffusion_clip_skip, enable_upscale=False, upscale_factor="x2", output_format="png", stop_generation=None):
     global stop_signal
     stop_signal = False
 
@@ -542,9 +542,9 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
         today = datetime.now().date()
         image_dir = os.path.join('outputs', f"StableDiffusion_{today.strftime('%Y%m%d')}")
         os.makedirs(image_dir, exist_ok=True)
-        image_filename = f"txt2img_{datetime.now().strftime('%Y%m%d_%H%M%S')}.png"
+        image_filename = f"txt2img_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
         image_path = os.path.join(image_dir, image_filename)
-        image.save(image_path, format="PNG")
+        image.save(image_path, format=output_format.upper())
 
         return image_path, None
 
@@ -557,7 +557,7 @@ def generate_image_img2img(prompt, negative_prompt, init_image,
                            strength, stable_diffusion_model_name, vae_model_name, stable_diffusion_settings_html,
                            stable_diffusion_model_type,
                            stable_diffusion_sampler, stable_diffusion_steps, stable_diffusion_cfg,
-                           stable_diffusion_clip_skip, stop_generation):
+                           stable_diffusion_clip_skip, output_format="png", stop_generation=None):
     global stop_signal
     stop_signal = False
 
@@ -637,9 +637,9 @@ def generate_image_img2img(prompt, negative_prompt, init_image,
         today = datetime.now().date()
         image_dir = os.path.join('outputs', f"StableDiffusion_{today.strftime('%Y%m%d')}")
         os.makedirs(image_dir, exist_ok=True)
-        image_filename = f"img2img_{datetime.now().strftime('%Y%m%d_%H%M%S')}.png"
+        image_filename = f"img2img_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
         image_path = os.path.join(image_dir, image_filename)
-        image.save(image_path, format="PNG")
+        image.save(image_path, format=output_format.upper())
 
         return image_path, None
 
@@ -653,7 +653,7 @@ def generate_image_img2img(prompt, negative_prompt, init_image,
 
 def generate_image_inpaint(prompt, negative_prompt, init_image, mask_image, stable_diffusion_model_name, vae_model_name,
                            stable_diffusion_settings_html, stable_diffusion_model_type, stable_diffusion_sampler,
-                           stable_diffusion_steps, stable_diffusion_cfg, width, height, stop_generation):
+                           stable_diffusion_steps, stable_diffusion_cfg, width, height, output_format="png", stop_generation=None):
     global stop_signal
     stop_signal = False
 
@@ -749,9 +749,9 @@ def generate_image_inpaint(prompt, negative_prompt, init_image, mask_image, stab
         today = datetime.now().date()
         image_dir = os.path.join('outputs', f"StableDiffusion_{today.strftime('%Y%m%d')}")
         os.makedirs(image_dir, exist_ok=True)
-        image_filename = f"inpaint_{datetime.now().strftime('%Y%m%d_%H%M%S')}.png"
+        image_filename = f"inpaint_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
         image_path = os.path.join(image_dir, image_filename)
-        image.save(image_path, format="PNG")
+        image.save(image_path, format=output_format.upper())
 
         return image_path, None
 
@@ -760,7 +760,7 @@ def generate_image_inpaint(prompt, negative_prompt, init_image, mask_image, stab
         torch.cuda.empty_cache()
 
 
-def generate_video(init_image, video_settings_html, motion_bucket_id, noise_aug_strength, fps, decode_chunk_size, stop_generation):
+def generate_video(init_image, video_settings_html, motion_bucket_id, noise_aug_strength, fps, decode_chunk_size, output_format, stop_generation):
     global stop_signal
     stop_signal = False
 
@@ -797,9 +797,15 @@ def generate_video(init_image, video_settings_html, motion_bucket_id, noise_aug_
         today = datetime.now().date()
         video_dir = os.path.join('outputs', f"StableDiffusion_{today.strftime('%Y%m%d')}")
         os.makedirs(video_dir, exist_ok=True)
-        video_filename = f"video_{datetime.now().strftime('%Y%m%d_%H%M%S')}.mp4"
-        video_path = os.path.join(video_dir, video_filename)
-        export_to_video(frames, video_path, fps=fps)
+
+        if output_format == "mp4":
+            video_filename = f"video_{datetime.now().strftime('%Y%m%d_%H%M%S')}.mp4"
+            video_path = os.path.join(video_dir, video_filename)
+            export_to_video(frames, video_path, fps=fps)
+        else:
+            video_filename = f"video_{datetime.now().strftime('%Y%m%d_%H%M%S')}.gif"
+            video_path = os.path.join(video_dir, video_filename)
+            frames[0].save(video_path, save_all=True, append_images=frames[1:], duration=1000 / fps, loop=0)
 
         return video_path, None
 
@@ -811,7 +817,7 @@ def generate_video(init_image, video_settings_html, motion_bucket_id, noise_aug_
         torch.cuda.empty_cache()
 
 
-def generate_image_extras(image_path, enable_upscale, stop_generation):
+def generate_image_extras(image_path, enable_upscale, output_format="png", stop_generation=None):
     global stop_signal
     if stop_signal:
         return None, "Generation stopped"
@@ -831,9 +837,9 @@ def generate_image_extras(image_path, enable_upscale, stop_generation):
         today = datetime.now().date()
         image_dir = os.path.join('outputs', f"StableDiffusion_{today.strftime('%Y%m%d')}")
         os.makedirs(image_dir, exist_ok=True)
-        image_filename = f"extras_{datetime.now().strftime('%Y%m%d_%H%M%S')}.png"
+        image_filename = f"extras_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
         image_path = os.path.join(image_dir, image_filename)
-        upscaled_image.save(image_path, format="PNG")
+        upscaled_image.save(image_path, format=output_format.upper())
 
         return image_path, None
     else:
@@ -1126,6 +1132,7 @@ txt2img_interface = gr.Interface(
         gr.Slider(minimum=1, maximum=4, value=1, step=1, label="Clip skip"),
         gr.Checkbox(label="Enable upscale", value=False),
         gr.Radio(choices=["x2", "x4"], label="Upscale size", value="x2"),
+        gr.Dropdown(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
         gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
     outputs=[
@@ -1155,6 +1162,7 @@ img2img_interface = gr.Interface(
         gr.Slider(minimum=1, maximum=100, value=30, step=1, label="Steps"),
         gr.Slider(minimum=1.0, maximum=30.0, value=8, step=0.1, label="CFG"),
         gr.Slider(minimum=1, maximum=4, value=1, step=1, label="Clip skip"),
+        gr.Dropdown(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
         gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
     outputs=[
@@ -1185,6 +1193,7 @@ inpaint_interface = gr.Interface(
         gr.Slider(minimum=1.0, maximum=30.0, value=8, step=0.1, label="CFG"),
         gr.Slider(minimum=256, maximum=2048, value=512, step=64, label="Width"),
         gr.Slider(minimum=256, maximum=2048, value=512, step=64, label="Height"),
+        gr.Dropdown(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
         gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
     outputs=[
@@ -1207,6 +1216,7 @@ video_interface = gr.Interface(
         gr.Slider(minimum=0.0, maximum=1.0, value=0.1, step=0.01, label="Noise Augmentation Strength"),
         gr.Slider(minimum=1, maximum=60, value=10, step=1, label="FPS"),
         gr.Slider(minimum=1, maximum=32, value=8, step=1, label="Decode Chunk Size"),
+        gr.Dropdown(choices=["mp4", "gif"], label="Select output format", value="mp4", interactive=True),
         gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
     outputs=[
@@ -1225,6 +1235,7 @@ extras_interface = gr.Interface(
     inputs=[
         gr.Image(label="Image to modify", type="filepath"),
         gr.Checkbox(label="Enable upscale", value=False),
+        gr.Dropdown(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
         gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
     outputs=[
@@ -1250,7 +1261,7 @@ audiocraft_interface = gr.Interface(
         gr.Slider(minimum=0.0, maximum=1.9, value=1.0, step=0.1, label="Temperature"),
         gr.Slider(minimum=1.0, maximum=10.0, value=3.0, step=0.1, label="CFG"),
         gr.Checkbox(label="Enable Multiband Diffusion", value=False),
-        gr.Dropdown(choices=["mp3", "wav", "ogg"], label="Select output format (Works only without MD)", value="mp3", interactive=True),
+        gr.Dropdown(choices=["mp3", "wav", "ogg"], label="Select output format (Works only without Multiband Diffusion)", value="mp3", interactive=True),
         gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
     outputs=[
