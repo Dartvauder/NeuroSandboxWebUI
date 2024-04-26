@@ -10,7 +10,8 @@ import whisper
 from datetime import datetime
 import warnings
 import logging
-from diffusers import StableDiffusionPipeline, StableDiffusionXLPipeline, StableDiffusionImg2ImgPipeline, AutoencoderKL, StableDiffusionLatentUpscalePipeline, StableDiffusionUpscalePipeline, StableDiffusionInpaintPipeline
+from diffusers import StableDiffusionPipeline, StableDiffusionXLPipeline, StableDiffusionImg2ImgPipeline, AutoencoderKL, StableDiffusionLatentUpscalePipeline, StableDiffusionUpscalePipeline, StableDiffusionInpaintPipeline, StableVideoDiffusionPipeline
+from diffusers.utils import load_image, export_to_video
 from git import Repo
 import numpy as np
 from PIL import Image
@@ -696,6 +697,56 @@ def generate_image_inpaint(prompt, negative_prompt, init_image, mask_image, stab
         torch.cuda.empty_cache()
 
 
+def generate_video(init_image, video_settings_html, motion_bucket_id, noise_aug_strength, fps, decode_chunk_size, stop_generation):
+    global stop_signal
+    stop_signal = False
+
+    video_model_name = "vdo/stable-video-diffusion-img2vid-xt-1-1"
+    video_model_path = os.path.join("inputs", "image", "sd_models", "video")
+
+    print(f"Downloading Stable Video Diffusion model: {video_model_name}")
+
+    if not os.path.exists(video_model_path):
+        os.makedirs(video_model_path, exist_ok=True)
+        Repo.clone_from(f"https://huggingface.co/{video_model_name}", video_model_path)
+
+    print(f"Stable Video Diffusion model {video_model_name} downloaded")
+
+    try:
+        pipe = StableVideoDiffusionPipeline.from_pretrained(
+            pretrained_model_name_or_path=video_model_path,
+            torch_dtype=torch.float16,
+            variant="fp16"
+        )
+        pipe.enable_model_cpu_offload()
+
+        image = load_image(init_image)
+        image = image.resize((1024, 576))
+
+        generator = torch.manual_seed(42)
+        frames = pipe(image, decode_chunk_size=decode_chunk_size, generator=generator,
+                      motion_bucket_id=motion_bucket_id, noise_aug_strength=noise_aug_strength).frames[0]
+
+        if stop_signal:
+            return None, "Generation stopped"
+
+        today = datetime.now().date()
+        video_dir = os.path.join('outputs', f"StableDiffusion_{today.strftime('%Y%m%d')}")
+        os.makedirs(video_dir, exist_ok=True)
+        video_filename = f"video_{datetime.now().strftime('%Y%m%d_%H%M%S')}.mp4"
+        video_path = os.path.join(video_dir, video_filename)
+        export_to_video(frames, video_path, fps=fps)
+
+        return video_path, None
+
+    finally:
+        try:
+            del pipe
+        except UnboundLocalError:
+            pass
+        torch.cuda.empty_cache()
+
+
 def generate_image_extras(image_path, enable_upscale, stop_generation):
     global stop_signal
     if stop_signal:
@@ -880,7 +931,7 @@ chat_interface = gr.Interface(
         gr.Dropdown(choices=llm_models_list, label="Select LLM model", value=None),
         gr.HTML("<h3>LLM Settings</h3>"),
         gr.Radio(choices=["transformers", "llama"], label="Select model type", value="transformers"),
-        gr.Slider(minimum=1, maximum=2048, value=512, step=1, label="Max length (for transformers type models)"),
+        gr.Slider(minimum=1, maximum=4096, value=512, step=1, label="Max length (for transformers type models)"),
         gr.Slider(minimum=1, maximum=4096, value=512, step=1, label="Max tokens (for llama type models)"),
         gr.Slider(minimum=0.0, maximum=2.0, value=0.7, step=0.1, label="Temperature"),
         gr.Slider(minimum=0.0, maximum=1.0, value=0.9, step=0.1, label="Top P"),
@@ -891,7 +942,7 @@ chat_interface = gr.Interface(
         gr.HTML("<h3>TTS Settings</h3>"),
         gr.Dropdown(choices=speaker_wavs_list, label="Select voice", interactive=True),
         gr.Dropdown(choices=["en", "ru"], label="Select language", interactive=True),
-        gr.Slider(minimum=0.0, maximum=1.0, value=1.0, step=0.1, label="TTS Temperature", interactive=True),
+        gr.Slider(minimum=0.0, maximum=2.0, value=1.0, step=0.1, label="TTS Temperature", interactive=True),
         gr.Slider(minimum=0.0, maximum=1.0, value=0.9, step=0.1, label="TTS Top P", interactive=True),
         gr.Slider(minimum=0, maximum=100, value=20, step=1, label="TTS Top K", interactive=True),
         gr.Slider(minimum=0.5, maximum=2.0, value=1.0, step=0.1, label="TTS Speed", interactive=True),
@@ -903,10 +954,9 @@ chat_interface = gr.Interface(
         gr.Image(type="filepath", label="Avatar"),
     ],
     title="NeuroSandboxWebUI (ALPHA) - LLM",
-    description="This user interface allows you to enter any text or audio and receive "
-                "generated response. You can select the LLM model, "
-                "avatar, voice and language from the drop-down lists. You can also customize the model settings from "
-                "using sliders. Try it and see what happens!",
+    description="This user interface allows you to enter any text or audio and receive generated response. You can select the LLM model, "
+                "avatar, voice and language for tts from the drop-down lists. You can also customize the model settings from the sliders. "
+                "Try it and see what happens!",
     allow_flagging="never",
 )
 
@@ -936,8 +986,8 @@ txt2img_interface = gr.Interface(
         gr.Textbox(label="Message", type="text"),
     ],
     title="NeuroSandboxWebUI (ALPHA) - StableDiffusion (txt2img)",
-    description="This user interface allows you to enter any text and generate images using Stable Diffusion. "
-                "You can select the Stable Diffusion model and customize the generation settings from the sliders. "
+    description="This user interface allows you to enter any text and generate images using StableDiffusion. "
+                "You can select the model and customize the generation settings from the sliders. "
                 "Try it and see what happens!",
     allow_flagging="never",
 )
@@ -965,8 +1015,8 @@ img2img_interface = gr.Interface(
         gr.Textbox(label="Message", type="text"),
     ],
     title="NeuroSandboxWebUI (ALPHA) - StableDiffusion (img2img)",
-    description="This user interface allows you to enter any text and image to generate new images using Stable Diffusion. "
-                "You can select the Stable Diffusion model and customize the generation settings from the sliders. "
+    description="This user interface allows you to enter any text and image to generate new images using StableDiffusion. "
+                "You can select the model and customize the generation settings from the sliders. "
                 "Try it and see what happens!",
     allow_flagging="never",
 )
@@ -995,8 +1045,30 @@ inpaint_interface = gr.Interface(
         gr.Textbox(label="Message", type="text"),
     ],
     title="NeuroSandboxWebUI (ALPHA) - StableDiffusion (inpaint)",
-    description="This user interface allows you to enter a prompt, an initial image, and a mask image to inpaint using Stable Diffusion. "
-                "You can select the Inpaint model and customize the generation settings. "
+    description="This user interface allows you to enter a prompt, an initial image, and a mask image to inpaint using StableDiffusion. "
+                "You can select the model and customize the generation settings from the sliders. "
+                "Try it and see what happens!",
+    allow_flagging="never",
+)
+
+video_interface = gr.Interface(
+    fn=generate_video,
+    inputs=[
+        gr.Image(label="Initial image", type="filepath"),
+        gr.HTML("<h3>Video Settings</h3>"),
+        gr.Slider(minimum=0, maximum=720, value=180, step=1, label="Motion Bucket ID"),
+        gr.Slider(minimum=0.0, maximum=1.0, value=0.1, step=0.01, label="Noise Augmentation Strength"),
+        gr.Slider(minimum=1, maximum=60, value=7, step=1, label="FPS"),
+        gr.Slider(minimum=1, maximum=32, value=8, step=1, label="Decode Chunk Size"),
+        gr.Button(value="Stop generation", interactive=True, variant="stop"),
+    ],
+    outputs=[
+        gr.Video(label="Generated video"),
+        gr.Textbox(label="Message", type="text"),
+    ],
+    title="NeuroSandboxWebUI (ALPHA) - StableDiffusion (video)",
+    description="This user interface allows you to enter an initial image and generate a video using StableVideoDiffusion. "
+                "You can customize the generation settings from the sliders. "
                 "Try it and see what happens!",
     allow_flagging="never",
 )
@@ -1039,7 +1111,7 @@ audiocraft_interface = gr.Interface(
     ],
     title="NeuroSandboxWebUI (ALPHA) - AudioCraft",
     description="This user interface allows you to enter any text and generate audio using AudioCraft. "
-                "You can select the AudioCraft model and customize the generation settings from the sliders. "
+                "You can select the model and customize the generation settings from the sliders. "
                 "Try it and see what happens!",
     allow_flagging="never",
 )
@@ -1058,8 +1130,8 @@ settings_interface = gr.Interface(
 )
 
 with gr.TabbedInterface(
-        [chat_interface, gr.TabbedInterface([txt2img_interface, img2img_interface, inpaint_interface, extras_interface],
-                                            tab_names=["txt2img", "img2img", "inpaint", "extras"]),
+        [chat_interface, gr.TabbedInterface([txt2img_interface, img2img_interface, inpaint_interface, video_interface, extras_interface],
+                                            tab_names=["txt2img", "img2img", "inpaint", "video", "extras"]),
          audiocraft_interface, settings_interface],
         tab_names=["LLM", "StableDiffusion", "AudioCraft", "Settings"]
 ) as app:
@@ -1067,6 +1139,7 @@ with gr.TabbedInterface(
     txt2img_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     img2img_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     inpaint_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
+    video_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     extras_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     audiocraft_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
 
@@ -1085,4 +1158,3 @@ with gr.TabbedInterface(
     )
 
     app.launch(share=share_mode, server_name="localhost")
-    
