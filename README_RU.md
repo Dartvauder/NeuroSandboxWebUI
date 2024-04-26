@@ -6,21 +6,22 @@
 
 ## Описание:
 
-Простой и удобный интерфейс для использования различных моделей нейросетей. Вы можете общаться с LLM используя текстовый или голосовой ввод, Stable Diffusion для генерации изображений и AudioCraft для генерации аудио
+Простой и удобный интерфейс для использования различных моделей нейросетей. Вы можете общаться с LLM используя текстовый или голосовой ввод, StableDiffusion для генерации изображений и AudioCraft для генерации аудио
 
 Цель проекта — создать максимально простое приложение для использования нейросетевых моделей
 
-### LLM: ![1](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/418a90e9-cb45-4d54-92c6-bdcda2711ba9)
+### LLM: ![1](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/4063f1fb-e3fe-4580-9d26-cd4ea34dcc41)
 
-### Stable Diffusion: 
- #### txt2img: ![2](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/b1f95343-48d4-4251-80ec-1599d3781a36)
- #### img2img: ![3](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/d9cea6c8-184b-4b7e-9853-ed96d6150df2)
- #### inpaint: ![4](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/3f3cf73e-852d-4260-8cc7-6f01e6d71a82)
- #### extras: ![5](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/ff81be62-1617-4812-8cd4-be0524770c90)
+### StableDiffusion: 
+ #### txt2img: ![2](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/c91d2fa4-d8dc-4fc7-b881-8e369346e15f)
+ #### img2img: ![3](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/61dc653f-1ccd-4d50-897c-c9fcc49b59f5)
+ #### inpaint: ![4](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/b331ade5-d0ba-46dc-9d8e-352ea9a33631)
+ #### video: ![5](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/07bba0b0-4f40-44d5-8446-5cf856921cd4)
+ #### extras: ![6](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/e5103afb-aa22-4468-a2b4-fbd2f8fed280)
 
-### AudioCraft: ![6](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/cd9f9787-0a23-42cd-93c1-9058143e84ba)
+### AudioCraft: ![7](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/2be4caa2-ebb8-45c8-9b88-a4c7d5d1bdfe)
 
-### Settings: ![7](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/a888d3ac-2ece-46aa-b736-3eb481b40f79)
+### Settings: ![8](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/52b0b01e-e6cf-49b0-8680-836ed30cf780)
 
 ## Функции:
 
@@ -28,7 +29,7 @@
 * Вы можете использовать приложение через мобильное устройство в localhost (Через IPv4)
 * Гибкий и оптимизированный интерфейс (От Gradio)
 * Поддержка Transformers и llama.cpp моделей (LLM)
-* Поддержка diffusers (safetensors) моделей (Stable Diffusion) - Вкладки txt2img, img2img, inpaint и extras
+* Поддержка diffusers (safetensors) моделей (StableDiffusion) - Вкладки txt2img, img2img, inpaint и extras
 * Поддержка AudioCraft (Модели: musicgen, audiogen и magnet)
 * Поддержка TTS и Whisper моделей (Для LLM)
 * Поддержка Lora, Vae, Inpaint и Upscale моделей (Для Stable Diffusion)
@@ -76,7 +77,7 @@
 
 ## Как использовать:
 
-#### Интерфейс имеет четыре вкладки: LLM, Stable Diffusion, AudioCraft и Settings. Выберите ту которая вам нужна и следуйте инструкциям ниже
+#### Интерфейс имеет четыре вкладки: LLM, StableDiffusion, AudioCraft и Settings. Выберите ту которая вам нужна и следуйте инструкциям ниже
 
 ### LLM:
 
@@ -91,7 +92,7 @@
 #### Образцы голоса = *inputs/audio/voices*
 #### Голос должен быть предварительно обработан (22050 кГц, монозвук, WAV), аватар предпочтительно должен быть `PNG` или `JPG`
 
-### Stable Diffusion - имеет четыре под-вкладки:
+### StableDiffusion - имеет пять под-вкладок:
 
 #### txt2img:
 
@@ -128,10 +129,16 @@
 7) Нарисуйте место для генерации и введите ваш запрос
 8) Нажмите кнопку `Submit`, чтобы получить измененное изображение
 
-#### Extras:
+#### video:
 
-1) Выберите нужные вам опции
-2) Загрузите исходное изображение
+1) Загрузите исходное изображение
+2) Настройте модель по нужным вам параметрам
+3) Нажмите кнопку `Submit`, чтобы получить видео из изображения
+
+#### extras:
+
+1) Загрузите исходное изображение
+2) Выберите нужные вам опции
 3) Нажмите кнопку `Submit`, чтобы получить измененное изображение
 
 ### AudioCraft:
@@ -159,7 +166,7 @@
 ## Где я могу взять модели, голоса и аватары?
 
 * LLM модели можно взять с сайта [HuggingFace](https://huggingface.co/models)
-* Модели Stable Diffusion, vae, inpaint и lora можно взять с сайта [CivitAI](https://civitai.com/models)
+* Модели StableDiffusion, vae, inpaint и lora можно взять с сайта [CivitAI](https://civitai.com/models)
 * Модели AudioCraft загружаются автоматически в папку *inputs*, когда вы выбираете модель и нажимаете кнопку `submit`
 * TTS, Whisper, Upscale и Multiband diffusion модели скачиваються автоматически в папку *inputs* при их использовании
 * Вы можете использовать голоса откуда угодно. Запишите свой или возьмите запись из интернета. Главное, чтобы оно было предварительно обработано!

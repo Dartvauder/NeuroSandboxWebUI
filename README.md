@@ -6,21 +6,22 @@
 
 ## Description:
 
-Simple and easy interface for use of different neural network models. You can chat with LLM using text or voice input, Stable Diffusion for generating images and AudioCraft for generating audio
+Simple and easy interface for use of different neural network models. You can chat with LLM using text or voice input, StableDiffusion for generating images and AudioCraft for generating audio
 
 The goal of the project - to create the easiest possible application to use neural network models
 
-### LLM: ![1](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/418a90e9-cb45-4d54-92c6-bdcda2711ba9)
+### LLM: ![1](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/4063f1fb-e3fe-4580-9d26-cd4ea34dcc41)
 
-### Stable Diffusion: 
- #### txt2img: ![2](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/b1f95343-48d4-4251-80ec-1599d3781a36)
- #### img2img: ![3](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/d9cea6c8-184b-4b7e-9853-ed96d6150df2)
- #### inpaint: ![4](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/3f3cf73e-852d-4260-8cc7-6f01e6d71a82)
- #### extras: ![5](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/ff81be62-1617-4812-8cd4-be0524770c90)
+### StableDiffusion: 
+ #### txt2img: ![2](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/c91d2fa4-d8dc-4fc7-b881-8e369346e15f)
+ #### img2img: ![3](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/61dc653f-1ccd-4d50-897c-c9fcc49b59f5)
+ #### inpaint: ![4](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/b331ade5-d0ba-46dc-9d8e-352ea9a33631)
+ #### video: ![5](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/07bba0b0-4f40-44d5-8446-5cf856921cd4)
+ #### extras: ![6](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/e5103afb-aa22-4468-a2b4-fbd2f8fed280)
 
-### AudioCraft: ![6](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/cd9f9787-0a23-42cd-93c1-9058143e84ba)
+### AudioCraft: ![7](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/2be4caa2-ebb8-45c8-9b88-a4c7d5d1bdfe)
 
-### Settings: ![7](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/a888d3ac-2ece-46aa-b736-3eb481b40f79)
+### Settings: ![8](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/52b0b01e-e6cf-49b0-8680-836ed30cf780)
 
 ## Features:
 
@@ -28,7 +29,7 @@ The goal of the project - to create the easiest possible application to use neur
 * You can use the application via your mobile device in localhost (Via IPv4)
 * Flexible and optimized interface (By Gradio)
 * Support for Transformers and llama.cpp models (LLM)
-* Support for diffusers (safetensors) models (Stable Diffusion) - txt2img, img2img, inpaint and extras tabs
+* Support for diffusers (safetensors) models (StableDiffusion) - txt2img, img2img, inpaint and extras tabs
 * AudioCraft support (Models: musicgen, audiogen and magnet)
 * Supports TTS and Whisper models (For LLM)
 * Support for Lora, Vae, Inpaint and Upscale models (For Stable Diffusion)
@@ -76,7 +77,7 @@ To get update, run `git pull`
 
 ## How to use:
 
-#### Interface has four tabs: LLM, Stable Diffusion, AudioCraft and Settings. Select the one you need and follow the instructions below 
+#### Interface has four tabs: LLM, StableDiffusion, AudioCraft and Settings. Select the one you need and follow the instructions below 
 
 ### LLM:
 
@@ -91,7 +92,7 @@ To get update, run `git pull`
 #### Voice samples = *inputs/audio/voices*
 #### The voice must be pre-processed (22050 kHz, mono, WAV), the avatar should preferably be `PNG` or `JPG`
 
-### Stable Diffusion - has four sub-tabs:
+### StableDiffusion - has five sub-tabs:
 
 #### txt2img:
 
@@ -130,10 +131,16 @@ To get update, run `git pull`
 #### Optional: You can select your `vae` model
 #### vae = *inputs/image/sd_models/vae*
 
+#### video:
+
+1) Upload the initial image
+2) Set up the model according to the parameters you need
+3) Click the `Submit` button to get the video from image
+
 #### extras:
 
-1) Select the options you need
-2) Upload the initial image
+1) Upload the initial image
+2) Select the options you need
 3) Click the `Submit` button to get the modified image
 
 ### AudioCraft:
@@ -162,7 +169,7 @@ To get update, run `git pull`
 ## Where can I get models, voices and avatars?
 
 * LLM models can be taken from [HuggingFace](https://huggingface.co/models)
-* Stable Diffusion, vae, inpaint and lora models can be taken from [CivitAI](https://civitai.com/models)
+* StableDiffusion, vae, inpaint and lora models can be taken from [CivitAI](https://civitai.com/models)
 * AudioCraft models are downloads automatically in *inputs* folder, when you select a model and press the submit button
 * TTS, Whisper, Upscale and Multiband diffusion models are downloads automatically in *inputs* folder when are they used 
 * You can take voices anywhere. Record yours or take a recording from the Internet. The main thing is that it is pre-processed!
