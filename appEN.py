@@ -280,6 +280,8 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_settin
                     no_repeat_ngram_size=2,
                     do_sample=True,
                     use_cache=True,
+                    repetition_penalty=1.1,
+                    early_stopping=True,
                     pad_token_id=tokenizer.eos_token_id,
                     return_dict_in_generate=True,
                     num_return_sequences=1,
@@ -320,6 +322,8 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_settin
                     top_p=top_p,
                     top_k=top_k,
                     repeat_penalty=1.15,
+                    repeat_penalty=1.1,
+                    early_stopping=True
                 )
 
                 progress_tokens = max_tokens
