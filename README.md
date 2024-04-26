@@ -134,13 +134,13 @@ To get update, run `git pull`
 #### video:
 
 1) Upload the initial image
-2) Select the options you need
+2) Set up the model according to the parameters you need
 3) Click the `Submit` button to get the video from image
 
 #### extras:
 
-1) Select the options you need
-2) Upload the initial image
+1) Upload the initial image
+2) Select the options you need
 3) Click the `Submit` button to get the modified image
 
 ### AudioCraft:
