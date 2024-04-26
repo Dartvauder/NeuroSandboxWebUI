@@ -10,20 +10,20 @@
 
 Цель проекта — создать максимально простое приложение для использования нейросетевых моделей
 
-### LLM: ![1](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/4063f1fb-e3fe-4580-9d26-cd4ea34dcc41)
+### LLM: ![1](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/77bc6fdf-4a27-45ec-9459-9e90423fbb48)
 
 ### StableDiffusion: 
- #### txt2img: ![2](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/c91d2fa4-d8dc-4fc7-b881-8e369346e15f)
- #### img2img: ![3](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/61dc653f-1ccd-4d50-897c-c9fcc49b59f5)
- #### inpaint: ![4](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/b331ade5-d0ba-46dc-9d8e-352ea9a33631)
- #### video: ![5](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/07bba0b0-4f40-44d5-8446-5cf856921cd4)
- #### extras: ![6](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/e5103afb-aa22-4468-a2b4-fbd2f8fed280)
+ #### txt2img: ![2](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/8b2adf99-9724-43c5-b715-063a9feb1afb)
+ #### img2img: ![3](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/e1944acf-a065-4dba-9fdb-28ee061f2d1a)
+ #### inpaint: ![4](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/0005debc-ba17-4515-8205-a367521f53c7)
+ #### video: ![5](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/555232f9-2b49-4865-b2a9-46bfef3367f0)
+ #### extras: ![6](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/107a25d7-cc1c-45ba-82f5-11501d4f2832)
 
-### AudioCraft: ![7](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/2be4caa2-ebb8-45c8-9b88-a4c7d5d1bdfe)
+### AudioCraft: ![7](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/2aebf0c2-e011-4944-b47b-9312496133b5)
 
-### ModelDownloader: ![8](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/8807fcc6-046c-4f3f-b50e-e8ba4430c37e)
+### ModelDownloader: ![8](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/0ad5db30-89b6-4d0e-8181-4d759fa3dcfc)
 
-### Settings: ![8](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/52b0b01e-e6cf-49b0-8680-836ed30cf780)
+### Settings: ![9](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/3a6f10bb-d5c2-41c2-8949-238673086e5e)
 
 ## Функции:
 
