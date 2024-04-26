@@ -6,7 +6,7 @@
 
 ## Описание:
 
-Простой и удобный интерфейс для использования различных моделей нейросетей. Вы можете общаться с LLM используя текстовый или голосовой ввод, StableDiffusion для генерации изображений и AudioCraft для генерации аудио
+Простой и удобный интерфейс для использования различных моделей нейросетей. Вы можете общаться с LLM используя текстовый или голосовой ввод, использовать StableDiffusion для генерации изображений и видео, а так-же AudioCraft для генерации аудио
 
 Цель проекта — создать максимально простое приложение для использования нейросетевых моделей
 
@@ -29,10 +29,10 @@
 * Вы можете использовать приложение через мобильное устройство в localhost (Через IPv4)
 * Гибкий и оптимизированный интерфейс (От Gradio)
 * Поддержка Transformers и llama.cpp моделей (LLM)
-* Поддержка diffusers (safetensors) моделей (StableDiffusion) - Вкладки txt2img, img2img, inpaint и extras
+* Поддержка diffusers (safetensors) моделей (StableDiffusion) - Вкладки txt2img, img2img, inpaint, video и extras
 * Поддержка AudioCraft (Модели: musicgen, audiogen и magnet)
 * Поддержка TTS и Whisper моделей (Для LLM)
-* Поддержка Lora, Vae, Inpaint и Upscale моделей (Для Stable Diffusion)
+* Поддержка Lora, Vae, Inpaint, Upscale и Video моделей (Для Stable Diffusion)
 * Поддержка Multiband Diffusion модели (Для AudioCraft)
 * Возможность выбора аватара (Для LLM)
 * Настройки моделей внутри интерфейса
