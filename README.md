@@ -6,24 +6,26 @@
 
 ## Description:
 
-Simple and easy interface for use of different neural network models. You can chat with LLM using text or voice input, use StableDiffusion for generating images and videos, and also AudioCraft for generating audio
+Simple and easy interface for use of different neural network models. You can chat with LLM using text or voice input, use StableDiffusion for generating images and videos, AudioCraft for generating audio, CoquiTTS for text to speech and OpenAI-Whisper for speech to text. Also you can download LLM and StableDiffusion models, and change application settings inside interface
 
 The goal of the project - to create the easiest possible application to use neural network models
 
-### LLM: ![1](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/77bc6fdf-4a27-45ec-9459-9e90423fbb48)
+### LLM: ![1](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/9f6c7c86-03fe-400d-9f28-4824a93100f0)
 
-### StableDiffusion: 
- #### txt2img: ![2](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/8b2adf99-9724-43c5-b715-063a9feb1afb)
- #### img2img: ![3](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/e1944acf-a065-4dba-9fdb-28ee061f2d1a)
- #### inpaint: ![4](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/0005debc-ba17-4515-8205-a367521f53c7)
- #### video: ![5](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/555232f9-2b49-4865-b2a9-46bfef3367f0)
- #### extras: ![6](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/107a25d7-cc1c-45ba-82f5-11501d4f2832)
+### TTS-STT: ![2](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/b327c698-66a8-4649-a754-98830c2cbf27)
 
-### AudioCraft: ![7](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/2aebf0c2-e011-4944-b47b-9312496133b5)
+### StableDiffusion:
+ #### txt2img: ![3](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/a27878cd-ba13-451a-8181-994148f6919c)
+ #### img2img: ![4](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/d51168e6-29ab-4a58-ac0e-b83a8f7c40e0)
+ #### inpaint: ![5](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/953ab08c-30ff-4b6e-9590-1037b4ffa8f4)
+ #### video: ![6](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/d1966c3e-df35-47ae-9cf7-d69f7155a454)
+ #### extras: ![7](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/32a72376-9450-44d8-9e81-7d4085c7754f)
 
-### ModelDownloader: ![8](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/0ad5db30-89b6-4d0e-8181-4d759fa3dcfc)
+### AudioCraft: ![8](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/382ca556-1a14-4099-af36-936c212048f3)
 
-### Settings: ![9](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/3a6f10bb-d5c2-41c2-8949-238673086e5e)
+### ModelDownloader: ![9](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/ff98c1f1-33df-4018-981c-32671700659f)
+
+### Settings: ![10](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/40b38b60-0e32-4a04-a278-fdb0aa15c224)
 
 ## Features:
 
@@ -33,7 +35,7 @@ The goal of the project - to create the easiest possible application to use neur
 * Support for Transformers and llama.cpp models (LLM)
 * Support for diffusers (safetensors) models (StableDiffusion) - txt2img, img2img, inpaint, video and extras tabs
 * AudioCraft support (Models: musicgen, audiogen and magnet)
-* Supports TTS and Whisper models (For LLM)
+* Supports TTS and Whisper models (For LLM and TTS-STT)
 * Support for Lora, Vae, Inpaint, Upscale and Video models (For StableDiffusion)
 * Support Multiband Diffusion model (For AudioCraft)
 * Ability to select an avatar (For LLM)
@@ -80,7 +82,7 @@ To get update, run `git pull`
 
 ## How to use:
 
-#### Interface has five tabs: LLM, StableDiffusion, AudioCraft, ModelDownloader and Settings. Select the one you need and follow the instructions below 
+#### Interface has six tabs: LLM, TTS-STT, StableDiffusion, AudioCraft, ModelDownloader and Settings. Select the one you need and follow the instructions below 
 
 ### LLM:
 
@@ -94,6 +96,14 @@ To get update, run `git pull`
 #### Avatars = *inputs/image/avatars*
 #### Voice samples = *inputs/audio/voices*
 #### The voice must be pre-processed (22050 kHz, mono, WAV), the avatar should preferably be `PNG` or `JPG`
+
+### TTS-STT
+
+1) Type text for text to speech
+2) Input audio for speech to text
+3) Click the `Submit` button to receive the generated text and audio response
+#### Voice samples = *inputs/audio/voices*
+#### The voice must be pre-processed (22050 kHz, mono, WAV)
 
 ### StableDiffusion - has five sub-tabs:
 
