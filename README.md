@@ -169,6 +169,8 @@ To get update, run `git pull`
 ### ModelDownloader:
 
 * Here you can download `LLM` and `StableDiffusion models`. Just choose the model from the drop-down list and click the `Submit` button
+#### LLM model dowmloading here:
+#### StableDiffusion models downloading here:
 
 ### Settings: 
 
