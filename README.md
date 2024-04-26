@@ -6,7 +6,7 @@
 
 ## Description:
 
-Simple and easy interface for use of different neural network models. You can chat with LLM using text or voice input, StableDiffusion for generating images and AudioCraft for generating audio
+Simple and easy interface for use of different neural network models. You can chat with LLM using text or voice input, use StableDiffusion for generating images and videos, and also AudioCraft for generating audio
 
 The goal of the project - to create the easiest possible application to use neural network models
 
@@ -29,7 +29,7 @@ The goal of the project - to create the easiest possible application to use neur
 * You can use the application via your mobile device in localhost (Via IPv4)
 * Flexible and optimized interface (By Gradio)
 * Support for Transformers and llama.cpp models (LLM)
-* Support for diffusers (safetensors) models (StableDiffusion) - txt2img, img2img, inpaint and extras tabs
+* Support for diffusers (safetensors) models (StableDiffusion) - txt2img, img2img, inpaint, video and extras tabs
 * AudioCraft support (Models: musicgen, audiogen and magnet)
 * Supports TTS and Whisper models (For LLM)
 * Support for Lora, Vae, Inpaint and Upscale models (For Stable Diffusion)
