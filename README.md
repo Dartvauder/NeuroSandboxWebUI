@@ -99,7 +99,11 @@ To get update, run `git pull`
 
 ### TTS-STT
 
-1) 
+1) Type text for text to speech
+2) Input audio for speech to text
+3) Click the `Submit` button to receive the generated text and audio response
+#### Voice samples = *inputs/audio/voices*
+#### The voice must be pre-processed (22050 kHz, mono, WAV)
 
 ### StableDiffusion - has five sub-tabs:
 
