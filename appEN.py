@@ -1085,3 +1085,4 @@ with gr.TabbedInterface(
     )
 
     app.launch(share=share_mode, server_name="localhost")
+    
