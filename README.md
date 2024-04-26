@@ -6,7 +6,7 @@
 
 ## Description:
 
-Simple and easy interface for use of different neural network models. You can chat with LLM using text or voice input, use StableDiffusion for generating images and videos, AudioCraft for generating audio, CoquiTTS for text to speech and OpenAI-Whisper for speech to text. Also you can download LLM and StableDiffusion models and change application settings inside interface
+Simple and easy interface for use of different neural network models. You can chat with LLM using text or voice input, use StableDiffusion for generating images and videos, AudioCraft for generating audio, CoquiTTS for text to speech and OpenAI-Whisper for speech to text. Also you can download LLM and StableDiffusion models, and change application settings inside interface
 
 The goal of the project - to create the easiest possible application to use neural network models
 
