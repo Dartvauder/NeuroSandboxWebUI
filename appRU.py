@@ -797,7 +797,7 @@ def generate_audio(prompt, input_audio=None, model_name=None, audiocraft_setting
         if mbd:
             if stop_signal:
                 return None, "Generation stopped"
-            tokens = rearrange(tokens, "b n d -> n b d")  # Изменение формы тензора
+            tokens = rearrange(tokens, "b n d -> n b d")
             wav_diffusion = mbd.tokens_to_wav(tokens)
             wav_diffusion = wav_diffusion.squeeze()
             if wav_diffusion.ndim == 1:
