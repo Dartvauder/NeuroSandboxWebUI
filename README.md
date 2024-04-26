@@ -82,7 +82,7 @@ To get update, run `git pull`
 
 ## How to use:
 
-#### Interface has six tabs: LLM, TTS-STT StableDiffusion, AudioCraft, ModelDownloader and Settings. Select the one you need and follow the instructions below 
+#### Interface has six tabs: LLM, TTS-STT, StableDiffusion, AudioCraft, ModelDownloader and Settings. Select the one you need and follow the instructions below 
 
 ### LLM:
 
