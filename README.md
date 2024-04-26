@@ -6,13 +6,13 @@
 
 ## Description:
 
-Simple and easy interface for use of different neural network models. You can chat with LLM using text or voice input, Stable Diffusion for generating images and AudioCraft for generating audio
+Simple and easy interface for use of different neural network models. You can chat with LLM using text or voice input, StableDiffusion for generating images and AudioCraft for generating audio
 
 The goal of the project - to create the easiest possible application to use neural network models
 
 ### LLM: ![1](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/418a90e9-cb45-4d54-92c6-bdcda2711ba9)
 
-### Stable Diffusion: 
+### StableDiffusion: 
  #### txt2img: ![2](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/b1f95343-48d4-4251-80ec-1599d3781a36)
  #### img2img: ![3](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/d9cea6c8-184b-4b7e-9853-ed96d6150df2)
  #### inpaint: ![4](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/3f3cf73e-852d-4260-8cc7-6f01e6d71a82)
@@ -28,7 +28,7 @@ The goal of the project - to create the easiest possible application to use neur
 * You can use the application via your mobile device in localhost (Via IPv4)
 * Flexible and optimized interface (By Gradio)
 * Support for Transformers and llama.cpp models (LLM)
-* Support for diffusers (safetensors) models (Stable Diffusion) - txt2img, img2img, inpaint and extras tabs
+* Support for diffusers (safetensors) models (StableDiffusion) - txt2img, img2img, inpaint and extras tabs
 * AudioCraft support (Models: musicgen, audiogen and magnet)
 * Supports TTS and Whisper models (For LLM)
 * Support for Lora, Vae, Inpaint and Upscale models (For Stable Diffusion)
@@ -91,7 +91,7 @@ To get update, run `git pull`
 #### Voice samples = *inputs/audio/voices*
 #### The voice must be pre-processed (22050 kHz, mono, WAV), the avatar should preferably be `PNG` or `JPG`
 
-### Stable Diffusion - has four sub-tabs:
+### StableDiffusion - has four sub-tabs:
 
 #### txt2img:
 
@@ -162,7 +162,7 @@ To get update, run `git pull`
 ## Where can I get models, voices and avatars?
 
 * LLM models can be taken from [HuggingFace](https://huggingface.co/models)
-* Stable Diffusion, vae, inpaint and lora models can be taken from [CivitAI](https://civitai.com/models)
+* StableDiffusion, vae, inpaint and lora models can be taken from [CivitAI](https://civitai.com/models)
 * AudioCraft models are downloads automatically in *inputs* folder, when you select a model and press the submit button
 * TTS, Whisper, Upscale and Multiband diffusion models are downloads automatically in *inputs* folder when are they used 
 * You can take voices anywhere. Record yours or take a recording from the Internet. The main thing is that it is pre-processed!
