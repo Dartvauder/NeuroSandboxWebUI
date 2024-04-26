@@ -10,20 +10,22 @@ Simple and easy interface for use of different neural network models. You can ch
 
 The goal of the project - to create the easiest possible application to use neural network models
 
-### LLM: ![1](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/77bc6fdf-4a27-45ec-9459-9e90423fbb48)
+### LLM: 
+
+### TTS-STT: 
 
 ### StableDiffusion: 
- #### txt2img: ![2](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/8b2adf99-9724-43c5-b715-063a9feb1afb)
- #### img2img: ![3](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/e1944acf-a065-4dba-9fdb-28ee061f2d1a)
- #### inpaint: ![4](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/0005debc-ba17-4515-8205-a367521f53c7)
- #### video: ![5](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/555232f9-2b49-4865-b2a9-46bfef3367f0)
- #### extras: ![6](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/107a25d7-cc1c-45ba-82f5-11501d4f2832)
+ #### txt2img: 
+ #### img2img: 
+ #### inpaint: 
+ #### video: 
+ #### extras: 
 
-### AudioCraft: ![7](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/2aebf0c2-e011-4944-b47b-9312496133b5)
+### AudioCraft: 
 
-### ModelDownloader: ![8](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/0ad5db30-89b6-4d0e-8181-4d759fa3dcfc)
+### ModelDownloader: 
 
-### Settings: ![9](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/3a6f10bb-d5c2-41c2-8949-238673086e5e)
+### Settings: 
 
 ## Features:
 
@@ -33,7 +35,7 @@ The goal of the project - to create the easiest possible application to use neur
 * Support for Transformers and llama.cpp models (LLM)
 * Support for diffusers (safetensors) models (StableDiffusion) - txt2img, img2img, inpaint, video and extras tabs
 * AudioCraft support (Models: musicgen, audiogen and magnet)
-* Supports TTS and Whisper models (For LLM)
+* Supports TTS and Whisper models (For LLM and TTS-STT)
 * Support for Lora, Vae, Inpaint, Upscale and Video models (For StableDiffusion)
 * Support Multiband Diffusion model (For AudioCraft)
 * Ability to select an avatar (For LLM)
@@ -80,7 +82,7 @@ To get update, run `git pull`
 
 ## How to use:
 
-#### Interface has five tabs: LLM, StableDiffusion, AudioCraft, ModelDownloader and Settings. Select the one you need and follow the instructions below 
+#### Interface has six tabs: LLM, TTS-STT StableDiffusion, AudioCraft, ModelDownloader and Settings. Select the one you need and follow the instructions below 
 
 ### LLM:
 
@@ -94,6 +96,10 @@ To get update, run `git pull`
 #### Avatars = *inputs/image/avatars*
 #### Voice samples = *inputs/audio/voices*
 #### The voice must be pre-processed (22050 kHz, mono, WAV), the avatar should preferably be `PNG` or `JPG`
+
+### TTS-STT
+
+1) 
 
 ### StableDiffusion - has five sub-tabs:
 
