@@ -719,13 +719,14 @@ def generate_video(init_image, video_settings_html, motion_bucket_id, noise_aug_
             variant="fp16"
         )
         pipe.enable_model_cpu_offload()
+        pipe.unet.enable_forward_chunking()
 
         image = load_image(init_image)
         image = image.resize((1024, 576))
 
         generator = torch.manual_seed(42)
         frames = pipe(image, decode_chunk_size=decode_chunk_size, generator=generator,
-                      motion_bucket_id=motion_bucket_id, noise_aug_strength=noise_aug_strength).frames[0]
+                      motion_bucket_id=motion_bucket_id, noise_aug_strength=noise_aug_strength, num_frames=25).frames[0]
 
         if stop_signal:
             return None, "Generation stopped"
