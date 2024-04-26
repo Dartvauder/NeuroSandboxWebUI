@@ -15,6 +15,7 @@ audioread==3.0.1
 av==12.0.0
 Babel==2.14.0
 bangla==0.0.2
+bitsandbytes==0.43.1
 blinker==1.7.0
 blis==0.7.11
 bnnumerizer==0.0.2
@@ -56,8 +57,8 @@ fsspec==2024.3.1
 g2pkk==0.1.2
 gitdb==4.0.11
 GitPython==3.1.43
-gradio==4.26.0
-gradio_client==0.15.1
+gradio==4.28.2
+gradio_client==0.16.0
 grpcio==1.62.2
 gruut==2.2.3
 gruut-ipa==0.13.0
@@ -112,7 +113,10 @@ networkx==2.8.8
 nltk==3.8.1
 num2words==0.5.13
 numba==0.59.1
-numpy==1.22.0
+numpy==1.26.4
+nvidia-cublas-cu12==12.4.5.8
+nvidia-cuda-nvrtc-cu12==12.4.127
+nvidia-cudnn-cu12==9.1.0.70
 omegaconf==2.3.0
 openai-whisper==20231117
 opencv-python==4.9.0.80
@@ -131,6 +135,7 @@ pycparser==2.22
 pydantic==2.7.1
 pydantic_core==2.18.2
 pydub==0.25.1
+pyee==11.1.0
 Pygments==2.17.2
 pynndescent==0.5.12
 pyparsing==3.1.2
@@ -138,6 +143,7 @@ pypinyin==0.51.0
 pysbd==0.3.4
 python-crfsuite==0.9.10
 python-dateutil==2.9.0.post0
+python-ffmpeg==2.0.12
 python-multipart==0.0.9
 pytz==2024.1
 PyYAML==6.0.1
@@ -185,7 +191,7 @@ transformers==4.40.1
 treetable==0.2.5
 TTS==0.22.0
 typeguard==4.2.1
-typer==0.9.4
+typer==0.12.3
 typing_extensions==4.11.0
 tzdata==2024.1
 tzlocal==5.2
