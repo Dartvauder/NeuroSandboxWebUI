@@ -6,13 +6,13 @@
 
 ## Описание:
 
-Простой и удобный интерфейс для использования различных моделей нейросетей. Вы можете общаться с LLM используя текстовый или голосовой ввод, Stable Diffusion для генерации изображений и AudioCraft для генерации аудио
+Простой и удобный интерфейс для использования различных моделей нейросетей. Вы можете общаться с LLM используя текстовый или голосовой ввод, StableDiffusion для генерации изображений и AudioCraft для генерации аудио
 
 Цель проекта — создать максимально простое приложение для использования нейросетевых моделей
 
 ### LLM: ![1](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/418a90e9-cb45-4d54-92c6-bdcda2711ba9)
 
-### Stable Diffusion: 
+### StableDiffusion: 
  #### txt2img: ![2](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/b1f95343-48d4-4251-80ec-1599d3781a36)
  #### img2img: ![3](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/d9cea6c8-184b-4b7e-9853-ed96d6150df2)
  #### inpaint: ![4](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/3f3cf73e-852d-4260-8cc7-6f01e6d71a82)
@@ -28,7 +28,7 @@
 * Вы можете использовать приложение через мобильное устройство в localhost (Через IPv4)
 * Гибкий и оптимизированный интерфейс (От Gradio)
 * Поддержка Transformers и llama.cpp моделей (LLM)
-* Поддержка diffusers (safetensors) моделей (Stable Diffusion) - Вкладки txt2img, img2img, inpaint и extras
+* Поддержка diffusers (safetensors) моделей (StableDiffusion) - Вкладки txt2img, img2img, inpaint и extras
 * Поддержка AudioCraft (Модели: musicgen, audiogen и magnet)
 * Поддержка TTS и Whisper моделей (Для LLM)
 * Поддержка Lora, Vae, Inpaint и Upscale моделей (Для Stable Diffusion)
@@ -76,7 +76,7 @@
 
 ## Как использовать:
 
-#### Интерфейс имеет четыре вкладки: LLM, Stable Diffusion, AudioCraft и Settings. Выберите ту которая вам нужна и следуйте инструкциям ниже
+#### Интерфейс имеет четыре вкладки: LLM, StableDiffusion, AudioCraft и Settings. Выберите ту которая вам нужна и следуйте инструкциям ниже
 
 ### LLM:
 
@@ -91,7 +91,7 @@
 #### Образцы голоса = *inputs/audio/voices*
 #### Голос должен быть предварительно обработан (22050 кГц, монозвук, WAV), аватар предпочтительно должен быть `PNG` или `JPG`
 
-### Stable Diffusion - имеет четыре под-вкладки:
+### StableDiffusion - имеет четыре под-вкладки:
 
 #### txt2img:
 
@@ -159,7 +159,7 @@
 ## Где я могу взять модели, голоса и аватары?
 
 * LLM модели можно взять с сайта [HuggingFace](https://huggingface.co/models)
-* Модели Stable Diffusion, vae, inpaint и lora можно взять с сайта [CivitAI](https://civitai.com/models)
+* Модели StableDiffusion, vae, inpaint и lora можно взять с сайта [CivitAI](https://civitai.com/models)
 * Модели AudioCraft загружаются автоматически в папку *inputs*, когда вы выбираете модель и нажимаете кнопку `submit`
 * TTS, Whisper, Upscale и Multiband diffusion модели скачиваються автоматически в папку *inputs* при их использовании
 * Вы можете использовать голоса откуда угодно. Запишите свой или возьмите запись из интернета. Главное, чтобы оно было предварительно обработано!
