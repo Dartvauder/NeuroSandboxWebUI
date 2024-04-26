@@ -386,6 +386,53 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_settin
     return chat_history, audio_path, avatar_path, chat_dir, None
 
 
+def generate_tts_stt(text, audio, tts_settings_html, speaker_wav, language, tts_temperature, tts_top_p, tts_top_k, tts_speed):
+    global tts_model, whisper_model
+
+    tts_output = None
+    stt_output = None
+
+    if not text and not audio:
+        return None, "Please enter text for TTS or record audio for STT!"
+
+    if text:
+        if not tts_model:
+            tts_model = load_tts_model()
+        if not speaker_wav or not language:
+            return None, "Please select a voice and language for TTS!"
+        device = "cuda" if torch.cuda.is_available() else "cpu"
+        tts_model = tts_model.to(device)
+
+        wav = tts_model.tts(text=text, speaker_wav=f"inputs/audio/voices/{speaker_wav}", language=language,
+                            temperature=tts_temperature, top_p=tts_top_p, top_k=tts_top_k, speed=tts_speed)
+
+        today = datetime.now().date()
+        audio_dir = os.path.join('outputs', f"TTS_{today.strftime('%Y%m%d')}")
+        os.makedirs(audio_dir, exist_ok=True)
+        audio_filename = f"tts_{datetime.now().strftime('%Y%m%d_%H%M%S')}.wav"
+        tts_output = os.path.join(audio_dir, audio_filename)
+        sf.write(tts_output, wav, 22050)
+
+    if audio:
+        if not whisper_model:
+            whisper_model = load_whisper_model()
+        device = "cuda" if torch.cuda.is_available() else "cpu"
+        whisper_model = whisper_model.to(device)
+
+        stt_output = transcribe_audio(audio)
+
+        if stt_output:
+            today = datetime.now().date()
+            stt_dir = os.path.join('outputs', f"STT_{today.strftime('%Y%m%d')}")
+            os.makedirs(stt_dir, exist_ok=True)
+            stt_filename = f"stt_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt"
+            stt_file_path = os.path.join(stt_dir, stt_filename)
+            with open(stt_file_path, 'w', encoding='utf-8') as f:
+                f.write(stt_output)
+
+    return tts_output, stt_output
+
+
 def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name, vae_model_name, lora_model_names, stable_diffusion_settings_html,
                            stable_diffusion_model_type, stable_diffusion_sampler, stable_diffusion_steps,
                            stable_diffusion_cfg, stable_diffusion_width, stable_diffusion_height,
@@ -986,7 +1033,7 @@ chat_interface = gr.Interface(
         gr.HTML("<h3>TTS Settings</h3>"),
         gr.Dropdown(choices=speaker_wavs_list, label="Select voice", interactive=True),
         gr.Dropdown(choices=["en", "ru"], label="Select language", interactive=True),
-        gr.Slider(minimum=0.0, maximum=2.0, value=1.0, step=0.1, label="TTS Temperature", interactive=True),
+        gr.Slider(minimum=0.0, maximum=1.9, value=1.0, step=0.1, label="TTS Temperature", interactive=True),
         gr.Slider(minimum=0.0, maximum=1.0, value=0.9, step=0.1, label="TTS Top P", interactive=True),
         gr.Slider(minimum=0, maximum=100, value=20, step=1, label="TTS Top K", interactive=True),
         gr.Slider(minimum=0.5, maximum=2.0, value=1.0, step=0.1, label="TTS Speed", interactive=True),
@@ -1000,6 +1047,31 @@ chat_interface = gr.Interface(
     title="NeuroSandboxWebUI (ALPHA) - LLM",
     description="This user interface allows you to enter any text or audio and receive generated response. You can select the LLM model, "
                 "avatar, voice and language for tts from the drop-down lists. You can also customize the model settings from the sliders. "
+                "Try it and see what happens!",
+    allow_flagging="never",
+)
+
+tts_stt_interface = gr.Interface(
+    fn=generate_tts_stt,
+    inputs=[
+        gr.Textbox(label="Enter text for TTS"),
+        gr.Audio(label="Record audio for STT", type="filepath"),
+        gr.HTML("<h3>TTS Settings</h3>"),
+        gr.Dropdown(choices=speaker_wavs_list, label="Select voice", interactive=True),
+        gr.Dropdown(choices=["en", "es", "fr", "de", "it", "pt", "pl", "tr", "ru", "nl", "cs", "ar", "zh-cn", "ja", "hu", "ko", "hi"], label="Select language", interactive=True),
+        gr.Slider(minimum=0.0, maximum=1.9, value=1.0, step=0.1, label="TTS Temperature", interactive=True),
+        gr.Slider(minimum=0.0, maximum=1.0, value=0.9, step=0.1, label="TTS Top P", interactive=True),
+        gr.Slider(minimum=0, maximum=100, value=20, step=1, label="TTS Top K", interactive=True),
+        gr.Slider(minimum=0.5, maximum=2.0, value=1.0, step=0.1, label="TTS Speed", interactive=True),
+    ],
+    outputs=[
+        gr.Audio(label="TTS Audio", type="filepath"),
+        gr.Textbox(label="STT Text"),
+    ],
+    title="NeuroSandboxWebUI (ALPHA) - TTS-STT",
+    description="This user interface allows you to enter text for Text-to-Speech(CoquiTTS) and record audio for Speech-to-Text(OpenAIWhisper). "
+                "For TTS, you can select the voice and language, and customize the generation settings from the sliders. "
+                "For STT, simply record your audio and the spoken text will be displayed. "
                 "Try it and see what happens!",
     allow_flagging="never",
 )
@@ -1144,7 +1216,7 @@ audiocraft_interface = gr.Interface(
         gr.Slider(minimum=1, maximum=120, value=10, step=1, label="Duration (seconds)"),
         gr.Slider(minimum=1, maximum=1000, value=250, step=1, label="Top K"),
         gr.Slider(minimum=0.0, maximum=1.0, value=0.0, step=0.1, label="Top P"),
-        gr.Slider(minimum=0.0, maximum=2.0, value=1.0, step=0.1, label="Temperature"),
+        gr.Slider(minimum=0.0, maximum=1.9, value=1.0, step=0.1, label="Temperature"),
         gr.Slider(minimum=1.0, maximum=10.0, value=3.0, step=0.1, label="CFG"),
         gr.Checkbox(label="Enable Multiband Diffusion", value=False),
         gr.Button(value="Stop generation", interactive=True, variant="stop"),
@@ -1188,10 +1260,10 @@ settings_interface = gr.Interface(
 )
 
 with gr.TabbedInterface(
-        [chat_interface, gr.TabbedInterface([txt2img_interface, img2img_interface, inpaint_interface, video_interface, extras_interface],
-                                            tab_names=["txt2img", "img2img", "inpaint", "video", "extras"]),
+        [chat_interface, tts_stt_interface, gr.TabbedInterface([txt2img_interface, img2img_interface, inpaint_interface, video_interface, extras_interface],
+        tab_names=["txt2img", "img2img", "inpaint", "video", "extras"]),
          audiocraft_interface, model_downloader_interface, settings_interface],
-        tab_names=["LLM", "StableDiffusion", "AudioCraft", "ModelDownloader", "Settings"]
+        tab_names=["LLM", "TTS-STT", "StableDiffusion", "AudioCraft", "ModelDownloader", "Settings"]
 ) as app:
     chat_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     txt2img_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
