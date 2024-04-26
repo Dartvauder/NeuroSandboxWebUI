@@ -16,6 +16,7 @@ The goal of the project - to create the easiest possible application to use neur
  #### txt2img: ![2](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/b1f95343-48d4-4251-80ec-1599d3781a36)
  #### img2img: ![3](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/d9cea6c8-184b-4b7e-9853-ed96d6150df2)
  #### inpaint: ![4](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/3f3cf73e-852d-4260-8cc7-6f01e6d71a82)
+ #### video:
  #### extras: ![5](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/ff81be62-1617-4812-8cd4-be0524770c90)
 
 ### AudioCraft: ![6](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/cd9f9787-0a23-42cd-93c1-9058143e84ba)
@@ -91,7 +92,7 @@ To get update, run `git pull`
 #### Voice samples = *inputs/audio/voices*
 #### The voice must be pre-processed (22050 kHz, mono, WAV), the avatar should preferably be `PNG` or `JPG`
 
-### StableDiffusion - has four sub-tabs:
+### StableDiffusion - has five sub-tabs:
 
 #### txt2img:
 
@@ -129,6 +130,12 @@ To get update, run `git pull`
 8) Click the `Submit` button to get the inpainted image
 #### Optional: You can select your `vae` model
 #### vae = *inputs/image/sd_models/vae*
+
+#### video:
+
+1) Upload the initial image
+2) Select the options you need
+3) Click the `Submit` button to get the video from image
 
 #### extras:
 
