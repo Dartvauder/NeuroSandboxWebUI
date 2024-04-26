@@ -76,7 +76,7 @@ To get update, run `git pull`
 
 ## How to use:
 
-#### Interface has four tabs: LLM, Stable Diffusion, AudioCraft and Settings. Select the one you need and follow the instructions below 
+#### Interface has four tabs: LLM, StableDiffusion, AudioCraft and Settings. Select the one you need and follow the instructions below 
 
 ### LLM:
 
