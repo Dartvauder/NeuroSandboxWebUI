@@ -702,20 +702,19 @@ def generate_video(init_image, video_settings_html, motion_bucket_id, noise_aug_
     stop_signal = False
 
     video_model_name = "vdo/stable-video-diffusion-img2vid-xt-1-1"
-    video_model_dir = os.path.join("inputs", "image", "sd_models", "video", video_model_name)
+    video_model_path = os.path.join("inputs", "image", "sd_models", "video")
 
-    if not os.path.exists(video_model_dir):
-        os.makedirs(video_model_dir, exist_ok=True)
-        pipe = StableVideoDiffusionPipeline.from_pretrained(
-            pretrained_model_name_or_path=video_model_name,
-            torch_dtype=torch.float16,
-            variant="fp16"
-        )
-        pipe.save_pretrained(video_model_dir)
+    print(f"Downloading Stable Video Diffusion model: {video_model_name}")
+
+    if not os.path.exists(video_model_path):
+        os.makedirs(video_model_path, exist_ok=True)
+        Repo.clone_from(f"https://huggingface.co/{video_model_name}", video_model_path)
+
+    print(f"Stable Video Diffusion model {video_model_name} downloaded")
 
     try:
         pipe = StableVideoDiffusionPipeline.from_pretrained(
-            pretrained_model_name_or_path=video_model_dir,
+            pretrained_model_name_or_path=video_model_path,
             torch_dtype=torch.float16,
             variant="fp16"
         )
