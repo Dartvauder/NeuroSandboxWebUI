@@ -469,7 +469,7 @@ def generate_tts_stt(text, audio, tts_settings_html, speaker_wav, language, tts_
     return tts_output, stt_output
 
 
-def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name, vae_model_name, lora_model_names, stable_diffusion_settings_html,
+def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name, vae_model_name, lora_model_names, textual_inversion_model_name, stable_diffusion_settings_html,
                            stable_diffusion_model_type, stable_diffusion_sampler, stable_diffusion_steps,
                            stable_diffusion_cfg, stable_diffusion_width, stable_diffusion_height,
                            stable_diffusion_clip_skip, enable_upscale=False, upscale_factor="x2", upscale_steps=50, upscale_cfg=6, output_format="png", stop_generation=None):
@@ -538,6 +538,12 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
         for lora_model_name in lora_model_names:
             lora_model_path = os.path.join("inputs", "image", "sd_models", "lora", lora_model_name)
             stable_diffusion_model.load_lora_weights(lora_model_path)
+
+    if textual_inversion_model_name is not None:
+        textual_inversion_model_path = os.path.join("inputs", "image", "sd_models", "embedding",
+                                                    textual_inversion_model_name)
+        if os.path.exists(textual_inversion_model_path):
+            stable_diffusion_model.load_textual_inversion(textual_inversion_model_path)
 
     try:
         images = stable_diffusion_model(prompt, negative_prompt=negative_prompt,
@@ -972,7 +978,6 @@ def generate_audio(prompt, input_audio=None, model_name=None, audiocraft_setting
         else:
             return audio_path + ".wav", None
 
-
     finally:
         del model
         if mbd:
@@ -1068,6 +1073,7 @@ vae_models_list = [None] + [model.replace(".safetensors", "") for model in os.li
                             model.endswith(".safetensors") or not model.endswith(".txt")]
 lora_models_list = [None] + [model for model in os.listdir("inputs/image/sd_models/lora") if
                              model.endswith(".safetensors")]
+textual_inversion_models_list = [None] + [model for model in os.listdir("inputs/image/sd_models/embedding") if model.endswith(".pt")]
 inpaint_models_list = [None] + [model.replace(".safetensors", "") for model in
                                 os.listdir("inputs/image/sd_models/inpaint")
                                 if model.endswith(".safetensors") or not model.endswith(".txt")]
@@ -1145,6 +1151,7 @@ txt2img_interface = gr.Interface(
         gr.Dropdown(choices=stable_diffusion_models_list, label="Select StableDiffusion model", value=None),
         gr.Dropdown(choices=vae_models_list, label="Select VAE model (optional)", value=None),
         gr.Dropdown(choices=lora_models_list, label="Select LORA models (optional)", value=None, multiselect=True),
+        gr.Dropdown(choices=textual_inversion_models_list, label="Select Embedding model (optional)", value=None, multiselect=True),
         gr.HTML("<h3>StableDiffusion Settings</h3>"),
         gr.Radio(choices=["SD", "SD2", "SDXL"], label="Select model type", value="SD"),
         gr.Dropdown(choices=["euler_ancestral", "euler", "lms", "heun", "dpm", "dpm_solver", "dpm_solver++"],
