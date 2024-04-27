@@ -168,7 +168,9 @@ To get update, run `git pull`
 
 ### ModelDownloader:
 
-* Here you can download `LLM` and `StableDiffusion models`. Just choose the model from the drop-down list and click the `Submit` button
+* Here you can download `LLM` and `StableDiffusion` models. Just choose the model from the drop-down list and click the `Submit` button
+#### `LLM` models are downloaded here: *inputs/text/llm_models*
+#### `StableDiffusion` models are downloaded here: *inputs/image/sd_models*
 
 ### Settings: 
 
@@ -182,14 +184,13 @@ To get update, run `git pull`
 4) You can turn off the application using the `Close terminal` button
 5) You can open the *outputs* folder by clicking on the `Folder` button
 
-
 ## Where can I get models, voices and avatars?
 
 * LLM models can be taken from [HuggingFace](https://huggingface.co/models) or from ModelDownloader inside interface
 * StableDiffusion, vae, inpaint and lora models can be taken from [CivitAI](https://civitai.com/models) or from ModelDownloader inside interface
 * AudioCraft models are downloads automatically in *inputs* folder, when you select a model and press the submit button
 * TTS, Whisper, Upscale and Multiband diffusion models are downloads automatically in *inputs* folder when are they used 
-* You can take voices anywhere. Record yours or take a recording from the Internet. The main thing is that it is pre-processed!
+* You can take voices anywhere. Record yours or take a recording from the Internet. Or just use those that are already in the project. The main thing is that it is pre-processed!
 * It’s the same with avatars as with voices. You can download them on the Internet, generate them using neural networks, or take a photo of yourself. The main thing is to comply with the required file format
 
 ## Roadmap
@@ -221,4 +222,3 @@ Thank you very much to these projects for allowing me to create my application:
 * CryptoWallet(BEP-20) - 0x3d86bdb5f50b92d0d7Eb44F1a833acC5e91aAEcA
 
 * [!["Buy Me A Coffee"](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/Dartvauder)
-

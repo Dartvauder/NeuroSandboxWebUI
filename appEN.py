@@ -3,6 +3,7 @@ import langdetect
 from transformers import AutoModelForCausalLM, AutoTokenizer
 import soundfile as sf
 import os
+import json
 import torch
 from einops import rearrange
 from TTS.api import TTS
@@ -218,7 +219,7 @@ chat_history = []
 
 
 def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_settings_html, llm_model_type, max_length, max_tokens,
-                             temperature, top_p, top_k, avatar_html, avatar_name, enable_tts, tts_settings_html,
+                             temperature, top_p, top_k, chat_history_format, avatar_name, enable_tts, tts_settings_html,
                              speaker_wav, language, tts_temperature, tts_top_p, tts_top_k, tts_speed, output_format, stop_generation):
     global chat_history, chat_dir, tts_model, whisper_model, stop_signal
     stop_signal = False
@@ -339,11 +340,20 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_settin
             os.makedirs(chat_dir)
             os.makedirs(os.path.join(chat_dir, 'text'))
             os.makedirs(os.path.join(chat_dir, 'audio'))
-        chat_history_path = os.path.join(chat_dir, 'text', 'chat_history.txt')
-        with open(chat_history_path, "a", encoding="utf-8") as f:
-            f.write(f"Human: {prompt}\n")
-            if text:
-                f.write(f"AI: {text}\n\n")
+        chat_history_path = os.path.join(chat_dir, 'text', f'chat_history.{chat_history_format}')
+        if chat_history_format == "txt":
+            with open(chat_history_path, "a", encoding="utf-8") as f:
+                f.write(f"Human: {prompt}\n")
+                if text:
+                    f.write(f"AI: {text}\n\n")
+        elif chat_history_format == "json":
+            chat_history = []
+            if os.path.exists(chat_history_path):
+                with open(chat_history_path, "r", encoding="utf-8") as f:
+                    chat_history = json.load(f)
+            chat_history.append(["Human: " + prompt, "AI: " + (text if text else "")])
+            with open(chat_history_path, "w", encoding="utf-8") as f:
+                json.dump(chat_history, f, ensure_ascii=False, indent=4)
         avatar_path = f"inputs/image/avatars/{avatar_name}" if avatar_name else None
         if enable_tts and text:
             if stop_signal:
@@ -1062,7 +1072,7 @@ chat_interface = gr.Interface(
         gr.Slider(minimum=0.0, maximum=2.0, value=0.7, step=0.1, label="Temperature"),
         gr.Slider(minimum=0.0, maximum=1.0, value=0.9, step=0.1, label="Top P"),
         gr.Slider(minimum=0, maximum=100, value=20, step=1, label="Top K"),
-        gr.HTML("<br>"),
+        gr.Dropdown(choices=["txt", "json"], label="Select chat history format", value="txt", interactive=True),
         gr.Dropdown(choices=avatars_list, label="Select avatar", value=None),
         gr.Checkbox(label="Enable TTS", value=False),
         gr.HTML("<h3>TTS Settings</h3>"),
