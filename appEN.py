@@ -770,7 +770,7 @@ def generate_image_inpaint(prompt, negative_prompt, init_image, mask_image, stab
         torch.cuda.empty_cache()
 
 
-def generate_video(init_image, video_settings_html, motion_bucket_id, noise_aug_strength, fps, decode_chunk_size, output_format, stop_generation):
+def generate_video(init_image, video_settings_html, motion_bucket_id, noise_aug_strength, fps, num_frames, decode_chunk_size, output_format, stop_generation):
     global stop_signal
     stop_signal = False
 
@@ -799,7 +799,7 @@ def generate_video(init_image, video_settings_html, motion_bucket_id, noise_aug_
 
         generator = torch.manual_seed(42)
         frames = pipe(image, decode_chunk_size=decode_chunk_size, generator=generator,
-                      motion_bucket_id=motion_bucket_id, noise_aug_strength=noise_aug_strength, num_frames=25).frames[0]
+                      motion_bucket_id=motion_bucket_id, noise_aug_strength=noise_aug_strength, num_frames=num_frames).frames[0]
 
         if stop_signal:
             return None, "Generation stopped"
@@ -1222,9 +1222,10 @@ video_interface = gr.Interface(
     inputs=[
         gr.Image(label="Initial image", type="filepath"),
         gr.HTML("<h3>Video Settings</h3>"),
-        gr.Slider(minimum=0, maximum=720, value=180, step=1, label="Motion Bucket ID"),
+        gr.Slider(minimum=0, maximum=360, value=180, step=1, label="Motion Bucket ID"),
         gr.Slider(minimum=0.0, maximum=1.0, value=0.1, step=0.01, label="Noise Augmentation Strength"),
         gr.Slider(minimum=1, maximum=60, value=10, step=1, label="FPS"),
+        gr.Slider(minimum=1, maximum=120, value=25, step=1, label="Frames"),
         gr.Slider(minimum=1, maximum=32, value=8, step=1, label="Decode Chunk Size"),
         gr.Dropdown(choices=["mp4", "gif"], label="Select output format", value="mp4", interactive=True),
         gr.Button(value="Stop generation", interactive=True, variant="stop"),
