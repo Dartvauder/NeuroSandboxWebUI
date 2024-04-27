@@ -711,7 +711,7 @@ def generate_image_depth2img(prompt, negative_prompt, init_image, stable_diffusi
     try:
         original_config_file = "configs/sd/v2-inference.yaml"
         stable_diffusion_model = StableDiffusionDepth2ImgPipeline.from_pretrained(
-            stable_diffusion_model_path, use_safetensors=True, device_map="auto",
+            stable_diffusion_model_path, use_safetensors=True,
             original_config_file=original_config_file, torch_dtype=torch.float16, variant="fp16",
         )
     except (ValueError, KeyError):
