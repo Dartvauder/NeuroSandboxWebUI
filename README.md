@@ -36,7 +36,7 @@ The goal of the project - to create the easiest possible application to use neur
 * Support for diffusers (safetensors) models (StableDiffusion) - txt2img, img2img, inpaint, video and extras tabs
 * AudioCraft support (Models: musicgen, audiogen and magnet)
 * Supports TTS and Whisper models (For LLM and TTS-STT)
-* Supports Lora, Textual inversion (embedding) Vae, Inpaint, Upscale and Video models (For StableDiffusion)
+* Supports Lora, Textual inversion (embedding), Vae, Inpaint, Upscale and Video models (For StableDiffusion)
 * Support Multiband Diffusion model (For AudioCraft)
 * Ability to select an avatar (For LLM)
 * Model settings inside the interface
