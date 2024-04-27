@@ -1,8 +1,10 @@
 import gradio as gr
 import langdetect
 from transformers import AutoModelForCausalLM, AutoTokenizer
+from libretranslatepy import LibreTranslateAPI
 import soundfile as sf
 import os
+import subprocess
 import json
 import torch
 from einops import rearrange
@@ -475,6 +477,12 @@ def generate_tts_stt(text, audio, tts_settings_html, speaker_wav, language, tts_
                     json.dump(stt_history, f, ensure_ascii=False, indent=4)
 
     return tts_output, stt_output
+
+
+def translate_text(text, source_lang, target_lang):
+    translator = LibreTranslateAPI("http://127.0.0.1:5000")
+    translation = translator.translate(text, source_lang, target_lang)
+    return translation
 
 
 def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name, vae_model_name, lora_model_names, textual_inversion_model_names, stable_diffusion_settings_html,
@@ -997,6 +1005,51 @@ def generate_audio(prompt, input_audio=None, model_name=None, audiocraft_setting
         torch.cuda.empty_cache()
 
 
+def demucs_generate(audio_file, output_format="wav"):
+    global stop_signal
+    if stop_signal:
+        return None, "Generation stopped"
+
+    if not audio_file:
+        return None, "Please upload an audio file!"
+
+    today = datetime.now().date()
+    demucs_dir = os.path.join("outputs", f"Demucs_{today.strftime('%Y%m%d')}")
+    os.makedirs(demucs_dir, exist_ok=True)
+
+    separate_dir = os.path.join(demucs_dir, "separate")
+    os.makedirs(separate_dir, exist_ok=True)
+
+    try:
+        command = f"demucs --two-stems=vocals {audio_file} -o {separate_dir}"
+        subprocess.run(command, shell=True, check=True)
+
+        if stop_signal:
+            return None, "Generation stopped"
+
+        vocal_file = os.path.join(separate_dir, "mdx_extra", "vocals.wav")
+        instrumental_file = os.path.join(separate_dir, "mdx_extra", "no_vocals.wav")
+
+        if output_format == "mp3":
+            vocal_output = os.path.join(separate_dir, "mdx_extra", "vocal.mp3")
+            instrumental_output = os.path.join(separate_dir, "mdx_extra", "instrumental.mp3")
+            subprocess.run(f"ffmpeg -i {vocal_file} -b:a 192k {vocal_output}", shell=True, check=True)
+            subprocess.run(f"ffmpeg -i {instrumental_file} -b:a 192k {instrumental_output}", shell=True, check=True)
+        elif output_format == "ogg":
+            vocal_output = os.path.join(separate_dir, "mdx_extra", "vocal.ogg")
+            instrumental_output = os.path.join(separate_dir, "mdx_extra", "instrumental.ogg")
+            subprocess.run(f"ffmpeg -i {vocal_file} -c:a libvorbis -qscale:a 5 {vocal_output}", shell=True, check=True)
+            subprocess.run(f"ffmpeg -i {instrumental_file} -c:a libvorbis -qscale:a 5 {instrumental_output}", shell=True, check=True)
+        else:
+            vocal_output = vocal_file
+            instrumental_output = instrumental_file
+
+        return vocal_output, instrumental_output, None
+
+    except Exception as e:
+        return None, None, str(e)
+
+
 def download_model(model_name_llm, model_name_sd):
     if not model_name_llm and not model_name_sd:
         return "Please select a model to download"
@@ -1151,6 +1204,23 @@ tts_stt_interface = gr.Interface(
     description="This user interface allows you to enter text for Text-to-Speech(CoquiTTS) and record audio for Speech-to-Text(OpenAIWhisper). "
                 "For TTS, you can select the voice and language, and customize the generation settings from the sliders. "
                 "For STT, simply record your audio and the spoken text will be displayed. "
+                "Try it and see what happens!",
+    allow_flagging="never",
+)
+
+translate_interface = gr.Interface(
+    fn=translate_text,
+    inputs=[
+        gr.Textbox(label="Enter text to translate"),
+        gr.Dropdown(choices=["en", "es", "fr", "de", "it", "pt", "pl", "tr", "ru", "nl", "cs", "ar", "zh", "ja", "hi"], label="Select source language", value="en"),
+        gr.Dropdown(choices=["en", "es", "fr", "de", "it", "pt", "pl", "tr", "ru", "nl", "cs", "ar", "zh", "ja", "hi"], label="Select target language", value="ru"),
+    ],
+    outputs=[
+        gr.Textbox(label="Translated text"),
+    ],
+    title="NeuroSandboxWebUI (ALPHA) - LibreTranslate",
+    description="This user interface allows you to enter text and translate it using LibreTranslate. "
+                "Select the source and target languages and click Submit to get the translation. "
                 "Try it and see what happens!",
     allow_flagging="never",
 )
@@ -1323,6 +1393,24 @@ audiocraft_interface = gr.Interface(
     allow_flagging="never",
 )
 
+demucs_interface = gr.Interface(
+    fn=demucs_generate,
+    inputs=[
+        gr.Audio(type="filepath", label="Audio file to separate"),
+        gr.Dropdown(choices=["wav", "mp3", "ogg"], label="Select output format", value="wav", interactive=True),
+    ],
+    outputs=[
+        gr.Audio(label="Vocal", type="filepath"),
+        gr.Audio(label="Instrumental", type="filepath"),
+        gr.Textbox(label="Message", type="text"),
+    ],
+    title="NeuroSandboxWebUI (ALPHA) - Demucs",
+    description="This user interface allows you to upload an audio file and separate it into vocal and instrumental using Demucs. "
+                "The separated audio files will be saved in the outputs folder. "
+                "Try it and see what happens!",
+    allow_flagging="never",
+)
+
 model_downloader_interface = gr.Interface(
     fn=download_model,
     inputs=[
@@ -1351,10 +1439,10 @@ settings_interface = gr.Interface(
 )
 
 with gr.TabbedInterface(
-        [chat_interface, tts_stt_interface, gr.TabbedInterface([txt2img_interface, img2img_interface, inpaint_interface, video_interface, extras_interface],
+        [chat_interface, tts_stt_interface, translate_interface, gr.TabbedInterface([txt2img_interface, img2img_interface, inpaint_interface, video_interface, extras_interface],
         tab_names=["txt2img", "img2img", "inpaint", "video", "extras"]),
-         audiocraft_interface, model_downloader_interface, settings_interface],
-        tab_names=["LLM", "TTS-STT", "StableDiffusion", "AudioCraft", "ModelDownloader", "Settings"]
+         audiocraft_interface, demucs_interface, model_downloader_interface, settings_interface],
+        tab_names=["LLM", "TTS-STT", "LibreTranslate", "StableDiffusion", "AudioCraft", "Demucs", "ModelDownloader", "Settings"]
 ) as app:
     chat_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     txt2img_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
