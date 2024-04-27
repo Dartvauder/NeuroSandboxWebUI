@@ -190,16 +190,14 @@ def load_upscale_model(upscale_factor):
         upscaler = StableDiffusionLatentUpscalePipeline.from_pretrained(
             upscale_model_path,
             revision="fp16",
-            torch_dtype=torch.float16,
-            device_map="auto"
+            torch_dtype=torch.float16
         )
     else:
         upscaler = StableDiffusionUpscalePipeline.from_pretrained(
             upscale_model_path,
             original_config_file=original_config_file,
             revision="fp16",
-            torch_dtype=torch.float16,
-            device_map="auto"
+            torch_dtype=torch.float16
         )
 
     upscaler.to(device)
