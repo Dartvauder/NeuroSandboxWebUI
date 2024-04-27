@@ -1367,6 +1367,24 @@ depth2img_interface = gr.Interface(
     allow_flagging="never",
 )
 
+upscale_interface = gr.Interface(
+    fn=generate_image_upscale,
+    inputs=[
+        gr.Image(label="Image to upscale", type="filepath"),
+        gr.Slider(minimum=1, maximum=100, value=50, step=1, label="Steps"),
+        gr.Slider(minimum=1.0, maximum=30.0, value=8, step=0.1, label="CFG"),
+        gr.Dropdown(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
+        gr.Button(value="Stop generation", interactive=True, variant="stop"),
+    ],
+    outputs=[
+        gr.Image(type="filepath", label="Upscaled image"),
+        gr.Textbox(label="Message", type="text"),
+    ],
+    title="NeuroSandboxWebUI (ALPHA) - StableDiffusion (upscale)",
+    description="This user interface allows you to upload an image and upscale it",
+    allow_flagging="never",
+)
+
 inpaint_interface = gr.Interface(
     fn=generate_image_inpaint,
     inputs=[
@@ -1419,24 +1437,6 @@ video_interface = gr.Interface(
     description="This user interface allows you to enter an initial image and generate a video using StableVideoDiffusion. "
                 "You can customize the generation settings from the sliders. "
                 "Try it and see what happens!",
-    allow_flagging="never",
-)
-
-upscale_interface = gr.Interface(
-    fn=generate_image_upscale,
-    inputs=[
-        gr.Image(label="Image to upscale", type="filepath"),
-        gr.Slider(minimum=1, maximum=100, value=50, step=1, label="Steps"),
-        gr.Slider(minimum=1.0, maximum=30.0, value=8, step=0.1, label="CFG"),
-        gr.Dropdown(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
-        gr.Button(value="Stop generation", interactive=True, variant="stop"),
-    ],
-    outputs=[
-        gr.Image(type="filepath", label="Upscaled image"),
-        gr.Textbox(label="Message", type="text"),
-    ],
-    title="NeuroSandboxWebUI (ALPHA) - StableDiffusion (upscale)",
-    description="This user interface allows you to upload an image and upscale it",
     allow_flagging="never",
 )
 
