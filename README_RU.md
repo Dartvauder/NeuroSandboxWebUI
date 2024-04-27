@@ -10,22 +10,27 @@
 
 Цель проекта — создать максимально простое приложение для использования нейросетевых моделей
 
-### LLM: ![1](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/9f6c7c86-03fe-400d-9f28-4824a93100f0)
+### LLM: 
 
-### TTS-STT: ![2](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/b327c698-66a8-4649-a754-98830c2cbf27)
+### TTS-STT: 
+
+### LibreTranslate:
 
 ### StableDiffusion:
- #### txt2img: ![3](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/e18f7992-7b79-4250-ab6c-27fac5de0776)
- #### img2img: ![4](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/d51168e6-29ab-4a58-ac0e-b83a8f7c40e0)
- #### inpaint: ![5](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/953ab08c-30ff-4b6e-9590-1037b4ffa8f4)
- #### video: ![6](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/0e5738de-f8c0-4ace-badc-af1e64fae196)
- #### extras: ![7](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/55f37964-2a56-49e2-9995-df9122f76172)
+ #### txt2img: 
+ #### img2img: 
+ #### depth2img:
+ #### upscale:
+ #### inpaint: 
+ #### video: 
 
-### AudioCraft: ![8](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/382ca556-1a14-4099-af36-936c212048f3)
+### AudioCraft: 
 
-### ModelDownloader: ![9](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/ff98c1f1-33df-4018-981c-32671700659f)
+### Demucs:
 
-### Settings: ![10](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/40b38b60-0e32-4a04-a278-fdb0aa15c224)
+### ModelDownloader: 
+
+### Settings: 
 
 ## Функции:
 
@@ -38,6 +43,8 @@
 * Поддержка TTS и Whisper моделей (Для LLM и TTS-STT)
 * Поддержка Lora, Textual inversion (embedding), Vae, Inpaint, Upscale и Video моделей (Для StableDiffusion)
 * Поддержка Multiband Diffusion модели (Для AudioCraft)
+* Поддержка LibreTranslate (Локальный API)
+* Поддержка Demucs
 * Возможность выбора аватара (Для LLM)
 * Настройки моделей внутри интерфейса
 * ModelDownloader (Для LLM и StableDiffusion)
@@ -82,7 +89,7 @@
 
 ## Как использовать:
 
-#### Интерфейс имеет шесть вкладок: LLM, TTS-STT, StableDiffusion, AudioCraft, ModelDownloader и Settings. Выберите ту которая вам нужна и следуйте инструкциям ниже
+#### Интерфейс имеет восемь вкладок: LLM, TTS-STT, LibreTranslate, StableDiffusion, AudioCraft, Demucs, ModelDownloader и Settings. Выберите ту которая вам нужна и следуйте инструкциям ниже
 
 ### LLM:
 
@@ -104,6 +111,8 @@
 3) Нажмите кнопку `Submit`, чтобы получить сгенерированный текстовый и аудио ответ
 #### Образцы голоса = *inputs/audio/voices*
 #### Голос должен быть предварительно обработан (22050 кГц, монозвук, WAV)
+
+### LibreTranslate:
 
 ### StableDiffusion - имеет пять под-вкладок:
 
@@ -132,6 +141,14 @@
 #### Необязательно: вы можете выбрать свою модель `vae`
 #### vae = *inputs/image/sd_models/vae*
 
+#### depth2img:
+
+#### upscale:
+
+1) Загрузите исходное изображение
+2) Выберите нужные вам опции
+3) Нажмите кнопку `Submit`, чтобы получить измененное изображение
+
 #### inpaint:
 
 1) Сначала загрузите ваши модели в папку: *inputs/image/sd_models/inpaint*
@@ -150,12 +167,6 @@
 1) Загрузите исходное изображение
 2) Настройте модель по нужным вам параметрам
 3) Нажмите кнопку `Submit`, чтобы получить видео из изображения
-
-#### extras:
-
-1) Загрузите исходное изображение
-2) Выберите нужные вам опции
-3) Нажмите кнопку `Submit`, чтобы получить измененное изображение
 
 ### AudioCraft:
 
