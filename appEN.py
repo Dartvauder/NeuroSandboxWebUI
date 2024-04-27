@@ -783,10 +783,7 @@ def generate_video(init_image, video_settings_html, motion_bucket_id, noise_aug_
         os.makedirs(video_model_path, exist_ok=True)
         Repo.clone_from(f"https://huggingface.co/{video_model_name}", video_model_path)
 
-    print(f"Stable Video Diffusion model {video_model_name} downloaded")
-
-    if ValueError:
-        return None, "Please, upload an initial image!"    
+    print(f"Stable Video Diffusion model {video_model_name} downloaded")    
 
     try:
         pipe = StableVideoDiffusionPipeline.from_pretrained(
@@ -806,6 +803,9 @@ def generate_video(init_image, video_settings_html, motion_bucket_id, noise_aug_
 
         if stop_signal:
             return None, "Generation stopped"
+        
+        if ValueError:
+        return None, "Please, upload an initial image!"
 
         today = datetime.now().date()
         video_dir = os.path.join('outputs', f"StableDiffusion_{today.strftime('%Y%m%d')}")
