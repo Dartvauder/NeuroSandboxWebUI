@@ -141,6 +141,14 @@ def load_audiocraft_model(model_name):
             Repo.clone_from("https://huggingface.co/facebook/audiogen-medium", audiocraft_model_path)
         elif model_name == "musicgen-stereo-melody":
             Repo.clone_from("https://huggingface.co/facebook/musicgen-stereo-melody", audiocraft_model_path)
+        elif model_name == "musicgen-medium":
+            Repo.clone_from("https://huggingface.co/facebook/musicgen-medium", audiocraft_model_path)
+        elif model_name == "musicgen-melody":
+            Repo.clone_from("https://huggingface.co/facebook/musicgen-melody", audiocraft_model_path)
+        elif model_name == "musicgen-large":
+            Repo.clone_from("https://huggingface.co/facebook/musicgen-large", audiocraft_model_path)
+        elif model_name == "hybrid-magnet-medium":
+            Repo.clone_from("https://huggingface.co/facebook/hybrid-magnet-medium", audiocraft_model_path)
         elif model_name == "magnet-medium-30sec":
             Repo.clone_from("https://huggingface.co/facebook/magnet-medium-30secs", audiocraft_model_path)
         elif model_name == "magnet-medium-10sec":
@@ -937,7 +945,10 @@ def generate_audio(prompt, input_audio=None, model_name=None, audiocraft_setting
             descriptions = [prompt]
             model.set_generation_params(duration=duration, top_k=top_k, top_p=top_p, temperature=temperature,
                                         cfg_coef=cfg_coef)
-            wav, tokens = model.generate(descriptions, return_tokens=True)
+            if model_type == "musicgen":
+                wav, tokens = model.generate(descriptions, return_tokens=True)
+            elif model_type == "audiogen":
+                wav = model.generate(descriptions)
             progress_bar.update(duration)
             if wav.ndim > 2:
                 wav = wav.squeeze()
@@ -1068,8 +1079,8 @@ speaker_wavs_list = [None] + [wav for wav in os.listdir("inputs/audio/voices") i
 stable_diffusion_models_list = [None] + [model.replace(".safetensors", "") for model in
                                          os.listdir("inputs/image/sd_models")
                                          if (model.endswith(".safetensors") or not model.endswith(".txt") and not os.path.isdir(os.path.join("inputs/image/sd_models")))]
-audiocraft_models_list = [None] + ["musicgen-stereo-medium", "audiogen-medium", "musicgen-stereo-melody",
-                                   "magnet-medium-30sec", "magnet-medium-10sec", "audio-magnet-medium"]
+audiocraft_models_list = [None] + ["musicgen-stereo-medium", "audiogen-medium", "musicgen-stereo-melody", "musicgen-medium", "musicgen-melody", "musicgen-large",
+                                   "hybrid-magnet-medium", "magnet-medium-30sec", "magnet-medium-10sec", "audio-magnet-medium"]
 vae_models_list = [None] + [model.replace(".safetensors", "") for model in os.listdir("inputs/image/sd_models/vae") if
                             model.endswith(".safetensors") or not model.endswith(".txt")]
 lora_models_list = [None] + [model for model in os.listdir("inputs/image/sd_models/lora") if
