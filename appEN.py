@@ -472,7 +472,7 @@ def generate_tts_stt(text, audio, tts_settings_html, speaker_wav, language, tts_
 def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name, vae_model_name, lora_model_names, stable_diffusion_settings_html,
                            stable_diffusion_model_type, stable_diffusion_sampler, stable_diffusion_steps,
                            stable_diffusion_cfg, stable_diffusion_width, stable_diffusion_height,
-                           stable_diffusion_clip_skip, enable_upscale=False, upscale_factor="x2", output_format="png", stop_generation=None):
+                           stable_diffusion_clip_skip, enable_upscale=False, upscale_factor="x2", upscale_steps=50, upscale_cfg=6, output_format="png", stop_generation=None):
     global stop_signal
     stop_signal = False
 
@@ -554,9 +554,9 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
             upscaler = load_upscale_model(upscale_factor_value)
             if upscaler:
                 if upscale_factor == "x2":
-                    upscaled_image = upscaler(prompt=prompt, image=image, num_inference_steps=50, guidance_scale=6).images[0]
+                    upscaled_image = upscaler(prompt=prompt, image=image, num_inference_steps=upscale_steps, guidance_scale=upscale_cfg).images[0]
                 else:
-                    upscaled_image = upscaler(prompt=prompt, image=image, num_inference_steps=30, guidance_scale=8)["images"][0]
+                    upscaled_image = upscaler(prompt=prompt, image=image, num_inference_steps=upscale_steps, guidance_scale=upscale_cfg)["images"][0]
                 image = upscaled_image
 
         today = datetime.now().date()
@@ -1153,6 +1153,8 @@ txt2img_interface = gr.Interface(
         gr.Slider(minimum=1, maximum=4, value=1, step=1, label="Clip skip"),
         gr.Checkbox(label="Enable upscale", value=False),
         gr.Radio(choices=["x2", "x4"], label="Upscale size", value="x2"),
+        gr.Slider(minimum=1, maximum=100, value=50, step=1, label="Upscale steps"),
+        gr.Slider(minimum=1.0, maximum=30.0, value=6, step=0.1, label="Upscale CFG"),
         gr.Dropdown(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
         gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
