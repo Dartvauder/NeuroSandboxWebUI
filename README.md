@@ -178,6 +178,8 @@ To get update, run `git pull`
 6) Click the `Submit` button to get the generated audio
 #### Optional: You can enable `multiband diffusion` to improve the generated audio
 
+### Demucs:
+
 ### ModelDownloader:
 
 * Here you can download `LLM` and `StableDiffusion` models. Just choose the model from the drop-down list and click the `Submit` button
