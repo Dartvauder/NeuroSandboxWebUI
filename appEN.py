@@ -803,9 +803,6 @@ def generate_video(init_image, video_settings_html, motion_bucket_id, noise_aug_
 
         if stop_signal:
             return None, "Generation stopped"
-        
-        if ValueError:
-        return None, "Please, upload an initial image!"
 
         today = datetime.now().date()
         video_dir = os.path.join('outputs', f"StableDiffusion_{today.strftime('%Y%m%d')}")
