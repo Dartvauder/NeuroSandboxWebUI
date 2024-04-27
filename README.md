@@ -15,7 +15,7 @@ The goal of the project - to create the easiest possible application to use neur
 ### TTS-STT: ![2](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/b327c698-66a8-4649-a754-98830c2cbf27)
 
 ### StableDiffusion:
- #### txt2img: ![3](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/a27878cd-ba13-451a-8181-994148f6919c)
+ #### txt2img: ![3](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/09c14365-9d87-49e2-8e37-439f918697f7)
  #### img2img: ![4](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/d51168e6-29ab-4a58-ac0e-b83a8f7c40e0)
  #### inpaint: ![5](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/953ab08c-30ff-4b6e-9590-1037b4ffa8f4)
  #### video: ![6](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/0e5738de-f8c0-4ace-badc-af1e64fae196)
