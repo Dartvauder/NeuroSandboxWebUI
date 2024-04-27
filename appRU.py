@@ -1151,7 +1151,7 @@ txt2img_interface = gr.Interface(
         gr.Dropdown(choices=stable_diffusion_models_list, label="Select StableDiffusion model", value=None),
         gr.Dropdown(choices=vae_models_list, label="Select VAE model (optional)", value=None),
         gr.Dropdown(choices=lora_models_list, label="Select LORA models (optional)", value=None, multiselect=True),
-        gr.Dropdown(choices=textual_inversion_models_list, label="Select Embedding model (optional)", value=None, multiselect=True),
+        gr.Dropdown(choices=textual_inversion_models_list, label="Select Embedding models (optional)", value=None, multiselect=True),
         gr.HTML("<h3>StableDiffusion Settings</h3>"),
         gr.Radio(choices=["SD", "SD2", "SDXL"], label="Select model type", value="SD"),
         gr.Dropdown(choices=["euler_ancestral", "euler", "lms", "heun", "dpm", "dpm_solver", "dpm_solver++"],
