@@ -13,7 +13,7 @@ import whisper
 from datetime import datetime
 import warnings
 import logging
-from diffusers import StableDiffusionPipeline, StableDiffusionXLPipeline, StableDiffusionImg2ImgPipeline, AutoencoderKL, StableDiffusionLatentUpscalePipeline, StableDiffusionUpscalePipeline, StableDiffusionInpaintPipeline, StableVideoDiffusionPipeline
+from diffusers import StableDiffusionPipeline, StableDiffusionXLPipeline, StableDiffusionImg2ImgPipeline, StableDiffusionDepth2ImgPipeline, AutoencoderKL, StableDiffusionLatentUpscalePipeline, StableDiffusionUpscalePipeline, StableDiffusionInpaintPipeline, StableVideoDiffusionPipeline
 from diffusers.utils import load_image, export_to_video
 from git import Repo
 import numpy as np
@@ -694,6 +694,64 @@ def generate_image_img2img(prompt, negative_prompt, init_image,
         torch.cuda.empty_cache()
 
 
+def generate_image_depth2img(prompt, negative_prompt, init_image, stable_diffusion_settings_html, strength,
+                             output_format="png", stop_generation=None):
+    global stop_signal
+    stop_signal = False
+
+    if not init_image:
+        return None, "Please, upload an initial image!"
+
+    stable_diffusion_model_path = os.path.join("inputs", "image", "sd_models", "depth")
+
+    if not os.path.exists(stable_diffusion_model_path):
+        os.makedirs(stable_diffusion_model_path, exist_ok=True)
+        Repo.clone_from("https://huggingface.co/stabilityai/stable-diffusion-2-depth", stable_diffusion_model_path)
+
+    try:
+        original_config_file = "configs/sd/v2-inference.yaml"
+        stable_diffusion_model = StableDiffusionDepth2ImgPipeline.from_pretrained(
+            stable_diffusion_model_path, use_safetensors=True, device_map="auto",
+            original_config_file=original_config_file, torch_dtype=torch.float16, variant="fp16",
+        )
+    except (ValueError, KeyError):
+        return None, "Failed to load the depth2img model"
+
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+
+    if XFORMERS_AVAILABLE:
+        stable_diffusion_model.enable_xformers_memory_efficient_attention(attention_op=None)
+        stable_diffusion_model.vae.enable_xformers_memory_efficient_attention(attention_op=None)
+        stable_diffusion_model.unet.enable_xformers_memory_efficient_attention(attention_op=None)
+
+    stable_diffusion_model.to(device)
+    stable_diffusion_model.text_encoder.to(device)
+    stable_diffusion_model.vae.to(device)
+    stable_diffusion_model.unet.to(device)
+
+    stable_diffusion_model.safety_checker = None
+
+    try:
+        init_image = Image.open(init_image).convert("RGB")
+        image = stable_diffusion_model(prompt=prompt, negative_prompt=negative_prompt, image=init_image, strength=strength).images[0]
+
+        if stop_signal:
+            return None, "Generation stopped"
+
+        today = datetime.now().date()
+        image_dir = os.path.join('outputs', f"StableDiffusion_{today.strftime('%Y%m%d')}")
+        os.makedirs(image_dir, exist_ok=True)
+        image_filename = f"depth2img_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
+        image_path = os.path.join(image_dir, image_filename)
+        image.save(image_path, format=output_format.upper())
+
+        return image_path, None
+
+    finally:
+        del stable_diffusion_model
+        torch.cuda.empty_cache()
+
+
 def generate_image_inpaint(prompt, negative_prompt, init_image, mask_image, stable_diffusion_model_name, vae_model_name,
                            stable_diffusion_settings_html, stable_diffusion_model_type, stable_diffusion_sampler,
                            stable_diffusion_steps, stable_diffusion_cfg, width, height, output_format="png", stop_generation=None):
@@ -863,13 +921,10 @@ def generate_video(init_image, video_settings_html, motion_bucket_id, noise_aug_
         torch.cuda.empty_cache()
 
 
-def generate_image_extras(image_path, enable_upscale, num_inference_steps, guidance_scale, output_format="png", stop_generation=None):
+def generate_image_upscale(image_path, num_inference_steps, guidance_scale, output_format="png", stop_generation=None):
     global stop_signal
     if stop_signal:
         return None, "Generation stopped"
-
-    if not enable_upscale:
-        return None, "Please enable upscale to generate an image!"
 
     if not image_path:
         return None, "Please, upload an initial image!"
@@ -883,7 +938,7 @@ def generate_image_extras(image_path, enable_upscale, num_inference_steps, guida
         today = datetime.now().date()
         image_dir = os.path.join('outputs', f"StableDiffusion_{today.strftime('%Y%m%d')}")
         os.makedirs(image_dir, exist_ok=True)
-        image_filename = f"extras_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
+        image_filename = f"upscaled_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
         image_path = os.path.join(image_dir, image_filename)
         upscaled_image.save(image_path, format=output_format.upper())
 
@@ -1291,6 +1346,27 @@ img2img_interface = gr.Interface(
     allow_flagging="never",
 )
 
+depth2img_interface = gr.Interface(
+    fn=generate_image_depth2img,
+    inputs=[
+        gr.Textbox(label="Enter your prompt"),
+        gr.Textbox(label="Enter your negative prompt", value=""),
+        gr.Image(label="Initial image", type="filepath"),
+        gr.HTML("<h3>StableDiffusion Settings</h3>"),
+        gr.Slider(minimum=0.0, maximum=1.0, value=0.7, step=0.01, label="Strength"),
+        gr.Dropdown(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
+        gr.Button(value="Stop generation", interactive=True, variant="stop"),
+    ],
+    outputs=[
+        gr.Image(type="filepath", label="Generated image"),
+        gr.Textbox(label="Message", type="text"),
+    ],
+    title="NeuroSandboxWebUI (ALPHA) - StableDiffusion (depth2img)",
+    description="This user interface allows you to enter a prompt, an initial image to generate depth-aware images using StableDiffusion. "
+                "Try it and see what happens!",
+    allow_flagging="never",
+)
+
 inpaint_interface = gr.Interface(
     fn=generate_image_inpaint,
     inputs=[
@@ -1346,22 +1422,21 @@ video_interface = gr.Interface(
     allow_flagging="never",
 )
 
-extras_interface = gr.Interface(
-    fn=generate_image_extras,
+upscale_interface = gr.Interface(
+    fn=generate_image_upscale,
     inputs=[
-        gr.Image(label="Image to modify", type="filepath"),
-        gr.Checkbox(label="Enable upscale", value=False),
+        gr.Image(label="Image to upscale", type="filepath"),
         gr.Slider(minimum=1, maximum=100, value=50, step=1, label="Steps"),
         gr.Slider(minimum=1.0, maximum=30.0, value=8, step=0.1, label="CFG"),
         gr.Dropdown(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
         gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
     outputs=[
-        gr.Image(type="filepath", label="Modified Image"),
+        gr.Image(type="filepath", label="Upscaled image"),
         gr.Textbox(label="Message", type="text"),
     ],
-    title="NeuroSandboxWebUI (ALPHA) - StableDiffusion (extras)",
-    description="This user interface allows you to upload an image and transform it using different options",
+    title="NeuroSandboxWebUI (ALPHA) - StableDiffusion (upscale)",
+    description="This user interface allows you to upload an image and upscale it",
     allow_flagging="never",
 )
 
@@ -1439,17 +1514,18 @@ settings_interface = gr.Interface(
 )
 
 with gr.TabbedInterface(
-        [chat_interface, tts_stt_interface, translate_interface, gr.TabbedInterface([txt2img_interface, img2img_interface, inpaint_interface, video_interface, extras_interface],
-        tab_names=["txt2img", "img2img", "inpaint", "video", "extras"]),
+        [chat_interface, tts_stt_interface, translate_interface, gr.TabbedInterface([txt2img_interface, img2img_interface, depth2img_interface, upscale_interface, inpaint_interface, video_interface],
+        tab_names=["txt2img", "img2img", "depth2img", "upscale", "inpaint", "video"]),
          audiocraft_interface, demucs_interface, model_downloader_interface, settings_interface],
         tab_names=["LLM", "TTS-STT", "LibreTranslate", "StableDiffusion", "AudioCraft", "Demucs", "ModelDownloader", "Settings"]
 ) as app:
     chat_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     txt2img_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     img2img_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
+    depth2img_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
+    upscale_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     inpaint_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     video_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
-    extras_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     audiocraft_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
 
     close_button = gr.Button("Close terminal")
