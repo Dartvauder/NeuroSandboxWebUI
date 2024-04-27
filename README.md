@@ -10,22 +10,27 @@ Simple and easy interface for use of different neural network models. You can ch
 
 The goal of the project - to create the easiest possible application to use neural network models
 
-### LLM: ![1](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/9f6c7c86-03fe-400d-9f28-4824a93100f0)
+### LLM: 
 
-### TTS-STT: ![2](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/b327c698-66a8-4649-a754-98830c2cbf27)
+### TTS-STT: 
+
+### LibreTranslate:
 
 ### StableDiffusion:
- #### txt2img: ![3](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/e18f7992-7b79-4250-ab6c-27fac5de0776)
- #### img2img: ![4](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/d51168e6-29ab-4a58-ac0e-b83a8f7c40e0)
- #### inpaint: ![5](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/953ab08c-30ff-4b6e-9590-1037b4ffa8f4)
- #### video: ![6](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/0e5738de-f8c0-4ace-badc-af1e64fae196)
- #### extras: ![7](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/55f37964-2a56-49e2-9995-df9122f76172)
+ #### txt2img: 
+ #### img2img: 
+ #### depth2img:
+ #### upscale:
+ #### inpaint: 
+ #### video: 
 
-### AudioCraft: ![8](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/382ca556-1a14-4099-af36-936c212048f3)
+### AudioCraft: 
 
-### ModelDownloader: ![9](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/ff98c1f1-33df-4018-981c-32671700659f)
+### Demucs:
 
-### Settings: ![10](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/40b38b60-0e32-4a04-a278-fdb0aa15c224)
+### ModelDownloader: 
+
+### Settings: 
 
 ## Features:
 
@@ -38,6 +43,8 @@ The goal of the project - to create the easiest possible application to use neur
 * Supports TTS and Whisper models (For LLM and TTS-STT)
 * Supports Lora, Textual inversion (embedding), Vae, Inpaint, Upscale and Video models (For StableDiffusion)
 * Support Multiband Diffusion model (For AudioCraft)
+* Support LibreTranslate (Local API)
+* Support Demucs
 * Ability to select an avatar (For LLM)
 * Model settings inside the interface
 * ModelDownloader (For LLM and StableDiffusion)
@@ -82,7 +89,7 @@ To get update, run `git pull`
 
 ## How to use:
 
-#### Interface has six tabs: LLM, TTS-STT, StableDiffusion, AudioCraft, ModelDownloader and Settings. Select the one you need and follow the instructions below 
+#### Interface has eight tabs: LLM, TTS-STT, LibreTranslate, StableDiffusion, AudioCraft, Demucs, ModelDownloader and Settings. Select the one you need and follow the instructions below 
 
 ### LLM:
 
@@ -105,7 +112,9 @@ To get update, run `git pull`
 #### Voice samples = *inputs/audio/voices*
 #### The voice must be pre-processed (22050 kHz, mono, WAV)
 
-### StableDiffusion - has five sub-tabs:
+### LibreTranslate:
+
+### StableDiffusion - has six sub-tabs:
 
 #### txt2img:
 
@@ -132,6 +141,14 @@ To get update, run `git pull`
 #### Optional: You can select your `vae` model
 #### vae = *inputs/image/sd_models/vae*
 
+#### depth2img:
+
+#### upscale:
+
+1) Upload the initial image
+2) Select the options you need
+3) Click the `Submit` button to get the modified image
+
 #### inpaint:
 
 1) First upload your models to the folder: *inputs/image/sd_models/inpaint*
@@ -150,12 +167,6 @@ To get update, run `git pull`
 1) Upload the initial image
 2) Set up the model according to the parameters you need
 3) Click the `Submit` button to get the video from image
-
-#### extras:
-
-1) Upload the initial image
-2) Select the options you need
-3) Click the `Submit` button to get the modified image
 
 ### AudioCraft:
 
