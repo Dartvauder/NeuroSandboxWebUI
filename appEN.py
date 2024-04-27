@@ -784,6 +784,9 @@ def generate_video(init_image, video_settings_html, motion_bucket_id, noise_aug_
     global stop_signal
     stop_signal = False
 
+    if not init_image:
+        return None, "Please upload an initial image!"
+
     video_model_name = "vdo/stable-video-diffusion-img2vid-xt-1-1"
     video_model_path = os.path.join("inputs", "image", "sd_models", "video")
 
