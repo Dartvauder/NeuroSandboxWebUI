@@ -95,7 +95,7 @@ To get update, run `git pull`
 #### Optional: you can enable `TTS` mode, select the `voice` and `language` needed to receive an audio response. You can also select `avatar`
 #### Avatars = *inputs/image/avatars*
 #### Voice samples = *inputs/audio/voices*
-#### The voice must be pre-processed (22050 kHz, mono, WAV), the avatar should preferably be `PNG` or `JPG`
+#### The voice must be pre-processed (22050 kHz, mono, WAV), the avatar should preferably be `PNG` or `JPEG`
 
 ### TTS-STT
 
