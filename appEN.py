@@ -921,13 +921,10 @@ def generate_video(init_image, video_settings_html, motion_bucket_id, noise_aug_
         torch.cuda.empty_cache()
 
 
-def generate_image_upscale(image_path, enable_upscale, num_inference_steps, guidance_scale, output_format="png", stop_generation=None):
+def generate_image_upscale(image_path, num_inference_steps, guidance_scale, output_format="png", stop_generation=None):
     global stop_signal
     if stop_signal:
         return None, "Generation stopped"
-
-    if not enable_upscale:
-        return None, "Please enable upscale to generate an image!"
 
     if not image_path:
         return None, "Please, upload an initial image!"
@@ -1429,7 +1426,6 @@ upscale_interface = gr.Interface(
     fn=generate_image_upscale,
     inputs=[
         gr.Image(label="Image to upscale", type="filepath"),
-        gr.Checkbox(label="Enable upscale", value=False),
         gr.Slider(minimum=1, maximum=100, value=50, step=1, label="Steps"),
         gr.Slider(minimum=1.0, maximum=30.0, value=8, step=0.1, label="CFG"),
         gr.Dropdown(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
