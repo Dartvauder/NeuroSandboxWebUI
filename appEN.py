@@ -219,7 +219,7 @@ chat_history = []
 
 
 def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_settings_html, llm_model_type, max_length, max_tokens,
-                             temperature, top_p, top_k, chat_history_format, avatar_html, avatar_name, enable_tts, tts_settings_html,
+                             temperature, top_p, top_k, chat_history_format, avatar_name, enable_tts, tts_settings_html,
                              speaker_wav, language, tts_temperature, tts_top_p, tts_top_k, tts_speed, output_format, stop_generation):
     global chat_history, chat_dir, tts_model, whisper_model, stop_signal
     stop_signal = False
@@ -1073,7 +1073,6 @@ chat_interface = gr.Interface(
         gr.Slider(minimum=0.0, maximum=1.0, value=0.9, step=0.1, label="Top P"),
         gr.Slider(minimum=0, maximum=100, value=20, step=1, label="Top K"),
         gr.Dropdown(choices=["txt", "json"], label="Select chat history format", value="txt", interactive=True),
-        gr.HTML("<br>"),
         gr.Dropdown(choices=avatars_list, label="Select avatar", value=None),
         gr.Checkbox(label="Enable TTS", value=False),
         gr.HTML("<h3>TTS Settings</h3>"),
