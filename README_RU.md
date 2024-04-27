@@ -36,7 +36,7 @@
 * Поддержка diffusers (safetensors) моделей (StableDiffusion) - Вкладки txt2img, img2img, inpaint, video и extras
 * Поддержка AudioCraft (Модели: musicgen, audiogen и magnet)
 * Поддержка TTS и Whisper моделей (Для LLM и TTS-STT)
-* Поддержка Lora, textual inversion (embedding), Vae, Inpaint, Upscale и Video моделей (Для StableDiffusion)
+* Поддержка Lora, Textual inversion (embedding), Vae, Inpaint, Upscale и Video моделей (Для StableDiffusion)
 * Поддержка Multiband Diffusion модели (Для AudioCraft)
 * Возможность выбора аватара (Для LLM)
 * Настройки моделей внутри интерфейса
