@@ -1,6 +1,7 @@
 import gradio as gr
 import langdetect
 from transformers import AutoModelForCausalLM, AutoTokenizer
+from libretranslatepy import LibreTranslateAPI
 import soundfile as sf
 import os
 import subprocess
@@ -476,6 +477,12 @@ def generate_tts_stt(text, audio, tts_settings_html, speaker_wav, language, tts_
                     json.dump(stt_history, f, ensure_ascii=False, indent=4)
 
     return tts_output, stt_output
+
+
+def translate_text(text, source_lang, target_lang):
+    translator = LibreTranslateAPI("http://127.0.0.1:5000")
+    translation = translator.translate(text, source_lang, target_lang)
+    return translation
 
 
 def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name, vae_model_name, lora_model_names, textual_inversion_model_names, stable_diffusion_settings_html,
@@ -1201,6 +1208,23 @@ tts_stt_interface = gr.Interface(
     allow_flagging="never",
 )
 
+translate_interface = gr.Interface(
+    fn=translate_text,
+    inputs=[
+        gr.Textbox(label="Enter text to translate"),
+        gr.Dropdown(choices=["en", "es", "fr", "de", "it", "pt", "pl", "tr", "ru", "nl", "cs", "ar", "zh", "ja", "hi"], label="Select source language", value="en"),
+        gr.Dropdown(choices=["en", "es", "fr", "de", "it", "pt", "pl", "tr", "ru", "nl", "cs", "ar", "zh", "ja", "hi"], label="Select target language", value="ru"),
+    ],
+    outputs=[
+        gr.Textbox(label="Translated text"),
+    ],
+    title="NeuroSandboxWebUI (ALPHA) - LibreTranslate",
+    description="This user interface allows you to enter text and translate it using LibreTranslate. "
+                "Select the source and target languages and click Submit to get the translation. "
+                "Try it and see what happens!",
+    allow_flagging="never",
+)
+
 txt2img_interface = gr.Interface(
     fn=generate_image_txt2img,
     inputs=[
@@ -1415,10 +1439,10 @@ settings_interface = gr.Interface(
 )
 
 with gr.TabbedInterface(
-        [chat_interface, tts_stt_interface, gr.TabbedInterface([txt2img_interface, img2img_interface, inpaint_interface, video_interface, extras_interface],
+        [chat_interface, tts_stt_interface, translate_interface, gr.TabbedInterface([txt2img_interface, img2img_interface, inpaint_interface, video_interface, extras_interface],
         tab_names=["txt2img", "img2img", "inpaint", "video", "extras"]),
          audiocraft_interface, demucs_interface, model_downloader_interface, settings_interface],
-        tab_names=["LLM", "TTS-STT", "StableDiffusion", "AudioCraft", "Demucs", "ModelDownloader", "Settings"]
+        tab_names=["LLM", "TTS-STT", "LibreTranslate", "StableDiffusion", "AudioCraft", "Demucs", "ModelDownloader", "Settings"]
 ) as app:
     chat_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     txt2img_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
