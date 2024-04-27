@@ -785,6 +785,9 @@ def generate_video(init_image, video_settings_html, motion_bucket_id, noise_aug_
 
     print(f"Stable Video Diffusion model {video_model_name} downloaded")
 
+    if ValueError:
+        return None, "Please, upload an initial image!"    
+
     try:
         pipe = StableVideoDiffusionPipeline.from_pretrained(
             pretrained_model_name_or_path=video_model_path,
