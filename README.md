@@ -114,6 +114,10 @@ To get update, run `git pull`
 
 ### LibreTranslate:
 
+* First you need to install and run [LibreTranslate](https://github.com/LibreTranslate/LibreTranslate)
+1) Select source and target language
+2) Click the `Submit` button to get the translate
+
 ### StableDiffusion - has six sub-tabs:
 
 #### txt2img:
@@ -143,11 +147,16 @@ To get update, run `git pull`
 
 #### depth2img:
 
+1) Upload the initial image
+2) Set up the model according to the parameters you need
+3) Enter your request
+4) Click the `Submit` button to get the generated image
+
 #### upscale:
 
 1) Upload the initial image
 2) Select the options you need
-3) Click the `Submit` button to get the modified image
+3) Click the `Submit` button to get the upscaled image
 
 #### inpaint:
 
@@ -215,19 +224,21 @@ To get update, run `git pull`
 
 Thank you very much to these projects for allowing me to create my application:
 
-* `Gradio` - https://github.com/gradio-app/gradio
-* `Transformers` - https://github.com/huggingface/transformers
-* `TTS` - https://github.com/coqui-ai/TTS
-* `openai-Whisper` - https://github.com/openai/whisper
+* `gradio` - https://github.com/gradio-app/gradio
+* `transformers` - https://github.com/huggingface/transformers
+* `tts` - https://github.com/coqui-ai/TTS
+* `openai-whisper` - https://github.com/openai/whisper
 * `torch` - https://github.com/pytorch/pytorch
-* `Soundfile` - https://github.com/bastibe/python-soundfile
+* `soundfile` - https://github.com/bastibe/python-soundfile
 * `accelerate` - https://github.com/huggingface/accelerate
 * `cuda-python` - https://github.com/NVIDIA/cuda-python
-* `GitPython` - https://github.com/gitpython-developers/GitPython
+* `gitpython` - https://github.com/gitpython-developers/GitPython
 * `diffusers` - https://github.com/huggingface/diffusers
 * `llama.cpp-python` - https://github.com/abetlen/llama-cpp-python
-* `AudioCraft` - https://github.com/facebookresearch/audiocraft
+* `audiocraft` - https://github.com/facebookresearch/audiocraft
 * `xformers` - https://github.com/facebookresearch/xformers
+* `demucs` - https://github.com/facebookresearch/demucs
+* `libretranslatepy` - https://github.com/argosopentech/LibreTranslate-py
 
 ## Donation
 
