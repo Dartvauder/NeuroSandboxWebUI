@@ -141,6 +141,14 @@ def load_audiocraft_model(model_name):
             Repo.clone_from("https://huggingface.co/facebook/audiogen-medium", audiocraft_model_path)
         elif model_name == "musicgen-stereo-melody":
             Repo.clone_from("https://huggingface.co/facebook/musicgen-stereo-melody", audiocraft_model_path)
+        elif model_name == "musicgen-medium":
+            Repo.clone_from("https://huggingface.co/facebook/musicgen-medium", audiocraft_model_path)
+        elif model_name == "musicgen-melody":
+            Repo.clone_from("https://huggingface.co/facebook/musicgen-melody", audiocraft_model_path)
+        elif model_name == "musicgen-large":
+            Repo.clone_from("https://huggingface.co/facebook/musicgen-large", audiocraft_model_path)
+        elif model_name == "hybrid-magnet-medium":
+            Repo.clone_from("https://huggingface.co/facebook/hybrid-magnet-medium", audiocraft_model_path)
         elif model_name == "magnet-medium-30sec":
             Repo.clone_from("https://huggingface.co/facebook/magnet-medium-30secs", audiocraft_model_path)
         elif model_name == "magnet-medium-10sec":
@@ -469,7 +477,7 @@ def generate_tts_stt(text, audio, tts_settings_html, speaker_wav, language, tts_
     return tts_output, stt_output
 
 
-def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name, vae_model_name, lora_model_names, stable_diffusion_settings_html,
+def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name, vae_model_name, lora_model_names, textual_inversion_model_names, stable_diffusion_settings_html,
                            stable_diffusion_model_type, stable_diffusion_sampler, stable_diffusion_steps,
                            stable_diffusion_cfg, stable_diffusion_width, stable_diffusion_height,
                            stable_diffusion_clip_skip, enable_upscale=False, upscale_factor="x2", upscale_steps=50, upscale_cfg=6, output_format="png", stop_generation=None):
@@ -538,6 +546,13 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
         for lora_model_name in lora_model_names:
             lora_model_path = os.path.join("inputs", "image", "sd_models", "lora", lora_model_name)
             stable_diffusion_model.load_lora_weights(lora_model_path)
+
+    if textual_inversion_model_names is not None:
+        for textual_inversion_model_name in textual_inversion_model_names:
+            textual_inversion_model_path = os.path.join("inputs", "image", "sd_models", "embedding",
+                                                        textual_inversion_model_name)
+            if os.path.exists(textual_inversion_model_path):
+                stable_diffusion_model.load_textual_inversion(textual_inversion_model_path)
 
     try:
         images = stable_diffusion_model(prompt, negative_prompt=negative_prompt,
@@ -790,13 +805,13 @@ def generate_video(init_image, video_settings_html, motion_bucket_id, noise_aug_
     video_model_name = "vdo/stable-video-diffusion-img2vid-xt-1-1"
     video_model_path = os.path.join("inputs", "image", "sd_models", "video")
 
-    print(f"Downloading Stable Video Diffusion model: {video_model_name}")
+    print(f"Downloading StableVideoDiffusion model")
 
     if not os.path.exists(video_model_path):
         os.makedirs(video_model_path, exist_ok=True)
         Repo.clone_from(f"https://huggingface.co/{video_model_name}", video_model_path)
 
-    print(f"Stable Video Diffusion model {video_model_name} downloaded")
+    print(f"StableVideoDiffusion model downloaded")
 
     try:
         pipe = StableVideoDiffusionPipeline.from_pretrained(
@@ -930,7 +945,10 @@ def generate_audio(prompt, input_audio=None, model_name=None, audiocraft_setting
             descriptions = [prompt]
             model.set_generation_params(duration=duration, top_k=top_k, top_p=top_p, temperature=temperature,
                                         cfg_coef=cfg_coef)
-            wav, tokens = model.generate(descriptions, return_tokens=True)
+            if model_type == "musicgen":
+                wav, tokens = model.generate(descriptions, return_tokens=True)
+            elif model_type == "audiogen":
+                wav = model.generate(descriptions)
             progress_bar.update(duration)
             if wav.ndim > 2:
                 wav = wav.squeeze()
@@ -972,7 +990,6 @@ def generate_audio(prompt, input_audio=None, model_name=None, audiocraft_setting
         else:
             return audio_path + ".wav", None
 
-
     finally:
         del model
         if mbd:
@@ -1011,7 +1028,7 @@ def download_model(model_name_llm, model_name_sd):
         if model_name_sd == "Dreamshaper8(SD1.5)":
             model_url = "https://huggingface.co/Lykon/DreamShaper/resolve/main/DreamShaper_8_pruned.safetensors"
         elif model_name_sd == "RealisticVisionV4.0(SDXL)":
-            model_url = "https://huggingface.co/SG161222/RealVisXL_V4.0/blob/main/RealVisXL_V4.0.safetensors"
+            model_url = "https://huggingface.co/SG161222/RealVisXL_V4.0/resolve/main/RealVisXL_V4.0.safetensors"
         model_path = os.path.join("inputs", "image", "sd_models", f"{model_name_sd}.safetensors")
 
         if model_url:
@@ -1062,12 +1079,13 @@ speaker_wavs_list = [None] + [wav for wav in os.listdir("inputs/audio/voices") i
 stable_diffusion_models_list = [None] + [model.replace(".safetensors", "") for model in
                                          os.listdir("inputs/image/sd_models")
                                          if (model.endswith(".safetensors") or not model.endswith(".txt") and not os.path.isdir(os.path.join("inputs/image/sd_models")))]
-audiocraft_models_list = [None] + ["musicgen-stereo-medium", "audiogen-medium", "musicgen-stereo-melody",
-                                   "magnet-medium-30sec", "magnet-medium-10sec", "audio-magnet-medium"]
+audiocraft_models_list = [None] + ["musicgen-stereo-medium", "audiogen-medium", "musicgen-stereo-melody", "musicgen-medium", "musicgen-melody", "musicgen-large",
+                                   "hybrid-magnet-medium", "magnet-medium-30sec", "magnet-medium-10sec", "audio-magnet-medium"]
 vae_models_list = [None] + [model.replace(".safetensors", "") for model in os.listdir("inputs/image/sd_models/vae") if
                             model.endswith(".safetensors") or not model.endswith(".txt")]
 lora_models_list = [None] + [model for model in os.listdir("inputs/image/sd_models/lora") if
                              model.endswith(".safetensors")]
+textual_inversion_models_list = [None] + [model for model in os.listdir("inputs/image/sd_models/embedding") if model.endswith(".pt")]
 inpaint_models_list = [None] + [model.replace(".safetensors", "") for model in
                                 os.listdir("inputs/image/sd_models/inpaint")
                                 if model.endswith(".safetensors") or not model.endswith(".txt")]
@@ -1095,7 +1113,7 @@ chat_interface = gr.Interface(
         gr.Slider(minimum=0.0, maximum=1.0, value=0.9, step=0.1, label="TTS Top P", interactive=True),
         gr.Slider(minimum=0, maximum=100, value=20, step=1, label="TTS Top K", interactive=True),
         gr.Slider(minimum=0.5, maximum=2.0, value=1.0, step=0.1, label="TTS Speed", interactive=True),
-        gr.Dropdown(choices=["mp3", "wav", "ogg"], label="Select output format", value="mp3", interactive=True),
+        gr.Dropdown(choices=["wav", "mp3", "ogg"], label="Select output format", value="wav", interactive=True),
         gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
     outputs=[
@@ -1122,7 +1140,7 @@ tts_stt_interface = gr.Interface(
         gr.Slider(minimum=0.0, maximum=1.0, value=0.9, step=0.1, label="TTS Top P", interactive=True),
         gr.Slider(minimum=0, maximum=100, value=20, step=1, label="TTS Top K", interactive=True),
         gr.Slider(minimum=0.5, maximum=2.0, value=1.0, step=0.1, label="TTS Speed", interactive=True),
-        gr.Dropdown(choices=["mp3", "wav", "ogg"], label="Select TTS output format", value="mp3", interactive=True),
+        gr.Dropdown(choices=["wav", "mp3", "ogg"], label="Select TTS output format", value="wav", interactive=True),
         gr.Dropdown(choices=["txt", "json"], label="Select STT output format", value="txt", interactive=True),
     ],
     outputs=[
@@ -1145,6 +1163,7 @@ txt2img_interface = gr.Interface(
         gr.Dropdown(choices=stable_diffusion_models_list, label="Select StableDiffusion model", value=None),
         gr.Dropdown(choices=vae_models_list, label="Select VAE model (optional)", value=None),
         gr.Dropdown(choices=lora_models_list, label="Select LORA models (optional)", value=None, multiselect=True),
+        gr.Dropdown(choices=textual_inversion_models_list, label="Select Embedding models (optional)", value=None, multiselect=True),
         gr.HTML("<h3>StableDiffusion Settings</h3>"),
         gr.Radio(choices=["SD", "SD2", "SDXL"], label="Select model type", value="SD"),
         gr.Dropdown(choices=["euler_ancestral", "euler", "lms", "heun", "dpm", "dpm_solver", "dpm_solver++"],
@@ -1290,7 +1309,7 @@ audiocraft_interface = gr.Interface(
         gr.Slider(minimum=0.0, maximum=1.9, value=1.0, step=0.1, label="Temperature"),
         gr.Slider(minimum=1.0, maximum=10.0, value=3.0, step=0.1, label="CFG"),
         gr.Checkbox(label="Enable Multiband Diffusion", value=False),
-        gr.Dropdown(choices=["mp3", "wav", "ogg"], label="Select output format (Works only without Multiband Diffusion)", value="mp3", interactive=True),
+        gr.Dropdown(choices=["wav", "mp3", "ogg"], label="Select output format (Works only without Multiband Diffusion)", value="wav", interactive=True),
         gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
     outputs=[

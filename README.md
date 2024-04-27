@@ -15,7 +15,7 @@ The goal of the project - to create the easiest possible application to use neur
 ### TTS-STT: ![2](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/b327c698-66a8-4649-a754-98830c2cbf27)
 
 ### StableDiffusion:
- #### txt2img: ![3](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/a27878cd-ba13-451a-8181-994148f6919c)
+ #### txt2img: ![3](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/e18f7992-7b79-4250-ab6c-27fac5de0776)
  #### img2img: ![4](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/d51168e6-29ab-4a58-ac0e-b83a8f7c40e0)
  #### inpaint: ![5](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/953ab08c-30ff-4b6e-9590-1037b4ffa8f4)
  #### video: ![6](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/0e5738de-f8c0-4ace-badc-af1e64fae196)
@@ -36,7 +36,7 @@ The goal of the project - to create the easiest possible application to use neur
 * Support for diffusers (safetensors) models (StableDiffusion) - txt2img, img2img, inpaint, video and extras tabs
 * AudioCraft support (Models: musicgen, audiogen and magnet)
 * Supports TTS and Whisper models (For LLM and TTS-STT)
-* Support for Lora, Vae, Inpaint, Upscale and Video models (For StableDiffusion)
+* Supports Lora, Textual inversion (embedding) Vae, Inpaint, Upscale and Video models (For StableDiffusion)
 * Support Multiband Diffusion model (For AudioCraft)
 * Ability to select an avatar (For LLM)
 * Model settings inside the interface
@@ -115,9 +115,10 @@ To get update, run `git pull`
 4) Set up the model according to the parameters you need
 5) Enter your request
 6) Click the `Submit` button to get the generated image
-#### Optional: You can select your `vae` and `lora` models to improve the generation method, also you can enable `upscale` to increase the size of the generated image 
+#### Optional: You can select your `vae`, `embedding` and `lora` models to improve the generation method, also you can enable `upscale` to increase the size of the generated image 
 #### vae = *inputs/image/sd_models/vae*
 #### lora = *inputs/image/sd_models/lora*
+#### embedding = *inputs/image/sd_models/embedding*
 
 #### img2img:
 
@@ -187,7 +188,7 @@ To get update, run `git pull`
 ## Where can I get models, voices and avatars?
 
 * LLM models can be taken from [HuggingFace](https://huggingface.co/models) or from ModelDownloader inside interface
-* StableDiffusion, vae, inpaint and lora models can be taken from [CivitAI](https://civitai.com/models) or from ModelDownloader inside interface
+* StableDiffusion, vae, inpaint, embedding and lora models can be taken from [CivitAI](https://civitai.com/models) or from ModelDownloader inside interface
 * AudioCraft models are downloads automatically in *inputs* folder, when you select a model and press the submit button
 * TTS, Whisper, Upscale and Multiband diffusion models are downloads automatically in *inputs* folder when are they used 
 * You can take voices anywhere. Record yours or take a recording from the Internet. Or just use those that are already in the project. The main thing is that it is pre-processed!
