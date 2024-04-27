@@ -544,9 +544,9 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
             upscaler = load_upscale_model(upscale_factor_value)
             if upscaler:
                 if upscale_factor == "x2":
-                    upscaled_image = upscaler(prompt=prompt, image=image, num_inference_steps=50, guidance_scale=8).images[0]
+                    upscaled_image = upscaler(prompt=prompt, image=image, num_inference_steps=50, guidance_scale=6).images[0]
                 else:
-                    upscaled_image = upscaler(prompt=prompt, image=image, num_inference_steps=50, guidance_scale=8)["images"][0]
+                    upscaled_image = upscaler(prompt=prompt, image=image, num_inference_steps=30, guidance_scale=8)["images"][0]
                 image = upscaled_image
 
         today = datetime.now().date()
@@ -827,7 +827,7 @@ def generate_video(init_image, video_settings_html, motion_bucket_id, noise_aug_
         torch.cuda.empty_cache()
 
 
-def generate_image_extras(image_path, enable_upscale, output_format="png", stop_generation=None):
+def generate_image_extras(image_path, enable_upscale, num_inference_steps, guidance_scale, output_format="png", stop_generation=None):
     global stop_signal
     if stop_signal:
         return None, "Generation stopped"
@@ -842,7 +842,7 @@ def generate_image_extras(image_path, enable_upscale, output_format="png", stop_
     upscaler = load_upscale_model(upscale_factor)
     if upscaler:
         image = Image.open(image_path).convert("RGB")
-        upscaled_image = upscaler(prompt="", image=image, num_inference_steps=50, guidance_scale=8).images[0]
+        upscaled_image = upscaler(prompt="", image=image, num_inference_steps=num_inference_steps, guidance_scale=guidance_scale).images[0]
 
         today = datetime.now().date()
         image_dir = os.path.join('outputs', f"StableDiffusion_{today.strftime('%Y%m%d')}")
@@ -1246,6 +1246,8 @@ extras_interface = gr.Interface(
     inputs=[
         gr.Image(label="Image to modify", type="filepath"),
         gr.Checkbox(label="Enable upscale", value=False),
+        gr.Slider(minimum=1, maximum=100, value=50, step=1, label="Steps"),
+        gr.Slider(minimum=1.0, maximum=30.0, value=8, step=0.1, label="CFG"),
         gr.Dropdown(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
         gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
