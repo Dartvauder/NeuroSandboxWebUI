@@ -190,16 +190,14 @@ def load_upscale_model(upscale_factor):
         upscaler = StableDiffusionLatentUpscalePipeline.from_pretrained(
             upscale_model_path,
             revision="fp16",
-            torch_dtype=torch.float16,
-            device_map="auto"
+            torch_dtype=torch.float16
         )
     else:
         upscaler = StableDiffusionUpscalePipeline.from_pretrained(
             upscale_model_path,
             original_config_file=original_config_file,
             revision="fp16",
-            torch_dtype=torch.float16,
-            device_map="auto"
+            torch_dtype=torch.float16
         )
 
     upscaler.to(device)
@@ -406,7 +404,7 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_settin
     return chat_history, audio_path, avatar_path, chat_dir, None
 
 
-def generate_tts_stt(text, audio, tts_settings_html, speaker_wav, language, tts_temperature, tts_top_p, tts_top_k, tts_speed, output_format):
+def generate_tts_stt(text, audio, tts_settings_html, speaker_wav, language, tts_temperature, tts_top_p, tts_top_k, tts_speed, tts_output_format, stt_output_format):
     global tts_model, whisper_model
 
     tts_output = None
@@ -429,12 +427,12 @@ def generate_tts_stt(text, audio, tts_settings_html, speaker_wav, language, tts_
         today = datetime.now().date()
         audio_dir = os.path.join('outputs', f"TTS_{today.strftime('%Y%m%d')}")
         os.makedirs(audio_dir, exist_ok=True)
-        audio_filename = f"tts_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
+        audio_filename = f"tts_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{tts_output_format}"
         tts_output = os.path.join(audio_dir, audio_filename)
 
-        if output_format == "mp3":
+        if tts_output_format == "mp3":
             sf.write(tts_output, wav, 22050, format='mp3')
-        elif output_format == "ogg":
+        elif tts_output_format == "ogg":
             sf.write(tts_output, wav, 22050, format='ogg')
         else:
             sf.write(tts_output, wav, 22050)
@@ -451,10 +449,22 @@ def generate_tts_stt(text, audio, tts_settings_html, speaker_wav, language, tts_
             today = datetime.now().date()
             stt_dir = os.path.join('outputs', f"STT_{today.strftime('%Y%m%d')}")
             os.makedirs(stt_dir, exist_ok=True)
-            stt_filename = f"stt_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt"
-            stt_file_path = os.path.join(stt_dir, stt_filename)
-            with open(stt_file_path, 'w', encoding='utf-8') as f:
-                f.write(stt_output)
+
+            if stt_output_format == "txt":
+                stt_filename = f"stt_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt"
+                stt_file_path = os.path.join(stt_dir, stt_filename)
+                with open(stt_file_path, 'w', encoding='utf-8') as f:
+                    f.write(stt_output)
+            elif stt_output_format == "json":
+                stt_filename = f"stt_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+                stt_file_path = os.path.join(stt_dir, stt_filename)
+                stt_history = []
+                if os.path.exists(stt_file_path):
+                    with open(stt_file_path, "r", encoding="utf-8") as f:
+                        stt_history = json.load(f)
+                stt_history.append(stt_output)
+                with open(stt_file_path, "w", encoding="utf-8") as f:
+                    json.dump(stt_history, f, ensure_ascii=False, indent=4)
 
     return tts_output, stt_output
 
@@ -462,7 +472,7 @@ def generate_tts_stt(text, audio, tts_settings_html, speaker_wav, language, tts_
 def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name, vae_model_name, lora_model_names, stable_diffusion_settings_html,
                            stable_diffusion_model_type, stable_diffusion_sampler, stable_diffusion_steps,
                            stable_diffusion_cfg, stable_diffusion_width, stable_diffusion_height,
-                           stable_diffusion_clip_skip, enable_upscale=False, upscale_factor="x2", output_format="png", stop_generation=None):
+                           stable_diffusion_clip_skip, enable_upscale=False, upscale_factor="x2", upscale_steps=50, upscale_cfg=6, output_format="png", stop_generation=None):
     global stop_signal
     stop_signal = False
 
@@ -544,9 +554,9 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
             upscaler = load_upscale_model(upscale_factor_value)
             if upscaler:
                 if upscale_factor == "x2":
-                    upscaled_image = upscaler(prompt=prompt, image=image, num_inference_steps=50, guidance_scale=8).images[0]
+                    upscaled_image = upscaler(prompt=prompt, image=image, num_inference_steps=upscale_steps, guidance_scale=upscale_cfg).images[0]
                 else:
-                    upscaled_image = upscaler(prompt=prompt, image=image, num_inference_steps=50, guidance_scale=8)["images"][0]
+                    upscaled_image = upscaler(prompt=prompt, image=image, num_inference_steps=upscale_steps, guidance_scale=upscale_cfg)["images"][0]
                 image = upscaled_image
 
         today = datetime.now().date()
@@ -770,9 +780,12 @@ def generate_image_inpaint(prompt, negative_prompt, init_image, mask_image, stab
         torch.cuda.empty_cache()
 
 
-def generate_video(init_image, video_settings_html, motion_bucket_id, noise_aug_strength, fps, decode_chunk_size, output_format, stop_generation):
+def generate_video(init_image, video_settings_html, motion_bucket_id, noise_aug_strength, fps, num_frames, decode_chunk_size, output_format, stop_generation):
     global stop_signal
     stop_signal = False
+
+    if not init_image:
+        return None, "Please upload an initial image!"
 
     video_model_name = "vdo/stable-video-diffusion-img2vid-xt-1-1"
     video_model_path = os.path.join("inputs", "image", "sd_models", "video")
@@ -799,7 +812,7 @@ def generate_video(init_image, video_settings_html, motion_bucket_id, noise_aug_
 
         generator = torch.manual_seed(42)
         frames = pipe(image, decode_chunk_size=decode_chunk_size, generator=generator,
-                      motion_bucket_id=motion_bucket_id, noise_aug_strength=noise_aug_strength, num_frames=25).frames[0]
+                      motion_bucket_id=motion_bucket_id, noise_aug_strength=noise_aug_strength, num_frames=num_frames).frames[0]
 
         if stop_signal:
             return None, "Generation stopped"
@@ -827,7 +840,7 @@ def generate_video(init_image, video_settings_html, motion_bucket_id, noise_aug_
         torch.cuda.empty_cache()
 
 
-def generate_image_extras(image_path, enable_upscale, output_format="png", stop_generation=None):
+def generate_image_extras(image_path, enable_upscale, num_inference_steps, guidance_scale, output_format="png", stop_generation=None):
     global stop_signal
     if stop_signal:
         return None, "Generation stopped"
@@ -842,7 +855,7 @@ def generate_image_extras(image_path, enable_upscale, output_format="png", stop_
     upscaler = load_upscale_model(upscale_factor)
     if upscaler:
         image = Image.open(image_path).convert("RGB")
-        upscaled_image = upscaler(prompt="", image=image, num_inference_steps=50, guidance_scale=8).images[0]
+        upscaled_image = upscaler(prompt="", image=image, num_inference_steps=num_inference_steps, guidance_scale=guidance_scale).images[0]
 
         today = datetime.now().date()
         image_dir = os.path.join('outputs', f"StableDiffusion_{today.strftime('%Y%m%d')}")
@@ -1109,7 +1122,8 @@ tts_stt_interface = gr.Interface(
         gr.Slider(minimum=0.0, maximum=1.0, value=0.9, step=0.1, label="TTS Top P", interactive=True),
         gr.Slider(minimum=0, maximum=100, value=20, step=1, label="TTS Top K", interactive=True),
         gr.Slider(minimum=0.5, maximum=2.0, value=1.0, step=0.1, label="TTS Speed", interactive=True),
-        gr.Dropdown(choices=["mp3", "wav", "ogg"], label="Select output format", value="mp3", interactive=True),
+        gr.Dropdown(choices=["mp3", "wav", "ogg"], label="Select TTS output format", value="mp3", interactive=True),
+        gr.Dropdown(choices=["txt", "json"], label="Select STT output format", value="txt", interactive=True),
     ],
     outputs=[
         gr.Audio(label="TTS Audio", type="filepath"),
@@ -1142,6 +1156,8 @@ txt2img_interface = gr.Interface(
         gr.Slider(minimum=1, maximum=4, value=1, step=1, label="Clip skip"),
         gr.Checkbox(label="Enable upscale", value=False),
         gr.Radio(choices=["x2", "x4"], label="Upscale size", value="x2"),
+        gr.Slider(minimum=1, maximum=100, value=50, step=1, label="Upscale steps"),
+        gr.Slider(minimum=1.0, maximum=30.0, value=6, step=0.1, label="Upscale CFG"),
         gr.Dropdown(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
         gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
@@ -1222,9 +1238,10 @@ video_interface = gr.Interface(
     inputs=[
         gr.Image(label="Initial image", type="filepath"),
         gr.HTML("<h3>Video Settings</h3>"),
-        gr.Slider(minimum=0, maximum=720, value=180, step=1, label="Motion Bucket ID"),
+        gr.Slider(minimum=0, maximum=360, value=180, step=1, label="Motion Bucket ID"),
         gr.Slider(minimum=0.0, maximum=1.0, value=0.1, step=0.01, label="Noise Augmentation Strength"),
         gr.Slider(minimum=1, maximum=60, value=10, step=1, label="FPS"),
+        gr.Slider(minimum=2, maximum=120, value=25, step=1, label="Frames"),
         gr.Slider(minimum=1, maximum=32, value=8, step=1, label="Decode Chunk Size"),
         gr.Dropdown(choices=["mp4", "gif"], label="Select output format", value="mp4", interactive=True),
         gr.Button(value="Stop generation", interactive=True, variant="stop"),
@@ -1245,6 +1262,8 @@ extras_interface = gr.Interface(
     inputs=[
         gr.Image(label="Image to modify", type="filepath"),
         gr.Checkbox(label="Enable upscale", value=False),
+        gr.Slider(minimum=1, maximum=100, value=50, step=1, label="Steps"),
+        gr.Slider(minimum=1.0, maximum=30.0, value=8, step=0.1, label="CFG"),
         gr.Dropdown(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
         gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
