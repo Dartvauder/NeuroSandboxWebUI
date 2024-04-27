@@ -937,7 +937,10 @@ def generate_audio(prompt, input_audio=None, model_name=None, audiocraft_setting
             descriptions = [prompt]
             model.set_generation_params(duration=duration, top_k=top_k, top_p=top_p, temperature=temperature,
                                         cfg_coef=cfg_coef)
-            wav, tokens = model.generate(descriptions, return_tokens=True)
+            if model_type == "musicgen":
+                wav, tokens = model.generate(descriptions, return_tokens=True)
+            elif model_type == "audiogen":
+                wav = model.generate(descriptions)
             progress_bar.update(duration)
             if wav.ndim > 2:
                 wav = wav.squeeze()
