@@ -796,13 +796,13 @@ def generate_video(init_image, video_settings_html, motion_bucket_id, noise_aug_
     video_model_name = "vdo/stable-video-diffusion-img2vid-xt-1-1"
     video_model_path = os.path.join("inputs", "image", "sd_models", "video")
 
-    print(f"Downloading Stable Video Diffusion model: {video_model_name}")
+    print(f"Downloading StableVideoDiffusion model")
 
     if not os.path.exists(video_model_path):
         os.makedirs(video_model_path, exist_ok=True)
         Repo.clone_from(f"https://huggingface.co/{video_model_name}", video_model_path)
 
-    print(f"Stable Video Diffusion model {video_model_name} downloaded")
+    print(f"StableVideoDiffusion model downloaded")
 
     try:
         pipe = StableVideoDiffusionPipeline.from_pretrained(
