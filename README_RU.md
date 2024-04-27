@@ -114,6 +114,10 @@
 
 ### LibreTranslate:
 
+* Сначала вам нужно установить и запустить [LibreTranslate](https://github.com/LibreTranslate/LibreTranslate)
+1) Выберите исходный и целевой язык
+2) Нажмите кнопку `Submit`, чтобы получить перевод
+
 ### StableDiffusion - имеет шесть под-вкладок:
 
 #### txt2img:
@@ -143,11 +147,16 @@
 
 #### depth2img:
 
+1) Загрузите исходное изображение
+2) Настройте модель по нужным вам параметрам
+3) Введите ваш запрос
+4) Нажмите кнопку `Submit`, чтобы получить сгенерированное изображение
+
 #### upscale:
 
 1) Загрузите исходное изображение
 2) Выберите нужные вам опции
-3) Нажмите кнопку `Submit`, чтобы получить измененное изображение
+3) Нажмите кнопку `Submit`, чтобы получить увеличенное изображение
 
 #### inpaint:
 
@@ -215,19 +224,21 @@
 
 Большое спасибо этим проектам за то, что благодаря им я смог создать свое приложение:
 
-* `Gradio` - https://github.com/gradio-app/gradio
-* `Transformers` - https://github.com/huggingface/transformers
-* `TTS` - https://github.com/coqui-ai/TTS
-* `openai-Whisper` - https://github.com/openai/whisper
+* `gradio` - https://github.com/gradio-app/gradio
+* `transformers` - https://github.com/huggingface/transformers
+* `tts` - https://github.com/coqui-ai/TTS
+* `openai-whisper` - https://github.com/openai/whisper
 * `torch` - https://github.com/pytorch/pytorch
-* `Soundfile` - https://github.com/bastibe/python-soundfile
+* `soundfile` - https://github.com/bastibe/python-soundfile
 * `accelerate` - https://github.com/huggingface/accelerate
 * `cuda-python` - https://github.com/NVIDIA/cuda-python
-* `GitPython` - https://github.com/gitpython-developers/GitPython
+* `gitpython` - https://github.com/gitpython-developers/GitPython
 * `diffusers` - https://github.com/huggingface/diffusers
 * `llama.cpp-python` - https://github.com/abetlen/llama-cpp-python
-* `AudioCraft` - https://github.com/facebookresearch/audiocraft
+* `audiocraft` - https://github.com/facebookresearch/audiocraft
 * `xformers` - https://github.com/facebookresearch/xformers
+* `demucs` - https://github.com/facebookresearch/demucs
+* `libretranslatepy` - https://github.com/argosopentech/LibreTranslate-py
 
 ## Пожертвование
 
