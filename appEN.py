@@ -1238,7 +1238,7 @@ video_interface = gr.Interface(
         gr.Slider(minimum=0, maximum=360, value=180, step=1, label="Motion Bucket ID"),
         gr.Slider(minimum=0.0, maximum=1.0, value=0.1, step=0.01, label="Noise Augmentation Strength"),
         gr.Slider(minimum=1, maximum=60, value=10, step=1, label="FPS"),
-        gr.Slider(minimum=1, maximum=120, value=25, step=1, label="Frames"),
+        gr.Slider(minimum=2, maximum=120, value=25, step=1, label="Frames"),
         gr.Slider(minimum=1, maximum=32, value=8, step=1, label="Decode Chunk Size"),
         gr.Dropdown(choices=["mp4", "gif"], label="Select output format", value="mp4", interactive=True),
         gr.Button(value="Stop generation", interactive=True, variant="stop"),
