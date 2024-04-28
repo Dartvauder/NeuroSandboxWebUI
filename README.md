@@ -92,7 +92,7 @@ To get update, run `git pull`
 
 ## How to use:
 
-#### Interface has eight tabs: LLM, TTS-STT, LibreTranslate, StableDiffusion, AudioCraft, Demucs, ModelDownloader and Settings. Select the one you need and follow the instructions below 
+#### Interface has nine tabs: LLM, TTS-STT, LibreTranslate, StableDiffusion, AudioCraft, Demucs, ModelDownloader, Settings and System. Select the one you need and follow the instructions below 
 
 ### LLM:
 
