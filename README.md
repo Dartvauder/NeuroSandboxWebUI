@@ -49,7 +49,7 @@ The goal of the project - to create the easiest possible application to use neur
 * Support LibreTranslate (Local API)
 * Support Demucs
 * Support Rembg
-* Ability to select an avatar (For LLM)
+* Support multimodal LLaVA 1.6 (For LLM)
 * Model settings inside the interface
 * ModelDownloader (For LLM and StableDiffusion)
 * Application settings
