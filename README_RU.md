@@ -258,6 +258,7 @@
 * `xformers` - https://github.com/facebookresearch/xformers
 * `demucs` - https://github.com/facebookresearch/demucs
 * `libretranslatepy` - https://github.com/argosopentech/LibreTranslate-py
+* `rembg` - https://github.com/danielgatis/rembg
 
 ## Пожертвование
 
