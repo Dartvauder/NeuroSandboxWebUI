@@ -161,7 +161,7 @@ To get update, run `git pull`
 #### upscale:
 
 1) Upload the initial image
-2) Select the options you need
+2) Set up the model according to the parameters you need
 3) Click the `Submit` button to get the upscaled image
 
 #### inpaint:
