@@ -2,6 +2,7 @@ import gradio as gr
 import langdetect
 from transformers import AutoModelForCausalLM, AutoTokenizer
 from libretranslatepy import LibreTranslateAPI
+import urllib.error
 import soundfile as sf
 import os
 import subprocess
@@ -13,8 +14,8 @@ import whisper
 from datetime import datetime
 import warnings
 import logging
-from diffusers import StableDiffusionPipeline, StableDiffusionXLPipeline, StableDiffusionImg2ImgPipeline, StableDiffusionDepth2ImgPipeline, AutoencoderKL, StableDiffusionLatentUpscalePipeline, StableDiffusionUpscalePipeline, StableDiffusionInpaintPipeline, StableVideoDiffusionPipeline
-from diffusers.utils import load_image, export_to_video
+from diffusers import StableDiffusionPipeline, StableDiffusionXLPipeline, StableDiffusionImg2ImgPipeline, StableDiffusionDepth2ImgPipeline, AutoencoderKL, StableDiffusionLatentUpscalePipeline, StableDiffusionUpscalePipeline, StableDiffusionInpaintPipeline, StableVideoDiffusionPipeline, I2VGenXLPipeline
+from diffusers.utils import load_image, export_to_video, export_to_gif
 from git import Repo
 import numpy as np
 from PIL import Image
@@ -24,6 +25,10 @@ import requests
 import torchaudio
 from audiocraft.models import MusicGen, AudioGen, MultiBandDiffusion  # MAGNeT
 from audiocraft.data.audio import audio_write
+import psutil
+import GPUtil
+from cpuinfo import get_cpu_info
+from pynvml import nvmlInit, nvmlDeviceGetHandleByIndex, nvmlDeviceGetTemperature, NVML_TEMPERATURE_GPU
 
 XFORMERS_AVAILABLE = False
 torch.cuda.is_available()
@@ -479,10 +484,44 @@ def generate_tts_stt(text, audio, tts_settings_html, speaker_wav, language, tts_
     return tts_output, stt_output
 
 
-def translate_text(text, source_lang, target_lang):
-    translator = LibreTranslateAPI("http://127.0.0.1:5000")
-    translation = translator.translate(text, source_lang, target_lang)
-    return translation
+def translate_text(text, source_lang, target_lang, enable_translate_history, translate_history_format):
+    try:
+        translator = LibreTranslateAPI("http://127.0.0.1:5000")
+        translation = translator.translate(text, source_lang, target_lang)
+
+        if enable_translate_history:
+            today = datetime.now().date()
+            translate_dir = os.path.join('outputs', f"Translate_{today.strftime('%Y%m%d')}")
+            os.makedirs(translate_dir, exist_ok=True)
+
+            translate_history_path = os.path.join(translate_dir, f'translate_history.{translate_history_format}')
+            if translate_history_format == "txt":
+                with open(translate_history_path, "a", encoding="utf-8") as f:
+                    f.write(f"Source ({source_lang}): {text}\n")
+                    f.write(f"Translation ({target_lang}): {translation}\n\n")
+            elif translate_history_format == "json":
+                translate_history = []
+                if os.path.exists(translate_history_path):
+                    with open(translate_history_path, "r", encoding="utf-8") as f:
+                        translate_history = json.load(f)
+                translate_history.append({
+                    "source": {
+                        "language": source_lang,
+                        "text": text
+                    },
+                    "translation": {
+                        "language": target_lang,
+                        "text": translation
+                    }
+                })
+                with open(translate_history_path, "w", encoding="utf-8") as f:
+                    json.dump(translate_history, f, ensure_ascii=False, indent=4)
+
+        return translation
+
+    except urllib.error.URLError as e:
+        error_message = "LibreTranslate is not running. Please start the LibreTranslate server."
+        return error_message
 
 
 def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name, vae_model_name, lora_model_names, textual_inversion_model_names, stable_diffusion_settings_html,
@@ -705,8 +744,10 @@ def generate_image_depth2img(prompt, negative_prompt, init_image, stable_diffusi
     stable_diffusion_model_path = os.path.join("inputs", "image", "sd_models", "depth")
 
     if not os.path.exists(stable_diffusion_model_path):
+        print("Downloading depth2img model...")
         os.makedirs(stable_diffusion_model_path, exist_ok=True)
         Repo.clone_from("https://huggingface.co/stabilityai/stable-diffusion-2-depth", stable_diffusion_model_path)
+        print("Depth2img model downloaded")
 
     try:
         original_config_file = "configs/sd/v2-inference.yaml"
@@ -750,6 +791,32 @@ def generate_image_depth2img(prompt, negative_prompt, init_image, stable_diffusi
     finally:
         del stable_diffusion_model
         torch.cuda.empty_cache()
+
+
+def generate_image_upscale(image_path, num_inference_steps, guidance_scale, output_format="png", stop_generation=None):
+    global stop_signal
+    if stop_signal:
+        return None, "Generation stopped"
+
+    if not image_path:
+        return None, "Please, upload an initial image!"
+
+    upscale_factor = 2
+    upscaler = load_upscale_model(upscale_factor)
+    if upscaler:
+        image = Image.open(image_path).convert("RGB")
+        upscaled_image = upscaler(prompt="", image=image, num_inference_steps=num_inference_steps, guidance_scale=guidance_scale).images[0]
+
+        today = datetime.now().date()
+        image_dir = os.path.join('outputs', f"StableDiffusion_{today.strftime('%Y%m%d')}")
+        os.makedirs(image_dir, exist_ok=True)
+        image_filename = f"upscaled_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
+        image_path = os.path.join(image_dir, image_filename)
+        upscaled_image.save(image_path, format=output_format.upper())
+
+        return image_path, None
+    else:
+        return None, "Failed to load upscale model"
 
 
 def generate_image_inpaint(prompt, negative_prompt, init_image, mask_image, stable_diffusion_model_name, vae_model_name,
@@ -861,90 +928,106 @@ def generate_image_inpaint(prompt, negative_prompt, init_image, mask_image, stab
         torch.cuda.empty_cache()
 
 
-def generate_video(init_image, video_settings_html, motion_bucket_id, noise_aug_strength, fps, num_frames, decode_chunk_size, output_format, stop_generation):
+def generate_video(init_image, output_format, video_settings_html, motion_bucket_id, noise_aug_strength, fps, num_frames, decode_chunk_size,
+                   iv2gen_xl_settings_html, prompt, negative_prompt, num_inference_steps, guidance_scale, stop_generation):
     global stop_signal
     stop_signal = False
 
     if not init_image:
-        return None, "Please upload an initial image!"
+        return None, None, "Please upload an initial image!"
 
-    video_model_name = "vdo/stable-video-diffusion-img2vid-xt-1-1"
-    video_model_path = os.path.join("inputs", "image", "sd_models", "video")
+    today = datetime.now().date()
+    video_dir = os.path.join('outputs', f"StableDiffusion_{today.strftime('%Y%m%d')}")
+    os.makedirs(video_dir, exist_ok=True)
 
-    print(f"Downloading StableVideoDiffusion model")
+    if output_format == "mp4":
+        video_model_name = "vdo/stable-video-diffusion-img2vid-xt-1-1"
+        video_model_path = os.path.join("inputs", "image", "sd_models", "video", "SVD")
 
-    if not os.path.exists(video_model_path):
-        os.makedirs(video_model_path, exist_ok=True)
-        Repo.clone_from(f"https://huggingface.co/{video_model_name}", video_model_path)
+        print(f"Downloading StableVideoDiffusion model")
 
-    print(f"StableVideoDiffusion model downloaded")
+        if not os.path.exists(video_model_path):
+            os.makedirs(video_model_path, exist_ok=True)
+            Repo.clone_from(f"https://huggingface.co/{video_model_name}", video_model_path)
 
-    try:
-        pipe = StableVideoDiffusionPipeline.from_pretrained(
-            pretrained_model_name_or_path=video_model_path,
-            torch_dtype=torch.float16,
-            variant="fp16"
-        )
-        pipe.enable_model_cpu_offload()
-        pipe.unet.enable_forward_chunking()
+        print(f"StableVideoDiffusion model downloaded")
 
-        image = load_image(init_image)
-        image = image.resize((1024, 576))
+        try:
+            pipe = StableVideoDiffusionPipeline.from_pretrained(
+                pretrained_model_name_or_path=video_model_path,
+                torch_dtype=torch.float16,
+                variant="fp16"
+            )
+            pipe.enable_model_cpu_offload()
+            pipe.unet.enable_forward_chunking()
 
-        generator = torch.manual_seed(42)
-        frames = pipe(image, decode_chunk_size=decode_chunk_size, generator=generator,
-                      motion_bucket_id=motion_bucket_id, noise_aug_strength=noise_aug_strength, num_frames=num_frames).frames[0]
+            image = load_image(init_image)
+            image = image.resize((1024, 576))
 
-        if stop_signal:
-            return None, "Generation stopped"
+            generator = torch.manual_seed(42)
+            frames = pipe(image, decode_chunk_size=decode_chunk_size, generator=generator,
+                          motion_bucket_id=motion_bucket_id, noise_aug_strength=noise_aug_strength, num_frames=num_frames).frames[0]
 
-        today = datetime.now().date()
-        video_dir = os.path.join('outputs', f"StableDiffusion_{today.strftime('%Y%m%d')}")
-        os.makedirs(video_dir, exist_ok=True)
+            if stop_signal:
+                return None, None, "Generation stopped"
 
-        if output_format == "mp4":
             video_filename = f"video_{datetime.now().strftime('%Y%m%d_%H%M%S')}.mp4"
             video_path = os.path.join(video_dir, video_filename)
             export_to_video(frames, video_path, fps=fps)
-        else:
+
+            return video_path, None, None
+
+        finally:
+            try:
+                del pipe
+            except UnboundLocalError:
+                pass
+            torch.cuda.empty_cache()
+
+    elif output_format == "gif":
+        video_model_name = "ali-vilab/i2vgen-xl"
+        video_model_path = os.path.join("inputs", "image", "sd_models", "video", "i2vgenxl")
+
+        print(f"Downloading i2vgen-xl model")
+
+        if not os.path.exists(video_model_path):
+            os.makedirs(video_model_path, exist_ok=True)
+            Repo.clone_from(f"https://huggingface.co/{video_model_name}", video_model_path)
+
+        print(f"i2vgen-xl model downloaded")
+
+        try:
+            pipeline = I2VGenXLPipeline.from_pretrained(video_model_path, torch_dtype=torch.float16, variant="fp16")
+            pipeline.enable_model_cpu_offload()
+
+            image = load_image(init_image).convert("RGB")
+
+            generator = torch.manual_seed(8888)
+
+            frames = pipeline(
+                prompt=prompt,
+                image=image,
+                num_inference_steps=num_inference_steps,
+                negative_prompt=negative_prompt,
+                guidance_scale=guidance_scale,
+                generator=generator
+            ).frames[0]
+
+            if stop_signal:
+                return None, None, "Generation stopped"
+
             video_filename = f"video_{datetime.now().strftime('%Y%m%d_%H%M%S')}.gif"
             video_path = os.path.join(video_dir, video_filename)
-            frames[0].save(video_path, save_all=True, append_images=frames[1:], duration=1000 / fps, loop=0)
+            export_to_gif(frames, video_path)
 
-        return video_path, None
+            return None, video_path, None
 
-    finally:
-        try:
-            del pipe
-        except UnboundLocalError:
-            pass
-        torch.cuda.empty_cache()
-
-
-def generate_image_upscale(image_path, num_inference_steps, guidance_scale, output_format="png", stop_generation=None):
-    global stop_signal
-    if stop_signal:
-        return None, "Generation stopped"
-
-    if not image_path:
-        return None, "Please, upload an initial image!"
-
-    upscale_factor = 2
-    upscaler = load_upscale_model(upscale_factor)
-    if upscaler:
-        image = Image.open(image_path).convert("RGB")
-        upscaled_image = upscaler(prompt="", image=image, num_inference_steps=num_inference_steps, guidance_scale=guidance_scale).images[0]
-
-        today = datetime.now().date()
-        image_dir = os.path.join('outputs', f"StableDiffusion_{today.strftime('%Y%m%d')}")
-        os.makedirs(image_dir, exist_ok=True)
-        image_filename = f"upscaled_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
-        image_path = os.path.join(image_dir, image_filename)
-        upscaled_image.save(image_path, format=output_format.upper())
-
-        return image_path, None
-    else:
-        return None, "Failed to load upscale model"
+        finally:
+            try:
+                del pipeline
+            except UnboundLocalError:
+                pass
+            torch.cuda.empty_cache()
 
 
 def generate_audio(prompt, input_audio=None, model_name=None, audiocraft_settings_html=None, model_type="musicgen",
@@ -1060,19 +1143,20 @@ def generate_audio(prompt, input_audio=None, model_name=None, audiocraft_setting
         torch.cuda.empty_cache()
 
 
-def demucs_generate(audio_file, output_format="wav"):
+def demucs_separate(audio_file, output_format="wav"):
     global stop_signal
     if stop_signal:
-        return None, "Generation stopped"
+        return None, None, "Generation stopped"
 
     if not audio_file:
-        return None, "Please upload an audio file!"
+        return None, None, "Please upload an audio file!"
 
     today = datetime.now().date()
     demucs_dir = os.path.join("outputs", f"Demucs_{today.strftime('%Y%m%d')}")
     os.makedirs(demucs_dir, exist_ok=True)
 
-    separate_dir = os.path.join(demucs_dir, "separate")
+    now = datetime.now()
+    separate_dir = os.path.join(demucs_dir, f"separate_{now.strftime('%Y%m%d_%H%M%S')}")
     os.makedirs(separate_dir, exist_ok=True)
 
     try:
@@ -1080,19 +1164,19 @@ def demucs_generate(audio_file, output_format="wav"):
         subprocess.run(command, shell=True, check=True)
 
         if stop_signal:
-            return None, "Generation stopped"
+            return None, None, "Generation stopped"
 
-        vocal_file = os.path.join(separate_dir, "mdx_extra", "vocals.wav")
-        instrumental_file = os.path.join(separate_dir, "mdx_extra", "no_vocals.wav")
+        vocal_file = os.path.join(separate_dir, "vocals.wav")
+        instrumental_file = os.path.join(separate_dir, "no_vocals.wav")
 
         if output_format == "mp3":
-            vocal_output = os.path.join(separate_dir, "mdx_extra", "vocal.mp3")
-            instrumental_output = os.path.join(separate_dir, "mdx_extra", "instrumental.mp3")
+            vocal_output = os.path.join(separate_dir, "vocal.mp3")
+            instrumental_output = os.path.join(separate_dir, "instrumental.mp3")
             subprocess.run(f"ffmpeg -i {vocal_file} -b:a 192k {vocal_output}", shell=True, check=True)
             subprocess.run(f"ffmpeg -i {instrumental_file} -b:a 192k {instrumental_output}", shell=True, check=True)
         elif output_format == "ogg":
-            vocal_output = os.path.join(separate_dir, "mdx_extra", "vocal.ogg")
-            instrumental_output = os.path.join(separate_dir, "mdx_extra", "instrumental.ogg")
+            vocal_output = os.path.join(separate_dir, "vocal.ogg")
+            instrumental_output = os.path.join(separate_dir, "instrumental.ogg")
             subprocess.run(f"ffmpeg -i {vocal_file} -c:a libvorbis -qscale:a 5 {vocal_output}", shell=True, check=True)
             subprocess.run(f"ffmpeg -i {instrumental_file} -c:a libvorbis -qscale:a 5 {instrumental_output}", shell=True, check=True)
         else:
@@ -1163,6 +1247,27 @@ def settings_interface(share_value):
 share_mode = False
 
 
+def get_system_info():
+    gpu = GPUtil.getGPUs()[0]
+    gpu_total_memory = f"{gpu.memoryTotal} MB"
+    gpu_used_memory = f"{gpu.memoryUsed} MB"
+    gpu_free_memory = f"{gpu.memoryFree} MB"
+
+    nvmlInit()
+    handle = nvmlDeviceGetHandleByIndex(0)
+    gpu_temp = nvmlDeviceGetTemperature(handle, NVML_TEMPERATURE_GPU)
+
+    cpu_info = get_cpu_info()
+    cpu_temp = cpu_info.get("cpu_temp", None)
+
+    ram = psutil.virtual_memory()
+    ram_total = f"{ram.total // (1024 ** 3)} GB"
+    ram_used = f"{ram.used // (1024 ** 3)} GB"
+    ram_free = f"{ram.available // (1024 ** 3)} GB"
+
+    return gpu_total_memory, gpu_used_memory, gpu_free_memory, gpu_temp, cpu_temp, ram_total, ram_used, ram_free
+
+
 def stop_all_processes():
     global stop_signal
     stop_signal = True
@@ -1211,7 +1316,7 @@ chat_interface = gr.Interface(
         gr.Slider(minimum=0.0, maximum=2.0, value=0.7, step=0.1, label="Temperature"),
         gr.Slider(minimum=0.0, maximum=1.0, value=0.9, step=0.1, label="Top P"),
         gr.Slider(minimum=0, maximum=100, value=20, step=1, label="Top K"),
-        gr.Dropdown(choices=["txt", "json"], label="Select chat history format", value="txt", interactive=True),
+        gr.Radio(choices=["txt", "json"], label="Select chat history format", value="txt", interactive=True),
         gr.Dropdown(choices=avatars_list, label="Select avatar", value=None),
         gr.Checkbox(label="Enable TTS", value=False),
         gr.HTML("<h3>TTS Settings</h3>"),
@@ -1221,7 +1326,7 @@ chat_interface = gr.Interface(
         gr.Slider(minimum=0.0, maximum=1.0, value=0.9, step=0.1, label="TTS Top P", interactive=True),
         gr.Slider(minimum=0, maximum=100, value=20, step=1, label="TTS Top K", interactive=True),
         gr.Slider(minimum=0.5, maximum=2.0, value=1.0, step=0.1, label="TTS Speed", interactive=True),
-        gr.Dropdown(choices=["wav", "mp3", "ogg"], label="Select output format", value="wav", interactive=True),
+        gr.Radio(choices=["wav", "mp3", "ogg"], label="Select output format", value="wav", interactive=True),
         gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
     outputs=[
@@ -1248,7 +1353,7 @@ tts_stt_interface = gr.Interface(
         gr.Slider(minimum=0.0, maximum=1.0, value=0.9, step=0.1, label="TTS Top P", interactive=True),
         gr.Slider(minimum=0, maximum=100, value=20, step=1, label="TTS Top K", interactive=True),
         gr.Slider(minimum=0.5, maximum=2.0, value=1.0, step=0.1, label="TTS Speed", interactive=True),
-        gr.Dropdown(choices=["wav", "mp3", "ogg"], label="Select TTS output format", value="wav", interactive=True),
+        gr.Radio(choices=["wav", "mp3", "ogg"], label="Select TTS output format", value="wav", interactive=True),
         gr.Dropdown(choices=["txt", "json"], label="Select STT output format", value="txt", interactive=True),
     ],
     outputs=[
@@ -1269,6 +1374,8 @@ translate_interface = gr.Interface(
         gr.Textbox(label="Enter text to translate"),
         gr.Dropdown(choices=["en", "es", "fr", "de", "it", "pt", "pl", "tr", "ru", "nl", "cs", "ar", "zh", "ja", "hi"], label="Select source language", value="en"),
         gr.Dropdown(choices=["en", "es", "fr", "de", "it", "pt", "pl", "tr", "ru", "nl", "cs", "ar", "zh", "ja", "hi"], label="Select target language", value="ru"),
+        gr.Checkbox(label="Enable translate history save", value=False),
+        gr.Radio(choices=["txt", "json"], label="Select translate history format", value="txt", interactive=True)
     ],
     outputs=[
         gr.Textbox(label="Translated text"),
@@ -1302,7 +1409,7 @@ txt2img_interface = gr.Interface(
         gr.Radio(choices=["x2", "x4"], label="Upscale size", value="x2"),
         gr.Slider(minimum=1, maximum=100, value=50, step=1, label="Upscale steps"),
         gr.Slider(minimum=1.0, maximum=30.0, value=6, step=0.1, label="Upscale CFG"),
-        gr.Dropdown(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
+        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
         gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
     outputs=[
@@ -1332,7 +1439,7 @@ img2img_interface = gr.Interface(
         gr.Slider(minimum=1, maximum=100, value=30, step=1, label="Steps"),
         gr.Slider(minimum=1.0, maximum=30.0, value=8, step=0.1, label="CFG"),
         gr.Slider(minimum=1, maximum=4, value=1, step=1, label="Clip skip"),
-        gr.Dropdown(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
+        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
         gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
     outputs=[
@@ -1354,7 +1461,7 @@ depth2img_interface = gr.Interface(
         gr.Image(label="Initial image", type="filepath"),
         gr.HTML("<h3>StableDiffusion Settings</h3>"),
         gr.Slider(minimum=0.0, maximum=1.0, value=0.7, step=0.01, label="Strength"),
-        gr.Dropdown(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
+        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
         gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
     outputs=[
@@ -1373,7 +1480,7 @@ upscale_interface = gr.Interface(
         gr.Image(label="Image to upscale", type="filepath"),
         gr.Slider(minimum=1, maximum=100, value=50, step=1, label="Steps"),
         gr.Slider(minimum=1.0, maximum=30.0, value=8, step=0.1, label="CFG"),
-        gr.Dropdown(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
+        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
         gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
     outputs=[
@@ -1402,7 +1509,7 @@ inpaint_interface = gr.Interface(
         gr.Slider(minimum=1.0, maximum=30.0, value=8, step=0.1, label="CFG"),
         gr.Slider(minimum=256, maximum=2048, value=512, step=64, label="Width"),
         gr.Slider(minimum=256, maximum=2048, value=512, step=64, label="Height"),
-        gr.Dropdown(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
+        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
         gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
     outputs=[
@@ -1420,21 +1527,27 @@ video_interface = gr.Interface(
     fn=generate_video,
     inputs=[
         gr.Image(label="Initial image", type="filepath"),
-        gr.HTML("<h3>Video Settings</h3>"),
+        gr.Radio(choices=["mp4", "gif"], label="Select output format", value="mp4", interactive=True),
+        gr.HTML("<h3>SVD Settings (mp4)</h3>"),
         gr.Slider(minimum=0, maximum=360, value=180, step=1, label="Motion Bucket ID"),
         gr.Slider(minimum=0.0, maximum=1.0, value=0.1, step=0.01, label="Noise Augmentation Strength"),
         gr.Slider(minimum=1, maximum=60, value=10, step=1, label="FPS"),
         gr.Slider(minimum=2, maximum=120, value=25, step=1, label="Frames"),
         gr.Slider(minimum=1, maximum=32, value=8, step=1, label="Decode Chunk Size"),
-        gr.Dropdown(choices=["mp4", "gif"], label="Select output format", value="mp4", interactive=True),
+        gr.HTML("<h3>I2VGen-xl Settings (gif)</h3>"),
+        gr.Textbox(label="Prompt", value=""),
+        gr.Textbox(label="Negative Prompt", value=""),
+        gr.Slider(minimum=1, maximum=100, value=50, step=1, label="Steps"),
+        gr.Slider(minimum=1.0, maximum=30.0, value=9.0, step=0.1, label="CFG"),
         gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
     outputs=[
         gr.Video(label="Generated video"),
+        gr.Image(label="Generated GIF", type="filepath"),
         gr.Textbox(label="Message", type="text"),
     ],
     title="NeuroSandboxWebUI (ALPHA) - StableDiffusion (video)",
-    description="This user interface allows you to enter an initial image and generate a video using StableVideoDiffusion. "
+    description="This user interface allows you to enter an initial image and generate a video using StableVideoDiffusion(mp4) and I2VGen-xl(gif). "
                 "You can customize the generation settings from the sliders. "
                 "Try it and see what happens!",
     allow_flagging="never",
@@ -1454,7 +1567,7 @@ audiocraft_interface = gr.Interface(
         gr.Slider(minimum=0.0, maximum=1.9, value=1.0, step=0.1, label="Temperature"),
         gr.Slider(minimum=1.0, maximum=10.0, value=3.0, step=0.1, label="CFG"),
         gr.Checkbox(label="Enable Multiband Diffusion", value=False),
-        gr.Dropdown(choices=["wav", "mp3", "ogg"], label="Select output format (Works only without Multiband Diffusion)", value="wav", interactive=True),
+        gr.Radio(choices=["wav", "mp3", "ogg"], label="Select output format (Works only without Multiband Diffusion)", value="wav", interactive=True),
         gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
     outputs=[
@@ -1469,10 +1582,10 @@ audiocraft_interface = gr.Interface(
 )
 
 demucs_interface = gr.Interface(
-    fn=demucs_generate,
+    fn=demucs_separate,
     inputs=[
         gr.Audio(type="filepath", label="Audio file to separate"),
-        gr.Dropdown(choices=["wav", "mp3", "ogg"], label="Select output format", value="wav", interactive=True),
+        gr.Radio(choices=["wav", "mp3", "ogg"], label="Select output format", value="wav", interactive=True),
     ],
     outputs=[
         gr.Audio(label="Vocal", type="filepath"),
@@ -1503,7 +1616,7 @@ model_downloader_interface = gr.Interface(
 settings_interface = gr.Interface(
     fn=settings_interface,
     inputs=[
-        gr.Radio(choices=["False", "True"], label="Share Mode", value="False")
+        gr.Radio(choices=["True", "False"], label="Share Mode", value="False")
     ],
     outputs=[
         gr.Textbox(label="Message", type="text")
@@ -1513,11 +1626,29 @@ settings_interface = gr.Interface(
     allow_flagging="never",
 )
 
+system_interface = gr.Interface(
+    fn=get_system_info,
+    inputs=[],
+    outputs=[
+        gr.Textbox(label="GPU Total Memory"),
+        gr.Textbox(label="GPU Used Memory"),
+        gr.Textbox(label="GPU Free Memory"),
+        gr.Textbox(label="GPU Temperature"),
+        gr.Textbox(label="CPU Temperature"),
+        gr.Textbox(label="RAM Total"),
+        gr.Textbox(label="RAM Used"),
+        gr.Textbox(label="RAM Free"),
+    ],
+    title="NeuroSandboxWebUI (ALPHA) - System",
+    description="This interface displays system information",
+    allow_flagging="never",
+)
+
 with gr.TabbedInterface(
         [chat_interface, tts_stt_interface, translate_interface, gr.TabbedInterface([txt2img_interface, img2img_interface, depth2img_interface, upscale_interface, inpaint_interface, video_interface],
         tab_names=["txt2img", "img2img", "depth2img", "upscale", "inpaint", "video"]),
-         audiocraft_interface, demucs_interface, model_downloader_interface, settings_interface],
-        tab_names=["LLM", "TTS-STT", "LibreTranslate", "StableDiffusion", "AudioCraft", "Demucs", "ModelDownloader", "Settings"]
+         audiocraft_interface, demucs_interface, model_downloader_interface, settings_interface, system_interface],
+        tab_names=["LLM", "TTS-STT", "LibreTranslate", "StableDiffusion", "AudioCraft", "Demucs", "ModelDownloader", "Settings", "System"]
 ) as app:
     chat_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     txt2img_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
