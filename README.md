@@ -17,23 +17,23 @@ The goal of the project - to create the easiest possible application to use neur
 ### LibreTranslate: ![3](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/6de47646-b058-42c2-a2fa-58de06616863)
 
 ### StableDiffusion:
- #### txt2img: 
- #### img2img: 
- #### depth2img: 
- #### upscale: 
- #### inpaint: 
- #### video: 
- #### extras: 
+ #### txt2img: ![4](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/c4387329-44e8-4372-aba3-44ec2c140c2e)
+ #### img2img: ![5](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/df15b0c2-e0e3-4f51-94bb-e1a469db4c76)
+ #### depth2img: ![6](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/b275712f-94e5-4147-8f02-ca5e2c2a88d4)
+ #### upscale: ![7](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/a8a394ee-c1ab-4248-9ca5-e7f4564ff0a8)
+ #### inpaint: ![8](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/71ee7944-f510-4922-a489-20f3ef576179)
+ #### video: ![9](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/95586145-f41e-443a-af61-1eb7db79d8bd)
+ #### extras: ![10](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/b249593d-42a6-4990-8790-1e00ee4333af)
  
-### AudioCraft: 
+### AudioCraft: ![11](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/48de57c4-e0a9-4a7c-b4b5-d67224b54833)
 
-### Demucs: 
+### Demucs: ![12](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/895f0f1e-f944-4ae2-9fc8-6ebc18db94e8)
 
-### ModelDownloader: 
+### ModelDownloader: ![13](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/8326511d-8671-4a17-8ab8-78f9e14c1d28)
 
-### Settings: 
+### Settings: ![14](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/7276e470-508d-4d43-bd21-9ebe24b5c0ab)
 
-### System: 
+### System: ![15](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/6f65bbf8-741f-4e22-868c-83b51b0a6ed8)
 
 ## Features:
 
