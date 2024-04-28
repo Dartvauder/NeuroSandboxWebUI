@@ -104,10 +104,9 @@ To get update, run `git pull`
 4) Set up the model according to the parameters you need
 5) Type (or speak) your request
 6) Click the `Submit` button to receive the generated text and audio response
-#### Optional: you can enable `TTS` mode, select the `voice` and `language` needed to receive an audio response. You can also select `avatar`
-#### Avatars = *inputs/image/avatars*
+#### Optional: you can enable `TTS` mode, select the `voice` and `language` needed to receive an audio response
 #### Voice samples = *inputs/audio/voices*
-#### The voice must be pre-processed (22050 kHz, mono, WAV), the avatar should preferably be `PNG` or `JPEG`
+#### The voice must be pre-processed (22050 kHz, mono, WAV)
 
 ### TTS-STT
 
@@ -233,7 +232,6 @@ To get update, run `git pull`
 * AudioCraft models are downloads automatically in *inputs* folder, when you select a model and press the submit button
 * TTS, Whisper, Upscale and Multiband diffusion models are downloads automatically in *inputs* folder when are they used 
 * You can take voices anywhere. Record yours or take a recording from the Internet. Or just use those that are already in the project. The main thing is that it is pre-processed!
-* It’s the same with avatars as with voices. You can download them on the Internet, generate them using neural networks, or take a photo of yourself. The main thing is to comply with the required file format
 
 ## Roadmap
 
