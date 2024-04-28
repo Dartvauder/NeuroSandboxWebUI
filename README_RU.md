@@ -92,7 +92,7 @@
 
 ## Как использовать:
 
-#### Интерфейс имеет восемь вкладок: LLM, TTS-STT, LibreTranslate, StableDiffusion, AudioCraft, Demucs, ModelDownloader и Settings. Выберите ту которая вам нужна и следуйте инструкциям ниже
+#### Интерфейс имеет девять вкладок: LLM, TTS-STT, LibreTranslate, StableDiffusion, AudioCraft, Demucs, ModelDownloader, Settings и System. Выберите ту которая вам нужна и следуйте инструкциям ниже
 
 ### LLM:
 
