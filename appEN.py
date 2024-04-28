@@ -2,6 +2,7 @@ import gradio as gr
 import langdetect
 from transformers import AutoModelForCausalLM, AutoTokenizer
 from libretranslatepy import LibreTranslateAPI
+import urllib.error
 import soundfile as sf
 import os
 import subprocess
@@ -484,38 +485,43 @@ def generate_tts_stt(text, audio, tts_settings_html, speaker_wav, language, tts_
 
 
 def translate_text(text, source_lang, target_lang, enable_translate_history, translate_history_format):
-    translator = LibreTranslateAPI("http://127.0.0.1:5000")
-    translation = translator.translate(text, source_lang, target_lang)
+    try:
+        translator = LibreTranslateAPI("http://127.0.0.1:5000")
+        translation = translator.translate(text, source_lang, target_lang)
 
-    if enable_translate_history:
-        today = datetime.now().date()
-        translate_dir = os.path.join('outputs', f"Translate_{today.strftime('%Y%m%d')}")
-        os.makedirs(translate_dir, exist_ok=True)
+        if enable_translate_history:
+            today = datetime.now().date()
+            translate_dir = os.path.join('outputs', f"Translate_{today.strftime('%Y%m%d')}")
+            os.makedirs(translate_dir, exist_ok=True)
 
-        translate_history_path = os.path.join(translate_dir, f'translate_history.{translate_history_format}')
-        if translate_history_format == "txt":
-            with open(translate_history_path, "a", encoding="utf-8") as f:
-                f.write(f"Source ({source_lang}): {text}\n")
-                f.write(f"Translation ({target_lang}): {translation}\n\n")
-        elif translate_history_format == "json":
-            translate_history = []
-            if os.path.exists(translate_history_path):
-                with open(translate_history_path, "r", encoding="utf-8") as f:
-                    translate_history = json.load(f)
-            translate_history.append({
-                "source": {
-                    "language": source_lang,
-                    "text": text
-                },
-                "translation": {
-                    "language": target_lang,
-                    "text": translation
-                }
-            })
-            with open(translate_history_path, "w", encoding="utf-8") as f:
-                json.dump(translate_history, f, ensure_ascii=False, indent=4)
+            translate_history_path = os.path.join(translate_dir, f'translate_history.{translate_history_format}')
+            if translate_history_format == "txt":
+                with open(translate_history_path, "a", encoding="utf-8") as f:
+                    f.write(f"Source ({source_lang}): {text}\n")
+                    f.write(f"Translation ({target_lang}): {translation}\n\n")
+            elif translate_history_format == "json":
+                translate_history = []
+                if os.path.exists(translate_history_path):
+                    with open(translate_history_path, "r", encoding="utf-8") as f:
+                        translate_history = json.load(f)
+                translate_history.append({
+                    "source": {
+                        "language": source_lang,
+                        "text": text
+                    },
+                    "translation": {
+                        "language": target_lang,
+                        "text": translation
+                    }
+                })
+                with open(translate_history_path, "w", encoding="utf-8") as f:
+                    json.dump(translate_history, f, ensure_ascii=False, indent=4)
 
-    return translation
+        return translation
+
+    except urllib.error.URLError as e:
+        error_message = "LibreTranslate is not running. Please start the LibreTranslate server."
+        return error_message
 
 
 def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name, vae_model_name, lora_model_names, textual_inversion_model_names, stable_diffusion_settings_html,
@@ -1139,11 +1145,12 @@ def generate_audio(prompt, input_audio=None, model_name=None, audiocraft_setting
 
 def demucs_separate(audio_file, output_format="wav"):
     global stop_signal
+
     if stop_signal:
-        return None, "Generation stopped"
+        return None, None, "Generation stopped"
 
     if not audio_file:
-        return None, "Please upload an audio file!"
+        return None, None, "Please upload an audio file!"
 
     today = datetime.now().date()
     demucs_dir = os.path.join("outputs", f"Demucs_{today.strftime('%Y%m%d')}")
@@ -1157,7 +1164,7 @@ def demucs_separate(audio_file, output_format="wav"):
         subprocess.run(command, shell=True, check=True)
 
         if stop_signal:
-            return None, "Generation stopped"
+            return None, None, "Generation stopped"
 
         vocal_file = os.path.join(separate_dir, "mdx_extra", "vocals.wav")
         instrumental_file = os.path.join(separate_dir, "mdx_extra", "no_vocals.wav")
