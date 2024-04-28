@@ -51,6 +51,7 @@ The goal of the project - to create the easiest possible application to use neur
 * Model settings inside the interface
 * ModelDownloader (For LLM and StableDiffusion)
 * Application settings
+* Ability to see system sensors
 
 ## Required Dependencies:
 
