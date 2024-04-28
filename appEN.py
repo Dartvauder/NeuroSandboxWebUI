@@ -1166,8 +1166,14 @@ def demucs_separate(audio_file, output_format="wav"):
         if stop_signal:
             return None, None, "Generation stopped"
 
+        temp_vocal_file = os.path.join(separate_dir, "htdemucs", os.path.splitext(os.path.basename(audio_file))[0], "vocals.wav")
+        temp_instrumental_file = os.path.join(separate_dir, "htdemucs", os.path.splitext(os.path.basename(audio_file))[0], "no_vocals.wav")
+
         vocal_file = os.path.join(separate_dir, "vocals.wav")
-        instrumental_file = os.path.join(separate_dir, "no_vocals.wav")
+        instrumental_file = os.path.join(separate_dir, "instrumental.wav")
+
+        os.rename(temp_vocal_file, vocal_file)
+        os.rename(temp_instrumental_file, instrumental_file)
 
         if output_format == "mp3":
             vocal_output = os.path.join(separate_dir, "vocal.mp3")
