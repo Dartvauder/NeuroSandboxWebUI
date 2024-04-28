@@ -6,26 +6,34 @@
 
 ## Описание:
 
-Простой и удобный интерфейс для использования различных моделей нейронных сетей. Вы можете общаться с LLM, используя текстовый или голосовой ввод, использовать StableDiffusion для генерации изображений и видео, AudioCraft для генерации аудио, CoquiTTS для преобразования текста в речь и OpenAI-Whisper для преобразования речи в текст. Также вы можете скачать модели LLM и StableDiffusion, и изменить настройки приложения внутри интерфейса
+Простой и удобный интерфейс для использования различных моделей нейронных сетей. Вы можете общаться с LLM, используя текстовый или голосовой ввод, использовать StableDiffusion для генерации изображений и видео, AudioCraft для генерации музыки и аудио, CoquiTTS для преобразования текста в речь, OpenAI-Whisper для преобразования речи в текст, LibreTranslate для перевода текста и Demucs для сепарации аудио файлов. Также вы можете скачать модели LLM и StableDiffusion, изменить настройки приложения внутри интерфейса и проверить датчики системы
 
 Цель проекта — создать максимально простое приложение для использования нейросетевых моделей
 
-### LLM: ![1](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/9f6c7c86-03fe-400d-9f28-4824a93100f0)
+### LLM: ![1](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/e162f89e-b767-42a5-9522-fcaa0f652258)
 
-### TTS-STT: ![2](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/b327c698-66a8-4649-a754-98830c2cbf27)
+### TTS-STT: ![2](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/8137b1d1-5f96-41ac-979a-5add6a78fe60)
+
+### LibreTranslate: ![3](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/6de47646-b058-42c2-a2fa-58de06616863)
 
 ### StableDiffusion:
- #### txt2img: ![3](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/e18f7992-7b79-4250-ab6c-27fac5de0776)
- #### img2img: ![4](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/d51168e6-29ab-4a58-ac0e-b83a8f7c40e0)
- #### inpaint: ![5](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/953ab08c-30ff-4b6e-9590-1037b4ffa8f4)
- #### video: ![6](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/0e5738de-f8c0-4ace-badc-af1e64fae196)
- #### extras: ![7](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/55f37964-2a56-49e2-9995-df9122f76172)
+ #### txt2img: ![4](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/c4387329-44e8-4372-aba3-44ec2c140c2e)
+ #### img2img: ![5](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/df15b0c2-e0e3-4f51-94bb-e1a469db4c76)
+ #### depth2img: ![6](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/b275712f-94e5-4147-8f02-ca5e2c2a88d4)
+ #### upscale: ![7](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/a8a394ee-c1ab-4248-9ca5-e7f4564ff0a8)
+ #### inpaint: ![8](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/71ee7944-f510-4922-a489-20f3ef576179)
+ #### video: ![9](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/95586145-f41e-443a-af61-1eb7db79d8bd)
+ #### extras: ![10](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/b249593d-42a6-4990-8790-1e00ee4333af)
+ 
+### AudioCraft: ![11](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/48de57c4-e0a9-4a7c-b4b5-d67224b54833)
 
-### AudioCraft: ![8](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/382ca556-1a14-4099-af36-936c212048f3)
+### Demucs: ![12](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/895f0f1e-f944-4ae2-9fc8-6ebc18db94e8)
 
-### ModelDownloader: ![9](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/ff98c1f1-33df-4018-981c-32671700659f)
+### ModelDownloader: ![13](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/8326511d-8671-4a17-8ab8-78f9e14c1d28)
 
-### Settings: ![10](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/40b38b60-0e32-4a04-a278-fdb0aa15c224)
+### Settings: ![14](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/7276e470-508d-4d43-bd21-9ebe24b5c0ab)
+
+### System: ![15](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/6f65bbf8-741f-4e22-868c-83b51b0a6ed8)
 
 ## Функции:
 
@@ -33,15 +41,19 @@
 * Вы можете использовать приложение через мобильное устройство в localhost (Через IPv4)
 * Гибкий и оптимизированный интерфейс (От Gradio)
 * Поддержка Transformers и llama.cpp моделей (LLM)
-* Поддержка diffusers (safetensors) моделей (StableDiffusion) - Вкладки txt2img, img2img, inpaint, video и extras
+* Поддержка diffusers и safetensors моделей (StableDiffusion) - Вкладки txt2img, img2img, depth2img, upscale, inpaint, video и extras
 * Поддержка AudioCraft (Модели: musicgen, audiogen и magnet)
 * Поддержка TTS и Whisper моделей (Для LLM и TTS-STT)
 * Поддержка Lora, Textual inversion (embedding), Vae, Inpaint, Upscale и Video моделей (Для StableDiffusion)
 * Поддержка Multiband Diffusion модели (Для AudioCraft)
+* Поддержка LibreTranslate (Локальный API)
+* Поддержка Demucs
+* Поддержка Rembg
 * Возможность выбора аватара (Для LLM)
 * Настройки моделей внутри интерфейса
 * ModelDownloader (Для LLM и StableDiffusion)
 * Настройки приложения
+* Возможность видеть датчики системы
 
 ## Необходимые зависимости:
 
@@ -82,7 +94,7 @@
 
 ## Как использовать:
 
-#### Интерфейс имеет шесть вкладок: LLM, TTS-STT, StableDiffusion, AudioCraft, ModelDownloader и Settings. Выберите ту которая вам нужна и следуйте инструкциям ниже
+#### Интерфейс имеет девять вкладок: LLM, TTS-STT, LibreTranslate, StableDiffusion, AudioCraft, Demucs, ModelDownloader, Settings и System. Выберите ту которая вам нужна и следуйте инструкциям ниже
 
 ### LLM:
 
@@ -92,7 +104,7 @@
 4) Настройте модель по нужным вам параметрам
 5) Введите (или произнесите) ваш запрос
 6) Нажмите кнопку `Submit` чтобы получить сгенерированный текстовый и аудио ответ
-#### Необязательно: вы можете включить режим `TTS`, выбрать `голос` и `язык` необходимые для получения аудио ответа. Так же вы можете выбрать `аватар`
+#### Дополнительно: вы можете включить режим `TTS`, выбрать `голос` и `язык` необходимые для получения аудио ответа. Так же вы можете выбрать `аватар`
 #### Аватары = *inputs/image/avatars*
 #### Образцы голоса = *inputs/audio/voices*
 #### Голос должен быть предварительно обработан (22050 кГц, монозвук, WAV), аватар предпочтительно должен быть `PNG` или `JPEG`
@@ -105,7 +117,14 @@
 #### Образцы голоса = *inputs/audio/voices*
 #### Голос должен быть предварительно обработан (22050 кГц, монозвук, WAV)
 
-### StableDiffusion - имеет пять под-вкладок:
+### LibreTranslate:
+
+* Сначала вам нужно установить и запустить [LibreTranslate](https://github.com/LibreTranslate/LibreTranslate)
+1) Выберите исходный и целевой язык
+2) (Дополнительно) Вы можете сохранить историю перевода включив соответствующую кнопку
+3) Нажмите кнопку `Submit`, чтобы получить перевод
+
+### StableDiffusion - имеет семь под-вкладок:
 
 #### txt2img:
 
@@ -115,7 +134,7 @@
 4) Настройте модель по нужным вам параметрам
 5) Введите ваш запрос
 6) Нажмите кнопку `Submit`, чтобы получить сгенерированное изображение
-#### Необязательно: вы можете выбрать свои модели `vae`, `embedding` и `lora` чтобы улучшить метод генерации, а так же включить `upscale` чтобы увеличить размер сгенерированного изображения
+#### Дополнительно: вы можете выбрать свои модели `vae`, `embedding` и `lora` чтобы улучшить метод генерации, а так же включить `upscale` чтобы увеличить размер сгенерированного изображения
 #### vae = *inputs/image/sd_models/vae*
 #### lora = *inputs/image/sd_models/lora*
 #### embedding = *inputs/image/sd_models/embedding*
@@ -129,8 +148,21 @@
 5) Загрузите исходное изображение, с которым будет происходить генерация
 6) Введите ваш запрос
 7) Нажмите кнопку `Submit`, чтобы получить сгенерированное изображение
-#### Необязательно: вы можете выбрать свою модель `vae`
+#### Дополнительно: вы можете выбрать свою модель `vae`
 #### vae = *inputs/image/sd_models/vae*
+
+#### depth2img:
+
+1) Загрузите исходное изображение
+2) Настройте модель по нужным вам параметрам
+3) Введите ваш запрос
+4) Нажмите кнопку `Submit`, чтобы получить сгенерированное изображение
+
+#### upscale:
+
+1) Загрузите исходное изображение
+2) Выберите нужные вам опции
+3) Нажмите кнопку `Submit`, чтобы получить увеличенное изображение
 
 #### inpaint:
 
@@ -142,7 +174,7 @@
 6) В `mask image` выберите кисть, затем палитру и измените цвет на `#FFFFFF`
 7) Нарисуйте место для генерации и введите ваш запрос
 8) Нажмите кнопку `Submit`, чтобы получить измененное изображение
-#### Необязательно: вы можете выбрать свою модель `vae`
+#### Дополнительно: вы можете выбрать свою модель `vae`
 #### vae = *inputs/image/sd_models/vae*
 
 #### video:
@@ -163,9 +195,14 @@
 2) Выберите тип модели (`musicgen` или `audiogen`)
 3) Настройте модель по нужным вам параметрам
 4) Введите ваш запрос
-5) (Необязательно) загрузите исходный звук, если вы используете модель `melody`
+5) (Дополнительно) загрузите исходный звук, если вы используете модель `melody`
 6) Нажмите кнопку `Submit`, чтобы получить сгенерированный звук
-#### Необязательно: вы можете включить `multiband diffusion`, чтобы улучшить генерируемый звук
+#### Дополнительно: вы можете включить `multiband diffusion`, чтобы улучшить генерируемый звук
+
+### Demucs:
+
+1) Загрузите исходный звук для сепарации
+2) Нажмите кнопку `Submit`, чтобы получить сепарированный звук
 
 ### ModelDownloader:
 
@@ -176,6 +213,10 @@
 ### Settings:
 
 * Здесь вы можете изменить настройки приложения. На данный момент вы можете изменить только режим `Share` на `True` или `False`
+
+### System: 
+
+* Здесь вы можете увидеть показатели датчиков вашего компьютера
 
 ### Общее:
 
@@ -202,19 +243,22 @@
 
 Большое спасибо этим проектам за то, что благодаря им я смог создать свое приложение:
 
-* `Gradio` - https://github.com/gradio-app/gradio
-* `Transformers` - https://github.com/huggingface/transformers
-* `TTS` - https://github.com/coqui-ai/TTS
-* `openai-Whisper` - https://github.com/openai/whisper
+* `gradio` - https://github.com/gradio-app/gradio
+* `transformers` - https://github.com/huggingface/transformers
+* `tts` - https://github.com/coqui-ai/TTS
+* `openai-whisper` - https://github.com/openai/whisper
 * `torch` - https://github.com/pytorch/pytorch
-* `Soundfile` - https://github.com/bastibe/python-soundfile
+* `soundfile` - https://github.com/bastibe/python-soundfile
 * `accelerate` - https://github.com/huggingface/accelerate
 * `cuda-python` - https://github.com/NVIDIA/cuda-python
-* `GitPython` - https://github.com/gitpython-developers/GitPython
+* `gitpython` - https://github.com/gitpython-developers/GitPython
 * `diffusers` - https://github.com/huggingface/diffusers
 * `llama.cpp-python` - https://github.com/abetlen/llama-cpp-python
-* `AudioCraft` - https://github.com/facebookresearch/audiocraft
+* `audiocraft` - https://github.com/facebookresearch/audiocraft
 * `xformers` - https://github.com/facebookresearch/xformers
+* `demucs` - https://github.com/facebookresearch/demucs
+* `libretranslatepy` - https://github.com/argosopentech/LibreTranslate-py
+* `rembg` - https://github.com/danielgatis/rembg
 
 ## Пожертвование
 
