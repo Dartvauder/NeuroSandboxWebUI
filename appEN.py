@@ -479,9 +479,38 @@ def generate_tts_stt(text, audio, tts_settings_html, speaker_wav, language, tts_
     return tts_output, stt_output
 
 
-def translate_text(text, source_lang, target_lang):
+def translate_text(text, source_lang, target_lang, enable_translate_history, translate_history_format):
     translator = LibreTranslateAPI("http://127.0.0.1:5000")
     translation = translator.translate(text, source_lang, target_lang)
+
+    if enable_translate_history:
+        today = datetime.now().date()
+        translate_dir = os.path.join('outputs', f"Translate_{today.strftime('%Y%m%d')}")
+        os.makedirs(translate_dir, exist_ok=True)
+
+        translate_history_path = os.path.join(translate_dir, f'translate_history.{translate_history_format}')
+        if translate_history_format == "txt":
+            with open(translate_history_path, "a", encoding="utf-8") as f:
+                f.write(f"Source ({source_lang}): {text}\n")
+                f.write(f"Translation ({target_lang}): {translation}\n\n")
+        elif translate_history_format == "json":
+            translate_history = []
+            if os.path.exists(translate_history_path):
+                with open(translate_history_path, "r", encoding="utf-8") as f:
+                    translate_history = json.load(f)
+            translate_history.append({
+                "source": {
+                    "language": source_lang,
+                    "text": text
+                },
+                "translation": {
+                    "language": target_lang,
+                    "text": translation
+                }
+            })
+            with open(translate_history_path, "w", encoding="utf-8") as f:
+                json.dump(translate_history, f, ensure_ascii=False, indent=4)
+
     return translation
 
 
@@ -1311,6 +1340,8 @@ translate_interface = gr.Interface(
         gr.Textbox(label="Enter text to translate"),
         gr.Dropdown(choices=["en", "es", "fr", "de", "it", "pt", "pl", "tr", "ru", "nl", "cs", "ar", "zh", "ja", "hi"], label="Select source language", value="en"),
         gr.Dropdown(choices=["en", "es", "fr", "de", "it", "pt", "pl", "tr", "ru", "nl", "cs", "ar", "zh", "ja", "hi"], label="Select target language", value="ru"),
+        gr.Checkbox(label="Enable translate history save", value=False),
+        gr.Radio(choices=["txt", "json"], label="Select translate history format", value="txt", interactive=True)
     ],
     outputs=[
         gr.Textbox(label="Translated text"),
