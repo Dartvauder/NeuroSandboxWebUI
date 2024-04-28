@@ -928,7 +928,7 @@ def generate_video(init_image, output_format, video_settings_html, motion_bucket
     stop_signal = False
 
     if not init_image:
-        return None, "Please upload an initial image!"
+        return None, None, "Please upload an initial image!"
 
     today = datetime.now().date()
     video_dir = os.path.join('outputs', f"StableDiffusion_{today.strftime('%Y%m%d')}")
@@ -963,13 +963,13 @@ def generate_video(init_image, output_format, video_settings_html, motion_bucket
                           motion_bucket_id=motion_bucket_id, noise_aug_strength=noise_aug_strength, num_frames=num_frames).frames[0]
 
             if stop_signal:
-                return None, "Generation stopped"
+                return None, None, "Generation stopped"
 
             video_filename = f"video_{datetime.now().strftime('%Y%m%d_%H%M%S')}.mp4"
             video_path = os.path.join(video_dir, video_filename)
             export_to_video(frames, video_path, fps=fps)
 
-            return video_path, None
+            return video_path, None, None
 
         finally:
             try:
@@ -1008,13 +1008,13 @@ def generate_video(init_image, output_format, video_settings_html, motion_bucket
             ).frames[0]
 
             if stop_signal:
-                return None, "Generation stopped"
+                return None, None, "Generation stopped"
 
             video_filename = f"video_{datetime.now().strftime('%Y%m%d_%H%M%S')}.gif"
             video_path = os.path.join(video_dir, video_filename)
             export_to_gif(frames, video_path)
 
-            return video_path, None
+            return None, video_path, None
 
         finally:
             try:
@@ -1536,6 +1536,7 @@ video_interface = gr.Interface(
     ],
     outputs=[
         gr.Video(label="Generated video"),
+        gr.Image(label="Generated GIF", type="filepath"),
         gr.Textbox(label="Message", type="text"),
     ],
     title="NeuroSandboxWebUI (ALPHA) - StableDiffusion (video)",
