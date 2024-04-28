@@ -17,22 +17,23 @@ The goal of the project - to create the easiest possible application to use neur
 ### LibreTranslate: ![3](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/6de47646-b058-42c2-a2fa-58de06616863)
 
 ### StableDiffusion:
- #### txt2img: ![4](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/4b96c08f-5e12-4c5d-a75d-748c642ffafd)
- #### img2img: ![5](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/a217ae4c-f59d-47e6-8559-120be4963b55)
- #### depth2img: ![6](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/7d2bcbce-03ae-47e4-bbe5-93e6fba5f071)
- #### upscale: ![7](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/052c8f0d-0c95-4248-963e-0485f5ac3b2e)
- #### inpaint: ![8](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/bf4afd3d-ceb3-4024-ad91-3d689ff16916)
- #### video: ![9](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/bcd62f45-e4e0-4f9c-ae3e-37b6a3ab7581)
+ #### txt2img: 
+ #### img2img: 
+ #### depth2img: 
+ #### upscale: 
+ #### inpaint: 
+ #### video: 
+ #### extras: 
  
-### AudioCraft: ![10](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/6464e094-0111-4a22-a195-700365068a09)
+### AudioCraft: 
 
-### Demucs: ![11](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/aba6e2a6-26bd-4bcc-98e5-ade028f90382)
+### Demucs: 
 
-### ModelDownloader: ![12](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/eefe2a87-b245-460e-87c9-ac47fad6cc09)
+### ModelDownloader: 
 
-### Settings: ![13](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/96d98d88-479b-4915-9a93-873963411031)
+### Settings: 
 
-### System: ![14](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/83a0191b-63d3-45fa-aa25-1889c126269c)
+### System: 
 
 ## Features:
 
@@ -40,13 +41,14 @@ The goal of the project - to create the easiest possible application to use neur
 * You can use the application via your mobile device in localhost (Via IPv4)
 * Flexible and optimized interface (By Gradio)
 * Support for Transformers and llama.cpp models (LLM)
-* Support for diffusers and safetensors models (StableDiffusion) - txt2img, img2img, depth2img, upscale, inpaint and video tabs
+* Support for diffusers and safetensors models (StableDiffusion) - txt2img, img2img, depth2img, upscale, inpaint, video and extras tabs
 * AudioCraft support (Models: musicgen, audiogen and magnet)
 * Supports TTS and Whisper models (For LLM and TTS-STT)
 * Supports Lora, Textual inversion (embedding), Vae, Inpaint, Upscale and Video models (For StableDiffusion)
 * Support Multiband Diffusion model (For AudioCraft)
 * Support LibreTranslate (Local API)
 * Support Demucs
+* Support Rembg
 * Ability to select an avatar (For LLM)
 * Model settings inside the interface
 * ModelDownloader (For LLM and StableDiffusion)
