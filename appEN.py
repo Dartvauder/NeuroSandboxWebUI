@@ -752,6 +752,32 @@ def generate_image_depth2img(prompt, negative_prompt, init_image, stable_diffusi
         torch.cuda.empty_cache()
 
 
+def generate_image_upscale(image_path, num_inference_steps, guidance_scale, output_format="png", stop_generation=None):
+    global stop_signal
+    if stop_signal:
+        return None, "Generation stopped"
+
+    if not image_path:
+        return None, "Please, upload an initial image!"
+
+    upscale_factor = 2
+    upscaler = load_upscale_model(upscale_factor)
+    if upscaler:
+        image = Image.open(image_path).convert("RGB")
+        upscaled_image = upscaler(prompt="", image=image, num_inference_steps=num_inference_steps, guidance_scale=guidance_scale).images[0]
+
+        today = datetime.now().date()
+        image_dir = os.path.join('outputs', f"StableDiffusion_{today.strftime('%Y%m%d')}")
+        os.makedirs(image_dir, exist_ok=True)
+        image_filename = f"upscaled_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
+        image_path = os.path.join(image_dir, image_filename)
+        upscaled_image.save(image_path, format=output_format.upper())
+
+        return image_path, None
+    else:
+        return None, "Failed to load upscale model"
+
+
 def generate_image_inpaint(prompt, negative_prompt, init_image, mask_image, stable_diffusion_model_name, vae_model_name,
                            stable_diffusion_settings_html, stable_diffusion_model_type, stable_diffusion_sampler,
                            stable_diffusion_steps, stable_diffusion_cfg, width, height, output_format="png", stop_generation=None):
@@ -919,32 +945,6 @@ def generate_video(init_image, video_settings_html, motion_bucket_id, noise_aug_
         except UnboundLocalError:
             pass
         torch.cuda.empty_cache()
-
-
-def generate_image_upscale(image_path, num_inference_steps, guidance_scale, output_format="png", stop_generation=None):
-    global stop_signal
-    if stop_signal:
-        return None, "Generation stopped"
-
-    if not image_path:
-        return None, "Please, upload an initial image!"
-
-    upscale_factor = 2
-    upscaler = load_upscale_model(upscale_factor)
-    if upscaler:
-        image = Image.open(image_path).convert("RGB")
-        upscaled_image = upscaler(prompt="", image=image, num_inference_steps=num_inference_steps, guidance_scale=guidance_scale).images[0]
-
-        today = datetime.now().date()
-        image_dir = os.path.join('outputs', f"StableDiffusion_{today.strftime('%Y%m%d')}")
-        os.makedirs(image_dir, exist_ok=True)
-        image_filename = f"upscaled_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
-        image_path = os.path.join(image_dir, image_filename)
-        upscaled_image.save(image_path, format=output_format.upper())
-
-        return image_path, None
-    else:
-        return None, "Failed to load upscale model"
 
 
 def generate_audio(prompt, input_audio=None, model_name=None, audiocraft_settings_html=None, model_type="musicgen",
