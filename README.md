@@ -124,7 +124,7 @@ To get update, run `git pull`
 2) (Optional) You can save the translation history by turning on the corresponding button
 3) Click the `Submit` button to get the translate
 
-### StableDiffusion - has six sub-tabs:
+### StableDiffusion - has seven sub-tabs:
 
 #### txt2img:
 
@@ -182,6 +182,12 @@ To get update, run `git pull`
 1) Upload the initial image
 2) Set up the model according to the parameters you need
 3) Click the `Submit` button to get the video from image
+
+#### extras:
+
+1) Upload the initial image
+2) Select the options you need
+3) Click the `Submit` button to get the modified image
 
 ### AudioCraft:
 
