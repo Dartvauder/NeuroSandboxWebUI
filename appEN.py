@@ -26,6 +26,7 @@ from audiocraft.models import MusicGen, AudioGen, MultiBandDiffusion  # MAGNeT
 from audiocraft.data.audio import audio_write
 import psutil
 import GPUtil
+from cpuinfo import get_cpu_info
 from pynvml import nvmlInit, nvmlDeviceGetHandleByIndex, nvmlDeviceGetTemperature, NVML_TEMPERATURE_GPU
 
 XFORMERS_AVAILABLE = False
@@ -1249,7 +1250,8 @@ def get_system_info():
     handle = nvmlDeviceGetHandleByIndex(0)
     gpu_temp = nvmlDeviceGetTemperature(handle, NVML_TEMPERATURE_GPU)
 
-    cpu_temp = psutil.sensors_temperatures()['coretemp'][0].current
+    cpu_info = get_cpu_info()
+    cpu_temp = cpu_info.get("cpu_temp", None)
 
     ram = psutil.virtual_memory()
     ram_total = f"{ram.total // (1024 ** 3)} GB"
