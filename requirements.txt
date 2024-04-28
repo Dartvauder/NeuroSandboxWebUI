@@ -66,6 +66,7 @@ gruut_lang_de==2.0.0
 gruut_lang_en==2.0.0
 gruut_lang_es==2.0.0
 gruut_lang_fr==2.0.2
+GPUtil==1.4.0
 h11==0.14.0
 hangul-romanize==0.1.0
 httpcore==1.0.5
@@ -139,6 +140,7 @@ pydub==0.25.1
 pyee==11.1.0
 Pygments==2.17.2
 pynndescent==0.5.12
+pynvml==11.5.0
 pyparsing==3.1.2
 pypinyin==0.51.0
 pysbd==0.3.4
