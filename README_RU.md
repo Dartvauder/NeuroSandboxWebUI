@@ -6,31 +6,31 @@
 
 ## Описание:
 
-Простой и удобный интерфейс для использования различных моделей нейронных сетей. Вы можете общаться с LLM, используя текстовый или голосовой ввод, использовать StableDiffusion для генерации изображений и видео, AudioCraft для генерации музыки и аудио, CoquiTTS для преобразования текста в речь, OpenAI-Whisper для преобразования речи в текст, LibreTranslate для перевода текста и Demucs для сепарации аудио файлов. Также вы можете скачать модели LLM и StableDiffusion, и изменить настройки приложения внутри интерфейса
+Простой и удобный интерфейс для использования различных моделей нейронных сетей. Вы можете общаться с LLM, используя текстовый или голосовой ввод, использовать StableDiffusion для генерации изображений и видео, AudioCraft для генерации музыки и аудио, CoquiTTS для преобразования текста в речь, OpenAI-Whisper для преобразования речи в текст, LibreTranslate для перевода текста и Demucs для сепарации аудио файлов. Также вы можете скачать модели LLM и StableDiffusion, изменить настройки приложения внутри интерфейса и проверить датчики системы
 
 Цель проекта — создать максимально простое приложение для использования нейросетевых моделей
 
-### LLM: ![1](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/fccf6b36-a688-411c-957b-8a6c223b6cde)
+### LLM: 
 
-### TTS-STT: ![2](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/777d74a4-126e-4251-a8d1-ed61594d4645)
+### TTS-STT: 
 
 ### LibreTranslate: 
 
 ### StableDiffusion:
- #### txt2img: ![4](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/2670c247-453b-4887-80e2-2b86e416955a)
- #### img2img: ![5](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/d3475458-176c-475d-9c13-db0cd4b8636b)
- #### depth2img: ![6](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/9ad9220c-5f90-49b1-8b7d-f63744962b25)
- #### upscale: ![7](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/7b1d911f-441e-4e3f-bf8e-daa701a06248)
- #### inpaint: ![8](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/8b680de7-92ec-4ff4-b8d8-8d1429600aba)
+ #### txt2img: 
+ #### img2img: 
+ #### depth2img: 
+ #### upscale: 
+ #### inpaint: 
  #### video: 
 
-### AudioCraft: ![10](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/fbe9876a-c9d5-4604-a7e0-44d640e24173)
+### AudioCraft: 
 
-### Demucs: ![11](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/ddd5ff8d-86b0-48e5-92a6-4b781edadfe1)
+### Demucs: 
 
-### ModelDownloader: ![12](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/b8d4e279-7f35-4031-aea0-5372920f20f6)
+### ModelDownloader: 
 
-### Settings: ![13](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/a6c88400-bb56-4628-ad63-c540f36d59e9)
+### Settings: 
 
 ### System: 
 
