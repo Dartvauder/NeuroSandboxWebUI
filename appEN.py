@@ -1160,7 +1160,7 @@ def demucs_separate(audio_file, output_format="wav"):
     os.makedirs(separate_dir, exist_ok=True)
 
     try:
-        command = f"demucs --two-stems=vocals {audio_file} -o {separate_dir} --out {separate_dir}"
+        command = f"demucs --two-stems=vocals {audio_file} -o {separate_dir}"
         subprocess.run(command, shell=True, check=True)
 
         if stop_signal:
