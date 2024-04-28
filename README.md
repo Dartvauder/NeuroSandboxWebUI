@@ -192,6 +192,9 @@ To get update, run `git pull`
 
 ### Demucs:
 
+1) Upload the initial audio to separate
+2) Click the `Submit` button to get the separated audio
+
 ### ModelDownloader:
 
 * Here you can download `LLM` and `StableDiffusion` models. Just choose the model from the drop-down list and click the `Submit` button
@@ -201,6 +204,10 @@ To get update, run `git pull`
 ### Settings: 
 
 * Here you can change the application settings. For now you can only change `Share` mode to `True` or `False`
+
+### System: 
+
+* Here you can see your computer's sensor readings
 
 ### Additional Information:
 
