@@ -258,6 +258,7 @@ Thank you very much to these projects for allowing me to create my application:
 * `xformers` - https://github.com/facebookresearch/xformers
 * `demucs` - https://github.com/facebookresearch/demucs
 * `libretranslatepy` - https://github.com/argosopentech/LibreTranslate-py
+* `rembg` - https://github.com/danielgatis/rembg
 
 ## Donation
 
