@@ -14,7 +14,7 @@ The goal of the project - to create the easiest possible application to use neur
 
 ### TTS-STT: ![2](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/777d74a4-126e-4251-a8d1-ed61594d4645)
 
-### LibreTranslate: ![3](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/eaf31edd-27d9-488b-81e1-fcead2757013)
+### LibreTranslate: 
 
 ### StableDiffusion:
  #### txt2img: ![4](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/2670c247-453b-4887-80e2-2b86e416955a)
@@ -22,7 +22,7 @@ The goal of the project - to create the easiest possible application to use neur
  #### depth2img: ![6](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/9ad9220c-5f90-49b1-8b7d-f63744962b25)
  #### upscale: ![7](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/7b1d911f-441e-4e3f-bf8e-daa701a06248)
  #### inpaint: ![8](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/8b680de7-92ec-4ff4-b8d8-8d1429600aba)
- #### video: ![9](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/5410d3dd-9b61-4575-8ff2-806218efc161)
+ #### video: 
 
 ### AudioCraft: ![10](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/fbe9876a-c9d5-4604-a7e0-44d640e24173)
 
@@ -31,6 +31,8 @@ The goal of the project - to create the easiest possible application to use neur
 ### ModelDownloader: ![12](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/b8d4e279-7f35-4031-aea0-5372920f20f6)
 
 ### Settings: ![13](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/a6c88400-bb56-4628-ad63-c540f36d59e9)
+
+### System: 
 
 ## Features:
 
@@ -116,7 +118,8 @@ To get update, run `git pull`
 
 * First you need to install and run [LibreTranslate](https://github.com/LibreTranslate/LibreTranslate)
 1) Select source and target language
-2) Click the `Submit` button to get the translate
+2) (Optional) You can save the translation history by turning on the corresponding button
+3) Click the `Submit` button to get the translate
 
 ### StableDiffusion - has six sub-tabs:
 
