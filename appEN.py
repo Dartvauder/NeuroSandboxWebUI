@@ -1145,7 +1145,6 @@ def generate_audio(prompt, input_audio=None, model_name=None, audiocraft_setting
 
 def demucs_separate(audio_file, output_format="wav"):
     global stop_signal
-
     if stop_signal:
         return None, None, "Generation stopped"
 
@@ -1156,27 +1155,28 @@ def demucs_separate(audio_file, output_format="wav"):
     demucs_dir = os.path.join("outputs", f"Demucs_{today.strftime('%Y%m%d')}")
     os.makedirs(demucs_dir, exist_ok=True)
 
-    separate_dir = os.path.join(demucs_dir, "separate")
+    now = datetime.now()
+    separate_dir = os.path.join(demucs_dir, f"separate_{now.strftime('%Y%m%d_%H%M%S')}")
     os.makedirs(separate_dir, exist_ok=True)
 
     try:
-        command = f"demucs --two-stems=vocals {audio_file} -o {separate_dir}"
+        command = f"demucs --two-stems=vocals {audio_file} -o {separate_dir} --out {separate_dir}"
         subprocess.run(command, shell=True, check=True)
 
         if stop_signal:
             return None, None, "Generation stopped"
 
-        vocal_file = os.path.join(separate_dir, "mdx_extra", "vocals.wav")
-        instrumental_file = os.path.join(separate_dir, "mdx_extra", "no_vocals.wav")
+        vocal_file = os.path.join(separate_dir, "vocals.wav")
+        instrumental_file = os.path.join(separate_dir, "no_vocals.wav")
 
         if output_format == "mp3":
-            vocal_output = os.path.join(separate_dir, "mdx_extra", "vocal.mp3")
-            instrumental_output = os.path.join(separate_dir, "mdx_extra", "instrumental.mp3")
+            vocal_output = os.path.join(separate_dir, "vocal.mp3")
+            instrumental_output = os.path.join(separate_dir, "instrumental.mp3")
             subprocess.run(f"ffmpeg -i {vocal_file} -b:a 192k {vocal_output}", shell=True, check=True)
             subprocess.run(f"ffmpeg -i {instrumental_file} -b:a 192k {instrumental_output}", shell=True, check=True)
         elif output_format == "ogg":
-            vocal_output = os.path.join(separate_dir, "mdx_extra", "vocal.ogg")
-            instrumental_output = os.path.join(separate_dir, "mdx_extra", "instrumental.ogg")
+            vocal_output = os.path.join(separate_dir, "vocal.ogg")
+            instrumental_output = os.path.join(separate_dir, "instrumental.ogg")
             subprocess.run(f"ffmpeg -i {vocal_file} -c:a libvorbis -qscale:a 5 {vocal_output}", shell=True, check=True)
             subprocess.run(f"ffmpeg -i {instrumental_file} -c:a libvorbis -qscale:a 5 {instrumental_output}", shell=True, check=True)
         else:
