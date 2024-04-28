@@ -22,6 +22,7 @@ from PIL import Image
 from tqdm import tqdm
 from llama_cpp import Llama
 import requests
+from rembg import remove
 import torchaudio
 from audiocraft.models import MusicGen, AudioGen, MultiBandDiffusion  # MAGNeT
 from audiocraft.data.audio import audio_write
@@ -53,6 +54,21 @@ chat_dir = None
 tts_model = None
 whisper_model = None
 audiocraft_model_path = None
+
+
+def remove_bg(src_img_path, out_img_path):
+    model_path = "inputs/image/sd_models/rembg"
+    os.makedirs(model_path, exist_ok=True)
+
+    os.environ["U2NET_HOME"] = model_path
+
+    with open(src_img_path, "rb") as input_file:
+        input_data = input_file.read()
+
+    output_data = remove(input_data)
+
+    with open(out_img_path, "wb") as output_file:
+        output_file.write(output_data)
 
 
 def load_model(model_name, model_type, n_ctx=None):
@@ -1030,6 +1046,28 @@ def generate_video(init_image, output_format, video_settings_html, motion_bucket
             torch.cuda.empty_cache()
 
 
+def generate_image_extras(input_image, image_output_format, remove_background, stop_generation):
+    if not input_image:
+        return None, "Please upload an image file!"
+
+    if not remove_background:
+        return None, "Please choose the option to modify the image"
+
+    today = datetime.now().date()
+    output_dir = os.path.join('outputs', f"Extras_{today.strftime('%Y%m%d')}")
+    os.makedirs(output_dir, exist_ok=True)
+
+    output_filename = f"background_removed_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{image_output_format}"
+    output_path = os.path.join(output_dir, output_filename)
+
+    try:
+        remove_bg(input_image, output_path)
+        return output_path, None
+
+    except Exception as e:
+        return None, str(e)
+
+
 def generate_audio(prompt, input_audio=None, model_name=None, audiocraft_settings_html=None, model_type="musicgen",
                    duration=10, top_k=250, top_p=0.0,
                    temperature=1.0, cfg_coef=3.0, enable_multiband=False, output_format="mp3", stop_generation=None):
@@ -1559,6 +1597,23 @@ video_interface = gr.Interface(
     allow_flagging="never",
 )
 
+extras_interface = gr.Interface(
+    fn=generate_image_extras,
+    inputs=[
+        gr.Image(label="Image to modify", type="filepath"),
+        gr.Radio(choices=["png", "jpeg"], label="Select output format (image)", value="png", interactive=True),
+        gr.Checkbox(label="Remove Background", value=False),
+        gr.Button(value="Stop generation", interactive=True, variant="stop"),
+    ],
+    outputs=[
+        gr.Image(label="Modified image", type="filepath"),
+        gr.Textbox(label="Message", type="text"),
+    ],
+    title="NeuroSandboxWebUI (ALPHA) - Extras",
+    description="This user interface allows you to modify the image",
+    allow_flagging="never",
+)
+
 audiocraft_interface = gr.Interface(
     fn=generate_audio,
     inputs=[
@@ -1651,8 +1706,8 @@ system_interface = gr.Interface(
 )
 
 with gr.TabbedInterface(
-        [chat_interface, tts_stt_interface, translate_interface, gr.TabbedInterface([txt2img_interface, img2img_interface, depth2img_interface, upscale_interface, inpaint_interface, video_interface],
-        tab_names=["txt2img", "img2img", "depth2img", "upscale", "inpaint", "video"]),
+        [chat_interface, tts_stt_interface, translate_interface, gr.TabbedInterface([txt2img_interface, img2img_interface, depth2img_interface, upscale_interface, inpaint_interface, video_interface, extras_interface],
+        tab_names=["txt2img", "img2img", "depth2img", "upscale", "inpaint", "video", "extras"]),
          audiocraft_interface, demucs_interface, model_downloader_interface, settings_interface, system_interface],
         tab_names=["LLM", "TTS-STT", "LibreTranslate", "StableDiffusion", "AudioCraft", "Demucs", "ModelDownloader", "Settings", "System"]
 ) as app:
@@ -1663,6 +1718,7 @@ with gr.TabbedInterface(
     upscale_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     inpaint_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     video_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
+    extras_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     audiocraft_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
 
     close_button = gr.Button("Close terminal")
