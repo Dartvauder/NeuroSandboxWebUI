@@ -40,13 +40,14 @@
 * Вы можете использовать приложение через мобильное устройство в localhost (Через IPv4)
 * Гибкий и оптимизированный интерфейс (От Gradio)
 * Поддержка Transformers и llama.cpp моделей (LLM)
-* Поддержка diffusers и safetensors моделей (StableDiffusion) - Вкладки txt2img, img2img, depth2img, upscale, inpaint и video
+* Поддержка diffusers и safetensors моделей (StableDiffusion) - Вкладки txt2img, img2img, depth2img, upscale, inpaint, video и extras
 * Поддержка AudioCraft (Модели: musicgen, audiogen и magnet)
 * Поддержка TTS и Whisper моделей (Для LLM и TTS-STT)
 * Поддержка Lora, Textual inversion (embedding), Vae, Inpaint, Upscale и Video моделей (Для StableDiffusion)
 * Поддержка Multiband Diffusion модели (Для AudioCraft)
 * Поддержка LibreTranslate (Локальный API)
 * Поддержка Demucs
+* Поддержка Rembg
 * Возможность выбора аватара (Для LLM)
 * Настройки моделей внутри интерфейса
 * ModelDownloader (Для LLM и StableDiffusion)
