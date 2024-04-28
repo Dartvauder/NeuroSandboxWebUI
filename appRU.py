@@ -1601,7 +1601,7 @@ extras_interface = gr.Interface(
     fn=generate_image_extras,
     inputs=[
         gr.Image(label="Image to modify", type="filepath"),
-        gr.Radio(choices=["png", "jpeg"], label="Select output format (image)", value="png", interactive=True),
+        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
         gr.Checkbox(label="Remove Background", value=False),
         gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
