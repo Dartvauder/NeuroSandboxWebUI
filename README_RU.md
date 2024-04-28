@@ -49,7 +49,7 @@
 * Поддержка LibreTranslate (Локальный API)
 * Поддержка Demucs
 * Поддержка Rembg
-* Возможность выбора аватара (Для LLM)
+* Поддержка multimodal LLaVA 1.6 (Для LLM)
 * Настройки моделей внутри интерфейса
 * ModelDownloader (Для LLM и StableDiffusion)
 * Настройки приложения
