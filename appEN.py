@@ -24,6 +24,9 @@ import requests
 import torchaudio
 from audiocraft.models import MusicGen, AudioGen, MultiBandDiffusion  # MAGNeT
 from audiocraft.data.audio import audio_write
+import psutil
+import GPUtil
+from pynvml import nvmlInit, nvmlDeviceGetHandleByIndex, nvmlDeviceGetTemperature, NVML_TEMPERATURE_GPU
 
 XFORMERS_AVAILABLE = False
 torch.cuda.is_available()
@@ -734,8 +737,10 @@ def generate_image_depth2img(prompt, negative_prompt, init_image, stable_diffusi
     stable_diffusion_model_path = os.path.join("inputs", "image", "sd_models", "depth")
 
     if not os.path.exists(stable_diffusion_model_path):
+        print("Downloading depth2img model...")
         os.makedirs(stable_diffusion_model_path, exist_ok=True)
         Repo.clone_from("https://huggingface.co/stabilityai/stable-diffusion-2-depth", stable_diffusion_model_path)
+        print("Depth2img model downloaded")
 
     try:
         original_config_file = "configs/sd/v2-inference.yaml"
@@ -1234,6 +1239,26 @@ def settings_interface(share_value):
 share_mode = False
 
 
+def get_system_info():
+    gpu = GPUtil.getGPUs()[0]
+    gpu_total_memory = f"{gpu.memoryTotal} MB"
+    gpu_used_memory = f"{gpu.memoryUsed} MB"
+    gpu_free_memory = f"{gpu.memoryFree} MB"
+
+    nvmlInit()
+    handle = nvmlDeviceGetHandleByIndex(0)
+    gpu_temp = nvmlDeviceGetTemperature(handle, NVML_TEMPERATURE_GPU)
+
+    cpu_temp = psutil.sensors_temperatures()['coretemp'][0].current
+
+    ram = psutil.virtual_memory()
+    ram_total = f"{ram.total // (1024 ** 3)} GB"
+    ram_used = f"{ram.used // (1024 ** 3)} GB"
+    ram_free = f"{ram.available // (1024 ** 3)} GB"
+
+    return gpu_total_memory, gpu_used_memory, gpu_free_memory, gpu_temp, cpu_temp, ram_total, ram_used, ram_free
+
+
 def stop_all_processes():
     global stop_signal
     stop_signal = True
@@ -1591,11 +1616,29 @@ settings_interface = gr.Interface(
     allow_flagging="never",
 )
 
+system_interface = gr.Interface(
+    fn=get_system_info,
+    inputs=[],
+    outputs=[
+        gr.Textbox(label="GPU Total Memory"),
+        gr.Textbox(label="GPU Used Memory"),
+        gr.Textbox(label="GPU Free Memory"),
+        gr.Textbox(label="GPU Temperature"),
+        gr.Textbox(label="CPU Temperature"),
+        gr.Textbox(label="RAM Total"),
+        gr.Textbox(label="RAM Used"),
+        gr.Textbox(label="RAM Free"),
+    ],
+    title="NeuroSandboxWebUI (ALPHA) - System",
+    description="This interface displays system information",
+    allow_flagging="never",
+)
+
 with gr.TabbedInterface(
         [chat_interface, tts_stt_interface, translate_interface, gr.TabbedInterface([txt2img_interface, img2img_interface, depth2img_interface, upscale_interface, inpaint_interface, video_interface],
         tab_names=["txt2img", "img2img", "depth2img", "upscale", "inpaint", "video"]),
-         audiocraft_interface, demucs_interface, model_downloader_interface, settings_interface],
-        tab_names=["LLM", "TTS-STT", "LibreTranslate", "StableDiffusion", "AudioCraft", "Demucs", "ModelDownloader", "Settings"]
+         audiocraft_interface, demucs_interface, model_downloader_interface, settings_interface, system_interface],
+        tab_names=["LLM", "TTS-STT", "LibreTranslate", "StableDiffusion", "AudioCraft", "Demucs", "ModelDownloader", "Settings", "System"]
 ) as app:
     chat_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     txt2img_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
