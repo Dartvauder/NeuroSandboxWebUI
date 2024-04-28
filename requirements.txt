@@ -15,7 +15,6 @@ audioread==3.0.1
 av==12.0.0
 Babel==2.14.0
 bangla==0.0.2
-backgroundremover==0.2.7
 bitsandbytes==0.43.1
 blinker==1.7.0
 blis==0.7.11
@@ -156,6 +155,7 @@ referencing==0.35.0
 regex==2024.4.16
 requests==2.31.0
 retrying==1.3.4
+rembg==2.0.56
 rich==13.7.1
 rpds-py==0.18.0
 ruff==0.4.2
