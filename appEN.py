@@ -85,6 +85,7 @@ def load_model(model_name, model_type, n_ctx=None):
                     model_path,
                     device_map=device,
                     torch_dtype=torch.float16,
+                    trust_remote_code=True
                 )
                 return tokenizer, model, None
             except (OSError, RuntimeError):
