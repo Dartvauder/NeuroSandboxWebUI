@@ -10,11 +10,11 @@
 
 Цель проекта — создать максимально простое приложение для использования нейросетевых моделей
 
-### LLM: ![1](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/e162f89e-b767-42a5-9522-fcaa0f652258)
+### LLM: 
 
 ### TTS-STT: ![2](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/8137b1d1-5f96-41ac-979a-5add6a78fe60)
 
-### LibreTranslate: ![3](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/6de47646-b058-42c2-a2fa-58de06616863)
+### LibreTranslate: 
 
 ### StableDiffusion:
  #### txt2img: ![4](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/c4387329-44e8-4372-aba3-44ec2c140c2e)
@@ -23,7 +23,7 @@
  #### upscale: ![7](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/a8a394ee-c1ab-4248-9ca5-e7f4564ff0a8)
  #### inpaint: ![8](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/71ee7944-f510-4922-a489-20f3ef576179)
  #### video: ![9](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/95586145-f41e-443a-af61-1eb7db79d8bd)
- #### extras: ![10](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/b249593d-42a6-4990-8790-1e00ee4333af)
+ #### extras: 
  
 ### AudioCraft: ![11](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/48de57c4-e0a9-4a7c-b4b5-d67224b54833)
 
@@ -49,7 +49,8 @@
 * Поддержка LibreTranslate (Локальный API)
 * Поддержка Demucs
 * Поддержка Rembg
-* Поддержка multimodal LLaVA 1.6 (Для LLM)
+* Поддержка multimodal (Для LLM)
+* Поддержка WebSearch (DuckDuckGo)
 * Настройки моделей внутри интерфейса
 * ModelDownloader (Для LLM и StableDiffusion)
 * Настройки приложения
