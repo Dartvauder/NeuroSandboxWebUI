@@ -49,7 +49,8 @@ The goal of the project - to create the easiest possible application to use neur
 * Support LibreTranslate (Local API)
 * Support Demucs
 * Support Rembg
-* Support multimodal LLaVA 1.6 (For LLM)
+* Support multimodal (For LLM)
+* Support WebSearch (DuckDuckGo)
 * Model settings inside the interface
 * ModelDownloader (For LLM and StableDiffusion)
 * Application settings
