@@ -499,9 +499,12 @@ def generate_tts_stt(text, audio, tts_settings_html, speaker_wav, language, tts_
     return tts_output, stt_output
 
 
-def translate_text(text, source_lang, target_lang, enable_translate_history, translate_history_format):
+def translate_text(text, source_lang, target_lang, enable_translate_history, translate_history_format, file=None):
     try:
         translator = LibreTranslateAPI("http://127.0.0.1:5000")
+        if file:
+            with open(file.name, "r", encoding="utf-8") as f:
+                text = f.read()
         translation = translator.translate(text, source_lang, target_lang)
 
         if enable_translate_history:
@@ -1415,7 +1418,8 @@ translate_interface = gr.Interface(
         gr.Dropdown(choices=["en", "es", "fr", "de", "it", "pt", "pl", "tr", "ru", "nl", "cs", "ar", "zh", "ja", "hi"], label="Select source language", value="en"),
         gr.Dropdown(choices=["en", "es", "fr", "de", "it", "pt", "pl", "tr", "ru", "nl", "cs", "ar", "zh", "ja", "hi"], label="Select target language", value="ru"),
         gr.Checkbox(label="Enable translate history save", value=False),
-        gr.Radio(choices=["txt", "json"], label="Select translate history format", value="txt", interactive=True)
+        gr.Radio(choices=["txt", "json"], label="Select translate history format", value="txt", interactive=True),
+        gr.File(label="Upload text file (optional)", file_count="single", interactive=True),
     ],
     outputs=[
         gr.Textbox(label="Translated text"),
