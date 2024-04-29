@@ -249,7 +249,7 @@ chat_history = []
 
 
 def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_settings_html, llm_model_type, max_length, max_tokens,
-                             temperature, top_p, top_k, chat_history_format, enable_tts, tts_settings_html,
+                             temperature, top_p, top_k, chat_history_format, enable_libretranslate, target_lang, enable_tts, tts_settings_html,
                              speaker_wav, language, tts_temperature, tts_top_p, tts_top_k, tts_speed, output_format, stop_generation):
     global chat_history, chat_dir, tts_model, whisper_model, stop_signal
     stop_signal = False
@@ -362,6 +362,15 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_settin
                 progress_bar.close()
 
                 text = output['choices'][0]['text']
+
+            if enable_libretranslate:
+                try:
+                    translator = LibreTranslateAPI("http://127.0.0.1:5000")
+                    translation = translator.translate(text, detect_lang, target_lang)
+                    text = translation
+                except urllib.error.URLError:
+                    chat_history.append([None, "LibreTranslate is not running. Please start the LibreTranslate server."])
+                    return chat_history, None, None, None
 
         if not chat_dir:
             now = datetime.now()
@@ -1362,6 +1371,8 @@ chat_interface = gr.Interface(
         gr.Slider(minimum=0.0, maximum=1.0, value=0.9, step=0.1, label="Top P"),
         gr.Slider(minimum=0, maximum=100, value=20, step=1, label="Top K"),
         gr.Radio(choices=["txt", "json"], label="Select chat history format", value="txt", interactive=True),
+        gr.Checkbox(label="Enable LibreTranslate", value=False),
+        gr.Dropdown(choices=["en", "es", "fr", "de", "it", "pt", "pl", "tr", "ru", "nl", "cs", "ar", "zh", "ja", "hi"], label="Select target language", value="ru", interactive=True),
         gr.Checkbox(label="Enable TTS", value=False),
         gr.HTML("<h3>TTS Settings</h3>"),
         gr.Dropdown(choices=speaker_wavs_list, label="Select voice", interactive=True),
