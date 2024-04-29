@@ -248,26 +248,25 @@ chat_history = []
 
 
 def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_settings_html, llm_model_type, max_length, max_tokens,
-                             temperature, top_p, top_k, chat_history_format, avatar_name, enable_tts, tts_settings_html,
+                             temperature, top_p, top_k, chat_history_format, enable_tts, tts_settings_html,
                              speaker_wav, language, tts_temperature, tts_top_p, tts_top_k, tts_speed, output_format, stop_generation):
     global chat_history, chat_dir, tts_model, whisper_model, stop_signal
     stop_signal = False
     if not input_text and not input_audio:
         chat_history.append(["Please, enter your request!", None])
-        return chat_history, None, None, None, None
+        return chat_history, None, None, None
     prompt = transcribe_audio(input_audio) if input_audio else input_text
     if not llm_model_name:
         chat_history.append([None, "Please, select a LLM model!"])
-        return chat_history, None, None, None, None
+        return chat_history, None, None, None
     tokenizer, llm_model, error_message = load_model(llm_model_name, llm_model_type)
     if error_message:
         chat_history.append([None, error_message])
-        return chat_history, None, None, None, None
+        return chat_history, None, None, None
     tts_model = None
     whisper_model = None
     text = None
     audio_path = None
-    avatar_path = None
 
     try:
         if enable_tts:
@@ -275,7 +274,7 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_settin
                 tts_model = load_tts_model()
             if not speaker_wav or not language:
                 chat_history.append([None, "Please, select a voice and language for TTS!"])
-                return chat_history, None, None, None, None
+                return chat_history, None, None, None
             device = "cuda" if torch.cuda.is_available() else "cpu"
             tts_model = tts_model.to(device)
         if input_audio:
@@ -322,7 +321,7 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_settin
 
                 if stop_signal:
                     chat_history.append([prompt, "Generation stopped"])
-                    return chat_history, None, None, None
+                    return chat_history, None, None
 
                 progress_bar.close()
 
@@ -357,7 +356,7 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_settin
 
                 if stop_signal:
                     chat_history.append([prompt, "Generation stopped"])
-                    return chat_history, None, None, None
+                    return chat_history, None, None
 
                 progress_bar.close()
 
@@ -383,11 +382,10 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_settin
             chat_history.append(["Human: " + prompt, "AI: " + (text if text else "")])
             with open(chat_history_path, "w", encoding="utf-8") as f:
                 json.dump(chat_history, f, ensure_ascii=False, indent=4)
-        avatar_path = f"inputs/image/avatars/{avatar_name}" if avatar_name else None
         if enable_tts and text:
             if stop_signal:
                 chat_history.append([prompt, text])
-                return chat_history, None, avatar_path, chat_dir, "Generation stopped"
+                return chat_history, None, chat_dir, "Generation stopped"
             enable_text_splitting = False
             repetition_penalty = 2.0
             length_penalty = 1.0
@@ -432,7 +430,7 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_settin
         torch.cuda.empty_cache()
 
     chat_history.append([prompt, text])
-    return chat_history, audio_path, avatar_path, chat_dir, None
+    return chat_history, audio_path, chat_dir, None
 
 
 def generate_tts_stt(text, audio, tts_settings_html, speaker_wav, language, tts_temperature, tts_top_p, tts_top_k, tts_speed, tts_output_format, stt_output_format):
@@ -1331,7 +1329,6 @@ def open_outputs_folder():
 
 
 llm_models_list = [None] + [model for model in os.listdir("inputs/text/llm_models") if not model.endswith(".txt")]
-avatars_list = [None] + [avatar for avatar in os.listdir("inputs/image/avatars") if not avatar.endswith(".txt")]
 speaker_wavs_list = [None] + [wav for wav in os.listdir("inputs/audio/voices") if not wav.endswith(".txt")]
 stable_diffusion_models_list = [None] + [model.replace(".safetensors", "") for model in
                                          os.listdir("inputs/image/sd_models")
@@ -1361,7 +1358,6 @@ chat_interface = gr.Interface(
         gr.Slider(minimum=0.0, maximum=1.0, value=0.9, step=0.1, label="Top P"),
         gr.Slider(minimum=0, maximum=100, value=20, step=1, label="Top K"),
         gr.Radio(choices=["txt", "json"], label="Select chat history format", value="txt", interactive=True),
-        gr.Dropdown(choices=avatars_list, label="Select avatar", value=None),
         gr.Checkbox(label="Enable TTS", value=False),
         gr.HTML("<h3>TTS Settings</h3>"),
         gr.Dropdown(choices=speaker_wavs_list, label="Select voice", interactive=True),
@@ -1376,7 +1372,6 @@ chat_interface = gr.Interface(
     outputs=[
         gr.Chatbot(label="LLM text response", value=[]),
         gr.Audio(label="LLM audio response", type="filepath"),
-        gr.Image(type="filepath", label="Avatar"),
     ],
     title="NeuroSandboxWebUI (ALPHA) - LLM",
     description="This user interface allows you to enter any text or audio and receive generated response. You can select the LLM model, "
