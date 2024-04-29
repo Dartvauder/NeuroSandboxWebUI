@@ -1605,7 +1605,7 @@ extras_interface = gr.Interface(
         gr.Image(label="Modified image", type="filepath"),
         gr.Textbox(label="Message", type="text"),
     ],
-    title="NeuroSandboxWebUI (ALPHA) - Extras",
+    title="NeuroSandboxWebUI (ALPHA) - StableDiffusion (extras)",
     description="This user interface allows you to modify the image",
     allow_flagging="never",
 )
