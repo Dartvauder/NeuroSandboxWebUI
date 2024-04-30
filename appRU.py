@@ -1,6 +1,6 @@
 import gradio as gr
 import langdetect
-from transformers import AutoModelForCausalLM, AutoTokenizer, AutoProcessor, BarkModel
+from transformers import AutoModelForCausalLM, AutoTokenizer, Blip2Processor, Blip2ForConditionalGeneration, AutoProcessor, BarkModel
 from libretranslatepy import LibreTranslateAPI
 import urllib.error
 import soundfile as sf
@@ -24,6 +24,7 @@ from PIL import Image
 from tqdm import tqdm
 from llama_cpp import Llama
 import requests
+from bs4 import BeautifulSoup
 from rembg import remove
 import torchaudio
 from audiocraft.models import MusicGen, AudioGen, MultiBandDiffusion  # MAGNeT
@@ -102,6 +103,21 @@ def load_model(model_name, model_type, n_ctx=None):
             except (ValueError, RuntimeError):
                 return None, None, "The selected model is not compatible with the 'llama' model type"
     return None, None, None
+
+
+def load_blip2_model():
+    global stop_signal
+    if stop_signal:
+        return "Generation stopped"
+    print("Downloading BLIP 2...")
+    blip2_model_path = "inputs/text/llm_models/multimodal/blip2-opt-2.7b"
+    if not os.path.exists(blip2_model_path):
+        os.makedirs(blip2_model_path, exist_ok=True)
+        Repo.clone_from("https://huggingface.co/Salesforce/blip2-opt-2.7b", blip2_model_path)
+    print("BLIP 2 downloaded")
+    processor = Blip2Processor.from_pretrained(blip2_model_path)
+    model = Blip2ForConditionalGeneration.from_pretrained(blip2_model_path, torch_dtype=torch.float16, device_map="auto")
+    return processor, model
 
 
 def transcribe_audio(audio_file_path):
@@ -1241,7 +1257,7 @@ def generate_3d(prompt, init_image, num_inference_steps, guidance_scale, frame_s
         ).images
 
     if stop_signal:
-        return None, None, "Generation stopped"
+        return None, "Generation stopped"
 
     today = datetime.now().date()
     output_dir = os.path.join('outputs', f"Shap-E_{today.strftime('%Y%m%d')}")
@@ -1258,12 +1274,12 @@ def generate_3d(prompt, init_image, num_inference_steps, guidance_scale, frame_s
     glb_path = os.path.join(output_dir, glb_filename)
     mesh.export(glb_path, file_type="glb")
 
-    return glb_path, ply_path, None
+    return glb_path, None
 
 
 def generate_audio_audiocraft(prompt, input_audio=None, model_name=None, audiocraft_settings_html=None, model_type="musicgen",
-                   duration=10, top_k=250, top_p=0.0,
-                   temperature=1.0, cfg_coef=3.0, enable_multiband=False, output_format="mp3", stop_generation=None):
+                              duration=10, top_k=250, top_p=0.0,
+                              temperature=1.0, cfg_coef=3.0, enable_multiband=False, output_format="mp3", stop_generation=None):
     global audiocraft_model_path, stop_signal
     stop_signal = False
 
@@ -1584,7 +1600,7 @@ def open_outputs_folder():
             os.system(f'open "{outputs_folder}"' if os.name == "darwin" else f'xdg-open "{outputs_folder}"')
 
 
-llm_models_list = [None] + [model for model in os.listdir("inputs/text/llm_models") if not model.endswith(".txt")]
+llm_models_list = [None, "blip2-opt-2.7b"] + [model for model in os.listdir("inputs/text/llm_models") if not model.endswith(".txt")]
 speaker_wavs_list = [None] + [wav for wav in os.listdir("inputs/audio/voices") if not wav.endswith(".txt")]
 stable_diffusion_models_list = [None] + [model.replace(".safetensors", "") for model in
                                          os.listdir("inputs/image/sd_models")
@@ -1924,8 +1940,7 @@ shap_e_interface = gr.Interface(
         gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
     outputs=[
-        gr.Model3D(label="Generated 3D (glb) object"),
-        gr.Model3D(label="Generated 3D (ply) object"),
+        gr.Model3D(label="Generated 3D object"),
         gr.Textbox(label="Message", type="text"),
     ],
     title="NeuroSandboxWebUI (ALPHA) - Shap-E",
