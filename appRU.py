@@ -1,6 +1,6 @@
 import gradio as gr
 import langdetect
-from transformers import AutoModelForCausalLM, AutoTokenizer
+from transformers import AutoModelForCausalLM, AutoTokenizer, AutoProcessor, BarkModel
 from libretranslatepy import LibreTranslateAPI
 import urllib.error
 import soundfile as sf
@@ -14,11 +14,12 @@ import whisper
 from datetime import datetime
 import warnings
 import logging
-from diffusers import StableDiffusionPipeline, StableDiffusionXLPipeline, StableDiffusionImg2ImgPipeline, StableDiffusionDepth2ImgPipeline, AutoencoderKL, StableDiffusionLatentUpscalePipeline, StableDiffusionUpscalePipeline, StableDiffusionInpaintPipeline, StableVideoDiffusionPipeline, I2VGenXLPipeline, StableCascadePriorPipeline, StableCascadeDecoderPipeline, ShapEPipeline, ShapEImg2ImgPipeline
+from diffusers import StableDiffusionPipeline, StableDiffusionXLPipeline, StableDiffusionImg2ImgPipeline, StableDiffusionDepth2ImgPipeline, AutoencoderKL, StableDiffusionLatentUpscalePipeline, StableDiffusionUpscalePipeline, StableDiffusionInpaintPipeline, StableVideoDiffusionPipeline, I2VGenXLPipeline, StableCascadePriorPipeline, StableCascadeDecoderPipeline, ShapEPipeline, ShapEImg2ImgPipeline, AudioLDM2Pipeline
 from diffusers.utils import load_image, export_to_video, export_to_gif, export_to_ply
 import trimesh
 from git import Repo
 import numpy as np
+import scipy
 from PIL import Image
 from tqdm import tqdm
 from llama_cpp import Llama
@@ -507,6 +508,51 @@ def generate_tts_stt(text, audio, tts_settings_html, speaker_wav, language, tts_
                     json.dump(stt_history, f, ensure_ascii=False, indent=4)
 
     return tts_output, stt_output
+
+
+def generate_bark_audio(text, voice_preset, max_length, stop_generation):
+    global stop_signal
+    stop_signal = False
+
+    if not text:
+        return None, "Please enter text for the request!"
+
+    bark_model_path = os.path.join("inputs", "audio", "bark")
+
+    if not os.path.exists(bark_model_path):
+        print("Downloading Bark model...")
+        os.makedirs(bark_model_path, exist_ok=True)
+        Repo.clone_from("https://huggingface.co/suno/bark", bark_model_path)
+        print("Bark model downloaded")
+
+    try:
+        processor = AutoProcessor.from_pretrained(bark_model_path)
+        model = BarkModel.from_pretrained(bark_model_path)
+
+        if voice_preset:
+            inputs = processor(text, voice_preset=voice_preset)
+        else:
+            inputs = processor(text)
+
+        audio_array = model.generate(**inputs, max_length=max_length)
+
+        if stop_signal:
+            return None, "Generation stopped"
+
+        today = datetime.now().date()
+        audio_dir = os.path.join('outputs', f"Bark_{today.strftime('%Y%m%d')}")
+        os.makedirs(audio_dir, exist_ok=True)
+
+        audio_filename = f"bark_{datetime.now().strftime('%Y%m%d_%H%M%S')}.wav"
+        audio_path = os.path.join(audio_dir, audio_filename)
+
+        audio_array = audio_array.cpu().numpy().squeeze()
+        sf.write(audio_path, audio_array, 16000)
+
+        return audio_path, None
+
+    except Exception as e:
+        return None, str(e)
 
 
 def translate_text(text, source_lang, target_lang, enable_translate_history, translate_history_format, file=None):
@@ -1215,7 +1261,7 @@ def generate_3d(prompt, init_image, num_inference_steps, guidance_scale, frame_s
     return glb_path, ply_path, None
 
 
-def generate_audio(prompt, input_audio=None, model_name=None, audiocraft_settings_html=None, model_type="musicgen",
+def generate_audio_audiocraft(prompt, input_audio=None, model_name=None, audiocraft_settings_html=None, model_type="musicgen",
                    duration=10, top_k=250, top_p=0.0,
                    temperature=1.0, cfg_coef=3.0, enable_multiband=False, output_format="mp3", stop_generation=None):
     global audiocraft_model_path, stop_signal
@@ -1325,6 +1371,67 @@ def generate_audio(prompt, input_audio=None, model_name=None, audiocraft_setting
         del model
         if mbd:
             del mbd
+        torch.cuda.empty_cache()
+
+
+def generate_audio_audioldm2(prompt, negative_prompt, transcription, model_name, num_inference_steps, audio_length_in_s,
+                             num_waveforms_per_prompt, max_new_tokens, stop_generation):
+    global stop_signal
+    stop_signal = False
+
+    if not model_name:
+        return None, "Please, select an AudioLDM 2 model!"
+
+    model_path = os.path.join("inputs", "audio", "audioldm2", model_name)
+
+    if not os.path.exists(model_path):
+        print(f"Downloading AudioLDM 2 model: {model_name}...")
+        os.makedirs(model_path, exist_ok=True)
+        Repo.clone_from(f"https://huggingface.co/{model_name}", model_path)
+        print(f"AudioLDM 2 model {model_name} downloaded")
+
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+
+    pipe = AudioLDM2Pipeline.from_pretrained(model_path, torch_dtype=torch.float16)
+    pipe = pipe.to(device)
+
+    generator = torch.Generator(device).manual_seed(0)
+
+    try:
+        if model_name == "anhnct/audioldm2_gigaspeech":
+            audio = pipe(
+                prompt,
+                negative_prompt=negative_prompt,
+                transcription=transcription,
+                num_inference_steps=num_inference_steps,
+                audio_length_in_s=audio_length_in_s,
+                num_waveforms_per_prompt=num_waveforms_per_prompt,
+                generator=generator,
+                max_new_tokens=max_new_tokens
+            ).audios
+        else:
+            audio = pipe(
+                prompt,
+                negative_prompt=negative_prompt,
+                num_inference_steps=num_inference_steps,
+                audio_length_in_s=audio_length_in_s,
+                num_waveforms_per_prompt=num_waveforms_per_prompt,
+            ).audios
+
+        if stop_signal:
+            return None, "Generation stopped"
+
+        today = datetime.now().date()
+        audio_dir = os.path.join('outputs', f"AudioLDM2_{today.strftime('%Y%m%d')}")
+        os.makedirs(audio_dir, exist_ok=True)
+        audio_filename = f"audioldm2_{datetime.now().strftime('%Y%m%d_%H%M%S')}.wav"
+        audio_path = os.path.join(audio_dir, audio_filename)
+        scipy.io.wavfile.write(audio_path, rate=16000, data=audio[0])
+
+        return audio_path, None
+
+    finally:
+        del pipe
         torch.cuda.empty_cache()
 
 
@@ -1554,6 +1661,25 @@ tts_stt_interface = gr.Interface(
     description="This user interface allows you to enter text for Text-to-Speech(CoquiTTS) and record audio for Speech-to-Text(OpenAIWhisper). "
                 "For TTS, you can select the voice and language, and customize the generation settings from the sliders. "
                 "For STT, simply record your audio and the spoken text will be displayed. "
+                "Try it and see what happens!",
+    allow_flagging="never",
+)
+
+bark_interface = gr.Interface(
+    fn=generate_bark_audio,
+    inputs=[
+        gr.Textbox(label="Enter text for the request"),
+        gr.Dropdown(choices=[None] + [f"v2/{preset}" for preset in os.listdir(os.path.join("inputs", "audio", "bark", "v2")) if not preset.startswith(".")], label="Select voice preset", value=None),
+        gr.Slider(minimum=1, maximum=256, value=100, step=1, label="Max length"),
+        gr.Button(value="Stop generation", interactive=True, variant="stop"),
+    ],
+    outputs=[
+        gr.Audio(label="Generated audio", type="filepath"),
+        gr.Textbox(label="Message", type="text"),
+    ],
+    title="NeuroSandboxWebUI (ALPHA) - SunoBark",
+    description="This user interface allows you to enter text and generate audio using SunoBark. "
+                "You can select the voice preset and customize the max length. "
                 "Try it and see what happens!",
     allow_flagging="never",
 )
@@ -1810,7 +1936,7 @@ shap_e_interface = gr.Interface(
 )
 
 audiocraft_interface = gr.Interface(
-    fn=generate_audio,
+    fn=generate_audio_audiocraft,
     inputs=[
         gr.Textbox(label="Enter your prompt"),
         gr.Audio(type="filepath", label="Melody audio (optional)", interactive=True),
@@ -1832,6 +1958,30 @@ audiocraft_interface = gr.Interface(
     ],
     title="NeuroSandboxWebUI (ALPHA) - AudioCraft",
     description="This user interface allows you to enter any text and generate audio using AudioCraft. "
+                "You can select the model and customize the generation settings from the sliders. "
+                "Try it and see what happens!",
+    allow_flagging="never",
+)
+
+audioldm2_interface = gr.Interface(
+    fn=generate_audio_audioldm2,
+    inputs=[
+        gr.Textbox(label="Enter your prompt"),
+        gr.Textbox(label="Enter your negative prompt", value=""),
+        gr.Textbox(label="Enter transcription (for audioldm2_gigaspeech model)", value=""),
+        gr.Dropdown(choices=["cvssp/audioldm2", "cvssp/audioldm2-music", "anhnct/audioldm2_gigaspeech"], label="Select AudioLDM 2 model", value="cvssp/audioldm2"),
+        gr.Slider(minimum=1, maximum=1000, value=200, step=1, label="Steps"),
+        gr.Slider(minimum=1, maximum=60, value=10, step=1, label="Length (seconds)"),
+        gr.Slider(minimum=1, maximum=10, value=3, step=1, label="Waveforms number"),
+        gr.Slider(minimum=1, maximum=1024, value=512, step=1, label="Max new tokens (for audioldm2_gigaspeech model)"),
+        gr.Button(value="Stop generation", interactive=True, variant="stop"),
+    ],
+    outputs=[
+        gr.Audio(label="Generated audio", type="filepath"),
+        gr.Textbox(label="Message", type="text"),
+    ],
+    title="NeuroSandboxWebUI (ALPHA) - AudioLDM 2",
+    description="This user interface allows you to enter any text and generate audio using AudioLDM 2. "
                 "You can select the model and customize the generation settings from the sliders. "
                 "Try it and see what happens!",
     allow_flagging="never",
@@ -1901,12 +2051,13 @@ system_interface = gr.Interface(
 )
 
 with gr.TabbedInterface(
-        [chat_interface, tts_stt_interface, translate_interface, gr.TabbedInterface([txt2img_interface, img2img_interface, depth2img_interface, upscale_interface, inpaint_interface, video_interface, cascade_interface, extras_interface],
+        [chat_interface, tts_stt_interface, bark_interface, translate_interface, gr.TabbedInterface([txt2img_interface, img2img_interface, depth2img_interface, upscale_interface, inpaint_interface, video_interface, cascade_interface, extras_interface],
         tab_names=["txt2img", "img2img", "depth2img", "upscale", "inpaint", "video", "cascade", "extras"]),
-         shap_e_interface, audiocraft_interface, demucs_interface, model_downloader_interface, settings_interface, system_interface],
-        tab_names=["LLM", "TTS-STT", "LibreTranslate", "StableDiffusion", "Shap-E", "AudioCraft", "Demucs", "ModelDownloader", "Settings", "System"]
+         shap_e_interface, audiocraft_interface, audioldm2_interface, demucs_interface, model_downloader_interface, settings_interface, system_interface],
+        tab_names=["LLM", "TTS-STT", "SunoBark", "LibreTranslate", "StableDiffusion", "Shap-E", "AudioCraft", "AudioLDM 2", "Demucs", "ModelDownloader", "Settings", "System"]
 ) as app:
     chat_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
+    bark_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     txt2img_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     img2img_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     depth2img_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
@@ -1917,6 +2068,7 @@ with gr.TabbedInterface(
     extras_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     shap_e_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     audiocraft_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
+    audioldm2_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
 
     close_button = gr.Button("Close terminal")
     close_button.click(close_terminal, [], [], queue=False)
