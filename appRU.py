@@ -1174,6 +1174,7 @@ def generate_3d(prompt, init_image, num_inference_steps, guidance_scale, frame_s
             guidance_scale=guidance_scale,
             num_inference_steps=num_inference_steps,
             frame_size=frame_size,
+            output_type="mesh",
         ).images
     else:
         model_name = "openai/shap-e"
