@@ -44,7 +44,7 @@ The goal of the project - to create the easiest possible application to use neur
 * You can use the application via your mobile device in localhost (Via IPv4)
 * Flexible and optimized interface (By Gradio)
 * Support for Transformers and llama.cpp models (LLM)
-* Support for diffusers and safetensors models (StableDiffusion) - txt2img, img2img, depth2img, upscale, inpaint, video and extras tabs
+* Support for diffusers and safetensors models (StableDiffusion) - txt2img, img2img, depth2img, upscale, inpaint, video, cascade and extras tabs
 * AudioCraft support (Models: musicgen, audiogen and magnet)
 * Supports TTS and Whisper models (For LLM and TTS-STT)
 * Supports Lora, Textual inversion (embedding), Vae, Inpaint, Depth, Upscale and Video models (For StableDiffusion)
@@ -275,6 +275,12 @@ Thank you very much to these projects for allowing me to create my application:
 * `libretranslatepy` - https://github.com/argosopentech/LibreTranslate-py
 * `rembg` - https://github.com/danielgatis/rembg
 * `trimesh` - https://github.com/mikedh/trimesh
+
+## Third Party Licenses:
+
+#### Many models have their own license for use. Before using it, I advise you to familiarize yourself with them:
+
+*
 
 ## Donation
 
