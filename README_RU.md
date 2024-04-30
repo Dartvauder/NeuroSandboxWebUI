@@ -44,7 +44,7 @@
 * Вы можете использовать приложение через мобильное устройство в localhost (Через IPv4)
 * Гибкий и оптимизированный интерфейс (От Gradio)
 * Поддержка Transformers и llama.cpp моделей (LLM)
-* Поддержка diffusers и safetensors моделей (StableDiffusion) - Вкладки txt2img, img2img, depth2img, upscale, inpaint, video и extras
+* Поддержка diffusers и safetensors моделей (StableDiffusion) - Вкладки txt2img, img2img, depth2img, upscale, inpaint, video, cascade и extras
 * Поддержка AudioCraft (Модели: musicgen, audiogen и magnet)
 * Поддержка TTS и Whisper моделей (Для LLM и TTS-STT)
 * Поддержка Lora, Textual inversion (embedding), Vae, Inpaint, Depth, Upscale и Video моделей (Для StableDiffusion)
@@ -188,6 +188,7 @@
 3) Нажмите кнопку `Submit`, чтобы получить видео из изображения
 
 #### cascade:
+
 1) Введите запрос
 2) Настройте модель по нужным вам параметрам
 3) Нажмите кнопку `Отправить`, чтобы получить сгенерированное изображение 
@@ -274,6 +275,12 @@
 * `libretranslatepy` - https://github.com/argosopentech/LibreTranslate-py
 * `rembg` - https://github.com/danielgatis/rembg
 * `trimesh` - https://github.com/mikedh/trimesh
+
+## Сторонние лицензии:
+
+#### У многих моделей есть своя собственная лицензия на использование. Перед тем как ее использовать, советую ознакомиться с ними:
+
+*
 
 ## Пожертвование
 
