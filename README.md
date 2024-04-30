@@ -6,7 +6,7 @@
 
 ## Description:
 
-A simple and convenient interface for using various neural network models. You can communicate with LLM using text or voice input, use StableDiffusion to generate images and videos, Shap-E to generate 3D objects, AudioCraft to generate music and audio, CoquiTTS for text-to-speech, OpenAI-Whisper for speech-to-text, LibreTranslate for text translation and Demucs for audio file separation. You can also download the LLM and StableDiffusion models, change the application settings inside the interface and check system sensors
+A simple and convenient interface for using various neural network models. You can communicate with LLM using text or voice input, use StableDiffusion to generate images and videos, Shap-E to generate 3D objects, AudioCraft and AudioLDM 2 to generate music and audio, CoquiTTS for text-to-speech, OpenAI-Whisper for speech-to-text, LibreTranslate for text translation and Demucs for audio file separation. You can also download the LLM and StableDiffusion models, change the application settings inside the interface and check system sensors
 
 The goal of the project - to create the easiest possible application to use neural network models
 
@@ -30,6 +30,8 @@ The goal of the project - to create the easiest possible application to use neur
  
 ### AudioCraft: 
 
+### AudioLDM 2: 
+
 ### Demucs: 
 
 ### ModelDownloader: 
@@ -46,6 +48,7 @@ The goal of the project - to create the easiest possible application to use neur
 * Support for Transformers and llama.cpp models (LLM)
 * Support for diffusers and safetensors models (StableDiffusion) - txt2img, img2img, depth2img, upscale, inpaint, video, cascade and extras tabs
 * AudioCraft support (Models: musicgen, audiogen and magnet)
+* AudioLDM 2 support
 * Supports TTS and Whisper models (For LLM and TTS-STT)
 * Supports Lora, Textual inversion (embedding), Vae, Inpaint, Depth, Upscale and Video models (For StableDiffusion)
 * Support Multiband Diffusion model (For AudioCraft)
@@ -99,7 +102,7 @@ To get update, run `git pull`
 
 ## How to use:
 
-#### Interface has ten tabs: LLM, TTS-STT, LibreTranslate, StableDiffusion, Shap-E, AudioCraft, Demucs, ModelDownloader, Settings and System. Select the one you need and follow the instructions below 
+#### Interface has eleven tabs: LLM, TTS-STT, LibreTranslate, StableDiffusion, Shap-E, AudioCraft, Demucs, ModelDownloader, Settings and System. Select the one you need and follow the instructions below 
 
 ### LLM:
 
@@ -215,6 +218,13 @@ To get update, run `git pull`
 6) Click the `Submit` button to get the generated audio
 #### Optional: You can enable `multiband diffusion` to improve the generated audio
 
+### AudioLDM 2:
+
+1) Select a model from the drop-down list
+2) Set up the model according to the parameters you need
+3) Enter your request
+4) Click the `Submit` button to get the generated audio
+
 ### Demucs:
 
 1) Upload the initial audio to separate
@@ -246,7 +256,7 @@ To get update, run `git pull`
 
 * LLM models can be taken from [HuggingFace](https://huggingface.co/models) or from ModelDownloader inside interface 
 * StableDiffusion, vae, inpaint, embedding and lora models can be taken from [CivitAI](https://civitai.com/models) or from ModelDownloader inside interface
-* AudioCraft models are downloads automatically in *inputs* folder, when you select a model and press the submit button
+* AudioCraft and AudioLDM 2 models are downloads automatically in *inputs* folder, when you select a model and press the submit button
 * TTS, Whisper, BLIP-2, Upscale, Depth, Videos, Cascade, Rembg, Shap-E, Demucs and Multiband diffusion models are downloads automatically in *inputs* folder when are they used 
 * You can take voices anywhere. Record yours or take a recording from the Internet. Or just use those that are already in the project. The main thing is that it is pre-processed!
 
@@ -270,6 +280,7 @@ Thank you very much to these projects for allowing me to create my application:
 * `diffusers` - https://github.com/huggingface/diffusers
 * `llama.cpp-python` - https://github.com/abetlen/llama-cpp-python
 * `audiocraft` - https://github.com/facebookresearch/audiocraft
+* `AudioLDM2` - https://github.com/haoheliu/AudioLDM2
 * `xformers` - https://github.com/facebookresearch/xformers
 * `demucs` - https://github.com/facebookresearch/demucs
 * `libretranslatepy` - https://github.com/argosopentech/LibreTranslate-py
@@ -294,6 +305,7 @@ Thank you very much to these projects for allowing me to create my application:
 * [Rembg](https://github.com/danielgatis/rembg/blob/main/LICENSE.txt)
 * [Shap-E](https://github.com/openai/shap-e/blob/main/LICENSE)
 * [AudioCraft](https://github.com/facebookresearch/audiocraft/blob/main/LICENSE)
+* [AudioLDM2](https://github.com/haoheliu/AudioLDM2/blob/main/LICENSE)
 * [Demucs](https://github.com/facebookresearch/demucs/blob/main/LICENSE)
 
 ## Donation
