@@ -1122,7 +1122,7 @@ def generate_3d(prompt, init_image, num_inference_steps, guidance_scale, frame_s
         ).images
 
     if stop_signal:
-        return None, "Generation stopped"
+        return None, None, "Generation stopped"
 
     today = datetime.now().date()
     output_dir = os.path.join('outputs', f"Shap-E_{today.strftime('%Y%m%d')}")
@@ -1139,7 +1139,7 @@ def generate_3d(prompt, init_image, num_inference_steps, guidance_scale, frame_s
     glb_path = os.path.join(output_dir, glb_filename)
     mesh.export(glb_path, file_type="glb")
 
-    return glb_path, None
+    return glb_path, ply_path, None
 
 
 def generate_audio(prompt, input_audio=None, model_name=None, audiocraft_settings_html=None, model_type="musicgen",
@@ -1699,7 +1699,8 @@ shap_e_interface = gr.Interface(
         gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
     outputs=[
-        gr.Model3D(label="Generated 3D object"),
+        gr.Model3D(label="Generated 3D (glb) object"),
+        gr.Model3D(label="Generated 3D (ply) object"),
         gr.Textbox(label="Message", type="text"),
     ],
     title="NeuroSandboxWebUI (ALPHA) - Shap-E",
