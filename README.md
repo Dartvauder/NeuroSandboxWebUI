@@ -1,4 +1,4 @@
-## [Features](/#Features) | [Dependencies](/#Required-Dependencies) | [SystemRequirements](/#Minimum-System-Requirements) | [Install](/#How-to-install) | [Usage](/#How-to-use) | [Models](/#Where-can-I-get-models-voices-and-avatars) | [Roadmap](/#Roadmap) | [Acknowledgment](/#Acknowledgment-to-developers)
+## [Features](/#Features) | [Dependencies](/#Required-Dependencies) | [SystemRequirements](/#Minimum-System-Requirements) | [Install](/#How-to-install) | [Usage](/#How-to-use) | [Models](/#Where-can-I-get-models-voices-and-avatars) | [Roadmap](/#Roadmap) | [Acknowledgment](/#Acknowledgment-to-developers) | [Licenses](/#Third-Party-Licenses)
 
 # ![main](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/4ea0d891-8979-45ad-b052-626c41ae991a)
 * Work in progress! (ALPHA)
@@ -280,7 +280,20 @@ Thank you very much to these projects for allowing me to create my application:
 
 #### Many models have their own license for use. Before using it, I advise you to familiarize yourself with them:
 
-*
+* [Transformers](https://github.com/huggingface/transformers/blob/main/LICENSE)
+* [llama.cpp](https://github.com/ggerganov/llama.cpp/blob/master/LICENSE)
+* [CoquiTTS](https://github.com/coqui-ai/TTS/blob/dev/LICENSE.txt)
+* [OpenAI-Whisper](https://github.com/openai/whisper/blob/main/LICENSE)
+* [LibreTranslate](https://github.com/LibreTranslate/LibreTranslate/blob/main/LICENSE)
+* [StableDiffusion1.5](https://github.com/runwayml/stable-diffusion/blob/main/LICENSE)
+* [StableDiffusion2](https://github.com/Stability-AI/stablediffusion/blob/main/LICENSE)
+* [StableDiffusionXL](https://huggingface.co/stabilityai/stable-diffusion-xl-base-1.0/blob/main/LICENSE.md)
+* [StableCascade](https://huggingface.co/stabilityai/stable-cascade/blob/main/LICENSE)
+* [StableVideoDiffusion](https://huggingface.co/stabilityai/stable-video-diffusion-img2vid-xt-1-1/blob/main/LICENSE)
+* [Rembg](https://github.com/danielgatis/rembg/blob/main/LICENSE.txt)
+* [Shap-E](https://github.com/openai/shap-e/blob/main/LICENSE)
+* [AudioCraft](https://github.com/facebookresearch/audiocraft/blob/main/LICENSE)
+* [Demucs](https://github.com/facebookresearch/demucs/blob/main/LICENSE)
 
 ## Donation
 
