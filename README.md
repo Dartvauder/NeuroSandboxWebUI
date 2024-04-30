@@ -261,7 +261,7 @@ To get update, run `git pull`
 4) You can turn off the application using the `Close terminal` button
 5) You can open the *outputs* folder by clicking on the `Folder` button
 
-## Where can I get models, voices and avatars?
+## Where can i get models and voices?
 
 * LLM models can be taken from [HuggingFace](https://huggingface.co/models) or from ModelDownloader inside interface 
 * StableDiffusion, vae, inpaint, embedding and lora models can be taken from [CivitAI](https://civitai.com/models) or from ModelDownloader inside interface
@@ -317,6 +317,7 @@ Thank you very much to these projects for allowing me to create my application:
 * [AudioLDM2](https://github.com/haoheliu/AudioLDM2/blob/main/LICENSE)
 * [Demucs](https://github.com/facebookresearch/demucs/blob/main/LICENSE)
 * [SunoBark](https://github.com/suno-ai/bark/blob/main/LICENSE)
+* [BLIP-2](https://github.com/salesforce/LAVIS/blob/main/LICENSE.txt)
 
 ## Donation
 
