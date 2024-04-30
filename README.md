@@ -98,7 +98,7 @@ To get update, run `git pull`
 
 ## How to use:
 
-#### Interface has nine tabs: LLM, TTS-STT, LibreTranslate, StableDiffusion, AudioCraft, Demucs, ModelDownloader, Settings and System. Select the one you need and follow the instructions below 
+#### Interface has ten tabs: LLM, TTS-STT, LibreTranslate, StableDiffusion, Shap-E, AudioCraft, Demucs, ModelDownloader, Settings and System. Select the one you need and follow the instructions below 
 
 ### LLM:
 
@@ -194,7 +194,9 @@ To get update, run `git pull`
 
 ### Shap-E:
 
-1)
+1) Enter your request or upload the initial image
+2) Set up the model according to the parameters you need
+3) Click the `Submit` button to get the generated 3D object
 
 ### AudioCraft:
 
@@ -235,7 +237,7 @@ To get update, run `git pull`
 
 ## Where can I get models, voices and avatars?
 
-* LLM models can be taken from [HuggingFace](https://huggingface.co/models) or from ModelDownloader inside interface
+* LLM models can be taken from [HuggingFace](https://huggingface.co/models) or from ModelDownloader inside interface 
 * StableDiffusion, vae, inpaint, embedding and lora models can be taken from [CivitAI](https://civitai.com/models) or from ModelDownloader inside interface
 * AudioCraft models are downloads automatically in *inputs* folder, when you select a model and press the submit button
 * TTS, Whisper, Upscale and Multiband diffusion models are downloads automatically in *inputs* folder when are they used 
@@ -265,6 +267,7 @@ Thank you very much to these projects for allowing me to create my application:
 * `demucs` - https://github.com/facebookresearch/demucs
 * `libretranslatepy` - https://github.com/argosopentech/LibreTranslate-py
 * `rembg` - https://github.com/danielgatis/rembg
+* `trimesh` - https://github.com/mikedh/trimesh
 
 ## Donation
 
