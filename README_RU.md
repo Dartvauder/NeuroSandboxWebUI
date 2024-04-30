@@ -6,7 +6,7 @@
 
 ## Описание:
 
-Простой и удобный интерфейс для использования различных моделей нейронных сетей. Вы можете общаться с LLM, используя текстовый или голосовой ввод, использовать StableDiffusion для генерации изображений и видео,Shap-E для генерации 3Д обьектов, AudioCraft для генерации музыки и аудио, CoquiTTS для преобразования текста в речь, OpenAI-Whisper для преобразования речи в текст, LibreTranslate для перевода текста и Demucs для сепарации аудио файлов. Также вы можете скачать модели LLM и StableDiffusion, изменить настройки приложения внутри интерфейса и проверить датчики системы
+Простой и удобный интерфейс для использования различных моделей нейронных сетей. Вы можете общаться с LLM, используя текстовый или голосовой ввод, использовать StableDiffusion для генерации изображений и видео, Shap-E для генерации 3Д обьектов, AudioCraft для генерации музыки и аудио, CoquiTTS для преобразования текста в речь, OpenAI-Whisper для преобразования речи в текст, LibreTranslate для перевода текста и Demucs для сепарации аудио файлов. Также вы можете скачать модели LLM и StableDiffusion, изменить настройки приложения внутри интерфейса и проверить датчики системы
 
 Цель проекта — создать максимально простое приложение для использования нейросетевых моделей
 
@@ -44,7 +44,7 @@
 * Поддержка diffusers и safetensors моделей (StableDiffusion) - Вкладки txt2img, img2img, depth2img, upscale, inpaint, video и extras
 * Поддержка AudioCraft (Модели: musicgen, audiogen и magnet)
 * Поддержка TTS и Whisper моделей (Для LLM и TTS-STT)
-* Поддержка Lora, Textual inversion (embedding), Vae, Inpaint, Upscale и Video моделей (Для StableDiffusion)
+* Поддержка Lora, Textual inversion (embedding), Vae, Inpaint, Depth, Upscale и Video моделей (Для StableDiffusion)
 * Поддержка Multiband Diffusion модели (Для AudioCraft)
 * Поддержка LibreTranslate (Локальный API)
 * Поддержка Demucs
@@ -238,7 +238,7 @@
 * LLM модели можно взять с сайта [HuggingFace](https://huggingface.co/models) или из внутреннего интерфейса ModelDownloader
 * Модели StableDiffusion, vae, inpaint, embedding и lora можно взять с сайта [CivitAI](https://civitai.com/models) или из внутреннего интерфейса ModelDownloader
 * Модели AudioCraft загружаются автоматически в папку *inputs*, когда вы выбираете модель и нажимаете кнопку `submit`
-* TTS, Whisper, BLIP-2, Upscale, Depth2image, Videos, Rembg, Shap-E, Demucs и Multiband diffusion модели скачиваються автоматически в папку *inputs* при их использовании
+* TTS, Whisper, BLIP-2, Upscale, Depth, Videos, Rembg, Shap-E, Demucs и Multiband diffusion модели скачиваються автоматически в папку *inputs* при их использовании
 * Вы можете использовать голоса откуда угодно. Запишите свой или возьмите запись из интернета. Или просто используйте те, которые уже есть в проекте. Главное, чтобы оно было предварительно обработано!
 
 ## Дорожная карта
