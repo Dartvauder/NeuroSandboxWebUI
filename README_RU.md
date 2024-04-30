@@ -285,6 +285,7 @@
 * [CoquiTTS](https://github.com/coqui-ai/TTS/blob/dev/LICENSE.txt)
 * [OpenAI-Whisper](https://github.com/openai/whisper/blob/main/LICENSE)
 * [LibreTranslate](https://github.com/LibreTranslate/LibreTranslate/blob/main/LICENSE)
+* [Diffusers](https://github.com/huggingface/diffusers/blob/main/LICENSE)
 * [StableDiffusion1.5](https://github.com/runwayml/stable-diffusion/blob/main/LICENSE)
 * [StableDiffusion2](https://github.com/Stability-AI/stablediffusion/blob/main/LICENSE)
 * [StableDiffusionXL](https://huggingface.co/stabilityai/stable-diffusion-xl-base-1.0/blob/main/LICENSE.md)
