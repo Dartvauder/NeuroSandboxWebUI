@@ -56,7 +56,7 @@ The goal of the project - to create the easiest possible application to use neur
 * Support Demucs
 * Support Rembg
 * Support Shap-E
-* Support multimodal (For LLM)
+* Support BLIP-2 (For LLM)
 * Support WebSearch (DuckDuckGo)
 * Model settings inside the interface
 * ModelDownloader (For LLM and StableDiffusion)
