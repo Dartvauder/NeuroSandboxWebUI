@@ -305,7 +305,7 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_settin
                     top_p=top_p,
                     top_k=top_k,
                     temperature=temperature,
-                    repetition_penalty=1.15,
+                    repetition_penalty=1.1,
                     early_stopping=True,
                     num_beams=5,
                     no_repeat_ngram_size=2,
@@ -350,7 +350,7 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_settin
                     temperature=temperature,
                     top_p=top_p,
                     top_k=top_k,
-                    repeat_penalty=1.15,
+                    repeat_penalty=1.1,
                 )
 
                 progress_tokens = max_tokens
