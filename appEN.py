@@ -14,7 +14,7 @@ import whisper
 from datetime import datetime
 import warnings
 import logging
-from diffusers import StableDiffusionPipeline, StableDiffusionXLPipeline, StableDiffusionImg2ImgPipeline, StableDiffusionDepth2ImgPipeline, AutoencoderKL, StableDiffusionLatentUpscalePipeline, StableDiffusionUpscalePipeline, StableDiffusionInpaintPipeline, StableVideoDiffusionPipeline, I2VGenXLPipeline, ShapEPipeline, ShapEImg2ImgPipeline
+from diffusers import StableDiffusionPipeline, StableDiffusionXLPipeline, StableDiffusionImg2ImgPipeline, StableDiffusionDepth2ImgPipeline, AutoencoderKL, StableDiffusionLatentUpscalePipeline, StableDiffusionUpscalePipeline, StableDiffusionInpaintPipeline, StableVideoDiffusionPipeline, I2VGenXLPipeline, StableCascadePriorPipeline, StableCascadeDecoderPipeline, ShapEPipeline, ShapEImg2ImgPipeline
 from diffusers.utils import load_image, export_to_video, export_to_gif, export_to_ply
 import trimesh
 from git import Repo
@@ -1058,6 +1058,78 @@ def generate_video(init_image, output_format, video_settings_html, motion_bucket
             torch.cuda.empty_cache()
 
 
+def generate_image_cascade(prompt, negative_prompt, stable_cascade_settings_html, width, height, prior_steps, prior_guidance_scale,
+                           decoder_steps, decoder_guidance_scale, output_format="png",
+                           stop_generation=None):
+    global stop_signal
+    stop_signal = False
+
+    if not prompt:
+        return None, "Please enter a prompt!"
+
+    stable_cascade_model_path = os.path.join("inputs", "image", "sd_models", "cascade")
+
+    if not os.path.exists(stable_cascade_model_path):
+        print("Downloading Stable Cascade models...")
+        os.makedirs(stable_cascade_model_path, exist_ok=True)
+        Repo.clone_from("https://huggingface.co/stabilityai/stable-cascade-prior",
+                        os.path.join(stable_cascade_model_path, "prior"))
+        Repo.clone_from("https://huggingface.co/stabilityai/stable-cascade",
+                        os.path.join(stable_cascade_model_path, "decoder"))
+        print("Stable Cascade models downloaded")
+
+    try:
+        prior = StableCascadePriorPipeline.from_pretrained(os.path.join(stable_cascade_model_path, "prior"),
+                                                           variant="bf16", torch_dtype=torch.bfloat16)
+        decoder = StableCascadeDecoderPipeline.from_pretrained(os.path.join(stable_cascade_model_path, "decoder"),
+                                                               variant="bf16", torch_dtype=torch.float16)
+    except (ValueError, OSError):
+        return None, "Failed to load the Stable Cascade models"
+
+    prior.enable_model_cpu_offload()
+    decoder.enable_model_cpu_offload()
+
+    try:
+        prior_output = prior(
+            prompt=prompt,
+            height=height,
+            width=width,
+            negative_prompt=negative_prompt,
+            guidance_scale=prior_guidance_scale,
+            num_images_per_prompt=1,
+            num_inference_steps=prior_steps
+        )
+
+        if stop_signal:
+            return None, "Generation stopped"
+
+        decoder_output = decoder(
+            image_embeddings=prior_output.image_embeddings.to(torch.float16),
+            prompt=prompt,
+            negative_prompt=negative_prompt,
+            guidance_scale=decoder_guidance_scale,
+            output_type="pil",
+            num_inference_steps=decoder_steps
+        ).images[0]
+
+        if stop_signal:
+            return None, "Generation stopped"
+
+        today = datetime.now().date()
+        image_dir = os.path.join('outputs', f"StableDiffusion_{today.strftime('%Y%m%d')}")
+        os.makedirs(image_dir, exist_ok=True)
+        image_filename = f"cascade_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
+        image_path = os.path.join(image_dir, image_filename)
+        decoder_output.save(image_path)
+
+        return image_path, None
+
+    finally:
+        del prior
+        del decoder
+        torch.cuda.empty_cache()
+
+
 def generate_image_extras(input_image, image_output_format, remove_background, stop_generation):
     if not input_image:
         return None, "Please upload an image file!"
@@ -1671,6 +1743,32 @@ video_interface = gr.Interface(
     allow_flagging="never",
 )
 
+cascade_interface = gr.Interface(
+    fn=generate_image_cascade,
+    inputs=[
+        gr.Textbox(label="Enter your prompt"),
+        gr.Textbox(label="Enter your negative prompt", value=""),
+        gr.HTML("<h3>Stable Cascade Settings</h3>"),
+        gr.Slider(minimum=256, maximum=1024, value=512, step=64, label="Width"),
+        gr.Slider(minimum=256, maximum=1024, value=512, step=64, label="Height"),
+        gr.Slider(minimum=1, maximum=100, value=20, step=1, label="Prior Steps"),
+        gr.Slider(minimum=1.0, maximum=30.0, value=4.0, step=0.1, label="Prior Guidance Scale"),
+        gr.Slider(minimum=1, maximum=100, value=10, step=1, label="Decoder Steps"),
+        gr.Slider(minimum=0.0, maximum=30.0, value=8.0, step=0.1, label="Decoder Guidance Scale"),
+        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
+        gr.Button(value="Stop generation", interactive=True, variant="stop"),
+    ],
+    outputs=[
+        gr.Image(type="filepath", label="Generated image"),
+        gr.Textbox(label="Message", type="text"),
+    ],
+    title="NeuroSandboxWebUI (ALPHA) - StableDiffusion (cascade)",
+    description="This user interface allows you to enter a prompt and generate images using Stable Cascade. "
+                "You can customize the generation settings from the sliders. "
+                "Try it and see what happens!",
+    allow_flagging="never",
+)
+
 extras_interface = gr.Interface(
     fn=generate_image_extras,
     inputs=[
@@ -1802,8 +1900,8 @@ system_interface = gr.Interface(
 )
 
 with gr.TabbedInterface(
-        [chat_interface, tts_stt_interface, translate_interface, gr.TabbedInterface([txt2img_interface, img2img_interface, depth2img_interface, upscale_interface, inpaint_interface, video_interface, extras_interface],
-        tab_names=["txt2img", "img2img", "depth2img", "upscale", "inpaint", "video", "extras"]),
+        [chat_interface, tts_stt_interface, translate_interface, gr.TabbedInterface([txt2img_interface, img2img_interface, depth2img_interface, upscale_interface, inpaint_interface, video_interface, cascade_interface, extras_interface],
+        tab_names=["txt2img", "img2img", "depth2img", "upscale", "inpaint", "video", "cascade", "extras"]),
          shap_e_interface, audiocraft_interface, demucs_interface, model_downloader_interface, settings_interface, system_interface],
         tab_names=["LLM", "TTS-STT", "LibreTranslate", "StableDiffusion", "Shap-E", "AudioCraft", "Demucs", "ModelDownloader", "Settings", "System"]
 ) as app:
@@ -1814,6 +1912,7 @@ with gr.TabbedInterface(
     upscale_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     inpaint_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     video_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
+    cascade_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     extras_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     shap_e_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     audiocraft_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
