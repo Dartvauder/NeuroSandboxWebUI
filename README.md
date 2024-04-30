@@ -23,6 +23,7 @@ The goal of the project - to create the easiest possible application to use neur
  #### upscale: 
  #### inpaint: 
  #### video: 
+ #### cascade: 
  #### extras: 
 
 ### Shap-E: 
@@ -127,7 +128,7 @@ To get update, run `git pull`
 2) (Optional) You can save the translation history by turning on the corresponding button
 3) Click the `Submit` button to get the translate
 
-### StableDiffusion - has seven sub-tabs:
+### StableDiffusion - has eight sub-tabs:
 
 #### txt2img:
 
@@ -186,6 +187,12 @@ To get update, run `git pull`
 2) Set up the model according to the parameters you need
 3) Click the `Submit` button to get the video from image
 
+#### cascade:
+
+1) Enter your request
+2) Set up the model according to the parameters you need
+3) Click the `Submit` button to get the generated image
+
 #### extras:
 
 1) Upload the initial image
@@ -240,7 +247,7 @@ To get update, run `git pull`
 * LLM models can be taken from [HuggingFace](https://huggingface.co/models) or from ModelDownloader inside interface 
 * StableDiffusion, vae, inpaint, embedding and lora models can be taken from [CivitAI](https://civitai.com/models) or from ModelDownloader inside interface
 * AudioCraft models are downloads automatically in *inputs* folder, when you select a model and press the submit button
-* TTS, Whisper, BLIP-2, Upscale, Depth, Videos, Rembg, Shap-E, Demucs and Multiband diffusion models are downloads automatically in *inputs* folder when are they used 
+* TTS, Whisper, BLIP-2, Upscale, Depth, Videos, Cascade, Rembg, Shap-E, Demucs and Multiband diffusion models are downloads automatically in *inputs* folder when are they used 
 * You can take voices anywhere. Record yours or take a recording from the Internet. Or just use those that are already in the project. The main thing is that it is pre-processed!
 
 ## Roadmap
