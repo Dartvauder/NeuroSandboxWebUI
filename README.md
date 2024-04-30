@@ -246,7 +246,7 @@ To get update, run `git pull`
 
 ### Additional Information:
 
-1) Chat history, generated images and generated audio, are saved in the *outputs* folder
+1) All generations are saved in the *outputs* folder
 2) You can press the `Clear` button to reset your selection
 3) To stop the generation process, click the `Stop generation` button
 4) You can turn off the application using the `Close terminal` button
