@@ -240,7 +240,7 @@ To get update, run `git pull`
 * LLM models can be taken from [HuggingFace](https://huggingface.co/models) or from ModelDownloader inside interface 
 * StableDiffusion, vae, inpaint, embedding and lora models can be taken from [CivitAI](https://civitai.com/models) or from ModelDownloader inside interface
 * AudioCraft models are downloads automatically in *inputs* folder, when you select a model and press the submit button
-* TTS, Whisper, Upscale and Multiband diffusion models are downloads automatically in *inputs* folder when are they used 
+* TTS, Whisper, BLIP-2, Upscale, Depth2image, Videos, Rembg, Shap-E and Multiband diffusion models are downloads automatically in *inputs* folder when are they used 
 * You can take voices anywhere. Record yours or take a recording from the Internet. Or just use those that are already in the project. The main thing is that it is pre-processed!
 
 ## Roadmap
