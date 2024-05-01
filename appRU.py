@@ -285,11 +285,15 @@ def generate_text_and_speech(input_text, input_audio, input_image, llm_model_nam
         if llm_model_type == "llama":
             chat_history.append([None, "Multimodal with 'llama' model type is not supported yet!"])
             return chat_history, None, None, None
+        device = "cuda" if torch.cuda.is_available() else "cpu"
         processor, model = load_blip2_model()
         raw_image = Image.open(input_image).convert('RGB')
-        inputs = processor(raw_image, prompt, return_tensors="pt").to("cuda", torch.float16)
-        out = model.generate(**inputs)
+        inputs = processor(raw_image, prompt, return_tensors="pt").to(device, torch.float16)
+        max_length = 512
+        out = model.generate(**inputs, max_length=max_length)
         text = processor.decode(out[0], skip_special_tokens=True).strip()
+        chat_history.append([prompt, text])
+        return chat_history, None, None, None
     else:
         tokenizer, llm_model, error_message = load_model(llm_model_name, llm_model_type)
         if error_message:
@@ -555,8 +559,9 @@ def generate_bark_audio(text, voice_preset, max_length, stop_generation):
         print("Bark model downloaded")
 
     try:
+        device = "cuda" if torch.cuda.is_available() else "cpu"
         processor = AutoProcessor.from_pretrained(bark_model_path)
-        model = BarkModel.from_pretrained(bark_model_path, torch_dtype=torch.float16)
+        model = BarkModel.from_pretrained(bark_model_path, torch_dtype=torch.float16).to(device)
 
         if voice_preset:
             inputs = processor(text, voice_preset=voice_preset)
@@ -1057,11 +1062,13 @@ def generate_video(init_image, output_format, video_settings_html, motion_bucket
         print(f"StableVideoDiffusion model downloaded")
 
         try:
+            device = "cuda" if torch.cuda.is_available() else "cpu"
             pipe = StableVideoDiffusionPipeline.from_pretrained(
                 pretrained_model_name_or_path=video_model_path,
                 torch_dtype=torch.float16,
                 variant="fp16"
             )
+            pipe.to(device)
             pipe.enable_model_cpu_offload()
             pipe.unet.enable_forward_chunking()
 
@@ -1101,7 +1108,9 @@ def generate_video(init_image, output_format, video_settings_html, motion_bucket
         print(f"i2vgen-xl model downloaded")
 
         try:
+            device = "cuda" if torch.cuda.is_available() else "cpu"
             pipeline = I2VGenXLPipeline.from_pretrained(video_model_path, torch_dtype=torch.float16, variant="fp16")
+            pipeline.to(device)
             pipeline.enable_model_cpu_offload()
 
             image = load_image(init_image).convert("RGB")
@@ -1155,10 +1164,11 @@ def generate_image_cascade(prompt, negative_prompt, stable_cascade_settings_html
         print("Stable Cascade models downloaded")
 
     try:
+        device = "cuda" if torch.cuda.is_available() else "cpu"
         prior = StableCascadePriorPipeline.from_pretrained(os.path.join(stable_cascade_model_path, "prior"),
-                                                           variant="bf16", torch_dtype=torch.bfloat16)
+                                                           variant="bf16", torch_dtype=torch.bfloat16).to(device)
         decoder = StableCascadeDecoderPipeline.from_pretrained(os.path.join(stable_cascade_model_path, "decoder"),
-                                                               variant="bf16", torch_dtype=torch.float16)
+                                                               variant="bf16", torch_dtype=torch.float16).to(device)
     except (ValueError, OSError):
         return None, "Failed to load the Stable Cascade models"
 
@@ -1317,13 +1327,13 @@ def generate_audio_audiocraft(prompt, input_audio=None, model_name=None, audiocr
 
     try:
         if model_type == "musicgen":
-            model = MusicGen.get_pretrained(audiocraft_model_path)
+            model = MusicGen.get_pretrained(audiocraft_model_path).to(device)
             model.set_generation_params(duration=duration)
         elif model_type == "audiogen":
-            model = AudioGen.get_pretrained(audiocraft_model_path)
+            model = AudioGen.get_pretrained(audiocraft_model_path).to(device)
             model.set_generation_params(duration=duration)
         #        elif model_type == "magnet":
-        #            model = MAGNeT.get_pretrained(audiocraft_model_path)
+        #            model = MAGNeT.get_pretrained(audiocraft_model_path).to(device)
         #            model.set_generation_params()
         else:
             return None, "Invalid model type!"
@@ -1333,7 +1343,7 @@ def generate_audio_audiocraft(prompt, input_audio=None, model_name=None, audiocr
     mbd = None
 
     if enable_multiband:
-        mbd = MultiBandDiffusion.get_mbd_musicgen()
+        mbd = MultiBandDiffusion.get_mbd_musicgen().to(device)
 
     try:
         progress_bar = tqdm(total=duration, desc="Generating audio")
