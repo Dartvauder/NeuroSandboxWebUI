@@ -1700,7 +1700,7 @@ bark_interface = gr.Interface(
     fn=generate_bark_audio,
     inputs=[
         gr.Textbox(label="Enter text for the request"),
-        gr.Dropdown(choices=[None] + [f"v2/{preset}" for preset in os.listdir(os.path.join("inputs", "audio", "bark", "v2")) if not preset.startswith(".")], label="Select voice preset", value=None),
+        gr.Dropdown(choices=[None, "v2/en_speaker_1", "v2/ru_speaker_1"], label="Select voice preset", value=None),
         gr.Slider(minimum=1, maximum=256, value=100, step=1, label="Max length"),
         gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
