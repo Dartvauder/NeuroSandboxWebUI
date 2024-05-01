@@ -10,37 +10,37 @@ A simple and convenient interface for using various neural network models. You c
 
 The goal of the project - to create the easiest possible application to use neural network models
 
-### LLM: 
+### LLM: ![1](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/636ccf7a-36cf-4005-8bc0-763c6f17a805)
 
-### TTS-STT: 
+### TTS-STT: ![2](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/f7d51733-01a9-4316-884b-bb9c880d7b89)
 
 ### SunoBark:
 
-### LibreTranslate: 
+### LibreTranslate: ![4](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/43002c72-30a7-43e7-bc52-6650e89ca48c)
 
 ### StableDiffusion:
- #### txt2img: 
- #### img2img: 
- #### depth2img: 
- #### upscale: 
- #### inpaint: 
- #### video: 
- #### cascade: 
- #### extras: 
+ #### txt2img: ![5](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/e5c0d03d-5d9b-49ef-ae2a-f4b01266ba81)
+ #### img2img: ![6](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/c43c1954-f3f7-4376-b27c-3fc4dec2ebc6)
+ #### depth2img: ![7](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/bbc3a03a-ce2e-46c7-ba91-5703860a35e2)
+ #### upscale: ![8](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/14725b48-115f-4008-afc8-2e224baa0a7f)
+ #### inpaint: ![9](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/597f98f3-a9b1-46c2-9718-57e190006b4d)
+ #### video: ![10](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/e447bb27-6696-4e6b-88fe-232e8b0d514d)
+ #### cascade: ![11](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/889bb5b0-b137-4a48-a0f4-535688d18683)
+ #### extras: ![12](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/4c438781-8c4e-409e-966e-da7aa4b457e6)
 
-### Shap-E: 
+### Shap-E: ![13](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/c2ad89c4-c535-464e-bd2c-198307b63d1c)
  
-### AudioCraft: 
+### AudioCraft: ![14](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/bbed3087-b94a-4f60-8f7e-08901a248071)
 
 ### AudioLDM 2: 
 
-### Demucs: 
+### Demucs: ![16](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/4c0187cb-dd49-48f3-993d-fe3229ea931f)
 
-### ModelDownloader: 
+### ModelDownloader: ![17](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/a5e4a6b4-cc4c-4079-8c65-65e5f2818166)
 
-### Settings: 
+### Settings: ![18](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/19244f8b-2d8d-4768-b692-6b2be1d20b70)
 
-### System: 
+### System: ![19](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/c48b2294-82a1-4f7e-9a4c-64fb94801724)
 
 ## Features:
 
