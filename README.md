@@ -60,7 +60,7 @@ The goal of the project - to create the easiest possible application to use neur
 * Support Rembg
 * Support Shap-E
 * Support BLIP-2 (For LLM)
-* Support WebSearch (DuckDuckGo)
+* Support WebSearch (GoogleSearch)
 * Model settings inside the interface
 * ModelDownloader (For LLM and StableDiffusion)
 * Application settings
