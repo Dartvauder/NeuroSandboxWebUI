@@ -87,6 +87,7 @@ def load_model(model_name, model_type, n_ctx=None):
                 model = AutoModelForCausalLM.from_pretrained(
                     model_path,
                     device_map=device,
+                    load_in_4bit=True,
                     torch_dtype=torch.float16,
                     trust_remote_code=True
                 )
@@ -291,6 +292,7 @@ def generate_text_and_speech(input_text, input_audio, input_image, llm_model_nam
         inputs = processor(raw_image, prompt, return_tensors="pt").to(device, torch.float16)
         max_length = max_length
         out = model.generate(**inputs, max_length=max_length, num_beams=4, no_repeat_ngram_size=3)
+        text = processor.decode(out[0], skip_special_tokens=True).strip()
         chat_history.append([prompt, text])
         return chat_history, None, None, None
     else:
