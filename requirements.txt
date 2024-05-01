@@ -47,7 +47,6 @@ diffusers==0.27.2
 diskcache==5.6.3
 docopt==0.6.2
 dora_search==0.1.12
-duckduckgo_search==5.3.0
 einops==0.7.0
 encodec==0.1.1
 exceptiongroup==1.2.1
