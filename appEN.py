@@ -110,7 +110,7 @@ def load_blip2_model():
     if stop_signal:
         return "Generation stopped"
     print("Downloading BLIP 2...")
-    blip2_model_path = "inputs/text/llm_models/multimodal/blip2-opt-2.7b"
+    blip2_model_path = "inputs/text/llm_models/blip2-opt-2.7b"
     if not os.path.exists(blip2_model_path):
         os.makedirs(blip2_model_path, exist_ok=True)
         Repo.clone_from("https://huggingface.co/Salesforce/blip2-opt-2.7b", blip2_model_path)
