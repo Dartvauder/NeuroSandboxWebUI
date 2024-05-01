@@ -24,6 +24,8 @@ from PIL import Image
 from tqdm import tqdm
 from llama_cpp import Llama
 import requests
+from googlesearch import search
+from bs4 import BeautifulSoup
 from rembg import remove
 import torchaudio
 from audiocraft.models import MusicGen, AudioGen, MultiBandDiffusion  # MAGNeT
@@ -103,6 +105,15 @@ def load_model(model_name, model_type, n_ctx=None):
             except (ValueError, RuntimeError):
                 return None, None, "The selected model is not compatible with the 'llama' model type"
     return None, None, None
+
+
+def web_search(query):
+    search_results = []
+    for j in search(query, num_results=3):
+        page = requests.get(j)
+        soup = BeautifulSoup(page.content, "html.parser")
+        search_results.append(soup.get_text())
+    return " ".join(search_results)
 
 
 def load_blip2_model():
@@ -267,7 +278,7 @@ chat_history = []
 
 
 def generate_text_and_speech(input_text, input_audio, input_image, llm_model_name, llm_settings_html, llm_model_type, max_length, max_tokens,
-                             temperature, top_p, top_k, chat_history_format, enable_libretranslate, target_lang, enable_multimodal, enable_tts, tts_settings_html,
+                             temperature, top_p, top_k, chat_history_format, enable_web_search, enable_libretranslate, target_lang, enable_multimodal, enable_tts, tts_settings_html,
                              speaker_wav, language, tts_temperature, tts_top_p, tts_top_k, tts_speed, output_format, stop_generation):
     global chat_history, chat_dir, tts_model, whisper_model, stop_signal
     stop_signal = False
@@ -318,6 +329,9 @@ def generate_text_and_speech(input_text, input_audio, input_image, llm_model_nam
                     whisper_model = load_whisper_model()
                 device = "cuda" if torch.cuda.is_available() else "cpu"
                 whisper_model = whisper_model.to(device)
+            if enable_web_search:
+                web_context = web_search(prompt)
+                prompt = f"{prompt}\nWeb search results:\n{web_context}"
             if llm_model:
                 if llm_model_type == "transformers":
                     detect_lang = langdetect.detect(prompt)
@@ -1634,7 +1648,7 @@ chat_interface = gr.Interface(
     inputs=[
         gr.Textbox(label="Enter your request"),
         gr.Audio(type="filepath", label="Record your request (optional)"),
-        gr.Image(label="Upload image (optional)", type="filepath"),
+        gr.Image(label="Upload your image (optional)", type="filepath"),
         gr.Dropdown(choices=llm_models_list, label="Select LLM model", value=None),
         gr.HTML("<h3>LLM Settings</h3>"),
         gr.Radio(choices=["transformers", "llama"], label="Select model type", value="transformers"),
@@ -1644,6 +1658,7 @@ chat_interface = gr.Interface(
         gr.Slider(minimum=0.0, maximum=1.0, value=0.9, step=0.1, label="Top P"),
         gr.Slider(minimum=0, maximum=100, value=20, step=1, label="Top K"),
         gr.Radio(choices=["txt", "json"], label="Select chat history format", value="txt", interactive=True),
+        gr.Checkbox(label="Enable WebSearch", value=False),
         gr.Checkbox(label="Enable LibreTranslate", value=False),
         gr.Dropdown(choices=["en", "es", "fr", "de", "it", "pt", "pl", "tr", "ru", "nl", "cs", "ar", "zh", "ja", "hi"], label="Select target language", value="ru", interactive=True),
         gr.Checkbox(label="Enable Multimodal", value=False),
