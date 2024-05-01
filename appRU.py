@@ -289,7 +289,6 @@ def generate_text_and_speech(input_text, input_audio, input_image, llm_model_nam
         processor, model = load_blip2_model()
         raw_image = Image.open(input_image).convert('RGB')
         inputs = processor(raw_image, prompt, return_tensors="pt").to(device, torch.float16)
-        max_length = 512
         max_length = max_length
         out = model.generate(**inputs, max_length=max_length, num_beams=4, no_repeat_ngram_size=3)
         chat_history.append([prompt, text])
