@@ -24,7 +24,6 @@ from PIL import Image
 from tqdm import tqdm
 from llama_cpp import Llama
 import requests
-from bs4 import BeautifulSoup
 from rembg import remove
 import torchaudio
 from audiocraft.models import MusicGen, AudioGen, MultiBandDiffusion  # MAGNeT
@@ -1415,8 +1414,8 @@ def generate_audio_audiocraft(prompt, input_audio=None, model_name=None, audiocr
         torch.cuda.empty_cache()
 
 
-def generate_audio_audioldm2(prompt, negative_prompt, transcription, model_name, num_inference_steps, audio_length_in_s,
-                             num_waveforms_per_prompt, max_new_tokens, stop_generation):
+def generate_audio_audioldm2(prompt, negative_prompt, model_name, num_inference_steps, audio_length_in_s,
+                             num_waveforms_per_prompt, stop_generation):
     global stop_signal
     stop_signal = False
 
@@ -1439,25 +1438,14 @@ def generate_audio_audioldm2(prompt, negative_prompt, transcription, model_name,
     generator = torch.Generator(device).manual_seed(0)
 
     try:
-        if model_name == "anhnct/audioldm2_gigaspeech":
-            audio = pipe(
-                prompt,
-                negative_prompt=negative_prompt,
-                transcription=transcription,
-                num_inference_steps=num_inference_steps,
-                audio_length_in_s=audio_length_in_s,
-                num_waveforms_per_prompt=num_waveforms_per_prompt,
-                generator=generator,
-                max_new_tokens=max_new_tokens
-            ).audios
-        else:
-            audio = pipe(
-                prompt,
-                negative_prompt=negative_prompt,
-                num_inference_steps=num_inference_steps,
-                audio_length_in_s=audio_length_in_s,
-                num_waveforms_per_prompt=num_waveforms_per_prompt,
-            ).audios
+        audio = pipe(
+            prompt,
+            negative_prompt=negative_prompt,
+            num_inference_steps=num_inference_steps,
+            audio_length_in_s=audio_length_in_s,
+            num_waveforms_per_prompt=num_waveforms_per_prompt,
+            generator=generator,
+        ).audios
 
         if stop_signal:
             return None, "Generation stopped"
@@ -2010,12 +1998,10 @@ audioldm2_interface = gr.Interface(
     inputs=[
         gr.Textbox(label="Enter your prompt"),
         gr.Textbox(label="Enter your negative prompt", value=""),
-        gr.Textbox(label="Enter transcription (for audioldm2_gigaspeech model)", value=""),
-        gr.Dropdown(choices=["cvssp/audioldm2", "cvssp/audioldm2-music", "anhnct/audioldm2_gigaspeech"], label="Select AudioLDM 2 model", value="cvssp/audioldm2"),
+        gr.Dropdown(choices=["cvssp/audioldm2", "cvssp/audioldm2-music"], label="Select AudioLDM 2 model", value="cvssp/audioldm2"),
         gr.Slider(minimum=1, maximum=1000, value=200, step=1, label="Steps"),
         gr.Slider(minimum=1, maximum=60, value=10, step=1, label="Length (seconds)"),
         gr.Slider(minimum=1, maximum=10, value=3, step=1, label="Waveforms number"),
-        gr.Slider(minimum=1, maximum=512, value=256, step=1, label="Max new tokens (for audioldm2_gigaspeech model)"),
         gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
     outputs=[
