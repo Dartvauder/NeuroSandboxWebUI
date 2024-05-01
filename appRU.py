@@ -286,7 +286,7 @@ def generate_text_and_speech(input_text, input_audio, input_image, llm_model_nam
             chat_history.append([None, "Multimodal with 'llama' model type is not supported yet!"])
             return chat_history, None, None, None
         processor, model = load_blip2_model()
-        raw_image = Image.open(input_image.name).convert('RGB')
+        raw_image = Image.open(input_image).convert('RGB')
         inputs = processor(raw_image, prompt, return_tensors="pt").to("cuda", torch.float16)
         out = model.generate(**inputs)
         text = processor.decode(out[0], skip_special_tokens=True).strip()
