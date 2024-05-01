@@ -556,7 +556,7 @@ def generate_bark_audio(text, voice_preset, max_length, stop_generation):
 
     try:
         processor = AutoProcessor.from_pretrained(bark_model_path)
-        model = BarkModel.from_pretrained(bark_model_path)
+        model = BarkModel.from_pretrained(bark_model_path, torch_dtype=torch.float16)
 
         if voice_preset:
             inputs = processor(text, voice_preset=voice_preset)
@@ -564,6 +564,7 @@ def generate_bark_audio(text, voice_preset, max_length, stop_generation):
             inputs = processor(text)
 
         audio_array = model.generate(**inputs, max_length=max_length)
+        model.enable_cpu_offload()
 
         if stop_signal:
             return None, "Generation stopped"
