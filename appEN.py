@@ -14,7 +14,7 @@ import whisper
 from datetime import datetime
 import warnings
 import logging
-from diffusers import DiffusionPipeline, DPMSolverMultistepScheduler, StableDiffusionPipeline, StableDiffusionXLPipeline, StableDiffusionImg2ImgPipeline, StableDiffusionDepth2ImgPipeline, AutoencoderKL, StableDiffusionLatentUpscalePipeline, StableDiffusionUpscalePipeline, StableDiffusionInpaintPipeline, StableVideoDiffusionPipeline, I2VGenXLPipeline, StableCascadePriorPipeline, StableCascadeDecoderPipeline, ShapEPipeline, ShapEImg2ImgPipeline, AudioLDM2Pipeline
+from diffusers import DiffusionPipeline, DPMSolverMultistepScheduler, AutoPipelineForText2Image, AutoPipelineForImage2Image, StableDiffusionPipeline, StableDiffusionXLPipeline, StableDiffusionImg2ImgPipeline, StableDiffusionDepth2ImgPipeline, AutoencoderKL, StableDiffusionLatentUpscalePipeline, StableDiffusionUpscalePipeline, StableDiffusionInpaintPipeline, StableVideoDiffusionPipeline, I2VGenXLPipeline, StableCascadePriorPipeline, StableCascadeDecoderPipeline, ShapEPipeline, ShapEImg2ImgPipeline, AudioLDM2Pipeline
 from diffusers.utils import load_image, export_to_video, export_to_gif, export_to_ply
 import trimesh
 from git import Repo
@@ -1252,6 +1252,49 @@ def generate_image_extras(input_image, image_output_format, remove_background, s
         return None, str(e)
 
 
+def generate_image_kandinsky3(prompt, negative_prompt, init_image, kandinsky3_settings_html, kandinsky3_steps, kandinsky3_cfg, kandinsky3_width, kandinsky3_height, kandinsky3_strength, output_format="png", stop_generation=None):
+    global stop_signal
+    stop_signal = False
+
+    kandinsky_model_path = os.path.join("inputs", "image", "kandinsky3")
+
+    if not os.path.exists(kandinsky_model_path):
+        print("Downloading Kandinsky 3 model...")
+        os.makedirs(kandinsky_model_path, exist_ok=True)
+        Repo.clone_from("https://huggingface.co/kandinsky-community/kandinsky-3", kandinsky_model_path)
+        print("Kandinsky 3 model downloaded")
+
+    try:
+        device = "cuda" if torch.cuda.is_available() else "cpu"
+        if init_image:
+            pipe = AutoPipelineForImage2Image.from_pretrained(kandinsky_model_path, variant="fp16", torch_dtype=torch.float16)
+            image = load_image(init_image)
+            generator = torch.Generator(device=device).manual_seed(0)
+            image = pipe(prompt, negative_prompt=negative_prompt, image=image, strength=kandinsky3_strength, num_inference_steps=kandinsky3_steps, guidance_scale=kandinsky3_cfg, generator=generator).images[0]
+        else:
+            pipe = AutoPipelineForText2Image.from_pretrained(kandinsky_model_path, variant="fp16", torch_dtype=torch.float16)
+            generator = torch.Generator(device=device).manual_seed(0)
+            image = pipe(prompt, negative_prompt=negative_prompt, num_inference_steps=kandinsky3_steps, guidance_scale=kandinsky3_cfg, width=kandinsky3_width, height=kandinsky3_height, generator=generator).images[0]
+
+        pipe.enable_model_cpu_offload()
+
+        if stop_signal:
+            return None, "Generation stopped"
+
+        today = datetime.now().date()
+        image_dir = os.path.join('outputs', f"Kandinsky3_{today.strftime('%Y%m%d')}")
+        os.makedirs(image_dir, exist_ok=True)
+        image_filename = f"kandinsky3_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
+        image_path = os.path.join(image_dir, image_filename)
+        image.save(image_path)
+
+        return image_path, None
+
+    finally:
+        del pipe
+        torch.cuda.empty_cache()
+
+
 def generate_video_zeroscope2(prompt, negative_prompt, video_to_enhance, strength, num_inference_steps, width, height, num_frames,
                               stop_generation):
     global stop_signal
@@ -2025,6 +2068,33 @@ extras_interface = gr.Interface(
     allow_flagging="never",
 )
 
+kandinsky3_interface = gr.Interface(
+    fn=generate_image_kandinsky3,
+    inputs=[
+        gr.Textbox(label="Enter your prompt"),
+        gr.Textbox(label="Enter your negative prompt", value=""),
+        gr.Image(label="Initial image (optional)", type="filepath", interactive=True),
+        gr.HTML("<h3>Kandinsky 3 Settings</h3>"),
+        gr.Slider(minimum=1, maximum=100, value=25, step=1, label="Steps"),
+        gr.Slider(minimum=1.0, maximum=30.0, value=7.5, step=0.1, label="CFG"),
+        gr.Slider(minimum=256, maximum=2048, value=768, step=64, label="Width"),
+        gr.Slider(minimum=256, maximum=2048, value=768, step=64, label="Height"),
+        gr.Slider(minimum=0.0, maximum=1.0, value=0.75, step=0.01, label="Strength (for img2img)"),
+        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
+        gr.Button(value="Stop generation", interactive=True, variant="stop"),
+    ],
+    outputs=[
+        gr.Image(type="filepath", label="Generated image"),
+        gr.Textbox(label="Message", type="text"),
+    ],
+    title="NeuroSandboxWebUI (ALPHA) - Kandinsky 3",
+    description="This user interface allows you to enter any text and generate images using Kandinsky 3. "
+                "You can optionally upload an initial image for image2image generation. "
+                "Customize the generation settings from the sliders. "
+                "Try it and see what happens!",
+    allow_flagging="never",
+)
+
 zeroscope2_interface = gr.Interface(
     fn=generate_video_zeroscope2,
     inputs=[
@@ -2186,8 +2256,8 @@ system_interface = gr.Interface(
 with gr.TabbedInterface(
         [chat_interface, tts_stt_interface, bark_interface, translate_interface, gr.TabbedInterface([txt2img_interface, img2img_interface, depth2img_interface, upscale_interface, inpaint_interface, video_interface, cascade_interface, extras_interface],
         tab_names=["txt2img", "img2img", "depth2img", "upscale", "inpaint", "video", "cascade", "extras"]),
-        zeroscope2_interface, shap_e_interface, audiocraft_interface, audioldm2_interface, demucs_interface, model_downloader_interface, settings_interface, system_interface],
-        tab_names=["LLM", "TTS-STT", "SunoBark", "LibreTranslate", "StableDiffusion", "ZeroScope 2", "Shap-E", "AudioCraft", "AudioLDM 2", "Demucs", "ModelDownloader", "Settings", "System"]
+        kandinsky3_interface, zeroscope2_interface, shap_e_interface, audiocraft_interface, audioldm2_interface, demucs_interface, model_downloader_interface, settings_interface, system_interface],
+        tab_names=["LLM", "TTS-STT", "SunoBark", "LibreTranslate", "StableDiffusion", "Kandinsky 3", "ZeroScope 2", "Shap-E", "AudioCraft", "AudioLDM 2", "Demucs", "ModelDownloader", "Settings", "System"]
 ) as app:
     chat_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     bark_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
@@ -2199,6 +2269,7 @@ with gr.TabbedInterface(
     video_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     cascade_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     extras_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
+    kandinsky3_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     zeroscope2_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     shap_e_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     audiocraft_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
