@@ -1293,13 +1293,14 @@ def generate_video_zeroscope2(prompt, video_to_enhance, strength, num_inference_
 
         video_frames = []
         for i in range(num_frames):
-            frame = base_pipe(prompt, num_inference_steps=num_inference_steps, height=height, width=width).images[0]
+            output = base_pipe(prompt, num_inference_steps=num_inference_steps, height=height, width=width)
+            frame = output.frames[0][0]
             video_frames.append(frame)
 
             if stop_signal:
                 return None, "Generation stopped"
 
-        video_frames = [Image.fromarray(np.clip(frame[0] * 255, 0, 255).astype(np.uint8)) for frame in video_frames]
+        video_frames = [Image.fromarray(np.clip(frame * 255, 0, 255).astype(np.uint8)) for frame in video_frames]
 
         if enable_video_enhance and video_to_enhance:
             enhance_pipe = DiffusionPipeline.from_pretrained(enhance_model_path, torch_dtype=torch.float16)
