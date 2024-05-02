@@ -2100,7 +2100,7 @@ zeroscope2_interface = gr.Interface(
     inputs=[
         gr.Textbox(label="Enter your prompt"),
         gr.Textbox(label="Enter your negative prompt", value=""),
-        gr.Video(label="Video to enhance (optional)", type="filepath", interactive=True),
+        gr.Video(label="Video to enhance (optional)", interactive=True),
         gr.Slider(minimum=0.1, maximum=1.0, value=0.5, step=0.1, label="Strength"),
         gr.Slider(minimum=1, maximum=100, value=40, step=1, label="Steps"),
         gr.Slider(minimum=256, maximum=1280, value=576, step=64, label="Width"),
