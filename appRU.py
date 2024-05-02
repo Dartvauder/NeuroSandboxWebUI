@@ -14,7 +14,7 @@ import whisper
 from datetime import datetime
 import warnings
 import logging
-from diffusers import StableDiffusionPipeline, StableDiffusionXLPipeline, StableDiffusionImg2ImgPipeline, StableDiffusionDepth2ImgPipeline, AutoencoderKL, StableDiffusionLatentUpscalePipeline, StableDiffusionUpscalePipeline, StableDiffusionInpaintPipeline, StableVideoDiffusionPipeline, I2VGenXLPipeline, StableCascadePriorPipeline, StableCascadeDecoderPipeline, ShapEPipeline, ShapEImg2ImgPipeline, AudioLDM2Pipeline
+from diffusers import StableDiffusionPipeline, StableDiffusionXLPipeline, StableDiffusionImg2ImgPipeline, StableDiffusionDepth2ImgPipeline, AutoencoderKL, StableDiffusionLatentUpscalePipeline, StableDiffusionUpscalePipeline, StableDiffusionInpaintPipeline, StableVideoDiffusionPipeline, I2VGenXLPipeline, StableCascadePriorPipeline, StableCascadeDecoderPipeline, DiffusionPipeline, DPMSolverMultistepScheduler, ShapEPipeline, ShapEImg2ImgPipeline, AudioLDM2Pipeline
 from diffusers.utils import load_image, export_to_video, export_to_gif, export_to_ply
 import trimesh
 from git import Repo
@@ -1252,6 +1252,85 @@ def generate_image_extras(input_image, image_output_format, remove_background, s
         return None, str(e)
 
 
+def generate_video_zeroscope2(prompt, video_to_enhance, strength, num_inference_steps, width, height, num_frames,
+                              enable_video_enhance, stop_generation):
+    global stop_signal
+    stop_signal = False
+
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+
+    base_model_path = os.path.join("inputs", "image", "zeroscope2", "zeroscope_v2_576w")
+    if not os.path.exists(base_model_path):
+        print("Downloading ZeroScope 2 base model...")
+        os.makedirs(base_model_path, exist_ok=True)
+        Repo.clone_from("https://huggingface.co/cerspense/zeroscope_v2_576w", base_model_path)
+        print("ZeroScope 2 base model downloaded")
+
+    enhance_model_path = os.path.join("inputs", "image", "zeroscope2", "zeroscope_v2_XL")
+    if not os.path.exists(enhance_model_path):
+        print("Downloading ZeroScope 2 enhance model...")
+        os.makedirs(enhance_model_path, exist_ok=True)
+        Repo.clone_from("https://huggingface.co/cerspense/zeroscope_v2_XL", enhance_model_path)
+        print("ZeroScope 2 enhance model downloaded")
+
+    today = datetime.now().date()
+    video_dir = os.path.join('outputs', f"ZeroScope2_{today.strftime('%Y%m%d')}")
+    os.makedirs(video_dir, exist_ok=True)
+
+    if video_to_enhance and not enable_video_enhance:
+        return None, "Video enhancement is disabled. Please enable it to use the uploaded video."
+
+    if enable_video_enhance and not video_to_enhance:
+        return None, "Please upload a video to enhance."
+
+    try:
+        base_pipe = DiffusionPipeline.from_pretrained(base_model_path, torch_dtype=torch.float16)
+        base_pipe.scheduler = DPMSolverMultistepScheduler.from_config(base_pipe.scheduler.config)
+        base_pipe.to(device)
+        base_pipe.enable_model_cpu_offload()
+        base_pipe.enable_vae_slicing()
+        base_pipe.unet.enable_forward_chunking(chunk_size=1, dim=1)
+
+        video_frames = []
+        for i in range(num_frames):
+            output = base_pipe(prompt, num_inference_steps=num_inference_steps, height=height, width=width)
+            frame = output.frames[0][0]
+            video_frames.append(frame)
+
+            if stop_signal:
+                return None, "Generation stopped"
+
+        video_frames = [Image.fromarray(np.clip(frame * 255, 0, 255).astype(np.uint8)) for frame in video_frames]
+
+        if enable_video_enhance and video_to_enhance:
+            enhance_pipe = DiffusionPipeline.from_pretrained(enhance_model_path, torch_dtype=torch.float16)
+            enhance_pipe.to(device)
+            enhance_pipe.scheduler = DPMSolverMultistepScheduler.from_config(enhance_pipe.scheduler.config)
+            enhance_pipe.enable_model_cpu_offload()
+            enhance_pipe.enable_vae_slicing()
+
+            video = [frame.resize((1024, 576)) for frame in video_frames]
+
+            video_frames = enhance_pipe(prompt, video=video, strength=strength).frames
+
+        if stop_signal:
+            return None, "Generation stopped"
+
+        video_filename = f"zeroscope2_{datetime.now().strftime('%Y%m%d_%H%M%S')}.mp4"
+        video_path = os.path.join(video_dir, video_filename)
+        export_to_video(video_frames, video_path)
+
+        return video_path, None
+
+    finally:
+        try:
+            del base_pipe
+            del enhance_pipe
+        except UnboundLocalError:
+            pass
+        torch.cuda.empty_cache()
+
+
 def generate_3d(prompt, init_image, num_inference_steps, guidance_scale, frame_size, stop_generation):
     global stop_signal
     stop_signal = False
@@ -1627,7 +1706,7 @@ def open_outputs_folder():
             os.system(f'open "{outputs_folder}"' if os.name == "darwin" else f'xdg-open "{outputs_folder}"')
 
 
-llm_models_list = [None, "blip2-opt-2.7b"] + [model for model in os.listdir("inputs/text/llm_models") if not model.endswith(".txt")]
+llm_models_list = [None, "blip2-opt-2.7b"] + [model for model in os.listdir("inputs/text/llm_models") if not model.endswith(".txt") and model != "blip2-opt-2.7b"]
 speaker_wavs_list = [None] + [wav for wav in os.listdir("inputs/audio/voices") if not wav.endswith(".txt")]
 stable_diffusion_models_list = [None] + [model.replace(".safetensors", "") for model in
                                          os.listdir("inputs/image/sd_models")
@@ -1959,6 +2038,30 @@ extras_interface = gr.Interface(
     allow_flagging="never",
 )
 
+zeroscope2_interface = gr.Interface(
+    fn=generate_video_zeroscope2,
+    inputs=[
+        gr.Textbox(label="Enter your prompt"),
+        gr.Video(label="Video to enhance (optional)", interactive=True),
+        gr.Slider(minimum=0.1, maximum=1.0, value=0.5, step=0.1, label="Strength"),
+        gr.Slider(minimum=1, maximum=100, value=40, step=1, label="Steps"),
+        gr.Slider(minimum=256, maximum=1280, value=576, step=64, label="Width"),
+        gr.Slider(minimum=256, maximum=1280, value=320, step=64, label="Height"),
+        gr.Slider(minimum=1, maximum=100, value=36, step=1, label="Frames"),
+        gr.Checkbox(label="Enable Video Enhancement", value=False),
+        gr.Button(value="Stop generation", interactive=True, variant="stop"),
+    ],
+    outputs=[
+        gr.Video(label="Generated video"),
+        gr.Textbox(label="Message", type="text"),
+    ],
+    title="NeuroSandboxWebUI (ALPHA) - ZeroScope 2",
+    description="This user interface allows you to generate and enhance videos using ZeroScope 2 models. "
+                "You can enter a text prompt, upload an optional video for enhancement, and customize the generation settings. "
+                "Try it and see what happens!",
+    allow_flagging="never",
+)
+
 shap_e_interface = gr.Interface(
     fn=generate_3d,
     inputs=[
@@ -2096,8 +2199,8 @@ system_interface = gr.Interface(
 with gr.TabbedInterface(
         [chat_interface, tts_stt_interface, bark_interface, translate_interface, gr.TabbedInterface([txt2img_interface, img2img_interface, depth2img_interface, upscale_interface, inpaint_interface, video_interface, cascade_interface, extras_interface],
         tab_names=["txt2img", "img2img", "depth2img", "upscale", "inpaint", "video", "cascade", "extras"]),
-         shap_e_interface, audiocraft_interface, audioldm2_interface, demucs_interface, model_downloader_interface, settings_interface, system_interface],
-        tab_names=["LLM", "TTS-STT", "SunoBark", "LibreTranslate", "StableDiffusion", "Shap-E", "AudioCraft", "AudioLDM 2", "Demucs", "ModelDownloader", "Settings", "System"]
+                    zeroscope2_interface, shap_e_interface, audiocraft_interface, audioldm2_interface, demucs_interface, model_downloader_interface, settings_interface, system_interface],
+        tab_names=["LLM", "TTS-STT", "SunoBark", "LibreTranslate", "StableDiffusion", "ZeroScope 2", "Shap-E", "AudioCraft", "AudioLDM 2", "Demucs", "ModelDownloader", "Settings", "System"]
 ) as app:
     chat_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     bark_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
@@ -2109,6 +2212,7 @@ with gr.TabbedInterface(
     video_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     cascade_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     extras_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
+    zeroscope2_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     shap_e_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     audiocraft_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     audioldm2_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
