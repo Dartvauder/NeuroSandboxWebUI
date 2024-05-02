@@ -1295,7 +1295,7 @@ def generate_image_kandinsky3(prompt, negative_prompt, init_image, kandinsky3_se
         torch.cuda.empty_cache()
 
 
-def generate_video_zeroscope2(prompt, negative_prompt, video_to_enhance, strength, num_inference_steps, width, height, num_frames,
+def generate_video_zeroscope2(prompt, video_to_enhance, strength, num_inference_steps, width, height, num_frames,
                               stop_generation):
     global stop_signal
     stop_signal = False
@@ -1323,6 +1323,7 @@ def generate_video_zeroscope2(prompt, negative_prompt, video_to_enhance, strengt
     try:
         base_pipe = DiffusionPipeline.from_pretrained(base_model_path, torch_dtype=torch.float16)
         base_pipe.scheduler = DPMSolverMultistepScheduler.from_config(base_pipe.scheduler.config)
+        base_pipe.to(device)
         base_pipe.enable_model_cpu_offload()
         base_pipe.enable_vae_slicing()
         base_pipe.unet.enable_forward_chunking(chunk_size=1, dim=1)
@@ -1335,6 +1336,7 @@ def generate_video_zeroscope2(prompt, negative_prompt, video_to_enhance, strengt
 
         if video_to_enhance:
             enhance_pipe = DiffusionPipeline.from_pretrained(enhance_model_path, torch_dtype=torch.float16)
+            enhance_pipe.to(device)
             enhance_pipe.scheduler = DPMSolverMultistepScheduler.from_config(enhance_pipe.scheduler.config)
             enhance_pipe.enable_model_cpu_offload()
             enhance_pipe.enable_vae_slicing()
@@ -2099,7 +2101,6 @@ zeroscope2_interface = gr.Interface(
     fn=generate_video_zeroscope2,
     inputs=[
         gr.Textbox(label="Enter your prompt"),
-        gr.Textbox(label="Enter your negative prompt", value=""),
         gr.Video(label="Video to enhance (optional)", interactive=True),
         gr.Slider(minimum=0.1, maximum=1.0, value=0.5, step=0.1, label="Strength"),
         gr.Slider(minimum=1, maximum=100, value=40, step=1, label="Steps"),
