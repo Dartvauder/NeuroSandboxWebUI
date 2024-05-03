@@ -1,6 +1,6 @@
 import gradio as gr
 import langdetect
-from transformers import AutoModelForCausalLM, AutoTokenizer, Blip2Processor, Blip2ForConditionalGeneration, AutoProcessor, BarkModel
+from transformers import AutoModelForCausalLM, AutoTokenizer, AutoProcessor, BarkModel
 from libretranslatepy import LibreTranslateAPI
 import urllib.error
 import soundfile as sf
@@ -24,8 +24,6 @@ from PIL import Image
 from tqdm import tqdm
 from llama_cpp import Llama
 import requests
-from googlesearch import search
-from bs4 import BeautifulSoup
 from rembg import remove
 import torchaudio
 from audiocraft.models import MusicGen, AudioGen, MultiBandDiffusion  # MAGNeT
@@ -107,28 +105,25 @@ def load_model(model_name, model_type, n_ctx=None):
     return None, None, None
 
 
-def web_search(query):
-    search_results = []
-    for j in search(query, num_results=3):
-        page = requests.get(j)
-        soup = BeautifulSoup(page.content, "html.parser")
-        search_results.append(soup.get_text())
-    return " ".join(search_results)
-
-
-def load_blip2_model():
+def load_moondream2_model(model_id, revision):
     global stop_signal
     if stop_signal:
         return "Generation stopped"
-    print("Downloading BLIP 2...")
-    blip2_model_path = "inputs/text/llm_models/blip2-opt-2.7b"
-    if not os.path.exists(blip2_model_path):
-        os.makedirs(blip2_model_path, exist_ok=True)
-        Repo.clone_from("https://huggingface.co/Salesforce/blip2-opt-2.7b", blip2_model_path)
-    print("BLIP 2 downloaded")
-    processor = Blip2Processor.from_pretrained(blip2_model_path)
-    model = Blip2ForConditionalGeneration.from_pretrained(blip2_model_path, torch_dtype=torch.float16, device_map="auto")
-    return processor, model
+    print(f"Downloading MoonDream2 model...")
+    moondream2_model_path = os.path.join("inputs", "text", "llm_models", model_id)
+    if not os.path.exists(moondream2_model_path):
+        os.makedirs(moondream2_model_path, exist_ok=True)
+        model = AutoModelForCausalLM.from_pretrained(
+            model_id, trust_remote_code=True, revision=revision
+        )
+        tokenizer = AutoTokenizer.from_pretrained(model_id, revision=revision)
+        model.save_pretrained(moondream2_model_path)
+        tokenizer.save_pretrained(moondream2_model_path)
+    else:
+        model = AutoModelForCausalLM.from_pretrained(moondream2_model_path, trust_remote_code=True)
+        tokenizer = AutoTokenizer.from_pretrained(moondream2_model_path)
+    print("MoonDream2 model downloaded")
+    return model, tokenizer
 
 
 def transcribe_audio(audio_file_path):
@@ -289,22 +284,43 @@ def generate_text_and_speech(input_text, input_audio, input_image, llm_model_nam
     if not llm_model_name:
         chat_history.append([None, "Please, select a LLM model!"])
         return chat_history, None, None, None
-    if enable_multimodal and llm_model_name == "blip2-opt-2.7b":
+    if enable_multimodal and llm_model_name == "moondream2":
         if not input_image:
             chat_history.append([None, "Please, upload an image for Multimodal!"])
             return chat_history, None, None, None
         if llm_model_type == "llama":
             chat_history.append([None, "Multimodal with 'llama' model type is not supported yet!"])
             return chat_history, None, None, None
-        device = "cuda" if torch.cuda.is_available() else "cpu"
-        processor, model = load_blip2_model()
-        raw_image = Image.open(input_image).convert('RGB')
-        inputs = processor(raw_image, prompt, return_tensors="pt").to(device, torch.float16)
-        max_length = max_length
-        out = model.generate(**inputs, max_length=max_length, num_beams=4, no_repeat_ngram_size=3)
-        text = processor.decode(out[0], skip_special_tokens=True).strip()
+        model_id = "vikhyatk/moondream2"
+        revision = "2024-04-02"
+        model, tokenizer = load_moondream2_model(model_id, revision)
+        image = Image.open(input_image)
+        enc_image = model.encode_image(image)
+        text = model.answer_question(enc_image, prompt, tokenizer)
+
+        if not chat_dir:
+            now = datetime.now()
+            chat_dir = os.path.join('outputs', f"LLM_{now.strftime('%Y%m%d_%H%M%S')}")
+            os.makedirs(chat_dir)
+            os.makedirs(os.path.join(chat_dir, 'text'))
+            os.makedirs(os.path.join(chat_dir, 'audio'))
+        chat_history_path = os.path.join(chat_dir, 'text', f'chat_history.{chat_history_format}')
+        if chat_history_format == "txt":
+            with open(chat_history_path, "a", encoding="utf-8") as f:
+                f.write(f"Human: {prompt}\n")
+                if text:
+                    f.write(f"AI: {text}\n\n")
+        elif chat_history_format == "json":
+            chat_history = []
+            if os.path.exists(chat_history_path):
+                with open(chat_history_path, "r", encoding="utf-8") as f:
+                    chat_history = json.load(f)
+            chat_history.append(["Human: " + prompt, "AI: " + (text if text else "")])
+            with open(chat_history_path, "w", encoding="utf-8") as f:
+                json.dump(chat_history, f, ensure_ascii=False, indent=4)
+
         chat_history.append([prompt, text])
-        return chat_history, None, None, None
+        return chat_history, None, chat_dir, None
     else:
         tokenizer, llm_model, error_message = load_model(llm_model_name, llm_model_type)
         if error_message:
@@ -330,53 +346,43 @@ def generate_text_and_speech(input_text, input_audio, input_image, llm_model_nam
                 device = "cuda" if torch.cuda.is_available() else "cpu"
                 whisper_model = whisper_model.to(device)
             if enable_web_search:
-                web_context = web_search(prompt)
-                prompt = f"{prompt}\nWeb search results:\n{web_context}"
+                chat_history.append([None, "This feature doesn't work yet. Please, turn it off"])
+                return chat_history, None, None, None
             if llm_model:
                 if llm_model_type == "transformers":
                     detect_lang = langdetect.detect(prompt)
                     if detect_lang == "en":
-                        bot_instruction = "I am a chatbot created to help with any questions. I use my knowledge and abilities to provide useful and meaningful answers in any language"
+                        bot_instruction = "You are a friendly chatbot who always provides useful and meaningful answers in any language"
                     else:
-                        bot_instruction = "Я чат-бот, созданный для помощи по любым вопросам. Я использую свои знания и способности, чтобы давать полезные и содержательные ответы на любом языке"
-                    inputs = tokenizer.encode(bot_instruction + prompt, return_tensors="pt", truncation=True)
-                    device = llm_model.device
-                    inputs = inputs.to(device)
+                        bot_instruction = "Вы дружелюбный чат-бот, который всегда дает полезные и содержательные ответы на любом языке"
+                    messages = [
+                        {
+                            "role": "system",
+                            "content": bot_instruction,
+                        },
+                        {"role": "user", "content": prompt},
+                    ]
 
-                    progress_bar = tqdm(total=max_length, desc="Generating text")
-                    progress_tokens = 0
+                    tokenizer.padding_side = "left"
+                    tokenizer.pad_token = tokenizer.eos_token
+                    device = "cuda" if torch.cuda.is_available() else "cpu"
+                    model_inputs = tokenizer.apply_chat_template(messages, add_generation_prompt=True, padding=True,
+                                                                 return_tensors="pt").to(device)
+                    input_length = model_inputs.shape[1]
 
-                    outputs = llm_model.generate(
-                        inputs,
-                        max_new_tokens=None,
-                        max_length=max_length,
+                    generated_ids = llm_model.generate(
+                        model_inputs,
+                        do_sample=True,
+                        max_new_tokens=max_length,
                         top_p=top_p,
                         top_k=top_k,
                         temperature=temperature,
-                        repetition_penalty=1.15,
-                        early_stopping=True,
+                        repetition_penalty=1.1,
                         num_beams=5,
                         no_repeat_ngram_size=2,
-                        do_sample=True,
-                        use_cache=True,
-                        pad_token_id=tokenizer.eos_token_id,
-                        return_dict_in_generate=True,
-                        num_return_sequences=1,
                     )
 
-                    for i in range(len(outputs.sequences)):
-                        generated_sequence = outputs.sequences[i][inputs.shape[-1]:]
-                        progress_tokens += len(generated_sequence)
-                        progress_bar.update(progress_tokens - progress_bar.n)
-
-                    if stop_signal:
-                        chat_history.append([prompt, "Generation stopped"])
-                        return chat_history, None, None
-
-                    progress_bar.close()
-
-                    generated_sequence = outputs.sequences[0][inputs.shape[-1]:]
-                    text = tokenizer.decode(generated_sequence, skip_special_tokens=True)
+                    text = tokenizer.batch_decode(generated_ids[:, input_length:], skip_special_tokens=True)[0]
 
                 elif llm_model_type == "llama":
                     detect_lang = langdetect.detect(prompt)
@@ -557,7 +563,7 @@ def generate_tts_stt(text, audio, tts_settings_html, speaker_wav, language, tts_
     return tts_output, stt_output
 
 
-def generate_bark_audio(text, voice_preset, max_length, stop_generation):
+def generate_bark_audio(text, voice_preset, max_length, output_format, stop_generation):
     global stop_signal
     stop_signal = False
 
@@ -574,13 +580,15 @@ def generate_bark_audio(text, voice_preset, max_length, stop_generation):
 
     try:
         device = "cuda" if torch.cuda.is_available() else "cpu"
+        torch.set_default_tensor_type(torch.cuda.FloatTensor if device == "cuda" else torch.FloatTensor)
+
         processor = AutoProcessor.from_pretrained(bark_model_path)
-        model = BarkModel.from_pretrained(bark_model_path, torch_dtype=torch.float16).to(device)
+        model = BarkModel.from_pretrained(bark_model_path, torch_dtype=torch.float32)
 
         if voice_preset:
-            inputs = processor(text, voice_preset=voice_preset)
+            inputs = processor(text, voice_preset=voice_preset, return_tensors="pt")
         else:
-            inputs = processor(text)
+            inputs = processor(text, return_tensors="pt")
 
         audio_array = model.generate(**inputs, max_length=max_length)
         model.enable_cpu_offload()
@@ -592,11 +600,22 @@ def generate_bark_audio(text, voice_preset, max_length, stop_generation):
         audio_dir = os.path.join('outputs', f"Bark_{today.strftime('%Y%m%d')}")
         os.makedirs(audio_dir, exist_ok=True)
 
-        audio_filename = f"bark_{datetime.now().strftime('%Y%m%d_%H%M%S')}.wav"
+        audio_array = audio_array.cpu().numpy().squeeze()
+
+        audio_filename = f"bark_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
         audio_path = os.path.join(audio_dir, audio_filename)
 
-        audio_array = audio_array.cpu().numpy().squeeze()
-        sf.write(audio_path, audio_array, 16000)
+        if output_format == "mp3":
+            scipy.io.wavfile.write(audio_path, 16000, audio_array)
+            subprocess.run(f"ffmpeg -i {audio_path} -b:a 192k {audio_path[:-4]}.mp3", shell=True, check=True)
+            audio_path = f"{audio_path[:-4]}.mp3"
+        elif output_format == "ogg":
+            scipy.io.wavfile.write(audio_path, 16000, audio_array)
+            subprocess.run(f"ffmpeg -i {audio_path} -c:a libvorbis -qscale:a 5 {audio_path[:-4]}.ogg", shell=True,
+                           check=True)
+            audio_path = f"{audio_path[:-4]}.ogg"
+        else:
+            sf.write(audio_path, audio_array, 16000)
 
         return audio_path, None
 
@@ -1508,7 +1527,7 @@ def generate_audio_audiocraft(prompt, input_audio=None, model_name=None, audiocr
 
 
 def generate_audio_audioldm2(prompt, negative_prompt, model_name, num_inference_steps, audio_length_in_s,
-                             num_waveforms_per_prompt, stop_generation):
+                             num_waveforms_per_prompt, output_format, stop_generation):
     global stop_signal
     stop_signal = False
 
@@ -1546,9 +1565,20 @@ def generate_audio_audioldm2(prompt, negative_prompt, model_name, num_inference_
         today = datetime.now().date()
         audio_dir = os.path.join('outputs', f"AudioLDM2_{today.strftime('%Y%m%d')}")
         os.makedirs(audio_dir, exist_ok=True)
-        audio_filename = f"audioldm2_{datetime.now().strftime('%Y%m%d_%H%M%S')}.wav"
+        audio_filename = f"audioldm2_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
         audio_path = os.path.join(audio_dir, audio_filename)
-        scipy.io.wavfile.write(audio_path, rate=16000, data=audio[0])
+
+        if output_format == "mp3":
+            scipy.io.wavfile.write(audio_path, rate=16000, data=audio[0])
+            subprocess.run(f"ffmpeg -i {audio_path} -b:a 192k {audio_path[:-4]}.mp3", shell=True, check=True)
+            audio_path = f"{audio_path[:-4]}.mp3"
+        elif output_format == "ogg":
+            scipy.io.wavfile.write(audio_path, rate=16000, data=audio[0])
+            subprocess.run(f"ffmpeg -i {audio_path} -c:a libvorbis -qscale:a 5 {audio_path[:-4]}.ogg", shell=True,
+                           check=True)
+            audio_path = f"{audio_path[:-4]}.ogg"
+        else:
+            scipy.io.wavfile.write(audio_path, rate=16000, data=audio[0])
 
         return audio_path, None
 
@@ -1706,7 +1736,7 @@ def open_outputs_folder():
             os.system(f'open "{outputs_folder}"' if os.name == "darwin" else f'xdg-open "{outputs_folder}"')
 
 
-llm_models_list = [None, "blip2-opt-2.7b"] + [model for model in os.listdir("inputs/text/llm_models") if not model.endswith(".txt") and model != "blip2-opt-2.7b"]
+llm_models_list = [None, "moondream2"] + [model for model in os.listdir("inputs/text/llm_models") if not model.endswith(".txt") and model != "vikhyatk"]
 speaker_wavs_list = [None] + [wav for wav in os.listdir("inputs/audio/voices") if not wav.endswith(".txt")]
 stable_diffusion_models_list = [None] + [model.replace(".safetensors", "") for model in
                                          os.listdir("inputs/image/sd_models")
@@ -1796,6 +1826,7 @@ bark_interface = gr.Interface(
         gr.Textbox(label="Enter text for the request"),
         gr.Dropdown(choices=[None, "v2/en_speaker_1", "v2/ru_speaker_1"], label="Select voice preset", value=None),
         gr.Slider(minimum=1, maximum=256, value=100, step=1, label="Max length"),
+        gr.Radio(choices=["wav", "mp3", "ogg"], label="Select output format", value="wav", interactive=True),
         gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
     outputs=[
@@ -2120,6 +2151,7 @@ audioldm2_interface = gr.Interface(
         gr.Slider(minimum=1, maximum=1000, value=200, step=1, label="Steps"),
         gr.Slider(minimum=1, maximum=60, value=10, step=1, label="Length (seconds)"),
         gr.Slider(minimum=1, maximum=10, value=3, step=1, label="Waveforms number"),
+        gr.Radio(choices=["wav", "mp3", "ogg"], label="Select output format", value="wav", interactive=True),
         gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
     outputs=[
