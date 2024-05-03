@@ -113,14 +113,16 @@ def load_moondream2_model(model_id, revision):
     moondream2_model_path = os.path.join("inputs", "text", "llm_models", model_id)
     if not os.path.exists(moondream2_model_path):
         os.makedirs(moondream2_model_path, exist_ok=True)
+        device = "cuda" if torch.cuda.is_available() else "cpu"
         model = AutoModelForCausalLM.from_pretrained(
             model_id, trust_remote_code=True, revision=revision
-        )
+        ).to(device)
         tokenizer = AutoTokenizer.from_pretrained(model_id, revision=revision)
         model.save_pretrained(moondream2_model_path)
         tokenizer.save_pretrained(moondream2_model_path)
     else:
-        model = AutoModelForCausalLM.from_pretrained(moondream2_model_path, trust_remote_code=True)
+        device = "cuda" if torch.cuda.is_available() else "cpu"
+        model = AutoModelForCausalLM.from_pretrained(moondream2_model_path, trust_remote_code=True).to(device)
         tokenizer = AutoTokenizer.from_pretrained(moondream2_model_path)
     print("MoonDream2 model downloaded")
     return model, tokenizer
@@ -285,31 +287,40 @@ def generate_text_and_speech(input_text, input_audio, input_image, llm_model_nam
         chat_history.append([None, "Please, select a LLM model!"])
         return chat_history, None, None, None
     if enable_multimodal and llm_model_name == "moondream2":
+        if not input_image:
+            chat_history.append([None, "Please, upload an image for Multimodal!"])
+            return chat_history, None, None, None
         if llm_model_type == "llama":
             chat_history.append([None, "Multimodal with 'llama' model type is not supported yet!"])
             return chat_history, None, None, None
         model_id = "vikhyatk/moondream2"
         revision = "2024-04-02"
         model, tokenizer = load_moondream2_model(model_id, revision)
-        image = Image.open(input_image)
-        enc_image = model.encode_image(image)
 
-        detect_lang = langdetect.detect(prompt)
-        if detect_lang == "en":
-            bot_instruction = "You are a friendly chatbot who always provides useful and meaningful answers based on the given image and text input."
-        else:
-            bot_instruction = "Вы дружелюбный чат-бот, который всегда дает полезные и содержательные ответы на основе данного изображения и текстового ввода."
+        try:
+            image = Image.open(input_image)
+            enc_image = model.encode_image(image)
 
-        context = ""
-        for human_text, ai_text in chat_history[-10:]:
-            if human_text:
-                context += f"Human: {human_text}\n"
-            if ai_text:
-                context += f"AI: {ai_text}\n"
+            detect_lang = langdetect.detect(prompt)
+            if detect_lang == "en":
+                bot_instruction = "You are a friendly chatbot who always provides useful and meaningful answers based on the given image and text input."
+            else:
+                bot_instruction = "Вы дружелюбный чат-бот, который всегда дает полезные и содержательные ответы на основе данного изображения и текстового ввода."
 
-        prompt_with_context = f"{bot_instruction}\n\n{context}Human: {prompt}\nAI:"
+            context = ""
+            for human_text, ai_text in chat_history[-5:]:
+                if human_text:
+                    context += f"Human: {human_text}\n"
+                if ai_text:
+                    context += f"AI: {ai_text}\n"
 
-        text = model.answer_question(enc_image, prompt_with_context, tokenizer)
+            prompt_with_context = f"{bot_instruction}\n\n{context}Human: {prompt}\nAI:"
+
+            text = model.answer_question(enc_image, prompt_with_context, tokenizer)
+        finally:
+            del model
+            del tokenizer
+            torch.cuda.empty_cache()
 
         if not chat_dir:
             now = datetime.now()
