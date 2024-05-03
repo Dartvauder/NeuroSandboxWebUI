@@ -1359,7 +1359,7 @@ def generate_video_zeroscope2(prompt, video_to_enhance, strength, num_inference_
         base_pipe.unet.enable_forward_chunking(chunk_size=1, dim=1)
 
         video_frames = base_pipe(prompt, num_inference_steps=num_inference_steps, width=width, height=height, num_frames=num_frames).frames[0]
-        
+
         if enable_video_enhance and video_to_enhance:
             enhance_pipe = DiffusionPipeline.from_pretrained(enhance_model_path, torch_dtype=torch.float16)
             enhance_pipe.to(device)
