@@ -6,41 +6,43 @@
 
 ## Description:
 
-A simple and convenient interface for using various neural network models. You can communicate with LLM and BLIP-2 using text, voice and image input, use StableDiffusion to generate images and videos, Shap-E to generate 3D objects, AudioCraft and AudioLDM 2 to generate music and audio, CoquiTTS and SunoBark for text-to-speech, OpenAI-Whisper for speech-to-text, LibreTranslate for text translation and Demucs for audio file separation. You can also download the LLM and StableDiffusion models, change the application settings inside the interface and check system sensors
+A simple and convenient interface for using various neural network models. You can communicate with LLM and Moondream2 using text, voice and image input, use StableDiffusion to generate images, ZeroScope 2 to generate videos, Shap-E to generate 3D objects, AudioCraft and AudioLDM 2 to generate music and audio, CoquiTTS and SunoBark for text-to-speech, OpenAI-Whisper for speech-to-text, LibreTranslate for text translation and Demucs for audio file separation. You can also download the LLM and StableDiffusion models, change the application settings inside the interface and check system sensors
 
 The goal of the project - to create the easiest possible application to use neural network models
 
-### LLM: ![1](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/636ccf7a-36cf-4005-8bc0-763c6f17a805)
+### LLM: 
 
-### TTS-STT: ![2](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/f7d51733-01a9-4316-884b-bb9c880d7b89)
+### TTS-STT: 
 
 ### SunoBark:
 
-### LibreTranslate: ![4](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/43002c72-30a7-43e7-bc52-6650e89ca48c)
+### LibreTranslate: 
 
 ### StableDiffusion:
- #### txt2img: ![5](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/e5c0d03d-5d9b-49ef-ae2a-f4b01266ba81)
- #### img2img: ![6](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/c43c1954-f3f7-4376-b27c-3fc4dec2ebc6)
- #### depth2img: ![7](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/bbc3a03a-ce2e-46c7-ba91-5703860a35e2)
- #### upscale: ![8](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/14725b48-115f-4008-afc8-2e224baa0a7f)
- #### inpaint: ![9](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/597f98f3-a9b1-46c2-9718-57e190006b4d)
- #### video: ![10](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/e447bb27-6696-4e6b-88fe-232e8b0d514d)
- #### cascade: ![11](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/889bb5b0-b137-4a48-a0f4-535688d18683)
- #### extras: ![12](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/4c438781-8c4e-409e-966e-da7aa4b457e6)
+ #### txt2img: 
+ #### img2img: 
+ #### depth2img: 
+ #### upscale: 
+ #### inpaint: 
+ #### video: 
+ #### cascade: 
+ #### extras: 
 
-### Shap-E: ![13](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/c2ad89c4-c535-464e-bd2c-198307b63d1c)
+### ZeroScope 2: 
+
+### Shap-E: 
  
-### AudioCraft: ![14](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/bbed3087-b94a-4f60-8f7e-08901a248071)
+### AudioCraft: 
 
 ### AudioLDM 2: 
 
-### Demucs: ![16](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/4c0187cb-dd49-48f3-993d-fe3229ea931f)
+### Demucs: 
 
-### ModelDownloader: ![17](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/a5e4a6b4-cc4c-4079-8c65-65e5f2818166)
+### ModelDownloader: 
 
-### Settings: ![18](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/19244f8b-2d8d-4768-b692-6b2be1d20b70)
+### Settings: 
 
-### System: ![19](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/c48b2294-82a1-4f7e-9a4c-64fb94801724)
+### System: 
 
 ## Features:
 
@@ -55,12 +57,13 @@ The goal of the project - to create the easiest possible application to use neur
 * Supports Lora, Textual inversion (embedding), Vae, Inpaint, Depth, Upscale and Video models (For StableDiffusion)
 * Support Multiband Diffusion model (For AudioCraft)
 * Support LibreTranslate (Local API)
+* Support ZeroScope 2
 * Support SunoBark
 * Support Demucs
 * Support Rembg
 * Support Shap-E
-* Support BLIP-2 (For LLM)
-* Support WebSearch (GoogleSearch)
+* Support Moondream 2 (For LLM)
+* Support WebSearch (For LLM with GoogleSearch)
 * Model settings inside the interface
 * ModelDownloader (For LLM and StableDiffusion)
 * Application settings
@@ -105,7 +108,7 @@ To get update, run `git pull`
 
 ## How to use:
 
-#### Interface has twelve tabs: LLM, TTS-STT, SunoBark, LibreTranslate, StableDiffusion, Shap-E, AudioCraft, AudioLDM 2, Demucs, ModelDownloader, Settings and System. Select the one you need and follow the instructions below 
+#### Interface has thirteen tabs: LLM, TTS-STT, SunoBark, LibreTranslate, StableDiffusion, ZeroScope 2, Shap-E, AudioCraft, AudioLDM 2, Demucs, ModelDownloader, Settings and System. Select the one you need and follow the instructions below 
 
 ### LLM:
 
@@ -210,6 +213,12 @@ To get update, run `git pull`
 1) Upload the initial image
 2) Select the options you need
 3) Click the `Submit` button to get the modified image
+
+### ZeroScope 2:
+
+1) Enter your request
+2) Set up the model according to the parameters you need
+3) Click the `Submit` button to get the generated image
 
 ### Shap-E:
 
@@ -317,7 +326,8 @@ Thank you very much to these projects for allowing me to create my application:
 * [AudioLDM2](https://github.com/haoheliu/AudioLDM2/blob/main/LICENSE)
 * [Demucs](https://github.com/facebookresearch/demucs/blob/main/LICENSE)
 * [SunoBark](https://github.com/suno-ai/bark/blob/main/LICENSE)
-* [BLIP-2](https://github.com/salesforce/LAVIS/blob/main/LICENSE.txt)
+* [Moondream2](https://github.com/vikhyat/moondream/blob/main/LICENSE)
+* [ZeroScope2](https://spdx.org/licenses/CC-BY-NC-4.0)
 
 ## Donation
 
