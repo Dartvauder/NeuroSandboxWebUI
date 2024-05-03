@@ -1358,17 +1358,8 @@ def generate_video_zeroscope2(prompt, video_to_enhance, strength, num_inference_
         base_pipe.enable_vae_slicing()
         base_pipe.unet.enable_forward_chunking(chunk_size=1, dim=1)
 
-        video_frames = []
-        for i in range(num_frames):
-            output = base_pipe(prompt, num_inference_steps=num_inference_steps, height=height, width=width)
-            frame = output.frames[0][0]
-            video_frames.append(frame)
-
-            if stop_signal:
-                return None, "Generation stopped"
-
-        video_frames = [Image.fromarray(np.clip(frame * 255, 0, 255).astype(np.uint8)) for frame in video_frames]
-
+        video_frames = base_pipe(prompt, num_inference_steps=num_inference_steps, width=width, height=height, num_frames=num_frames).frames[0]
+        
         if enable_video_enhance and video_to_enhance:
             enhance_pipe = DiffusionPipeline.from_pretrained(enhance_model_path, torch_dtype=torch.float16)
             enhance_pipe.to(device)
