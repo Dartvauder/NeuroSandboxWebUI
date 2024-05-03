@@ -287,9 +287,6 @@ def generate_text_and_speech(input_text, input_audio, input_image, llm_model_nam
         chat_history.append([None, "Please, select a LLM model!"])
         return chat_history, None, None, None
     if enable_multimodal and llm_model_name == "moondream2":
-        if not input_image:
-            chat_history.append([None, "Please, upload an image for Multimodal!"])
-            return chat_history, None, None, None
         if llm_model_type == "llama":
             chat_history.append([None, "Multimodal with 'llama' model type is not supported yet!"])
             return chat_history, None, None, None
