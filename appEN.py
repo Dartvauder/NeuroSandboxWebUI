@@ -1,6 +1,6 @@
 import gradio as gr
 import langdetect
-from transformers import AutoModelForCausalLM, AutoTokenizer, Blip2Processor, Blip2ForConditionalGeneration, AutoProcessor, BarkModel
+from transformers import AutoModelForCausalLM, AutoTokenizer, AutoProcessor, BarkModel
 from libretranslatepy import LibreTranslateAPI
 import urllib.error
 import soundfile as sf
@@ -116,19 +116,25 @@ def web_search(query):
     return " ".join(search_results)
 
 
-def load_blip2_model():
+def load_moondream2_model(model_id, revision):
     global stop_signal
     if stop_signal:
         return "Generation stopped"
-    print("Downloading BLIP 2...")
-    blip2_model_path = "inputs/text/llm_models/blip2-opt-2.7b"
-    if not os.path.exists(blip2_model_path):
-        os.makedirs(blip2_model_path, exist_ok=True)
-        Repo.clone_from("https://huggingface.co/Salesforce/blip2-opt-2.7b", blip2_model_path)
-    print("BLIP 2 downloaded")
-    processor = Blip2Processor.from_pretrained(blip2_model_path)
-    model = Blip2ForConditionalGeneration.from_pretrained(blip2_model_path, torch_dtype=torch.float16, device_map="auto")
-    return processor, model
+    print(f"Downloading MoonDream2 model...")
+    moondream2_model_path = os.path.join("inputs", "text", "llm_models", model_id)
+    if not os.path.exists(moondream2_model_path):
+        os.makedirs(moondream2_model_path, exist_ok=True)
+        model = AutoModelForCausalLM.from_pretrained(
+            model_id, trust_remote_code=True, revision=revision
+        )
+        tokenizer = AutoTokenizer.from_pretrained(model_id, revision=revision)
+        model.save_pretrained(moondream2_model_path)
+        tokenizer.save_pretrained(moondream2_model_path)
+    else:
+        model = AutoModelForCausalLM.from_pretrained(moondream2_model_path, trust_remote_code=True)
+        tokenizer = AutoTokenizer.from_pretrained(moondream2_model_path)
+    print("MoonDream2 model downloaded")
+    return model, tokenizer
 
 
 def transcribe_audio(audio_file_path):
@@ -289,20 +295,19 @@ def generate_text_and_speech(input_text, input_audio, input_image, llm_model_nam
     if not llm_model_name:
         chat_history.append([None, "Please, select a LLM model!"])
         return chat_history, None, None, None
-    if enable_multimodal and llm_model_name == "blip2-opt-2.7b":
+    if enable_multimodal and llm_model_name == "moondream2":
         if not input_image:
             chat_history.append([None, "Please, upload an image for Multimodal!"])
             return chat_history, None, None, None
         if llm_model_type == "llama":
             chat_history.append([None, "Multimodal with 'llama' model type is not supported yet!"])
             return chat_history, None, None, None
-        device = "cuda" if torch.cuda.is_available() else "cpu"
-        processor, model = load_blip2_model()
-        raw_image = Image.open(input_image).convert('RGB')
-        inputs = processor(raw_image, prompt, return_tensors="pt").to(device, torch.float16)
-        max_length = max_length
-        out = model.generate(**inputs, max_length=max_length, num_beams=4, no_repeat_ngram_size=3)
-        text = processor.decode(out[0], skip_special_tokens=True).strip()
+        model_id = "vikhyatk/moondream2"
+        revision = "2024-04-02"
+        model, tokenizer = load_moondream2_model(model_id, revision)
+        image = Image.open(input_image)
+        enc_image = model.encode_image(image)
+        text = model.answer_question(enc_image, prompt, tokenizer)
         chat_history.append([prompt, text])
         return chat_history, None, None, None
     else:
@@ -1730,7 +1735,7 @@ def open_outputs_folder():
             os.system(f'open "{outputs_folder}"' if os.name == "darwin" else f'xdg-open "{outputs_folder}"')
 
 
-llm_models_list = [None, "blip2-opt-2.7b"] + [model for model in os.listdir("inputs/text/llm_models") if not model.endswith(".txt") and model != "blip2-opt-2.7b"]
+llm_models_list = [None, "moondream2"] + [model for model in os.listdir("inputs/text/llm_models") if not model.endswith(".txt") and model != "moondream2"]
 speaker_wavs_list = [None] + [wav for wav in os.listdir("inputs/audio/voices") if not wav.endswith(".txt")]
 stable_diffusion_models_list = [None] + [model.replace(".safetensors", "") for model in
                                          os.listdir("inputs/image/sd_models")
