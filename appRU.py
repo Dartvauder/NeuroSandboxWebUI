@@ -285,9 +285,6 @@ def generate_text_and_speech(input_text, input_audio, input_image, llm_model_nam
         chat_history.append([None, "Please, select a LLM model!"])
         return chat_history, None, None, None
     if enable_multimodal and llm_model_name == "moondream2":
-        if not input_image:
-            chat_history.append([None, "Please, upload an image for Multimodal!"])
-            return chat_history, None, None, None
         if llm_model_type == "llama":
             chat_history.append([None, "Multimodal with 'llama' model type is not supported yet!"])
             return chat_history, None, None, None
@@ -296,7 +293,23 @@ def generate_text_and_speech(input_text, input_audio, input_image, llm_model_nam
         model, tokenizer = load_moondream2_model(model_id, revision)
         image = Image.open(input_image)
         enc_image = model.encode_image(image)
-        text = model.answer_question(enc_image, prompt, tokenizer)
+
+        detect_lang = langdetect.detect(prompt)
+        if detect_lang == "en":
+            bot_instruction = "You are a friendly chatbot who always provides useful and meaningful answers based on the given image and text input."
+        else:
+            bot_instruction = "Вы дружелюбный чат-бот, который всегда дает полезные и содержательные ответы на основе данного изображения и текстового ввода."
+
+        context = ""
+        for human_text, ai_text in chat_history[-10:]:
+            if human_text:
+                context += f"Human: {human_text}\n"
+            if ai_text:
+                context += f"AI: {ai_text}\n"
+
+        prompt_with_context = f"{bot_instruction}\n\n{context}Human: {prompt}\nAI:"
+
+        text = model.answer_question(enc_image, prompt_with_context, tokenizer)
 
         if not chat_dir:
             now = datetime.now()
@@ -355,12 +368,20 @@ def generate_text_and_speech(input_text, input_audio, input_image, llm_model_nam
                         bot_instruction = "You are a friendly chatbot who always provides useful and meaningful answers in any language"
                     else:
                         bot_instruction = "Вы дружелюбный чат-бот, который всегда дает полезные и содержательные ответы на любом языке"
+
+                    context = ""
+                    for human_text, ai_text in chat_history[-10:]:
+                        if human_text:
+                            context += f"Human: {human_text}\n"
+                        if ai_text:
+                            context += f"AI: {ai_text}\n"
+
                     messages = [
                         {
                             "role": "system",
                             "content": bot_instruction,
                         },
-                        {"role": "user", "content": prompt},
+                        {"role": "user", "content": context + prompt},
                     ]
 
                     tokenizer.padding_side = "left"
@@ -369,6 +390,9 @@ def generate_text_and_speech(input_text, input_audio, input_image, llm_model_nam
                     model_inputs = tokenizer.apply_chat_template(messages, add_generation_prompt=True, padding=True,
                                                                  return_tensors="pt").to(device)
                     input_length = model_inputs.shape[1]
+
+                    progress_bar = tqdm(total=max_length, desc="Generating text")
+                    progress_tokens = 0
 
                     generated_ids = llm_model.generate(
                         model_inputs,
@@ -382,29 +406,45 @@ def generate_text_and_speech(input_text, input_audio, input_image, llm_model_nam
                         no_repeat_ngram_size=2,
                     )
 
+                    progress_tokens = max_length
+                    progress_bar.update(progress_tokens - progress_bar.n)
+
+                    if stop_signal:
+                        chat_history.append([prompt, "Generation stopped"])
+                        return chat_history, None, None
+
+                    progress_bar.close()
+
                     text = tokenizer.batch_decode(generated_ids[:, input_length:], skip_special_tokens=True)[0]
 
                 elif llm_model_type == "llama":
                     detect_lang = langdetect.detect(prompt)
                     if detect_lang == "en":
-                        instruction = "I am a chatbot created to help with any questions. I use my knowledge and abilities to provide useful and meaningful answers in any language\n\nHuman: "
+                        instruction = "I am a chatbot created to help with any questions. I use my knowledge and abilities to provide useful and meaningful answers in any language\n\n"
                     else:
-                        instruction = "Я чат-бот, созданный для помощи по любым вопросам. Я использую свои знания и способности, чтобы давать полезные и содержательные ответы на любом языке\n\nЧеловек: "
+                        instruction = "Я чат-бот, созданный для помощи по любым вопросам. Я использую свои знания и способности, чтобы давать полезные и содержательные ответы на любом языке\n\n"
 
-                    prompt_with_instruction = instruction + prompt + "\nAssistant: "
+                    context = ""
+                    for human_text, ai_text in chat_history[-10:]:
+                        if human_text:
+                            context += f"Human: {human_text}\n"
+                        if ai_text:
+                            context += f"Assistant: {ai_text}\n"
+
+                    prompt_with_context = instruction + context + "Human: " + prompt + "\nAssistant: "
 
                     progress_bar = tqdm(total=max_tokens, desc="Generating text")
                     progress_tokens = 0
 
                     output = llm_model(
-                        prompt_with_instruction,
+                        prompt_with_context,
                         max_tokens=max_tokens,
-                        stop=["Q:", "\n"],
+                        stop=["Human:", "\n"],
                         echo=False,
                         temperature=temperature,
                         top_p=top_p,
                         top_k=top_k,
-                        repeat_penalty=1.15,
+                        repeat_penalty=1.1,
                     )
 
                     progress_tokens = max_tokens
