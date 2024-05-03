@@ -308,8 +308,30 @@ def generate_text_and_speech(input_text, input_audio, input_image, llm_model_nam
         image = Image.open(input_image)
         enc_image = model.encode_image(image)
         text = model.answer_question(enc_image, prompt, tokenizer)
+
+        if not chat_dir:
+            now = datetime.now()
+            chat_dir = os.path.join('outputs', f"LLM_{now.strftime('%Y%m%d_%H%M%S')}")
+            os.makedirs(chat_dir)
+            os.makedirs(os.path.join(chat_dir, 'text'))
+            os.makedirs(os.path.join(chat_dir, 'audio'))
+        chat_history_path = os.path.join(chat_dir, 'text', f'chat_history.{chat_history_format}')
+        if chat_history_format == "txt":
+            with open(chat_history_path, "a", encoding="utf-8") as f:
+                f.write(f"Human: {prompt}\n")
+                if text:
+                    f.write(f"AI: {text}\n\n")
+        elif chat_history_format == "json":
+            chat_history = []
+            if os.path.exists(chat_history_path):
+                with open(chat_history_path, "r", encoding="utf-8") as f:
+                    chat_history = json.load(f)
+            chat_history.append(["Human: " + prompt, "AI: " + (text if text else "")])
+            with open(chat_history_path, "w", encoding="utf-8") as f:
+                json.dump(chat_history, f, ensure_ascii=False, indent=4)
+
         chat_history.append([prompt, text])
-        return chat_history, None, None, None
+        return chat_history, None, chat_dir, None
     else:
         tokenizer, llm_model, error_message = load_model(llm_model_name, llm_model_type)
         if error_message:
@@ -1735,7 +1757,7 @@ def open_outputs_folder():
             os.system(f'open "{outputs_folder}"' if os.name == "darwin" else f'xdg-open "{outputs_folder}"')
 
 
-llm_models_list = [None, "moondream2"] + [model for model in os.listdir("inputs/text/llm_models") if not model.endswith(".txt") and model != "moondream2"]
+llm_models_list = [None, "moondream2"] + [model for model in os.listdir("inputs/text/llm_models") if not model.endswith(".txt") and model != "vikhyatk"]
 speaker_wavs_list = [None] + [wav for wav in os.listdir("inputs/audio/voices") if not wav.endswith(".txt")]
 stable_diffusion_models_list = [None] + [model.replace(".safetensors", "") for model in
                                          os.listdir("inputs/image/sd_models")
