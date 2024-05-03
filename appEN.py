@@ -352,47 +352,45 @@ def generate_text_and_speech(input_text, input_audio, input_image, llm_model_nam
                 if llm_model_type == "transformers":
                     detect_lang = langdetect.detect(prompt)
                     if detect_lang == "en":
-                        bot_instruction = "I am a chatbot created to help with any questions. I use my knowledge and abilities to provide useful and meaningful answers in any language"
+                        bot_instruction = "You are a friendly chatbot who always provides useful and meaningful answers in any language"
                     else:
-                        bot_instruction = "Я чат-бот, созданный для помощи по любым вопросам. Я использую свои знания и способности, чтобы давать полезные и содержательные ответы на любом языке"
-                    inputs = tokenizer.encode(bot_instruction + prompt, return_tensors="pt", truncation=True)
-                    device = llm_model.device
-                    inputs = inputs.to(device)
+                        bot_instruction = "Вы дружелюбный чат-бот, который всегда дает полезные и содержательные ответы на любом языке"
 
-                    progress_bar = tqdm(total=max_length, desc="Generating text")
-                    progress_tokens = 0
+                    context = ""
+                    for human_text, ai_text in chat_history[-10:]:
+                        if human_text:
+                            context += f"Human: {human_text}\n"
+                        if ai_text:
+                            context += f"AI: {ai_text}\n"
 
-                    outputs = llm_model.generate(
-                        inputs,
-                        max_new_tokens=None,
-                        max_length=max_length,
+                    messages = [
+                        {
+                            "role": "system",
+                            "content": bot_instruction,
+                        },
+                        {"role": "user", "content": context + prompt},
+                    ]
+
+                    tokenizer.padding_side = "left"
+                    tokenizer.pad_token = tokenizer.eos_token
+                    device = "cuda" if torch.cuda.is_available() else "cpu"
+                    model_inputs = tokenizer.apply_chat_template(messages, add_generation_prompt=True, padding=True,
+                                                                 return_tensors="pt").to(device)
+                    input_length = model_inputs.shape[1]
+
+                    generated_ids = llm_model.generate(
+                        model_inputs,
+                        do_sample=True,
+                        max_new_tokens=max_length,
                         top_p=top_p,
                         top_k=top_k,
                         temperature=temperature,
-                        repetition_penalty=1.15,
-                        early_stopping=True,
+                        repetition_penalty=1.1,
                         num_beams=5,
                         no_repeat_ngram_size=2,
-                        do_sample=True,
-                        use_cache=True,
-                        pad_token_id=tokenizer.eos_token_id,
-                        return_dict_in_generate=True,
-                        num_return_sequences=1,
                     )
 
-                    for i in range(len(outputs.sequences)):
-                        generated_sequence = outputs.sequences[i][inputs.shape[-1]:]
-                        progress_tokens += len(generated_sequence)
-                        progress_bar.update(progress_tokens - progress_bar.n)
-
-                    if stop_signal:
-                        chat_history.append([prompt, "Generation stopped"])
-                        return chat_history, None, None
-
-                    progress_bar.close()
-
-                    generated_sequence = outputs.sequences[0][inputs.shape[-1]:]
-                    text = tokenizer.decode(generated_sequence, skip_special_tokens=True)
+                    text = tokenizer.batch_decode(generated_ids[:, input_length:], skip_special_tokens=True)[0]
 
                 elif llm_model_type == "llama":
                     detect_lang = langdetect.detect(prompt)
