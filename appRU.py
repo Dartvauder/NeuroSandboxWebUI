@@ -113,14 +113,16 @@ def load_moondream2_model(model_id, revision):
     moondream2_model_path = os.path.join("inputs", "text", "llm_models", model_id)
     if not os.path.exists(moondream2_model_path):
         os.makedirs(moondream2_model_path, exist_ok=True)
+        device = "cuda" if torch.cuda.is_available() else "cpu"
         model = AutoModelForCausalLM.from_pretrained(
             model_id, trust_remote_code=True, revision=revision
-        )
+        ).to(device)
         tokenizer = AutoTokenizer.from_pretrained(model_id, revision=revision)
         model.save_pretrained(moondream2_model_path)
         tokenizer.save_pretrained(moondream2_model_path)
     else:
-        model = AutoModelForCausalLM.from_pretrained(moondream2_model_path, trust_remote_code=True)
+        device = "cuda" if torch.cuda.is_available() else "cpu"
+        model = AutoModelForCausalLM.from_pretrained(moondream2_model_path, trust_remote_code=True).to(device)
         tokenizer = AutoTokenizer.from_pretrained(moondream2_model_path)
     print("MoonDream2 model downloaded")
     return model, tokenizer
@@ -291,25 +293,31 @@ def generate_text_and_speech(input_text, input_audio, input_image, llm_model_nam
         model_id = "vikhyatk/moondream2"
         revision = "2024-04-02"
         model, tokenizer = load_moondream2_model(model_id, revision)
-        image = Image.open(input_image)
-        enc_image = model.encode_image(image)
 
-        detect_lang = langdetect.detect(prompt)
-        if detect_lang == "en":
-            bot_instruction = "You are a friendly chatbot who always provides useful and meaningful answers based on the given image and text input."
-        else:
-            bot_instruction = "Вы дружелюбный чат-бот, который всегда дает полезные и содержательные ответы на основе данного изображения и текстового ввода."
+        try:
+            image = Image.open(input_image)
+            enc_image = model.encode_image(image)
 
-        context = ""
-        for human_text, ai_text in chat_history[-10:]:
-            if human_text:
-                context += f"Human: {human_text}\n"
-            if ai_text:
-                context += f"AI: {ai_text}\n"
+            detect_lang = langdetect.detect(prompt)
+            if detect_lang == "en":
+                bot_instruction = "You are a friendly chatbot who always provides useful and meaningful answers based on the given image and text input."
+            else:
+                bot_instruction = "Вы дружелюбный чат-бот, который всегда дает полезные и содержательные ответы на основе данного изображения и текстового ввода."
 
-        prompt_with_context = f"{bot_instruction}\n\n{context}Human: {prompt}\nAI:"
+            context = ""
+            for human_text, ai_text in chat_history[-5:]:
+                if human_text:
+                    context += f"Human: {human_text}\n"
+                if ai_text:
+                    context += f"AI: {ai_text}\n"
 
-        text = model.answer_question(enc_image, prompt_with_context, tokenizer)
+            prompt_with_context = f"{bot_instruction}\n\n{context}Human: {prompt}\nAI:"
+
+            text = model.answer_question(enc_image, prompt_with_context, tokenizer)
+        finally:
+            del model
+            del tokenizer
+            torch.cuda.empty_cache()
 
         if not chat_dir:
             now = datetime.now()
@@ -1350,16 +1358,7 @@ def generate_video_zeroscope2(prompt, video_to_enhance, strength, num_inference_
         base_pipe.enable_vae_slicing()
         base_pipe.unet.enable_forward_chunking(chunk_size=1, dim=1)
 
-        video_frames = []
-        for i in range(num_frames):
-            output = base_pipe(prompt, num_inference_steps=num_inference_steps, height=height, width=width)
-            frame = output.frames[0][0]
-            video_frames.append(frame)
-
-            if stop_signal:
-                return None, "Generation stopped"
-
-        video_frames = [Image.fromarray(np.clip(frame * 255, 0, 255).astype(np.uint8)) for frame in video_frames]
+        video_frames = base_pipe(prompt, num_inference_steps=num_inference_steps, width=width, height=height, num_frames=num_frames).frames[0]
 
         if enable_video_enhance and video_to_enhance:
             enhance_pipe = DiffusionPipeline.from_pretrained(enhance_model_path, torch_dtype=torch.float16)
