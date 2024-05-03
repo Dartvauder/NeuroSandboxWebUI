@@ -574,13 +574,15 @@ def generate_bark_audio(text, voice_preset, max_length, stop_generation):
 
     try:
         device = "cuda" if torch.cuda.is_available() else "cpu"
+        torch.set_default_tensor_type(torch.cuda.FloatTensor if device == "cuda" else torch.FloatTensor)
+
         processor = AutoProcessor.from_pretrained(bark_model_path)
-        model = BarkModel.from_pretrained(bark_model_path, torch_dtype=torch.float16).to(device)
+        model = BarkModel.from_pretrained(bark_model_path, torch_dtype=torch.float32)
 
         if voice_preset:
-            inputs = processor(text, voice_preset=voice_preset)
+            inputs = processor(text, voice_preset=voice_preset, return_tensors="pt")
         else:
-            inputs = processor(text)
+            inputs = processor(text, return_tensors="pt")
 
         audio_array = model.generate(**inputs, max_length=max_length)
         model.enable_cpu_offload()
