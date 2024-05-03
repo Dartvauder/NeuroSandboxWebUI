@@ -557,7 +557,7 @@ def generate_tts_stt(text, audio, tts_settings_html, speaker_wav, language, tts_
     return tts_output, stt_output
 
 
-def generate_bark_audio(text, voice_preset, max_length, stop_generation):
+def generate_bark_audio(text, voice_preset, max_length, output_format, stop_generation):
     global stop_signal
     stop_signal = False
 
@@ -594,11 +594,22 @@ def generate_bark_audio(text, voice_preset, max_length, stop_generation):
         audio_dir = os.path.join('outputs', f"Bark_{today.strftime('%Y%m%d')}")
         os.makedirs(audio_dir, exist_ok=True)
 
-        audio_filename = f"bark_{datetime.now().strftime('%Y%m%d_%H%M%S')}.wav"
+        audio_array = audio_array.cpu().numpy().squeeze()
+
+        audio_filename = f"bark_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
         audio_path = os.path.join(audio_dir, audio_filename)
 
-        audio_array = audio_array.cpu().numpy().squeeze()
-        sf.write(audio_path, audio_array, 16000)
+        if output_format == "mp3":
+            scipy.io.wavfile.write(audio_path, 16000, audio_array)
+            subprocess.run(f"ffmpeg -i {audio_path} -b:a 192k {audio_path[:-4]}.mp3", shell=True, check=True)
+            audio_path = f"{audio_path[:-4]}.mp3"
+        elif output_format == "ogg":
+            scipy.io.wavfile.write(audio_path, 16000, audio_array)
+            subprocess.run(f"ffmpeg -i {audio_path} -c:a libvorbis -qscale:a 5 {audio_path[:-4]}.ogg", shell=True,
+                           check=True)
+            audio_path = f"{audio_path[:-4]}.ogg"
+        else:
+            sf.write(audio_path, audio_array, 16000)
 
         return audio_path, None
 
@@ -1510,7 +1521,7 @@ def generate_audio_audiocraft(prompt, input_audio=None, model_name=None, audiocr
 
 
 def generate_audio_audioldm2(prompt, negative_prompt, model_name, num_inference_steps, audio_length_in_s,
-                             num_waveforms_per_prompt, stop_generation):
+                             num_waveforms_per_prompt, output_format, stop_generation):
     global stop_signal
     stop_signal = False
 
@@ -1548,9 +1559,20 @@ def generate_audio_audioldm2(prompt, negative_prompt, model_name, num_inference_
         today = datetime.now().date()
         audio_dir = os.path.join('outputs', f"AudioLDM2_{today.strftime('%Y%m%d')}")
         os.makedirs(audio_dir, exist_ok=True)
-        audio_filename = f"audioldm2_{datetime.now().strftime('%Y%m%d_%H%M%S')}.wav"
+        audio_filename = f"audioldm2_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
         audio_path = os.path.join(audio_dir, audio_filename)
-        scipy.io.wavfile.write(audio_path, rate=16000, data=audio[0])
+
+        if output_format == "mp3":
+            scipy.io.wavfile.write(audio_path, rate=16000, data=audio[0])
+            subprocess.run(f"ffmpeg -i {audio_path} -b:a 192k {audio_path[:-4]}.mp3", shell=True, check=True)
+            audio_path = f"{audio_path[:-4]}.mp3"
+        elif output_format == "ogg":
+            scipy.io.wavfile.write(audio_path, rate=16000, data=audio[0])
+            subprocess.run(f"ffmpeg -i {audio_path} -c:a libvorbis -qscale:a 5 {audio_path[:-4]}.ogg", shell=True,
+                           check=True)
+            audio_path = f"{audio_path[:-4]}.ogg"
+        else:
+            scipy.io.wavfile.write(audio_path, rate=16000, data=audio[0])
 
         return audio_path, None
 
@@ -1798,6 +1820,7 @@ bark_interface = gr.Interface(
         gr.Textbox(label="Enter text for the request"),
         gr.Dropdown(choices=[None, "v2/en_speaker_1", "v2/ru_speaker_1"], label="Select voice preset", value=None),
         gr.Slider(minimum=1, maximum=256, value=100, step=1, label="Max length"),
+        gr.Radio(choices=["wav", "mp3", "ogg"], label="Select output format", value="wav", interactive=True),
         gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
     outputs=[
@@ -2122,6 +2145,7 @@ audioldm2_interface = gr.Interface(
         gr.Slider(minimum=1, maximum=1000, value=200, step=1, label="Steps"),
         gr.Slider(minimum=1, maximum=60, value=10, step=1, label="Length (seconds)"),
         gr.Slider(minimum=1, maximum=10, value=3, step=1, label="Waveforms number"),
+        gr.Radio(choices=["wav", "mp3", "ogg"], label="Select output format", value="wav", interactive=True),
         gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
     outputs=[
