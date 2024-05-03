@@ -24,8 +24,6 @@ from PIL import Image
 from tqdm import tqdm
 from llama_cpp import Llama
 import requests
-from googlesearch import search
-from bs4 import BeautifulSoup
 from rembg import remove
 import torchaudio
 from audiocraft.models import MusicGen, AudioGen, MultiBandDiffusion  # MAGNeT
@@ -105,15 +103,6 @@ def load_model(model_name, model_type, n_ctx=None):
             except (ValueError, RuntimeError):
                 return None, None, "The selected model is not compatible with the 'llama' model type"
     return None, None, None
-
-
-def web_search(query):
-    search_results = []
-    for j in search(query, num_results=3):
-        page = requests.get(j)
-        soup = BeautifulSoup(page.content, "html.parser")
-        search_results.append(soup.get_text())
-    return " ".join(search_results)
 
 
 def load_moondream2_model(model_id, revision):
@@ -357,8 +346,8 @@ def generate_text_and_speech(input_text, input_audio, input_image, llm_model_nam
                 device = "cuda" if torch.cuda.is_available() else "cpu"
                 whisper_model = whisper_model.to(device)
             if enable_web_search:
-                web_context = web_search(prompt)
-                prompt = f"{prompt}\nWeb search results:\n{web_context}"
+                chat_history.append([None, "This feature doesn't work yet. Please, turn it off"])
+                return chat_history, None, None, None
             if llm_model:
                 if llm_model_type == "transformers":
                     detect_lang = langdetect.detect(prompt)
