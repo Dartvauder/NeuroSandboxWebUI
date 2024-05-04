@@ -1339,49 +1339,63 @@ def generate_video_zeroscope2(prompt, video_to_enhance, strength, num_inference_
     video_dir = os.path.join('outputs', f"ZeroScope2_{today.strftime('%Y%m%d')}")
     os.makedirs(video_dir, exist_ok=True)
 
-    if video_to_enhance and not enable_video_enhance:
-        return None, "Video enhancement is disabled. Please enable it to use the uploaded video."
+    if enable_video_enhance:
+        if not video_to_enhance:
+            return None, "Please upload a video to enhance."
 
-    if enable_video_enhance and not video_to_enhance:
-        return None, "Please upload a video to enhance."
-
-    try:
-        base_pipe = DiffusionPipeline.from_pretrained(base_model_path, torch_dtype=torch.float16)
-        base_pipe.scheduler = DPMSolverMultistepScheduler.from_config(base_pipe.scheduler.config)
-        base_pipe.to(device)
-        base_pipe.enable_model_cpu_offload()
-        base_pipe.enable_vae_slicing()
-        base_pipe.unet.enable_forward_chunking(chunk_size=1, dim=1)
-
-        video_frames = base_pipe(prompt, num_inference_steps=num_inference_steps, width=width, height=height, num_frames=num_frames).frames[0]
-
-        if enable_video_enhance and video_to_enhance:
+        try:
             enhance_pipe = DiffusionPipeline.from_pretrained(enhance_model_path, torch_dtype=torch.float16)
             enhance_pipe.to(device)
             enhance_pipe.scheduler = DPMSolverMultistepScheduler.from_config(enhance_pipe.scheduler.config)
             enhance_pipe.enable_model_cpu_offload()
             enhance_pipe.enable_vae_slicing()
 
-            video = [frame.resize((1024, 576)) for frame in video_frames]
+            video = [frame.resize((1024, 576)) for frame in video_to_enhance]
 
             video_frames = enhance_pipe(prompt, video=video, strength=strength).frames
 
-        if stop_signal:
-            return None, "Generation stopped"
+            if stop_signal:
+                return None, "Generation stopped"
 
-        video_filename = f"zeroscope2_{datetime.now().strftime('%Y%m%d_%H%M%S')}.mp4"
-        video_path = os.path.join(video_dir, video_filename)
-        export_to_video(video_frames, video_path)
+            video_filename = f"zeroscope2_{datetime.now().strftime('%Y%m%d_%H%M%S')}.mp4"
+            video_path = os.path.join(video_dir, video_filename)
+            export_to_video(video_frames, video_path)
 
-        return video_path, None
+            return video_path, None
 
-    finally:
+        finally:
+            try:
+                del enhance_pipe
+            except UnboundLocalError:
+                pass
+            torch.cuda.empty_cache()
+
+    else:
         try:
-            del base_pipe
-            del enhance_pipe
-        except UnboundLocalError:
-            pass
-        torch.cuda.empty_cache()
+            base_pipe = DiffusionPipeline.from_pretrained(base_model_path, torch_dtype=torch.float16)
+            base_pipe.scheduler = DPMSolverMultistepScheduler.from_config(base_pipe.scheduler.config)
+            base_pipe.to(device)
+            base_pipe.enable_model_cpu_offload()
+            base_pipe.enable_vae_slicing()
+            base_pipe.unet.enable_forward_chunking(chunk_size=1, dim=1)
+
+            video_frames = base_pipe(prompt, num_inference_steps=num_inference_steps, width=width, height=height, num_frames=num_frames).frames[0]
+
+            if stop_signal:
+                return None, "Generation stopped"
+
+            video_filename = f"zeroscope2_{datetime.now().strftime('%Y%m%d_%H%M%S')}.mp4"
+            video_path = os.path.join(video_dir, video_filename)
+            export_to_video(video_frames, video_path)
+
+            return video_path, None
+
+        finally:
+            try:
+                del base_pipe
+            except UnboundLocalError:
+                pass
+            torch.cuda.empty_cache()
 
 
 def generate_3d(prompt, init_image, num_inference_steps, guidance_scale, frame_size, stop_generation):
