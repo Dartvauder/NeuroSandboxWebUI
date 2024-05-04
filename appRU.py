@@ -638,7 +638,7 @@ def generate_bark_audio(text, voice_preset, max_length, output_format, stop_gene
         else:
             inputs = processor(text, return_tensors="pt")
 
-        audio_array = model.generate(**inputs, max_length=max_length)
+        audio_array = model.generate(**inputs, max_length=max_length, do_sample=True)
         model.enable_cpu_offload()
 
         if stop_signal:
