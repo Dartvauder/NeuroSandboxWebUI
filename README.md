@@ -18,7 +18,7 @@ The goal of the project - to create the easiest possible application to use neur
 
 ### LibreTranslate: ![4](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/c8c0e72c-44dc-443a-bd20-56c7872fd8d4)
 
-### StableDiffusion: ![5](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/824d087c-2008-4482-8b3c-431cc00b19fc)
+### StableDiffusion: ![5](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/b4c82e1a-94e8-42c7-a348-8beab068b227)
 
 ### ZeroScope 2: ![6](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/98ba05ab-70e3-4738-8263-26e0d86fefc7)
 
@@ -42,7 +42,7 @@ The goal of the project - to create the easiest possible application to use neur
 * You can use the application via your mobile device in localhost (Via IPv4)
 * Flexible and optimized interface (By Gradio)
 * Support for Transformers and llama.cpp models (LLM)
-* Support for diffusers and safetensors models (StableDiffusion) - txt2img, img2img, depth2img, upscale, inpaint, video, cascade and extras tabs
+* Support for diffusers and safetensors models (StableDiffusion) - txt2img, img2img, depth2img, upscale, inpaint, animatediff, video, cascade and extras tabs
 * AudioCraft support (Models: musicgen, audiogen and magnet)
 * AudioLDM 2 support
 * Supports TTS and Whisper models (For LLM and TTS-STT)
@@ -135,7 +135,7 @@ To get update, run `git pull`
 2) (Optional) You can save the translation history by turning on the corresponding button
 3) Click the `Submit` button to get the translate
 
-### StableDiffusion - has eight sub-tabs:
+### StableDiffusion - has nine sub-tabs:
 
 #### txt2img:
 
@@ -187,6 +187,13 @@ To get update, run `git pull`
 8) Click the `Submit` button to get the inpainted image
 #### Optional: You can select your `vae` model
 #### vae = *inputs/image/sd_models/vae*
+
+#### animatediff:
+
+1) First upload your models to the folder: *inputs/image/sd_models*
+2) Select your model from the drop-down list
+3) Set up the model according to the parameters you need
+4) Click the `Submit` button to get the generated image animation
 
 #### video:
 
@@ -267,7 +274,7 @@ To get update, run `git pull`
 * LLM models can be taken from [HuggingFace](https://huggingface.co/models) or from ModelDownloader inside interface 
 * StableDiffusion, vae, inpaint, embedding and lora models can be taken from [CivitAI](https://civitai.com/models) or from ModelDownloader inside interface
 * AudioCraft and AudioLDM 2 models are downloads automatically in *inputs* folder, when you select a model and press the submit button
-* TTS, Whisper, SunoBark, MoonDream2, Upscale, Depth, Videos, Cascade, Rembg, Shap-E, Demucs, ZeroScope and Multiband diffusion models are downloads automatically in *inputs* folder when are they used 
+* TTS, Whisper, SunoBark, MoonDream2, Upscale, Depth, AnimateDiff, Videos, Cascade, Rembg, Shap-E, Demucs, ZeroScope and Multiband diffusion models are downloads automatically in *inputs* folder when are they used 
 * You can take voices anywhere. Record yours or take a recording from the Internet. Or just use those that are already in the project. The main thing is that it is pre-processed!
 
 ## Roadmap

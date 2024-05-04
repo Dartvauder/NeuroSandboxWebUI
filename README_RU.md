@@ -18,7 +18,7 @@
 
 ### LibreTranslate: ![4](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/c8c0e72c-44dc-443a-bd20-56c7872fd8d4)
 
-### StableDiffusion: ![5](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/824d087c-2008-4482-8b3c-431cc00b19fc)
+### StableDiffusion: ![5](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/b4c82e1a-94e8-42c7-a348-8beab068b227)
 
 ### ZeroScope 2: ![6](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/98ba05ab-70e3-4738-8263-26e0d86fefc7)
 
@@ -42,7 +42,7 @@
 * Вы можете использовать приложение через мобильное устройство в localhost (Через IPv4)
 * Гибкий и оптимизированный интерфейс (От Gradio)
 * Поддержка Transformers и llama.cpp моделей (LLM)
-* Поддержка diffusers и safetensors моделей (StableDiffusion) - Вкладки txt2img, img2img, depth2img, upscale, inpaint, video, cascade и extras
+* Поддержка diffusers и safetensors моделей (StableDiffusion) - Вкладки txt2img, img2img, depth2img, upscale, inpaint, animatediff, video, cascade и extras
 * Поддержка AudioCraft (Модели: musicgen, audiogen и magnet)
 * Поддержка AudioLDM 2
 * Поддержка TTS и Whisper моделей (Для LLM и TTS-STT)
@@ -135,7 +135,7 @@
 2) (Дополнительно) Вы можете сохранить историю перевода включив соответствующую кнопку
 3) Нажмите кнопку `Submit`, чтобы получить перевод
 
-### StableDiffusion - имеет восемь под-вкладок:
+### StableDiffusion - имеет девять под-вкладок:
 
 #### txt2img:
 
@@ -187,6 +187,13 @@
 8) Нажмите кнопку `Submit`, чтобы получить измененное изображение
 #### Дополнительно: вы можете выбрать свою модель `vae`
 #### vae = *inputs/image/sd_models/vae*
+
+#### animatediff:
+
+1) Сначала загрузите ваши модели в папку: *inputs/image/sd_models*
+2) Выберите вашу модель из выпадающего списка
+3) Настройте модель по нужным вам параметрам
+8) Нажмите кнопку `Submit`, чтобы получить анимированное изображение
 
 #### video:
 
@@ -267,7 +274,7 @@
 * LLM модели можно взять с сайта [HuggingFace](https://huggingface.co/models) или из внутреннего интерфейса ModelDownloader
 * Модели StableDiffusion, vae, inpaint, embedding и lora можно взять с сайта [CivitAI](https://civitai.com/models) или из внутреннего интерфейса ModelDownloader
 * Модели AudioCraft и AudioLDM 2 загружаются автоматически в папку *inputs*, когда вы выбираете модель и нажимаете кнопку `submit`
-* TTS, Whisper, SunoBark, MoonDream2, Upscale, Depth, Videos, Cascade, Rembg, Shap-E, Demucs, ZeroScope и Multiband diffusion модели скачиваються автоматически в папку *inputs* при их использовании
+* TTS, Whisper, SunoBark, MoonDream2, Upscale, Depth, AnimateDiff, Videos, Cascade, Rembg, Shap-E, Demucs, ZeroScope и Multiband diffusion модели скачиваються автоматически в папку *inputs* при их использовании
 * Вы можете использовать голоса откуда угодно. Запишите свой или возьмите запись из интернета. Или просто используйте те, которые уже есть в проекте. Главное, чтобы оно было предварительно обработано!
 
 ## Дорожная карта
