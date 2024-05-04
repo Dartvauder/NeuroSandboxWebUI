@@ -99,7 +99,7 @@ To get update, run `update.bat`
 ### Linux
 
 1) `Git clone https://github.com/Dartvauder/NeuroSandboxWebUI.git` to any location
-2) In the terminal, run the `pip install --no-deps -r requirements.txt`and wait for installation of all dependencies
+2) In the terminal, run the `pip install --no-deps -r requirements.txt`, `pip install --no-deps -r requirements-cuda.txt`, `pip install --no-deps -r requirements-llama-cpp.txt` and wait for installation of all dependencies
 3) After installation, run `py appEN.py` or `py appRU.py`
 4) Wait for the application to launch
 5) Now you can start generating!
@@ -118,7 +118,7 @@ To get update, run `git pull`
 4) Set up the model according to the parameters you need
 5) Type (or speak) your request
 6) Click the `Submit` button to receive the generated text and audio response
-#### Optional: you can enable `TTS` mode, select the `voice` and `language` needed to receive an audio response
+#### Optional: you can enable `TTS` mode, select the `voice` and `language` needed to receive an audio response. You can also enable `multimodal` and upload an image to get its description
 #### Voice samples = *inputs/audio/voices*
 #### The voice must be pre-processed (22050 kHz, mono, WAV)
 
@@ -218,7 +218,7 @@ To get update, run `git pull`
 
 1) Enter your request
 2) Set up the model according to the parameters you need
-3) Click the `Submit` button to get the generated image
+3) Click the `Submit` button to get the generated video
 
 ### Shap-E:
 
@@ -260,7 +260,7 @@ To get update, run `git pull`
 
 ### System: 
 
-* Here you can see your computer's sensor readings
+* Here you can see the indicators of your computer's sensors by clicking on the `Submit` button
 
 ### Additional Information:
 
@@ -275,7 +275,7 @@ To get update, run `git pull`
 * LLM models can be taken from [HuggingFace](https://huggingface.co/models) or from ModelDownloader inside interface 
 * StableDiffusion, vae, inpaint, embedding and lora models can be taken from [CivitAI](https://civitai.com/models) or from ModelDownloader inside interface
 * AudioCraft and AudioLDM 2 models are downloads automatically in *inputs* folder, when you select a model and press the submit button
-* TTS, Whisper, SunoBark, BLIP-2, Upscale, Depth, Videos, Cascade, Rembg, Shap-E, Demucs and Multiband diffusion models are downloads automatically in *inputs* folder when are they used 
+* TTS, Whisper, SunoBark, MoonDream2, Upscale, Depth, Videos, Cascade, Rembg, Shap-E, Demucs, ZeroScope and Multiband diffusion models are downloads automatically in *inputs* folder when are they used 
 * You can take voices anywhere. Record yours or take a recording from the Internet. Or just use those that are already in the project. The main thing is that it is pre-processed!
 
 ## Roadmap
