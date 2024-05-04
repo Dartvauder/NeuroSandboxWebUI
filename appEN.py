@@ -654,14 +654,9 @@ def generate_bark_audio(text, voice_preset, max_length, output_format, stop_gene
         audio_path = os.path.join(audio_dir, audio_filename)
 
         if output_format == "mp3":
-            scipy.io.wavfile.write(audio_path, 16000, audio_array)
-            subprocess.run(f"ffmpeg -i {audio_path} -b:a 192k {audio_path[:-4]}.mp3", shell=True, check=True)
-            audio_path = f"{audio_path[:-4]}.mp3"
+            sf.write(audio_path, audio_array, 16000)
         elif output_format == "ogg":
-            scipy.io.wavfile.write(audio_path, 16000, audio_array)
-            subprocess.run(f"ffmpeg -i {audio_path} -c:a libvorbis -qscale:a 5 {audio_path[:-4]}.ogg", shell=True,
-                           check=True)
-            audio_path = f"{audio_path[:-4]}.ogg"
+            sf.write(audio_path, audio_array, 16000)
         else:
             sf.write(audio_path, audio_array, 16000)
 
@@ -1859,7 +1854,7 @@ bark_interface = gr.Interface(
     inputs=[
         gr.Textbox(label="Enter text for the request"),
         gr.Dropdown(choices=[None, "v2/en_speaker_1", "v2/ru_speaker_1"], label="Select voice preset", value=None),
-        gr.Slider(minimum=1, maximum=256, value=100, step=1, label="Max length"),
+        gr.Slider(minimum=1, maximum=100, value=10, step=1, label="Max length"),
         gr.Radio(choices=["wav", "mp3", "ogg"], label="Select output format", value="wav", interactive=True),
         gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
