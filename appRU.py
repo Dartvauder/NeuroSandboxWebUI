@@ -25,6 +25,8 @@ from PIL import Image
 from tqdm import tqdm
 from llama_cpp import Llama
 import requests
+from bs4 import BeautifulSoup
+from googlesearch import search
 from rembg import remove
 import torchaudio
 from audiocraft.models import MusicGen, AudioGen, MultiBandDiffusion  # MAGNeT
