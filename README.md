@@ -296,6 +296,7 @@ Thank you very much to these projects for allowing me to create my application:
 * `libretranslatepy` - https://github.com/argosopentech/LibreTranslate-py
 * `rembg` - https://github.com/danielgatis/rembg
 * `trimesh` - https://github.com/mikedh/trimesh
+* `googlesearch-python` - https://github.com/Nv7-GitHub/googlesearch
 
 ## Third Party Licenses:
 
