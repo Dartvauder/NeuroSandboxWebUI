@@ -13,6 +13,8 @@ cls
 
 echo Installing dependencies.../Установка зависимостей...
 pip install --no-deps -r "%CURRENT_DIR%requirements.txt"
+pip install --no-deps -r "%CURRENT_DIR%requirements-cuda.txt"
+pip install --no-deps -r "%CURRENT_DIR%requirements-llama-cpp.txt"
 cls
 
 echo Application has been installed successfully. Run start.bat/Приложение успешно установлено. Запустите start.bat
