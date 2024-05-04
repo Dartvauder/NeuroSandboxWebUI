@@ -1,6 +1,6 @@
 import gradio as gr
 import langdetect
-from transformers import AutoModelForCausalLM, AutoTokenizer
+from transformers import AutoModelForCausalLM, AutoTokenizer, AutoProcessor, BarkModel
 from libretranslatepy import LibreTranslateAPI
 import urllib.error
 import soundfile as sf
@@ -14,10 +14,12 @@ import whisper
 from datetime import datetime
 import warnings
 import logging
-from diffusers import StableDiffusionPipeline, StableDiffusionXLPipeline, StableDiffusionImg2ImgPipeline, StableDiffusionDepth2ImgPipeline, AutoencoderKL, StableDiffusionLatentUpscalePipeline, StableDiffusionUpscalePipeline, StableDiffusionInpaintPipeline, StableVideoDiffusionPipeline, I2VGenXLPipeline
-from diffusers.utils import load_image, export_to_video, export_to_gif
+from diffusers import StableDiffusionPipeline, StableDiffusionXLPipeline, StableDiffusionImg2ImgPipeline, StableDiffusionDepth2ImgPipeline, AutoencoderKL, StableDiffusionLatentUpscalePipeline, StableDiffusionUpscalePipeline, StableDiffusionInpaintPipeline, StableVideoDiffusionPipeline, I2VGenXLPipeline, StableCascadePriorPipeline, StableCascadeDecoderPipeline, DiffusionPipeline, DPMSolverMultistepScheduler, ShapEPipeline, ShapEImg2ImgPipeline, AudioLDM2Pipeline
+from diffusers.utils import load_image, export_to_video, export_to_gif, export_to_ply
+import trimesh
 from git import Repo
 import numpy as np
+import scipy
 from PIL import Image
 from tqdm import tqdm
 from llama_cpp import Llama
@@ -84,7 +86,9 @@ def load_model(model_name, model_type, n_ctx=None):
                 model = AutoModelForCausalLM.from_pretrained(
                     model_path,
                     device_map=device,
+                    load_in_4bit=True,
                     torch_dtype=torch.float16,
+                    trust_remote_code=True
                 )
                 return tokenizer, model, None
             except (OSError, RuntimeError):
@@ -99,6 +103,29 @@ def load_model(model_name, model_type, n_ctx=None):
             except (ValueError, RuntimeError):
                 return None, None, "The selected model is not compatible with the 'llama' model type"
     return None, None, None
+
+
+def load_moondream2_model(model_id, revision):
+    global stop_signal
+    if stop_signal:
+        return "Generation stopped"
+    print(f"Downloading MoonDream2 model...")
+    moondream2_model_path = os.path.join("inputs", "text", "llm_models", model_id)
+    if not os.path.exists(moondream2_model_path):
+        os.makedirs(moondream2_model_path, exist_ok=True)
+        device = "cuda" if torch.cuda.is_available() else "cpu"
+        model = AutoModelForCausalLM.from_pretrained(
+            model_id, trust_remote_code=True, revision=revision
+        ).to(device)
+        tokenizer = AutoTokenizer.from_pretrained(model_id, revision=revision)
+        model.save_pretrained(moondream2_model_path)
+        tokenizer.save_pretrained(moondream2_model_path)
+    else:
+        device = "cuda" if torch.cuda.is_available() else "cpu"
+        model = AutoModelForCausalLM.from_pretrained(moondream2_model_path, trust_remote_code=True).to(device)
+        tokenizer = AutoTokenizer.from_pretrained(moondream2_model_path)
+    print("MoonDream2 model downloaded")
+    return model, tokenizer
 
 
 def transcribe_audio(audio_file_path):
@@ -247,121 +274,50 @@ stop_signal = False
 chat_history = []
 
 
-def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_settings_html, llm_model_type, max_length, max_tokens,
-                             temperature, top_p, top_k, chat_history_format, avatar_name, enable_tts, tts_settings_html,
+def generate_text_and_speech(input_text, input_audio, input_image, llm_model_name, llm_settings_html, llm_model_type, max_length, max_tokens,
+                             temperature, top_p, top_k, chat_history_format, enable_web_search, enable_libretranslate, target_lang, enable_multimodal, enable_tts, tts_settings_html,
                              speaker_wav, language, tts_temperature, tts_top_p, tts_top_k, tts_speed, output_format, stop_generation):
     global chat_history, chat_dir, tts_model, whisper_model, stop_signal
     stop_signal = False
     if not input_text and not input_audio:
         chat_history.append(["Please, enter your request!", None])
-        return chat_history, None, None, None, None
+        return chat_history, None, None, None
     prompt = transcribe_audio(input_audio) if input_audio else input_text
     if not llm_model_name:
         chat_history.append([None, "Please, select a LLM model!"])
-        return chat_history, None, None, None, None
-    tokenizer, llm_model, error_message = load_model(llm_model_name, llm_model_type)
-    if error_message:
-        chat_history.append([None, error_message])
-        return chat_history, None, None, None, None
-    tts_model = None
-    whisper_model = None
-    text = None
-    audio_path = None
-    avatar_path = None
+        return chat_history, None, None, None
+    if enable_multimodal and llm_model_name == "moondream2":
+        if llm_model_type == "llama":
+            chat_history.append([None, "Multimodal with 'llama' model type is not supported yet!"])
+            return chat_history, None, None, None
+        model_id = "vikhyatk/moondream2"
+        revision = "2024-04-02"
+        model, tokenizer = load_moondream2_model(model_id, revision)
 
-    try:
-        if enable_tts:
-            if not tts_model:
-                tts_model = load_tts_model()
-            if not speaker_wav or not language:
-                chat_history.append([None, "Please, select a voice and language for TTS!"])
-                return chat_history, None, None, None, None
-            device = "cuda" if torch.cuda.is_available() else "cpu"
-            tts_model = tts_model.to(device)
-        if input_audio:
-            if not whisper_model:
-                whisper_model = load_whisper_model()
-            device = "cuda" if torch.cuda.is_available() else "cpu"
-            whisper_model = whisper_model.to(device)
-        if llm_model:
-            if llm_model_type == "transformers":
-                detect_lang = langdetect.detect(prompt)
-                if detect_lang == "en":
-                    bot_instruction = "I am a chatbot created to help with any questions. I use my knowledge and abilities to provide useful and meaningful answers in any language"
-                else:
-                    bot_instruction = "Я чат-бот, созданный для помощи по любым вопросам. Я использую свои знания и способности, чтобы давать полезные и содержательные ответы на любом языке"
-                inputs = tokenizer.encode(bot_instruction + prompt, return_tensors="pt", truncation=True)
-                device = llm_model.device
-                inputs = inputs.to(device)
+        try:
+            image = Image.open(input_image)
+            enc_image = model.encode_image(image)
 
-                progress_bar = tqdm(total=max_length, desc="Generating text")
-                progress_tokens = 0
+            detect_lang = langdetect.detect(prompt)
+            if detect_lang == "en":
+                bot_instruction = "You are a friendly chatbot who always provides useful and meaningful answers based on the given image and text input."
+            else:
+                bot_instruction = "Вы дружелюбный чат-бот, который всегда дает полезные и содержательные ответы на основе данного изображения и текстового ввода."
 
-                outputs = llm_model.generate(
-                    inputs,
-                    max_new_tokens=None,
-                    max_length=max_length,
-                    top_p=top_p,
-                    top_k=top_k,
-                    temperature=temperature,
-                    repetition_penalty=1.15,
-                    early_stopping=True,
-                    num_beams=5,
-                    no_repeat_ngram_size=2,
-                    do_sample=True,
-                    use_cache=True,
-                    pad_token_id=tokenizer.eos_token_id,
-                    return_dict_in_generate=True,
-                    num_return_sequences=1,
-                )
+            context = ""
+            for human_text, ai_text in chat_history[-5:]:
+                if human_text:
+                    context += f"Human: {human_text}\n"
+                if ai_text:
+                    context += f"AI: {ai_text}\n"
 
-                for i in range(len(outputs.sequences)):
-                    generated_sequence = outputs.sequences[i][inputs.shape[-1]:]
-                    progress_tokens += len(generated_sequence)
-                    progress_bar.update(progress_tokens - progress_bar.n)
+            prompt_with_context = f"{bot_instruction}\n\n{context}Human: {prompt}\nAI:"
 
-                if stop_signal:
-                    chat_history.append([prompt, "Generation stopped"])
-                    return chat_history, None, None, None
-
-                progress_bar.close()
-
-                generated_sequence = outputs.sequences[0][inputs.shape[-1]:]
-                text = tokenizer.decode(generated_sequence, skip_special_tokens=True)
-
-            elif llm_model_type == "llama":
-                detect_lang = langdetect.detect(prompt)
-                if detect_lang == "en":
-                    instruction = "I am a chatbot created to help with any questions. I use my knowledge and abilities to provide useful and meaningful answers in any language\n\nHuman: "
-                else:
-                    instruction = "Я чат-бот, созданный для помощи по любым вопросам. Я использую свои знания и способности, чтобы давать полезные и содержательные ответы на любом языке\n\nЧеловек: "
-
-                prompt_with_instruction = instruction + prompt + "\nAssistant: "
-
-                progress_bar = tqdm(total=max_tokens, desc="Generating text")
-                progress_tokens = 0
-
-                output = llm_model(
-                    prompt_with_instruction,
-                    max_tokens=max_tokens,
-                    stop=["Q:", "\n"],
-                    echo=False,
-                    temperature=temperature,
-                    top_p=top_p,
-                    top_k=top_k,
-                    repeat_penalty=1.15,
-                )
-
-                progress_tokens = max_tokens
-                progress_bar.update(progress_tokens - progress_bar.n)
-
-                if stop_signal:
-                    chat_history.append([prompt, "Generation stopped"])
-                    return chat_history, None, None, None
-
-                progress_bar.close()
-
-                text = output['choices'][0]['text']
+            text = model.answer_question(enc_image, prompt_with_context, tokenizer)
+        finally:
+            del model
+            del tokenizer
+            torch.cuda.empty_cache()
 
         if not chat_dir:
             now = datetime.now()
@@ -383,19 +339,187 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_settin
             chat_history.append(["Human: " + prompt, "AI: " + (text if text else "")])
             with open(chat_history_path, "w", encoding="utf-8") as f:
                 json.dump(chat_history, f, ensure_ascii=False, indent=4)
-        avatar_path = f"inputs/image/avatars/{avatar_name}" if avatar_name else None
-        if enable_tts and text:
-            if stop_signal:
-                chat_history.append([prompt, text])
-                return chat_history, None, avatar_path, chat_dir, "Generation stopped"
-            enable_text_splitting = False
-            repetition_penalty = 2.0
-            length_penalty = 1.0
-            if enable_text_splitting:
-                text_parts = text.split(".")
-                for part in text_parts:
-                    wav = tts_model.tts(text=part.strip(), speaker_wav=f"inputs/audio/voices/{speaker_wav}",
-                                        language=language,
+
+        chat_history.append([prompt, text])
+        return chat_history, None, chat_dir, None
+    else:
+        tokenizer, llm_model, error_message = load_model(llm_model_name, llm_model_type)
+        if error_message:
+            chat_history.append([None, error_message])
+            return chat_history, None, None, None
+        tts_model = None
+        whisper_model = None
+        text = None
+        audio_path = None
+
+        try:
+            if enable_tts:
+                if not tts_model:
+                    tts_model = load_tts_model()
+                if not speaker_wav or not language:
+                    chat_history.append([None, "Please, select a voice and language for TTS!"])
+                    return chat_history, None, None, None
+                device = "cuda" if torch.cuda.is_available() else "cpu"
+                tts_model = tts_model.to(device)
+            if input_audio:
+                if not whisper_model:
+                    whisper_model = load_whisper_model()
+                device = "cuda" if torch.cuda.is_available() else "cpu"
+                whisper_model = whisper_model.to(device)
+            if enable_web_search:
+                chat_history.append([None, "This feature doesn't work yet. Please, turn it off"])
+                return chat_history, None, None, None
+            if llm_model:
+                if llm_model_type == "transformers":
+                    detect_lang = langdetect.detect(prompt)
+                    if detect_lang == "en":
+                        bot_instruction = "You are a friendly chatbot who always provides useful and meaningful answers in any language"
+                    else:
+                        bot_instruction = "Вы дружелюбный чат-бот, который всегда дает полезные и содержательные ответы на любом языке"
+
+                    context = ""
+                    for human_text, ai_text in chat_history[-10:]:
+                        if human_text:
+                            context += f"Human: {human_text}\n"
+                        if ai_text:
+                            context += f"AI: {ai_text}\n"
+
+                    messages = [
+                        {
+                            "role": "system",
+                            "content": bot_instruction,
+                        },
+                        {"role": "user", "content": context + prompt},
+                    ]
+
+                    tokenizer.padding_side = "left"
+                    tokenizer.pad_token = tokenizer.eos_token
+                    device = "cuda" if torch.cuda.is_available() else "cpu"
+                    model_inputs = tokenizer.apply_chat_template(messages, add_generation_prompt=True, padding=True,
+                                                                 return_tensors="pt").to(device)
+                    input_length = model_inputs.shape[1]
+
+                    progress_bar = tqdm(total=max_length, desc="Generating text")
+                    progress_tokens = 0
+
+                    generated_ids = llm_model.generate(
+                        model_inputs,
+                        do_sample=True,
+                        max_new_tokens=max_length,
+                        top_p=top_p,
+                        top_k=top_k,
+                        temperature=temperature,
+                        repetition_penalty=1.1,
+                        num_beams=5,
+                        no_repeat_ngram_size=2,
+                    )
+
+                    progress_tokens = max_length
+                    progress_bar.update(progress_tokens - progress_bar.n)
+
+                    if stop_signal:
+                        chat_history.append([prompt, "Generation stopped"])
+                        return chat_history, None, None
+
+                    progress_bar.close()
+
+                    text = tokenizer.batch_decode(generated_ids[:, input_length:], skip_special_tokens=True)[0]
+
+                elif llm_model_type == "llama":
+                    detect_lang = langdetect.detect(prompt)
+                    if detect_lang == "en":
+                        instruction = "I am a chatbot created to help with any questions. I use my knowledge and abilities to provide useful and meaningful answers in any language\n\n"
+                    else:
+                        instruction = "Я чат-бот, созданный для помощи по любым вопросам. Я использую свои знания и способности, чтобы давать полезные и содержательные ответы на любом языке\n\n"
+
+                    context = ""
+                    for human_text, ai_text in chat_history[-10:]:
+                        if human_text:
+                            context += f"Human: {human_text}\n"
+                        if ai_text:
+                            context += f"Assistant: {ai_text}\n"
+
+                    prompt_with_context = instruction + context + "Human: " + prompt + "\nAssistant: "
+
+                    progress_bar = tqdm(total=max_tokens, desc="Generating text")
+                    progress_tokens = 0
+
+                    output = llm_model(
+                        prompt_with_context,
+                        max_tokens=max_tokens,
+                        stop=["Human:", "\n"],
+                        echo=False,
+                        temperature=temperature,
+                        top_p=top_p,
+                        top_k=top_k,
+                        repeat_penalty=1.1,
+                    )
+
+                    progress_tokens = max_tokens
+                    progress_bar.update(progress_tokens - progress_bar.n)
+
+                    if stop_signal:
+                        chat_history.append([prompt, "Generation stopped"])
+                        return chat_history, None, None
+
+                    progress_bar.close()
+
+                    text = output['choices'][0]['text']
+
+                if enable_libretranslate:
+                    try:
+                        translator = LibreTranslateAPI("http://127.0.0.1:5000")
+                        translation = translator.translate(text, detect_lang, target_lang)
+                        text = translation
+                    except urllib.error.URLError:
+                        chat_history.append([None, "LibreTranslate is not running. Please start the LibreTranslate server."])
+                        return chat_history, None, None, None
+
+            if not chat_dir:
+                now = datetime.now()
+                chat_dir = os.path.join('outputs', f"LLM_{now.strftime('%Y%m%d_%H%M%S')}")
+                os.makedirs(chat_dir)
+                os.makedirs(os.path.join(chat_dir, 'text'))
+                os.makedirs(os.path.join(chat_dir, 'audio'))
+            chat_history_path = os.path.join(chat_dir, 'text', f'chat_history.{chat_history_format}')
+            if chat_history_format == "txt":
+                with open(chat_history_path, "a", encoding="utf-8") as f:
+                    f.write(f"Human: {prompt}\n")
+                    if text:
+                        f.write(f"AI: {text}\n\n")
+            elif chat_history_format == "json":
+                chat_history = []
+                if os.path.exists(chat_history_path):
+                    with open(chat_history_path, "r", encoding="utf-8") as f:
+                        chat_history = json.load(f)
+                chat_history.append(["Human: " + prompt, "AI: " + (text if text else "")])
+                with open(chat_history_path, "w", encoding="utf-8") as f:
+                    json.dump(chat_history, f, ensure_ascii=False, indent=4)
+            if enable_tts and text:
+                if stop_signal:
+                    chat_history.append([prompt, text])
+                    return chat_history, None, chat_dir, "Generation stopped"
+                enable_text_splitting = False
+                repetition_penalty = 2.0
+                length_penalty = 1.0
+                if enable_text_splitting:
+                    text_parts = text.split(".")
+                    for part in text_parts:
+                        wav = tts_model.tts(text=part.strip(), speaker_wav=f"inputs/audio/voices/{speaker_wav}",
+                                            language=language,
+                                            temperature=tts_temperature, top_p=tts_top_p, top_k=tts_top_k, speed=tts_speed,
+                                            repetition_penalty=repetition_penalty, length_penalty=length_penalty)
+                        now = datetime.now()
+                        audio_filename = f"TTS_{now.strftime('%Y%m%d_%H%M%S')}.{output_format}"
+                        audio_path = os.path.join(chat_dir, 'audio', audio_filename)
+                        if output_format == "mp3":
+                            sf.write(audio_path, wav, 22050, format='mp3')
+                        elif output_format == "ogg":
+                            sf.write(audio_path, wav, 22050, format='ogg')
+                        else:
+                            sf.write(audio_path, wav, 22050)
+                else:
+                    wav = tts_model.tts(text=text, speaker_wav=f"inputs/audio/voices/{speaker_wav}", language=language,
                                         temperature=tts_temperature, top_p=tts_top_p, top_k=tts_top_k, speed=tts_speed,
                                         repetition_penalty=repetition_penalty, length_penalty=length_penalty)
                     now = datetime.now()
@@ -407,32 +531,19 @@ def generate_text_and_speech(input_text, input_audio, llm_model_name, llm_settin
                         sf.write(audio_path, wav, 22050, format='ogg')
                     else:
                         sf.write(audio_path, wav, 22050)
-            else:
-                wav = tts_model.tts(text=text, speaker_wav=f"inputs/audio/voices/{speaker_wav}", language=language,
-                                    temperature=tts_temperature, top_p=tts_top_p, top_k=tts_top_k, speed=tts_speed,
-                                    repetition_penalty=repetition_penalty, length_penalty=length_penalty)
-                now = datetime.now()
-                audio_filename = f"TTS_{now.strftime('%Y%m%d_%H%M%S')}.{output_format}"
-                audio_path = os.path.join(chat_dir, 'audio', audio_filename)
-                if output_format == "mp3":
-                    sf.write(audio_path, wav, 22050, format='mp3')
-                elif output_format == "ogg":
-                    sf.write(audio_path, wav, 22050, format='ogg')
-                else:
-                    sf.write(audio_path, wav, 22050)
-    finally:
-        if tokenizer is not None:
-            del tokenizer
-        if llm_model is not None:
-            del llm_model
-        if tts_model is not None:
-            del tts_model
-        if whisper_model is not None:
-            del whisper_model
-        torch.cuda.empty_cache()
+        finally:
+            if tokenizer is not None:
+                del tokenizer
+            if llm_model is not None:
+                del llm_model
+            if tts_model is not None:
+                del tts_model
+            if whisper_model is not None:
+                del whisper_model
+            torch.cuda.empty_cache()
 
     chat_history.append([prompt, text])
-    return chat_history, audio_path, avatar_path, chat_dir, None
+    return chat_history, audio_path, chat_dir, None
 
 
 def generate_tts_stt(text, audio, tts_settings_html, speaker_wav, language, tts_temperature, tts_top_p, tts_top_k, tts_speed, tts_output_format, stt_output_format):
@@ -500,9 +611,72 @@ def generate_tts_stt(text, audio, tts_settings_html, speaker_wav, language, tts_
     return tts_output, stt_output
 
 
-def translate_text(text, source_lang, target_lang, enable_translate_history, translate_history_format):
+def generate_bark_audio(text, voice_preset, max_length, output_format, stop_generation):
+    global stop_signal
+    stop_signal = False
+
+    if not text:
+        return None, "Please enter text for the request!"
+
+    bark_model_path = os.path.join("inputs", "audio", "bark")
+
+    if not os.path.exists(bark_model_path):
+        print("Downloading Bark model...")
+        os.makedirs(bark_model_path, exist_ok=True)
+        Repo.clone_from("https://huggingface.co/suno/bark", bark_model_path)
+        print("Bark model downloaded")
+
+    try:
+        device = "cuda" if torch.cuda.is_available() else "cpu"
+        torch.set_default_tensor_type(torch.cuda.FloatTensor if device == "cuda" else torch.FloatTensor)
+
+        processor = AutoProcessor.from_pretrained(bark_model_path)
+        model = BarkModel.from_pretrained(bark_model_path, torch_dtype=torch.float32)
+
+        if voice_preset:
+            inputs = processor(text, voice_preset=voice_preset, return_tensors="pt")
+        else:
+            inputs = processor(text, return_tensors="pt")
+
+        audio_array = model.generate(**inputs, max_length=max_length)
+        model.enable_cpu_offload()
+
+        if stop_signal:
+            return None, "Generation stopped"
+
+        today = datetime.now().date()
+        audio_dir = os.path.join('outputs', f"Bark_{today.strftime('%Y%m%d')}")
+        os.makedirs(audio_dir, exist_ok=True)
+
+        audio_array = audio_array.cpu().numpy().squeeze()
+
+        audio_filename = f"bark_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
+        audio_path = os.path.join(audio_dir, audio_filename)
+
+        if output_format == "mp3":
+            scipy.io.wavfile.write(audio_path, 16000, audio_array)
+            subprocess.run(f"ffmpeg -i {audio_path} -b:a 192k {audio_path[:-4]}.mp3", shell=True, check=True)
+            audio_path = f"{audio_path[:-4]}.mp3"
+        elif output_format == "ogg":
+            scipy.io.wavfile.write(audio_path, 16000, audio_array)
+            subprocess.run(f"ffmpeg -i {audio_path} -c:a libvorbis -qscale:a 5 {audio_path[:-4]}.ogg", shell=True,
+                           check=True)
+            audio_path = f"{audio_path[:-4]}.ogg"
+        else:
+            sf.write(audio_path, audio_array, 16000)
+
+        return audio_path, None
+
+    except Exception as e:
+        return None, str(e)
+
+
+def translate_text(text, source_lang, target_lang, enable_translate_history, translate_history_format, file=None):
     try:
         translator = LibreTranslateAPI("http://127.0.0.1:5000")
+        if file:
+            with open(file.name, "r", encoding="utf-8") as f:
+                text = f.read()
         translation = translator.translate(text, source_lang, target_lang)
 
         if enable_translate_history:
@@ -969,11 +1143,13 @@ def generate_video(init_image, output_format, video_settings_html, motion_bucket
         print(f"StableVideoDiffusion model downloaded")
 
         try:
+            device = "cuda" if torch.cuda.is_available() else "cpu"
             pipe = StableVideoDiffusionPipeline.from_pretrained(
                 pretrained_model_name_or_path=video_model_path,
                 torch_dtype=torch.float16,
                 variant="fp16"
             )
+            pipe.to(device)
             pipe.enable_model_cpu_offload()
             pipe.unet.enable_forward_chunking()
 
@@ -1013,7 +1189,9 @@ def generate_video(init_image, output_format, video_settings_html, motion_bucket
         print(f"i2vgen-xl model downloaded")
 
         try:
+            device = "cuda" if torch.cuda.is_available() else "cpu"
             pipeline = I2VGenXLPipeline.from_pretrained(video_model_path, torch_dtype=torch.float16, variant="fp16")
+            pipeline.to(device)
             pipeline.enable_model_cpu_offload()
 
             image = load_image(init_image).convert("RGB")
@@ -1046,6 +1224,79 @@ def generate_video(init_image, output_format, video_settings_html, motion_bucket
             torch.cuda.empty_cache()
 
 
+def generate_image_cascade(prompt, negative_prompt, stable_cascade_settings_html, width, height, prior_steps, prior_guidance_scale,
+                           decoder_steps, decoder_guidance_scale, output_format="png",
+                           stop_generation=None):
+    global stop_signal
+    stop_signal = False
+
+    if not prompt:
+        return None, "Please enter a prompt!"
+
+    stable_cascade_model_path = os.path.join("inputs", "image", "sd_models", "cascade")
+
+    if not os.path.exists(stable_cascade_model_path):
+        print("Downloading Stable Cascade models...")
+        os.makedirs(stable_cascade_model_path, exist_ok=True)
+        Repo.clone_from("https://huggingface.co/stabilityai/stable-cascade-prior",
+                        os.path.join(stable_cascade_model_path, "prior"))
+        Repo.clone_from("https://huggingface.co/stabilityai/stable-cascade",
+                        os.path.join(stable_cascade_model_path, "decoder"))
+        print("Stable Cascade models downloaded")
+
+    try:
+        device = "cuda" if torch.cuda.is_available() else "cpu"
+        prior = StableCascadePriorPipeline.from_pretrained(os.path.join(stable_cascade_model_path, "prior"),
+                                                           variant="bf16", torch_dtype=torch.bfloat16).to(device)
+        decoder = StableCascadeDecoderPipeline.from_pretrained(os.path.join(stable_cascade_model_path, "decoder"),
+                                                               variant="bf16", torch_dtype=torch.float16).to(device)
+    except (ValueError, OSError):
+        return None, "Failed to load the Stable Cascade models"
+
+    prior.enable_model_cpu_offload()
+    decoder.enable_model_cpu_offload()
+
+    try:
+        prior_output = prior(
+            prompt=prompt,
+            height=height,
+            width=width,
+            negative_prompt=negative_prompt,
+            guidance_scale=prior_guidance_scale,
+            num_images_per_prompt=1,
+            num_inference_steps=prior_steps
+        )
+
+        if stop_signal:
+            return None, "Generation stopped"
+
+        decoder_output = decoder(
+            image_embeddings=prior_output.image_embeddings.to(torch.float16),
+            prompt=prompt,
+            negative_prompt=negative_prompt,
+            guidance_scale=decoder_guidance_scale,
+            output_type="pil",
+            num_inference_steps=decoder_steps
+        ).images[0]
+
+        if stop_signal:
+            return None, "Generation stopped"
+
+        today = datetime.now().date()
+        image_dir = os.path.join('outputs', f"StableDiffusion_{today.strftime('%Y%m%d')}")
+        os.makedirs(image_dir, exist_ok=True)
+        image_filename = f"cascade_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
+        image_path = os.path.join(image_dir, image_filename)
+        decoder_output.save(image_path)
+
+        return image_path, None
+
+    finally:
+        del prior
+        del decoder
+        torch.cuda.empty_cache()
+
+
 def generate_image_extras(input_image, image_output_format, remove_background, stop_generation):
     if not input_image:
         return None, "Please upload an image file!"
@@ -1068,9 +1319,142 @@ def generate_image_extras(input_image, image_output_format, remove_background, s
         return None, str(e)
 
 
-def generate_audio(prompt, input_audio=None, model_name=None, audiocraft_settings_html=None, model_type="musicgen",
-                   duration=10, top_k=250, top_p=0.0,
-                   temperature=1.0, cfg_coef=3.0, enable_multiband=False, output_format="mp3", stop_generation=None):
+def generate_video_zeroscope2(prompt, video_to_enhance, strength, num_inference_steps, width, height, num_frames,
+                              enable_video_enhance, stop_generation):
+    global stop_signal
+    stop_signal = False
+
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+
+    base_model_path = os.path.join("inputs", "image", "zeroscope2", "zeroscope_v2_576w")
+    if not os.path.exists(base_model_path):
+        print("Downloading ZeroScope 2 base model...")
+        os.makedirs(base_model_path, exist_ok=True)
+        Repo.clone_from("https://huggingface.co/cerspense/zeroscope_v2_576w", base_model_path)
+        print("ZeroScope 2 base model downloaded")
+
+    enhance_model_path = os.path.join("inputs", "image", "zeroscope2", "zeroscope_v2_XL")
+    if not os.path.exists(enhance_model_path):
+        print("Downloading ZeroScope 2 enhance model...")
+        os.makedirs(enhance_model_path, exist_ok=True)
+        Repo.clone_from("https://huggingface.co/cerspense/zeroscope_v2_XL", enhance_model_path)
+        print("ZeroScope 2 enhance model downloaded")
+
+    today = datetime.now().date()
+    video_dir = os.path.join('outputs', f"ZeroScope2_{today.strftime('%Y%m%d')}")
+    os.makedirs(video_dir, exist_ok=True)
+
+    if video_to_enhance and not enable_video_enhance:
+        return None, "Video enhancement is disabled. Please enable it to use the uploaded video."
+
+    if enable_video_enhance and not video_to_enhance:
+        return None, "Please upload a video to enhance."
+
+    try:
+        base_pipe = DiffusionPipeline.from_pretrained(base_model_path, torch_dtype=torch.float16)
+        base_pipe.scheduler = DPMSolverMultistepScheduler.from_config(base_pipe.scheduler.config)
+        base_pipe.to(device)
+        base_pipe.enable_model_cpu_offload()
+        base_pipe.enable_vae_slicing()
+        base_pipe.unet.enable_forward_chunking(chunk_size=1, dim=1)
+
+        video_frames = base_pipe(prompt, num_inference_steps=num_inference_steps, width=width, height=height, num_frames=num_frames).frames[0]
+
+        if enable_video_enhance and video_to_enhance:
+            enhance_pipe = DiffusionPipeline.from_pretrained(enhance_model_path, torch_dtype=torch.float16)
+            enhance_pipe.to(device)
+            enhance_pipe.scheduler = DPMSolverMultistepScheduler.from_config(enhance_pipe.scheduler.config)
+            enhance_pipe.enable_model_cpu_offload()
+            enhance_pipe.enable_vae_slicing()
+
+            video = [frame.resize((1024, 576)) for frame in video_frames]
+
+            video_frames = enhance_pipe(prompt, video=video, strength=strength).frames
+
+        if stop_signal:
+            return None, "Generation stopped"
+
+        video_filename = f"zeroscope2_{datetime.now().strftime('%Y%m%d_%H%M%S')}.mp4"
+        video_path = os.path.join(video_dir, video_filename)
+        export_to_video(video_frames, video_path)
+
+        return video_path, None
+
+    finally:
+        try:
+            del base_pipe
+            del enhance_pipe
+        except UnboundLocalError:
+            pass
+        torch.cuda.empty_cache()
+
+
+def generate_3d(prompt, init_image, num_inference_steps, guidance_scale, frame_size, stop_generation):
+    global stop_signal
+    stop_signal = False
+
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+
+    if init_image:
+        model_name = "openai/shap-e-img2img"
+        model_path = os.path.join("inputs", "image", "shap-e", "img2img")
+        if not os.path.exists(model_path):
+            print("Downloading Shap-E img2img model...")
+            os.makedirs(model_path, exist_ok=True)
+            Repo.clone_from(f"https://huggingface.co/{model_name}", model_path)
+            print("Shap-E img2img model downloaded")
+
+        pipe = ShapEImg2ImgPipeline.from_pretrained(model_path, torch_dtype=torch.float16, variant="fp16").to(device)
+        image = Image.open(init_image).resize((256, 256))
+        images = pipe(
+            image,
+            guidance_scale=guidance_scale,
+            num_inference_steps=num_inference_steps,
+            frame_size=frame_size,
+            output_type="mesh",
+        ).images
+    else:
+        model_name = "openai/shap-e"
+        model_path = os.path.join("inputs", "image", "shap-e", "text2img")
+        if not os.path.exists(model_path):
+            print("Downloading Shap-E text2img model...")
+            os.makedirs(model_path, exist_ok=True)
+            Repo.clone_from(f"https://huggingface.co/{model_name}", model_path)
+            print("Shap-E text2img model downloaded")
+
+        pipe = ShapEPipeline.from_pretrained(model_path, torch_dtype=torch.float16, variant="fp16").to(device)
+        images = pipe(
+            prompt,
+            guidance_scale=guidance_scale,
+            num_inference_steps=num_inference_steps,
+            frame_size=frame_size,
+            output_type="mesh",
+        ).images
+
+    if stop_signal:
+        return None, "Generation stopped"
+
+    today = datetime.now().date()
+    output_dir = os.path.join('outputs', f"Shap-E_{today.strftime('%Y%m%d')}")
+    os.makedirs(output_dir, exist_ok=True)
+
+    ply_filename = f"3d_object_{datetime.now().strftime('%Y%m%d_%H%M%S')}.ply"
+    ply_path = os.path.join(output_dir, ply_filename)
+    export_to_ply(images[0], ply_path)
+
+    mesh = trimesh.load(ply_path)
+    rot = trimesh.transformations.rotation_matrix(-np.pi / 2, [1, 0, 0])
+    mesh = mesh.apply_transform(rot)
+    glb_filename = f"3d_object_{datetime.now().strftime('%Y%m%d_%H%M%S')}.glb"
+    glb_path = os.path.join(output_dir, glb_filename)
+    mesh.export(glb_path, file_type="glb")
+
+    return glb_path, None
+
+
+def generate_audio_audiocraft(prompt, input_audio=None, model_name=None, audiocraft_settings_html=None, model_type="musicgen",
+                              duration=10, top_k=250, top_p=0.0,
+                              temperature=1.0, cfg_coef=3.0, enable_multiband=False, output_format="mp3", stop_generation=None):
     global audiocraft_model_path, stop_signal
     stop_signal = False
 
@@ -1094,13 +1478,13 @@ def generate_audio(prompt, input_audio=None, model_name=None, audiocraft_setting
 
     try:
         if model_type == "musicgen":
-            model = MusicGen.get_pretrained(audiocraft_model_path)
+            model = MusicGen.get_pretrained(audiocraft_model_path).to(device)
             model.set_generation_params(duration=duration)
         elif model_type == "audiogen":
-            model = AudioGen.get_pretrained(audiocraft_model_path)
+            model = AudioGen.get_pretrained(audiocraft_model_path).to(device)
             model.set_generation_params(duration=duration)
         #        elif model_type == "magnet":
-        #            model = MAGNeT.get_pretrained(audiocraft_model_path)
+        #            model = MAGNeT.get_pretrained(audiocraft_model_path).to(device)
         #            model.set_generation_params()
         else:
             return None, "Invalid model type!"
@@ -1110,7 +1494,7 @@ def generate_audio(prompt, input_audio=None, model_name=None, audiocraft_setting
     mbd = None
 
     if enable_multiband:
-        mbd = MultiBandDiffusion.get_mbd_musicgen()
+        mbd = MultiBandDiffusion.get_mbd_musicgen().to(device)
 
     try:
         progress_bar = tqdm(total=duration, desc="Generating audio")
@@ -1178,6 +1562,67 @@ def generate_audio(prompt, input_audio=None, model_name=None, audiocraft_setting
         del model
         if mbd:
             del mbd
+        torch.cuda.empty_cache()
+
+
+def generate_audio_audioldm2(prompt, negative_prompt, model_name, num_inference_steps, audio_length_in_s,
+                             num_waveforms_per_prompt, output_format, stop_generation):
+    global stop_signal
+    stop_signal = False
+
+    if not model_name:
+        return None, "Please, select an AudioLDM 2 model!"
+
+    model_path = os.path.join("inputs", "audio", "audioldm2", model_name)
+
+    if not os.path.exists(model_path):
+        print(f"Downloading AudioLDM 2 model: {model_name}...")
+        os.makedirs(model_path, exist_ok=True)
+        Repo.clone_from(f"https://huggingface.co/{model_name}", model_path)
+        print(f"AudioLDM 2 model {model_name} downloaded")
+
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+
+    pipe = AudioLDM2Pipeline.from_pretrained(model_path, torch_dtype=torch.float16)
+    pipe = pipe.to(device)
+
+    generator = torch.Generator(device).manual_seed(0)
+
+    try:
+        audio = pipe(
+            prompt,
+            negative_prompt=negative_prompt,
+            num_inference_steps=num_inference_steps,
+            audio_length_in_s=audio_length_in_s,
+            num_waveforms_per_prompt=num_waveforms_per_prompt,
+            generator=generator,
+        ).audios
+
+        if stop_signal:
+            return None, "Generation stopped"
+
+        today = datetime.now().date()
+        audio_dir = os.path.join('outputs', f"AudioLDM2_{today.strftime('%Y%m%d')}")
+        os.makedirs(audio_dir, exist_ok=True)
+        audio_filename = f"audioldm2_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
+        audio_path = os.path.join(audio_dir, audio_filename)
+
+        if output_format == "mp3":
+            scipy.io.wavfile.write(audio_path, rate=16000, data=audio[0])
+            subprocess.run(f"ffmpeg -i {audio_path} -b:a 192k {audio_path[:-4]}.mp3", shell=True, check=True)
+            audio_path = f"{audio_path[:-4]}.mp3"
+        elif output_format == "ogg":
+            scipy.io.wavfile.write(audio_path, rate=16000, data=audio[0])
+            subprocess.run(f"ffmpeg -i {audio_path} -c:a libvorbis -qscale:a 5 {audio_path[:-4]}.ogg", shell=True,
+                           check=True)
+            audio_path = f"{audio_path[:-4]}.ogg"
+        else:
+            scipy.io.wavfile.write(audio_path, rate=16000, data=audio[0])
+
+        return audio_path, None
+
+    finally:
+        del pipe
         torch.cuda.empty_cache()
 
 
@@ -1330,8 +1775,7 @@ def open_outputs_folder():
             os.system(f'open "{outputs_folder}"' if os.name == "darwin" else f'xdg-open "{outputs_folder}"')
 
 
-llm_models_list = [None] + [model for model in os.listdir("inputs/text/llm_models") if not model.endswith(".txt")]
-avatars_list = [None] + [avatar for avatar in os.listdir("inputs/image/avatars") if not avatar.endswith(".txt")]
+llm_models_list = [None, "moondream2"] + [model for model in os.listdir("inputs/text/llm_models") if not model.endswith(".txt") and model != "vikhyatk"]
 speaker_wavs_list = [None] + [wav for wav in os.listdir("inputs/audio/voices") if not wav.endswith(".txt")]
 stable_diffusion_models_list = [None] + [model.replace(".safetensors", "") for model in
                                          os.listdir("inputs/image/sd_models")
@@ -1352,6 +1796,7 @@ chat_interface = gr.Interface(
     inputs=[
         gr.Textbox(label="Enter your request"),
         gr.Audio(type="filepath", label="Record your request (optional)"),
+        gr.Image(label="Upload your image (optional)", type="filepath"),
         gr.Dropdown(choices=llm_models_list, label="Select LLM model", value=None),
         gr.HTML("<h3>LLM Settings</h3>"),
         gr.Radio(choices=["transformers", "llama"], label="Select model type", value="transformers"),
@@ -1361,7 +1806,10 @@ chat_interface = gr.Interface(
         gr.Slider(minimum=0.0, maximum=1.0, value=0.9, step=0.1, label="Top P"),
         gr.Slider(minimum=0, maximum=100, value=20, step=1, label="Top K"),
         gr.Radio(choices=["txt", "json"], label="Select chat history format", value="txt", interactive=True),
-        gr.Dropdown(choices=avatars_list, label="Select avatar", value=None),
+        gr.Checkbox(label="Enable WebSearch", value=False),
+        gr.Checkbox(label="Enable LibreTranslate", value=False),
+        gr.Dropdown(choices=["en", "es", "fr", "de", "it", "pt", "pl", "tr", "ru", "nl", "cs", "ar", "zh", "ja", "hi"], label="Select target language", value="ru", interactive=True),
+        gr.Checkbox(label="Enable Multimodal", value=False),
         gr.Checkbox(label="Enable TTS", value=False),
         gr.HTML("<h3>TTS Settings</h3>"),
         gr.Dropdown(choices=speaker_wavs_list, label="Select voice", interactive=True),
@@ -1376,7 +1824,6 @@ chat_interface = gr.Interface(
     outputs=[
         gr.Chatbot(label="LLM text response", value=[]),
         gr.Audio(label="LLM audio response", type="filepath"),
-        gr.Image(type="filepath", label="Avatar"),
     ],
     title="NeuroSandboxWebUI (ALPHA) - LLM",
     description="This user interface allows you to enter any text or audio and receive generated response. You can select the LLM model, "
@@ -1412,6 +1859,26 @@ tts_stt_interface = gr.Interface(
     allow_flagging="never",
 )
 
+bark_interface = gr.Interface(
+    fn=generate_bark_audio,
+    inputs=[
+        gr.Textbox(label="Enter text for the request"),
+        gr.Dropdown(choices=[None, "v2/en_speaker_1", "v2/ru_speaker_1"], label="Select voice preset", value=None),
+        gr.Slider(minimum=1, maximum=256, value=100, step=1, label="Max length"),
+        gr.Radio(choices=["wav", "mp3", "ogg"], label="Select output format", value="wav", interactive=True),
+        gr.Button(value="Stop generation", interactive=True, variant="stop"),
+    ],
+    outputs=[
+        gr.Audio(label="Generated audio", type="filepath"),
+        gr.Textbox(label="Message", type="text"),
+    ],
+    title="NeuroSandboxWebUI (ALPHA) - SunoBark",
+    description="This user interface allows you to enter text and generate audio using SunoBark. "
+                "You can select the voice preset and customize the max length. "
+                "Try it and see what happens!",
+    allow_flagging="never",
+)
+
 translate_interface = gr.Interface(
     fn=translate_text,
     inputs=[
@@ -1419,7 +1886,8 @@ translate_interface = gr.Interface(
         gr.Dropdown(choices=["en", "es", "fr", "de", "it", "pt", "pl", "tr", "ru", "nl", "cs", "ar", "zh", "ja", "hi"], label="Select source language", value="en"),
         gr.Dropdown(choices=["en", "es", "fr", "de", "it", "pt", "pl", "tr", "ru", "nl", "cs", "ar", "zh", "ja", "hi"], label="Select target language", value="ru"),
         gr.Checkbox(label="Enable translate history save", value=False),
-        gr.Radio(choices=["txt", "json"], label="Select translate history format", value="txt", interactive=True)
+        gr.Radio(choices=["txt", "json"], label="Select translate history format", value="txt", interactive=True),
+        gr.File(label="Upload text file (optional)", file_count="single", interactive=True),
     ],
     outputs=[
         gr.Textbox(label="Translated text"),
@@ -1597,6 +2065,32 @@ video_interface = gr.Interface(
     allow_flagging="never",
 )
 
+cascade_interface = gr.Interface(
+    fn=generate_image_cascade,
+    inputs=[
+        gr.Textbox(label="Enter your prompt"),
+        gr.Textbox(label="Enter your negative prompt", value=""),
+        gr.HTML("<h3>Stable Cascade Settings</h3>"),
+        gr.Slider(minimum=256, maximum=4096, value=1024, step=64, label="Width"),
+        gr.Slider(minimum=256, maximum=4096, value=1024, step=64, label="Height"),
+        gr.Slider(minimum=1, maximum=100, value=30, step=1, label="Prior Steps"),
+        gr.Slider(minimum=1.0, maximum=30.0, value=4.0, step=0.1, label="Prior Guidance Scale"),
+        gr.Slider(minimum=1, maximum=100, value=20, step=1, label="Decoder Steps"),
+        gr.Slider(minimum=0.0, maximum=30.0, value=8.0, step=0.1, label="Decoder Guidance Scale"),
+        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
+        gr.Button(value="Stop generation", interactive=True, variant="stop"),
+    ],
+    outputs=[
+        gr.Image(type="filepath", label="Generated image"),
+        gr.Textbox(label="Message", type="text"),
+    ],
+    title="NeuroSandboxWebUI (ALPHA) - StableDiffusion (cascade)",
+    description="This user interface allows you to enter a prompt and generate images using Stable Cascade. "
+                "You can customize the generation settings from the sliders. "
+                "Try it and see what happens!",
+    allow_flagging="never",
+)
+
 extras_interface = gr.Interface(
     fn=generate_image_extras,
     inputs=[
@@ -1609,13 +2103,58 @@ extras_interface = gr.Interface(
         gr.Image(label="Modified image", type="filepath"),
         gr.Textbox(label="Message", type="text"),
     ],
-    title="NeuroSandboxWebUI (ALPHA) - Extras",
+    title="NeuroSandboxWebUI (ALPHA) - StableDiffusion (extras)",
     description="This user interface allows you to modify the image",
     allow_flagging="never",
 )
 
+zeroscope2_interface = gr.Interface(
+    fn=generate_video_zeroscope2,
+    inputs=[
+        gr.Textbox(label="Enter your prompt"),
+        gr.Video(label="Video to enhance (optional)", interactive=True),
+        gr.Slider(minimum=0.1, maximum=1.0, value=0.5, step=0.1, label="Strength"),
+        gr.Slider(minimum=1, maximum=100, value=40, step=1, label="Steps"),
+        gr.Slider(minimum=256, maximum=1280, value=576, step=64, label="Width"),
+        gr.Slider(minimum=256, maximum=1280, value=320, step=64, label="Height"),
+        gr.Slider(minimum=1, maximum=100, value=36, step=1, label="Frames"),
+        gr.Checkbox(label="Enable Video Enhancement", value=False),
+        gr.Button(value="Stop generation", interactive=True, variant="stop"),
+    ],
+    outputs=[
+        gr.Video(label="Generated video"),
+        gr.Textbox(label="Message", type="text"),
+    ],
+    title="NeuroSandboxWebUI (ALPHA) - ZeroScope 2",
+    description="This user interface allows you to generate and enhance videos using ZeroScope 2 models. "
+                "You can enter a text prompt, upload an optional video for enhancement, and customize the generation settings. "
+                "Try it and see what happens!",
+    allow_flagging="never",
+)
+
+shap_e_interface = gr.Interface(
+    fn=generate_3d,
+    inputs=[
+        gr.Textbox(label="Enter your prompt"),
+        gr.Image(label="Initial image (optional)", type="filepath", interactive=True),
+        gr.Slider(minimum=1, maximum=100, value=50, step=1, label="Steps"),
+        gr.Slider(minimum=1.0, maximum=30.0, value=10.0, step=0.1, label="CFG"),
+        gr.Slider(minimum=64, maximum=512, value=256, step=64, label="Frame size"),
+        gr.Button(value="Stop generation", interactive=True, variant="stop"),
+    ],
+    outputs=[
+        gr.Model3D(label="Generated 3D object"),
+        gr.Textbox(label="Message", type="text"),
+    ],
+    title="NeuroSandboxWebUI (ALPHA) - Shap-E",
+    description="This user interface allows you to generate 3D objects using Shap-E. "
+                "You can enter a text prompt or upload an initial image, and customize the generation settings. "
+                "Try it and see what happens!",
+    allow_flagging="never",
+)
+
 audiocraft_interface = gr.Interface(
-    fn=generate_audio,
+    fn=generate_audio_audiocraft,
     inputs=[
         gr.Textbox(label="Enter your prompt"),
         gr.Audio(type="filepath", label="Melody audio (optional)", interactive=True),
@@ -1637,6 +2176,29 @@ audiocraft_interface = gr.Interface(
     ],
     title="NeuroSandboxWebUI (ALPHA) - AudioCraft",
     description="This user interface allows you to enter any text and generate audio using AudioCraft. "
+                "You can select the model and customize the generation settings from the sliders. "
+                "Try it and see what happens!",
+    allow_flagging="never",
+)
+
+audioldm2_interface = gr.Interface(
+    fn=generate_audio_audioldm2,
+    inputs=[
+        gr.Textbox(label="Enter your prompt"),
+        gr.Textbox(label="Enter your negative prompt", value=""),
+        gr.Dropdown(choices=["cvssp/audioldm2", "cvssp/audioldm2-music"], label="Select AudioLDM 2 model", value="cvssp/audioldm2"),
+        gr.Slider(minimum=1, maximum=1000, value=200, step=1, label="Steps"),
+        gr.Slider(minimum=1, maximum=60, value=10, step=1, label="Length (seconds)"),
+        gr.Slider(minimum=1, maximum=10, value=3, step=1, label="Waveforms number"),
+        gr.Radio(choices=["wav", "mp3", "ogg"], label="Select output format", value="wav", interactive=True),
+        gr.Button(value="Stop generation", interactive=True, variant="stop"),
+    ],
+    outputs=[
+        gr.Audio(label="Generated audio", type="filepath"),
+        gr.Textbox(label="Message", type="text"),
+    ],
+    title="NeuroSandboxWebUI (ALPHA) - AudioLDM 2",
+    description="This user interface allows you to enter any text and generate audio using AudioLDM 2. "
                 "You can select the model and customize the generation settings from the sliders. "
                 "Try it and see what happens!",
     allow_flagging="never",
@@ -1706,20 +2268,25 @@ system_interface = gr.Interface(
 )
 
 with gr.TabbedInterface(
-        [chat_interface, tts_stt_interface, translate_interface, gr.TabbedInterface([txt2img_interface, img2img_interface, depth2img_interface, upscale_interface, inpaint_interface, video_interface, extras_interface],
-        tab_names=["txt2img", "img2img", "depth2img", "upscale", "inpaint", "video", "extras"]),
-         audiocraft_interface, demucs_interface, model_downloader_interface, settings_interface, system_interface],
-        tab_names=["LLM", "TTS-STT", "LibreTranslate", "StableDiffusion", "AudioCraft", "Demucs", "ModelDownloader", "Settings", "System"]
+        [chat_interface, tts_stt_interface, bark_interface, translate_interface, gr.TabbedInterface([txt2img_interface, img2img_interface, depth2img_interface, upscale_interface, inpaint_interface, video_interface, cascade_interface, extras_interface],
+        tab_names=["txt2img", "img2img", "depth2img", "upscale", "inpaint", "video", "cascade", "extras"]),
+                    zeroscope2_interface, shap_e_interface, audiocraft_interface, audioldm2_interface, demucs_interface, model_downloader_interface, settings_interface, system_interface],
+        tab_names=["LLM", "TTS-STT", "SunoBark", "LibreTranslate", "StableDiffusion", "ZeroScope 2", "Shap-E", "AudioCraft", "AudioLDM 2", "Demucs", "ModelDownloader", "Settings", "System"]
 ) as app:
     chat_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
+    bark_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     txt2img_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     img2img_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     depth2img_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     upscale_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     inpaint_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     video_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
+    cascade_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     extras_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
+    zeroscope2_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
+    shap_e_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     audiocraft_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
+    audioldm2_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
 
     close_button = gr.Button("Close terminal")
     close_button.click(close_terminal, [], [], queue=False)
