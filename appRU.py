@@ -20,6 +20,7 @@ import trimesh
 from git import Repo
 import numpy as np
 import scipy
+import imageio
 from PIL import Image
 from tqdm import tqdm
 from llama_cpp import Llama
@@ -1350,9 +1351,12 @@ def generate_video_zeroscope2(prompt, video_to_enhance, strength, num_inference_
             enhance_pipe.enable_model_cpu_offload()
             enhance_pipe.enable_vae_slicing()
 
-            video = [frame.resize((1024, 576)) for frame in video_to_enhance]
+            video = imageio.get_reader(video_to_enhance)
+            frames = []
+            for frame in video:
+                frames.append(Image.fromarray(frame).resize((1024, 576)))
 
-            video_frames = enhance_pipe(prompt, video=video, strength=strength).frames
+            video_frames = enhance_pipe(prompt, video=frames, strength=strength).frames
 
             if stop_signal:
                 return None, "Generation stopped"
