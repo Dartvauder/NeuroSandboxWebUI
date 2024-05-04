@@ -38,7 +38,7 @@
 
 ## Функции:
 
-* Простая установка через install.bat (Только для Windows)
+* Простая установка через install.bat(Windows) или install.sh(Linux)
 * Вы можете использовать приложение через мобильное устройство в localhost (Через IPv4)
 * Гибкий и оптимизированный интерфейс (От Gradio)
 * Поддержка Transformers и llama.cpp моделей (LLM)
@@ -91,12 +91,12 @@
 ### Linux
 
 1) `Git clone https://github.com/Dartvauder/NeuroSandboxWebUI.git` в любое место (Без кириллицы)
-2) В терминале запустите `pip install --no-deps -r requirements.txt`, `pip install --no-deps -r requirements-cuda.txt`, `pip install --no-deps -r requirements-llama-cpp.txt` и дождитесь установки всех зависимостей
-3) После установки, в терминале запустите `py appEN.py` или `py appRU.py`
+2) В терминале запустите `./install.sh` и дождитесь установки всех зависимостей
+3) После установки, в терминале запустите `./start.sh`
 4) Дождитесь запуска приложения
 5) Теперь вы можете приступать к генерациям!
 
-Чтобы получить обновление, запустите `git pull`
+Чтобы получить обновление, запустите `./update.sh`
 
 ## Как использовать:
 

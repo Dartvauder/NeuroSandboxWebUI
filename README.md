@@ -38,7 +38,7 @@ The goal of the project - to create the easiest possible application to use neur
 
 ## Features:
 
-* Easy installation via install.bat (Windows only)
+* Easy installation via install.bat(Windows) or install.sh(Linux)
 * You can use the application via your mobile device in localhost (Via IPv4)
 * Flexible and optimized interface (By Gradio)
 * Support for Transformers and llama.cpp models (LLM)
@@ -91,12 +91,12 @@ To get update, run `update.bat`
 ### Linux
 
 1) `Git clone https://github.com/Dartvauder/NeuroSandboxWebUI.git` to any location
-2) In the terminal, run the `pip install --no-deps -r requirements.txt`, `pip install --no-deps -r requirements-cuda.txt`, `pip install --no-deps -r requirements-llama-cpp.txt` and wait for installation of all dependencies
-3) After installation, run `py appEN.py` or `py appRU.py`
+2) In the terminal, run the `./install.sh` and wait for installation of all dependencies
+3) After installation, run `./start.sh`
 4) Wait for the application to launch
 5) Now you can start generating!
 
-To get update, run `git pull`
+To get update, run `./update.sh`
 
 ## How to use:
 
