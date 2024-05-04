@@ -18,7 +18,7 @@
 
 ### LibreTranslate: ![4](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/c8c0e72c-44dc-443a-bd20-56c7872fd8d4)
 
-### StableDiffusion: ![5](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/824d087c-2008-4482-8b3c-431cc00b19fc)
+### StableDiffusion: ![5](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/b4c82e1a-94e8-42c7-a348-8beab068b227)
 
 ### ZeroScope 2: ![6](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/98ba05ab-70e3-4738-8263-26e0d86fefc7)
 
