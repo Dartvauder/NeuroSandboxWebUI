@@ -16,7 +16,7 @@ set /p choice=Enter number/Введите число:
 if "%choice%"=="1" (
     cls
     start /b py "%CURRENT_DIR%appEN.py"
-    timeout /t 90 > NUL
+    timeout /t 100 > NUL
     start http://localhost:7860
     goto end
 )
@@ -24,7 +24,7 @@ if "%choice%"=="1" (
 if "%choice%"=="2" (
     cls
     start /b py "%CURRENT_DIR%appRU.py"
-    timeout /t 90 > NUL
+    timeout /t 100 > NUL
     start http://localhost:7860
     goto end
 )
