@@ -14,7 +14,7 @@ import whisper
 from datetime import datetime
 import warnings
 import logging
-from diffusers import StableDiffusionPipeline, StableDiffusionXLPipeline, StableDiffusionImg2ImgPipeline, StableDiffusionDepth2ImgPipeline, AutoencoderKL, StableDiffusionLatentUpscalePipeline, StableDiffusionUpscalePipeline, StableDiffusionInpaintPipeline, StableVideoDiffusionPipeline, I2VGenXLPipeline, StableCascadePriorPipeline, StableCascadeDecoderPipeline, DiffusionPipeline, DPMSolverMultistepScheduler, ShapEPipeline, ShapEImg2ImgPipeline, AudioLDM2Pipeline
+from diffusers import StableDiffusionPipeline, StableDiffusionXLPipeline, StableDiffusionImg2ImgPipeline, StableDiffusionDepth2ImgPipeline, AutoencoderKL, StableDiffusionLatentUpscalePipeline, StableDiffusionUpscalePipeline, StableDiffusionInpaintPipeline, AnimateDiffPipeline, DDIMScheduler, MotionAdapter, StableVideoDiffusionPipeline, I2VGenXLPipeline, StableCascadePriorPipeline, StableCascadeDecoderPipeline, DiffusionPipeline, DPMSolverMultistepScheduler, ShapEPipeline, ShapEImg2ImgPipeline, AudioLDM2Pipeline
 from diffusers.utils import load_image, export_to_video, export_to_gif, export_to_ply
 import trimesh
 from git import Repo
@@ -1114,6 +1114,99 @@ def generate_image_inpaint(prompt, negative_prompt, init_image, mask_image, stab
         torch.cuda.empty_cache()
 
 
+def generate_animation_animatediff(prompt, negative_prompt, stable_diffusion_model_name, num_frames, num_inference_steps,
+                                   guidance_scale, width, height, stop_generation):
+    global stop_signal
+    stop_signal = False
+
+    if not stable_diffusion_model_name:
+        return None, "Please, select a StableDiffusion model!"
+
+    if ValueError:
+        return None, "You are using the wrong model. Use StableDiffusion 1.5 model"
+
+    stable_diffusion_model_path = os.path.join("inputs", "image", "sd_models", f"{stable_diffusion_model_name}.safetensors")
+
+    if not os.path.exists(stable_diffusion_model_path):
+        return None, f"StableDiffusion model not found: {stable_diffusion_model_path}"
+
+    motion_adapter_path = os.path.join("inputs", "image", "sd_models", "motion_adapter")
+    if not os.path.exists(motion_adapter_path):
+        print("Downloading motion adapter...")
+        os.makedirs(motion_adapter_path, exist_ok=True)
+        Repo.clone_from("https://huggingface.co/guoyww/animatediff-motion-adapter-v1-5-2", motion_adapter_path)
+        print("Motion adapter downloaded")
+
+    try:
+        adapter = MotionAdapter.from_pretrained(motion_adapter_path, torch_dtype=torch.float16)
+        original_config_file = "configs/sd/v1-inference.yaml"
+        stable_diffusion_model = StableDiffusionPipeline.from_single_file(
+            stable_diffusion_model_path,
+            torch_dtype=torch.float16,
+            variant="fp16",
+            original_config_file=original_config_file,
+            device_map="auto",
+        )
+
+        scheduler_config_path = "configs/sd/animatediff/scheduler_config.json"
+        scheduler = DDIMScheduler.from_pretrained(
+            scheduler_config_path,
+            subfolder="scheduler",
+            clip_sample=False,
+            timestep_spacing="linspace",
+            beta_schedule="linear",
+            steps_offset=1,
+        )
+
+        pipe = AnimateDiffPipeline(
+            unet=stable_diffusion_model.unet,
+            text_encoder=stable_diffusion_model.text_encoder,
+            vae=stable_diffusion_model.vae,
+            motion_adapter=adapter,
+            tokenizer=stable_diffusion_model.tokenizer,
+            feature_extractor=stable_diffusion_model.feature_extractor,
+            scheduler=scheduler,
+        )
+
+        pipe.enable_vae_slicing()
+        pipe.enable_model_cpu_offload()
+
+        output = pipe(
+            prompt=prompt,
+            negative_prompt=negative_prompt,
+            num_frames=num_frames,
+            guidance_scale=guidance_scale,
+            num_inference_steps=num_inference_steps,
+            generator=torch.Generator("cpu").manual_seed(-1),
+            width=width,
+            height=height,
+        )
+
+        if stop_signal:
+            return None, "Generation stopped"
+
+        frames = output.frames[0]
+
+        today = datetime.now().date()
+        output_dir = os.path.join('outputs', f"AnimateDiff_{today.strftime('%Y%m%d')}")
+        os.makedirs(output_dir, exist_ok=True)
+
+        gif_filename = f"animatediff_{datetime.now().strftime('%Y%m%d_%H%M%S')}.gif"
+        gif_path = os.path.join(output_dir, gif_filename)
+        export_to_gif(frames, gif_path)
+
+        return gif_path, None
+
+    finally:
+        try:
+            del pipe
+            del adapter
+            del stable_diffusion_model
+        except UnboundLocalError:
+            pass
+        torch.cuda.empty_cache()
+
+
 def generate_video(init_image, output_format, video_settings_html, motion_bucket_id, noise_aug_strength, fps, num_frames, decode_chunk_size,
                    iv2gen_xl_settings_html, prompt, negative_prompt, num_inference_steps, guidance_scale, stop_generation):
     global stop_signal
@@ -2043,6 +2136,30 @@ inpaint_interface = gr.Interface(
     allow_flagging="never",
 )
 
+animatediff_interface = gr.Interface(
+    fn=generate_animation_animatediff,
+    inputs=[
+        gr.Textbox(label="Enter your prompt"),
+        gr.Textbox(label="Enter your negative prompt", value=""),
+        gr.Dropdown(choices=stable_diffusion_models_list, label="Select StableDiffusion model", value=None),
+        gr.Slider(minimum=1, maximum=200, value=20, step=1, label="Frames"),
+        gr.Slider(minimum=1, maximum=100, value=30, step=1, label="Steps"),
+        gr.Slider(minimum=1.0, maximum=30.0, value=8, step=0.1, label="Guidance Scale"),
+        gr.Slider(minimum=256, maximum=1024, value=512, step=64, label="Width"),
+        gr.Slider(minimum=256, maximum=1024, value=512, step=64, label="Height"),
+        gr.Button(value="Stop generation", interactive=True, variant="stop"),
+    ],
+    outputs=[
+        gr.Image(label="Generated GIF", type="filepath"),
+        gr.Textbox(label="Message", type="text"),
+    ],
+    title="NeuroSandboxWebUI (ALPHA) - StableDiffusion (animatediff)",
+    description="This user interface allows you to enter a prompt and generate animated GIFs using AnimateDiff. "
+                "You can select the model and customize the generation settings from the sliders. "
+                "Try it and see what happens!",
+    allow_flagging="never",
+)
+
 video_interface = gr.Interface(
     fn=generate_video,
     inputs=[
@@ -2276,8 +2393,8 @@ system_interface = gr.Interface(
 )
 
 with gr.TabbedInterface(
-        [chat_interface, tts_stt_interface, bark_interface, translate_interface, gr.TabbedInterface([txt2img_interface, img2img_interface, depth2img_interface, upscale_interface, inpaint_interface, video_interface, cascade_interface, extras_interface],
-        tab_names=["txt2img", "img2img", "depth2img", "upscale", "inpaint", "video", "cascade", "extras"]),
+        [chat_interface, tts_stt_interface, bark_interface, translate_interface, gr.TabbedInterface([txt2img_interface, img2img_interface, depth2img_interface, upscale_interface, inpaint_interface, animatediff_interface, video_interface, cascade_interface, extras_interface],
+        tab_names=["txt2img", "img2img", "depth2img", "upscale", "inpaint", "animatediff", "video", "cascade", "extras"]),
                     zeroscope2_interface, shap_e_interface, audiocraft_interface, audioldm2_interface, demucs_interface, model_downloader_interface, settings_interface, system_interface],
         tab_names=["LLM", "TTS-STT", "SunoBark", "LibreTranslate", "StableDiffusion", "ZeroScope 2", "Shap-E", "AudioCraft", "AudioLDM 2", "Demucs", "ModelDownloader", "Settings", "System"]
 ) as app:
@@ -2288,6 +2405,7 @@ with gr.TabbedInterface(
     depth2img_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     upscale_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     inpaint_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
+    animatediff_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     video_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     cascade_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     extras_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
