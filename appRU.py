@@ -654,11 +654,16 @@ def generate_bark_audio(text, voice_preset, max_length, output_format, stop_gene
         audio_path = os.path.join(audio_dir, audio_filename)
 
         if output_format == "mp3":
-            scipy.io.wavfile.write(audio_path, 24000, audio_array)
+            scipy.io.wavfile.write(audio_path, 16000, audio_array)
+            subprocess.run(f"ffmpeg -i {audio_path} -b:a 192k {audio_path[:-4]}.mp3", shell=True, check=True)
+            audio_path = f"{audio_path[:-4]}.mp3"
         elif output_format == "ogg":
-            scipy.io.wavfile.write(audio_path, 24000, audio_array)
+            scipy.io.wavfile.write(audio_path, 16000, audio_array)
+            subprocess.run(f"ffmpeg -i {audio_path} -c:a libvorbis -qscale:a 5 {audio_path[:-4]}.ogg", shell=True,
+                           check=True)
+            audio_path = f"{audio_path[:-4]}.ogg"
         else:
-            sf.write(audio_path, audio_array, 24000)
+            sf.write(audio_path, audio_array, 16000)
 
         return audio_path, None
 
@@ -1604,8 +1609,13 @@ def generate_audio_audioldm2(prompt, negative_prompt, model_name, num_inference_
 
         if output_format == "mp3":
             scipy.io.wavfile.write(audio_path, rate=16000, data=audio[0])
+            subprocess.run(f"ffmpeg -i {audio_path} -b:a 192k {audio_path[:-4]}.mp3", shell=True, check=True)
+            audio_path = f"{audio_path[:-4]}.mp3"
         elif output_format == "ogg":
             scipy.io.wavfile.write(audio_path, rate=16000, data=audio[0])
+            subprocess.run(f"ffmpeg -i {audio_path} -c:a libvorbis -qscale:a 5 {audio_path[:-4]}.ogg", shell=True,
+                           check=True)
+            audio_path = f"{audio_path[:-4]}.ogg"
         else:
             scipy.io.wavfile.write(audio_path, rate=16000, data=audio[0])
 
@@ -1651,9 +1661,13 @@ def demucs_separate(audio_file, output_format="wav"):
         if output_format == "mp3":
             vocal_output = os.path.join(separate_dir, "vocal.mp3")
             instrumental_output = os.path.join(separate_dir, "instrumental.mp3")
+            subprocess.run(f"ffmpeg -i {vocal_file} -b:a 192k {vocal_output}", shell=True, check=True)
+            subprocess.run(f"ffmpeg -i {instrumental_file} -b:a 192k {instrumental_output}", shell=True, check=True)
         elif output_format == "ogg":
             vocal_output = os.path.join(separate_dir, "vocal.ogg")
             instrumental_output = os.path.join(separate_dir, "instrumental.ogg")
+            subprocess.run(f"ffmpeg -i {vocal_file} -c:a libvorbis -qscale:a 5 {vocal_output}", shell=True, check=True)
+            subprocess.run(f"ffmpeg -i {instrumental_file} -c:a libvorbis -qscale:a 5 {instrumental_output}", shell=True, check=True)
         else:
             vocal_output = vocal_file
             instrumental_output = instrumental_file
