@@ -7,7 +7,7 @@ py -m venv "%CURRENT_DIR%venv"
 call "%CURRENT_DIR%venv\Scripts\activate.bat"
 cls
 
-echo Upgrading pip and setuptools...
+echo Upgrading pip and setuptools.../Обновление pip и setuptools...
 py -m pip install --upgrade pip setuptools
 cls
 
