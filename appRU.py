@@ -1609,13 +1609,8 @@ def generate_audio_audioldm2(prompt, negative_prompt, model_name, num_inference_
 
         if output_format == "mp3":
             scipy.io.wavfile.write(audio_path, rate=16000, data=audio[0])
-            subprocess.run(f"ffmpeg -i {audio_path} -b:a 192k {audio_path[:-4]}.mp3", shell=True, check=True)
-            audio_path = f"{audio_path[:-4]}.mp3"
         elif output_format == "ogg":
             scipy.io.wavfile.write(audio_path, rate=16000, data=audio[0])
-            subprocess.run(f"ffmpeg -i {audio_path} -c:a libvorbis -qscale:a 5 {audio_path[:-4]}.ogg", shell=True,
-                           check=True)
-            audio_path = f"{audio_path[:-4]}.ogg"
         else:
             scipy.io.wavfile.write(audio_path, rate=16000, data=audio[0])
 
