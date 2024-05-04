@@ -52,9 +52,9 @@ The goal of the project - to create the easiest possible application to use neur
 * Support ZeroScope 2
 * Support SunoBark
 * Support Demucs
-* Support Rembg
+* Support Rembg (For StableDiffusion)
 * Support Shap-E
-* Support Moondream 2 (For LLM)
+* Support multimodal (Moondream 2 for LLM)
 * Support WebSearch (For LLM with GoogleSearch)
 * Model settings inside the interface
 * ModelDownloader (For LLM and StableDiffusion)
