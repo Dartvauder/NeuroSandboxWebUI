@@ -52,9 +52,9 @@
 * Поддержка ZeroScope 2
 * Поддержка SunoBark
 * Поддержка Demucs
-* Поддержка Rembg
+* Поддержка Rembg (Для StableDiffusion)
 * Поддержка Shap-E
-* Поддержка Moondream 2 (Для LLM)
+* Поддержка multimodal (Moondream 2 для LLM)
 * Поддержка WebSearch (Для LLM через googleSearch)
 * Настройки моделей внутри интерфейса
 * ModelDownloader (Для LLM и StableDiffusion)
