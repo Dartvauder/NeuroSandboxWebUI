@@ -6,13 +6,15 @@
 
 ## Описание:
 
-Простой и удобный интерфейс для использования различных моделей нейронных сетей. Вы можете общаться с LLM, используя текстовый или голосовой ввод, использовать StableDiffusion для генерации изображений и видео, Shap-E для генерации 3Д обьектов, AudioCraft для генерации музыки и аудио, CoquiTTS для преобразования текста в речь, OpenAI-Whisper для преобразования речи в текст, LibreTranslate для перевода текста и Demucs для сепарации аудио файлов. Также вы можете скачать модели LLM и StableDiffusion, изменить настройки приложения внутри интерфейса и проверить датчики системы
+Простой и удобный интерфейс для использования различных моделей нейронных сетей. Вы можете общаться с LLM и Moondream2, используя текстовый или голосовой ввод и загрузив изображение, использовать StableDiffusion для генерации изображений, ZeroScope 2 для генерации видео, Shap-E для генерации 3Д обьектов, AudioCraft и AudioLDM 2 для генерации музыки и аудио, CoquiTTS и SunoBark для преобразования текста в речь, OpenAI-Whisper для преобразования речи в текст, LibreTranslate для перевода текста и Demucs для сепарации аудио файлов. Также вы можете скачать модели LLM и StableDiffusion, изменить настройки приложения внутри интерфейса и проверить датчики системы
 
 Цель проекта — создать максимально простое приложение для использования нейросетевых моделей
 
 ### LLM: 
 
 ### TTS-STT: 
+
+### SunoBark:
 
 ### LibreTranslate: 
 
@@ -26,9 +28,13 @@
  #### cascade: 
  #### extras: 
 
+### ZeroScope 2: 
+
 ### Shap-E: 
  
 ### AudioCraft: 
+
+### AudioLDM 2: 
 
 ### Demucs: 
 
@@ -46,15 +52,18 @@
 * Поддержка Transformers и llama.cpp моделей (LLM)
 * Поддержка diffusers и safetensors моделей (StableDiffusion) - Вкладки txt2img, img2img, depth2img, upscale, inpaint, video, cascade и extras
 * Поддержка AudioCraft (Модели: musicgen, audiogen и magnet)
+* Поддержка AudioLDM 2
 * Поддержка TTS и Whisper моделей (Для LLM и TTS-STT)
 * Поддержка Lora, Textual inversion (embedding), Vae, Inpaint, Depth, Upscale и Video моделей (Для StableDiffusion)
 * Поддержка Multiband Diffusion модели (Для AudioCraft)
 * Поддержка LibreTranslate (Локальный API)
+* Поддержка ZeroScope 2
+* Поддержка SunoBark
 * Поддержка Demucs
 * Поддержка Rembg
 * Поддержка Shap-E
-* Поддержка multimodal (Для LLM)
-* Поддержка WebSearch (DuckDuckGo)
+* Поддержка Moondream 2 (Для LLM)
+* Поддержка WebSearch (Для LLM через googleSearch)
 * Настройки моделей внутри интерфейса
 * ModelDownloader (Для LLM и StableDiffusion)
 * Настройки приложения
@@ -90,7 +99,7 @@
 ### Linux
 
 1) `Git clone https://github.com/Dartvauder/NeuroSandboxWebUI.git` в любое место (Без кириллицы)
-2) В терминале запустите `pip install --no-deps -r requirements.txt` и дождитесь установки всех зависимостей
+2) В терминале запустите `pip install --no-deps -r requirements.txt`, `pip install --no-deps -r requirements-cuda.txt`, `pip install --no-deps -r requirements-llama-cpp.txt` и дождитесь установки всех зависимостей
 3) После установки, в терминале запустите `py appEN.py` или `py appRU.py`
 4) Дождитесь запуска приложения
 5) Теперь вы можете приступать к генерациям!
@@ -99,7 +108,7 @@
 
 ## Как использовать:
 
-#### Интерфейс имеет десять вкладок: LLM, TTS-STT, LibreTranslate, StableDiffusion, Shap-E, AudioCraft, Demucs, ModelDownloader, Settings и System. Выберите ту которая вам нужна и следуйте инструкциям ниже
+#### Интерфейс имеет Тринадцать вкладок: LLM, TTS-STT, SunoBark, LibreTranslate, StableDiffusion, ZeroScope 2, Shap-E, AudioCraft, AudioLDM 2, Demucs, ModelDownloader, Settings и System. Выберите ту которая вам нужна и следуйте инструкциям ниже
 
 ### LLM:
 
@@ -109,7 +118,7 @@
 4) Настройте модель по нужным вам параметрам
 5) Введите (или произнесите) ваш запрос
 6) Нажмите кнопку `Submit` чтобы получить сгенерированный текстовый и аудио ответ
-#### Дополнительно: вы можете включить режим `TTS`, выбрать `голос` и `язык` необходимые для получения аудио ответа
+#### Дополнительно: вы можете включить режим `TTS`, выбрать `голос` и `язык` необходимые для получения аудио ответа. Так же вы можете включить `multimodal` и загрузить изображение чтобы получить его описание
 #### Образцы голоса = *inputs/audio/voices*
 #### Голос должен быть предварительно обработан (22050 кГц, монозвук, WAV)
 
@@ -120,6 +129,12 @@
 3) Нажмите кнопку `Submit`, чтобы получить сгенерированный текстовый и аудио ответ
 #### Образцы голоса = *inputs/audio/voices*
 #### Голос должен быть предварительно обработан (22050 кГц, монозвук, WAV)
+
+### SunoBark:
+
+1) Введите ваш запрос
+2) Настройте модель по нужным вам параметрам
+3) Нажмите кнопку `Submit` чтобы получить сгенерированный аудио ответ
 
 ### LibreTranslate:
 
@@ -189,15 +204,21 @@
 
 #### cascade:
 
-1) Введите запрос
+1) Введите ваш запрос
 2) Настройте модель по нужным вам параметрам
-3) Нажмите кнопку `Отправить`, чтобы получить сгенерированное изображение 
+3) Нажмите кнопку `Submit`, чтобы получить сгенерированное изображение 
 
 #### extras:
 
 1) Загрузите исходное изображение
 2) Выберите нужные вам опции
 3) Нажмите кнопку `Submit`, чтобы получить измененное изображение
+
+### ZeroScope 2:
+
+1) Введите ваш запрос
+2) Настройте модель по нужным вам параметрам
+3) Нажмите кнопку `Submit`, чтобы получить сгенерированное видео
 
 ### Shap-E:
 
@@ -212,13 +233,20 @@
 3) Настройте модель по нужным вам параметрам
 4) Введите ваш запрос
 5) (Дополнительно) загрузите исходный звук, если вы используете модель `melody`
-6) Нажмите кнопку `Submit`, чтобы получить сгенерированный звук
+6) Нажмите кнопку `Submit`, чтобы получить сгенерированное аудио
 #### Дополнительно: вы можете включить `multiband diffusion`, чтобы улучшить генерируемый звук
+
+### AudioLDM 2:
+
+1) Выберите модель из выпадающего списка
+2) Настройте модель по нужным вам параметрам
+3) Введите ваш запрос
+4) Нажмите кнопку `Submit`, чтобы получить сгенерированное аудио
 
 ### Demucs:
 
 1) Загрузите исходный звук для сепарации
-2) Нажмите кнопку `Submit`, чтобы получить сепарированный звук
+2) Нажмите кнопку `Submit`, чтобы получить сепарированное аудио
 
 ### ModelDownloader:
 
@@ -232,11 +260,11 @@
 
 ### System: 
 
-* Здесь вы можете увидеть показатели датчиков вашего компьютера
+* Здесь вы можете увидеть показатели датчиков вашего компьютера нажав на кнопку `Submit`
 
 ### Общее:
 
-1) История чата, сгенерированные изображения и сгенерированные аудио сохраняются в папке *outputs*
+1) Все генерации сохраняются в папке *outputs*
 2) Вы также можете нажать кнопку `Clear`, чтобы сбросить ваш выбор
 3) Чтобы остановить процесс генерации, нажмите кнопку `Stop generation`
 4) Вы также можете выключить приложение с помощью кнопки `Close terminal`
@@ -246,8 +274,8 @@
 
 * LLM модели можно взять с сайта [HuggingFace](https://huggingface.co/models) или из внутреннего интерфейса ModelDownloader
 * Модели StableDiffusion, vae, inpaint, embedding и lora можно взять с сайта [CivitAI](https://civitai.com/models) или из внутреннего интерфейса ModelDownloader
-* Модели AudioCraft загружаются автоматически в папку *inputs*, когда вы выбираете модель и нажимаете кнопку `submit`
-* TTS, Whisper, BLIP-2, Upscale, Depth, Videos, Cascade, Rembg, Shap-E, Demucs и Multiband diffusion модели скачиваються автоматически в папку *inputs* при их использовании
+* Модели AudioCraft и AudioLDM 2 загружаются автоматически в папку *inputs*, когда вы выбираете модель и нажимаете кнопку `submit`
+* TTS, Whisper, SunoBark, MoonDream2, Upscale, Depth, Videos, Cascade, Rembg, Shap-E, Demucs, ZeroScope и Multiband diffusion модели скачиваються автоматически в папку *inputs* при их использовании
 * Вы можете использовать голоса откуда угодно. Запишите свой или возьмите запись из интернета. Или просто используйте те, которые уже есть в проекте. Главное, чтобы оно было предварительно обработано!
 
 ## Дорожная карта
@@ -270,6 +298,7 @@
 * `diffusers` - https://github.com/huggingface/diffusers
 * `llama.cpp-python` - https://github.com/abetlen/llama-cpp-python
 * `audiocraft` - https://github.com/facebookresearch/audiocraft
+* `AudioLDM2` - https://github.com/haoheliu/AudioLDM2
 * `xformers` - https://github.com/facebookresearch/xformers
 * `demucs` - https://github.com/facebookresearch/demucs
 * `libretranslatepy` - https://github.com/argosopentech/LibreTranslate-py
@@ -294,7 +323,11 @@
 * [Rembg](https://github.com/danielgatis/rembg/blob/main/LICENSE.txt)
 * [Shap-E](https://github.com/openai/shap-e/blob/main/LICENSE)
 * [AudioCraft](https://github.com/facebookresearch/audiocraft/blob/main/LICENSE)
+* [AudioLDM2](https://github.com/haoheliu/AudioLDM2/blob/main/LICENSE)
 * [Demucs](https://github.com/facebookresearch/demucs/blob/main/LICENSE)
+* [SunoBark](https://github.com/suno-ai/bark/blob/main/LICENSE)
+* [Moondream2](https://github.com/vikhyat/moondream/blob/main/LICENSE)
+* [ZeroScope2](https://spdx.org/licenses/CC-BY-NC-4.0)
 
 ## Пожертвование
 
