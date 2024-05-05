@@ -233,5 +233,6 @@ wasabi==1.1.2
 weasel==0.3.4
 websockets==11.0.3
 Werkzeug==3.0.2
+xformers==0.0.26.post1
 yarl==1.9.4
 zipp==3.18.1
