@@ -614,7 +614,7 @@ def generate_tts_stt(text, audio, tts_settings_html, speaker_wav, language, tts_
     return tts_output, stt_output
 
 
-def generate_bark_audio(text, voice_preset, max_length, output_format, stop_generation):
+def generate_bark_audio(text, voice_preset, max_length, fine_temperature, coarse_temperature, output_format, stop_generation):
     global stop_signal
     stop_signal = False
 
@@ -641,7 +641,7 @@ def generate_bark_audio(text, voice_preset, max_length, output_format, stop_gene
         else:
             inputs = processor(text, return_tensors="pt")
 
-        audio_array = model.generate(**inputs, max_length=max_length, do_sample=True, fine_temperature=0.4, coarse_temperature=0.8)
+        audio_array = model.generate(**inputs, max_length=max_length, do_sample=True, fine_temperature=fine_temperature, coarse_temperature=coarse_temperature)
         model.enable_cpu_offload()
 
         if stop_signal:
@@ -1967,7 +1967,9 @@ bark_interface = gr.Interface(
     inputs=[
         gr.Textbox(label="Enter text for the request"),
         gr.Dropdown(choices=[None, "v2/en_speaker_1", "v2/ru_speaker_1"], label="Select voice preset", value=None),
-        gr.Slider(minimum=1, maximum=100, value=10, step=1, label="Max length"),
+        gr.Slider(minimum=1, maximum=1000, value=100, step=1, label="Max length"),
+        gr.Slider(minimum=0.1, maximum=2.0, value=0.4, step=0.1, label="Fine temperature"),
+        gr.Slider(minimum=0.1, maximum=2.0, value=0.8, step=0.1, label="Coarse temperature"),
         gr.Radio(choices=["wav", "mp3", "ogg"], label="Select output format", value="wav", interactive=True),
         gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
