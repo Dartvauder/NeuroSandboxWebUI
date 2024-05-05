@@ -70,7 +70,6 @@
 - C+ компилятор
   - Windows: [VisualStudio](https://visualstudio.microsoft.com/ru/)
   - Linux: [GCC](https://gcc.gnu.org/)
-#
 
 ## Минимальные системные требования:
 
