@@ -641,7 +641,7 @@ def generate_bark_audio(text, voice_preset, max_length, output_format, stop_gene
         else:
             inputs = processor(text, return_tensors="pt")
 
-        audio_array = model.generate(**inputs, max_length=max_length, do_sample=True)
+        audio_array = model.generate(**inputs, max_length=max_length, do_sample=True, fine_temperature=0.4, coarse_temperature=0.8)
         model.enable_cpu_offload()
 
         if stop_signal:
@@ -657,11 +657,11 @@ def generate_bark_audio(text, voice_preset, max_length, output_format, stop_gene
         audio_path = os.path.join(audio_dir, audio_filename)
 
         if output_format == "mp3":
-            sf.write(audio_path, audio_array, 16000)
+            sf.write(audio_path, audio_array, 24000)
         elif output_format == "ogg":
-            sf.write(audio_path, audio_array, 16000)
+            sf.write(audio_path, audio_array, 24000)
         else:
-            sf.write(audio_path, audio_array, 16000)
+            sf.write(audio_path, audio_array, 24000)
 
         return audio_path, None
 
