@@ -68,8 +68,8 @@ The goal of the project - to create the easiest possible application to use neur
 * [CUDA](https://developer.nvidia.com/cuda-downloads) (12.1)
 * [FFMPEG](https://ffmpeg.org/download.html)
 - C+ compiler
-      - Windows: [VisualStudio](https://visualstudio.microsoft.com/ru/)
-      - Linux: [GCC](https://gcc.gnu.org/)
+  - Windows: [VisualStudio](https://visualstudio.microsoft.com/ru/)
+  - Linux: [GCC](https://gcc.gnu.org/)
 ## Minimum System Requirements:
 
 * System: Windows or Linux
