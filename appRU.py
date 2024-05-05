@@ -17,6 +17,8 @@ import logging
 from diffusers import StableDiffusionPipeline, StableDiffusionXLPipeline, StableDiffusionImg2ImgPipeline, StableDiffusionDepth2ImgPipeline, AutoencoderKL, StableDiffusionLatentUpscalePipeline, StableDiffusionUpscalePipeline, StableDiffusionInpaintPipeline, AnimateDiffPipeline, DDIMScheduler, MotionAdapter, StableVideoDiffusionPipeline, I2VGenXLPipeline, StableCascadePriorPipeline, StableCascadeDecoderPipeline, DiffusionPipeline, DPMSolverMultistepScheduler, ShapEPipeline, ShapEImg2ImgPipeline, AudioLDM2Pipeline
 from diffusers.utils import load_image, export_to_video, export_to_gif, export_to_ply
 import trimesh
+from tsr.system import TSR
+from tsr.utils import to_gradio_3d_orientation, resize_foreground
 from git import Repo
 import numpy as np
 import scipy
@@ -1497,6 +1499,66 @@ def generate_video_zeroscope2(prompt, video_to_enhance, strength, num_inference_
             torch.cuda.empty_cache()
 
 
+def generate_3d_triposr(image, mc_resolution, foreground_ratio=0.85, output_format="obj", stop_generation=None):
+    global stop_signal
+    stop_signal = False
+
+    model_path = os.path.join("inputs", "image", "triposr")
+
+    if not os.path.exists(model_path):
+        print("Downloading TripoSR model...")
+        os.makedirs(model_path, exist_ok=True)
+        Repo.clone_from("https://huggingface.co/stabilityai/TripoSR", model_path)
+        print("TripoSR model downloaded")
+
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+
+    model = TSR.from_pretrained(
+        model_path,
+        config_name="config.yaml",
+        weight_name="model.ckpt",
+    )
+
+    model.renderer.set_chunk_size(8192)
+    model.to(device)
+
+    try:
+        def fill_background(image):
+            image = np.array(image).astype(np.float32) / 255.0
+            image = image[:, :, :3] * image[:, :, 3:4] + (1 - image[:, :, 3:4]) * 0.5
+            image = Image.fromarray((image * 255.0).astype(np.uint8))
+            return image
+
+        image_without_background = remove(image)
+        image_without_background = resize_foreground(image_without_background, foreground_ratio)
+        image_without_background = fill_background(image_without_background)
+
+        processed_image = model.image_processor(image_without_background, model.cfg.cond_image_size)[0].to(device)
+
+        scene_codes = model(processed_image, device=device)
+        mesh = model.extract_mesh(scene_codes, resolution=mc_resolution)[0]
+        mesh = to_gradio_3d_orientation(mesh)
+
+        today = datetime.now().date()
+        output_dir = os.path.join('outputs', f"TripoSR_{today.strftime('%Y%m%d')}")
+        os.makedirs(output_dir, exist_ok=True)
+
+        if output_format == "obj":
+            output_filename = f"3d_object_{datetime.now().strftime('%Y%m%d_%H%M%S')}.obj"
+            output_path = os.path.join(output_dir, output_filename)
+            mesh.export(output_path)
+        else:
+            output_filename = f"3d_object_{datetime.now().strftime('%Y%m%d_%H%M%S')}.glb"
+            output_path = os.path.join(output_dir, output_filename)
+            mesh.export(output_path)
+
+        return output_path, None
+
+    finally:
+        del model
+        torch.cuda.empty_cache()
+
+
 def generate_3d(prompt, init_image, num_inference_steps, guidance_scale, frame_size, stop_generation):
     global stop_signal
     stop_signal = False
@@ -2261,6 +2323,26 @@ zeroscope2_interface = gr.Interface(
     allow_flagging="never",
 )
 
+triposr_interface = gr.Interface(
+    fn=generate_3d_triposr,
+    inputs=[
+        gr.Image(label="Input image", type="pil"),
+        gr.Slider(minimum=32, maximum=320, value=256, step=32, label="Marching Cubes Resolution"),
+        gr.Slider(minimum=0.5, maximum=1.0, value=0.85, step=0.05, label="Foreground Ratio"),
+        gr.Radio(choices=["obj", "glb"], label="Select output format", value="obj", interactive=True),
+        gr.Button(value="Stop generation", interactive=True, variant="stop"),
+    ],
+    outputs=[
+        gr.Model3D(label="Generated 3D object"),
+        gr.Textbox(label="Message", type="text"),
+    ],
+    title="NeuroSandboxWebUI (ALPHA) - TripoSR",
+    description="This user interface allows you to generate 3D objects using TripoSR. "
+                "Upload an image and customize the generation settings. "
+                "Try it and see what happens!",
+    allow_flagging="never",
+)
+
 shap_e_interface = gr.Interface(
     fn=generate_3d,
     inputs=[
@@ -2399,8 +2481,8 @@ system_interface = gr.Interface(
 with gr.TabbedInterface(
         [chat_interface, tts_stt_interface, bark_interface, translate_interface, gr.TabbedInterface([txt2img_interface, img2img_interface, depth2img_interface, upscale_interface, inpaint_interface, animatediff_interface, video_interface, cascade_interface, extras_interface],
         tab_names=["txt2img", "img2img", "depth2img", "upscale", "inpaint", "animatediff", "video", "cascade", "extras"]),
-                    zeroscope2_interface, shap_e_interface, audiocraft_interface, audioldm2_interface, demucs_interface, model_downloader_interface, settings_interface, system_interface],
-        tab_names=["LLM", "TTS-STT", "SunoBark", "LibreTranslate", "StableDiffusion", "ZeroScope 2", "Shap-E", "AudioCraft", "AudioLDM 2", "Demucs", "ModelDownloader", "Settings", "System"]
+                    zeroscope2_interface, triposr_interface, shap_e_interface, audiocraft_interface, audioldm2_interface, demucs_interface, model_downloader_interface, settings_interface, system_interface],
+        tab_names=["LLM", "TTS-STT", "SunoBark", "LibreTranslate", "StableDiffusion", "ZeroScope 2", "TripoSR", "Shap-E", "AudioCraft", "AudioLDM 2", "Demucs", "ModelDownloader", "Settings", "System"]
 ) as app:
     chat_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     bark_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
@@ -2414,6 +2496,7 @@ with gr.TabbedInterface(
     cascade_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     extras_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     zeroscope2_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
+    triposr_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     shap_e_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     audiocraft_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     audioldm2_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
