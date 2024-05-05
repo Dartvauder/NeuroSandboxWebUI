@@ -6,7 +6,7 @@
 
 ## Description:
 
-A simple and convenient interface for using various neural network models. You can communicate with LLM and Moondream2 using text, voice and image input, use StableDiffusion to generate images, ZeroScope 2 to generate videos, Shap-E to generate 3D objects, AudioCraft and AudioLDM 2 to generate music and audio, CoquiTTS and SunoBark for text-to-speech, OpenAI-Whisper for speech-to-text, LibreTranslate for text translation and Demucs for audio file separation. You can also download the LLM and StableDiffusion models, change the application settings inside the interface and check system sensors
+A simple and convenient interface for using various neural network models. You can communicate with LLM and Moondream2 using text, voice and image input, use StableDiffusion to generate images, ZeroScope 2 to generate videos, TripoSR and Shap-E to generate 3D objects, AudioCraft and AudioLDM 2 to generate music and audio, CoquiTTS and SunoBark for text-to-speech, OpenAI-Whisper for speech-to-text, LibreTranslate for text translation and Demucs for audio file separation. You can also download the LLM and StableDiffusion models, change the application settings inside the interface and check system sensors
 
 The goal of the project - to create the easiest possible application to use neural network models
 
@@ -21,6 +21,8 @@ The goal of the project - to create the easiest possible application to use neur
 ### StableDiffusion: ![5](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/b4c82e1a-94e8-42c7-a348-8beab068b227)
 
 ### ZeroScope 2: ![6](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/98ba05ab-70e3-4738-8263-26e0d86fefc7)
+
+### TripoSR: 
 
 ### Shap-E: ![7](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/2daa2c45-b2e0-492b-a3ff-cf2f793ce7b8)
  
@@ -54,6 +56,7 @@ The goal of the project - to create the easiest possible application to use neur
 * Support Demucs
 * Support Rembg (For StableDiffusion)
 * Support Shap-E
+* Support TripoSR
 * Support multimodal (Moondream 2 for LLM)
 * Support WebSearch (For LLM with GoogleSearch)
 * Model settings inside the interface
@@ -103,7 +106,7 @@ To get update, run `./update.sh`
 
 ## How to use:
 
-#### Interface has thirteen tabs: LLM, TTS-STT, SunoBark, LibreTranslate, StableDiffusion, ZeroScope 2, Shap-E, AudioCraft, AudioLDM 2, Demucs, ModelDownloader, Settings and System. Select the one you need and follow the instructions below 
+#### Interface has fourteen tabs: LLM, TTS-STT, SunoBark, LibreTranslate, StableDiffusion, ZeroScope 2, TripoSR, Shap-E, AudioCraft, AudioLDM 2, Demucs, ModelDownloader, Settings and System. Select the one you need and follow the instructions below 
 
 ### LLM:
 
@@ -222,6 +225,12 @@ To get update, run `./update.sh`
 2) Set up the model according to the parameters you need
 3) Click the `Submit` button to get the generated video
 
+### TripoSR:
+
+1) Upload the initial image
+2) Set up the model according to the parameters you need
+3) Click the `Submit` button to get the generated 3D object
+
 ### Shap-E:
 
 1) Enter your request or upload the initial image
@@ -277,7 +286,7 @@ To get update, run `./update.sh`
 * LLM models can be taken from [HuggingFace](https://huggingface.co/models) or from ModelDownloader inside interface 
 * StableDiffusion, vae, inpaint, embedding and lora models can be taken from [CivitAI](https://civitai.com/models) or from ModelDownloader inside interface
 * AudioCraft and AudioLDM 2 models are downloads automatically in *inputs* folder, when you select a model and press the submit button
-* TTS, Whisper, SunoBark, MoonDream2, Upscale, Depth, AnimateDiff, Videos, Cascade, Rembg, Shap-E, Demucs, ZeroScope and Multiband diffusion models are downloads automatically in *inputs* folder when are they used 
+* TTS, Whisper, SunoBark, MoonDream2, Upscale, Depth, AnimateDiff, Videos, Cascade, Rembg, TripoSR, Shap-E, Demucs, ZeroScope and Multiband diffusion models are downloads automatically in *inputs* folder when are they used 
 * You can take voices anywhere. Record yours or take a recording from the Internet. Or just use those that are already in the project. The main thing is that it is pre-processed!
 
 ## Roadmap
@@ -307,6 +316,7 @@ Thank you very much to these projects for allowing me to create my application:
 * `rembg` - https://github.com/danielgatis/rembg
 * `trimesh` - https://github.com/mikedh/trimesh
 * `googlesearch-python` - https://github.com/Nv7-GitHub/googlesearch
+* `torchmcubes` - https://github.com/tatsy/torchmcubes
 
 ## Third Party Licenses:
 
@@ -331,6 +341,7 @@ Thank you very much to these projects for allowing me to create my application:
 * [SunoBark](https://github.com/suno-ai/bark/blob/main/LICENSE)
 * [Moondream2](https://github.com/vikhyat/moondream/blob/main/LICENSE)
 * [ZeroScope2](https://spdx.org/licenses/CC-BY-NC-4.0)
+* [TripoSR](https://github.com/VAST-AI-Research/TripoSR/blob/main/LICENSE)
 
 ## Donation
 
