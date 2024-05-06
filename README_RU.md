@@ -10,33 +10,33 @@
 
 Цель проекта — создать максимально простое приложение для использования нейросетевых моделей
 
-### LLM: ![1](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/2e7c1e23-80a9-4937-8076-a62f256e8d12)
+### LLM: 
 
-### TTS-STT: ![2](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/0b94bb40-4d38-4ebd-9f1e-86931614ee32)
+### TTS-STT: 
 
-### SunoBark: ![3](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/01a8b3cb-0d62-49ad-88b0-fe3fe68f98ce)
+### SunoBark: 
 
-### LibreTranslate: ![4](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/c8c0e72c-44dc-443a-bd20-56c7872fd8d4)
+### LibreTranslate: 
 
-### StableDiffusion: ![5](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/b4c82e1a-94e8-42c7-a348-8beab068b227)
+### StableDiffusion: 
 
-### ZeroScope 2: ![6](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/98ba05ab-70e3-4738-8263-26e0d86fefc7)
+### ZeroScope 2: 
 
 ### TripoSR: 
 
-### Shap-E: ![7](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/2daa2c45-b2e0-492b-a3ff-cf2f793ce7b8)
+### Shap-E: 
  
-### AudioCraft: ![8](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/13090c30-2ac8-4fa5-bcdf-37cbc9ffbdb1)
+### AudioCraft: 
 
-### AudioLDM 2: ![9](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/d0a2fe77-6933-4ac7-9434-dcce5220b4d0)
+### AudioLDM 2: 
 
-### Demucs: ![10](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/d6e3d040-8d03-4107-a473-4994be468a9e)
+### Demucs: 
 
-### ModelDownloader: ![11](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/7a940624-cc5f-43ab-9229-e07e49cdf294)
+### ModelDownloader: 
 
-### Settings: ![12](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/439481be-3b61-4bf8-825b-0ae2d0244c1e)
+### Settings: 
 
-### System: ![13](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/a2e56450-31e6-44c6-9be0-388515800bbb)
+### System: 
 
 ## Функции:
 
@@ -57,6 +57,7 @@
 * Поддержка Rembg (Для StableDiffusion)
 * Поддержка Shap-E
 * Поддержка TripoSR
+* Поддержка GLIGEN
 * Поддержка multimodal (Moondream 2 для LLM)
 * Поддержка WebSearch (Для LLM через googleSearch)
 * Настройки моделей внутри интерфейса
@@ -141,7 +142,7 @@
 2) (Дополнительно) Вы можете сохранить историю перевода включив соответствующую кнопку
 3) Нажмите кнопку `Submit`, чтобы получить перевод
 
-### StableDiffusion - имеет девять под-вкладок:
+### StableDiffusion - имеет десять под-вкладок:
 
 #### txt2img:
 
@@ -193,6 +194,13 @@
 8) Нажмите кнопку `Submit`, чтобы получить измененное изображение
 #### Дополнительно: вы можете выбрать свою модель `vae`
 #### vae = *inputs/image/sd_models/vae*
+
+#### gligen:
+
+1) Сначала загрузите ваши модели в папку: *inputs/image/sd_models/inpaint*
+2) Выберите вашу модель из выпадающего списка
+3) Выберите тип модели (`SD`, `SD2` или `SDXL`)
+4) Настройте модель по нужным вам параметрам
 
 #### animatediff:
 
@@ -286,7 +294,7 @@
 * LLM модели можно взять с сайта [HuggingFace](https://huggingface.co/models) или из внутреннего интерфейса ModelDownloader
 * Модели StableDiffusion, vae, inpaint, embedding и lora можно взять с сайта [CivitAI](https://civitai.com/models) или из внутреннего интерфейса ModelDownloader
 * Модели AudioCraft и AudioLDM 2 загружаются автоматически в папку *inputs*, когда вы выбираете модель и нажимаете кнопку `submit`
-* TTS, Whisper, SunoBark, MoonDream2, Upscale, Depth, AnimateDiff, Videos, Cascade, Rembg, TripoSR, Shap-E, Demucs, ZeroScope и Multiband diffusion модели скачиваються автоматически в папку *inputs* при их использовании
+* TTS, Whisper, SunoBark, MoonDream2, Upscale, GLIGEN, Depth, AnimateDiff, Videos, Cascade, Rembg, TripoSR, Shap-E, Demucs, ZeroScope и Multiband diffusion модели скачиваються автоматически в папку *inputs* при их использовании
 * Вы можете использовать голоса откуда угодно. Запишите свой или возьмите запись из интернета. Или просто используйте те, которые уже есть в проекте. Главное, чтобы оно было предварительно обработано!
 
 ## Дорожная карта
@@ -342,6 +350,7 @@
 * [Moondream2](https://github.com/vikhyat/moondream/blob/main/LICENSE)
 * [ZeroScope2](https://spdx.org/licenses/CC-BY-NC-4.0)
 * [TripoSR](https://github.com/VAST-AI-Research/TripoSR/blob/main/LICENSE)
+* [GLIGEN](https://github.com/gligen/GLIGEN/blob/master/LICENSE)
 
 ## Пожертвование
 
