@@ -717,7 +717,7 @@ def translate_text(text, source_lang, target_lang, enable_translate_history, tra
         return error_message
 
 
-def generate_wav2lip(image_path, audio_path, fps, pads, face_det_batch_size, wav2lip_batch_size, resize_factor, crop, box):
+def generate_wav2lip(image_path, audio_path, fps, pads, face_det_batch_size, wav2lip_batch_size, resize_factor, crop):
     global stop_signal
     stop_signal = False
 
@@ -745,7 +745,7 @@ def generate_wav2lip(image_path, audio_path, fps, pads, face_det_batch_size, wav
         output_filename = f"face_animation_{datetime.now().strftime('%Y%m%d_%H%M%S')}.mp4"
         output_path = os.path.join(output_dir, output_filename)
 
-        command = f"py {os.path.join(wav2lip_path, 'inference.py')} --checkpoint_path {checkpoint_path} --face {image_path} --audio {audio_path} --outfile {output_path} --fps {fps} --pads {pads} --face_det_batch_size {face_det_batch_size} --wav2lip_batch_size {wav2lip_batch_size} --resize_factor {resize_factor} --crop {crop} --box {box}"
+        command = f"py {os.path.join(wav2lip_path, 'inference.py')} --checkpoint_path {checkpoint_path} --face {image_path} --audio {audio_path} --outfile {output_path} --fps {fps} --pads {pads} --face_det_batch_size {face_det_batch_size} --wav2lip_batch_size {wav2lip_batch_size} --resize_factor {resize_factor} --crop {crop} --box {-1}"
 
         subprocess.run(command, shell=True, check=True)
 
@@ -2266,7 +2266,6 @@ wav2lip_interface = gr.Interface(
         gr.Slider(minimum=1, maximum=512, value=128, step=1, label="Wav2Lip Batch Size"),
         gr.Slider(minimum=1, maximum=4, value=1, step=1, label="Resize Factor"),
         gr.Textbox(label="Crop", value="0 -1 0 -1"),
-        gr.Slider(minimum=-1, maximum=1, value=-1, step=1, label="Box"),
     ],
     outputs=[
         gr.Video(label="Generated lip-sync"),
