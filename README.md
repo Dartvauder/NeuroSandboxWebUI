@@ -18,6 +18,8 @@ The goal of the project - to create the easiest possible application to use neur
 
 ### LibreTranslate: 
 
+### Wav2Lip:
+
 ### StableDiffusion: 
 
 ### ZeroScope 2: 
@@ -58,6 +60,7 @@ The goal of the project - to create the easiest possible application to use neur
 * Support Shap-E
 * Support TripoSR
 * Support GLIGEN
+* Support Wav2Lip
 * Support multimodal (Moondream 2 for LLM)
 * Support WebSearch (For LLM with GoogleSearch)
 * Model settings inside the interface
@@ -107,7 +110,7 @@ To get update, run `./update.sh`
 
 ## How to use:
 
-#### Interface has fourteen tabs: LLM, TTS-STT, SunoBark, LibreTranslate, StableDiffusion, ZeroScope 2, TripoSR, Shap-E, AudioCraft, AudioLDM 2, Demucs, ModelDownloader, Settings and System. Select the one you need and follow the instructions below 
+#### Interface has fifteen tabs: LLM, TTS-STT, SunoBark, LibreTranslate, Wav2Lip, StableDiffusion, ZeroScope 2, TripoSR, Shap-E, AudioCraft, AudioLDM 2, Demucs, ModelDownloader, Settings and System. Select the one you need and follow the instructions below 
 
 ### LLM:
 
@@ -141,6 +144,10 @@ To get update, run `./update.sh`
 1) Select source and target language
 2) (Optional) You can save the translation history by turning on the corresponding button
 3) Click the `Submit` button to get the translate
+
+### Wav2Lip:
+
+
 
 ### StableDiffusion - has ten sub-tabs:
 
@@ -299,7 +306,7 @@ To get update, run `./update.sh`
 * LLM models can be taken from [HuggingFace](https://huggingface.co/models) or from ModelDownloader inside interface 
 * StableDiffusion, vae, inpaint, embedding and lora models can be taken from [CivitAI](https://civitai.com/models) or from ModelDownloader inside interface
 * AudioCraft and AudioLDM 2 models are downloads automatically in *inputs* folder, when you select a model and press the submit button
-* TTS, Whisper, SunoBark, MoonDream2, Upscale, GLIGEN, Depth, AnimateDiff, Videos, Cascade, Rembg, TripoSR, Shap-E, Demucs, ZeroScope and Multiband diffusion models are downloads automatically in *inputs* folder when are they used 
+* TTS, Whisper, Wav2Lip, SunoBark, MoonDream2, Upscale, GLIGEN, Depth, AnimateDiff, Videos, Cascade, Rembg, TripoSR, Shap-E, Demucs, ZeroScope and Multiband diffusion models are downloads automatically in *inputs* folder when are they used 
 * You can take voices anywhere. Record yours or take a recording from the Internet. Or just use those that are already in the project. The main thing is that it is pre-processed!
 
 ## Roadmap
@@ -356,6 +363,7 @@ Thank you very much to these projects for allowing me to create my application:
 * [ZeroScope2](https://spdx.org/licenses/CC-BY-NC-4.0)
 * [TripoSR](https://github.com/VAST-AI-Research/TripoSR/blob/main/LICENSE)
 * [GLIGEN](https://github.com/gligen/GLIGEN/blob/master/LICENSE)
+* [Wav2Lip](https://github.com/Rudrabha/Wav2Lip)
 
 ## Donation
 
