@@ -356,6 +356,7 @@ Thank you very much to these projects for allowing me to create my application:
 * [StableDiffusionXL](https://huggingface.co/stabilityai/stable-diffusion-xl-base-1.0/blob/main/LICENSE.md)
 * [StableCascade](https://huggingface.co/stabilityai/stable-cascade/blob/main/LICENSE)
 * [StableVideoDiffusion](https://huggingface.co/stabilityai/stable-video-diffusion-img2vid-xt-1-1/blob/main/LICENSE)
+* [I2VGen-XL](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/mit.md)
 * [Rembg](https://github.com/danielgatis/rembg/blob/main/LICENSE.txt)
 * [Shap-E](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/mit.md)
 * [AudioCraft](https://spdx.org/licenses/CC-BY-NC-4.0)
