@@ -197,23 +197,28 @@ To get update, run `./update.sh`
 
 #### gligen:
 
-1) First upload your models to the folder: *inputs/image/sd_models/inpaint*
+1) First upload your models to the folder: *inputs/image/sd_models*
 2) Select your model from the drop-down list
 3) Select model type (`SD`, `SD2` or `SDXL`)
 4) Set up the model according to the parameters you need
+5) Enter your request for promt and GLIGEN phrases (in "" for box)
+6) Enter GLIGEN boxes (Like a [0.1387, 0.2051, 0.4277, 0.7090] for box)
+7) Click the `Submit` button to get the generated image
 
 #### animatediff:
 
 1) First upload your models to the folder: *inputs/image/sd_models*
 2) Select your model from the drop-down list
 3) Set up the model according to the parameters you need
-4) Click the `Submit` button to get the generated image animation
+4) Enter your request
+5) Click the `Submit` button to get the generated image animation
 
 #### video:
 
 1) Upload the initial image
-2) Set up the model according to the parameters you need
-3) Click the `Submit` button to get the video from image
+2) Enter your request (for IV2Gen-XL)
+3) Set up the model according to the parameters you need
+4) Click the `Submit` button to get the video from image
 
 #### cascade:
 
