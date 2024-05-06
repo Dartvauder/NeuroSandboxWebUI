@@ -743,7 +743,7 @@ def generate_wav2lip(image_path, audio_path):
         output_filename = f"face_animation_{datetime.now().strftime('%Y%m%d_%H%M%S')}.mp4"
         output_path = os.path.join(output_dir, output_filename)
 
-        command = f"python {os.path.join(wav2lip_path, 'inference.py')} --checkpoint_path {checkpoint_path} --face {image_path} --audio {audio_path} --outfile {output_path} --fps {30}"
+        command = f"py {os.path.join(wav2lip_path, 'inference.py')} --checkpoint_path {checkpoint_path} --face {image_path} --audio {audio_path} --outfile {output_path} --fps {30} --pads [0, 10, 0, 0] --face_det_batch_size {16} --wav2lip_batch_size {128} --resize_factor {1} --crop [0, -1, 0, -1] --box [-1, -1, -1, -1]"
 
         subprocess.run(command, shell=True, check=True)
 
