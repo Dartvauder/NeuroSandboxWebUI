@@ -18,6 +18,8 @@
 
 ### LibreTranslate: 
 
+### Wav2Lip:
+
 ### StableDiffusion: 
 
 ### ZeroScope 2: 
@@ -58,6 +60,7 @@
 * Поддержка Shap-E
 * Поддержка TripoSR
 * Поддержка GLIGEN
+* Поддержка Wav2Lip
 * Поддержка multimodal (Moondream 2 для LLM)
 * Поддержка WebSearch (Для LLM через googleSearch)
 * Настройки моделей внутри интерфейса
@@ -107,7 +110,7 @@
 
 ## Как использовать:
 
-#### Интерфейс имеет четырнадцать вкладок: LLM, TTS-STT, SunoBark, LibreTranslate, StableDiffusion, ZeroScope 2, TripoSR, Shap-E, AudioCraft, AudioLDM 2, Demucs, ModelDownloader, Settings и System. Выберите ту которая вам нужна и следуйте инструкциям ниже
+#### Интерфейс имеет пятнадцать вкладок: LLM, TTS-STT, SunoBark, LibreTranslate, Wav2Lip StableDiffusion, ZeroScope 2, TripoSR, Shap-E, AudioCraft, AudioLDM 2, Demucs, ModelDownloader, Settings и System. Выберите ту которая вам нужна и следуйте инструкциям ниже
 
 ### LLM:
 
@@ -141,6 +144,10 @@
 1) Выберите исходный и целевой язык
 2) (Дополнительно) Вы можете сохранить историю перевода включив соответствующую кнопку
 3) Нажмите кнопку `Submit`, чтобы получить перевод
+
+### Wav2Lip:
+
+
 
 ### StableDiffusion - имеет десять под-вкладок:
 
@@ -299,7 +306,7 @@
 * LLM модели можно взять с сайта [HuggingFace](https://huggingface.co/models) или из внутреннего интерфейса ModelDownloader
 * Модели StableDiffusion, vae, inpaint, embedding и lora можно взять с сайта [CivitAI](https://civitai.com/models) или из внутреннего интерфейса ModelDownloader
 * Модели AudioCraft и AudioLDM 2 загружаются автоматически в папку *inputs*, когда вы выбираете модель и нажимаете кнопку `submit`
-* TTS, Whisper, SunoBark, MoonDream2, Upscale, GLIGEN, Depth, AnimateDiff, Videos, Cascade, Rembg, TripoSR, Shap-E, Demucs, ZeroScope и Multiband diffusion модели скачиваються автоматически в папку *inputs* при их использовании
+* TTS, Whisper, Wav2Lip, SunoBark, MoonDream2, Upscale, GLIGEN, Depth, AnimateDiff, Videos, Cascade, Rembg, TripoSR, Shap-E, Demucs, ZeroScope и Multiband diffusion модели скачиваються автоматически в папку *inputs* при их использовании
 * Вы можете использовать голоса откуда угодно. Запишите свой или возьмите запись из интернета. Или просто используйте те, которые уже есть в проекте. Главное, чтобы оно было предварительно обработано!
 
 ## Дорожная карта
@@ -356,6 +363,7 @@
 * [ZeroScope2](https://spdx.org/licenses/CC-BY-NC-4.0)
 * [TripoSR](https://github.com/VAST-AI-Research/TripoSR/blob/main/LICENSE)
 * [GLIGEN](https://github.com/gligen/GLIGEN/blob/master/LICENSE)
+* [Wav2Lip](https://github.com/Rudrabha/Wav2Lip)
 
 ## Пожертвование
 
