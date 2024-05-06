@@ -10,35 +10,35 @@ A simple and convenient interface for using various neural network models. You c
 
 The goal of the project - to create the easiest possible application to use neural network models
 
-### LLM: 
+### LLM: ![1](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/cce08d77-e83f-4cc2-9b3b-b597f6ccc112)
 
-### TTS-STT: 
+### TTS-STT: ![2](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/9fb0dfad-133d-47db-af0f-4f9713f96bc5)
 
-### SunoBark: 
+### SunoBark: ![3](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/e3329dce-a154-4a6c-b431-1e6c4b43de72)
 
-### LibreTranslate: 
+### LibreTranslate: ![4](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/f731619e-d30a-4fe3-a16f-3cdc92f710f6)
 
-### Wav2Lip:
+### Wav2Lip: ![5](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/3090f8e1-44cd-431c-a671-e3be60658070)
 
-### StableDiffusion: 
+### StableDiffusion: ![6](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/29abaefe-8a00-4bff-941f-34cbf6303ec5)
 
-### ZeroScope 2: 
+### ZeroScope 2: ![7](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/815bb897-0e92-4a6d-a111-e7669c96ba62)
 
-### TripoSR: 
+### TripoSR: ![8](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/eba825db-c038-4db4-8a5f-a25a3801232c)
 
-### Shap-E: 
- 
-### AudioCraft: 
+### Shap-E: ![9](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/e9fbddb3-1d81-4774-9aa2-a71a9bf40645)
 
-### AudioLDM 2: 
+### AudioCraft: ![10](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/b792a907-063f-4263-bf65-f4010cac219c)
 
-### Demucs: 
+### AudioLDM 2: ![11](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/bc970ca8-1d88-460d-af54-dd84e9674f35)
 
-### ModelDownloader: 
+### Demucs: ![12](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/908add05-6981-4089-b519-d0c5326d4241)
 
-### Settings: 
+### ModelDownloader: ![13](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/c78e54ec-67b7-41fb-a5e2-ca9182677c23)
 
-### System: 
+### Settings: ![14](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/6db77549-d0dd-4df8-b889-1060231beea7)
+
+### System: ![15](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/2f087997-f009-493e-9ebd-dca89fa6d82a)
 
 ## Features:
 
