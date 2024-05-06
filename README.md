@@ -10,33 +10,33 @@ A simple and convenient interface for using various neural network models. You c
 
 The goal of the project - to create the easiest possible application to use neural network models
 
-### LLM: ![1](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/2e7c1e23-80a9-4937-8076-a62f256e8d12)
+### LLM: 
 
-### TTS-STT: ![2](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/0b94bb40-4d38-4ebd-9f1e-86931614ee32)
+### TTS-STT: 
 
-### SunoBark: ![3](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/01a8b3cb-0d62-49ad-88b0-fe3fe68f98ce)
+### SunoBark: 
 
-### LibreTranslate: ![4](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/c8c0e72c-44dc-443a-bd20-56c7872fd8d4)
+### LibreTranslate: 
 
-### StableDiffusion: ![5](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/b4c82e1a-94e8-42c7-a348-8beab068b227)
+### StableDiffusion: 
 
-### ZeroScope 2: ![6](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/98ba05ab-70e3-4738-8263-26e0d86fefc7)
+### ZeroScope 2: 
 
 ### TripoSR: 
 
-### Shap-E: ![7](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/2daa2c45-b2e0-492b-a3ff-cf2f793ce7b8)
+### Shap-E: 
  
-### AudioCraft: ![8](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/13090c30-2ac8-4fa5-bcdf-37cbc9ffbdb1)
+### AudioCraft: 
 
-### AudioLDM 2: ![9](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/d0a2fe77-6933-4ac7-9434-dcce5220b4d0)
+### AudioLDM 2: 
 
-### Demucs: ![10](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/d6e3d040-8d03-4107-a473-4994be468a9e)
+### Demucs: 
 
-### ModelDownloader: ![11](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/7a940624-cc5f-43ab-9229-e07e49cdf294)
+### ModelDownloader: 
 
-### Settings: ![12](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/439481be-3b61-4bf8-825b-0ae2d0244c1e)
+### Settings: 
 
-### System: ![13](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/a2e56450-31e6-44c6-9be0-388515800bbb)
+### System: 
 
 ## Features:
 
@@ -57,6 +57,7 @@ The goal of the project - to create the easiest possible application to use neur
 * Support Rembg (For StableDiffusion)
 * Support Shap-E
 * Support TripoSR
+* Support GLIGEN
 * Support multimodal (Moondream 2 for LLM)
 * Support WebSearch (For LLM with GoogleSearch)
 * Model settings inside the interface
@@ -141,7 +142,7 @@ To get update, run `./update.sh`
 2) (Optional) You can save the translation history by turning on the corresponding button
 3) Click the `Submit` button to get the translate
 
-### StableDiffusion - has nine sub-tabs:
+### StableDiffusion - has ten sub-tabs:
 
 #### txt2img:
 
@@ -193,6 +194,13 @@ To get update, run `./update.sh`
 8) Click the `Submit` button to get the inpainted image
 #### Optional: You can select your `vae` model
 #### vae = *inputs/image/sd_models/vae*
+
+#### gligen:
+
+1) First upload your models to the folder: *inputs/image/sd_models/inpaint*
+2) Select your model from the drop-down list
+3) Select model type (`SD`, `SD2` or `SDXL`)
+4) Set up the model according to the parameters you need
 
 #### animatediff:
 
@@ -286,7 +294,7 @@ To get update, run `./update.sh`
 * LLM models can be taken from [HuggingFace](https://huggingface.co/models) or from ModelDownloader inside interface 
 * StableDiffusion, vae, inpaint, embedding and lora models can be taken from [CivitAI](https://civitai.com/models) or from ModelDownloader inside interface
 * AudioCraft and AudioLDM 2 models are downloads automatically in *inputs* folder, when you select a model and press the submit button
-* TTS, Whisper, SunoBark, MoonDream2, Upscale, Depth, AnimateDiff, Videos, Cascade, Rembg, TripoSR, Shap-E, Demucs, ZeroScope and Multiband diffusion models are downloads automatically in *inputs* folder when are they used 
+* TTS, Whisper, SunoBark, MoonDream2, Upscale, GLIGEN, Depth, AnimateDiff, Videos, Cascade, Rembg, TripoSR, Shap-E, Demucs, ZeroScope and Multiband diffusion models are downloads automatically in *inputs* folder when are they used 
 * You can take voices anywhere. Record yours or take a recording from the Internet. Or just use those that are already in the project. The main thing is that it is pre-processed!
 
 ## Roadmap
@@ -342,6 +350,7 @@ Thank you very much to these projects for allowing me to create my application:
 * [Moondream2](https://github.com/vikhyat/moondream/blob/main/LICENSE)
 * [ZeroScope2](https://spdx.org/licenses/CC-BY-NC-4.0)
 * [TripoSR](https://github.com/VAST-AI-Research/TripoSR/blob/main/LICENSE)
+* [GLIGEN](https://github.com/gligen/GLIGEN/blob/master/LICENSE)
 
 ## Donation
 
