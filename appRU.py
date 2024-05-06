@@ -715,6 +715,47 @@ def translate_text(text, source_lang, target_lang, enable_translate_history, tra
         return error_message
 
 
+def generate_wav2lip(image_path, audio_path):
+    global stop_signal
+    stop_signal = False
+
+    if not image_path or not audio_path:
+        return None, "Please upload an image and an audio file!"
+
+    try:
+        wav2lip_path = os.path.join("inputs", "image", "Wav2Lip")
+
+        checkpoint_path = os.path.join(wav2lip_path, "checkpoints", "wav2lip_gan.pth")
+
+        if not os.path.exists(checkpoint_path):
+            print("Downloading Wav2Lip GAN checkpoint...")
+            os.makedirs(os.path.dirname(checkpoint_path), exist_ok=True)
+            url = "https://huggingface.co/camenduru/Wav2Lip/resolve/main/checkpoints/wav2lip_gan.pth"
+            response = requests.get(url, allow_redirects=True)
+            with open(checkpoint_path, "wb") as file:
+                file.write(response.content)
+            print("Wav2Lip GAN checkpoint downloaded")
+
+        today = datetime.now().date()
+        output_dir = os.path.join("outputs", f"FaceAnimation_{today.strftime('%Y%m%d')}")
+        os.makedirs(output_dir, exist_ok=True)
+
+        output_filename = f"face_animation_{datetime.now().strftime('%Y%m%d_%H%M%S')}.mp4"
+        output_path = os.path.join(output_dir, output_filename)
+
+        command = f"python {os.path.join(wav2lip_path, 'inference.py')} --checkpoint_path {checkpoint_path} --face {image_path} --audio {audio_path} --outfile {output_path} --fps {30}"
+
+        subprocess.run(command, shell=True, check=True)
+
+        if stop_signal:
+            return None, "Generation stopped"
+
+        return output_path, None
+
+    except Exception as e:
+        return None, str(e)
+
+
 def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name, vae_model_name, lora_model_names, textual_inversion_model_names, stable_diffusion_settings_html,
                            stable_diffusion_model_type, stable_diffusion_sampler, stable_diffusion_steps,
                            stable_diffusion_cfg, stable_diffusion_width, stable_diffusion_height,
@@ -2179,6 +2220,23 @@ translate_interface = gr.Interface(
     allow_flagging="never",
 )
 
+wav2lip_interface = gr.Interface(
+    fn=generate_wav2lip,
+    inputs=[
+        gr.Image(label="Input image", type="filepath"),
+        gr.Audio(label="Input audio", type="filepath"),
+    ],
+    outputs=[
+        gr.Video(label="Generated lip-sync"),
+        gr.Textbox(label="Message", type="text"),
+    ],
+    title="NeuroSandboxWebUI (ALPHA) - Wav2Lip",
+    description="This user interface allows you to generate talking head videos by combining an image and an audio file using Wav2Lip. "
+                "Upload an image and an audio file, and click Generate to create the talking head video. "
+                "Try it and see what happens!",
+    allow_flagging="never",
+)
+
 txt2img_interface = gr.Interface(
     fn=generate_image_txt2img,
     inputs=[
@@ -2622,10 +2680,10 @@ system_interface = gr.Interface(
 )
 
 with gr.TabbedInterface(
-        [chat_interface, tts_stt_interface, bark_interface, translate_interface, gr.TabbedInterface([txt2img_interface, img2img_interface, depth2img_interface, upscale_interface, inpaint_interface, gligen_interface, animatediff_interface, video_interface, cascade_interface, extras_interface],
+        [chat_interface, tts_stt_interface, bark_interface, translate_interface, wav2lip_interface, gr.TabbedInterface([txt2img_interface, img2img_interface, depth2img_interface, upscale_interface, inpaint_interface, gligen_interface, animatediff_interface, video_interface, cascade_interface, extras_interface],
         tab_names=["txt2img", "img2img", "depth2img", "upscale", "inpaint", "gligen", "animatediff", "video", "cascade", "extras"]),
                     zeroscope2_interface, triposr_interface, shap_e_interface, audiocraft_interface, audioldm2_interface, demucs_interface, model_downloader_interface, settings_interface, system_interface],
-        tab_names=["LLM", "TTS-STT", "SunoBark", "LibreTranslate", "StableDiffusion", "ZeroScope 2", "TripoSR", "Shap-E", "AudioCraft", "AudioLDM 2", "Demucs", "ModelDownloader", "Settings", "System"]
+        tab_names=["LLM", "TTS-STT", "SunoBark", "LibreTranslate", "Wav2Lip", "StableDiffusion", "ZeroScope 2", "TripoSR", "Shap-E", "AudioCraft", "AudioLDM 2", "Demucs", "ModelDownloader", "Settings", "System"]
 ) as app:
     chat_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     bark_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
