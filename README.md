@@ -56,7 +56,7 @@ The goal of the project - to create the easiest possible application to use neur
 * Support ZeroScope 2
 * Support SunoBark
 * Support Demucs
-* Support Rembg (For StableDiffusion)
+* Support Rembg
 * Support Shap-E
 * Support TripoSR
 * Support GLIGEN
