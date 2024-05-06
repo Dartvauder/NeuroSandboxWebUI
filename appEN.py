@@ -715,7 +715,7 @@ def translate_text(text, source_lang, target_lang, enable_translate_history, tra
         return error_message
 
 
-def generate_wav2lip(image_path, audio_path):
+def generate_wav2lip(image_path, audio_path, fps, pads, face_det_batch_size, wav2lip_batch_size, resize_factor, crop):
     global stop_signal
     stop_signal = False
 
@@ -743,7 +743,7 @@ def generate_wav2lip(image_path, audio_path):
         output_filename = f"face_animation_{datetime.now().strftime('%Y%m%d_%H%M%S')}.mp4"
         output_path = os.path.join(output_dir, output_filename)
 
-        command = f"py {os.path.join(wav2lip_path, 'inference.py')} --checkpoint_path {checkpoint_path} --face {image_path} --audio {audio_path} --outfile {output_path} --fps {30} --pads 0, 10, 0, 0 --face_det_batch_size {16} --wav2lip_batch_size {128} --resize_factor {1} --crop 0, -1, 0, -1 --box -1"
+        command = f"py {os.path.join(wav2lip_path, 'inference.py')} --checkpoint_path {checkpoint_path} --face {image_path} --audio {audio_path} --outfile {output_path} --fps {fps} --pads {pads} --face_det_batch_size {face_det_batch_size} --wav2lip_batch_size {wav2lip_batch_size} --resize_factor {resize_factor} --crop {crop} --box {-1}"
 
         subprocess.run(command, shell=True, check=True)
 
@@ -1239,6 +1239,8 @@ def generate_image_gligen(prompt, gligen_phrases, gligen_boxes, stable_diffusion
             Repo.clone_from("https://huggingface.co/masterful/gligen-1-4-inpainting-text-box", os.path.join(gligen_model_path, "inpainting"))
             print("GLIGEN model downloaded")
 
+        gligen_boxes = json.loads(gligen_boxes)
+
         pipe = StableDiffusionGLIGENPipeline.from_pretrained(
             os.path.join(gligen_model_path, "inpainting"), variant="fp16", torch_dtype=torch.float16
         )
@@ -1248,7 +1250,7 @@ def generate_image_gligen(prompt, gligen_phrases, gligen_boxes, stable_diffusion
             prompt=prompt,
             gligen_phrases=gligen_phrases,
             gligen_inpaint_image=image,
-            gligen_boxes=gligen_boxes,
+            gligen_boxes=[gligen_boxes],
             gligen_scheduled_sampling_beta=1,
             output_type="pil",
             num_inference_steps=stable_diffusion_steps,
@@ -2225,6 +2227,12 @@ wav2lip_interface = gr.Interface(
     inputs=[
         gr.Image(label="Input image", type="filepath"),
         gr.Audio(label="Input audio", type="filepath"),
+        gr.Slider(minimum=1, maximum=60, value=30, step=1, label="FPS"),
+        gr.Textbox(label="Pads", value="0 10 0 0"),
+        gr.Slider(minimum=1, maximum=64, value=16, step=1, label="Face Detection Batch Size"),
+        gr.Slider(minimum=1, maximum=512, value=128, step=1, label="Wav2Lip Batch Size"),
+        gr.Slider(minimum=1, maximum=4, value=1, step=1, label="Resize Factor"),
+        gr.Textbox(label="Crop", value="0 -1 0 -1"),
     ],
     outputs=[
         gr.Video(label="Generated lip-sync"),
@@ -2378,7 +2386,7 @@ gligen_interface = gr.Interface(
     inputs=[
         gr.Textbox(label="Enter your prompt"),
         gr.Textbox(label="Enter GLIGEN phrases", value=""),
-        gr.Textbox(label="Enter GLIGEN boxes (e.g., [[0.1, 0.2, 0.4, 0.7], [0.5, 0.4, 0.8, 0.7]])", value=""),
+        gr.Textbox(label="Enter GLIGEN boxes", value=""),
         gr.Dropdown(choices=stable_diffusion_models_list, label="Select StableDiffusion model", value=None),
         gr.HTML("<h3>StableDiffusion Settings</h3>"),
         gr.Radio(choices=["SD", "SD2", "SDXL"], label="Select model type", value="SD"),
@@ -2396,7 +2404,7 @@ gligen_interface = gr.Interface(
         gr.Image(type="filepath", label="Generated image"),
         gr.Textbox(label="Message", type="text"),
     ],
-    title="NeuroSandboxWebUI (ALPHA) - StableDiffusion (GLIGEN)",
+    title="NeuroSandboxWebUI (ALPHA) - StableDiffusion (gligen)",
     description="This user interface allows you to generate images using Stable Diffusion and insert objects using GLIGEN. "
                 "Select the Stable Diffusion model, customize the generation settings, enter a prompt, GLIGEN phrases, and bounding boxes. "
                 "Try it and see what happens!",
