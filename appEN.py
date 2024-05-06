@@ -14,8 +14,9 @@ import whisper
 from datetime import datetime
 import warnings
 import logging
-from diffusers import StableDiffusionPipeline, StableDiffusionXLPipeline, StableDiffusionImg2ImgPipeline, StableDiffusionDepth2ImgPipeline, AutoencoderKL, StableDiffusionLatentUpscalePipeline, StableDiffusionUpscalePipeline, StableDiffusionInpaintPipeline, AnimateDiffPipeline, DDIMScheduler, MotionAdapter, StableVideoDiffusionPipeline, I2VGenXLPipeline, StableCascadePriorPipeline, StableCascadeDecoderPipeline, DiffusionPipeline, DPMSolverMultistepScheduler, ShapEPipeline, ShapEImg2ImgPipeline, AudioLDM2Pipeline
+from diffusers import StableDiffusionPipeline, StableDiffusionXLPipeline, StableDiffusionImg2ImgPipeline, StableDiffusionDepth2ImgPipeline, AutoencoderKL, StableDiffusionLatentUpscalePipeline, StableDiffusionUpscalePipeline, StableDiffusionInpaintPipeline, StableDiffusionGLIGENPipeline, AnimateDiffPipeline, DDIMScheduler, MotionAdapter, StableVideoDiffusionPipeline, I2VGenXLPipeline, StableCascadePriorPipeline, StableCascadeDecoderPipeline, DiffusionPipeline, DPMSolverMultistepScheduler, ShapEPipeline, ShapEImg2ImgPipeline, AudioLDM2Pipeline
 from diffusers.utils import load_image, export_to_video, export_to_gif, export_to_ply
+from compel import Compel
 import trimesh
 from tsr.system import TSR
 from tsr.utils import to_gradio_3d_orientation, resize_foreground
@@ -792,7 +793,11 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
                 stable_diffusion_model.load_textual_inversion(textual_inversion_model_path)
 
     try:
-        images = stable_diffusion_model(prompt, negative_prompt=negative_prompt,
+        compel_proc = Compel(tokenizer=stable_diffusion_model.tokenizer,
+                             text_encoder=stable_diffusion_model.text_encoder)
+        prompt_embeds = compel_proc(prompt)
+
+        images = stable_diffusion_model(prompt_embeds=prompt_embeds, negative_prompt=negative_prompt,
                                         num_inference_steps=stable_diffusion_steps,
                                         guidance_scale=stable_diffusion_cfg, height=stable_diffusion_height,
                                         width=stable_diffusion_width, clip_skip=stable_diffusion_clip_skip,
@@ -898,7 +903,11 @@ def generate_image_img2img(prompt, negative_prompt, init_image,
         init_image = Image.open(init_image).convert("RGB")
         init_image = stable_diffusion_model.image_processor.preprocess(init_image)
 
-        images = stable_diffusion_model(prompt, negative_prompt=negative_prompt,
+        compel_proc = Compel(tokenizer=stable_diffusion_model.tokenizer,
+                             text_encoder=stable_diffusion_model.text_encoder)
+        prompt_embeds = compel_proc(prompt)
+
+        images = stable_diffusion_model(prompt_embeds=prompt_embeds, negative_prompt=negative_prompt,
                                         num_inference_steps=stable_diffusion_steps,
                                         guidance_scale=stable_diffusion_cfg, clip_skip=stable_diffusion_clip_skip,
                                         sampler=stable_diffusion_sampler, image=init_image, strength=strength)
@@ -1115,6 +1124,110 @@ def generate_image_inpaint(prompt, negative_prompt, init_image, mask_image, stab
 
     finally:
         del stable_diffusion_model
+        torch.cuda.empty_cache()
+
+
+def generate_image_gligen(prompt, gligen_phrases, gligen_boxes, stable_diffusion_model_name, stable_diffusion_settings_html,
+                          stable_diffusion_model_type, stable_diffusion_sampler, stable_diffusion_steps,
+                          stable_diffusion_cfg, stable_diffusion_width, stable_diffusion_height,
+                          stable_diffusion_clip_skip, output_format="png", stop_generation=None):
+    global stop_signal
+    stop_signal = False
+
+    if not stable_diffusion_model_name:
+        return None, "Please, select a StableDiffusion model!"
+
+    stable_diffusion_model_path = os.path.join("inputs", "image", "sd_models",
+                                               f"{stable_diffusion_model_name}.safetensors")
+
+    if not os.path.exists(stable_diffusion_model_path):
+        return None, f"StableDiffusion model not found: {stable_diffusion_model_path}"
+
+    try:
+        if stable_diffusion_model_type == "SD":
+            original_config_file = "configs/sd/v1-inference.yaml"
+            stable_diffusion_model = StableDiffusionPipeline.from_single_file(
+                stable_diffusion_model_path, use_safetensors=True, device_map="auto",
+                original_config_file=original_config_file, torch_dtype=torch.float16, variant="fp16"
+            )
+        elif stable_diffusion_model_type == "SD2":
+            original_config_file = "configs/sd/v2-inference.yaml"
+            stable_diffusion_model = StableDiffusionPipeline.from_single_file(
+                stable_diffusion_model_path, use_safetensors=True, device_map="auto",
+                original_config_file=original_config_file, torch_dtype=torch.float16, variant="fp16"
+            )
+        elif stable_diffusion_model_type == "SDXL":
+            original_config_file = "configs/sd/sd_xl_base.yaml"
+            stable_diffusion_model = StableDiffusionXLPipeline.from_single_file(
+                stable_diffusion_model_path, use_safetensors=True, device_map="auto", attention_slice=1,
+                original_config_file=original_config_file, torch_dtype=torch.float16, variant="fp16"
+            )
+        else:
+            return None, "Invalid StableDiffusion model type!"
+    except (ValueError, KeyError):
+        return None, "The selected model is not compatible with the chosen model type"
+
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+
+    if XFORMERS_AVAILABLE:
+        stable_diffusion_model.enable_xformers_memory_efficient_attention(attention_op=None)
+        stable_diffusion_model.vae.enable_xformers_memory_efficient_attention(attention_op=None)
+        stable_diffusion_model.unet.enable_xformers_memory_efficient_attention(attention_op=None)
+
+    stable_diffusion_model.to(device)
+    stable_diffusion_model.text_encoder.to(device)
+    stable_diffusion_model.vae.to(device)
+    stable_diffusion_model.unet.to(device)
+
+    stable_diffusion_model.safety_checker = None
+
+    try:
+        image = stable_diffusion_model(prompt, num_inference_steps=stable_diffusion_steps,
+                                        guidance_scale=stable_diffusion_cfg, height=stable_diffusion_height,
+                                        width=stable_diffusion_width, clip_skip=stable_diffusion_clip_skip,
+                                        sampler=stable_diffusion_sampler)["images"][0]
+
+        if stop_signal:
+            return None, "Generation stopped"
+
+        gligen_model_path = os.path.join("inputs", "image", "sd_models", "gligen")
+
+        if not os.path.exists(gligen_model_path):
+            print("Downloading GLIGEN model...")
+            os.makedirs(gligen_model_path, exist_ok=True)
+            Repo.clone_from("https://huggingface.co/masterful/gligen-1-4-inpainting-text-box", os.path.join(gligen_model_path, "inpainting"))
+            print("GLIGEN model downloaded")
+
+        pipe = StableDiffusionGLIGENPipeline.from_pretrained(
+            os.path.join(gligen_model_path, "inpainting"), variant="fp16", torch_dtype=torch.float16
+        )
+        pipe = pipe.to("cuda")
+
+        images = pipe(
+            prompt=prompt,
+            gligen_phrases=gligen_phrases,
+            gligen_inpaint_image=image,
+            gligen_boxes=gligen_boxes,
+            gligen_scheduled_sampling_beta=1,
+            output_type="pil",
+            num_inference_steps=stable_diffusion_steps,
+        ).images
+
+        if stop_signal:
+            return None, "Generation stopped"
+
+        today = datetime.now().date()
+        image_dir = os.path.join('outputs', f"StableDiffusion_{today.strftime('%Y%m%d')}")
+        os.makedirs(image_dir, exist_ok=True)
+        image_filename = f"gligen_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
+        image_path = os.path.join(image_dir, image_filename)
+        images[0].save(image_path)
+
+        return image_path, None
+
+    finally:
+        del stable_diffusion_model
+        del pipe
         torch.cuda.empty_cache()
 
 
@@ -2202,6 +2315,36 @@ inpaint_interface = gr.Interface(
     allow_flagging="never",
 )
 
+gligen_interface = gr.Interface(
+    fn=generate_image_gligen,
+    inputs=[
+        gr.Textbox(label="Enter your prompt"),
+        gr.Textbox(label="Enter GLIGEN phrases", value=""),
+        gr.Textbox(label="Enter GLIGEN boxes (e.g., [[0.1, 0.2, 0.4, 0.7], [0.5, 0.4, 0.8, 0.7]])", value=""),
+        gr.Dropdown(choices=stable_diffusion_models_list, label="Select StableDiffusion model", value=None),
+        gr.HTML("<h3>StableDiffusion Settings</h3>"),
+        gr.Radio(choices=["SD", "SD2", "SDXL"], label="Select model type", value="SD"),
+        gr.Dropdown(choices=["euler_ancestral", "euler", "lms", "heun", "dpm", "dpm_solver", "dpm_solver++"],
+                    label="Select sampler", value="euler_ancestral"),
+        gr.Slider(minimum=1, maximum=100, value=30, step=1, label="Steps"),
+        gr.Slider(minimum=1.0, maximum=30.0, value=8, step=0.1, label="CFG"),
+        gr.Slider(minimum=256, maximum=2048, value=512, step=64, label="Width"),
+        gr.Slider(minimum=256, maximum=2048, value=512, step=64, label="Height"),
+        gr.Slider(minimum=1, maximum=4, value=1, step=1, label="Clip skip"),
+        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
+        gr.Button(value="Stop generation", interactive=True, variant="stop"),
+    ],
+    outputs=[
+        gr.Image(type="filepath", label="Generated image"),
+        gr.Textbox(label="Message", type="text"),
+    ],
+    title="NeuroSandboxWebUI (ALPHA) - StableDiffusion (GLIGEN)",
+    description="This user interface allows you to generate images using Stable Diffusion and insert objects using GLIGEN. "
+                "Select the Stable Diffusion model, customize the generation settings, enter a prompt, GLIGEN phrases, and bounding boxes. "
+                "Try it and see what happens!",
+    allow_flagging="never",
+)
+
 animatediff_interface = gr.Interface(
     fn=generate_animation_animatediff,
     inputs=[
@@ -2479,8 +2622,8 @@ system_interface = gr.Interface(
 )
 
 with gr.TabbedInterface(
-        [chat_interface, tts_stt_interface, bark_interface, translate_interface, gr.TabbedInterface([txt2img_interface, img2img_interface, depth2img_interface, upscale_interface, inpaint_interface, animatediff_interface, video_interface, cascade_interface, extras_interface],
-        tab_names=["txt2img", "img2img", "depth2img", "upscale", "inpaint", "animatediff", "video", "cascade", "extras"]),
+        [chat_interface, tts_stt_interface, bark_interface, translate_interface, gr.TabbedInterface([txt2img_interface, img2img_interface, depth2img_interface, upscale_interface, inpaint_interface, gligen_interface, animatediff_interface, video_interface, cascade_interface, extras_interface],
+        tab_names=["txt2img", "img2img", "depth2img", "upscale", "inpaint", "gligen", "animatediff", "video", "cascade", "extras"]),
                     zeroscope2_interface, triposr_interface, shap_e_interface, audiocraft_interface, audioldm2_interface, demucs_interface, model_downloader_interface, settings_interface, system_interface],
         tab_names=["LLM", "TTS-STT", "SunoBark", "LibreTranslate", "StableDiffusion", "ZeroScope 2", "TripoSR", "Shap-E", "AudioCraft", "AudioLDM 2", "Demucs", "ModelDownloader", "Settings", "System"]
 ) as app:
@@ -2491,6 +2634,7 @@ with gr.TabbedInterface(
     depth2img_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     upscale_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     inpaint_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
+    gligen_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     animatediff_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     video_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     cascade_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
