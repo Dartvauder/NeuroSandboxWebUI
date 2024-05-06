@@ -56,7 +56,7 @@
 * Поддержка ZeroScope 2
 * Поддержка SunoBark
 * Поддержка Demucs
-* Поддержка Rembg (Для StableDiffusion)
+* Поддержка Rembg
 * Поддержка Shap-E
 * Поддержка TripoSR
 * Поддержка GLIGEN
