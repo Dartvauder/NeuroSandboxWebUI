@@ -22,8 +22,6 @@ from tsr.system import TSR
 from tsr.utils import to_gradio_3d_orientation, resize_foreground
 from git import Repo
 import numpy as np
-import cv2
-import onnxruntime
 import scipy
 import imageio
 from PIL import Image
@@ -1548,53 +1546,22 @@ def generate_image_cascade(prompt, negative_prompt, stable_cascade_settings_html
         torch.cuda.empty_cache()
 
 
-def generate_image_extras(input_image, target_image, image_output_format, remove_background, enable_faceswap, stop_generation):
+def generate_image_extras(input_image, image_output_format, remove_background, stop_generation):
     if not input_image:
         return None, "Please upload an image file!"
 
-    if not remove_background and not enable_faceswap:
-        return None, "Please choose an option to modify the image"
+    if not remove_background:
+        return None, "Please choose the option to modify the image"
 
     today = datetime.now().date()
     output_dir = os.path.join('outputs', f"Extras_{today.strftime('%Y%m%d')}")
     os.makedirs(output_dir, exist_ok=True)
 
-    output_path = None
+    output_filename = f"background_removed_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{image_output_format}"
+    output_path = os.path.join(output_dir, output_filename)
 
     try:
-        if remove_background:
-            output_filename = f"background_removed_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{image_output_format}"
-            output_path = os.path.join(output_dir, output_filename)
-            remove_bg(input_image, output_path)
-
-        if enable_faceswap:
-            if not target_image:
-                return None, "Please upload a target image for FaceSwap!"
-
-            faceswap_model_path = os.path.join("inputs", "image", "faceswap", "inswapper_128.onnx")
-
-            if not os.path.exists(faceswap_model_path):
-                print("Downloading FaceSwap model...")
-                os.makedirs(os.path.dirname(faceswap_model_path), exist_ok=True)
-                url = "https://huggingface.co/ezioruan/inswapper_128.onnx/resolve/main/inswapper_128.onnx"
-                response = requests.get(url, allow_redirects=True)
-                with open(faceswap_model_path, "wb") as file:
-                    file.write(response.content)
-                print("FaceSwap model downloaded")
-
-            source_image = cv2.imread(input_image)
-            target_image = cv2.imread(target_image)
-
-            sess = onnxruntime.InferenceSession(faceswap_model_path)
-            input_name = sess.get_inputs()[0].name
-            output_name = sess.get_outputs()[0].name
-
-            result = sess.run([output_name], {input_name: [source_image, target_image]})[0]
-
-            output_filename = f"faceswap_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{image_output_format}"
-            output_path = os.path.join(output_dir, output_filename)
-            cv2.imwrite(output_path, result)
-
+        remove_bg(input_image, output_path)
         return output_path, None
 
     except Exception as e:
@@ -2528,10 +2495,8 @@ extras_interface = gr.Interface(
     fn=generate_image_extras,
     inputs=[
         gr.Image(label="Image to modify", type="filepath"),
-        gr.Image(label="Target image for FaceSwap", type="filepath"),
         gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
         gr.Checkbox(label="Remove Background", value=False),
-        gr.Checkbox(label="Enable FaceSwap", value=False),
         gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
     outputs=[
