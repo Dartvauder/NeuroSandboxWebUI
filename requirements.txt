@@ -32,6 +32,7 @@ colorama==0.4.6
 coloredlogs==15.0.1
 colorlog==6.8.2
 commandlines==0.4.1
+compel==2.0.2
 confection==0.1.4
 contourpy==1.2.1
 coqpit==0.0.17
@@ -110,6 +111,7 @@ lazy_loader==0.4
 libretranslatepy==2.1.4
 librosa==0.10.0
 lightning-utilities==0.11.2
+llama_cpp_python==0.2.69
 llvmlite==0.42.0
 marisa-trie==1.1.0
 Markdown==3.6
