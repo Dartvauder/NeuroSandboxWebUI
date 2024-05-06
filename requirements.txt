@@ -32,6 +32,7 @@ colorama==0.4.6
 coloredlogs==15.0.1
 colorlog==6.8.2
 commandlines==0.4.1
+compel==2.0.2
 confection==0.1.4
 contourpy==1.2.1
 coqpit==0.0.17

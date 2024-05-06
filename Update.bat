@@ -11,6 +11,7 @@ echo Updating dependencies.../Обновление зависимостей...
 pip install --no-deps -r "%CURRENT_DIR%requirements.txt"
 pip install --no-deps -r "%CURRENT_DIR%requirements-cuda.txt"
 pip install --no-deps -r "%CURRENT_DIR%requirements-llama-cpp.txt"
+pip install git+https://github.com/tatsy/torchmcubes.git
 cls
 
 echo Application has been updated successfully. Run start.bat/Приложение успешно обновлено. Запустите start.bat

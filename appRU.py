@@ -14,9 +14,12 @@ import whisper
 from datetime import datetime
 import warnings
 import logging
-from diffusers import StableDiffusionPipeline, StableDiffusionXLPipeline, StableDiffusionImg2ImgPipeline, StableDiffusionDepth2ImgPipeline, AutoencoderKL, StableDiffusionLatentUpscalePipeline, StableDiffusionUpscalePipeline, StableDiffusionInpaintPipeline, AnimateDiffPipeline, DDIMScheduler, MotionAdapter, StableVideoDiffusionPipeline, I2VGenXLPipeline, StableCascadePriorPipeline, StableCascadeDecoderPipeline, DiffusionPipeline, DPMSolverMultistepScheduler, ShapEPipeline, ShapEImg2ImgPipeline, AudioLDM2Pipeline
+from diffusers import StableDiffusionPipeline, StableDiffusionXLPipeline, StableDiffusionImg2ImgPipeline, StableDiffusionDepth2ImgPipeline, AutoencoderKL, StableDiffusionLatentUpscalePipeline, StableDiffusionUpscalePipeline, StableDiffusionInpaintPipeline, StableDiffusionGLIGENPipeline, AnimateDiffPipeline, DDIMScheduler, MotionAdapter, StableVideoDiffusionPipeline, I2VGenXLPipeline, StableCascadePriorPipeline, StableCascadeDecoderPipeline, DiffusionPipeline, DPMSolverMultistepScheduler, ShapEPipeline, ShapEImg2ImgPipeline, AudioLDM2Pipeline
 from diffusers.utils import load_image, export_to_video, export_to_gif, export_to_ply
+from compel import Compel
 import trimesh
+from tsr.system import TSR
+from tsr.utils import to_gradio_3d_orientation, resize_foreground
 from git import Repo
 import numpy as np
 import scipy
@@ -712,6 +715,47 @@ def translate_text(text, source_lang, target_lang, enable_translate_history, tra
         return error_message
 
 
+def generate_wav2lip(image_path, audio_path, fps, pads, face_det_batch_size, wav2lip_batch_size, resize_factor, crop):
+    global stop_signal
+    stop_signal = False
+
+    if not image_path or not audio_path:
+        return None, "Please upload an image and an audio file!"
+
+    try:
+        wav2lip_path = os.path.join("inputs", "image", "Wav2Lip")
+
+        checkpoint_path = os.path.join(wav2lip_path, "checkpoints", "wav2lip_gan.pth")
+
+        if not os.path.exists(checkpoint_path):
+            print("Downloading Wav2Lip GAN checkpoint...")
+            os.makedirs(os.path.dirname(checkpoint_path), exist_ok=True)
+            url = "https://huggingface.co/camenduru/Wav2Lip/resolve/main/checkpoints/wav2lip_gan.pth"
+            response = requests.get(url, allow_redirects=True)
+            with open(checkpoint_path, "wb") as file:
+                file.write(response.content)
+            print("Wav2Lip GAN checkpoint downloaded")
+
+        today = datetime.now().date()
+        output_dir = os.path.join("outputs", f"FaceAnimation_{today.strftime('%Y%m%d')}")
+        os.makedirs(output_dir, exist_ok=True)
+
+        output_filename = f"face_animation_{datetime.now().strftime('%Y%m%d_%H%M%S')}.mp4"
+        output_path = os.path.join(output_dir, output_filename)
+
+        command = f"py {os.path.join(wav2lip_path, 'inference.py')} --checkpoint_path {checkpoint_path} --face {image_path} --audio {audio_path} --outfile {output_path} --fps {fps} --pads {pads} --face_det_batch_size {face_det_batch_size} --wav2lip_batch_size {wav2lip_batch_size} --resize_factor {resize_factor} --crop {crop} --box {-1}"
+
+        subprocess.run(command, shell=True, check=True)
+
+        if stop_signal:
+            return None, "Generation stopped"
+
+        return output_path, None
+
+    except Exception as e:
+        return None, str(e)
+
+
 def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name, vae_model_name, lora_model_names, textual_inversion_model_names, stable_diffusion_settings_html,
                            stable_diffusion_model_type, stable_diffusion_sampler, stable_diffusion_steps,
                            stable_diffusion_cfg, stable_diffusion_width, stable_diffusion_height,
@@ -790,7 +834,11 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
                 stable_diffusion_model.load_textual_inversion(textual_inversion_model_path)
 
     try:
-        images = stable_diffusion_model(prompt, negative_prompt=negative_prompt,
+        compel_proc = Compel(tokenizer=stable_diffusion_model.tokenizer,
+                             text_encoder=stable_diffusion_model.text_encoder)
+        prompt_embeds = compel_proc(prompt)
+
+        images = stable_diffusion_model(prompt_embeds=prompt_embeds, negative_prompt=negative_prompt,
                                         num_inference_steps=stable_diffusion_steps,
                                         guidance_scale=stable_diffusion_cfg, height=stable_diffusion_height,
                                         width=stable_diffusion_width, clip_skip=stable_diffusion_clip_skip,
@@ -896,7 +944,11 @@ def generate_image_img2img(prompt, negative_prompt, init_image,
         init_image = Image.open(init_image).convert("RGB")
         init_image = stable_diffusion_model.image_processor.preprocess(init_image)
 
-        images = stable_diffusion_model(prompt, negative_prompt=negative_prompt,
+        compel_proc = Compel(tokenizer=stable_diffusion_model.tokenizer,
+                             text_encoder=stable_diffusion_model.text_encoder)
+        prompt_embeds = compel_proc(prompt)
+
+        images = stable_diffusion_model(prompt_embeds=prompt_embeds, negative_prompt=negative_prompt,
                                         num_inference_steps=stable_diffusion_steps,
                                         guidance_scale=stable_diffusion_cfg, clip_skip=stable_diffusion_clip_skip,
                                         sampler=stable_diffusion_sampler, image=init_image, strength=strength)
@@ -1113,6 +1165,112 @@ def generate_image_inpaint(prompt, negative_prompt, init_image, mask_image, stab
 
     finally:
         del stable_diffusion_model
+        torch.cuda.empty_cache()
+
+
+def generate_image_gligen(prompt, gligen_phrases, gligen_boxes, stable_diffusion_model_name, stable_diffusion_settings_html,
+                          stable_diffusion_model_type, stable_diffusion_sampler, stable_diffusion_steps,
+                          stable_diffusion_cfg, stable_diffusion_width, stable_diffusion_height,
+                          stable_diffusion_clip_skip, output_format="png", stop_generation=None):
+    global stop_signal
+    stop_signal = False
+
+    if not stable_diffusion_model_name:
+        return None, "Please, select a StableDiffusion model!"
+
+    stable_diffusion_model_path = os.path.join("inputs", "image", "sd_models",
+                                               f"{stable_diffusion_model_name}.safetensors")
+
+    if not os.path.exists(stable_diffusion_model_path):
+        return None, f"StableDiffusion model not found: {stable_diffusion_model_path}"
+
+    try:
+        if stable_diffusion_model_type == "SD":
+            original_config_file = "configs/sd/v1-inference.yaml"
+            stable_diffusion_model = StableDiffusionPipeline.from_single_file(
+                stable_diffusion_model_path, use_safetensors=True, device_map="auto",
+                original_config_file=original_config_file, torch_dtype=torch.float16, variant="fp16"
+            )
+        elif stable_diffusion_model_type == "SD2":
+            original_config_file = "configs/sd/v2-inference.yaml"
+            stable_diffusion_model = StableDiffusionPipeline.from_single_file(
+                stable_diffusion_model_path, use_safetensors=True, device_map="auto",
+                original_config_file=original_config_file, torch_dtype=torch.float16, variant="fp16"
+            )
+        elif stable_diffusion_model_type == "SDXL":
+            original_config_file = "configs/sd/sd_xl_base.yaml"
+            stable_diffusion_model = StableDiffusionXLPipeline.from_single_file(
+                stable_diffusion_model_path, use_safetensors=True, device_map="auto", attention_slice=1,
+                original_config_file=original_config_file, torch_dtype=torch.float16, variant="fp16"
+            )
+        else:
+            return None, "Invalid StableDiffusion model type!"
+    except (ValueError, KeyError):
+        return None, "The selected model is not compatible with the chosen model type"
+
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+
+    if XFORMERS_AVAILABLE:
+        stable_diffusion_model.enable_xformers_memory_efficient_attention(attention_op=None)
+        stable_diffusion_model.vae.enable_xformers_memory_efficient_attention(attention_op=None)
+        stable_diffusion_model.unet.enable_xformers_memory_efficient_attention(attention_op=None)
+
+    stable_diffusion_model.to(device)
+    stable_diffusion_model.text_encoder.to(device)
+    stable_diffusion_model.vae.to(device)
+    stable_diffusion_model.unet.to(device)
+
+    stable_diffusion_model.safety_checker = None
+
+    try:
+        image = stable_diffusion_model(prompt, num_inference_steps=stable_diffusion_steps,
+                                        guidance_scale=stable_diffusion_cfg, height=stable_diffusion_height,
+                                        width=stable_diffusion_width, clip_skip=stable_diffusion_clip_skip,
+                                        sampler=stable_diffusion_sampler)["images"][0]
+
+        if stop_signal:
+            return None, "Generation stopped"
+
+        gligen_model_path = os.path.join("inputs", "image", "sd_models", "gligen")
+
+        if not os.path.exists(gligen_model_path):
+            print("Downloading GLIGEN model...")
+            os.makedirs(gligen_model_path, exist_ok=True)
+            Repo.clone_from("https://huggingface.co/masterful/gligen-1-4-inpainting-text-box", os.path.join(gligen_model_path, "inpainting"))
+            print("GLIGEN model downloaded")
+
+        gligen_boxes = json.loads(gligen_boxes)
+
+        pipe = StableDiffusionGLIGENPipeline.from_pretrained(
+            os.path.join(gligen_model_path, "inpainting"), variant="fp16", torch_dtype=torch.float16
+        )
+        pipe = pipe.to("cuda")
+
+        images = pipe(
+            prompt=prompt,
+            gligen_phrases=gligen_phrases,
+            gligen_inpaint_image=image,
+            gligen_boxes=[gligen_boxes],
+            gligen_scheduled_sampling_beta=1,
+            output_type="pil",
+            num_inference_steps=stable_diffusion_steps,
+        ).images
+
+        if stop_signal:
+            return None, "Generation stopped"
+
+        today = datetime.now().date()
+        image_dir = os.path.join('outputs', f"StableDiffusion_{today.strftime('%Y%m%d')}")
+        os.makedirs(image_dir, exist_ok=True)
+        image_filename = f"gligen_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
+        image_path = os.path.join(image_dir, image_filename)
+        images[0].save(image_path)
+
+        return image_path, None
+
+    finally:
+        del stable_diffusion_model
+        del pipe
         torch.cuda.empty_cache()
 
 
@@ -1495,6 +1653,66 @@ def generate_video_zeroscope2(prompt, video_to_enhance, strength, num_inference_
             except UnboundLocalError:
                 pass
             torch.cuda.empty_cache()
+
+
+def generate_3d_triposr(image, mc_resolution, foreground_ratio=0.85, output_format="obj", stop_generation=None):
+    global stop_signal
+    stop_signal = False
+
+    model_path = os.path.join("inputs", "image", "triposr")
+
+    if not os.path.exists(model_path):
+        print("Downloading TripoSR model...")
+        os.makedirs(model_path, exist_ok=True)
+        Repo.clone_from("https://huggingface.co/stabilityai/TripoSR", model_path)
+        print("TripoSR model downloaded")
+
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+
+    model = TSR.from_pretrained(
+        model_path,
+        config_name="config.yaml",
+        weight_name="model.ckpt",
+    )
+
+    model.renderer.set_chunk_size(8192)
+    model.to(device)
+
+    try:
+        def fill_background(image):
+            image = np.array(image).astype(np.float32) / 255.0
+            image = image[:, :, :3] * image[:, :, 3:4] + (1 - image[:, :, 3:4]) * 0.5
+            image = Image.fromarray((image * 255.0).astype(np.uint8))
+            return image
+
+        image_without_background = remove(image)
+        image_without_background = resize_foreground(image_without_background, foreground_ratio)
+        image_without_background = fill_background(image_without_background)
+
+        processed_image = model.image_processor(image_without_background, model.cfg.cond_image_size)[0].to(device)
+
+        scene_codes = model(processed_image, device=device)
+        mesh = model.extract_mesh(scene_codes, resolution=mc_resolution)[0]
+        mesh = to_gradio_3d_orientation(mesh)
+
+        today = datetime.now().date()
+        output_dir = os.path.join('outputs', f"TripoSR_{today.strftime('%Y%m%d')}")
+        os.makedirs(output_dir, exist_ok=True)
+
+        if output_format == "obj":
+            output_filename = f"3d_object_{datetime.now().strftime('%Y%m%d_%H%M%S')}.obj"
+            output_path = os.path.join(output_dir, output_filename)
+            mesh.export(output_path)
+        else:
+            output_filename = f"3d_object_{datetime.now().strftime('%Y%m%d_%H%M%S')}.glb"
+            output_path = os.path.join(output_dir, output_filename)
+            mesh.export(output_path)
+
+        return output_path, None
+
+    finally:
+        del model
+        torch.cuda.empty_cache()
 
 
 def generate_3d(prompt, init_image, num_inference_steps, guidance_scale, frame_size, stop_generation):
@@ -2004,6 +2222,29 @@ translate_interface = gr.Interface(
     allow_flagging="never",
 )
 
+wav2lip_interface = gr.Interface(
+    fn=generate_wav2lip,
+    inputs=[
+        gr.Image(label="Input image", type="filepath"),
+        gr.Audio(label="Input audio", type="filepath"),
+        gr.Slider(minimum=1, maximum=60, value=30, step=1, label="FPS"),
+        gr.Textbox(label="Pads", value="0 10 0 0"),
+        gr.Slider(minimum=1, maximum=64, value=16, step=1, label="Face Detection Batch Size"),
+        gr.Slider(minimum=1, maximum=512, value=128, step=1, label="Wav2Lip Batch Size"),
+        gr.Slider(minimum=1, maximum=4, value=1, step=1, label="Resize Factor"),
+        gr.Textbox(label="Crop", value="0 -1 0 -1"),
+    ],
+    outputs=[
+        gr.Video(label="Generated lip-sync"),
+        gr.Textbox(label="Message", type="text"),
+    ],
+    title="NeuroSandboxWebUI (ALPHA) - Wav2Lip",
+    description="This user interface allows you to generate talking head videos by combining an image and an audio file using Wav2Lip. "
+                "Upload an image and an audio file, and click Generate to create the talking head video. "
+                "Try it and see what happens!",
+    allow_flagging="never",
+)
+
 txt2img_interface = gr.Interface(
     fn=generate_image_txt2img,
     inputs=[
@@ -2140,6 +2381,36 @@ inpaint_interface = gr.Interface(
     allow_flagging="never",
 )
 
+gligen_interface = gr.Interface(
+    fn=generate_image_gligen,
+    inputs=[
+        gr.Textbox(label="Enter your prompt"),
+        gr.Textbox(label="Enter GLIGEN phrases", value=""),
+        gr.Textbox(label="Enter GLIGEN boxes", value=""),
+        gr.Dropdown(choices=stable_diffusion_models_list, label="Select StableDiffusion model", value=None),
+        gr.HTML("<h3>StableDiffusion Settings</h3>"),
+        gr.Radio(choices=["SD", "SD2", "SDXL"], label="Select model type", value="SD"),
+        gr.Dropdown(choices=["euler_ancestral", "euler", "lms", "heun", "dpm", "dpm_solver", "dpm_solver++"],
+                    label="Select sampler", value="euler_ancestral"),
+        gr.Slider(minimum=1, maximum=100, value=30, step=1, label="Steps"),
+        gr.Slider(minimum=1.0, maximum=30.0, value=8, step=0.1, label="CFG"),
+        gr.Slider(minimum=256, maximum=2048, value=512, step=64, label="Width"),
+        gr.Slider(minimum=256, maximum=2048, value=512, step=64, label="Height"),
+        gr.Slider(minimum=1, maximum=4, value=1, step=1, label="Clip skip"),
+        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
+        gr.Button(value="Stop generation", interactive=True, variant="stop"),
+    ],
+    outputs=[
+        gr.Image(type="filepath", label="Generated image"),
+        gr.Textbox(label="Message", type="text"),
+    ],
+    title="NeuroSandboxWebUI (ALPHA) - StableDiffusion (gligen)",
+    description="This user interface allows you to generate images using Stable Diffusion and insert objects using GLIGEN. "
+                "Select the Stable Diffusion model, customize the generation settings, enter a prompt, GLIGEN phrases, and bounding boxes. "
+                "Try it and see what happens!",
+    allow_flagging="never",
+)
+
 animatediff_interface = gr.Interface(
     fn=generate_animation_animatediff,
     inputs=[
@@ -2257,6 +2528,26 @@ zeroscope2_interface = gr.Interface(
     title="NeuroSandboxWebUI (ALPHA) - ZeroScope 2",
     description="This user interface allows you to generate and enhance videos using ZeroScope 2 models. "
                 "You can enter a text prompt, upload an optional video for enhancement, and customize the generation settings. "
+                "Try it and see what happens!",
+    allow_flagging="never",
+)
+
+triposr_interface = gr.Interface(
+    fn=generate_3d_triposr,
+    inputs=[
+        gr.Image(label="Input image", type="pil"),
+        gr.Slider(minimum=32, maximum=320, value=256, step=32, label="Marching Cubes Resolution"),
+        gr.Slider(minimum=0.5, maximum=1.0, value=0.85, step=0.05, label="Foreground Ratio"),
+        gr.Radio(choices=["obj", "glb"], label="Select output format", value="obj", interactive=True),
+        gr.Button(value="Stop generation", interactive=True, variant="stop"),
+    ],
+    outputs=[
+        gr.Model3D(label="Generated 3D object"),
+        gr.Textbox(label="Message", type="text"),
+    ],
+    title="NeuroSandboxWebUI (ALPHA) - TripoSR",
+    description="This user interface allows you to generate 3D objects using TripoSR. "
+                "Upload an image and customize the generation settings. "
                 "Try it and see what happens!",
     allow_flagging="never",
 )
@@ -2397,10 +2688,10 @@ system_interface = gr.Interface(
 )
 
 with gr.TabbedInterface(
-        [chat_interface, tts_stt_interface, bark_interface, translate_interface, gr.TabbedInterface([txt2img_interface, img2img_interface, depth2img_interface, upscale_interface, inpaint_interface, animatediff_interface, video_interface, cascade_interface, extras_interface],
-        tab_names=["txt2img", "img2img", "depth2img", "upscale", "inpaint", "animatediff", "video", "cascade", "extras"]),
-                    zeroscope2_interface, shap_e_interface, audiocraft_interface, audioldm2_interface, demucs_interface, model_downloader_interface, settings_interface, system_interface],
-        tab_names=["LLM", "TTS-STT", "SunoBark", "LibreTranslate", "StableDiffusion", "ZeroScope 2", "Shap-E", "AudioCraft", "AudioLDM 2", "Demucs", "ModelDownloader", "Settings", "System"]
+        [chat_interface, tts_stt_interface, bark_interface, translate_interface, wav2lip_interface, gr.TabbedInterface([txt2img_interface, img2img_interface, depth2img_interface, upscale_interface, inpaint_interface, gligen_interface, animatediff_interface, video_interface, cascade_interface, extras_interface],
+        tab_names=["txt2img", "img2img", "depth2img", "upscale", "inpaint", "gligen", "animatediff", "video", "cascade", "extras"]),
+                    zeroscope2_interface, triposr_interface, shap_e_interface, audiocraft_interface, audioldm2_interface, demucs_interface, model_downloader_interface, settings_interface, system_interface],
+        tab_names=["LLM", "TTS-STT", "SunoBark", "LibreTranslate", "Wav2Lip", "StableDiffusion", "ZeroScope 2", "TripoSR", "Shap-E", "AudioCraft", "AudioLDM 2", "Demucs", "ModelDownloader", "Settings", "System"]
 ) as app:
     chat_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     bark_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
@@ -2409,11 +2700,13 @@ with gr.TabbedInterface(
     depth2img_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     upscale_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     inpaint_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
+    gligen_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     animatediff_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     video_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     cascade_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     extras_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     zeroscope2_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
+    triposr_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     shap_e_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     audiocraft_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     audioldm2_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
