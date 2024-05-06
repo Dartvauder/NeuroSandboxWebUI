@@ -17,14 +17,14 @@ while true; do
         1)
             clear
             python "$CURRENT_DIR/appEN.py" &
-            sleep 10
+            sleep 120
             xdg-open "http://localhost:7860"
             break
             ;;
         2)
             clear
             python "$CURRENT_DIR/appRU.py" &
-            sleep 10
+            sleep 120
             xdg-open "http://localhost:7860"
             break
             ;;
