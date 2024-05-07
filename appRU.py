@@ -124,8 +124,9 @@ def load_lora_model(base_model_name, lora_model_name, model_type):
     lora_model_path = f"inputs/text/llm_models/lora/{lora_model_name}"
 
     try:
-        base_model = AutoModelForCausalLM.from_pretrained(base_model_path)
-        model = PeftModel.from_pretrained(base_model, lora_model_path)
+        device = "cuda" if torch.cuda.is_available() else "cpu"
+        base_model = AutoModelForCausalLM.from_pretrained(base_model_path).to(device)
+        model = PeftModel.from_pretrained(base_model, lora_model_path).to(device)
         merged_model = model.merge_and_unload()
         tokenizer = AutoTokenizer.from_pretrained(base_model_path)
         return tokenizer, merged_model, None
