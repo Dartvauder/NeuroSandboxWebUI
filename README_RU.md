@@ -46,11 +46,11 @@
 * Вы можете использовать приложение через мобильное устройство в localhost (Через IPv4)
 * Гибкий и оптимизированный интерфейс (От Gradio)
 * Поддержка Transformers и llama.cpp моделей (LLM)
-* Поддержка diffusers и safetensors моделей (StableDiffusion) - Вкладки txt2img, img2img, depth2img, upscale, inpaint, animatediff, video, cascade и extras
+* Поддержка diffusers и safetensors моделей (StableDiffusion) - Вкладки txt2img, img2img, depth2img, upscale, inpaint, gligen, animatediff, video, cascade и extras
 * Поддержка AudioCraft (Модели: musicgen, audiogen и magnet)
-* Поддержка AudioLDM 2
+* Поддержка AudioLDM 2 (Модели: audio и music)
 * Поддержка TTS и Whisper моделей (Для LLM и TTS-STT)
-* Поддержка Lora, Textual inversion (embedding), Vae, Img2img, Depth, Upscale, Inpaint, AnimateDiff, Videos и Cascade моделей (Для StableDiffusion)
+* Поддержка Lora, Textual inversion (embedding), Vae, Img2img, Depth, Upscale, Inpaint, GLIGEN, AnimateDiff, Videos и Cascade моделей (Для StableDiffusion)
 * Поддержка Multiband Diffusion модели (Для AudioCraft)
 * Поддержка LibreTranslate (Локальный API)
 * Поддержка ZeroScope 2
@@ -59,10 +59,8 @@
 * Поддержка Rembg
 * Поддержка Shap-E
 * Поддержка TripoSR
-* Поддержка GLIGEN
 * Поддержка Wav2Lip
-* Поддержка multimodal (Moondream 2 для LLM)
-* Поддержка WebSearch (Для LLM через googleSearch)
+* Поддержка Multimodal (Moondream 2), LORA (transformers) и WebSearch (with GoogleSearch) для LLM
 * Настройки моделей внутри интерфейса
 * ModelDownloader (Для LLM и StableDiffusion)
 * Настройки приложения
@@ -120,8 +118,9 @@
 4) Настройте модель по нужным вам параметрам
 5) Введите (или произнесите) ваш запрос
 6) Нажмите кнопку `Submit` чтобы получить сгенерированный текстовый и аудио ответ
-#### Дополнительно: вы можете включить режим `TTS`, выбрать `голос` и `язык` необходимые для получения аудио ответа. Так же вы можете включить `multimodal` и загрузить изображение чтобы получить его описание
+#### Дополнительно: вы можете включить режим TTS, выбрать `voice` и `language`, необходимые для получения аудио ответа. Вы можете включить `multimodal` и загрузить изображение, чтобы получить его описание. Вы можете включить `websearch` для доступа в Интернет. Вы можете включить `libretranslate`, чтобы получить перевод. Также вы можете выбрать модель `LORA` для улучшения генерации
 #### Образцы голоса = *inputs/audio/voices*
+#### LORA = *inputs/text/llm_models/lora*
 #### Голос должен быть предварительно обработан (22050 кГц, монозвук, WAV)
 
 ### TTS-STT:
@@ -141,9 +140,9 @@
 ### LibreTranslate:
 
 * Сначала вам нужно установить и запустить [LibreTranslate](https://github.com/LibreTranslate/LibreTranslate)
-1) Выберите исходный и целевой язык
-2) (Дополнительно) Вы можете сохранить историю перевода включив соответствующую кнопку
-3) Нажмите кнопку `Submit`, чтобы получить перевод
+1) Выберите исходный и целевой языки
+2) Нажмите кнопку `Submit`, чтобы получить перевод
+#### Дополнительно: вы можете сохранить историю перевода включив соответствующую кнопку
 
 ### Wav2Lip:
 

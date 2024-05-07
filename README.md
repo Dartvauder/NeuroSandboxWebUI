@@ -46,11 +46,11 @@ The goal of the project - to create the easiest possible application to use neur
 * You can use the application via your mobile device in localhost (Via IPv4)
 * Flexible and optimized interface (By Gradio)
 * Support for Transformers and llama.cpp models (LLM)
-* Support for diffusers and safetensors models (StableDiffusion) - txt2img, img2img, depth2img, upscale, inpaint, animatediff, video, cascade and extras tabs
+* Support for diffusers and safetensors models (StableDiffusion) - txt2img, img2img, depth2img, upscale, inpaint, gligen, animatediff, video, cascade and extras tabs
 * AudioCraft support (Models: musicgen, audiogen and magnet)
-* AudioLDM 2 support
+* AudioLDM 2 support (Models: audio and music)
 * Supports TTS and Whisper models (For LLM and TTS-STT)
-* Supports Lora, Textual inversion (embedding), Vae, Img2img, Depth, Upscale, Inpaint, AnimateDiff, Videos and Cascade models (For StableDiffusion)
+* Supports Lora, Textual inversion (embedding), Vae, Img2img, Depth, Upscale, Inpaint, GLIGEN, AnimateDiff, Videos and Cascade models (For StableDiffusion)
 * Support Multiband Diffusion model (For AudioCraft)
 * Support LibreTranslate (Local API)
 * Support ZeroScope 2
@@ -59,10 +59,8 @@ The goal of the project - to create the easiest possible application to use neur
 * Support Rembg
 * Support Shap-E
 * Support TripoSR
-* Support GLIGEN
 * Support Wav2Lip
-* Support multimodal (Moondream 2 for LLM)
-* Support WebSearch (For LLM with GoogleSearch)
+* Support Multimodal (Moondream 2), LORA (transformers) and WebSearch (with GoogleSearch) for LLM
 * Model settings inside the interface
 * ModelDownloader (For LLM and StableDiffusion)
 * Application settings
@@ -120,8 +118,9 @@ To get update, run `./update.sh`
 4) Set up the model according to the parameters you need
 5) Type (or speak) your request
 6) Click the `Submit` button to receive the generated text and audio response
-#### Optional: you can enable `TTS` mode, select the `voice` and `language` needed to receive an audio response. You can also enable `multimodal` and upload an image to get its description
+#### Optional: you can enable `TTS` mode, select the `voice` and `language` needed to receive an audio response. You can enable `multimodal` and upload an image to get its description. You can enable `websearch` for Internet access. You can enable `libretranslate` to get the translate. Also you can choose `LORA` model to improve generation
 #### Voice samples = *inputs/audio/voices*
+#### LORA = *inputs/text/llm_models/lora*
 #### The voice must be pre-processed (22050 kHz, mono, WAV)
 
 ### TTS-STT:
@@ -141,9 +140,9 @@ To get update, run `./update.sh`
 ### LibreTranslate:
 
 * First you need to install and run [LibreTranslate](https://github.com/LibreTranslate/LibreTranslate)
-1) Select source and target language
-2) (Optional) You can save the translation history by turning on the corresponding button
-3) Click the `Submit` button to get the translate
+1) Select source and target languages
+2) Click the `Submit` button to get the translate
+#### Optional: you can save the translation history by turning on the corresponding button
 
 ### Wav2Lip:
 
