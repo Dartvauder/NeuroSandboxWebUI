@@ -372,6 +372,8 @@ def generate_text_and_speech(input_text, input_audio, input_image, llm_model_nam
         return chat_history, None, chat_dir, None
     else:
         tokenizer, llm_model, error_message = load_model(llm_model_name, llm_model_type)
+        if llm_lora_model_name:
+            tokenizer, llm_model, error_message = load_lora_model(llm_model_name, llm_lora_model_name, llm_model_type)      
         if error_message:
             chat_history.append([None, error_message])
             return chat_history, None, None, None
