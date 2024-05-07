@@ -60,8 +60,7 @@
 * Поддержка Shap-E
 * Поддержка TripoSR
 * Поддержка Wav2Lip
-* Поддержка multimodal (Moondream 2 для LLM)
-* Поддержка WebSearch (Для LLM через googleSearch)
+* Поддержка Multimodal (Moondream 2), LORA (transformers) и WebSearch (with GoogleSearch) для LLM
 * Настройки моделей внутри интерфейса
 * ModelDownloader (Для LLM и StableDiffusion)
 * Настройки приложения
