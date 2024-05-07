@@ -60,8 +60,7 @@ The goal of the project - to create the easiest possible application to use neur
 * Support Shap-E
 * Support TripoSR
 * Support Wav2Lip
-* Support multimodal (Moondream 2 for LLM)
-* Support WebSearch (For LLM with GoogleSearch)
+* Support Multimodal (Moondream 2), LORA (transformers) and WebSearch (with GoogleSearch) for LLM
 * Model settings inside the interface
 * ModelDownloader (For LLM and StableDiffusion)
 * Application settings
