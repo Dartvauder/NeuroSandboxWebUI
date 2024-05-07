@@ -46,11 +46,11 @@
 * Вы можете использовать приложение через мобильное устройство в localhost (Через IPv4)
 * Гибкий и оптимизированный интерфейс (От Gradio)
 * Поддержка Transformers и llama.cpp моделей (LLM)
-* Поддержка diffusers и safetensors моделей (StableDiffusion) - Вкладки txt2img, img2img, depth2img, upscale, inpaint, animatediff, video, cascade и extras
+* Поддержка diffusers и safetensors моделей (StableDiffusion) - Вкладки txt2img, img2img, depth2img, upscale, inpaint, gligen, animatediff, video, cascade и extras
 * Поддержка AudioCraft (Модели: musicgen, audiogen и magnet)
-* Поддержка AudioLDM 2
+* Поддержка AudioLDM 2 (Модели: audio и music)
 * Поддержка TTS и Whisper моделей (Для LLM и TTS-STT)
-* Поддержка Lora, Textual inversion (embedding), Vae, Img2img, Depth, Upscale, Inpaint, AnimateDiff, Videos и Cascade моделей (Для StableDiffusion)
+* Поддержка Lora, Textual inversion (embedding), Vae, Img2img, Depth, Upscale, Inpaint, GLIGEN, AnimateDiff, Videos и Cascade моделей (Для StableDiffusion)
 * Поддержка Multiband Diffusion модели (Для AudioCraft)
 * Поддержка LibreTranslate (Локальный API)
 * Поддержка ZeroScope 2
@@ -59,7 +59,6 @@
 * Поддержка Rembg
 * Поддержка Shap-E
 * Поддержка TripoSR
-* Поддержка GLIGEN
 * Поддержка Wav2Lip
 * Поддержка multimodal (Moondream 2 для LLM)
 * Поддержка WebSearch (Для LLM через googleSearch)
