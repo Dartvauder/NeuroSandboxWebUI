@@ -1,6 +1,7 @@
 import gradio as gr
 import langdetect
 from transformers import AutoModelForCausalLM, AutoTokenizer, AutoProcessor, BarkModel
+from peft import PeftModel
 from libretranslatepy import LibreTranslateAPI
 import urllib.error
 import soundfile as sf
@@ -109,6 +110,27 @@ def load_model(model_name, model_type, n_ctx=None):
             except (ValueError, RuntimeError):
                 return None, None, "The selected model is not compatible with the 'llama' model type"
     return None, None, None
+
+
+def load_lora_model(base_model_name, lora_model_name, model_type):
+    global stop_signal
+    if stop_signal:
+        return None, None, "Generation stopped"
+
+    if model_type == "llama":
+        return None, None, "LORA model with 'llama' model type is not supported yet!"
+
+    base_model_path = f"inputs/text/llm_models/{base_model_name}"
+    lora_model_path = f"inputs/text/llm_models/lora/{lora_model_name}"
+
+    try:
+        base_model = AutoModelForCausalLM.from_pretrained(base_model_path)
+        model = PeftModel.from_pretrained(base_model, lora_model_path)
+        merged_model = model.merge_and_unload()
+        tokenizer = AutoTokenizer.from_pretrained(base_model_path)
+        return tokenizer, merged_model, None
+    except (OSError, RuntimeError):
+        return None, None, "Failed to load LoRA model"
 
 
 def load_moondream2_model(model_id, revision):
@@ -280,7 +302,7 @@ stop_signal = False
 chat_history = []
 
 
-def generate_text_and_speech(input_text, input_audio, input_image, llm_model_name, llm_settings_html, llm_model_type, max_length, max_tokens,
+def generate_text_and_speech(input_text, input_audio, input_image, llm_model_name, llm_lora_model_name, llm_settings_html, llm_model_type, max_length, max_tokens,
                              temperature, top_p, top_k, chat_history_format, enable_web_search, enable_libretranslate, target_lang, enable_multimodal, enable_tts, tts_settings_html,
                              speaker_wav, language, tts_temperature, tts_top_p, tts_top_k, tts_speed, output_format, stop_generation):
     global chat_history, chat_dir, tts_model, whisper_model, stop_signal
@@ -2096,7 +2118,8 @@ def open_outputs_folder():
             os.system(f'open "{outputs_folder}"' if os.name == "darwin" else f'xdg-open "{outputs_folder}"')
 
 
-llm_models_list = [None, "moondream2"] + [model for model in os.listdir("inputs/text/llm_models") if not model.endswith(".txt") and model != "vikhyatk"]
+llm_models_list = [None, "moondream2"] + [model for model in os.listdir("inputs/text/llm_models") if not model.endswith(".txt") and model != "vikhyatk" and model != "lora"]
+llm_lora_models_list = [None] + [model for model in os.listdir("inputs/text/llm_models/lora") if not model.endswith(".txt")]
 speaker_wavs_list = [None] + [wav for wav in os.listdir("inputs/audio/voices") if not wav.endswith(".txt")]
 stable_diffusion_models_list = [None] + [model.replace(".safetensors", "") for model in
                                          os.listdir("inputs/image/sd_models")
@@ -2119,6 +2142,7 @@ chat_interface = gr.Interface(
         gr.Audio(type="filepath", label="Record your request (optional)"),
         gr.Image(label="Upload your image (optional)", type="filepath"),
         gr.Dropdown(choices=llm_models_list, label="Select LLM model", value=None),
+        gr.Dropdown(choices=llm_lora_models_list, label="Select LoRA model (optional)", value=None),
         gr.HTML("<h3>LLM Settings</h3>"),
         gr.Radio(choices=["transformers", "llama"], label="Select model type", value="transformers"),
         gr.Slider(minimum=1, maximum=4096, value=512, step=1, label="Max length (for transformers type models)"),
