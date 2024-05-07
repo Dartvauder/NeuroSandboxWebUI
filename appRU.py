@@ -130,8 +130,10 @@ def load_lora_model(base_model_name, lora_model_name, model_type):
         merged_model = model.merge_and_unload()
         tokenizer = AutoTokenizer.from_pretrained(base_model_path)
         return tokenizer, merged_model, None
-    except (OSError, RuntimeError):
-        return None, None, "Failed to load LoRA model"
+    finally:
+        del tokenizer
+        del merged_model
+        torch.cuda.empty_cache()
 
 
 def load_moondream2_model(model_id, revision):
