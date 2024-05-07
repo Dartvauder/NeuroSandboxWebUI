@@ -46,11 +46,11 @@ The goal of the project - to create the easiest possible application to use neur
 * You can use the application via your mobile device in localhost (Via IPv4)
 * Flexible and optimized interface (By Gradio)
 * Support for Transformers and llama.cpp models (LLM)
-* Support for diffusers and safetensors models (StableDiffusion) - txt2img, img2img, depth2img, upscale, inpaint, animatediff, video, cascade and extras tabs
+* Support for diffusers and safetensors models (StableDiffusion) - txt2img, img2img, depth2img, upscale, inpaint, gligen, animatediff, video, cascade and extras tabs
 * AudioCraft support (Models: musicgen, audiogen and magnet)
-* AudioLDM 2 support
+* AudioLDM 2 support (Models: audio and music)
 * Supports TTS and Whisper models (For LLM and TTS-STT)
-* Supports Lora, Textual inversion (embedding), Vae, Img2img, Depth, Upscale, Inpaint, AnimateDiff, Videos and Cascade models (For StableDiffusion)
+* Supports Lora, Textual inversion (embedding), Vae, Img2img, Depth, Upscale, Inpaint, GLIGEN, AnimateDiff, Videos and Cascade models (For StableDiffusion)
 * Support Multiband Diffusion model (For AudioCraft)
 * Support LibreTranslate (Local API)
 * Support ZeroScope 2
@@ -59,7 +59,6 @@ The goal of the project - to create the easiest possible application to use neur
 * Support Rembg
 * Support Shap-E
 * Support TripoSR
-* Support GLIGEN
 * Support Wav2Lip
 * Support multimodal (Moondream 2 for LLM)
 * Support WebSearch (For LLM with GoogleSearch)
