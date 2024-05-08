@@ -50,13 +50,12 @@
 * Поддержка AudioCraft (Модели: musicgen, audiogen и magnet)
 * Поддержка AudioLDM 2 (Модели: audio и music)
 * Поддержка TTS и Whisper моделей (Для LLM и TTS-STT)
-* Поддержка Lora, Textual inversion (embedding), Vae, Img2img, Depth, Upscale, Inpaint, GLIGEN, AnimateDiff, Videos и Cascade моделей (Для StableDiffusion)
+* Поддержка Lora, Textual inversion (embedding), Vae, Img2img, Depth, Upscale, Inpaint, GLIGEN, AnimateDiff, Videos, Cascade и Rembg моделей (Для StableDiffusion)
 * Поддержка Multiband Diffusion модели (Для AudioCraft)
 * Поддержка LibreTranslate (Локальный API)
 * Поддержка ZeroScope 2
 * Поддержка SunoBark
 * Поддержка Demucs
-* Поддержка Rembg
 * Поддержка Shap-E
 * Поддержка TripoSR
 * Поддержка Wav2Lip
