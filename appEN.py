@@ -51,7 +51,13 @@ except ImportError:
     print("Xformers is not installed. Proceeding without it")
 
 warnings.filterwarnings("ignore")
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+logging.getLogger('transformers').setLevel(logging.ERROR)
+logging.getLogger('llama_cpp').setLevel(logging.ERROR)
+logging.getLogger('whisper').setLevel(logging.ERROR)
+logging.getLogger('TTS').setLevel(logging.ERROR)
+logging.getLogger('diffusers').setLevel(logging.ERROR)
+logging.getLogger('audiocraft').setLevel(logging.ERROR)
+logging.getLogger('xformers').setLevel(logging.ERROR)
 
 chat_dir = None
 tts_model = None
