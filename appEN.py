@@ -51,13 +51,7 @@ except ImportError:
     print("Xformers is not installed. Proceeding without it")
 
 warnings.filterwarnings("ignore")
-logging.getLogger('transformers').setLevel(logging.ERROR)
-logging.getLogger('llama_cpp').setLevel(logging.ERROR)
-logging.getLogger('whisper').setLevel(logging.ERROR)
-logging.getLogger('TTS').setLevel(logging.ERROR)
-logging.getLogger('diffusers').setLevel(logging.ERROR)
-logging.getLogger('audiocraft').setLevel(logging.ERROR)
-logging.getLogger('xformers').setLevel(logging.ERROR)
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
 chat_dir = None
 tts_model = None
@@ -1573,22 +1567,43 @@ def generate_image_cascade(prompt, negative_prompt, stable_cascade_settings_html
         torch.cuda.empty_cache()
 
 
-def generate_image_extras(input_image, image_output_format, remove_background, stop_generation):
+def generate_image_extras(input_image, source_image, remove_background, enable_faceswap, image_output_format, stop_generation):
     if not input_image:
         return None, "Please upload an image file!"
 
-    if not remove_background:
-        return None, "Please choose the option to modify the image"
+    if not remove_background and not enable_faceswap:
+        return None, "Please choose an option to modify the image"
 
     today = datetime.now().date()
     output_dir = os.path.join('outputs', f"Extras_{today.strftime('%Y%m%d')}")
     os.makedirs(output_dir, exist_ok=True)
 
-    output_filename = f"background_removed_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{image_output_format}"
+    output_filename = f"modified_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{image_output_format}"
     output_path = os.path.join(output_dir, output_filename)
 
     try:
-        remove_bg(input_image, output_path)
+        if remove_background:
+            remove_bg(input_image, output_path)
+
+        if enable_faceswap:
+            if not source_image:
+                return None, "Please upload a source image for faceswap!"
+
+            roop_model_path = os.path.join("inputs", "image", "roop")
+
+            if not os.path.exists(roop_model_path):
+                print("Downloading roop model...")
+                os.makedirs(roop_model_path, exist_ok=True)
+                Repo.clone_from("https://github.com/s0md3v/roop", roop_model_path)
+                print("roop model downloaded")
+
+            faceswap_output_path = os.path.join(output_dir, f"faceswap_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{image_output_format}")
+
+            command = f"python {os.path.join(roop_model_path, 'run.py')} --target {input_image} --source {source_image} --output {faceswap_output_path}"
+            subprocess.run(command, shell=True, check=True)
+
+            output_path = faceswap_output_path
+
         return output_path, None
 
     except Exception as e:
@@ -2524,8 +2539,10 @@ extras_interface = gr.Interface(
     fn=generate_image_extras,
     inputs=[
         gr.Image(label="Image to modify", type="filepath"),
-        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
+        gr.Image(label="Source Image", type="filepath"),
         gr.Checkbox(label="Remove Background", value=False),
+        gr.Checkbox(label="Enable Faceswap", value=False),
+        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
         gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
     outputs=[
