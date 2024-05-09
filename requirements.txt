@@ -135,6 +135,7 @@ nvidia-cuda-nvrtc-cu12==12.4.127
 nvidia-cudnn-cu12==9.1.0.70
 omegaconf==2.3.0
 onnxruntime==1.17.3
+onnxruntime-gpu==1.17.1
 openai-whisper==20231117
 opencv-python==4.9.0.80
 opencv-python-headless==4.9.0.80
