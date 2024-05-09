@@ -16,7 +16,6 @@ pip install --no-deps -r "$CURRENT_DIR/requirements.txt"
 pip install --no-deps -r "$CURRENT_DIR/requirements-cuda.txt"
 pip install --no-deps -r "$CURRENT_DIR/requirements-llama-cpp.txt"
 pip install git+https://github.com/tatsy/torchmcubes.git
-pip install flash-attn==2.5.8 --no-build-isolation
 clear
 
 echo "Application has been installed successfully. Run start.sh/Приложение успешно установлено. Запустите start.sh"
