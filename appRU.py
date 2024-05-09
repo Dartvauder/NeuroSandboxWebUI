@@ -1854,13 +1854,13 @@ def generate_audio_audiocraft(prompt, input_audio=None, model_name=None, audiocr
 
     try:
         if model_type == "musicgen":
-            model = MusicGen.get_pretrained(audiocraft_model_path).to(device)
+            model = MusicGen.get_pretrained(audiocraft_model_path)
             model.set_generation_params(duration=duration)
         elif model_type == "audiogen":
-            model = AudioGen.get_pretrained(audiocraft_model_path).to(device)
+            model = AudioGen.get_pretrained(audiocraft_model_path)
             model.set_generation_params(duration=duration)
         #        elif model_type == "magnet":
-        #            model = MAGNeT.get_pretrained(audiocraft_model_path).to(device)
+        #            model = MAGNeT.get_pretrained(audiocraft_model_path)
         #            model.set_generation_params()
         else:
             return None, "Invalid model type!"
@@ -1870,7 +1870,7 @@ def generate_audio_audiocraft(prompt, input_audio=None, model_name=None, audiocr
     mbd = None
 
     if enable_multiband:
-        mbd = MultiBandDiffusion.get_mbd_musicgen().to(device)
+        mbd = MultiBandDiffusion.get_mbd_musicgen()
 
     try:
         progress_bar = tqdm(total=duration, desc="Generating audio")
