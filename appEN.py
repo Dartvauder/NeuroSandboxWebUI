@@ -1578,7 +1578,7 @@ def generate_image_extras(input_image, source_image, remove_background, enable_f
     output_dir = os.path.join('outputs', f"Extras_{today.strftime('%Y%m%d')}")
     os.makedirs(output_dir, exist_ok=True)
 
-    output_filename = f"modified_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{image_output_format}"
+    output_filename = f"background_removed_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{image_output_format}"
     output_path = os.path.join(output_dir, output_filename)
 
     try:
@@ -1597,7 +1597,7 @@ def generate_image_extras(input_image, source_image, remove_background, enable_f
                 Repo.clone_from("https://github.com/s0md3v/roop", roop_model_path)
                 print("roop model downloaded")
 
-            faceswap_output_path = os.path.join(output_dir, f"faceswap_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{image_output_format}")
+            faceswap_output_path = os.path.join(output_dir, f"faceswapped_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{image_output_format}")
 
             command = f"python {os.path.join(roop_model_path, 'run.py')} --target {input_image} --source {source_image} --output {faceswap_output_path}"
             subprocess.run(command, shell=True, check=True)
