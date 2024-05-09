@@ -365,6 +365,7 @@
 * [TripoSR](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/mit.md)
 * [GLIGEN](https://huggingface.co/spaces/CompVis/stable-diffusion-license)
 * [Wav2Lip](https://github.com/Rudrabha/Wav2Lip)
+* [Roop](https://github.com/s0md3v/roop/blob/main/LICENSE)
 
 ## Пожертвование
 
