@@ -6,7 +6,7 @@
 
 ## Description:
 
-A simple and convenient interface for using various neural network models. You can communicate with LLM and Moondream2 using text, voice and image input, use StableDiffusion to generate images, ZeroScope 2 to generate videos, TripoSR and Shap-E to generate 3D objects, AudioCraft and AudioLDM 2 to generate music and audio, CoquiTTS and SunoBark for text-to-speech, OpenAI-Whisper for speech-to-text, Wav2Lip for lip-sync, Roop to faceswap, Rembg to remove background, LibreTranslate for text translation and Demucs for audio file separation. You can also download the LLM and StableDiffusion models, change the application settings inside the interface and check system sensors
+A simple and convenient interface for using various neural network models. You can communicate with LLM and Moondream2 using text, voice and image input, use StableDiffusion to generate images, ZeroScope 2 to generate videos, TripoSR and Shap-E to generate 3D objects, AudioCraft and AudioLDM 2 to generate music and audio, CoquiTTS and SunoBark for text-to-speech, OpenAI-Whisper for speech-to-text, Wav2Lip for lip-sync, Roop to faceswap, Rembg to remove background, CodeFormer for face restore, LibreTranslate for text translation and Demucs for audio file separation. You can also download the LLM and StableDiffusion models, change the application settings inside the interface and check system sensors
 
 The goal of the project - to create the easiest possible application to use neural network models
 
@@ -50,7 +50,7 @@ The goal of the project - to create the easiest possible application to use neur
 * AudioCraft support (Models: musicgen, audiogen and magnet)
 * AudioLDM 2 support (Models: audio and music)
 * Supports TTS and Whisper models (For LLM and TTS-STT)
-* Supports Lora, Textual inversion (embedding), Vae, Img2img, Depth, Upscale, Inpaint, GLIGEN, AnimateDiff, Videos, Cascade, Rembg and Roop models (For StableDiffusion)
+* Supports Lora, Textual inversion (embedding), Vae, Img2img, Depth, Upscale, Inpaint, GLIGEN, AnimateDiff, Videos, Cascade, Rembg, CodeFormer and Roop models (For StableDiffusion)
 * Support Multiband Diffusion model (For AudioCraft)
 * Support LibreTranslate (Local API)
 * Support ZeroScope 2
@@ -366,6 +366,7 @@ Thank you very much to these projects for allowing me to create my application:
 * [GLIGEN](https://huggingface.co/spaces/CompVis/stable-diffusion-license)
 * [Wav2Lip](https://github.com/Rudrabha/Wav2Lip)
 * [Roop](https://github.com/s0md3v/roop/blob/main/LICENSE)
+* [CodeFormer](https://github.com/sczhou/CodeFormer/blob/master/LICENSE)
 
 ## Donation
 
