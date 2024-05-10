@@ -9,6 +9,7 @@ cls
 
 echo Upgrading pip and setuptools.../Обновление pip и setuptools...
 py -m pip install --upgrade pip setuptools
+pip install wheel
 cls
 
 echo Installing dependencies.../Установка зависимостей...
