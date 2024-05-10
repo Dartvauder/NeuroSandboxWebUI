@@ -594,8 +594,12 @@ def generate_tts_stt(text, audio, tts_settings_html, speaker_wav, language, tts_
         device = "cuda" if torch.cuda.is_available() else "cpu"
         tts_model = tts_model.to(device)
 
-        wav = tts_model.tts(text=text, speaker_wav=f"inputs/audio/voices/{speaker_wav}", language=language,
-                            temperature=tts_temperature, top_p=tts_top_p, top_k=tts_top_k, speed=tts_speed)
+        try:
+            wav = tts_model.tts(text=text, speaker_wav=f"inputs/audio/voices/{speaker_wav}", language=language,
+                                temperature=tts_temperature, top_p=tts_top_p, top_k=tts_top_k, speed=tts_speed)
+        finally:
+            del tts_model
+            torch.cuda.empty_cache()
 
         today = datetime.now().date()
         audio_dir = os.path.join('outputs', f"TTS_{today.strftime('%Y%m%d')}")
@@ -616,7 +620,11 @@ def generate_tts_stt(text, audio, tts_settings_html, speaker_wav, language, tts_
         device = "cuda" if torch.cuda.is_available() else "cpu"
         whisper_model = whisper_model.to(device)
 
-        stt_output = transcribe_audio(audio)
+        try:
+            stt_output = transcribe_audio(audio)
+        finally:
+            del whisper_model
+            torch.cuda.empty_cache()
 
         if stt_output:
             today = datetime.now().date()
@@ -695,6 +703,11 @@ def generate_bark_audio(text, voice_preset, max_length, fine_temperature, coarse
 
     except Exception as e:
         return None, str(e)
+
+    finally:
+        del model
+        del processor
+        torch.cuda.empty_cache()
 
 
 def translate_text(text, source_lang, target_lang, enable_translate_history, translate_history_format, file=None):
@@ -1068,18 +1081,24 @@ def generate_image_upscale(image_path, num_inference_steps, guidance_scale, outp
 
     upscale_factor = 2
     upscaler = load_upscale_model(upscale_factor)
+
     if upscaler:
-        image = Image.open(image_path).convert("RGB")
-        upscaled_image = upscaler(prompt="", image=image, num_inference_steps=num_inference_steps, guidance_scale=guidance_scale).images[0]
+        try:
+            image = Image.open(image_path).convert("RGB")
+            upscaled_image = upscaler(prompt="", image=image, num_inference_steps=num_inference_steps, guidance_scale=guidance_scale).images[0]
 
-        today = datetime.now().date()
-        image_dir = os.path.join('outputs', f"StableDiffusion_{today.strftime('%Y%m%d')}")
-        os.makedirs(image_dir, exist_ok=True)
-        image_filename = f"upscaled_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
-        image_path = os.path.join(image_dir, image_filename)
-        upscaled_image.save(image_path, format=output_format.upper())
+            today = datetime.now().date()
+            image_dir = os.path.join('outputs', f"StableDiffusion_{today.strftime('%Y%m%d')}")
+            os.makedirs(image_dir, exist_ok=True)
+            image_filename = f"upscaled_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
+            image_path = os.path.join(image_dir, image_filename)
+            upscaled_image.save(image_path, format=output_format.upper())
 
-        return image_path, None
+            return image_path, None
+
+        finally:
+            del upscaler
+            torch.cuda.empty_cache()
     else:
         return None, "Failed to load upscale model"
 
@@ -1170,7 +1189,11 @@ def generate_image_inpaint(prompt, negative_prompt, init_image, mask_image, stab
 
         mask_array = Image.fromarray(mask_array).resize(init_image.size, resample=Image.NEAREST)
 
-        images = stable_diffusion_model(prompt=prompt, negative_prompt=negative_prompt, image=init_image,
+        compel_proc = Compel(tokenizer=stable_diffusion_model.tokenizer,
+                             text_encoder=stable_diffusion_model.text_encoder)
+        prompt_embeds = compel_proc(prompt)
+
+        images = stable_diffusion_model(prompt_embeds=prompt_embeds, negative_prompt=negative_prompt, image=init_image,
                                         mask_image=mask_array, width=width, height=height,
                                         num_inference_steps=stable_diffusion_steps,
                                         guidance_scale=stable_diffusion_cfg, sampler=stable_diffusion_sampler)
