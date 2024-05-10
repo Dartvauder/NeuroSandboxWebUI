@@ -2520,7 +2520,7 @@ gligen_interface = gr.Interface(
 animatediff_interface = gr.Interface(
     fn=generate_animation_animatediff,
     inputs=[
-        gr.Textbox(label="Enter your prompt (+ and - for prompt weighting)"),
+        gr.Textbox(label="Enter your prompt"),
         gr.Textbox(label="Enter your negative prompt", value=""),
         gr.Dropdown(choices=stable_diffusion_models_list, label="Select StableDiffusion model (only SD1.5)", value=None),
         gr.Slider(minimum=1, maximum=200, value=20, step=1, label="Frames"),
