@@ -1590,11 +1590,11 @@ def generate_image_cascade(prompt, negative_prompt, stable_cascade_settings_html
         torch.cuda.empty_cache()
 
 
-def generate_image_extras(input_image, source_image, remove_background, enable_faceswap, image_output_format, stop_generation):
+def generate_image_extras(input_image, source_image, remove_background, enable_faceswap, enable_facerestore, image_output_format, stop_generation):
     if not input_image:
         return None, "Please upload an image file!"
 
-    if not remove_background and not enable_faceswap:
+    if not remove_background and not enable_faceswap and not enable_facerestore:
         return None, "Please choose an option to modify the image"
 
     today = datetime.now().date()
@@ -1626,6 +1626,40 @@ def generate_image_extras(input_image, source_image, remove_background, enable_f
             subprocess.run(command, shell=True, check=True)
 
             output_path = faceswap_output_path
+
+        if enable_facerestore:
+            codeformer_path = os.path.join("inputs", "image", "CodeFormer")
+            codeformer_weights_path = os.path.join(codeformer_path, "weights", "CodeFormer")
+            facelib_weights_path = os.path.join(codeformer_path, "weights", "facelib")
+
+            if not os.path.exists(codeformer_weights_path):
+                os.makedirs(codeformer_weights_path, exist_ok=True)
+                codeformer_url = "https://github.com/sczhou/CodeFormer/releases/download/v0.1.0/codeformer.pth"
+                response = requests.get(codeformer_url, allow_redirects=True)
+                with open(os.path.join(codeformer_weights_path, "codeformer.pth"), "wb") as file:
+                    file.write(response.content)
+
+            if not os.path.exists(facelib_weights_path):
+                os.makedirs(facelib_weights_path, exist_ok=True)
+                facelib_urls = [
+                    "https://github.com/sczhou/CodeFormer/releases/download/v0.1.0/detection_mobilenet0.25_Final.pth",
+                    "https://github.com/sczhou/CodeFormer/releases/download/v0.1.0/detection_Resnet50_Final.pth",
+                    "https://github.com/sczhou/CodeFormer/releases/download/v0.1.0/parsing_parsenet.pth",
+                    "https://github.com/sczhou/CodeFormer/releases/download/v0.1.0/yolov5l-face.pth",
+                    "https://github.com/sczhou/CodeFormer/releases/download/v0.1.0/yolov5n-face.pth"
+                ]
+                for url in facelib_urls:
+                    response = requests.get(url, allow_redirects=True)
+                    filename = os.path.basename(url)
+                    with open(os.path.join(facelib_weights_path, filename), "wb") as file:
+                        file.write(response.content)
+
+            facerestore_output_path = os.path.join(output_dir)
+
+            command = f"python {os.path.join(codeformer_path, 'inference_codeformer.py')} -w 0.5 --has_aligned --input_path {input_image} --output_path {facerestore_output_path}"
+            subprocess.run(command, shell=True, check=True)
+
+            output_path = facerestore_output_path
 
         return output_path, None
 
@@ -2570,6 +2604,7 @@ extras_interface = gr.Interface(
         gr.Image(label="Source Image", type="filepath"),
         gr.Checkbox(label="Remove Background", value=False),
         gr.Checkbox(label="Enable Faceswap", value=False),
+        gr.Checkbox(label="Enable FaceRestore", value=False),
         gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
         gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
