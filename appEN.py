@@ -2050,8 +2050,8 @@ def download_model(model_name_llm, model_name_sd):
 
     if model_name_llm:
         model_url = ""
-        if model_name_llm == "Phi3(Transformers3B)":
-            model_url = "https://huggingface.co/microsoft/Phi-3-mini-4k-instruct"
+        if model_name_llm == "StarlingLM(Transformers7B)":
+            model_url = "https://huggingface.co/Nexusflow/Starling-LM-7B-beta"
         elif model_name_llm == "OpenChat(Llama7B.Q4)":
             model_url = "https://huggingface.co/TheBloke/openchat-3.5-0106-GGUF/resolve/main/openchat-3.5-0106.Q4_K_M.gguf"
         model_path = os.path.join("inputs", "text", "llm_models", model_name_llm)
@@ -2691,7 +2691,7 @@ demucs_interface = gr.Interface(
 model_downloader_interface = gr.Interface(
     fn=download_model,
     inputs=[
-        gr.Dropdown(choices=[None, "Phi3(Transformers3B)", "OpenChat(Llama7B.Q4)"], label="Download LLM model", value=None),
+        gr.Dropdown(choices=[None, "StarlingLM(Transformers7B)", "OpenChat(Llama7B.Q4)"], label="Download LLM model", value=None),
         gr.Dropdown(choices=[None, "Dreamshaper8(SD1.5)", "RealisticVisionV4.0(SDXL)"], label="Download StableDiffusion model", value=None),
     ],
     outputs=[
