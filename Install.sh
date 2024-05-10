@@ -7,8 +7,9 @@ python3 -m venv "$CURRENT_DIR/venv"
 source "$CURRENT_DIR/venv/bin/activate"
 clear
 
-echo "Upgrading pip and setuptools.../Обновление pip и setuptools..."
+echo "Upgrading pip, setuptools and whell.../Обновление pip, setuptools и wheel..."
 python3 -m pip install --upgrade pip setuptools
+pip install wheel
 clear
 
 echo "Installing dependencies.../Установка зависимостей..."
