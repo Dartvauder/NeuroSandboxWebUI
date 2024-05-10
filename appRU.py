@@ -1654,7 +1654,7 @@ def generate_image_extras(input_image, source_image, remove_background, enable_f
                     with open(os.path.join(facelib_weights_path, filename), "wb") as file:
                         file.write(response.content)
 
-            facerestore_output_path = os.path.join(output_dir, f"facerestored_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{image_output_format}")
+            facerestore_output_path = os.path.join(output_dir)
 
             command = f"python {os.path.join(codeformer_path, 'inference_codeformer.py')} -w 0.5 --has_aligned --input_path {input_image} --output_path {facerestore_output_path}"
             subprocess.run(command, shell=True, check=True)
