@@ -89,21 +89,23 @@ The goal of the project - to create the easiest possible application to use neur
 
 1) `Git clone https://github.com/Dartvauder/NeuroSandboxWebUI.git` to any location
 2) Run the `install.bat` and wait for installation
-3) After installation, run `start.bat`
+3) After installation, run `Start.bat`
 4) Select the file version and wait for the application to launch
 5) Now you can start generating!
 
-To get update, run `update.bat`
+To get update, run `Update.bat`
+To work with the virtual environment through the terminal, run `Venv.bat`
 
 ### Linux
 
 1) `Git clone https://github.com/Dartvauder/NeuroSandboxWebUI.git` to any location
-2) In the terminal, run the `./install.sh` and wait for installation of all dependencies
-3) After installation, run `./start.sh`
+2) In the terminal, run the `./Install.sh` and wait for installation of all dependencies
+3) After installation, run `./Start.sh`
 4) Wait for the application to launch
 5) Now you can start generating!
 
-To get update, run `./update.sh`
+To get update, run `./Update.sh`
+To work with the virtual environment through the terminal, run `./Venv.sh`
 
 ## How to use:
 
