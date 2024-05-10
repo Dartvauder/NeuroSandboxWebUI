@@ -140,9 +140,9 @@ def load_moondream2_model(model_id, revision):
     global stop_signal
     if stop_signal:
         return "Generation stopped"
-    print(f"Downloading MoonDream2 model...")
     moondream2_model_path = os.path.join("inputs", "text", "llm_models", model_id)
     if not os.path.exists(moondream2_model_path):
+        print(f"Downloading MoonDream2 model...")
         os.makedirs(moondream2_model_path, exist_ok=True)
         device = "cuda" if torch.cuda.is_available() else "cpu"
         model = AutoModelForCausalLM.from_pretrained(
@@ -151,11 +151,11 @@ def load_moondream2_model(model_id, revision):
         tokenizer = AutoTokenizer.from_pretrained(model_id, revision=revision)
         model.save_pretrained(moondream2_model_path)
         tokenizer.save_pretrained(moondream2_model_path)
+        print("MoonDream2 model downloaded")
     else:
         device = "cuda" if torch.cuda.is_available() else "cpu"
         model = AutoModelForCausalLM.from_pretrained(moondream2_model_path, trust_remote_code=True).to(device)
         tokenizer = AutoTokenizer.from_pretrained(moondream2_model_path)
-    print("MoonDream2 model downloaded")
     return model, tokenizer
 
 
@@ -181,12 +181,12 @@ def load_tts_model():
     global stop_signal
     if stop_signal:
         return "Generation stopped"
-    print("Downloading TTS...")
     tts_model_path = "inputs/audio/XTTS-v2"
     if not os.path.exists(tts_model_path):
+        print("Downloading TTS...")
         os.makedirs(tts_model_path, exist_ok=True)
         Repo.clone_from("https://huggingface.co/coqui/XTTS-v2", tts_model_path)
-    print("TTS model downloaded")
+        print("TTS model downloaded")
     return TTS(model_path=tts_model_path, config_path=f"{tts_model_path}/config.json")
 
 
@@ -194,15 +194,15 @@ def load_whisper_model():
     global stop_signal
     if stop_signal:
         return "Generation stopped"
-    print("Downloading Whisper...")
     whisper_model_path = "inputs/text/whisper-medium"
     if not os.path.exists(whisper_model_path):
+        print("Downloading Whisper...")
         os.makedirs(whisper_model_path, exist_ok=True)
         url = ("https://openaipublic.azureedge.net/main/whisper/models"
                "/345ae4da62f9b3d59415adc60127b97c714f32e89e936602e85993674d08dcb1/medium.pt")
         r = requests.get(url, allow_redirects=True)
         open(os.path.join(whisper_model_path, "medium.pt"), "wb").write(r.content)
-    print("Whisper downloaded")
+        print("Whisper downloaded")
     model_file = os.path.join(whisper_model_path, "medium.pt")
     return whisper.load_model(model_file)
 
@@ -212,9 +212,9 @@ def load_audiocraft_model(model_name):
     if stop_signal:
         return "Generation stopped"
     global audiocraft_model_path
-    print(f"Downloading AudioCraft model: {model_name}...")
     audiocraft_model_path = os.path.join("inputs", "audio", "audiocraft", model_name)
     if not os.path.exists(audiocraft_model_path):
+        print(f"Downloading AudioCraft model: {model_name}...")
         os.makedirs(audiocraft_model_path, exist_ok=True)
         if model_name == "musicgen-stereo-medium":
             Repo.clone_from("https://huggingface.co/facebook/musicgen-stereo-medium", audiocraft_model_path)
@@ -236,7 +236,7 @@ def load_audiocraft_model(model_name):
             Repo.clone_from("https://huggingface.co/facebook/magnet-medium-10secs", audiocraft_model_path)
         elif model_name == "audio-magnet-medium":
             Repo.clone_from("https://huggingface.co/facebook/audio-magnet-medium", audiocraft_model_path)
-    print(f"AudioCraft model {model_name} downloaded")
+        print(f"AudioCraft model {model_name} downloaded")
     return audiocraft_model_path
 
 
@@ -244,9 +244,9 @@ def load_multiband_diffusion_model():
     global stop_signal
     if stop_signal:
         return "Generation stopped"
-    print(f"Downloading Multiband Diffusion model")
     multiband_diffusion_path = os.path.join("inputs", "audio", "audiocraft", "multiband-diffusion")
     if not os.path.exists(multiband_diffusion_path):
+        print(f"Downloading Multiband Diffusion model")
         os.makedirs(multiband_diffusion_path, exist_ok=True)
         Repo.clone_from("https://huggingface.co/facebook/multiband-diffusion", multiband_diffusion_path)
         print("Multiband Diffusion model downloaded")
@@ -267,11 +267,11 @@ def load_upscale_model(upscale_factor):
         upscale_model_path = os.path.join("inputs", "image", "sd_models", "upscale", "x4-upscaler")
         original_config_file = "configs/sd/x4-upscaling.yaml"
 
-    print(f"Downloading Upscale model: {upscale_model_name}")
-
     if not os.path.exists(upscale_model_path):
+        print(f"Downloading Upscale model: {upscale_model_name}")
         os.makedirs(upscale_model_path, exist_ok=True)
         Repo.clone_from(f"https://huggingface.co/{upscale_model_name}", upscale_model_path)
+        print(f"Upscale model {upscale_model_name} downloaded")
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -293,8 +293,6 @@ def load_upscale_model(upscale_factor):
     upscaler.enable_attention_slicing()
     if XFORMERS_AVAILABLE:
         upscaler.enable_xformers_memory_efficient_attention(attention_op=None)
-
-    print(f"Upscale model {upscale_model_name} downloaded")
 
     upscaler.upscale_factor = upscale_factor
     return upscaler
@@ -376,7 +374,7 @@ def generate_text_and_speech(input_text, input_audio, input_image, llm_model_nam
     else:
         tokenizer, llm_model, error_message = load_model(llm_model_name, llm_model_type)
         if llm_lora_model_name:
-            tokenizer, llm_model, error_message = load_lora_model(llm_model_name, llm_lora_model_name, llm_model_type)      
+            tokenizer, llm_model, error_message = load_lora_model(llm_model_name, llm_lora_model_name, llm_model_type)
         if error_message:
             chat_history.append([None, error_message])
             return chat_history, None, None, None
@@ -596,8 +594,12 @@ def generate_tts_stt(text, audio, tts_settings_html, speaker_wav, language, tts_
         device = "cuda" if torch.cuda.is_available() else "cpu"
         tts_model = tts_model.to(device)
 
-        wav = tts_model.tts(text=text, speaker_wav=f"inputs/audio/voices/{speaker_wav}", language=language,
-                            temperature=tts_temperature, top_p=tts_top_p, top_k=tts_top_k, speed=tts_speed)
+        try:
+            wav = tts_model.tts(text=text, speaker_wav=f"inputs/audio/voices/{speaker_wav}", language=language,
+                                temperature=tts_temperature, top_p=tts_top_p, top_k=tts_top_k, speed=tts_speed)
+        finally:
+            del tts_model
+            torch.cuda.empty_cache()
 
         today = datetime.now().date()
         audio_dir = os.path.join('outputs', f"TTS_{today.strftime('%Y%m%d')}")
@@ -618,7 +620,11 @@ def generate_tts_stt(text, audio, tts_settings_html, speaker_wav, language, tts_
         device = "cuda" if torch.cuda.is_available() else "cpu"
         whisper_model = whisper_model.to(device)
 
-        stt_output = transcribe_audio(audio)
+        try:
+            stt_output = transcribe_audio(audio)
+        finally:
+            del whisper_model
+            torch.cuda.empty_cache()
 
         if stt_output:
             today = datetime.now().date()
@@ -698,6 +704,11 @@ def generate_bark_audio(text, voice_preset, max_length, fine_temperature, coarse
     except Exception as e:
         return None, str(e)
 
+    finally:
+        del model
+        del processor
+        torch.cuda.empty_cache()
+
 
 def translate_text(text, source_lang, target_lang, enable_translate_history, translate_history_format, file=None):
     try:
@@ -755,13 +766,13 @@ def generate_wav2lip(image_path, audio_path, fps, pads, face_det_batch_size, wav
         checkpoint_path = os.path.join(wav2lip_path, "checkpoints", "wav2lip_gan.pth")
 
         if not os.path.exists(checkpoint_path):
-            print("Downloading Wav2Lip GAN checkpoint...")
+            print("Downloading Wav2Lip GAN model...")
             os.makedirs(os.path.dirname(checkpoint_path), exist_ok=True)
             url = "https://huggingface.co/camenduru/Wav2Lip/resolve/main/checkpoints/wav2lip_gan.pth"
             response = requests.get(url, allow_redirects=True)
             with open(checkpoint_path, "wb") as file:
                 file.write(response.content)
-            print("Wav2Lip GAN checkpoint downloaded")
+            print("Wav2Lip GAN model downloaded")
 
         today = datetime.now().date()
         output_dir = os.path.join("outputs", f"FaceAnimation_{today.strftime('%Y%m%d')}")
@@ -1070,18 +1081,24 @@ def generate_image_upscale(image_path, num_inference_steps, guidance_scale, outp
 
     upscale_factor = 2
     upscaler = load_upscale_model(upscale_factor)
+
     if upscaler:
-        image = Image.open(image_path).convert("RGB")
-        upscaled_image = upscaler(prompt="", image=image, num_inference_steps=num_inference_steps, guidance_scale=guidance_scale).images[0]
+        try:
+            image = Image.open(image_path).convert("RGB")
+            upscaled_image = upscaler(prompt="", image=image, num_inference_steps=num_inference_steps, guidance_scale=guidance_scale).images[0]
 
-        today = datetime.now().date()
-        image_dir = os.path.join('outputs', f"StableDiffusion_{today.strftime('%Y%m%d')}")
-        os.makedirs(image_dir, exist_ok=True)
-        image_filename = f"upscaled_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
-        image_path = os.path.join(image_dir, image_filename)
-        upscaled_image.save(image_path, format=output_format.upper())
+            today = datetime.now().date()
+            image_dir = os.path.join('outputs', f"StableDiffusion_{today.strftime('%Y%m%d')}")
+            os.makedirs(image_dir, exist_ok=True)
+            image_filename = f"upscaled_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
+            image_path = os.path.join(image_dir, image_filename)
+            upscaled_image.save(image_path, format=output_format.upper())
 
-        return image_path, None
+            return image_path, None
+
+        finally:
+            del upscaler
+            torch.cuda.empty_cache()
     else:
         return None, "Failed to load upscale model"
 
@@ -1172,7 +1189,11 @@ def generate_image_inpaint(prompt, negative_prompt, init_image, mask_image, stab
 
         mask_array = Image.fromarray(mask_array).resize(init_image.size, resample=Image.NEAREST)
 
-        images = stable_diffusion_model(prompt=prompt, negative_prompt=negative_prompt, image=init_image,
+        compel_proc = Compel(tokenizer=stable_diffusion_model.tokenizer,
+                             text_encoder=stable_diffusion_model.text_encoder)
+        prompt_embeds = compel_proc(prompt)
+
+        images = stable_diffusion_model(prompt_embeds=prompt_embeds, negative_prompt=negative_prompt, image=init_image,
                                         mask_image=mask_array, width=width, height=height,
                                         num_inference_steps=stable_diffusion_steps,
                                         guidance_scale=stable_diffusion_cfg, sampler=stable_diffusion_sampler)
@@ -1410,13 +1431,11 @@ def generate_video(init_image, output_format, video_settings_html, motion_bucket
         video_model_name = "vdo/stable-video-diffusion-img2vid-xt-1-1"
         video_model_path = os.path.join("inputs", "image", "sd_models", "video", "SVD")
 
-        print(f"Downloading StableVideoDiffusion model")
-
         if not os.path.exists(video_model_path):
+            print(f"Downloading StableVideoDiffusion model")
             os.makedirs(video_model_path, exist_ok=True)
             Repo.clone_from(f"https://huggingface.co/{video_model_name}", video_model_path)
-
-        print(f"StableVideoDiffusion model downloaded")
+            print(f"StableVideoDiffusion model downloaded")
 
         try:
             device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -1456,13 +1475,11 @@ def generate_video(init_image, output_format, video_settings_html, motion_bucket
         video_model_name = "ali-vilab/i2vgen-xl"
         video_model_path = os.path.join("inputs", "image", "sd_models", "video", "i2vgenxl")
 
-        print(f"Downloading i2vgen-xl model")
-
         if not os.path.exists(video_model_path):
+            print(f"Downloading i2vgen-xl model")
             os.makedirs(video_model_path, exist_ok=True)
             Repo.clone_from(f"https://huggingface.co/{video_model_name}", video_model_path)
-
-        print(f"i2vgen-xl model downloaded")
+            print(f"i2vgen-xl model downloaded")
 
         try:
             device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -1662,11 +1679,9 @@ def generate_video_zeroscope2(prompt, video_to_enhance, strength, num_inference_
             if stop_signal:
                 return None, "Generation stopped"
 
-            video_frames_np = [np.array(frame) for frame in video_frames]
-
             video_filename = f"zeroscope2_{datetime.now().strftime('%Y%m%d_%H%M%S')}.mp4"
             video_path = os.path.join(video_dir, video_filename)
-            export_to_video(video_frames_np, video_path)
+            export_to_video(video_frames, video_path)
 
             return video_path, None
 
@@ -1814,18 +1829,23 @@ def generate_3d(prompt, init_image, num_inference_steps, guidance_scale, frame_s
     output_dir = os.path.join('outputs', f"Shap-E_{today.strftime('%Y%m%d')}")
     os.makedirs(output_dir, exist_ok=True)
 
-    ply_filename = f"3d_object_{datetime.now().strftime('%Y%m%d_%H%M%S')}.ply"
-    ply_path = os.path.join(output_dir, ply_filename)
-    export_to_ply(images[0], ply_path)
+    try:
+        ply_filename = f"3d_object_{datetime.now().strftime('%Y%m%d_%H%M%S')}.ply"
+        ply_path = os.path.join(output_dir, ply_filename)
+        export_to_ply(images[0], ply_path)
 
-    mesh = trimesh.load(ply_path)
-    rot = trimesh.transformations.rotation_matrix(-np.pi / 2, [1, 0, 0])
-    mesh = mesh.apply_transform(rot)
-    glb_filename = f"3d_object_{datetime.now().strftime('%Y%m%d_%H%M%S')}.glb"
-    glb_path = os.path.join(output_dir, glb_filename)
-    mesh.export(glb_path, file_type="glb")
+        mesh = trimesh.load(ply_path)
+        rot = trimesh.transformations.rotation_matrix(-np.pi / 2, [1, 0, 0])
+        mesh = mesh.apply_transform(rot)
+        glb_filename = f"3d_object_{datetime.now().strftime('%Y%m%d_%H%M%S')}.glb"
+        glb_path = os.path.join(output_dir, glb_filename)
+        mesh.export(glb_path, file_type="glb")
 
-    return glb_path, None
+        return glb_path, None
+
+    finally:
+        del pipe
+        torch.cuda.empty_cache()
 
 
 def generate_audio_audiocraft(prompt, input_audio=None, model_name=None, audiocraft_settings_html=None, model_type="musicgen",
