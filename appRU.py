@@ -1829,18 +1829,23 @@ def generate_3d(prompt, init_image, num_inference_steps, guidance_scale, frame_s
     output_dir = os.path.join('outputs', f"Shap-E_{today.strftime('%Y%m%d')}")
     os.makedirs(output_dir, exist_ok=True)
 
-    ply_filename = f"3d_object_{datetime.now().strftime('%Y%m%d_%H%M%S')}.ply"
-    ply_path = os.path.join(output_dir, ply_filename)
-    export_to_ply(images[0], ply_path)
+    try:
+        ply_filename = f"3d_object_{datetime.now().strftime('%Y%m%d_%H%M%S')}.ply"
+        ply_path = os.path.join(output_dir, ply_filename)
+        export_to_ply(images[0], ply_path)
 
-    mesh = trimesh.load(ply_path)
-    rot = trimesh.transformations.rotation_matrix(-np.pi / 2, [1, 0, 0])
-    mesh = mesh.apply_transform(rot)
-    glb_filename = f"3d_object_{datetime.now().strftime('%Y%m%d_%H%M%S')}.glb"
-    glb_path = os.path.join(output_dir, glb_filename)
-    mesh.export(glb_path, file_type="glb")
+        mesh = trimesh.load(ply_path)
+        rot = trimesh.transformations.rotation_matrix(-np.pi / 2, [1, 0, 0])
+        mesh = mesh.apply_transform(rot)
+        glb_filename = f"3d_object_{datetime.now().strftime('%Y%m%d_%H%M%S')}.glb"
+        glb_path = os.path.join(output_dir, glb_filename)
+        mesh.export(glb_path, file_type="glb")
 
-    return glb_path, None
+        return glb_path, None
+
+    finally:
+        del pipe
+        torch.cuda.empty_cache()
 
 
 def generate_audio_audiocraft(prompt, input_audio=None, model_name=None, audiocraft_settings_html=None, model_type="musicgen",
