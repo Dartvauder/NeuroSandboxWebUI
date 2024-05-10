@@ -40,7 +40,7 @@ compel==2.0.2
 confection==0.1.4
 contourpy==1.2.1
 coqpit==0.0.17
-cuda-python==12.1.0
+cuda-python==12.4.0
 curl_cffi==0.6.3
 customtkinter==5.2.2
 cycler==0.12.1
