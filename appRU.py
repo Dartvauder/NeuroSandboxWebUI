@@ -1601,7 +1601,7 @@ def generate_image_extras(input_image, source_image, remove_background, enable_f
     output_dir = os.path.join('outputs', f"Extras_{today.strftime('%Y%m%d')}")
     os.makedirs(output_dir, exist_ok=True)
 
-    output_filename = f"backgroundremoved_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{image_output_format}"
+    output_filename = f"modified_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{image_output_format}"
     output_path = os.path.join(output_dir, output_filename)
 
     try:
