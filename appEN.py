@@ -2354,7 +2354,7 @@ wav2lip_interface = gr.Interface(
 txt2img_interface = gr.Interface(
     fn=generate_image_txt2img,
     inputs=[
-        gr.Textbox(label="Enter your prompt"),
+        gr.Textbox(label="Enter your prompt (+ and - for prompt weighting)"),
         gr.Textbox(label="Enter your negative prompt", value=""),
         gr.Dropdown(choices=stable_diffusion_models_list, label="Select StableDiffusion model", value=None),
         gr.Dropdown(choices=vae_models_list, label="Select VAE model (optional)", value=None),
@@ -2390,7 +2390,7 @@ txt2img_interface = gr.Interface(
 img2img_interface = gr.Interface(
     fn=generate_image_img2img,
     inputs=[
-        gr.Textbox(label="Enter your prompt"),
+        gr.Textbox(label="Enter your prompt (+ and - for prompt weighting)"),
         gr.Textbox(label="Enter your negative prompt", value=""),
         gr.Image(label="Initial image", type="filepath"),
         gr.Slider(minimum=0.0, maximum=1.0, value=0.5, step=0.01, label="Strength"),
@@ -2459,7 +2459,7 @@ upscale_interface = gr.Interface(
 inpaint_interface = gr.Interface(
     fn=generate_image_inpaint,
     inputs=[
-        gr.Textbox(label="Enter your prompt"),
+        gr.Textbox(label="Enter your prompt (+ and - for prompt weighting)"),
         gr.Textbox(label="Enter your negative prompt", value=""),
         gr.Image(label="Initial image", type="filepath"),
         gr.ImageEditor(label="Mask image", type="filepath"),
@@ -2602,8 +2602,8 @@ extras_interface = gr.Interface(
     inputs=[
         gr.Image(label="Image to modify", type="filepath"),
         gr.Image(label="Source Image", type="filepath"),
-        gr.Checkbox(label="Remove Background", value=False),
-        gr.Checkbox(label="Enable Faceswap", value=False),
+        gr.Checkbox(label="Remove BackGround", value=False),
+        gr.Checkbox(label="Enable FaceSwap", value=False),
         gr.Checkbox(label="Enable FaceRestore", value=False),
         gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
         gr.Button(value="Stop generation", interactive=True, variant="stop"),
@@ -2746,7 +2746,6 @@ demucs_interface = gr.Interface(
     ],
     title="NeuroSandboxWebUI (ALPHA) - Demucs",
     description="This user interface allows you to upload an audio file and separate it into vocal and instrumental using Demucs. "
-                "The separated audio files will be saved in the outputs folder. "
                 "Try it and see what happens!",
     allow_flagging="never",
 )
