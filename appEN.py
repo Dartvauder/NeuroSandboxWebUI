@@ -2057,7 +2057,7 @@ def download_model(model_name_llm, model_name_sd):
         model_path = os.path.join("inputs", "text", "llm_models", model_name_llm)
 
         if model_url:
-            if model_name_llm == "Phi3(Transformers3B)":
+            if model_name_llm == "StarlingLM(Transformers7B)":
                 Repo.clone_from(model_url, model_path)
             else:
                 response = requests.get(model_url, allow_redirects=True)
