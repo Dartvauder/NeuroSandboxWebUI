@@ -161,7 +161,7 @@ To work with the virtual environment through the terminal, run `./Venv.sh`
 2) Select your model from the drop-down list
 3) Select model type (`SD`, `SD2` or `SDXL`)
 4) Set up the model according to the parameters you need
-5) Enter your request
+5) Enter your request (+ and - for prompt weighting)
 6) Click the `Submit` button to get the generated image
 #### Optional: You can select your `vae`, `embedding` and `lora` models to improve the generation method, also you can enable `upscale` to increase the size of the generated image 
 #### vae = *inputs/image/sd_models/vae*
@@ -175,7 +175,7 @@ To work with the virtual environment through the terminal, run `./Venv.sh`
 3) Select model type (`SD`, `SD2` or `SDXL`)
 4) Set up the model according to the parameters you need
 5) Upload the initial image with which the generation will take place
-6) Enter your request
+6) Enter your request (+ and - for prompt weighting)
 7) Click the `Submit` button to get the generated image
 #### Optional: You can select your `vae` model
 #### vae = *inputs/image/sd_models/vae*
@@ -184,7 +184,7 @@ To work with the virtual environment through the terminal, run `./Venv.sh`
 
 1) Upload the initial image
 2) Set up the model according to the parameters you need
-3) Enter your request
+3) Enter your request (+ and - for prompt weighting)
 4) Click the `Submit` button to get the generated image
 
 #### controlnet:
@@ -193,7 +193,7 @@ To work with the virtual environment through the terminal, run `./Venv.sh`
 2) Upload the initial image
 3) Select your stable diffusion and controlnet models from the drop-down lists
 4) Set up the models according to the parameters you need
-5) Enter your request
+5) Enter your request (+ and - for prompt weighting)
 6) Click the `Submit` button to get the generated image
 
 #### upscale:
@@ -210,7 +210,7 @@ To work with the virtual environment through the terminal, run `./Venv.sh`
 4) Set up the model according to the parameters you need
 5) Upload the image with which the generation will take place to `initial image` and `mask image`
 6) In `mask image`, select the brush, then the palette and change the color to `#FFFFFF`
-7) Draw a place for generation and enter your request
+7) Draw a place for generation and enter your request (+ and - for prompt weighting)
 8) Click the `Submit` button to get the inpainted image
 #### Optional: You can select your `vae` model
 #### vae = *inputs/image/sd_models/vae*
@@ -221,7 +221,7 @@ To work with the virtual environment through the terminal, run `./Venv.sh`
 2) Select your model from the drop-down list
 3) Select model type (`SD`, `SD2` or `SDXL`)
 4) Set up the model according to the parameters you need
-5) Enter your request for promt and GLIGEN phrases (in "" for box)
+5) Enter your request for promt (+ and - for prompt weighting) and GLIGEN phrases (in "" for box)
 6) Enter GLIGEN boxes (Like a [0.1387, 0.2051, 0.4277, 0.7090] for box)
 7) Click the `Submit` button to get the generated image
 
