@@ -1131,9 +1131,15 @@ def generate_image_controlnet(prompt, negative_prompt, init_image, stable_diffus
 
         return image_path, None
 
+    except (TypeError, ValueError):
+        return None, "Invalid StableDiffusion model type!"
+
     finally:
-        del controlnet
-        del pipe
+        try:
+            del controlnet
+            del pipe
+        except UnboundLocalError:
+            pass
         torch.cuda.empty_cache()
 
 
@@ -2511,7 +2517,7 @@ controlnet_interface = gr.Interface(
         gr.Textbox(label="Enter your prompt"),
         gr.Textbox(label="Enter your negative prompt", value=""),
         gr.Image(label="Initial image", type="filepath"),
-        gr.Dropdown(choices=stable_diffusion_models_list, label="Select StableDiffusion model", value=None),
+        gr.Dropdown(choices=stable_diffusion_models_list, label="Select StableDiffusion model (only SD1.5)", value=None),
         gr.Dropdown(choices=controlnet_models_list, label="Select ControlNet model", value=None),
         gr.Slider(minimum=1, maximum=100, value=30, step=1, label="Steps"),
         gr.Slider(minimum=1.0, maximum=30.0, value=8, step=0.1, label="CFG"),
