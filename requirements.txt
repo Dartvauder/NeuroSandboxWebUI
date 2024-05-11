@@ -39,6 +39,7 @@ commandlines==0.4.1
 compel==2.0.2
 confection==0.1.4
 contourpy==1.2.1
+controlnet-aux==0.0.8
 coqpit==0.0.17
 cuda-python==12.4.0
 curl_cffi==0.6.3
@@ -242,6 +243,7 @@ thinc==8.2.3
 threadpoolctl==3.4.0
 tifffile==2024.4.24
 tiktoken==0.6.0
+timm==0.6.7
 tkinterdnd2==0.3.0
 tokenizers==0.19.1
 tomli==2.0.1
