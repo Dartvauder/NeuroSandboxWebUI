@@ -20,7 +20,7 @@ The goal of the project - to create the easiest possible application to use neur
 
 ### Wav2Lip: ![5](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/3090f8e1-44cd-431c-a671-e3be60658070)
 
-### StableDiffusion: ![6](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/29abaefe-8a00-4bff-941f-34cbf6303ec5)
+### StableDiffusion: ![6](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/e513ea23-e04b-4cca-b519-b54a6ddcd3b3)
 
 ### ZeroScope 2: ![7](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/815bb897-0e92-4a6d-a111-e7669c96ba62)
 
@@ -46,11 +46,11 @@ The goal of the project - to create the easiest possible application to use neur
 * You can use the application via your mobile device in localhost (Via IPv4)
 * Flexible and optimized interface (By Gradio)
 * Support for Transformers and llama.cpp models (LLM)
-* Support for diffusers and safetensors models (StableDiffusion) - txt2img, img2img, depth2img, upscale, inpaint, gligen, animatediff, video, cascade and extras tabs
+* Support for diffusers and safetensors models (StableDiffusion) - txt2img, img2img, depth2img, controlnet, upscale, inpaint, gligen, animatediff, video, cascade and extras tabs
 * AudioCraft support (Models: musicgen, audiogen and magnet)
 * AudioLDM 2 support (Models: audio and music)
 * Supports TTS and Whisper models (For LLM and TTS-STT)
-* Supports Lora, Textual inversion (embedding), Vae, Img2img, Depth, Upscale, Inpaint, GLIGEN, AnimateDiff, Videos, Cascade, Rembg, CodeFormer and Roop models (For StableDiffusion)
+* Supports Lora, Textual inversion (embedding), Vae, Img2img, Depth, Controlnet, Upscale, Inpaint, GLIGEN, AnimateDiff, Videos, Cascade, Rembg, CodeFormer and Roop models (For StableDiffusion)
 * Support Multiband Diffusion model (For AudioCraft)
 * Support LibreTranslate (Local API)
 * Support ZeroScope 2
@@ -152,7 +152,7 @@ To work with the virtual environment through the terminal, run `./Venv.sh`
 3) Set up the model according to the parameters you need
 4) Click the `Submit` button to receive the lip-sync
 
-### StableDiffusion - has ten sub-tabs:
+### StableDiffusion - has eleven sub-tabs:
 
 #### txt2img:
 
@@ -185,6 +185,15 @@ To work with the virtual environment through the terminal, run `./Venv.sh`
 2) Set up the model according to the parameters you need
 3) Enter your request
 4) Click the `Submit` button to get the generated image
+
+#### controlnet:
+
+1) First upload your stable diffusion models to the folder: *inputs/image/sd_models*
+2) Upload the initial image
+3) Select your stable diffusion and controlnet models from the drop-down lists
+4) Set up the models according to the parameters you need
+5) Enter your request
+6) Click the `Submit` button to get the generated image
 
 #### upscale:
 
@@ -308,7 +317,7 @@ To work with the virtual environment through the terminal, run `./Venv.sh`
 
 * LLM models can be taken from [HuggingFace](https://huggingface.co/models) or from ModelDownloader inside interface 
 * StableDiffusion, vae, inpaint, embedding and lora models can be taken from [CivitAI](https://civitai.com/models) or from ModelDownloader inside interface
-* AudioCraft, AudioLDM 2, TTS, Whisper, Wav2Lip, SunoBark, MoonDream2, Upscale, GLIGEN, Depth, AnimateDiff, Videos, Cascade, Rembg, Roop, CodeFormer, TripoSR, Shap-E, Demucs, ZeroScope and Multiband diffusion models are downloads automatically in *inputs* folder when are they used 
+* AudioCraft, AudioLDM 2, TTS, Whisper, Wav2Lip, SunoBark, MoonDream2, Upscale, GLIGEN, Depth, Controlnet, AnimateDiff, Videos, Cascade, Rembg, Roop, CodeFormer, TripoSR, Shap-E, Demucs, ZeroScope and Multiband diffusion models are downloads automatically in *inputs* folder when are they used 
 * You can take voices anywhere. Record yours or take a recording from the Internet. Or just use those that are already in the project. The main thing is that it is pre-processed!
 
 ## Wiki

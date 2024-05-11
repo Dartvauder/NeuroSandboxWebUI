@@ -39,6 +39,7 @@ commandlines==0.4.1
 compel==2.0.2
 confection==0.1.4
 contourpy==1.2.1
+controlnet-aux==0.0.8
 coqpit==0.0.17
 cuda-python==12.4.0
 curl_cffi==0.6.3
@@ -110,6 +111,8 @@ insightface==0.7.3
 intel-openmp==2021.4.0
 itsdangerous==2.2.0
 jamo==0.4.1
+jax==0.4.28
+jaxlib==0.4.28
 jieba==0.42.1
 Jinja2==3.1.3
 joblib==1.4.0
@@ -137,6 +140,7 @@ markdown-it-py==3.0.0
 MarkupSafe==2.1.5
 matplotlib==3.8.4
 mdurl==0.1.2
+mediapipe==0.10.14
 mkl==2021.4.0
 ml-dtypes==0.3.2
 more-itertools==10.2.0
@@ -159,6 +163,7 @@ onnx==1.16.0
 onnxruntime==1.17.3
 onnxruntime-gpu==1.17.1
 openai-whisper==20231117
+opencv-contrib-python==4.9.0.80
 opencv-python==4.9.0.80
 opencv-python-headless==4.9.0.80
 opennsfw2==0.13.7
@@ -218,6 +223,7 @@ six==1.16.0
 smart-open==6.4.0
 smmap==5.0.1
 sniffio==1.3.1
+sounddevice==0.4.6
 soundfile==0.12.1
 soupsieve==2.5
 soxr==0.3.7
@@ -242,6 +248,7 @@ thinc==8.2.3
 threadpoolctl==3.4.0
 tifffile==2024.4.24
 tiktoken==0.6.0
+timm==0.6.7
 tkinterdnd2==0.3.0
 tokenizers==0.19.1
 tomli==2.0.1

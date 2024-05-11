@@ -15,7 +15,7 @@ import whisper
 from datetime import datetime
 import warnings
 import logging
-from diffusers import StableDiffusionPipeline, StableDiffusionXLPipeline, StableDiffusionImg2ImgPipeline, StableDiffusionDepth2ImgPipeline, AutoencoderKL, StableDiffusionLatentUpscalePipeline, StableDiffusionUpscalePipeline, StableDiffusionInpaintPipeline, StableDiffusionGLIGENPipeline, AnimateDiffPipeline, DDIMScheduler, MotionAdapter, StableVideoDiffusionPipeline, I2VGenXLPipeline, StableCascadePriorPipeline, StableCascadeDecoderPipeline, DiffusionPipeline, DPMSolverMultistepScheduler, ShapEPipeline, ShapEImg2ImgPipeline, AudioLDM2Pipeline
+from diffusers import StableDiffusionPipeline, StableDiffusionXLPipeline, StableDiffusionImg2ImgPipeline, StableDiffusionDepth2ImgPipeline, ControlNetModel, StableDiffusionControlNetPipeline, AutoencoderKL, StableDiffusionLatentUpscalePipeline, UniPCMultistepScheduler, StableDiffusionUpscalePipeline, StableDiffusionInpaintPipeline, StableDiffusionGLIGENPipeline, AnimateDiffPipeline, DDIMScheduler, MotionAdapter, StableVideoDiffusionPipeline, I2VGenXLPipeline, StableCascadePriorPipeline, StableCascadeDecoderPipeline, DiffusionPipeline, DPMSolverMultistepScheduler, ShapEPipeline, ShapEImg2ImgPipeline, AudioLDM2Pipeline
 from diffusers.utils import load_image, export_to_video, export_to_gif, export_to_ply
 from compel import Compel
 import trimesh
@@ -35,6 +35,7 @@ from rembg import remove
 import torchaudio
 from audiocraft.models import MusicGen, AudioGen, MultiBandDiffusion  # MAGNeT
 from audiocraft.data.audio import audio_write
+from controlnet_aux import OpenposeDetector
 import psutil
 import GPUtil
 from cpuinfo import get_cpu_info
@@ -1068,6 +1069,71 @@ def generate_image_depth2img(prompt, negative_prompt, init_image, stable_diffusi
 
     finally:
         del stable_diffusion_model
+        torch.cuda.empty_cache()
+
+
+def generate_image_controlnet(prompt, negative_prompt, init_image, stable_diffusion_model_name, controlnet_model_name, num_inference_steps, guidance_scale, width, height, output_format="png", stop_generation=None):
+    global stop_signal
+    stop_signal = False
+
+    if not init_image:
+        return None, "Please, upload an initial image!"
+
+    if not stable_diffusion_model_name:
+        return None, "Please, select a StableDiffusion model!"
+
+    if not controlnet_model_name:
+        return None, "Please, select a ControlNet model!"
+
+    stable_diffusion_model_path = os.path.join("inputs", "image", "sd_models", f"{stable_diffusion_model_name}.safetensors")
+
+    if not os.path.exists(stable_diffusion_model_path):
+        return None, f"StableDiffusion model not found: {stable_diffusion_model_path}"
+
+    controlnet_model_path = os.path.join("inputs", "image", "sd_models", "controlnet", "openpose")
+
+    if not os.path.exists(controlnet_model_path):
+        print("Downloading ControlNet Openpose model...")
+        os.makedirs(controlnet_model_path, exist_ok=True)
+        Repo.clone_from("https://huggingface.co/lllyasviel/control_v11p_sd15_openpose", controlnet_model_path)
+        print("ControlNet Openpose model downloaded")
+
+    try:
+        device = "cuda" if torch.cuda.is_available() else "cpu"
+        controlnet = ControlNetModel.from_pretrained(controlnet_model_path, torch_dtype=torch.float16)
+        pipe = StableDiffusionControlNetPipeline.from_single_file(
+            stable_diffusion_model_path,
+            controlnet=controlnet,
+            torch_dtype=torch.float16,
+            device_map="auto",
+            use_safetensors=True,
+        )
+        pipe.scheduler = UniPCMultistepScheduler.from_config(pipe.scheduler.config)
+        pipe.enable_model_cpu_offload()
+        pipe.to(device)
+
+        processor = OpenposeDetector.from_pretrained("lllyasviel/ControlNet")
+        image = Image.open(init_image).convert("RGB")
+        control_image = processor(image, hand_and_face=True)
+
+        generator = torch.manual_seed(0)
+        image = pipe(prompt, negative_prompt=negative_prompt, num_inference_steps=num_inference_steps, guidance_scale=guidance_scale, width=width, height=height, generator=generator, image=control_image).images[0]
+
+        if stop_signal:
+            return None, "Generation stopped"
+
+        today = datetime.now().date()
+        image_dir = os.path.join('outputs', f"StableDiffusion_{today.strftime('%Y%m%d')}")
+        os.makedirs(image_dir, exist_ok=True)
+        image_filename = f"controlnet_openpose_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
+        image_path = os.path.join(image_dir, image_filename)
+        image.save(image_path, format=output_format.upper())
+
+        return image_path, None
+
+    finally:
+        del controlnet
+        del pipe
         torch.cuda.empty_cache()
 
 
@@ -2216,6 +2282,7 @@ textual_inversion_models_list = [None] + [model for model in os.listdir("inputs/
 inpaint_models_list = [None] + [model.replace(".safetensors", "") for model in
                                 os.listdir("inputs/image/sd_models/inpaint")
                                 if model.endswith(".safetensors") or not model.endswith(".txt")]
+controlnet_models_list = [None, "openpose"]
 
 chat_interface = gr.Interface(
     fn=generate_text_and_speech,
@@ -2434,6 +2501,32 @@ depth2img_interface = gr.Interface(
     ],
     title="NeuroSandboxWebUI (ALPHA) - StableDiffusion (depth2img)",
     description="This user interface allows you to enter a prompt, an initial image to generate depth-aware images using StableDiffusion. "
+                "Try it and see what happens!",
+    allow_flagging="never",
+)
+
+controlnet_interface = gr.Interface(
+    fn=generate_image_controlnet,
+    inputs=[
+        gr.Textbox(label="Enter your prompt"),
+        gr.Textbox(label="Enter your negative prompt", value=""),
+        gr.Image(label="Initial image", type="filepath"),
+        gr.Dropdown(choices=stable_diffusion_models_list, label="Select StableDiffusion model", value=None),
+        gr.Dropdown(choices=controlnet_models_list, label="Select ControlNet model", value=None),
+        gr.Slider(minimum=1, maximum=100, value=30, step=1, label="Steps"),
+        gr.Slider(minimum=1.0, maximum=30.0, value=8, step=0.1, label="CFG"),
+        gr.Slider(minimum=256, maximum=2048, value=512, step=64, label="Width"),
+        gr.Slider(minimum=256, maximum=2048, value=512, step=64, label="Height"),
+        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
+        gr.Button(value="Stop generation", interactive=True, variant="stop"),
+    ],
+    outputs=[
+        gr.Image(type="filepath", label="Generated image"),
+        gr.Textbox(label="Message", type="text"),
+    ],
+    title="NeuroSandboxWebUI (ALPHA) - StableDiffusion (controlnet)",
+    description="This user interface allows you to generate images using ControlNet models. "
+                "Upload an initial image, enter a prompt, select a Stable Diffusion model, and customize the generation settings. "
                 "Try it and see what happens!",
     allow_flagging="never",
 )
@@ -2796,8 +2889,8 @@ system_interface = gr.Interface(
 )
 
 with gr.TabbedInterface(
-        [chat_interface, tts_stt_interface, bark_interface, translate_interface, wav2lip_interface, gr.TabbedInterface([txt2img_interface, img2img_interface, depth2img_interface, upscale_interface, inpaint_interface, gligen_interface, animatediff_interface, video_interface, cascade_interface, extras_interface],
-        tab_names=["txt2img", "img2img", "depth2img", "upscale", "inpaint", "gligen", "animatediff", "video", "cascade", "extras"]),
+        [chat_interface, tts_stt_interface, bark_interface, translate_interface, wav2lip_interface, gr.TabbedInterface([txt2img_interface, img2img_interface, depth2img_interface, controlnet_interface, upscale_interface, inpaint_interface, gligen_interface, animatediff_interface, video_interface, cascade_interface, extras_interface],
+        tab_names=["txt2img", "img2img", "depth2img", "controlnet", "upscale", "inpaint", "gligen", "animatediff", "video", "cascade", "extras"]),
                     zeroscope2_interface, triposr_interface, shap_e_interface, audiocraft_interface, audioldm2_interface, demucs_interface, model_downloader_interface, settings_interface, system_interface],
         tab_names=["LLM", "TTS-STT", "SunoBark", "LibreTranslate", "Wav2Lip", "StableDiffusion", "ZeroScope 2", "TripoSR", "Shap-E", "AudioCraft", "AudioLDM 2", "Demucs", "ModelDownloader", "Settings", "System"]
 ) as app:
@@ -2806,6 +2899,7 @@ with gr.TabbedInterface(
     txt2img_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     img2img_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     depth2img_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
+    controlnet_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     upscale_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     inpaint_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     gligen_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
