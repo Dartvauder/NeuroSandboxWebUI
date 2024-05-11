@@ -326,7 +326,9 @@
 
 ## Благодарность разработчикам
 
-Большое спасибо этим проектам за то, что благодаря им я смог создать свое приложение:
+Большое спасибо этим проектам за то, что благодаря их приложениям/библиотекам, я смог создать свое приложение:
+
+###: В первую очередь я хочу поблагодарить разработчиков [PyCharm](https://www.jetbrains.com/pycharm/) и [GitHub](https://desktop.github.com). С помощью их приложений, я смог создать и выложить свой код
 
 * `gradio` - https://github.com/gradio-app/gradio
 * `transformers` - https://github.com/huggingface/transformers
@@ -334,7 +336,6 @@
 * `openai-whisper` - https://github.com/openai/whisper
 * `torch` - https://github.com/pytorch/pytorch
 * `soundfile` - https://github.com/bastibe/python-soundfile
-* `accelerate` - https://github.com/huggingface/accelerate
 * `cuda-python` - https://github.com/NVIDIA/cuda-python
 * `gitpython` - https://github.com/gitpython-developers/GitPython
 * `diffusers` - https://github.com/huggingface/diffusers
@@ -343,11 +344,13 @@
 * `AudioLDM2` - https://github.com/haoheliu/AudioLDM2
 * `xformers` - https://github.com/facebookresearch/xformers
 * `demucs` - https://github.com/facebookresearch/demucs
+* `libretranslate` - https://github.com/LibreTranslate/LibreTranslate
 * `libretranslatepy` - https://github.com/argosopentech/LibreTranslate-py
 * `rembg` - https://github.com/danielgatis/rembg
 * `trimesh` - https://github.com/mikedh/trimesh
 * `googlesearch-python` - https://github.com/Nv7-GitHub/googlesearch
 * `torchmcubes` - https://github.com/tatsy/torchmcubes
+* `suno-bark` - https://github.com/suno-ai/bark
 
 ## Сторонние лицензии:
 
@@ -379,6 +382,7 @@
 * [Roop](https://github.com/s0md3v/roop/blob/main/LICENSE)
 * [CodeFormer](https://github.com/sczhou/CodeFormer/blob/master/LICENSE)
 * [ControlNet](https://github.com/lllyasviel/ControlNet/blob/main/LICENSE)
+* [AnimateDiff](https://github.com/guoyww/AnimateDiff/blob/main/LICENSE.txt)
 
 ## Пожертвование
 
