@@ -15,7 +15,7 @@ import whisper
 from datetime import datetime
 import warnings
 import logging
-from diffusers import StableDiffusionPipeline, StableDiffusionXLPipeline, StableDiffusionImg2ImgPipeline, StableDiffusionDepth2ImgPipeline, ControlNetModel, StableDiffusionControlNetPipeline, AutoencoderKL, StableDiffusionLatentUpscalePipeline, StableDiffusionUpscalePipeline, StableDiffusionInpaintPipeline, StableDiffusionGLIGENPipeline, AnimateDiffPipeline, MotionAdapter, StableVideoDiffusionPipeline, I2VGenXLPipeline, StableCascadePriorPipeline, StableCascadeDecoderPipeline, DiffusionPipeline, DPMSolverMultistepScheduler, ShapEPipeline, ShapEImg2ImgPipeline, AudioLDM2Pipeline
+from diffusers import StableDiffusionPipeline, StableDiffusionXLPipeline, StableDiffusionImg2ImgPipeline, StableDiffusionDepth2ImgPipeline, ControlNetModel, StableDiffusionControlNetPipeline, AutoencoderKL, StableDiffusionLatentUpscalePipeline, StableDiffusionUpscalePipeline, StableDiffusionInpaintPipeline, StableDiffusionGLIGENPipeline, AnimateDiffPipeline, AnimateDiffVideoToVideoPipeline, MotionAdapter, StableVideoDiffusionPipeline, I2VGenXLPipeline, StableCascadePriorPipeline, StableCascadeDecoderPipeline, DiffusionPipeline, DPMSolverMultistepScheduler, ShapEPipeline, ShapEImg2ImgPipeline, AudioLDM2Pipeline
 from diffusers.utils import load_image, export_to_video, export_to_gif, export_to_ply
 from compel import Compel
 import trimesh
@@ -1457,7 +1457,7 @@ def generate_image_gligen(prompt, negative_prompt, gligen_phrases, gligen_boxes,
         torch.cuda.empty_cache()
 
 
-def generate_animation_animatediff(prompt, negative_prompt, stable_diffusion_model_name, num_frames, num_inference_steps,
+def generate_animation_animatediff(prompt, negative_prompt, input_video, strength, stable_diffusion_model_name, motion_lora_name, num_frames, num_inference_steps,
                                    guidance_scale, width, height, stop_generation):
     global stop_signal
     stop_signal = False
@@ -1478,59 +1478,128 @@ def generate_animation_animatediff(prompt, negative_prompt, stable_diffusion_mod
         print("Motion adapter downloaded")
 
     try:
-        adapter = MotionAdapter.from_pretrained(motion_adapter_path, torch_dtype=torch.float16)
-        original_config_file = "configs/sd/v1-inference.yaml"
-        stable_diffusion_model = StableDiffusionPipeline.from_single_file(
-            stable_diffusion_model_path,
-            torch_dtype=torch.float16,
-            variant="fp16",
-            original_config_file=original_config_file,
-            device_map="auto",
-        )
+        if input_video:
+            adapter = MotionAdapter.from_pretrained(motion_adapter_path, torch_dtype=torch.float16)
+            original_config_file = "configs/sd/v1-inference.yaml"
+            stable_diffusion_model = StableDiffusionPipeline.from_single_file(
+                stable_diffusion_model_path,
+                torch_dtype=torch.float16,
+                variant="fp16",
+                original_config_file=original_config_file,
+                device_map="auto",
+            )
 
-        pipe = AnimateDiffPipeline(
-            unet=stable_diffusion_model.unet,
-            text_encoder=stable_diffusion_model.text_encoder,
-            vae=stable_diffusion_model.vae,
-            motion_adapter=adapter,
-            tokenizer=stable_diffusion_model.tokenizer,
-            feature_extractor=stable_diffusion_model.feature_extractor,
-            scheduler=stable_diffusion_model.scheduler,
-        )
+            pipe = AnimateDiffVideoToVideoPipeline(
+                unet=stable_diffusion_model.unet,
+                text_encoder=stable_diffusion_model.text_encoder,
+                vae=stable_diffusion_model.vae,
+                motion_adapter=adapter,
+                tokenizer=stable_diffusion_model.tokenizer,
+                feature_extractor=stable_diffusion_model.feature_extractor,
+                scheduler=stable_diffusion_model.scheduler,
+            )
 
-        pipe.enable_vae_slicing()
-        pipe.enable_model_cpu_offload()
+            pipe.enable_vae_slicing()
+            pipe.enable_model_cpu_offload()
 
-        compel_proc = Compel(tokenizer=stable_diffusion_model.tokenizer,
-                             text_encoder=stable_diffusion_model.text_encoder)
-        prompt_embeds = compel_proc(prompt)
-        negative_prompt_embeds = compel_proc(negative_prompt)
+            compel_proc = Compel(tokenizer=stable_diffusion_model.tokenizer,
+                                 text_encoder=stable_diffusion_model.text_encoder)
+            prompt_embeds = compel_proc(prompt)
+            negative_prompt_embeds = compel_proc(negative_prompt)
 
-        output = pipe(
-            prompt_embeds=prompt_embeds,
-            negative_prompt_embeds=negative_prompt_embeds,
-            num_frames=num_frames,
-            guidance_scale=guidance_scale,
-            num_inference_steps=num_inference_steps,
-            generator=torch.Generator("cpu").manual_seed(-1),
-            width=width,
-            height=height,
-        )
+            output = pipe(
+                prompt_embeds=prompt_embeds,
+                negative_prompt_embeds=negative_prompt_embeds,
+                video=input_video,
+                strength=strength,
+                guidance_scale=guidance_scale,
+                num_inference_steps=num_inference_steps,
+                generator=torch.Generator("cpu").manual_seed(-1),
+            )
 
-        if stop_signal:
-            return None, "Generation stopped"
+            if stop_signal:
+                return None, "Generation stopped"
 
-        frames = output.frames[0]
+            frames = output.frames[0]
 
-        today = datetime.now().date()
-        output_dir = os.path.join('outputs', f"AnimateDiff_{today.strftime('%Y%m%d')}")
-        os.makedirs(output_dir, exist_ok=True)
+            today = datetime.now().date()
+            output_dir = os.path.join('outputs', f"AnimateDiff_{today.strftime('%Y%m%d')}")
+            os.makedirs(output_dir, exist_ok=True)
 
-        gif_filename = f"animatediff_{datetime.now().strftime('%Y%m%d_%H%M%S')}.gif"
-        gif_path = os.path.join(output_dir, gif_filename)
-        export_to_gif(frames, gif_path)
+            gif_filename = f"animatediff_{datetime.now().strftime('%Y%m%d_%H%M%S')}.gif"
+            gif_path = os.path.join(output_dir, gif_filename)
+            export_to_gif(frames, gif_path)
 
-        return gif_path, None
+            return gif_path, None
+
+        else:
+            adapter = MotionAdapter.from_pretrained(motion_adapter_path, torch_dtype=torch.float16)
+            original_config_file = "configs/sd/v1-inference.yaml"
+            stable_diffusion_model = StableDiffusionPipeline.from_single_file(
+                stable_diffusion_model_path,
+                torch_dtype=torch.float16,
+                variant="fp16",
+                original_config_file=original_config_file,
+                device_map="auto",
+            )
+
+            pipe = AnimateDiffPipeline(
+                unet=stable_diffusion_model.unet,
+                text_encoder=stable_diffusion_model.text_encoder,
+                vae=stable_diffusion_model.vae,
+                motion_adapter=adapter,
+                tokenizer=stable_diffusion_model.tokenizer,
+                feature_extractor=stable_diffusion_model.feature_extractor,
+                scheduler=stable_diffusion_model.scheduler,
+            )
+
+            if motion_lora_name:
+                motion_lora_path = os.path.join("inputs", "image", "sd_models", "motion_lora", motion_lora_name)
+                if not os.path.exists(motion_lora_path):
+                    print(f"Downloading {motion_lora_name} motion lora...")
+                    os.makedirs(motion_lora_path, exist_ok=True)
+                    if motion_lora_name == "zoom-in":
+                        Repo.clone_from("https://huggingface.co/guoyww/animatediff-motion-lora-zoom-in",
+                                        motion_lora_path)
+                    elif motion_lora_name == "zoom-out":
+                        Repo.clone_from("https://huggingface.co/guoyww/animatediff-motion-lora-zoom-out",
+                                        motion_lora_path)
+                    print(f"{motion_lora_name} motion lora downloaded")
+                pipe.load_lora_weights(motion_lora_path, adapter_name=motion_lora_name)
+
+            pipe.enable_vae_slicing()
+            pipe.enable_model_cpu_offload()
+
+            compel_proc = Compel(tokenizer=stable_diffusion_model.tokenizer,
+                                 text_encoder=stable_diffusion_model.text_encoder)
+            prompt_embeds = compel_proc(prompt)
+            negative_prompt_embeds = compel_proc(negative_prompt)
+
+            output = pipe(
+                prompt_embeds=prompt_embeds,
+                negative_prompt_embeds=negative_prompt_embeds,
+                num_frames=num_frames,
+                guidance_scale=guidance_scale,
+                num_inference_steps=num_inference_steps,
+                generator=torch.Generator("cpu").manual_seed(-1),
+                width=width,
+                height=height,
+            )
+
+            if stop_signal:
+                return None, "Generation stopped"
+
+            frames = output.frames[0]
+
+            today = datetime.now().date()
+            output_dir = os.path.join('outputs', f"AnimateDiff_{today.strftime('%Y%m%d')}")
+            os.makedirs(output_dir, exist_ok=True)
+
+            gif_filename = f"animatediff_{datetime.now().strftime('%Y%m%d_%H%M%S')}.gif"
+            gif_path = os.path.join(output_dir, gif_filename)
+            export_to_gif(frames, gif_path)
+
+            return gif_path, None
 
     finally:
         try:
@@ -2677,7 +2746,10 @@ animatediff_interface = gr.Interface(
     inputs=[
         gr.Textbox(label="Enter your prompt"),
         gr.Textbox(label="Enter your negative prompt", value=""),
+        gr.Image(label="Initial GIF", type="filepath"),
+        gr.Slider(minimum=0.0, maximum=1.0, value=0.5, step=0.01, label="Strength"),
         gr.Dropdown(choices=stable_diffusion_models_list, label="Select StableDiffusion model (only SD1.5)", value=None),
+        gr.Dropdown(choices=[None, "zoom-in", "zoom-out"], label="Select Motion LORA", value=None),
         gr.Slider(minimum=1, maximum=200, value=20, step=1, label="Frames"),
         gr.Slider(minimum=1, maximum=100, value=30, step=1, label="Steps"),
         gr.Slider(minimum=1.0, maximum=30.0, value=8, step=0.1, label="Guidance Scale"),
