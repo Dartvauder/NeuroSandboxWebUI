@@ -1457,7 +1457,7 @@ def generate_image_gligen(prompt, negative_prompt, gligen_phrases, gligen_boxes,
         torch.cuda.empty_cache()
 
 
-def generate_animation_animatediff(prompt, negative_prompt, stable_diffusion_model_name, num_frames, num_inference_steps,
+def generate_animation_animatediff(prompt, negative_prompt, stable_diffusion_model_name, motion_lora_name, num_frames, num_inference_steps,
                                    guidance_scale, width, height, stop_generation):
     global stop_signal
     stop_signal = False
@@ -1497,6 +1497,18 @@ def generate_animation_animatediff(prompt, negative_prompt, stable_diffusion_mod
             feature_extractor=stable_diffusion_model.feature_extractor,
             scheduler=stable_diffusion_model.scheduler,
         )
+
+        if motion_lora_name:
+            motion_lora_path = os.path.join("inputs", "image", "sd_models", "motion_lora", motion_lora_name)
+            if not os.path.exists(motion_lora_path):
+                print(f"Downloading {motion_lora_name} motion lora...")
+                os.makedirs(motion_lora_path, exist_ok=True)
+                if motion_lora_name == "zoom-in":
+                    Repo.clone_from("https://huggingface.co/guoyww/animatediff-motion-lora-zoom-in", motion_lora_path)
+                elif motion_lora_name == "zoom-out":
+                    Repo.clone_from("https://huggingface.co/guoyww/animatediff-motion-lora-zoom-out", motion_lora_path)
+                print(f"{motion_lora_name} motion lora downloaded")
+            pipe.load_lora_weights(motion_lora_path, adapter_name=motion_lora_name)
 
         pipe.enable_vae_slicing()
         pipe.enable_model_cpu_offload()
@@ -2678,6 +2690,7 @@ animatediff_interface = gr.Interface(
         gr.Textbox(label="Enter your prompt"),
         gr.Textbox(label="Enter your negative prompt", value=""),
         gr.Dropdown(choices=stable_diffusion_models_list, label="Select StableDiffusion model (only SD1.5)", value=None),
+        gr.Dropdown(choices=[None, "zoom-in", "zoom-out"], label="Select Motion LORA", value=None),
         gr.Slider(minimum=1, maximum=200, value=20, step=1, label="Frames"),
         gr.Slider(minimum=1, maximum=100, value=30, step=1, label="Steps"),
         gr.Slider(minimum=1.0, maximum=30.0, value=8, step=0.1, label="Guidance Scale"),
