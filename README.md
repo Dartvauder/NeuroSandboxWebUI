@@ -378,6 +378,7 @@ Thank you very much to these projects for allowing me to create my application:
 * [Wav2Lip](https://github.com/Rudrabha/Wav2Lip)
 * [Roop](https://github.com/s0md3v/roop/blob/main/LICENSE)
 * [CodeFormer](https://github.com/sczhou/CodeFormer/blob/master/LICENSE)
+* [ControlNet](https://github.com/lllyasviel/ControlNet/blob/main/LICENSE)
 
 ## Donation
 
