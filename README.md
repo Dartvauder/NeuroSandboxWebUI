@@ -326,7 +326,9 @@ To work with the virtual environment through the terminal, run `./Venv.sh`
 
 ## Acknowledgment to developers
 
-Thank you very much to these projects for allowing me to create my application:
+Many thanks to these projects because thanks to their applications/libraries, i was able to create my application:
+
+###: First of all, I want to thank the developers of [PyCharm](https://www.jetbrains.com/pycharm/) and [GitHub](https://desktop.github.com). With the help of their applications, I was able to create and share my code
 
 * `gradio` - https://github.com/gradio-app/gradio
 * `transformers` - https://github.com/huggingface/transformers
@@ -334,7 +336,6 @@ Thank you very much to these projects for allowing me to create my application:
 * `openai-whisper` - https://github.com/openai/whisper
 * `torch` - https://github.com/pytorch/pytorch
 * `soundfile` - https://github.com/bastibe/python-soundfile
-* `accelerate` - https://github.com/huggingface/accelerate
 * `cuda-python` - https://github.com/NVIDIA/cuda-python
 * `gitpython` - https://github.com/gitpython-developers/GitPython
 * `diffusers` - https://github.com/huggingface/diffusers
@@ -343,11 +344,13 @@ Thank you very much to these projects for allowing me to create my application:
 * `AudioLDM2` - https://github.com/haoheliu/AudioLDM2
 * `xformers` - https://github.com/facebookresearch/xformers
 * `demucs` - https://github.com/facebookresearch/demucs
+* `libretranslate` - https://github.com/LibreTranslate/LibreTranslate
 * `libretranslatepy` - https://github.com/argosopentech/LibreTranslate-py
 * `rembg` - https://github.com/danielgatis/rembg
 * `trimesh` - https://github.com/mikedh/trimesh
 * `googlesearch-python` - https://github.com/Nv7-GitHub/googlesearch
 * `torchmcubes` - https://github.com/tatsy/torchmcubes
+* `suno-bark` - https://github.com/suno-ai/bark
 
 ## Third Party Licenses:
 
@@ -379,6 +382,7 @@ Thank you very much to these projects for allowing me to create my application:
 * [Roop](https://github.com/s0md3v/roop/blob/main/LICENSE)
 * [CodeFormer](https://github.com/sczhou/CodeFormer/blob/master/LICENSE)
 * [ControlNet](https://github.com/lllyasviel/ControlNet/blob/main/LICENSE)
+* [AnimateDiff](https://github.com/guoyww/AnimateDiff/blob/main/LICENSE.txt)
 
 ## Donation
 
