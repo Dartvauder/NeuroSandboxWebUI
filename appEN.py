@@ -1131,9 +1131,15 @@ def generate_image_controlnet(prompt, negative_prompt, init_image, stable_diffus
 
         return image_path, None
 
+    except (TypeError, ValueError):
+        return None, "Invalid StableDiffusion model type!"
+
     finally:
-        del controlnet
-        del pipe
+        try:
+            del controlnet
+            del pipe
+        except UnboundLocalError:
+            pass
         torch.cuda.empty_cache()
 
 
