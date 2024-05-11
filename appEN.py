@@ -1397,7 +1397,7 @@ def generate_image_gligen(prompt, negative_prompt, gligen_phrases, gligen_boxes,
                              text_encoder=stable_diffusion_model.text_encoder)
         prompt_embeds = compel_proc(prompt)
         negative_prompt_embeds = compel_proc(negative_prompt)
-        
+
         if stable_diffusion_model_type == "SDXL":
             image = stable_diffusion_model(prompt=prompt, negative_prompt=negative_prompt,
                                            num_inference_steps=stable_diffusion_steps,
@@ -2490,7 +2490,7 @@ wav2lip_interface = gr.Interface(
 txt2img_interface = gr.Interface(
     fn=generate_image_txt2img,
     inputs=[
-        gr.Textbox(label="Enter your prompt (+ and - for prompt weighting)"),
+        gr.Textbox(label="Enter your prompt"),
         gr.Textbox(label="Enter your negative prompt", value=""),
         gr.Dropdown(choices=stable_diffusion_models_list, label="Select StableDiffusion model", value=None),
         gr.Dropdown(choices=vae_models_list, label="Select VAE model (optional)", value=None),
@@ -2526,7 +2526,7 @@ txt2img_interface = gr.Interface(
 img2img_interface = gr.Interface(
     fn=generate_image_img2img,
     inputs=[
-        gr.Textbox(label="Enter your prompt (+ and - for prompt weighting)"),
+        gr.Textbox(label="Enter your prompt"),
         gr.Textbox(label="Enter your negative prompt", value=""),
         gr.Image(label="Initial image", type="filepath"),
         gr.Slider(minimum=0.0, maximum=1.0, value=0.5, step=0.01, label="Strength"),
@@ -2621,7 +2621,7 @@ upscale_interface = gr.Interface(
 inpaint_interface = gr.Interface(
     fn=generate_image_inpaint,
     inputs=[
-        gr.Textbox(label="Enter your prompt (+ and - for prompt weighting)"),
+        gr.Textbox(label="Enter your prompt"),
         gr.Textbox(label="Enter your negative prompt", value=""),
         gr.Image(label="Initial image", type="filepath"),
         gr.ImageEditor(label="Mask image", type="filepath"),
