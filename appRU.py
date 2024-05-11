@@ -1457,7 +1457,7 @@ def generate_image_gligen(prompt, negative_prompt, gligen_phrases, gligen_boxes,
         torch.cuda.empty_cache()
 
 
-def generate_animation_animatediff(prompt, negative_prompt, input_video, strength, stable_diffusion_model_name, motion_lora_name, num_frames, num_inference_steps,
+def generate_image_animatediff(prompt, negative_prompt, input_video, strength, stable_diffusion_model_name, motion_lora_name, num_frames, num_inference_steps,
                                    guidance_scale, width, height, stop_generation):
     global stop_signal
     stop_signal = False
@@ -2742,7 +2742,7 @@ gligen_interface = gr.Interface(
 )
 
 animatediff_interface = gr.Interface(
-    fn=generate_animation_animatediff,
+    fn=generate_image_animatediff,
     inputs=[
         gr.Textbox(label="Enter your prompt"),
         gr.Textbox(label="Enter your negative prompt", value=""),
