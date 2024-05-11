@@ -326,9 +326,9 @@ To work with the virtual environment through the terminal, run `./Venv.sh`
 
 ## Acknowledgment to developers
 
-Many thanks to these projects because thanks to their applications/libraries, i was able to create my application:
+#### Many thanks to these projects because thanks to their applications/libraries, i was able to create my application:
 
-### First of all, I want to thank the developers of [PyCharm](https://www.jetbrains.com/pycharm/) and [GitHub](https://desktop.github.com). With the help of their applications, i was able to create and share my code
+First of all, I want to thank the developers of [PyCharm](https://www.jetbrains.com/pycharm/) and [GitHub](https://desktop.github.com). With the help of their applications, i was able to create and share my code
 
 * `gradio` - https://github.com/gradio-app/gradio
 * `transformers` - https://github.com/huggingface/transformers
