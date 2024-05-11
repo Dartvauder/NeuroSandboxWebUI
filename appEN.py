@@ -888,12 +888,21 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
         compel_proc = Compel(tokenizer=stable_diffusion_model.tokenizer,
                              text_encoder=stable_diffusion_model.text_encoder)
         prompt_embeds = compel_proc(prompt)
+        negative_prompt_embeds = compel_proc(negative_prompt)
 
-        images = stable_diffusion_model(prompt_embeds=prompt_embeds, negative_prompt=negative_prompt,
-                                        num_inference_steps=stable_diffusion_steps,
-                                        guidance_scale=stable_diffusion_cfg, height=stable_diffusion_height,
-                                        width=stable_diffusion_width, clip_skip=stable_diffusion_clip_skip,
-                                        sampler=stable_diffusion_sampler)
+        if stable_diffusion_model_type == "SDXL":
+            images = stable_diffusion_model(prompt=prompt, negative_prompt=negative_prompt,
+                                            num_inference_steps=stable_diffusion_steps,
+                                            guidance_scale=stable_diffusion_cfg, height=stable_diffusion_height,
+                                            width=stable_diffusion_width, clip_skip=stable_diffusion_clip_skip,
+                                            sampler=stable_diffusion_sampler)
+        else:
+            images = stable_diffusion_model(prompt_embeds=prompt_embeds, negative_prompt_embeds=negative_prompt_embeds,
+                                            num_inference_steps=stable_diffusion_steps,
+                                            guidance_scale=stable_diffusion_cfg, height=stable_diffusion_height,
+                                            width=stable_diffusion_width, clip_skip=stable_diffusion_clip_skip,
+                                            sampler=stable_diffusion_sampler)
+
         if stop_signal:
             return None, "Generation stopped"
         image = images["images"][0]
@@ -998,11 +1007,19 @@ def generate_image_img2img(prompt, negative_prompt, init_image,
         compel_proc = Compel(tokenizer=stable_diffusion_model.tokenizer,
                              text_encoder=stable_diffusion_model.text_encoder)
         prompt_embeds = compel_proc(prompt)
+        negative_prompt_embeds = compel_proc(negative_prompt)
 
-        images = stable_diffusion_model(prompt_embeds=prompt_embeds, negative_prompt=negative_prompt,
-                                        num_inference_steps=stable_diffusion_steps,
-                                        guidance_scale=stable_diffusion_cfg, clip_skip=stable_diffusion_clip_skip,
-                                        sampler=stable_diffusion_sampler, image=init_image, strength=strength)
+        if stable_diffusion_model_type == "SDXL":
+            images = stable_diffusion_model(prompt=prompt, negative_prompt=negative_prompt,
+                                            num_inference_steps=stable_diffusion_steps,
+                                            guidance_scale=stable_diffusion_cfg, clip_skip=stable_diffusion_clip_skip,
+                                            sampler=stable_diffusion_sampler, image=init_image, strength=strength)
+        else:
+            images = stable_diffusion_model(prompt_embeds=prompt_embeds, negative_prompt_embeds=negative_prompt_embeds,
+                                            num_inference_steps=stable_diffusion_steps,
+                                            guidance_scale=stable_diffusion_cfg, clip_skip=stable_diffusion_clip_skip,
+                                            sampler=stable_diffusion_sampler, image=init_image, strength=strength)
+
         if stop_signal:
             return None, "Generation stopped"
         image = images["images"][0]
@@ -1065,7 +1082,13 @@ def generate_image_depth2img(prompt, negative_prompt, init_image, stable_diffusi
 
     try:
         init_image = Image.open(init_image).convert("RGB")
-        image = stable_diffusion_model(prompt=prompt, negative_prompt=negative_prompt, image=init_image, strength=strength).images[0]
+
+        compel_proc = Compel(tokenizer=stable_diffusion_model.tokenizer,
+                             text_encoder=stable_diffusion_model.text_encoder)
+        prompt_embeds = compel_proc(prompt)
+        negative_prompt_embeds = compel_proc(negative_prompt)
+
+        image = stable_diffusion_model(prompt_embeds=prompt_embeds, negative_prompt_embeds=negative_prompt_embeds, image=init_image, strength=strength).images[0]
 
         if stop_signal:
             return None, "Generation stopped"
@@ -1276,11 +1299,20 @@ def generate_image_inpaint(prompt, negative_prompt, init_image, mask_image, stab
         compel_proc = Compel(tokenizer=stable_diffusion_model.tokenizer,
                              text_encoder=stable_diffusion_model.text_encoder)
         prompt_embeds = compel_proc(prompt)
+        negative_prompt_embeds = compel_proc(negative_prompt)
 
-        images = stable_diffusion_model(prompt_embeds=prompt_embeds, negative_prompt=negative_prompt, image=init_image,
-                                        mask_image=mask_array, width=width, height=height,
-                                        num_inference_steps=stable_diffusion_steps,
-                                        guidance_scale=stable_diffusion_cfg, sampler=stable_diffusion_sampler)
+        if stable_diffusion_model_type == "SDXL":
+            images = stable_diffusion_model(prompt=prompt, negative_prompt=negative_prompt,
+                                            image=init_image,
+                                            mask_image=mask_array, width=width, height=height,
+                                            num_inference_steps=stable_diffusion_steps,
+                                            guidance_scale=stable_diffusion_cfg, sampler=stable_diffusion_sampler)
+        else:
+            images = stable_diffusion_model(prompt_embeds=prompt_embeds, negative_prompt_embeds=negative_prompt_embeds,
+                                            image=init_image,
+                                            mask_image=mask_array, width=width, height=height,
+                                            num_inference_steps=stable_diffusion_steps,
+                                            guidance_scale=stable_diffusion_cfg, sampler=stable_diffusion_sampler)
 
         if stop_signal:
             return None, "Generation stopped"
