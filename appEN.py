@@ -66,6 +66,18 @@ whisper_model = None
 audiocraft_model_path = None
 
 
+def authenticate(username, password):
+    try:
+        with open("GradioAuth.txt", "r") as file:
+            stored_credentials = file.read().strip().split(":")
+            if len(stored_credentials) == 2:
+                stored_username, stored_password = stored_credentials
+                return username == stored_username and password == stored_password
+    except FileNotFoundError:
+        pass
+    return False
+
+
 def remove_bg(src_img_path, out_img_path):
     model_path = "inputs/image/sd_models/rembg"
     os.makedirs(model_path, exist_ok=True)
@@ -2933,4 +2945,4 @@ with gr.TabbedInterface(
         '</div>'
     )
 
-    app.launch(share=share_mode, server_name="localhost")
+    app.launch(share=share_mode, server_name="localhost", auth=authenticate)

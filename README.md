@@ -43,8 +43,9 @@ The goal of the project - to create the easiest possible application to use neur
 ## Features:
 
 * Easy installation via install.bat(Windows) or install.sh(Linux)
-* You can use the application via your mobile device in localhost (Via IPv4)
+* You can use the application via your mobile device in localhost(Via IPv4) or anywhere online(Via Share)
 * Flexible and optimized interface (By Gradio)
+* Authentication via admin:admin (You can enter your login details in the GradioAuth.txt file)
 * Support for Transformers and llama.cpp models (LLM)
 * Support for diffusers and safetensors models (StableDiffusion) - txt2img, img2img, depth2img, controlnet, upscale, inpaint, gligen, animatediff, video, cascade and extras tabs
 * AudioCraft support (Models: musicgen, audiogen and magnet)
