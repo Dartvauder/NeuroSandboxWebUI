@@ -230,7 +230,7 @@ To work with the virtual environment through the terminal, run `./Venv.sh`
 1) First upload your models to the folder: *inputs/image/sd_models*
 2) Select your model from the drop-down list
 3) Set up the model according to the parameters you need
-4) Enter your request
+4) Enter your request (+ and - for prompt weighting)
 5) Click the `Submit` button to get the generated image animation
 
 #### video:

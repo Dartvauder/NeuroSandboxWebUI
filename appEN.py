@@ -1429,7 +1429,8 @@ def generate_image_gligen(prompt, negative_prompt, gligen_phrases, gligen_boxes,
         pipe = pipe.to("cuda")
 
         images = pipe(
-            prompt=prompt,
+            prompt_embeds=prompt_embeds,
+            negative_prompt_embeds=negative_prompt_embeds,
             gligen_phrases=gligen_phrases,
             gligen_inpaint_image=image,
             gligen_boxes=[gligen_boxes],
@@ -1500,9 +1501,14 @@ def generate_animation_animatediff(prompt, negative_prompt, stable_diffusion_mod
         pipe.enable_vae_slicing()
         pipe.enable_model_cpu_offload()
 
+        compel_proc = Compel(tokenizer=stable_diffusion_model.tokenizer,
+                             text_encoder=stable_diffusion_model.text_encoder)
+        prompt_embeds = compel_proc(prompt)
+        negative_prompt_embeds = compel_proc(negative_prompt)
+
         output = pipe(
-            prompt=prompt,
-            negative_prompt=negative_prompt,
+            prompt_embeds=prompt_embeds,
+            negative_prompt_embeds=negative_prompt_embeds,
             num_frames=num_frames,
             guidance_scale=guidance_scale,
             num_inference_steps=num_inference_steps,
