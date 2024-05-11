@@ -43,8 +43,9 @@
 ## Функции:
 
 * Простая установка через install.bat(Windows) или install.sh(Linux)
-* Вы можете использовать приложение через мобильное устройство в localhost (Через IPv4)
+* Вы можете использовать приложение через мобильное устройство в localhost(Через IPv4) или через любое онлайн(Через Share)
 * Гибкий и оптимизированный интерфейс (От Gradio)
+* Аутентификация через admin:admin (Вы можете вписать свои данные для входа в файле GradioAuth.txt)
 * Поддержка Transformers и llama.cpp моделей (LLM)
 * Поддержка diffusers и safetensors моделей (StableDiffusion) - Вкладки txt2img, img2img, depth2img, controlnet, upscale, inpaint, gligen, animatediff, video, cascade и extras
 * Поддержка AudioCraft (Модели: musicgen, audiogen и magnet)
