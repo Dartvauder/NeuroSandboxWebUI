@@ -1157,7 +1157,7 @@ def generate_image_controlnet(prompt, negative_prompt, init_image, stable_diffus
                              text_encoder=pipe.text_encoder)
         prompt_embeds = compel_proc(prompt)
         negative_prompt_embeds = compel_proc(negative_prompt)
-        
+
         image = pipe(prompt_embeds=prompt_embeds, negative_prompt_embeds=negative_prompt_embeds, num_inference_steps=num_inference_steps, guidance_scale=guidance_scale, width=width, height=height, generator=generator, image=control_image).images[0]
 
         if stop_signal:
@@ -1338,7 +1338,7 @@ def generate_image_inpaint(prompt, negative_prompt, init_image, mask_image, stab
         torch.cuda.empty_cache()
 
 
-def generate_image_gligen(prompt, gligen_phrases, gligen_boxes, stable_diffusion_model_name, stable_diffusion_settings_html,
+def generate_image_gligen(prompt, negative_prompt, gligen_phrases, gligen_boxes, stable_diffusion_model_name, stable_diffusion_settings_html,
                           stable_diffusion_model_type, stable_diffusion_sampler, stable_diffusion_steps,
                           stable_diffusion_cfg, stable_diffusion_width, stable_diffusion_height,
                           stable_diffusion_clip_skip, output_format="png", stop_generation=None):
@@ -1393,10 +1393,23 @@ def generate_image_gligen(prompt, gligen_phrases, gligen_boxes, stable_diffusion
     stable_diffusion_model.safety_checker = None
 
     try:
-        image = stable_diffusion_model(prompt, num_inference_steps=stable_diffusion_steps,
-                                        guidance_scale=stable_diffusion_cfg, height=stable_diffusion_height,
-                                        width=stable_diffusion_width, clip_skip=stable_diffusion_clip_skip,
-                                        sampler=stable_diffusion_sampler)["images"][0]
+        compel_proc = Compel(tokenizer=stable_diffusion_model.tokenizer,
+                             text_encoder=stable_diffusion_model.text_encoder)
+        prompt_embeds = compel_proc(prompt)
+        negative_prompt_embeds = compel_proc(negative_prompt)
+        
+        if stable_diffusion_model_type == "SDXL":
+            image = stable_diffusion_model(prompt=prompt, negative_prompt=negative_prompt,
+                                           num_inference_steps=stable_diffusion_steps,
+                                           guidance_scale=stable_diffusion_cfg, height=stable_diffusion_height,
+                                           width=stable_diffusion_width, clip_skip=stable_diffusion_clip_skip,
+                                           sampler=stable_diffusion_sampler)["images"][0]
+        else:
+            image = stable_diffusion_model(prompt_embeds=prompt_embeds, negative_prompt_embeds=negative_prompt_embeds,
+                                           num_inference_steps=stable_diffusion_steps,
+                                           guidance_scale=stable_diffusion_cfg, height=stable_diffusion_height,
+                                           width=stable_diffusion_width, clip_skip=stable_diffusion_clip_skip,
+                                           sampler=stable_diffusion_sampler)["images"][0]
 
         if stop_signal:
             return None, "Generation stopped"
@@ -2640,6 +2653,7 @@ gligen_interface = gr.Interface(
     fn=generate_image_gligen,
     inputs=[
         gr.Textbox(label="Enter your prompt"),
+        gr.Textbox(label="Enter your negative prompt", value=""),
         gr.Textbox(label="Enter GLIGEN phrases", value=""),
         gr.Textbox(label="Enter GLIGEN boxes", value=""),
         gr.Dropdown(choices=stable_diffusion_models_list, label="Select StableDiffusion model", value=None),
