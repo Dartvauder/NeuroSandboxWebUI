@@ -1072,12 +1072,18 @@ def generate_image_depth2img(prompt, negative_prompt, init_image, stable_diffusi
         torch.cuda.empty_cache()
 
 
-def generate_image_controlnet(prompt, init_image, stable_diffusion_model_name, num_inference_steps, guidance_scale, output_format="png", stop_generation=None):
+def generate_image_controlnet(prompt, negative_prompt, init_image, stable_diffusion_model_name, controlnet_model_name, num_inference_steps, guidance_scale, width, height, output_format="png", stop_generation=None):
     global stop_signal
     stop_signal = False
 
+    if not init_image:
+        return None, "Please, upload an initial image!"
+
     if not stable_diffusion_model_name:
         return None, "Please, select a StableDiffusion model!"
+
+    if not controlnet_model_name:
+        return None, "Please, select a ControlNet model!"
 
     stable_diffusion_model_path = os.path.join("inputs", "image", "sd_models", f"{stable_diffusion_model_name}.safetensors")
 
@@ -1111,7 +1117,7 @@ def generate_image_controlnet(prompt, init_image, stable_diffusion_model_name, n
         control_image = processor(image, hand_and_face=True)
 
         generator = torch.manual_seed(0)
-        image = pipe(prompt, num_inference_steps=num_inference_steps, guidance_scale=guidance_scale, generator=generator, image=control_image).images[0]
+        image = pipe(prompt, negative_prompt=negative_prompt, num_inference_steps=num_inference_steps, guidance_scale=guidance_scale, width=width, height=height, generator=generator, image=control_image).images[0]
 
         if stop_signal:
             return None, "Generation stopped"
@@ -2276,6 +2282,7 @@ textual_inversion_models_list = [None] + [model for model in os.listdir("inputs/
 inpaint_models_list = [None] + [model.replace(".safetensors", "") for model in
                                 os.listdir("inputs/image/sd_models/inpaint")
                                 if model.endswith(".safetensors") or not model.endswith(".txt")]
+controlnet_models_list = [None, "openpose"]
 
 chat_interface = gr.Interface(
     fn=generate_text_and_speech,
@@ -2502,10 +2509,14 @@ controlnet_interface = gr.Interface(
     fn=generate_image_controlnet,
     inputs=[
         gr.Textbox(label="Enter your prompt"),
+        gr.Textbox(label="Enter your negative prompt", value=""),
         gr.Image(label="Initial image", type="filepath"),
         gr.Dropdown(choices=stable_diffusion_models_list, label="Select StableDiffusion model", value=None),
+        gr.Dropdown(choices=controlnet_models_list, label="Select ControlNet model", value=None),
         gr.Slider(minimum=1, maximum=100, value=30, step=1, label="Steps"),
         gr.Slider(minimum=1.0, maximum=30.0, value=8, step=0.1, label="CFG"),
+        gr.Slider(minimum=256, maximum=2048, value=512, step=64, label="Width"),
+        gr.Slider(minimum=256, maximum=2048, value=512, step=64, label="Height"),
         gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
         gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
