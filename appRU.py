@@ -15,7 +15,7 @@ import whisper
 from datetime import datetime
 import warnings
 import logging
-from diffusers import StableDiffusionPipeline, StableDiffusionXLPipeline, StableDiffusionImg2ImgPipeline, StableDiffusionDepth2ImgPipeline, ControlNetModel, StableDiffusionControlNetPipeline, AutoencoderKL, StableDiffusionLatentUpscalePipeline, UniPCMultistepScheduler, StableDiffusionUpscalePipeline, StableDiffusionInpaintPipeline, StableDiffusionGLIGENPipeline, AnimateDiffPipeline, DDIMScheduler, MotionAdapter, StableVideoDiffusionPipeline, I2VGenXLPipeline, StableCascadePriorPipeline, StableCascadeDecoderPipeline, DiffusionPipeline, DPMSolverMultistepScheduler, ShapEPipeline, ShapEImg2ImgPipeline, AudioLDM2Pipeline
+from diffusers import StableDiffusionPipeline, StableDiffusionXLPipeline, StableDiffusionImg2ImgPipeline, StableDiffusionDepth2ImgPipeline, ControlNetModel, StableDiffusionControlNetPipeline, AutoencoderKL, StableDiffusionLatentUpscalePipeline, StableDiffusionUpscalePipeline, StableDiffusionInpaintPipeline, StableDiffusionGLIGENPipeline, AnimateDiffPipeline, MotionAdapter, StableVideoDiffusionPipeline, I2VGenXLPipeline, StableCascadePriorPipeline, StableCascadeDecoderPipeline, DiffusionPipeline, DPMSolverMultistepScheduler, ShapEPipeline, ShapEImg2ImgPipeline, AudioLDM2Pipeline
 from diffusers.utils import load_image, export_to_video, export_to_gif, export_to_ply
 from compel import Compel
 import trimesh
@@ -1143,7 +1143,6 @@ def generate_image_controlnet(prompt, negative_prompt, init_image, stable_diffus
             device_map="auto",
             use_safetensors=True,
         )
-        pipe.scheduler = UniPCMultistepScheduler.from_config(pipe.scheduler.config)
         pipe.enable_model_cpu_offload()
         pipe.to(device)
 
@@ -1465,9 +1464,6 @@ def generate_animation_animatediff(prompt, negative_prompt, stable_diffusion_mod
     if not stable_diffusion_model_name:
         return None, "Please, select a StableDiffusion model!"
 
-    if ValueError:
-        return None, "You are using the wrong model. Use StableDiffusion 1.5 model"
-
     stable_diffusion_model_path = os.path.join("inputs", "image", "sd_models", f"{stable_diffusion_model_name}.safetensors")
 
     if not os.path.exists(stable_diffusion_model_path):
@@ -1491,16 +1487,6 @@ def generate_animation_animatediff(prompt, negative_prompt, stable_diffusion_mod
             device_map="auto",
         )
 
-        scheduler_config_path = "configs/sd/animatediff/scheduler_config.json"
-        scheduler = DDIMScheduler.from_pretrained(
-            scheduler_config_path,
-            subfolder="scheduler",
-            clip_sample=False,
-            timestep_spacing="linspace",
-            beta_schedule="linear",
-            steps_offset=1,
-        )
-
         pipe = AnimateDiffPipeline(
             unet=stable_diffusion_model.unet,
             text_encoder=stable_diffusion_model.text_encoder,
@@ -1508,7 +1494,7 @@ def generate_animation_animatediff(prompt, negative_prompt, stable_diffusion_mod
             motion_adapter=adapter,
             tokenizer=stable_diffusion_model.tokenizer,
             feature_extractor=stable_diffusion_model.feature_extractor,
-            scheduler=scheduler,
+            scheduler=stable_diffusion_model.scheduler,
         )
 
         pipe.enable_vae_slicing()
