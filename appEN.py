@@ -1152,7 +1152,13 @@ def generate_image_controlnet(prompt, negative_prompt, init_image, stable_diffus
         control_image = processor(image, hand_and_face=True)
 
         generator = torch.manual_seed(0)
-        image = pipe(prompt, negative_prompt=negative_prompt, num_inference_steps=num_inference_steps, guidance_scale=guidance_scale, width=width, height=height, generator=generator, image=control_image).images[0]
+
+        compel_proc = Compel(tokenizer=pipe.tokenizer,
+                             text_encoder=pipe.text_encoder)
+        prompt_embeds = compel_proc(prompt)
+        negative_prompt_embeds = compel_proc(negative_prompt)
+        
+        image = pipe(prompt_embeds=prompt_embeds, negative_prompt_embeds=negative_prompt_embeds, num_inference_steps=num_inference_steps, guidance_scale=guidance_scale, width=width, height=height, generator=generator, image=control_image).images[0]
 
         if stop_signal:
             return None, "Generation stopped"
