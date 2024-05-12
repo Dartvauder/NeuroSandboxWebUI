@@ -20,7 +20,7 @@ The goal of the project - to create the easiest possible application to use neur
 
 ### Wav2Lip: ![5](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/3090f8e1-44cd-431c-a671-e3be60658070)
 
-### StableDiffusion: 
+### StableDiffusion: ![6](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/7dedcc4b-8ea7-4825-9d8d-c2cd608883b7)
 
 ### ZeroScope 2: ![7](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/815bb897-0e92-4a6d-a111-e7669c96ba62)
 
