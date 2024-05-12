@@ -16,9 +16,9 @@ import whisper
 from datetime import datetime
 import warnings
 import logging
-from diffusers import StableDiffusionPipeline, StableDiffusionXLPipeline, StableDiffusionImg2ImgPipeline, StableDiffusionDepth2ImgPipeline, ControlNetModel, StableDiffusionControlNetPipeline, AutoencoderKL, StableDiffusionLatentUpscalePipeline, StableDiffusionUpscalePipeline, StableDiffusionInpaintPipeline, StableDiffusionGLIGENPipeline, AnimateDiffPipeline, AnimateDiffVideoToVideoPipeline, MotionAdapter, StableVideoDiffusionPipeline, I2VGenXLPipeline, StableCascadePriorPipeline, StableCascadeDecoderPipeline, DiffusionPipeline, DPMSolverMultistepScheduler, ShapEPipeline, ShapEImg2ImgPipeline, AudioLDM2Pipeline, StableDiffusionInstructPix2PixPipeline, EulerAncestralDiscreteScheduler
+from diffusers import StableDiffusionPipeline, StableDiffusionXLPipeline, StableDiffusionImg2ImgPipeline, StableDiffusionDepth2ImgPipeline, ControlNetModel, StableDiffusionControlNetPipeline, AutoencoderKL, StableDiffusionLatentUpscalePipeline, StableDiffusionUpscalePipeline, StableDiffusionInpaintPipeline, StableDiffusionGLIGENPipeline, AnimateDiffPipeline, AnimateDiffVideoToVideoPipeline, MotionAdapter, StableVideoDiffusionPipeline, I2VGenXLPipeline, StableCascadePriorPipeline, StableCascadeDecoderPipeline, DiffusionPipeline, DPMSolverMultistepScheduler, ShapEPipeline, ShapEImg2ImgPipeline, AudioLDM2Pipeline, StableDiffusionInstructPix2PixPipeline
 from diffusers.utils import load_image, export_to_video, export_to_gif, export_to_ply
-from controlnet_aux import OpenposeDetector, LineartDetector, PidiNetDetector, HEDdetector
+from controlnet_aux import OpenposeDetector, LineartDetector, HEDdetector
 from compel import Compel
 import trimesh
 from tsr.system import TSR
@@ -1129,7 +1129,6 @@ def generate_image_pix2pix(prompt, negative_prompt, init_image, num_inference_st
         pipe = StableDiffusionInstructPix2PixPipeline.from_pretrained(pix2pix_model_path, torch_dtype=torch.float16,
                                                                       safety_checker=None)
         pipe.to(device)
-        pipe.scheduler = EulerAncestralDiscreteScheduler.from_config(pipe.scheduler.config)
 
         image = Image.open(init_image).convert("RGB")
 
@@ -1217,7 +1216,7 @@ def generate_image_controlnet(prompt, negative_prompt, init_image, stable_diffus
         image = Image.open(init_image).convert("RGB")
 
         if controlnet_model_name == "openpose":
-            processor = OpenposeDetector.from_pretrained("lllyasviel/ControlNet")
+            processor = OpenposeDetector.from_pretrained(annotator_path)
             control_image = processor(image, hand_and_face=True)
         elif controlnet_model_name == "depth":
             depth_estimator = pipeline('depth-estimation')
