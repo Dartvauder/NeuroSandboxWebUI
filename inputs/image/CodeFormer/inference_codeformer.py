@@ -241,7 +241,7 @@ if __name__ == '__main__':
                 save_face_name = f'{basename}_{idx:02d}.png'
             if args.suffix is not None:
                 save_face_name = f'{save_face_name[:-4]}_{args.suffix}.png'
-            save_restore_path = os.path.join(result_root, 'restored_faces', save_face_name)
+            save_restore_path = os.path.join(result_root)
             imwrite(restored_face, save_restore_path)
 
         # save restored img
