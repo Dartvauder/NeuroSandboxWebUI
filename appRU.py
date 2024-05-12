@@ -16,7 +16,7 @@ import whisper
 from datetime import datetime
 import warnings
 import logging
-from diffusers import StableDiffusionPipeline, StableDiffusionXLPipeline, StableDiffusionImg2ImgPipeline, StableDiffusionDepth2ImgPipeline, ControlNetModel, StableDiffusionControlNetPipeline, AutoencoderKL, StableDiffusionLatentUpscalePipeline, StableDiffusionUpscalePipeline, StableDiffusionInpaintPipeline, StableDiffusionGLIGENPipeline, AnimateDiffPipeline, AnimateDiffVideoToVideoPipeline, MotionAdapter, StableVideoDiffusionPipeline, I2VGenXLPipeline, StableCascadePriorPipeline, StableCascadeDecoderPipeline, DiffusionPipeline, DPMSolverMultistepScheduler, ShapEPipeline, ShapEImg2ImgPipeline, AudioLDM2Pipeline
+from diffusers import StableDiffusionPipeline, StableDiffusionXLPipeline, StableDiffusionImg2ImgPipeline, StableDiffusionDepth2ImgPipeline, ControlNetModel, StableDiffusionControlNetPipeline, AutoencoderKL, StableDiffusionLatentUpscalePipeline, StableDiffusionUpscalePipeline, StableDiffusionInpaintPipeline, StableDiffusionGLIGENPipeline, AnimateDiffPipeline, AnimateDiffVideoToVideoPipeline, MotionAdapter, StableVideoDiffusionPipeline, I2VGenXLPipeline, StableCascadePriorPipeline, StableCascadeDecoderPipeline, DiffusionPipeline, DPMSolverMultistepScheduler, ShapEPipeline, ShapEImg2ImgPipeline, AudioLDM2Pipeline, StableDiffusionInstructPix2PixPipeline, EulerAncestralDiscreteScheduler
 from diffusers.utils import load_image, export_to_video, export_to_gif, export_to_ply
 from controlnet_aux import OpenposeDetector, LineartDetector, PidiNetDetector, HEDdetector
 from compel import Compel
@@ -1105,6 +1105,57 @@ def generate_image_depth2img(prompt, negative_prompt, init_image, stable_diffusi
 
     finally:
         del stable_diffusion_model
+        torch.cuda.empty_cache()
+
+
+def generate_image_pix2pix(prompt, negative_prompt, init_image, num_inference_steps, guidance_scale,
+                           output_format="png", stop_generation=None):
+    global stop_signal
+    stop_signal = False
+
+    if not init_image:
+        return None, "Please, upload an initial image!"
+
+    pix2pix_model_path = os.path.join("inputs", "image", "sd_models", "pix2pix")
+
+    if not os.path.exists(pix2pix_model_path):
+        print("Downloading Pix2Pix model...")
+        os.makedirs(pix2pix_model_path, exist_ok=True)
+        Repo.clone_from("https://huggingface.co/timbrooks/instruct-pix2pix", pix2pix_model_path)
+        print("Pix2Pix model downloaded")
+
+    try:
+        device = "cuda" if torch.cuda.is_available() else "cpu"
+        pipe = StableDiffusionInstructPix2PixPipeline.from_pretrained(pix2pix_model_path, torch_dtype=torch.float16,
+                                                                      safety_checker=None)
+        pipe.to(device)
+        pipe.scheduler = EulerAncestralDiscreteScheduler.from_config(pipe.scheduler.config)
+
+        image = Image.open(init_image).convert("RGB")
+
+        compel_proc = Compel(tokenizer=pipe.tokenizer,
+                             text_encoder=pipe.text_encoder)
+        prompt_embeds = compel_proc(prompt)
+        negative_prompt_embeds = compel_proc(negative_prompt)
+
+        image = pipe(prompt_embeds=prompt_embeds, negative_prompt_embeds=negative_prompt_embeds,
+                     image=image, num_inference_steps=num_inference_steps, image_guidance_scale=guidance_scale).images[
+            0]
+
+        if stop_signal:
+            return None, "Generation stopped"
+
+        today = datetime.now().date()
+        image_dir = os.path.join('outputs', f"StableDiffusion_{today.strftime('%Y%m%d')}")
+        os.makedirs(image_dir, exist_ok=True)
+        image_filename = f"pix2pix_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
+        image_path = os.path.join(image_dir, image_filename)
+        image.save(image_path, format=output_format.upper())
+
+        return image_path, None
+
+    finally:
+        del pipe
         torch.cuda.empty_cache()
 
 
@@ -2687,6 +2738,28 @@ depth2img_interface = gr.Interface(
     allow_flagging="never",
 )
 
+pix2pix_interface = gr.Interface(
+    fn=generate_image_pix2pix,
+    inputs=[
+        gr.Textbox(label="Enter your prompt"),
+        gr.Textbox(label="Enter your negative prompt", value=""),
+        gr.Image(label="Initial image", type="filepath"),
+        gr.Slider(minimum=1, maximum=100, value=30, step=1, label="Steps"),
+        gr.Slider(minimum=1.0, maximum=30.0, value=8, step=0.1, label="CFG"),
+        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
+        gr.Button(value="Stop generation", interactive=True, variant="stop"),
+    ],
+    outputs=[
+        gr.Image(type="filepath", label="Generated image"),
+        gr.Textbox(label="Message", type="text"),
+    ],
+    title="NeuroSandboxWebUI (ALPHA) - StableDiffusion (pix2pix)",
+    description="This user interface allows you to enter a prompt and an initial image to generate new images using Pix2Pix. "
+                "You can customize the generation settings from the sliders. "
+                "Try it and see what happens!",
+    allow_flagging="never",
+)
+
 controlnet_interface = gr.Interface(
     fn=generate_image_controlnet,
     inputs=[
@@ -3075,8 +3148,8 @@ system_interface = gr.Interface(
 )
 
 with gr.TabbedInterface(
-        [chat_interface, tts_stt_interface, bark_interface, translate_interface, wav2lip_interface, gr.TabbedInterface([txt2img_interface, img2img_interface, depth2img_interface, controlnet_interface, upscale_interface, inpaint_interface, gligen_interface, animatediff_interface, video_interface, cascade_interface, extras_interface],
-        tab_names=["txt2img", "img2img", "depth2img", "controlnet", "upscale", "inpaint", "gligen", "animatediff", "video", "cascade", "extras"]),
+        [chat_interface, tts_stt_interface, bark_interface, translate_interface, wav2lip_interface, gr.TabbedInterface([txt2img_interface, img2img_interface, depth2img_interface, pix2pix_interface, controlnet_interface, upscale_interface, inpaint_interface, gligen_interface, animatediff_interface, video_interface, cascade_interface, extras_interface],
+        tab_names=["txt2img", "img2img", "depth2img", "pix2pix", "controlnet", "upscale", "inpaint", "gligen", "animatediff", "video", "cascade", "extras"]),
                     zeroscope2_interface, triposr_interface, shap_e_interface, audiocraft_interface, audioldm2_interface, demucs_interface, model_downloader_interface, settings_interface, system_interface],
         tab_names=["LLM", "TTS-STT", "SunoBark", "LibreTranslate", "Wav2Lip", "StableDiffusion", "ZeroScope 2", "TripoSR", "Shap-E", "AudioCraft", "AudioLDM 2", "Demucs", "ModelDownloader", "Settings", "System"]
 ) as app:
@@ -3085,6 +3158,7 @@ with gr.TabbedInterface(
     txt2img_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     img2img_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     depth2img_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
+    pix2pix_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     controlnet_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     upscale_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     inpaint_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
