@@ -37,7 +37,6 @@ from rembg import remove
 import torchaudio
 from audiocraft.models import MusicGen, AudioGen, MultiBandDiffusion  # MAGNeT
 from audiocraft.data.audio import audio_write
-from controlnet_aux import OpenposeDetector, PidiNetDetector, HEDdetector
 import psutil
 import GPUtil
 from cpuinfo import get_cpu_info
