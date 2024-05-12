@@ -16,9 +16,9 @@ import whisper
 from datetime import datetime
 import warnings
 import logging
-from diffusers import StableDiffusionPipeline, StableDiffusionXLPipeline, StableDiffusionImg2ImgPipeline, StableDiffusionDepth2ImgPipeline, ControlNetModel, StableDiffusionControlNetPipeline, AutoencoderKL, StableDiffusionLatentUpscalePipeline, StableDiffusionUpscalePipeline, StableDiffusionInpaintPipeline, StableDiffusionGLIGENPipeline, AnimateDiffPipeline, AnimateDiffVideoToVideoPipeline, MotionAdapter, StableVideoDiffusionPipeline, I2VGenXLPipeline, StableCascadePriorPipeline, StableCascadeDecoderPipeline, DiffusionPipeline, DPMSolverMultistepScheduler, ShapEPipeline, ShapEImg2ImgPipeline, AudioLDM2Pipeline
+from diffusers import StableDiffusionPipeline, StableDiffusionXLPipeline, StableDiffusionImg2ImgPipeline, StableDiffusionDepth2ImgPipeline, ControlNetModel, StableDiffusionControlNetPipeline, AutoencoderKL, StableDiffusionLatentUpscalePipeline, StableDiffusionUpscalePipeline, StableDiffusionInpaintPipeline, StableDiffusionGLIGENPipeline, AnimateDiffPipeline, AnimateDiffVideoToVideoPipeline, MotionAdapter, StableVideoDiffusionPipeline, I2VGenXLPipeline, StableCascadePriorPipeline, StableCascadeDecoderPipeline, DiffusionPipeline, DPMSolverMultistepScheduler, ShapEPipeline, ShapEImg2ImgPipeline, AudioLDM2Pipeline, StableDiffusionInstructPix2PixPipeline
 from diffusers.utils import load_image, export_to_video, export_to_gif, export_to_ply
-from controlnet_aux import OpenposeDetector, LineartDetector, PidiNetDetector, HEDdetector
+from controlnet_aux import OpenposeDetector, LineartDetector, HEDdetector
 from compel import Compel
 import trimesh
 from tsr.system import TSR
@@ -31,8 +31,14 @@ from PIL import Image
 from tqdm import tqdm
 from llama_cpp import Llama
 import requests
-from bs4 import BeautifulSoup
+import re
+from selenium import webdriver
+from selenium.webdriver.chrome.service import Service
+from selenium.common.exceptions import TimeoutException, NoSuchElementException
+from webdriver_manager.chrome import ChromeDriverManager
+from fake_useragent import UserAgent
 from googlesearch import search
+import html2text
 from rembg import remove
 import torchaudio
 from audiocraft.models import MusicGen, AudioGen, MultiBandDiffusion  # MAGNeT
@@ -77,6 +83,45 @@ def authenticate(username, password):
     except FileNotFoundError:
         pass
     return False
+
+
+def perform_web_search(query, num_results=5, max_length=500):
+    ua = UserAgent()
+    user_agent = ua.random
+
+    options = webdriver.ChromeOptions()
+    options.add_argument(f'user-agent={user_agent}')
+    options.add_argument('--headless')
+    options.add_argument('--disable-images')
+    options.add_argument('--disable-extensions')
+    options.add_argument('--no-sandbox')
+    options.add_argument('--disable-dev-shm-usage')
+
+    driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
+    driver.set_page_load_timeout(30)
+
+    search_results = []
+    for url in search(query, num_results=num_results):
+        try:
+            driver.get(url)
+            page_source = driver.page_source
+            h = html2text.HTML2Text()
+            h.ignore_links = True
+            h.ignore_images = True
+            h.ignore_emphasis = True
+            page_text = h.handle(page_source)
+            page_text = re.sub(r'\s+', ' ', page_text).strip()
+            search_results.append(page_text)
+        except (TimeoutException, NoSuchElementException):
+            continue
+
+    driver.quit()
+
+    search_text = " ".join(search_results)
+    if len(search_text) > max_length:
+        search_text = search_text[:max_length]
+
+    return search_text
 
 
 def remove_bg(src_img_path, out_img_path):
@@ -411,9 +456,6 @@ def generate_text_and_speech(input_text, input_audio, input_image, llm_model_nam
                     whisper_model = load_whisper_model()
                 device = "cuda" if torch.cuda.is_available() else "cpu"
                 whisper_model = whisper_model.to(device)
-            if enable_web_search:
-                chat_history.append([None, "This feature doesn't work yet. Please, turn it off"])
-                return chat_history, None, None, None
             if llm_model:
                 if llm_model_type == "transformers":
                     detect_lang = langdetect.detect(prompt)
@@ -446,6 +488,14 @@ def generate_text_and_speech(input_text, input_audio, input_image, llm_model_nam
 
                     progress_bar = tqdm(total=max_length, desc="Generating text")
                     progress_tokens = 0
+
+                    if enable_web_search:
+                        search_results = perform_web_search(prompt)
+                        prompt_with_search = f"{prompt}\nWeb search results:\n{search_results}"
+                        messages[1]["content"] = context + prompt_with_search
+                        model_inputs = tokenizer.apply_chat_template(messages, add_generation_prompt=True, padding=True,
+                                                                     return_tensors="pt").to(device)
+                        input_length = model_inputs.shape[1]
 
                     generated_ids = llm_model.generate(
                         model_inputs,
@@ -488,6 +538,10 @@ def generate_text_and_speech(input_text, input_audio, input_image, llm_model_nam
 
                     progress_bar = tqdm(total=max_tokens, desc="Generating text")
                     progress_tokens = 0
+
+                    if enable_web_search:
+                        search_results = perform_web_search(prompt)
+                        prompt_with_context = f"{prompt_with_context}\nWeb search results:\n{search_results}\nAssistant: "
 
                     output = llm_model(
                         prompt_with_context,
@@ -1108,6 +1162,56 @@ def generate_image_depth2img(prompt, negative_prompt, init_image, stable_diffusi
         torch.cuda.empty_cache()
 
 
+def generate_image_pix2pix(prompt, negative_prompt, init_image, num_inference_steps, guidance_scale,
+                           output_format="png", stop_generation=None):
+    global stop_signal
+    stop_signal = False
+
+    if not init_image:
+        return None, "Please, upload an initial image!"
+
+    pix2pix_model_path = os.path.join("inputs", "image", "sd_models", "pix2pix")
+
+    if not os.path.exists(pix2pix_model_path):
+        print("Downloading Pix2Pix model...")
+        os.makedirs(pix2pix_model_path, exist_ok=True)
+        Repo.clone_from("https://huggingface.co/timbrooks/instruct-pix2pix", pix2pix_model_path)
+        print("Pix2Pix model downloaded")
+
+    try:
+        device = "cuda" if torch.cuda.is_available() else "cpu"
+        pipe = StableDiffusionInstructPix2PixPipeline.from_pretrained(pix2pix_model_path, torch_dtype=torch.float16,
+                                                                      safety_checker=None)
+        pipe.to(device)
+
+        image = Image.open(init_image).convert("RGB")
+
+        compel_proc = Compel(tokenizer=pipe.tokenizer,
+                             text_encoder=pipe.text_encoder)
+        prompt_embeds = compel_proc(prompt)
+        negative_prompt_embeds = compel_proc(negative_prompt)
+
+        image = pipe(prompt_embeds=prompt_embeds, negative_prompt_embeds=negative_prompt_embeds,
+                     image=image, num_inference_steps=num_inference_steps, image_guidance_scale=guidance_scale).images[
+            0]
+
+        if stop_signal:
+            return None, "Generation stopped"
+
+        today = datetime.now().date()
+        image_dir = os.path.join('outputs', f"StableDiffusion_{today.strftime('%Y%m%d')}")
+        os.makedirs(image_dir, exist_ok=True)
+        image_filename = f"pix2pix_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
+        image_path = os.path.join(image_dir, image_filename)
+        image.save(image_path, format=output_format.upper())
+
+        return image_path, None
+
+    finally:
+        del pipe
+        torch.cuda.empty_cache()
+
+
 def generate_image_controlnet(prompt, negative_prompt, init_image, stable_diffusion_model_name, controlnet_model_name, num_inference_steps, guidance_scale, width, height, output_format="png", stop_generation=None):
     global stop_signal
     stop_signal = False
@@ -1166,7 +1270,7 @@ def generate_image_controlnet(prompt, negative_prompt, init_image, stable_diffus
         image = Image.open(init_image).convert("RGB")
 
         if controlnet_model_name == "openpose":
-            processor = OpenposeDetector.from_pretrained("lllyasviel/ControlNet")
+            processor = OpenposeDetector.from_pretrained(annotator_path)
             control_image = processor(image, hand_and_face=True)
         elif controlnet_model_name == "depth":
             depth_estimator = pipeline('depth-estimation')
@@ -1877,32 +1981,8 @@ def generate_image_extras(input_image, source_image, remove_background, enable_f
 
         if enable_facerestore:
             codeformer_path = os.path.join("inputs", "image", "CodeFormer")
-            codeformer_weights_path = os.path.join(codeformer_path, "weights", "CodeFormer")
-            facelib_weights_path = os.path.join(codeformer_path, "weights", "facelib")
 
-            if not os.path.exists(codeformer_weights_path):
-                os.makedirs(codeformer_weights_path, exist_ok=True)
-                codeformer_url = "https://github.com/sczhou/CodeFormer/releases/download/v0.1.0/codeformer.pth"
-                response = requests.get(codeformer_url, allow_redirects=True)
-                with open(os.path.join(codeformer_weights_path, "codeformer.pth"), "wb") as file:
-                    file.write(response.content)
-
-            if not os.path.exists(facelib_weights_path):
-                os.makedirs(facelib_weights_path, exist_ok=True)
-                facelib_urls = [
-                    "https://github.com/sczhou/CodeFormer/releases/download/v0.1.0/detection_mobilenet0.25_Final.pth",
-                    "https://github.com/sczhou/CodeFormer/releases/download/v0.1.0/detection_Resnet50_Final.pth",
-                    "https://github.com/sczhou/CodeFormer/releases/download/v0.1.0/parsing_parsenet.pth",
-                    "https://github.com/sczhou/CodeFormer/releases/download/v0.1.0/yolov5l-face.pth",
-                    "https://github.com/sczhou/CodeFormer/releases/download/v0.1.0/yolov5n-face.pth"
-                ]
-                for url in facelib_urls:
-                    response = requests.get(url, allow_redirects=True)
-                    filename = os.path.basename(url)
-                    with open(os.path.join(facelib_weights_path, filename), "wb") as file:
-                        file.write(response.content)
-
-            facerestore_output_path = os.path.join(output_dir)
+            facerestore_output_path = os.path.join(output_dir, f"facerestored_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{image_output_format}")
 
             command = f"python {os.path.join(codeformer_path, 'inference_codeformer.py')} -w 0.5 --has_aligned --input_path {input_image} --output_path {facerestore_output_path}"
             subprocess.run(command, shell=True, check=True)
@@ -2687,6 +2767,28 @@ depth2img_interface = gr.Interface(
     allow_flagging="never",
 )
 
+pix2pix_interface = gr.Interface(
+    fn=generate_image_pix2pix,
+    inputs=[
+        gr.Textbox(label="Enter your prompt"),
+        gr.Textbox(label="Enter your negative prompt", value=""),
+        gr.Image(label="Initial image", type="filepath"),
+        gr.Slider(minimum=1, maximum=100, value=30, step=1, label="Steps"),
+        gr.Slider(minimum=1.0, maximum=30.0, value=8, step=0.1, label="CFG"),
+        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
+        gr.Button(value="Stop generation", interactive=True, variant="stop"),
+    ],
+    outputs=[
+        gr.Image(type="filepath", label="Generated image"),
+        gr.Textbox(label="Message", type="text"),
+    ],
+    title="NeuroSandboxWebUI (ALPHA) - StableDiffusion (pix2pix)",
+    description="This user interface allows you to enter a prompt and an initial image to generate new images using Pix2Pix. "
+                "You can customize the generation settings from the sliders. "
+                "Try it and see what happens!",
+    allow_flagging="never",
+)
+
 controlnet_interface = gr.Interface(
     fn=generate_image_controlnet,
     inputs=[
@@ -3075,8 +3177,8 @@ system_interface = gr.Interface(
 )
 
 with gr.TabbedInterface(
-        [chat_interface, tts_stt_interface, bark_interface, translate_interface, wav2lip_interface, gr.TabbedInterface([txt2img_interface, img2img_interface, depth2img_interface, controlnet_interface, upscale_interface, inpaint_interface, gligen_interface, animatediff_interface, video_interface, cascade_interface, extras_interface],
-        tab_names=["txt2img", "img2img", "depth2img", "controlnet", "upscale", "inpaint", "gligen", "animatediff", "video", "cascade", "extras"]),
+        [chat_interface, tts_stt_interface, bark_interface, translate_interface, wav2lip_interface, gr.TabbedInterface([txt2img_interface, img2img_interface, depth2img_interface, pix2pix_interface, controlnet_interface, upscale_interface, inpaint_interface, gligen_interface, animatediff_interface, video_interface, cascade_interface, extras_interface],
+        tab_names=["txt2img", "img2img", "depth2img", "pix2pix", "controlnet", "upscale", "inpaint", "gligen", "animatediff", "video", "cascade", "extras"]),
                     zeroscope2_interface, triposr_interface, shap_e_interface, audiocraft_interface, audioldm2_interface, demucs_interface, model_downloader_interface, settings_interface, system_interface],
         tab_names=["LLM", "TTS-STT", "SunoBark", "LibreTranslate", "Wav2Lip", "StableDiffusion", "ZeroScope 2", "TripoSR", "Shap-E", "AudioCraft", "AudioLDM 2", "Demucs", "ModelDownloader", "Settings", "System"]
 ) as app:
@@ -3085,6 +3187,7 @@ with gr.TabbedInterface(
     txt2img_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     img2img_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     depth2img_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
+    pix2pix_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     controlnet_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     upscale_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     inpaint_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)

@@ -20,7 +20,7 @@ The goal of the project - to create the easiest possible application to use neur
 
 ### Wav2Lip: ![5](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/3090f8e1-44cd-431c-a671-e3be60658070)
 
-### StableDiffusion: ![6](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/e513ea23-e04b-4cca-b519-b54a6ddcd3b3)
+### StableDiffusion: ![6](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/7dedcc4b-8ea7-4825-9d8d-c2cd608883b7)
 
 ### ZeroScope 2: ![7](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/815bb897-0e92-4a6d-a111-e7669c96ba62)
 
@@ -47,11 +47,11 @@ The goal of the project - to create the easiest possible application to use neur
 * Flexible and optimized interface (By Gradio)
 * Authentication via admin:admin (You can enter your login details in the GradioAuth.txt file)
 * Support for Transformers and llama.cpp models (LLM)
-* Support for diffusers and safetensors models (StableDiffusion) - txt2img, img2img, depth2img, controlnet, upscale, inpaint, gligen, animatediff, video, cascade and extras tabs
+* Support for diffusers and safetensors models (StableDiffusion) - txt2img, img2img, depth2img, pix2pix, controlnet, upscale, inpaint, gligen, animatediff, video, cascade and extras tabs
 * AudioCraft support (Models: musicgen, audiogen and magnet)
 * AudioLDM 2 support (Models: audio and music)
 * Supports TTS and Whisper models (For LLM and TTS-STT)
-* Supports Lora, Textual inversion (embedding), Vae, Img2img, Depth, Controlnet, Upscale, Inpaint, GLIGEN, AnimateDiff, Videos, Cascade, Rembg, CodeFormer and Roop models (For StableDiffusion)
+* Supports Lora, Textual inversion (embedding), Vae, Img2img, Depth, Pix2Pix, Controlnet, Upscale, Inpaint, GLIGEN, AnimateDiff, Videos, Cascade, Rembg, CodeFormer and Roop models (For StableDiffusion)
 * Support Multiband Diffusion model (For AudioCraft)
 * Support LibreTranslate (Local API)
 * Support ZeroScope 2
@@ -153,7 +153,7 @@ To work with the virtual environment through the terminal, run `./Venv.sh`
 3) Set up the model according to the parameters you need
 4) Click the `Submit` button to receive the lip-sync
 
-### StableDiffusion - has eleven sub-tabs:
+### StableDiffusion - has twelve sub-tabs:
 
 #### txt2img:
 
@@ -181,6 +181,13 @@ To work with the virtual environment through the terminal, run `./Venv.sh`
 #### vae = *inputs/image/sd_models/vae*
 
 #### depth2img:
+
+1) Upload the initial image
+2) Set up the model according to the parameters you need
+3) Enter your request (+ and - for prompt weighting)
+4) Click the `Submit` button to get the generated image
+
+#### pix2pix:
 
 1) Upload the initial image
 2) Set up the model according to the parameters you need
@@ -318,7 +325,7 @@ To work with the virtual environment through the terminal, run `./Venv.sh`
 
 * LLM models can be taken from [HuggingFace](https://huggingface.co/models) or from ModelDownloader inside interface 
 * StableDiffusion, vae, inpaint, embedding and lora models can be taken from [CivitAI](https://civitai.com/models) or from ModelDownloader inside interface
-* AudioCraft, AudioLDM 2, TTS, Whisper, Wav2Lip, SunoBark, MoonDream2, Upscale, GLIGEN, Depth, Controlnet, AnimateDiff, Videos, Cascade, Rembg, Roop, CodeFormer, TripoSR, Shap-E, Demucs, ZeroScope and Multiband diffusion models are downloads automatically in *inputs* folder when are they used 
+* AudioCraft, AudioLDM 2, TTS, Whisper, Wav2Lip, SunoBark, MoonDream2, Upscale, GLIGEN, Depth, Pix2Pix, Controlnet, AnimateDiff, Videos, Cascade, Rembg, Roop, CodeFormer, TripoSR, Shap-E, Demucs, ZeroScope and Multiband diffusion models are downloads automatically in *inputs* folder when are they used 
 * You can take voices anywhere. Record yours or take a recording from the Internet. Or just use those that are already in the project. The main thing is that it is pre-processed!
 
 ## Wiki
@@ -384,6 +391,7 @@ First of all, I want to thank the developers of [PyCharm](https://www.jetbrains.
 * [CodeFormer](https://github.com/sczhou/CodeFormer/blob/master/LICENSE)
 * [ControlNet](https://github.com/lllyasviel/ControlNet/blob/main/LICENSE)
 * [AnimateDiff](https://github.com/guoyww/AnimateDiff/blob/main/LICENSE.txt)
+* [Pix2Pix](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/mit.md)
 
 ## Donation
 

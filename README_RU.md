@@ -20,7 +20,7 @@
 
 ### Wav2Lip: ![5](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/3090f8e1-44cd-431c-a671-e3be60658070)
 
-### StableDiffusion: ![6](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/e513ea23-e04b-4cca-b519-b54a6ddcd3b3)
+### StableDiffusion: ![6](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/7dedcc4b-8ea7-4825-9d8d-c2cd608883b7)
 
 ### ZeroScope 2: ![7](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/815bb897-0e92-4a6d-a111-e7669c96ba62)
 
@@ -47,11 +47,11 @@
 * Гибкий и оптимизированный интерфейс (От Gradio)
 * Аутентификация через admin:admin (Вы можете вписать свои данные для входа в файле GradioAuth.txt)
 * Поддержка Transformers и llama.cpp моделей (LLM)
-* Поддержка diffusers и safetensors моделей (StableDiffusion) - Вкладки txt2img, img2img, depth2img, controlnet, upscale, inpaint, gligen, animatediff, video, cascade и extras
+* Поддержка diffusers и safetensors моделей (StableDiffusion) - Вкладки txt2img, img2img, depth2img, pix2pix, controlnet, upscale, inpaint, gligen, animatediff, video, cascade и extras
 * Поддержка AudioCraft (Модели: musicgen, audiogen и magnet)
 * Поддержка AudioLDM 2 (Модели: audio и music)
 * Поддержка TTS и Whisper моделей (Для LLM и TTS-STT)
-* Поддержка Lora, Textual inversion (embedding), Vae, Img2img, Depth, Controlnet, Upscale, Inpaint, GLIGEN, AnimateDiff, Videos, Cascade, Rembg, CodeFormer и Roop моделей (Для StableDiffusion)
+* Поддержка Lora, Textual inversion (embedding), Vae, Img2img, Depth, Pix2Pix, Controlnet, Upscale, Inpaint, GLIGEN, AnimateDiff, Videos, Cascade, Rembg, CodeFormer и Roop моделей (Для StableDiffusion)
 * Поддержка Multiband Diffusion модели (Для AudioCraft)
 * Поддержка LibreTranslate (Локальный API)
 * Поддержка ZeroScope 2
@@ -153,7 +153,7 @@
 3) Настройте модель по нужным вам параметрам
 4) Нажмите кнопку `Submit`, чтобы получить лицевую синхронизацию губ
 
-### StableDiffusion - имеет одиннадцать под-вкладок:
+### StableDiffusion - имеет двенадцать под-вкладок:
 
 #### txt2img:
 
@@ -181,6 +181,13 @@
 #### vae = *inputs/image/sd_models/vae*
 
 #### depth2img:
+
+1) Загрузите исходное изображение
+2) Настройте модель по нужным вам параметрам
+3) Введите ваш запрос (+ и - для prompt weighting)
+4) Нажмите кнопку `Submit`, чтобы получить сгенерированное изображение
+
+#### pix2pix:
 
 1) Загрузите исходное изображение
 2) Настройте модель по нужным вам параметрам
@@ -318,7 +325,7 @@
 
 * LLM модели можно взять с сайта [HuggingFace](https://huggingface.co/models) или из внутреннего интерфейса ModelDownloader
 * Модели StableDiffusion, vae, inpaint, embedding и lora можно взять с сайта [CivitAI](https://civitai.com/models) или из внутреннего интерфейса ModelDownloader
-* AudioCraft, AudioLDM 2, TTS, Whisper, Wav2Lip, SunoBark, MoonDream2, Upscale, GLIGEN, Depth, Controlnet, AnimateDiff, Videos, Cascade, Rembg, Roop, CodeFormer, TripoSR, Shap-E, Demucs, ZeroScope и Multiband diffusion модели скачиваються автоматически в папку *inputs* при их использовании
+* AudioCraft, AudioLDM 2, TTS, Whisper, Wav2Lip, SunoBark, MoonDream2, Upscale, GLIGEN, Depth, Pix2Pix, Controlnet, AnimateDiff, Videos, Cascade, Rembg, Roop, CodeFormer, TripoSR, Shap-E, Demucs, ZeroScope и Multiband diffusion модели скачиваються автоматически в папку *inputs* при их использовании
 * Вы можете использовать голоса откуда угодно. Запишите свой или возьмите запись из интернета. Или просто используйте те, которые уже есть в проекте. Главное, чтобы оно было предварительно обработано!
 
 ## Вики
@@ -384,6 +391,7 @@
 * [CodeFormer](https://github.com/sczhou/CodeFormer/blob/master/LICENSE)
 * [ControlNet](https://github.com/lllyasviel/ControlNet/blob/main/LICENSE)
 * [AnimateDiff](https://github.com/guoyww/AnimateDiff/blob/main/LICENSE.txt)
+* [Pix2Pix](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/mit.md)
 
 ## Пожертвование
 
