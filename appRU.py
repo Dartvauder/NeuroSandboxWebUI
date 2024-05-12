@@ -18,6 +18,7 @@ import warnings
 import logging
 from diffusers import StableDiffusionPipeline, StableDiffusionXLPipeline, StableDiffusionImg2ImgPipeline, StableDiffusionDepth2ImgPipeline, ControlNetModel, StableDiffusionControlNetPipeline, AutoencoderKL, StableDiffusionLatentUpscalePipeline, StableDiffusionUpscalePipeline, StableDiffusionInpaintPipeline, StableDiffusionGLIGENPipeline, AnimateDiffPipeline, AnimateDiffVideoToVideoPipeline, MotionAdapter, StableVideoDiffusionPipeline, I2VGenXLPipeline, StableCascadePriorPipeline, StableCascadeDecoderPipeline, DiffusionPipeline, DPMSolverMultistepScheduler, ShapEPipeline, ShapEImg2ImgPipeline, AudioLDM2Pipeline
 from diffusers.utils import load_image, export_to_video, export_to_gif, export_to_ply
+from controlnet_aux import LineartDetector, PidiNetDetector, HEDdetector
 from compel import Compel
 import trimesh
 from tsr.system import TSR
@@ -36,7 +37,7 @@ from rembg import remove
 import torchaudio
 from audiocraft.models import MusicGen, AudioGen, MultiBandDiffusion  # MAGNeT
 from audiocraft.data.audio import audio_write
-from controlnet_aux import OpenposeDetector
+from controlnet_aux import OpenposeDetector, PidiNetDetector, HEDdetector
 import psutil
 import GPUtil
 from cpuinfo import get_cpu_info
@@ -1137,7 +1138,18 @@ def generate_image_controlnet(prompt, negative_prompt, init_image, stable_diffus
             Repo.clone_from("https://huggingface.co/lllyasviel/control_v11f1p_sd15_depth", controlnet_model_path)
         elif controlnet_model_name == "canny":
             Repo.clone_from("https://huggingface.co/lllyasviel/control_v11p_sd15_canny", controlnet_model_path)
+        elif controlnet_model_name == "lineart":
+            Repo.clone_from("https://huggingface.co/lllyasviel/control_v11p_sd15_lineart", controlnet_model_path)
+        elif controlnet_model_name == "scribble":
+            Repo.clone_from("https://huggingface.co/lllyasviel/control_v11p_sd15_scribble", controlnet_model_path)
         print(f"ControlNet {controlnet_model_name} model downloaded")
+
+    annotator_path = os.path.join("inputs", "image", "sd_models", "controlnet", "Annotators")
+    if not os.path.exists(annotator_path):
+        print("Downloading Annotators...")
+        os.makedirs(annotator_path, exist_ok=True)
+        Repo.clone_from("https://huggingface.co/lllyasviel/Annotators", annotator_path)
+        print("Annotators downloaded")
 
     try:
         device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -1172,6 +1184,12 @@ def generate_image_controlnet(prompt, negative_prompt, init_image, stable_diffus
             control_image = control_image[:, :, None]
             control_image = np.concatenate([control_image, control_image, control_image], axis=2)
             control_image = Image.fromarray(control_image)
+        elif controlnet_model_name == "lineart":
+            processor = LineartDetector.from_pretrained(annotator_path)
+            control_image = processor(image)
+        elif controlnet_model_name == "scribble":
+            processor = HEDdetector.from_pretrained(annotator_path)
+            control_image = processor(image, scribble=True)
 
         generator = torch.manual_seed(0)
 
@@ -2447,7 +2465,7 @@ textual_inversion_models_list = [None] + [model for model in os.listdir("inputs/
 inpaint_models_list = [None] + [model.replace(".safetensors", "") for model in
                                 os.listdir("inputs/image/sd_models/inpaint")
                                 if model.endswith(".safetensors") or not model.endswith(".txt")]
-controlnet_models_list = [None, "openpose", "depth", "canny"]
+controlnet_models_list = [None, "openpose", "depth", "canny", "lineart", "scribble"]
 
 chat_interface = gr.Interface(
     fn=generate_text_and_speech,
