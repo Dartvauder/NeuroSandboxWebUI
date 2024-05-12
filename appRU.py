@@ -6,6 +6,7 @@ from libretranslatepy import LibreTranslateAPI
 import urllib.error
 import soundfile as sf
 import os
+import cv2
 import subprocess
 import json
 import torch
@@ -1134,6 +1135,8 @@ def generate_image_controlnet(prompt, negative_prompt, init_image, stable_diffus
             Repo.clone_from("https://huggingface.co/lllyasviel/control_v11p_sd15_openpose", controlnet_model_path)
         elif controlnet_model_name == "depth":
             Repo.clone_from("https://huggingface.co/lllyasviel/control_v11f1p_sd15_depth", controlnet_model_path)
+        elif controlnet_model_name == "canny":
+            Repo.clone_from("https://huggingface.co/lllyasviel/control_v11p_sd15_canny", controlnet_model_path)
         print(f"ControlNet {controlnet_model_name} model downloaded")
 
     try:
@@ -1149,15 +1152,23 @@ def generate_image_controlnet(prompt, negative_prompt, init_image, stable_diffus
         pipe.enable_model_cpu_offload()
         pipe.to(device)
 
+        image = Image.open(init_image).convert("RGB")
+
         if controlnet_model_name == "openpose":
             processor = OpenposeDetector.from_pretrained("lllyasviel/ControlNet")
-            image = Image.open(init_image).convert("RGB")
             control_image = processor(image, hand_and_face=True)
         elif controlnet_model_name == "depth":
             depth_estimator = pipeline('depth-estimation')
-            image = Image.open(init_image).convert("RGB")
             control_image = depth_estimator(image)['depth']
             control_image = np.array(control_image)
+            control_image = control_image[:, :, None]
+            control_image = np.concatenate([control_image, control_image, control_image], axis=2)
+            control_image = Image.fromarray(control_image)
+        elif controlnet_model_name == "canny":
+            image_array = np.array(image)
+            low_threshold = 100
+            high_threshold = 200
+            control_image = cv2.Canny(image_array, low_threshold, high_threshold)
             control_image = control_image[:, :, None]
             control_image = np.concatenate([control_image, control_image, control_image], axis=2)
             control_image = Image.fromarray(control_image)
@@ -1183,7 +1194,7 @@ def generate_image_controlnet(prompt, negative_prompt, init_image, stable_diffus
 
         return image_path, None
 
-    except (OSError,):
+    except (TypeError, ValueError):
         return None, "Invalid StableDiffusion model type!"
 
     finally:
@@ -2436,7 +2447,7 @@ textual_inversion_models_list = [None] + [model for model in os.listdir("inputs/
 inpaint_models_list = [None] + [model.replace(".safetensors", "") for model in
                                 os.listdir("inputs/image/sd_models/inpaint")
                                 if model.endswith(".safetensors") or not model.endswith(".txt")]
-controlnet_models_list = [None, "openpose", "depth"]
+controlnet_models_list = [None, "openpose", "depth", "canny"]
 
 chat_interface = gr.Interface(
     fn=generate_text_and_speech,
