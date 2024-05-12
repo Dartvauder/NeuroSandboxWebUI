@@ -31,8 +31,14 @@ from PIL import Image
 from tqdm import tqdm
 from llama_cpp import Llama
 import requests
-from bs4 import BeautifulSoup
+import re
+from selenium import webdriver
+from selenium.webdriver.chrome.service import Service
+from selenium.common.exceptions import TimeoutException, NoSuchElementException
+from webdriver_manager.chrome import ChromeDriverManager
+from fake_useragent import UserAgent
 from googlesearch import search
+import html2text
 from rembg import remove
 import torchaudio
 from audiocraft.models import MusicGen, AudioGen, MultiBandDiffusion  # MAGNeT
@@ -77,6 +83,45 @@ def authenticate(username, password):
     except FileNotFoundError:
         pass
     return False
+
+
+def perform_web_search(query, num_results=5, max_length=500):
+    ua = UserAgent()
+    user_agent = ua.random
+
+    options = webdriver.ChromeOptions()
+    options.add_argument(f'user-agent={user_agent}')
+    options.add_argument('--headless')
+    options.add_argument('--disable-images')
+    options.add_argument('--disable-extensions')
+    options.add_argument('--no-sandbox')
+    options.add_argument('--disable-dev-shm-usage')
+
+    driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
+    driver.set_page_load_timeout(30)
+
+    search_results = []
+    for url in search(query, num_results=num_results):
+        try:
+            driver.get(url)
+            page_source = driver.page_source
+            h = html2text.HTML2Text()
+            h.ignore_links = True
+            h.ignore_images = True
+            h.ignore_emphasis = True
+            page_text = h.handle(page_source)
+            page_text = re.sub(r'\s+', ' ', page_text).strip()
+            search_results.append(page_text)
+        except (TimeoutException, NoSuchElementException):
+            continue
+
+    driver.quit()
+
+    search_text = " ".join(search_results)
+    if len(search_text) > max_length:
+        search_text = search_text[:max_length]
+
+    return search_text
 
 
 def remove_bg(src_img_path, out_img_path):
@@ -411,9 +456,6 @@ def generate_text_and_speech(input_text, input_audio, input_image, llm_model_nam
                     whisper_model = load_whisper_model()
                 device = "cuda" if torch.cuda.is_available() else "cpu"
                 whisper_model = whisper_model.to(device)
-            if enable_web_search:
-                chat_history.append([None, "This feature doesn't work yet. Please, turn it off"])
-                return chat_history, None, None, None
             if llm_model:
                 if llm_model_type == "transformers":
                     detect_lang = langdetect.detect(prompt)
@@ -446,6 +488,14 @@ def generate_text_and_speech(input_text, input_audio, input_image, llm_model_nam
 
                     progress_bar = tqdm(total=max_length, desc="Generating text")
                     progress_tokens = 0
+
+                    if enable_web_search:
+                        search_results = perform_web_search(prompt)
+                        prompt_with_search = f"{prompt}\nWeb search results:\n{search_results}"
+                        messages[1]["content"] = context + prompt_with_search
+                        model_inputs = tokenizer.apply_chat_template(messages, add_generation_prompt=True, padding=True,
+                                                                     return_tensors="pt").to(device)
+                        input_length = model_inputs.shape[1]
 
                     generated_ids = llm_model.generate(
                         model_inputs,
@@ -488,6 +538,10 @@ def generate_text_and_speech(input_text, input_audio, input_image, llm_model_nam
 
                     progress_bar = tqdm(total=max_tokens, desc="Generating text")
                     progress_tokens = 0
+
+                    if enable_web_search:
+                        search_results = perform_web_search(prompt)
+                        prompt_with_context = f"{prompt_with_context}\nWeb search results:\n{search_results}\nAssistant: "
 
                     output = llm_model(
                         prompt_with_context,
