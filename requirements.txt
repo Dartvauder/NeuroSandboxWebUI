@@ -19,6 +19,7 @@ av==12.0.0
 Babel==2.14.0
 bangla==0.0.2
 basicsr==1.4.2
+beautifulsoup4==4.12.3
 bitsandbytes==0.43.1
 blinker==1.7.0
 blis==0.7.11
