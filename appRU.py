@@ -1,6 +1,6 @@
 import gradio as gr
 import langdetect
-from transformers import AutoModelForCausalLM, AutoTokenizer, AutoProcessor, BarkModel
+from transformers import AutoModelForCausalLM, AutoTokenizer, AutoProcessor, BarkModel, pipeline
 from peft import PeftModel
 from libretranslatepy import LibreTranslateAPI
 import urllib.error
@@ -1125,13 +1125,16 @@ def generate_image_controlnet(prompt, negative_prompt, init_image, stable_diffus
     if not os.path.exists(stable_diffusion_model_path):
         return None, f"StableDiffusion model not found: {stable_diffusion_model_path}"
 
-    controlnet_model_path = os.path.join("inputs", "image", "sd_models", "controlnet", "openpose")
+    controlnet_model_path = os.path.join("inputs", "image", "sd_models", "controlnet", controlnet_model_name)
 
     if not os.path.exists(controlnet_model_path):
-        print("Downloading ControlNet Openpose model...")
+        print(f"Downloading ControlNet {controlnet_model_name} model...")
         os.makedirs(controlnet_model_path, exist_ok=True)
-        Repo.clone_from("https://huggingface.co/lllyasviel/control_v11p_sd15_openpose", controlnet_model_path)
-        print("ControlNet Openpose model downloaded")
+        if controlnet_model_name == "openpose":
+            Repo.clone_from("https://huggingface.co/lllyasviel/control_v11p_sd15_openpose", controlnet_model_path)
+        elif controlnet_model_name == "depth":
+            Repo.clone_from("https://huggingface.co/lllyasviel/control_v11f1p_sd15_depth", controlnet_model_path)
+        print(f"ControlNet {controlnet_model_name} model downloaded")
 
     try:
         device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -1146,9 +1149,18 @@ def generate_image_controlnet(prompt, negative_prompt, init_image, stable_diffus
         pipe.enable_model_cpu_offload()
         pipe.to(device)
 
-        processor = OpenposeDetector.from_pretrained("lllyasviel/ControlNet")
-        image = Image.open(init_image).convert("RGB")
-        control_image = processor(image, hand_and_face=True)
+        if controlnet_model_name == "openpose":
+            processor = OpenposeDetector.from_pretrained("lllyasviel/ControlNet")
+            image = Image.open(init_image).convert("RGB")
+            control_image = processor(image, hand_and_face=True)
+        elif controlnet_model_name == "depth":
+            depth_estimator = pipeline('depth-estimation')
+            image = Image.open(init_image).convert("RGB")
+            control_image = depth_estimator(image)['depth']
+            control_image = np.array(control_image)
+            control_image = control_image[:, :, None]
+            control_image = np.concatenate([control_image, control_image, control_image], axis=2)
+            control_image = Image.fromarray(control_image)
 
         generator = torch.manual_seed(0)
 
@@ -1165,13 +1177,13 @@ def generate_image_controlnet(prompt, negative_prompt, init_image, stable_diffus
         today = datetime.now().date()
         image_dir = os.path.join('outputs', f"StableDiffusion_{today.strftime('%Y%m%d')}")
         os.makedirs(image_dir, exist_ok=True)
-        image_filename = f"controlnet_openpose_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
+        image_filename = f"controlnet_{controlnet_model_name}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
         image_path = os.path.join(image_dir, image_filename)
         image.save(image_path, format=output_format.upper())
 
         return image_path, None
 
-    except (TypeError, ValueError):
+    except (OSError,):
         return None, "Invalid StableDiffusion model type!"
 
     finally:
@@ -1564,6 +1576,18 @@ def generate_image_animatediff(prompt, negative_prompt, input_video, strength, s
                     elif motion_lora_name == "zoom-out":
                         Repo.clone_from("https://huggingface.co/guoyww/animatediff-motion-lora-zoom-out",
                                         motion_lora_path)
+                    elif motion_lora_name == "tilt-up":
+                        Repo.clone_from("https://huggingface.co/guoyww/animatediff-motion-lora-tilt-up",
+                                        motion_lora_path)
+                    elif motion_lora_name == "tilt-down":
+                        Repo.clone_from("https://huggingface.co/guoyww/animatediff-motion-lora-tilt-down",
+                                        motion_lora_path)
+                    elif motion_lora_name == "pan-right":
+                        Repo.clone_from("https://huggingface.co/guoyww/animatediff-motion-lora-pan-right",
+                                        motion_lora_path)
+                    elif motion_lora_name == "pan-left":
+                        Repo.clone_from("https://huggingface.co/guoyww/animatediff-motion-lora-pan-left",
+                                        motion_lora_path)
                     print(f"{motion_lora_name} motion lora downloaded")
                 pipe.load_lora_weights(motion_lora_path, adapter_name=motion_lora_name)
 
@@ -1679,15 +1703,15 @@ def generate_video(init_image, output_format, video_settings_html, motion_bucket
 
         try:
             device = "cuda" if torch.cuda.is_available() else "cpu"
-            pipeline = I2VGenXLPipeline.from_pretrained(video_model_path, torch_dtype=torch.float16, variant="fp16")
-            pipeline.to(device)
-            pipeline.enable_model_cpu_offload()
+            pipe = I2VGenXLPipeline.from_pretrained(video_model_path, torch_dtype=torch.float16, variant="fp16")
+            pipe.to(device)
+            pipe.enable_model_cpu_offload()
 
             image = load_image(init_image).convert("RGB")
 
             generator = torch.manual_seed(8888)
 
-            frames = pipeline(
+            frames = pipe(
                 prompt=prompt,
                 image=image,
                 num_inference_steps=num_inference_steps,
@@ -2412,7 +2436,7 @@ textual_inversion_models_list = [None] + [model for model in os.listdir("inputs/
 inpaint_models_list = [None] + [model.replace(".safetensors", "") for model in
                                 os.listdir("inputs/image/sd_models/inpaint")
                                 if model.endswith(".safetensors") or not model.endswith(".txt")]
-controlnet_models_list = [None, "openpose"]
+controlnet_models_list = [None, "openpose", "depth"]
 
 chat_interface = gr.Interface(
     fn=generate_text_and_speech,
@@ -2749,7 +2773,7 @@ animatediff_interface = gr.Interface(
         gr.Image(label="Initial GIF", type="filepath"),
         gr.Slider(minimum=0.0, maximum=1.0, value=0.5, step=0.01, label="Strength"),
         gr.Dropdown(choices=stable_diffusion_models_list, label="Select StableDiffusion model (only SD1.5)", value=None),
-        gr.Dropdown(choices=[None, "zoom-in", "zoom-out"], label="Select Motion LORA", value=None),
+        gr.Dropdown(choices=[None, "zoom-in", "zoom-out", "tilt-up", "tilt-down", "pan-right", "pan-left"], label="Select Motion LORA", value=None, multiselect=True),
         gr.Slider(minimum=1, maximum=200, value=20, step=1, label="Frames"),
         gr.Slider(minimum=1, maximum=100, value=30, step=1, label="Steps"),
         gr.Slider(minimum=1.0, maximum=30.0, value=8, step=0.1, label="Guidance Scale"),
