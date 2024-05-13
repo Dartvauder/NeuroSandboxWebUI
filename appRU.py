@@ -1067,17 +1067,25 @@ def generate_image_img2img(prompt, negative_prompt, init_image,
         init_image = Image.open(init_image).convert("RGB")
         init_image = stable_diffusion_model.image_processor.preprocess(init_image)
 
-        compel_proc = Compel(tokenizer=stable_diffusion_model.tokenizer,
-                             text_encoder=stable_diffusion_model.text_encoder)
-        prompt_embeds = compel_proc(prompt)
-        negative_prompt_embeds = compel_proc(negative_prompt)
-
         if stable_diffusion_model_type == "SDXL":
-            images = stable_diffusion_model(prompt=prompt, negative_prompt=negative_prompt,
+            compel = Compel(
+                tokenizer=[stable_diffusion_model.tokenizer, stable_diffusion_model.tokenizer_2],
+                text_encoder=[stable_diffusion_model.text_encoder, stable_diffusion_model.text_encoder_2],
+                returned_embeddings_type=ReturnedEmbeddingsType.PENULTIMATE_HIDDEN_STATES_NON_NORMALIZED,
+                requires_pooled=[False, True]
+            )
+            prompt_embeds, pooled_prompt_embeds = compel(prompt)
+
+            images = stable_diffusion_model(prompt_embeds=prompt_embeds, pooled_prompt_embeds=pooled_prompt_embeds, negative_prompt=negative_prompt,
                                             num_inference_steps=stable_diffusion_steps,
                                             guidance_scale=stable_diffusion_cfg, clip_skip=stable_diffusion_clip_skip,
                                             sampler=stable_diffusion_sampler, image=init_image, strength=strength)
         else:
+            compel_proc = Compel(tokenizer=stable_diffusion_model.tokenizer,
+                                 text_encoder=stable_diffusion_model.text_encoder)
+            prompt_embeds = compel_proc(prompt)
+            negative_prompt_embeds = compel_proc(negative_prompt)
+
             images = stable_diffusion_model(prompt_embeds=prompt_embeds, negative_prompt_embeds=negative_prompt_embeds,
                                             num_inference_steps=stable_diffusion_steps,
                                             guidance_scale=stable_diffusion_cfg, clip_skip=stable_diffusion_clip_skip,
@@ -1453,18 +1461,26 @@ def generate_image_inpaint(prompt, negative_prompt, init_image, mask_image, stab
 
         mask_array = Image.fromarray(mask_array).resize(init_image.size, resample=Image.NEAREST)
 
-        compel_proc = Compel(tokenizer=stable_diffusion_model.tokenizer,
-                             text_encoder=stable_diffusion_model.text_encoder)
-        prompt_embeds = compel_proc(prompt)
-        negative_prompt_embeds = compel_proc(negative_prompt)
-
         if stable_diffusion_model_type == "SDXL":
-            images = stable_diffusion_model(prompt=prompt, negative_prompt=negative_prompt,
+            compel = Compel(
+                tokenizer=[stable_diffusion_model.tokenizer, stable_diffusion_model.tokenizer_2],
+                text_encoder=[stable_diffusion_model.text_encoder, stable_diffusion_model.text_encoder_2],
+                returned_embeddings_type=ReturnedEmbeddingsType.PENULTIMATE_HIDDEN_STATES_NON_NORMALIZED,
+                requires_pooled=[False, True]
+            )
+            prompt_embeds, pooled_prompt_embeds = compel(prompt)
+
+            images = stable_diffusion_model(prompt_embeds=prompt_embeds, pooled_prompt_embeds=pooled_prompt_embeds, negative_prompt=negative_prompt,
                                             image=init_image,
                                             mask_image=mask_array, width=width, height=height,
                                             num_inference_steps=stable_diffusion_steps,
                                             guidance_scale=stable_diffusion_cfg, sampler=stable_diffusion_sampler)
         else:
+            compel_proc = Compel(tokenizer=stable_diffusion_model.tokenizer,
+                                 text_encoder=stable_diffusion_model.text_encoder)
+            prompt_embeds = compel_proc(prompt)
+            negative_prompt_embeds = compel_proc(negative_prompt)
+
             images = stable_diffusion_model(prompt_embeds=prompt_embeds, negative_prompt_embeds=negative_prompt_embeds,
                                             image=init_image,
                                             mask_image=mask_array, width=width, height=height,
@@ -1544,18 +1560,26 @@ def generate_image_gligen(prompt, negative_prompt, gligen_phrases, gligen_boxes,
     stable_diffusion_model.safety_checker = None
 
     try:
-        compel_proc = Compel(tokenizer=stable_diffusion_model.tokenizer,
-                             text_encoder=stable_diffusion_model.text_encoder)
-        prompt_embeds = compel_proc(prompt)
-        negative_prompt_embeds = compel_proc(negative_prompt)
-
         if stable_diffusion_model_type == "SDXL":
-            image = stable_diffusion_model(prompt=prompt, negative_prompt=negative_prompt,
+            compel = Compel(
+                tokenizer=[stable_diffusion_model.tokenizer, stable_diffusion_model.tokenizer_2],
+                text_encoder=[stable_diffusion_model.text_encoder, stable_diffusion_model.text_encoder_2],
+                returned_embeddings_type=ReturnedEmbeddingsType.PENULTIMATE_HIDDEN_STATES_NON_NORMALIZED,
+                requires_pooled=[False, True]
+            )
+            prompt_embeds, pooled_prompt_embeds = compel(prompt)
+
+            image = stable_diffusion_model(prompt_embeds=prompt_embeds, pooled_prompt_embeds=pooled_prompt_embeds, negative_prompt=negative_prompt,
                                            num_inference_steps=stable_diffusion_steps,
                                            guidance_scale=stable_diffusion_cfg, height=stable_diffusion_height,
                                            width=stable_diffusion_width, clip_skip=stable_diffusion_clip_skip,
                                            sampler=stable_diffusion_sampler)["images"][0]
         else:
+            compel_proc = Compel(tokenizer=stable_diffusion_model.tokenizer,
+                                 text_encoder=stable_diffusion_model.text_encoder)
+            prompt_embeds = compel_proc(prompt)
+            negative_prompt_embeds = compel_proc(negative_prompt)
+
             image = stable_diffusion_model(prompt_embeds=prompt_embeds, negative_prompt_embeds=negative_prompt_embeds,
                                            num_inference_steps=stable_diffusion_steps,
                                            guidance_scale=stable_diffusion_cfg, height=stable_diffusion_height,
@@ -1579,6 +1603,11 @@ def generate_image_gligen(prompt, negative_prompt, gligen_phrases, gligen_boxes,
             os.path.join(gligen_model_path, "inpainting"), variant="fp16", torch_dtype=torch.float16
         )
         pipe = pipe.to("cuda")
+
+        compel_proc = Compel(tokenizer=pipe.tokenizer,
+                             text_encoder=pipe.text_encoder)
+        prompt_embeds = compel_proc(prompt)
+        negative_prompt_embeds = compel_proc(negative_prompt)
 
         images = pipe(
             prompt_embeds=prompt_embeds,
