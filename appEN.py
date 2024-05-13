@@ -865,7 +865,7 @@ def generate_wav2lip(image_path, audio_path, fps, pads, face_det_batch_size, wav
 def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name, vae_model_name, lora_model_names, textual_inversion_model_names, stable_diffusion_settings_html,
                            stable_diffusion_model_type, stable_diffusion_sampler, stable_diffusion_steps,
                            stable_diffusion_cfg, stable_diffusion_width, stable_diffusion_height,
-                           stable_diffusion_clip_skip, enable_upscale=False, upscale_factor="x2", upscale_steps=50, upscale_cfg=6, output_format="png", stop_generation=None):
+                           stable_diffusion_clip_skip, enable_freeu=False, enable_tiled_vae=False, enable_upscale=False, upscale_factor="x2", upscale_steps=50, upscale_cfg=6, output_format="png", stop_generation=None):
     global stop_signal
     stop_signal = False
 
@@ -918,6 +918,12 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
     stable_diffusion_model.unet.to(device)
 
     stable_diffusion_model.safety_checker = None
+
+    if enable_freeu:
+        stable_diffusion_model.enable_freeu(s1=0.9, s2=0.2, b1=1.2, b2=1.4)
+
+    if enable_tiled_vae:
+        stable_diffusion_model.enable_vae_tiling()
 
     if vae_model_name is not None:
         vae_model_path = os.path.join("inputs", "image", "sd_models", "vae", f"{vae_model_name}.safetensors")
@@ -2735,7 +2741,9 @@ txt2img_interface = gr.Interface(
         gr.Slider(minimum=256, maximum=2048, value=512, step=64, label="Width"),
         gr.Slider(minimum=256, maximum=2048, value=512, step=64, label="Height"),
         gr.Slider(minimum=1, maximum=4, value=1, step=1, label="Clip skip"),
-        gr.Checkbox(label="Enable upscale", value=False),
+        gr.Checkbox(label="Enable FreeU", value=False),
+        gr.Checkbox(label="Enable Tiled VAE", value=False),
+        gr.Checkbox(label="Enable Upscale", value=False),
         gr.Radio(choices=["x2", "x4"], label="Upscale size", value="x2"),
         gr.Slider(minimum=1, maximum=100, value=50, step=1, label="Upscale steps"),
         gr.Slider(minimum=1.0, maximum=30.0, value=6, step=0.1, label="Upscale CFG"),
