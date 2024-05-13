@@ -379,7 +379,7 @@ def generate_text_and_speech(input_text, input_audio, input_image, llm_model_nam
             chat_history.append([None, "Multimodal with 'llama' model type is not supported yet!"])
             return chat_history, None, None, None
         model_id = "vikhyatk/moondream2"
-        revision = "2024-04-02"
+        revision = "2024-05-08"
         model, tokenizer = load_moondream2_model(model_id, revision)
 
         try:
