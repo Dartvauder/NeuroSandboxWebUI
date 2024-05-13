@@ -19,7 +19,7 @@ import logging
 from diffusers import StableDiffusionPipeline, StableDiffusionXLPipeline, StableDiffusionImg2ImgPipeline, StableDiffusionDepth2ImgPipeline, ControlNetModel, StableDiffusionControlNetPipeline, AutoencoderKL, StableDiffusionLatentUpscalePipeline, StableDiffusionUpscalePipeline, StableDiffusionInpaintPipeline, StableDiffusionGLIGENPipeline, AnimateDiffPipeline, AnimateDiffVideoToVideoPipeline, MotionAdapter, StableVideoDiffusionPipeline, I2VGenXLPipeline, StableCascadePriorPipeline, StableCascadeDecoderPipeline, DiffusionPipeline, DPMSolverMultistepScheduler, ShapEPipeline, ShapEImg2ImgPipeline, AudioLDM2Pipeline, StableDiffusionInstructPix2PixPipeline
 from diffusers.utils import load_image, export_to_video, export_to_gif, export_to_ply
 from controlnet_aux import OpenposeDetector, LineartDetector, HEDdetector
-from compel import Compel
+from compel import Compel, ReturnedEmbeddingsType
 import trimesh
 from tsr.system import TSR
 from tsr.utils import to_gradio_3d_orientation, resize_foreground
@@ -940,18 +940,26 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
                 stable_diffusion_model.load_textual_inversion(textual_inversion_model_path)
 
     try:
-        compel_proc = Compel(tokenizer=stable_diffusion_model.tokenizer,
-                             text_encoder=stable_diffusion_model.text_encoder)
-        prompt_embeds = compel_proc(prompt)
-        negative_prompt_embeds = compel_proc(negative_prompt)
-
         if stable_diffusion_model_type == "SDXL":
-            images = stable_diffusion_model(prompt=prompt, negative_prompt=negative_prompt,
+            compel = Compel(
+                tokenizer=[stable_diffusion_model.tokenizer, stable_diffusion_model.tokenizer_2],
+                text_encoder=[stable_diffusion_model.text_encoder, stable_diffusion_model.text_encoder_2],
+                returned_embeddings_type=ReturnedEmbeddingsType.PENULTIMATE_HIDDEN_STATES_NON_NORMALIZED,
+                requires_pooled=[False, True]
+            )
+            prompt_embeds, pooled_prompt_embeds = compel(prompt)
+            images = stable_diffusion_model(prompt_embeds=prompt_embeds, pooled_prompt_embeds=pooled_prompt_embeds,
+                                            negative_prompt=negative_prompt,
                                             num_inference_steps=stable_diffusion_steps,
                                             guidance_scale=stable_diffusion_cfg, height=stable_diffusion_height,
                                             width=stable_diffusion_width, clip_skip=stable_diffusion_clip_skip,
                                             sampler=stable_diffusion_sampler)
         else:
+            compel_proc = Compel(tokenizer=stable_diffusion_model.tokenizer,
+                                 text_encoder=stable_diffusion_model.text_encoder)
+            prompt_embeds = compel_proc(prompt)
+            negative_prompt_embeds = compel_proc(negative_prompt)
+
             images = stable_diffusion_model(prompt_embeds=prompt_embeds, negative_prompt_embeds=negative_prompt_embeds,
                                             num_inference_steps=stable_diffusion_steps,
                                             guidance_scale=stable_diffusion_cfg, height=stable_diffusion_height,
