@@ -1381,7 +1381,7 @@ def generate_image_upscale(image_path, num_inference_steps, guidance_scale, outp
         return None, "Failed to load upscale model"
 
 
-def generate_image_inpaint(prompt, negative_prompt, init_image, mask_image, stable_diffusion_model_name, vae_model_name,
+def generate_image_inpaint(prompt, negative_prompt, init_image, mask_image, blur_factor, stable_diffusion_model_name, vae_model_name,
                            stable_diffusion_settings_html, stable_diffusion_model_type, stable_diffusion_sampler,
                            stable_diffusion_steps, stable_diffusion_cfg, width, height, output_format="png", stop_generation=None):
     global stop_signal
@@ -1467,6 +1467,11 @@ def generate_image_inpaint(prompt, negative_prompt, init_image, mask_image, stab
 
         mask_array = Image.fromarray(mask_array).resize(init_image.size, resample=Image.NEAREST)
 
+        if blur_factor > 0:
+            blurred_mask = stable_diffusion_model.mask_processor.blur(mask_array, blur_factor=blur_factor)
+        else:
+            blurred_mask = mask_array
+
         if stable_diffusion_model_type == "SDXL":
             compel = Compel(
                 tokenizer=[stable_diffusion_model.tokenizer, stable_diffusion_model.tokenizer_2],
@@ -1478,7 +1483,7 @@ def generate_image_inpaint(prompt, negative_prompt, init_image, mask_image, stab
 
             images = stable_diffusion_model(prompt_embeds=prompt_embeds, pooled_prompt_embeds=pooled_prompt_embeds, negative_prompt=negative_prompt,
                                             image=init_image,
-                                            mask_image=mask_array, width=width, height=height,
+                                            mask_image=blurred_mask, width=width, height=height,
                                             num_inference_steps=stable_diffusion_steps,
                                             guidance_scale=stable_diffusion_cfg, sampler=stable_diffusion_sampler)
         else:
@@ -1489,7 +1494,7 @@ def generate_image_inpaint(prompt, negative_prompt, init_image, mask_image, stab
 
             images = stable_diffusion_model(prompt_embeds=prompt_embeds, negative_prompt_embeds=negative_prompt_embeds,
                                             image=init_image,
-                                            mask_image=mask_array, width=width, height=height,
+                                            mask_image=blurred_mask, width=width, height=height,
                                             num_inference_steps=stable_diffusion_steps,
                                             guidance_scale=stable_diffusion_cfg, sampler=stable_diffusion_sampler)
 
@@ -2885,6 +2890,7 @@ inpaint_interface = gr.Interface(
         gr.Textbox(label="Enter your negative prompt", value=""),
         gr.Image(label="Initial image", type="filepath"),
         gr.ImageEditor(label="Mask image", type="filepath"),
+        gr.Slider(minimum=0, maximum=100, value=0, step=1, label="Mask Blur Factor"),
         gr.Dropdown(choices=inpaint_models_list, label="Select Inpaint model", value=None),
         gr.Dropdown(choices=vae_models_list, label="Select VAE model (optional)", value=None),
         gr.HTML("<h3>StableDiffusion Settings</h3>"),
