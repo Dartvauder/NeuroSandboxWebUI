@@ -16,7 +16,7 @@ import whisper
 from datetime import datetime
 import warnings
 import logging
-from diffusers import StableDiffusionPipeline, StableDiffusionXLPipeline, StableDiffusionImg2ImgPipeline, StableDiffusionDepth2ImgPipeline, ControlNetModel, StableDiffusionControlNetPipeline, AutoencoderKL, StableDiffusionLatentUpscalePipeline, StableDiffusionUpscalePipeline, StableDiffusionInpaintPipeline, StableDiffusionGLIGENPipeline, AnimateDiffPipeline, AnimateDiffVideoToVideoPipeline, MotionAdapter, StableVideoDiffusionPipeline, I2VGenXLPipeline, StableCascadePriorPipeline, StableCascadeDecoderPipeline, DiffusionPipeline, DPMSolverMultistepScheduler, ShapEPipeline, ShapEImg2ImgPipeline, AudioLDM2Pipeline, StableDiffusionInstructPix2PixPipeline, AutoPipelineForText2Image
+from diffusers import StableDiffusionPipeline, StableDiffusionXLPipeline, StableDiffusionImg2ImgPipeline, StableDiffusionDepth2ImgPipeline, ControlNetModel, StableDiffusionControlNetPipeline, AutoencoderKL, StableDiffusionLatentUpscalePipeline, StableDiffusionUpscalePipeline, StableDiffusionInpaintPipeline, StableDiffusionGLIGENPipeline, AnimateDiffPipeline, AnimateDiffVideoToVideoPipeline, MotionAdapter, StableVideoDiffusionPipeline, I2VGenXLPipeline, StableCascadePriorPipeline, StableCascadeDecoderPipeline, DiffusionPipeline, DPMSolverMultistepScheduler, ShapEPipeline, ShapEImg2ImgPipeline, AudioLDM2Pipeline, StableDiffusionInstructPix2PixPipeline
 from diffusers.utils import load_image, export_to_video, export_to_gif, export_to_ply
 from controlnet_aux import OpenposeDetector, LineartDetector, HEDdetector
 from compel import Compel, ReturnedEmbeddingsType
@@ -1256,7 +1256,6 @@ def generate_image_controlnet(prompt, negative_prompt, init_image, stable_diffus
         return None, f"StableDiffusion model not found: {stable_diffusion_model_path}"
 
     controlnet_model_path = os.path.join("inputs", "image", "sd_models", "controlnet", controlnet_model_name)
-
     if not os.path.exists(controlnet_model_path):
         print(f"Downloading ControlNet {controlnet_model_name} model...")
         os.makedirs(controlnet_model_path, exist_ok=True)
@@ -1317,8 +1316,7 @@ def generate_image_controlnet(prompt, negative_prompt, init_image, stable_diffus
                 stable_diffusion_model_path,
                 torch_dtype=torch.float16,
             ).to(device)
-            pipe.load_ip_adapter(ip_adapter_model_path, subfolder="models",
-                                     weight_name="ip-adapter-full-face_sd15.bin")
+            pipe.load_ip_adapter(ip_adapter_model_path, subfolder="models", weight_name="ip-adapter-full-face_sd15.bin")
             pipe.set_ip_adapter_scale(0.5)
 
             image = load_image(init_image)
