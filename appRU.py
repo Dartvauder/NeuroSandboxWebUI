@@ -1299,7 +1299,7 @@ def generate_image_controlnet(prompt, negative_prompt, init_image, stable_diffus
 
             image = load_image(init_image)
 
-            generator = torch.Generator(device="cpu").manual_seed(0)
+            generator = torch.manual_seed(0)
 
             images = pipe(
                 prompt=prompt,
@@ -1321,7 +1321,7 @@ def generate_image_controlnet(prompt, negative_prompt, init_image, stable_diffus
 
             image = load_image(init_image)
 
-            generator = torch.Generator(device="cpu").manual_seed(26)
+            generator = torch.manual_seed(0)
 
             images = pipe(
                 prompt=prompt,
