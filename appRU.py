@@ -1301,11 +1301,19 @@ def generate_image_controlnet(prompt, negative_prompt, init_image, stable_diffus
 
             generator = torch.manual_seed(0)
 
+            compel_proc = Compel(tokenizer=pipe.tokenizer,
+                                 text_encoder=pipe.text_encoder)
+            prompt_embeds = compel_proc(prompt)
+            negative_prompt_embeds = compel_proc(negative_prompt)
+
             images = pipe(
-                prompt=prompt,
+                prompt_embeds=prompt_embeds,
                 ip_adapter_image=image,
-                negative_prompt=negative_prompt,
+                negative_prompt_embeds=negative_prompt_embeds,
                 num_inference_steps=num_inference_steps,
+                guidance_scale=guidance_scale,
+                width=width,
+                height=height,
                 generator=generator,
             ).images
 
@@ -1323,11 +1331,19 @@ def generate_image_controlnet(prompt, negative_prompt, init_image, stable_diffus
 
             generator = torch.manual_seed(0)
 
+            compel_proc = Compel(tokenizer=pipe.tokenizer,
+                                 text_encoder=pipe.text_encoder)
+            prompt_embeds = compel_proc(prompt)
+            negative_prompt_embeds = compel_proc(negative_prompt)
+
             images = pipe(
-                prompt=prompt,
+                prompt_embeds=prompt_embeds,
                 ip_adapter_image=image,
-                negative_prompt=negative_prompt,
+                negative_prompt_embeds=negative_prompt_embeds,
                 num_inference_steps=num_inference_steps,
+                guidance_scale=guidance_scale,
+                width=width,
+                height=height,
                 generator=generator,
             ).images
 
