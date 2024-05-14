@@ -1234,7 +1234,9 @@ def generate_image_pix2pix(prompt, negative_prompt, init_image, num_inference_st
         torch.cuda.empty_cache()
 
 
-def generate_image_controlnet(prompt, negative_prompt, init_image, stable_diffusion_model_name, controlnet_model_name, num_inference_steps, guidance_scale, width, height, output_format="png", stop_generation=None):
+def generate_image_controlnet(prompt, negative_prompt, init_image, stable_diffusion_model_name, controlnet_model_name,
+                              num_inference_steps, guidance_scale, width, height, output_format="png",
+                              stop_generation=None):
     global stop_signal
     stop_signal = False
 
@@ -1247,13 +1249,13 @@ def generate_image_controlnet(prompt, negative_prompt, init_image, stable_diffus
     if not controlnet_model_name:
         return None, "Please, select a ControlNet model!"
 
-    stable_diffusion_model_path = os.path.join("inputs", "image", "sd_models", f"{stable_diffusion_model_name}.safetensors")
+    stable_diffusion_model_path = os.path.join("inputs", "image", "sd_models",
+                                               f"{stable_diffusion_model_name}.safetensors")
 
     if not os.path.exists(stable_diffusion_model_path):
         return None, f"StableDiffusion model not found: {stable_diffusion_model_path}"
 
     controlnet_model_path = os.path.join("inputs", "image", "sd_models", "controlnet", controlnet_model_name)
-
     if not os.path.exists(controlnet_model_path):
         print(f"Downloading ControlNet {controlnet_model_name} model...")
         os.makedirs(controlnet_model_path, exist_ok=True)
@@ -1269,6 +1271,14 @@ def generate_image_controlnet(prompt, negative_prompt, init_image, stable_diffus
             Repo.clone_from("https://huggingface.co/lllyasviel/control_v11p_sd15_scribble", controlnet_model_path)
         print(f"ControlNet {controlnet_model_name} model downloaded")
 
+    ip_adapter_model_path = os.path.join("inputs", "image", "sd_models", "controlnet", "ip_adapter")
+    if controlnet_model_name == "ip-adapter" or controlnet_model_name == "ip-adapter-face":
+        if not os.path.exists(ip_adapter_model_path):
+            print("Downloading IP-Adapter models...")
+            os.makedirs(ip_adapter_model_path, exist_ok=True)
+            Repo.clone_from("https://huggingface.co/h94/IP-Adapter", ip_adapter_model_path)
+            print("IP-Adapter models downloaded")
+
     annotator_path = os.path.join("inputs", "image", "sd_models", "controlnet", "Annotators")
     if not os.path.exists(annotator_path):
         print("Downloading Annotators...")
@@ -1278,52 +1288,100 @@ def generate_image_controlnet(prompt, negative_prompt, init_image, stable_diffus
 
     try:
         device = "cuda" if torch.cuda.is_available() else "cpu"
-        controlnet = ControlNetModel.from_pretrained(controlnet_model_path, torch_dtype=torch.float16)
-        pipe = StableDiffusionControlNetPipeline.from_single_file(
-            stable_diffusion_model_path,
-            controlnet=controlnet,
-            torch_dtype=torch.float16,
-            device_map="auto",
-            use_safetensors=True,
-        )
-        pipe.enable_model_cpu_offload()
-        pipe.to(device)
 
-        image = Image.open(init_image).convert("RGB")
+        if controlnet_model_name == "ip-adapter":
+            pipe = StableDiffusionPipeline.from_single_file(
+                stable_diffusion_model_path,
+                torch_dtype=torch.float16,
+            ).to(device)
+            pipe.load_ip_adapter(ip_adapter_model_path, subfolder="models", weight_name="ip-adapter_sd15.bin")
+            pipe.set_ip_adapter_scale(0.6)
 
-        if controlnet_model_name == "openpose":
-            processor = OpenposeDetector.from_pretrained(annotator_path)
-            control_image = processor(image, hand_and_face=True)
-        elif controlnet_model_name == "depth":
-            depth_estimator = pipeline('depth-estimation')
-            control_image = depth_estimator(image)['depth']
-            control_image = np.array(control_image)
-            control_image = control_image[:, :, None]
-            control_image = np.concatenate([control_image, control_image, control_image], axis=2)
-            control_image = Image.fromarray(control_image)
-        elif controlnet_model_name == "canny":
-            image_array = np.array(image)
-            low_threshold = 100
-            high_threshold = 200
-            control_image = cv2.Canny(image_array, low_threshold, high_threshold)
-            control_image = control_image[:, :, None]
-            control_image = np.concatenate([control_image, control_image, control_image], axis=2)
-            control_image = Image.fromarray(control_image)
-        elif controlnet_model_name == "lineart":
-            processor = LineartDetector.from_pretrained(annotator_path)
-            control_image = processor(image)
-        elif controlnet_model_name == "scribble":
-            processor = HEDdetector.from_pretrained(annotator_path)
-            control_image = processor(image, scribble=True)
+            image = load_image(init_image)
 
-        generator = torch.manual_seed(0)
+            generator = torch.Generator(device="cpu").manual_seed(0)
 
-        compel_proc = Compel(tokenizer=pipe.tokenizer,
-                             text_encoder=pipe.text_encoder)
-        prompt_embeds = compel_proc(prompt)
-        negative_prompt_embeds = compel_proc(negative_prompt)
+            images = pipe(
+                prompt=prompt,
+                ip_adapter_image=image,
+                negative_prompt=negative_prompt,
+                num_inference_steps=num_inference_steps,
+                generator=generator,
+            ).images
 
-        image = pipe(prompt_embeds=prompt_embeds, negative_prompt_embeds=negative_prompt_embeds, num_inference_steps=num_inference_steps, guidance_scale=guidance_scale, width=width, height=height, generator=generator, image=control_image).images[0]
+            image = images[0]
+
+        elif controlnet_model_name == "ip-adapter-face":
+            pipe = StableDiffusionPipeline.from_single_file(
+                stable_diffusion_model_path,
+                torch_dtype=torch.float16,
+            ).to(device)
+            pipe.load_ip_adapter(ip_adapter_model_path, subfolder="models", weight_name="ip-adapter-full-face_sd15.bin")
+            pipe.set_ip_adapter_scale(0.5)
+
+            image = load_image(init_image)
+
+            generator = torch.Generator(device="cpu").manual_seed(26)
+
+            images = pipe(
+                prompt=prompt,
+                ip_adapter_image=image,
+                negative_prompt=negative_prompt,
+                num_inference_steps=num_inference_steps,
+                generator=generator,
+            ).images
+
+            image = images[0]
+
+        else:
+            controlnet = ControlNetModel.from_pretrained(controlnet_model_path, torch_dtype=torch.float16)
+            pipe = StableDiffusionControlNetPipeline.from_single_file(
+                stable_diffusion_model_path,
+                controlnet=controlnet,
+                torch_dtype=torch.float16,
+                device_map="auto",
+                use_safetensors=True,
+            )
+            pipe.enable_model_cpu_offload()
+            pipe.to(device)
+
+            image = Image.open(init_image).convert("RGB")
+
+            if controlnet_model_name == "openpose":
+                processor = OpenposeDetector.from_pretrained(annotator_path)
+                control_image = processor(image, hand_and_face=True)
+            elif controlnet_model_name == "depth":
+                depth_estimator = pipeline('depth-estimation')
+                control_image = depth_estimator(image)['depth']
+                control_image = np.array(control_image)
+                control_image = control_image[:, :, None]
+                control_image = np.concatenate([control_image, control_image, control_image], axis=2)
+                control_image = Image.fromarray(control_image)
+            elif controlnet_model_name == "canny":
+                image_array = np.array(image)
+                low_threshold = 100
+                high_threshold = 200
+                control_image = cv2.Canny(image_array, low_threshold, high_threshold)
+                control_image = control_image[:, :, None]
+                control_image = np.concatenate([control_image, control_image, control_image], axis=2)
+                control_image = Image.fromarray(control_image)
+            elif controlnet_model_name == "lineart":
+                processor = LineartDetector.from_pretrained(annotator_path)
+                control_image = processor(image)
+            elif controlnet_model_name == "scribble":
+                processor = HEDdetector.from_pretrained(annotator_path)
+                control_image = processor(image, scribble=True)
+
+            generator = torch.manual_seed(0)
+
+            compel_proc = Compel(tokenizer=pipe.tokenizer,
+                                 text_encoder=pipe.text_encoder)
+            prompt_embeds = compel_proc(prompt)
+            negative_prompt_embeds = compel_proc(negative_prompt)
+
+            image = pipe(prompt_embeds=prompt_embeds, negative_prompt_embeds=negative_prompt_embeds,
+                         num_inference_steps=num_inference_steps, guidance_scale=guidance_scale, width=width,
+                         height=height, generator=generator, image=control_image).images[0]
 
         if stop_signal:
             return None, "Generation stopped"
@@ -2592,7 +2650,7 @@ textual_inversion_models_list = [None] + [model for model in os.listdir("inputs/
 inpaint_models_list = [None] + [model.replace(".safetensors", "") for model in
                                 os.listdir("inputs/image/sd_models/inpaint")
                                 if model.endswith(".safetensors") or not model.endswith(".txt")]
-controlnet_models_list = [None, "openpose", "depth", "canny", "lineart", "scribble"]
+controlnet_models_list = [None, "openpose", "depth", "canny", "lineart", "scribble", "ip-adapter", "ip-adapter-face"]
 
 chat_interface = gr.Interface(
     fn=generate_text_and_speech,
