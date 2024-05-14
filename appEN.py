@@ -2027,7 +2027,7 @@ def generate_image_extras(input_image, source_image, remove_background, enable_f
 
             facerestore_output_path = os.path.join(output_dir, f"facerestored_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{image_output_format}")
 
-            command = f"python {os.path.join(codeformer_path, 'inference_codeformer.py')} -w 0.5 --has_aligned --input_path {input_image} --output_path {facerestore_output_path}"
+            command = f"python {os.path.join(codeformer_path, 'inference_codeformer.py')} -w 0.7 --bg_upsampler realesrgan --face_upsample --input_path {input_image} --output_path {facerestore_output_path}"
             subprocess.run(command, shell=True, check=True)
 
             output_path = facerestore_output_path
