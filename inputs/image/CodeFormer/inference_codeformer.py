@@ -232,7 +232,7 @@ if __name__ == '__main__':
         for idx, (cropped_face, restored_face) in enumerate(zip(face_helper.cropped_faces, face_helper.restored_faces)):
             # save cropped face
             if not args.has_aligned: 
-                save_crop_path = os.path.join(result_root, 'cropped_faces', f'{basename}_{idx:02d}.png')
+                save_crop_path = os.path.join(result_root)
                 imwrite(cropped_face, save_crop_path)
             # save restored face
             if args.has_aligned:
@@ -248,7 +248,7 @@ if __name__ == '__main__':
         if not args.has_aligned and restored_img is not None:
             if args.suffix is not None:
                 basename = f'{basename}_{args.suffix}'
-            save_restore_path = os.path.join(result_root, 'final_results', f'{basename}.png')
+            save_restore_path = os.path.join(result_root)
             imwrite(restored_img, save_restore_path)
 
     # save enhanced video
