@@ -1214,7 +1214,8 @@ def generate_image_pix2pix(prompt, negative_prompt, init_image, num_inference_st
         negative_prompt_embeds = compel_proc(negative_prompt)
 
         image = pipe(prompt_embeds=prompt_embeds, negative_prompt_embeds=negative_prompt_embeds,
-                     image=image, num_inference_steps=num_inference_steps, image_guidance_scale=guidance_scale).images[0]
+                     image=image, num_inference_steps=num_inference_steps, image_guidance_scale=guidance_scale).images[
+            0]
 
         if stop_signal:
             return None, "Generation stopped"
@@ -1779,7 +1780,7 @@ def generate_image_animatediff(prompt, negative_prompt, input_video, strength, s
                 strength=strength,
                 guidance_scale=guidance_scale,
                 num_inference_steps=num_inference_steps,
-                generator=torch.manual_seed(0),
+                generator=torch.Generator("cpu").manual_seed(-1),
             )
 
             if stop_signal:
@@ -1858,7 +1859,7 @@ def generate_image_animatediff(prompt, negative_prompt, input_video, strength, s
                 num_frames=num_frames,
                 guidance_scale=guidance_scale,
                 num_inference_steps=num_inference_steps,
-                generator=torch.manual_seed(0),
+                generator=torch.Generator("cpu").manual_seed(-1),
                 width=width,
                 height=height,
             )
@@ -1924,7 +1925,7 @@ def generate_video(init_image, output_format, video_settings_html, motion_bucket
             image = load_image(init_image)
             image = image.resize((1024, 576))
 
-            generator = torch.manual_seed(0)
+            generator = torch.manual_seed(42)
             frames = pipe(image, decode_chunk_size=decode_chunk_size, generator=generator,
                           motion_bucket_id=motion_bucket_id, noise_aug_strength=noise_aug_strength, num_frames=num_frames).frames[0]
 
@@ -1962,7 +1963,7 @@ def generate_video(init_image, output_format, video_settings_html, motion_bucket
 
             image = load_image(init_image).convert("RGB")
 
-            generator = torch.manual_seed(0)
+            generator = torch.manual_seed(8888)
 
             frames = pipe(
                 prompt=prompt,
