@@ -3335,8 +3335,11 @@ with gr.TabbedInterface(
 
     github_link = gr.HTML(
         '<div style="text-align: center; margin-top: 20px;">'
-        '<a href="https://github.com/Dartvauder/NeuroSandboxWebUI" target="_blank" style="color: blue; text-decoration: none; font-size: 16px;">'
+        '<a href="https://github.com/Dartvauder/NeuroTrainerWebUI" target="_blank" style="color: blue; text-decoration: none; font-size: 16px; margin-right: 20px;">'
         'GitHub'
+        '</a>'
+        '<a href="https://huggingface.co/Dartvauder007" target="_blank" style="color: blue; text-decoration: none; font-size: 16px;">'
+        'Hugging Face'
         '</a>'
         '</div>'
     )
