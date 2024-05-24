@@ -284,7 +284,7 @@ wcwidth==0.2.13
 weasel==0.3.4
 webdriver-manager==4.0.1
 websockets==11.0.3
-Werkzeug==3.0.2
+Werkzeug==3.0.3
 wrapt==1.16.0
 wsproto==1.2.0
 yapf==0.40.2
