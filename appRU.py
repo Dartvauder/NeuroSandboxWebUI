@@ -2000,8 +2000,7 @@ def generate_image_sd3(prompt, negative_prompt, num_inference_steps, guidance_sc
     if not os.path.exists(sd3_model_path):
         print("Downloading Stable Diffusion 3 model...")
         os.makedirs(sd3_model_path, exist_ok=True)
-        StableDiffusion3Pipeline.from_pretrained("v2ray/stable-diffusion-3-medium-diffusers",
-                                                 torch_dtype=torch.float16, cache_dir=sd3_model_path)
+        Repo.clone_from("https://huggingface.co/v2ray/stable-diffusion-3-medium-diffusers", sd3_model_path)
         print("Stable Diffusion 3 model downloaded")
 
     try:
