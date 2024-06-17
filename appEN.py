@@ -3366,7 +3366,7 @@ gallery_interface = gr.Interface(
         gr.Dropdown(label="Audio Files", choices=get_output_files()[3], interactive=True),
     ],
     outputs=[
-        gr.Textbox(label="Text Content"),
+        gr.Textbox(label="Text"),
         gr.Image(label="Image", type="filepath"),
         gr.Video(label="Video"),
         gr.Audio(label="Audio", type="filepath"),
