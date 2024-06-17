@@ -1995,9 +1995,18 @@ def generate_image_sd3(prompt, negative_prompt, num_inference_steps, guidance_sc
     global stop_signal
     stop_signal = False
 
+    sd3_model_path = os.path.join("inputs", "image", "sd_models", "sd3")
+
+    if not os.path.exists(sd3_model_path):
+        print("Downloading Stable Diffusion 3 model...")
+        os.makedirs(sd3_model_path, exist_ok=True)
+        StableDiffusion3Pipeline.from_pretrained("v2ray/stable-diffusion-3-medium-diffusers",
+                                                 torch_dtype=torch.float16, cache_dir=sd3_model_path)
+        print("Stable Diffusion 3 model downloaded")
+
     try:
         device = "cuda" if torch.cuda.is_available() else "cpu"
-        pipe = StableDiffusion3Pipeline.from_pretrained("v2ray/stable-diffusion-3-medium-diffusers", torch_dtype=torch.float16)
+        pipe = StableDiffusion3Pipeline.from_pretrained(sd3_model_path, torch_dtype=torch.float16)
         pipe = pipe.to(device)
 
         image = pipe(
