@@ -14,8 +14,6 @@ from einops import rearrange
 from TTS.api import TTS
 import whisper
 from datetime import datetime
-import warnings
-import logging
 from diffusers import StableDiffusionPipeline, StableDiffusion3Pipeline, StableDiffusionXLPipeline, StableDiffusionImg2ImgPipeline, StableDiffusionDepth2ImgPipeline, ControlNetModel, StableDiffusionControlNetPipeline, AutoencoderKL, StableDiffusionLatentUpscalePipeline, StableDiffusionUpscalePipeline, StableDiffusionInpaintPipeline, StableDiffusionGLIGENPipeline, AnimateDiffPipeline, AnimateDiffVideoToVideoPipeline, MotionAdapter, StableVideoDiffusionPipeline, I2VGenXLPipeline, StableCascadePriorPipeline, StableCascadeDecoderPipeline, DiffusionPipeline, DPMSolverMultistepScheduler, ShapEPipeline, ShapEImg2ImgPipeline, AudioLDM2Pipeline, StableDiffusionInstructPix2PixPipeline
 from diffusers.utils import load_image, export_to_video, export_to_gif, export_to_ply
 from controlnet_aux import OpenposeDetector, LineartDetector, HEDdetector
@@ -57,15 +55,6 @@ try:
     XFORMERS_AVAILABLE = True
 except ImportError:
     print("Xformers is not installed. Proceeding without it")
-
-warnings.filterwarnings("ignore")
-logging.getLogger('transformers').setLevel(logging.ERROR)
-logging.getLogger('llama_cpp').setLevel(logging.ERROR)
-logging.getLogger('whisper').setLevel(logging.ERROR)
-logging.getLogger('TTS').setLevel(logging.ERROR)
-logging.getLogger('diffusers').setLevel(logging.ERROR)
-logging.getLogger('audiocraft').setLevel(logging.ERROR)
-logging.getLogger('xformers').setLevel(logging.ERROR)
 
 chat_dir = None
 tts_model = None
@@ -2389,9 +2378,6 @@ def generate_audio_audiocraft(prompt, input_audio=None, model_name=None, audiocr
     if enable_multiband and model_type in ["audiogen", "magnet"]:
         return None, "Multiband Diffusion is not supported with 'audiogen' or 'magnet' model types. Please select 'musicgen' or disable Multiband Diffusion"
 
-    if model_type == "magnet":
-        return None, "The 'magnet' model type is currently not supported, but it will be available in a future update. Please select another model type for now"
-
     if not audiocraft_model_path:
         audiocraft_model_path = load_audiocraft_model(model_name)
 
@@ -2594,6 +2580,41 @@ def demucs_separate(audio_file, output_format="wav"):
 
     except Exception as e:
         return None, None, str(e)
+
+
+def get_output_files():
+    output_dir = "outputs"
+    text_files = []
+    image_files = []
+    video_files = []
+    audio_files = []
+
+    for root, dirs, files in os.walk(output_dir):
+        for file in files:
+            if file.endswith(".txt") or file.endswith(".json"):
+                text_files.append(os.path.join(root, file))
+            elif file.endswith(".png") or file.endswith(".jpeg"):
+                image_files.append(os.path.join(root, file))
+            elif file.endswith(".mp4"):
+                video_files.append(os.path.join(root, file))
+            elif file.endswith(".wav") or file.endswith(".mp3") or file.endswith(".ogg"):
+                audio_files.append(os.path.join(root, file))
+
+    def display_output_file(text_file, image_file, video_file, audio_file):
+        if text_file:
+            with open(text_file, "r") as f:
+                text_content = f.read()
+            return text_content, None, None, None
+        elif image_file:
+            return None, image_file, None, None
+        elif video_file:
+            return None, None, video_file, None
+        elif audio_file:
+            return None, None, None, audio_file
+        else:
+            return None, None, None, None
+
+    return text_files, image_files, video_files, audio_files, display_output_file
 
 
 def download_model(model_name_llm, model_name_sd):
@@ -3322,6 +3343,25 @@ demucs_interface = gr.Interface(
     allow_flagging="never",
 )
 
+gallery_interface = gr.Interface(
+    fn=lambda *args: get_output_files()[-1](*args),
+    inputs=[
+        gr.Dropdown(label="Text Files", choices=get_output_files()[0], interactive=True),
+        gr.Dropdown(label="Image Files", choices=get_output_files()[1], interactive=True),
+        gr.Dropdown(label="Video Files", choices=get_output_files()[2], interactive=True),
+        gr.Dropdown(label="Audio Files", choices=get_output_files()[3], interactive=True),
+    ],
+    outputs=[
+        gr.Textbox(label="Text"),
+        gr.Image(label="Image", type="filepath"),
+        gr.Video(label="Video"),
+        gr.Audio(label="Audio", type="filepath"),
+    ],
+    title="NeuroSandboxWebUI (ALPHA) - Gallery",
+    description="This interface allows you to view files from the outputs directory",
+    allow_flagging="never",
+)
+
 model_downloader_interface = gr.Interface(
     fn=download_model,
     inputs=[
@@ -3370,8 +3410,8 @@ system_interface = gr.Interface(
 with gr.TabbedInterface(
         [chat_interface, tts_stt_interface, bark_interface, translate_interface, wav2lip_interface, gr.TabbedInterface([txt2img_interface, img2img_interface, depth2img_interface, pix2pix_interface, controlnet_interface, upscale_interface, inpaint_interface, gligen_interface, animatediff_interface, video_interface, sd3_interface, cascade_interface, extras_interface],
         tab_names=["txt2img", "img2img", "depth2img", "pix2pix", "controlnet", "upscale", "inpaint", "gligen", "animatediff", "video", "sd3", "cascade", "extras"]),
-                    zeroscope2_interface, triposr_interface, shap_e_interface, audiocraft_interface, audioldm2_interface, demucs_interface, model_downloader_interface, settings_interface, system_interface],
-        tab_names=["LLM", "TTS-STT", "SunoBark", "LibreTranslate", "Wav2Lip", "StableDiffusion", "ZeroScope 2", "TripoSR", "Shap-E", "AudioCraft", "AudioLDM 2", "Demucs", "ModelDownloader", "Settings", "System"]
+                    zeroscope2_interface, triposr_interface, shap_e_interface, audiocraft_interface, audioldm2_interface, demucs_interface, gallery_interface, model_downloader_interface, settings_interface, system_interface],
+        tab_names=["LLM", "TTS-STT", "SunoBark", "LibreTranslate", "Wav2Lip", "StableDiffusion", "ZeroScope 2", "TripoSR", "Shap-E", "AudioCraft", "AudioLDM 2", "Demucs", "Gallery", "ModelDownloader", "Settings", "System"]
 ) as app:
     chat_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     bark_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
@@ -3397,7 +3437,7 @@ with gr.TabbedInterface(
     close_button = gr.Button("Close terminal")
     close_button.click(close_terminal, [], [], queue=False)
 
-    folder_button = gr.Button("Folder")
+    folder_button = gr.Button("Outputs")
     folder_button.click(open_outputs_folder, [], [], queue=False)
 
     github_link = gr.HTML(
