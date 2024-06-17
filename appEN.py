@@ -14,8 +14,6 @@ from einops import rearrange
 from TTS.api import TTS
 import whisper
 from datetime import datetime
-import warnings
-import logging
 from diffusers import StableDiffusionPipeline, StableDiffusion3Pipeline, StableDiffusionXLPipeline, StableDiffusionImg2ImgPipeline, StableDiffusionDepth2ImgPipeline, ControlNetModel, StableDiffusionControlNetPipeline, AutoencoderKL, StableDiffusionLatentUpscalePipeline, StableDiffusionUpscalePipeline, StableDiffusionInpaintPipeline, StableDiffusionGLIGENPipeline, AnimateDiffPipeline, AnimateDiffVideoToVideoPipeline, MotionAdapter, StableVideoDiffusionPipeline, I2VGenXLPipeline, StableCascadePriorPipeline, StableCascadeDecoderPipeline, DiffusionPipeline, DPMSolverMultistepScheduler, ShapEPipeline, ShapEImg2ImgPipeline, AudioLDM2Pipeline, StableDiffusionInstructPix2PixPipeline
 from diffusers.utils import load_image, export_to_video, export_to_gif, export_to_ply
 from controlnet_aux import OpenposeDetector, LineartDetector, HEDdetector
@@ -57,15 +55,6 @@ try:
     XFORMERS_AVAILABLE = True
 except ImportError:
     print("Xformers is not installed. Proceeding without it")
-
-warnings.filterwarnings("ignore")
-logging.getLogger('transformers').setLevel(logging.ERROR)
-logging.getLogger('llama_cpp').setLevel(logging.ERROR)
-logging.getLogger('whisper').setLevel(logging.ERROR)
-logging.getLogger('TTS').setLevel(logging.ERROR)
-logging.getLogger('diffusers').setLevel(logging.ERROR)
-logging.getLogger('audiocraft').setLevel(logging.ERROR)
-logging.getLogger('xformers').setLevel(logging.ERROR)
 
 chat_dir = None
 tts_model = None
@@ -3366,7 +3355,7 @@ gallery_interface = gr.Interface(
         gr.Dropdown(label="Audio Files", choices=get_output_files()[3], interactive=True),
     ],
     outputs=[
-        gr.Textbox(label="Text"),
+        gr.Textbox(label="Text Content"),
         gr.Image(label="Image", type="filepath"),
         gr.Video(label="Video"),
         gr.Audio(label="Audio", type="filepath"),
@@ -3451,7 +3440,7 @@ with gr.TabbedInterface(
     close_button = gr.Button("Close terminal")
     close_button.click(close_terminal, [], [], queue=False)
 
-    folder_button = gr.Button("Folder")
+    folder_button = gr.Button("Outputs")
     folder_button.click(open_outputs_folder, [], [], queue=False)
 
     github_link = gr.HTML(
