@@ -6,39 +6,41 @@
 
 ## Description:
 
-A simple and convenient interface for using various neural network models. You can communicate with LLM and Moondream2 using text, voice and image input, use StableDiffusion to generate images, ZeroScope 2 to generate videos, TripoSR and Shap-E to generate 3D objects, AudioCraft and AudioLDM 2 to generate music and audio, CoquiTTS and SunoBark for text-to-speech, OpenAI-Whisper for speech-to-text, Wav2Lip for lip-sync, Roop to faceswap, Rembg to remove background, CodeFormer for face restore, LibreTranslate for text translation and Demucs for audio file separation. You can also download the LLM and StableDiffusion models, change the application settings inside the interface and check system sensors
+A simple and convenient interface for using various neural network models. You can communicate with LLM and Moondream2 using text, voice and image input, use StableDiffusion to generate images, ZeroScope 2 to generate videos, TripoSR and Shap-E to generate 3D objects, AudioCraft and AudioLDM 2 to generate music and audio, CoquiTTS and SunoBark for text-to-speech, OpenAI-Whisper for speech-to-text, Wav2Lip for lip-sync, Roop to faceswap, Rembg to remove background, CodeFormer for face restore, LibreTranslate for text translation and Demucs for audio file separation. You can also view files from the outputs directory in gallery, download the LLM and StableDiffusion models, change the application settings inside the interface and check system sensors
 
 The goal of the project - to create the easiest possible application to use neural network models
 
-### LLM: ![1](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/cce08d77-e83f-4cc2-9b3b-b597f6ccc112)
+### LLM: ![1](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/433b5afd-d516-4780-b3bb-20a77b97f719)
 
-### TTS-STT: ![2](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/9fb0dfad-133d-47db-af0f-4f9713f96bc5)
+### TTS-STT: ![2](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/42931c9e-de0e-47f8-ba6f-12c9e2b87565)
 
-### SunoBark: ![3](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/e3329dce-a154-4a6c-b431-1e6c4b43de72)
+### SunoBark: ![3](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/c70da5dd-e40f-4b00-9f2f-eefbd847409d)
 
-### LibreTranslate: ![4](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/f731619e-d30a-4fe3-a16f-3cdc92f710f6)
+### LibreTranslate: ![4](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/8232624b-c645-4623-ad22-8e22cde37c1b)
 
-### Wav2Lip: ![5](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/3090f8e1-44cd-431c-a671-e3be60658070)
+### Wav2Lip: ![5](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/698d9a82-669f-4963-a554-e0d80445d56a)
 
-### StableDiffusion: ![6](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/28908f89-7077-47e0-8ea6-75b2f8d38e2c)
+### StableDiffusion: ![6](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/2bc1187b-08ce-41c8-90d9-1d054fe40d96)
 
-### ZeroScope 2: ![7](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/815bb897-0e92-4a6d-a111-e7669c96ba62)
+### ZeroScope 2: ![7](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/c676471a-9460-42f0-b695-31eb46a1af23)
 
-### TripoSR: ![8](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/eba825db-c038-4db4-8a5f-a25a3801232c)
+### TripoSR: ![8](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/c4ffb346-3adb-494e-9f7a-a21bbf8b1406)
 
-### Shap-E: ![9](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/e9fbddb3-1d81-4774-9aa2-a71a9bf40645)
+### Shap-E: ![9](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/2690d8f6-141e-41ee-96c0-2a7ff0642aa8)
 
-### AudioCraft: ![10](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/b792a907-063f-4263-bf65-f4010cac219c)
+### AudioCraft: ![10](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/3cb11abb-0118-43f1-9587-67d965ca2191)
 
-### AudioLDM 2: ![11](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/bc970ca8-1d88-460d-af54-dd84e9674f35)
+### AudioLDM 2: ![11](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/621c8255-fbd5-4435-8b23-fa323c9fc872)
 
-### Demucs: ![12](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/908add05-6981-4089-b519-d0c5326d4241)
+### Demucs: ![12](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/18441486-104c-473a-886a-d97491131296)
 
-### ModelDownloader: ![13](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/c78e54ec-67b7-41fb-a5e2-ca9182677c23)
+### Gallery: ![13](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/aaa3097a-aa03-481b-86c7-94a7d814e50d)
 
-### Settings: ![14](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/6db77549-d0dd-4df8-b889-1060231beea7)
+### ModelDownloader: ![14](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/f0777249-0d59-4540-8f3f-b304b8049b9b)
 
-### System: ![15](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/2f087997-f009-493e-9ebd-dca89fa6d82a)
+### Settings: ![15](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/efa4f423-f0c0-47ed-8af8-89eef241ac3f)
+
+### System: ![16](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/989e7578-62b0-48a3-a182-e5dc956ef73e)
 
 ## Features:
 
@@ -47,11 +49,11 @@ The goal of the project - to create the easiest possible application to use neur
 * Flexible and optimized interface (By Gradio)
 * Authentication via admin:admin (You can enter your login details in the GradioAuth.txt file)
 * Support for Transformers and llama.cpp models (LLM)
-* Support for diffusers and safetensors models (StableDiffusion) - txt2img, sd3, img2img, depth2img, pix2pix, controlnet, upscale, inpaint, gligen, animatediff, video, cascade and extras tabs
+* Support for diffusers and safetensors models (StableDiffusion) - txt2img, img2img, depth2img, pix2pix, controlnet, upscale, inpaint, gligen, animatediff, video, sd3, cascade and extras tabs
 * AudioCraft support (Models: musicgen, audiogen and magnet)
 * AudioLDM 2 support (Models: audio and music)
 * Supports TTS and Whisper models (For LLM and TTS-STT)
-* Supports Lora, Textual inversion (embedding), Vae, Img2img, Depth, Pix2Pix, Controlnet, Upscale, Inpaint, GLIGEN, AnimateDiff, Videos, Cascade, sd3, Rembg, CodeFormer and Roop models (For StableDiffusion)
+* Supports Lora, Textual inversion (embedding), Vae, Img2img, Depth, Pix2Pix, Controlnet, Upscale, Inpaint, GLIGEN, AnimateDiff, Videos, SD3, Cascade, Rembg, CodeFormer and Roop models (For StableDiffusion)
 * Support Multiband Diffusion model (For AudioCraft)
 * Support LibreTranslate (Local API)
 * Support ZeroScope 2
@@ -62,6 +64,7 @@ The goal of the project - to create the easiest possible application to use neur
 * Support Wav2Lip
 * Support Multimodal (Moondream 2), LORA (transformers) and WebSearch (with GoogleSearch) for LLM
 * Model settings inside the interface
+* Gallery
 * ModelDownloader (For LLM and StableDiffusion)
 * Application settings
 * Ability to see system sensors
@@ -110,7 +113,7 @@ To work with the virtual environment through the terminal, run `./Venv.sh`
 
 ## How to use:
 
-#### Interface has fifteen tabs: LLM, TTS-STT, SunoBark, LibreTranslate, Wav2Lip, StableDiffusion, ZeroScope 2, TripoSR, Shap-E, AudioCraft, AudioLDM 2, Demucs, ModelDownloader, Settings and System. Select the one you need and follow the instructions below 
+#### Interface has sixteen tabs: LLM, TTS-STT, SunoBark, LibreTranslate, Wav2Lip, StableDiffusion, ZeroScope 2, TripoSR, Shap-E, AudioCraft, AudioLDM 2, Demucs, Gallery, ModelDownloader, Settings and System. Select the one you need and follow the instructions below 
 
 ### LLM:
 
@@ -167,12 +170,6 @@ To work with the virtual environment through the terminal, run `./Venv.sh`
 #### vae = *inputs/image/sd_models/vae*
 #### lora = *inputs/image/sd_models/lora*
 #### embedding = *inputs/image/sd_models/embedding*
-
-#### sd3:
-
-1) Enter your request
-2) Set up the model according to the parameters you need
-3) Click the `Submit` button to get the generated image
 
 #### img2img:
 
@@ -253,6 +250,12 @@ To work with the virtual environment through the terminal, run `./Venv.sh`
 3) Set up the model according to the parameters you need
 4) Click the `Submit` button to get the video from image
 
+#### sd3:
+
+1) Enter your request
+2) Set up the model according to the parameters you need
+3) Click the `Submit` button to get the generated image
+
 #### cascade:
 
 1) Enter your request
@@ -305,6 +308,10 @@ To work with the virtual environment through the terminal, run `./Venv.sh`
 1) Upload the initial audio to separate
 2) Click the `Submit` button to get the separated audio
 
+### Gallery:
+
+* Here you can view files from the outputs directory
+
 ### ModelDownloader:
 
 * Here you can download `LLM` and `StableDiffusion` models. Just choose the model from the drop-down list and click the `Submit` button
@@ -325,13 +332,13 @@ To work with the virtual environment through the terminal, run `./Venv.sh`
 2) You can press the `Clear` button to reset your selection
 3) To stop the generation process, click the `Stop generation` button
 4) You can turn off the application using the `Close terminal` button
-5) You can open the *outputs* folder by clicking on the `Folder` button
+5) You can open the *outputs* folder by clicking on the `Outputs` button
 
 ## Where can i get models and voices?
 
 * LLM models can be taken from [HuggingFace](https://huggingface.co/models) or from ModelDownloader inside interface 
 * StableDiffusion, vae, inpaint, embedding and lora models can be taken from [CivitAI](https://civitai.com/models) or from ModelDownloader inside interface
-* AudioCraft, AudioLDM 2, TTS, Whisper, Wav2Lip, SunoBark, MoonDream2, Upscale, GLIGEN, Depth, Pix2Pix, Controlnet, AnimateDiff, Videos, Cascade, SD3, Rembg, Roop, CodeFormer, TripoSR, Shap-E, Demucs, ZeroScope and Multiband diffusion models are downloads automatically in *inputs* folder when are they used 
+* AudioCraft, AudioLDM 2, TTS, Whisper, Wav2Lip, SunoBark, MoonDream2, Upscale, GLIGEN, Depth, Pix2Pix, Controlnet, AnimateDiff, Videos, SD3, Cascade, Rembg, Roop, CodeFormer, TripoSR, Shap-E, Demucs, ZeroScope and Multiband diffusion models are downloads automatically in *inputs* folder when are they used 
 * You can take voices anywhere. Record yours or take a recording from the Internet. Or just use those that are already in the project. The main thing is that it is pre-processed!
 
 ## Wiki
