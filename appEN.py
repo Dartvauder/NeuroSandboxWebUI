@@ -2378,9 +2378,6 @@ def generate_audio_audiocraft(prompt, input_audio=None, model_name=None, audiocr
     if enable_multiband and model_type in ["audiogen", "magnet"]:
         return None, "Multiband Diffusion is not supported with 'audiogen' or 'magnet' model types. Please select 'musicgen' or disable Multiband Diffusion"
 
-    if model_type == "magnet":
-        return None, "The 'magnet' model type is currently not supported, but it will be available in a future update. Please select another model type for now"
-
     if not audiocraft_model_path:
         audiocraft_model_path = load_audiocraft_model(model_name)
 
