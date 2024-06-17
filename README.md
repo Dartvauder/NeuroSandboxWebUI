@@ -289,7 +289,7 @@ To work with the virtual environment through the terminal, run `./Venv.sh`
 ### AudioCraft:
 
 1) Select a model from the drop-down list
-2) Select model type (`musicgen` or `audiogen`)
+2) Select model type (`musicgen`, `audiogen` or `magnet`)
 3) Set up the model according to the parameters you need
 4) Enter your request
 5) (Optional) upload the initial audio if you are using `melody` model 
