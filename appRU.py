@@ -2596,6 +2596,41 @@ def demucs_separate(audio_file, output_format="wav"):
         return None, None, str(e)
 
 
+def get_output_files():
+    output_dir = "outputs"
+    text_files = []
+    image_files = []
+    video_files = []
+    audio_files = []
+
+    for root, dirs, files in os.walk(output_dir):
+        for file in files:
+            if file.endswith(".txt") or file.endswith(".json"):
+                text_files.append(os.path.join(root, file))
+            elif file.endswith(".png") or file.endswith(".jpeg"):
+                image_files.append(os.path.join(root, file))
+            elif file.endswith(".mp4"):
+                video_files.append(os.path.join(root, file))
+            elif file.endswith(".wav") or file.endswith(".mp3") or file.endswith(".ogg"):
+                audio_files.append(os.path.join(root, file))
+
+    def display_output_file(text_file, image_file, video_file, audio_file):
+        if text_file:
+            with open(text_file, "r") as f:
+                text_content = f.read()
+            return text_content, None, None, None
+        elif image_file:
+            return None, image_file, None, None
+        elif video_file:
+            return None, None, video_file, None
+        elif audio_file:
+            return None, None, None, audio_file
+        else:
+            return None, None, None, None
+
+    return text_files, image_files, video_files, audio_files, display_output_file
+
+
 def download_model(model_name_llm, model_name_sd):
     if not model_name_llm and not model_name_sd:
         return "Please select a model to download"
@@ -3322,6 +3357,25 @@ demucs_interface = gr.Interface(
     allow_flagging="never",
 )
 
+gallery_interface = gr.Interface(
+    fn=lambda *args: get_output_files()[-1](*args),
+    inputs=[
+        gr.Dropdown(label="Text Files", choices=get_output_files()[0], interactive=True),
+        gr.Dropdown(label="Image Files", choices=get_output_files()[1], interactive=True),
+        gr.Dropdown(label="Video Files", choices=get_output_files()[2], interactive=True),
+        gr.Dropdown(label="Audio Files", choices=get_output_files()[3], interactive=True),
+    ],
+    outputs=[
+        gr.Textbox(label="Text"),
+        gr.Image(label="Image", type="filepath"),
+        gr.Video(label="Video"),
+        gr.Audio(label="Audio", type="filepath"),
+    ],
+    title="NeuroSandboxWebUI (ALPHA) - Gallery",
+    description="This interface allows you to view files from the outputs directory",
+    allow_flagging="never",
+)
+
 model_downloader_interface = gr.Interface(
     fn=download_model,
     inputs=[
@@ -3370,8 +3424,8 @@ system_interface = gr.Interface(
 with gr.TabbedInterface(
         [chat_interface, tts_stt_interface, bark_interface, translate_interface, wav2lip_interface, gr.TabbedInterface([txt2img_interface, img2img_interface, depth2img_interface, pix2pix_interface, controlnet_interface, upscale_interface, inpaint_interface, gligen_interface, animatediff_interface, video_interface, sd3_interface, cascade_interface, extras_interface],
         tab_names=["txt2img", "img2img", "depth2img", "pix2pix", "controlnet", "upscale", "inpaint", "gligen", "animatediff", "video", "sd3", "cascade", "extras"]),
-                    zeroscope2_interface, triposr_interface, shap_e_interface, audiocraft_interface, audioldm2_interface, demucs_interface, model_downloader_interface, settings_interface, system_interface],
-        tab_names=["LLM", "TTS-STT", "SunoBark", "LibreTranslate", "Wav2Lip", "StableDiffusion", "ZeroScope 2", "TripoSR", "Shap-E", "AudioCraft", "AudioLDM 2", "Demucs", "ModelDownloader", "Settings", "System"]
+                    zeroscope2_interface, triposr_interface, shap_e_interface, audiocraft_interface, audioldm2_interface, demucs_interface, gallery_interface, model_downloader_interface, settings_interface, system_interface],
+        tab_names=["LLM", "TTS-STT", "SunoBark", "LibreTranslate", "Wav2Lip", "StableDiffusion", "ZeroScope 2", "TripoSR", "Shap-E", "AudioCraft", "AudioLDM 2", "Demucs", "Gallery", "ModelDownloader", "Settings", "System"]
 ) as app:
     chat_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     bark_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
