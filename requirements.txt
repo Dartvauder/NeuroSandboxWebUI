@@ -1,5 +1,5 @@
 absl-py==2.1.0
-accelerate==0.31.0
+accelerate==0.32.1
 addict==2.4.0
 aiofiles==23.2.1
 aiohttp==3.9.5
@@ -36,7 +36,7 @@ colorama==0.4.6
 coloredlogs==15.0.1
 colorlog==6.8.2
 commandlines==0.4.1
-compel==2.0.2
+compel==2.0.3
 confection==0.1.4
 contourpy==1.2.1
 controlnet-aux==0.0.8
@@ -51,7 +51,7 @@ darkdetect==0.8.0
 dateparser==1.1.8
 decorator==5.1.1
 demucs==4.0.1
-diffusers==0.29.0
+diffusers==0.29.2
 diskcache==5.6.3
 docopt==0.6.2
 dora_search==0.1.12
@@ -83,8 +83,8 @@ GitPython==3.1.43
 google-pasta==0.2.0
 googlesearch-python==1.2.4
 GPUtil==1.4.0
-gradio==4.36.1
-gradio_client==1.0.1
+gradio==4.37.2
+gradio_client==1.0.2
 grpcio==1.62.2
 gruut==2.2.3
 gruut-ipa==0.13.0
@@ -265,7 +265,7 @@ torchdata==0.7.0
 torchmetrics==1.4.0
 tqdm==4.66.4
 trainer==0.0.36
-transformers==4.41.2
+transformers==4.42.3
 treetable==0.2.5
 trimesh==4.3.2
 trio==0.25.0
