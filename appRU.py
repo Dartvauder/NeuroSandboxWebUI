@@ -2047,7 +2047,6 @@ def generate_image_sd3(prompt, negative_prompt, num_inference_steps, guidance_sc
         print("Stable Diffusion 3 model downloaded")
 
     try:
-        device = "cuda" if torch.cuda.is_available() else "cpu"
 
         quantization_config = BitsAndBytesConfig(load_in_8bit=True)
 
@@ -2056,8 +2055,7 @@ def generate_image_sd3(prompt, negative_prompt, num_inference_steps, guidance_sc
             subfolder="text_encoder_3",
             quantization_config=quantization_config,
         )
-        pipe = StableDiffusion3Pipeline.from_pretrained(sd3_model_path, text_encoder_3=text_encoder, torch_dtype=torch.float16)
-        pipe = pipe.to(device)
+        pipe = StableDiffusion3Pipeline.from_pretrained(sd3_model_path, device_map="balanced", text_encoder_3=text_encoder, torch_dtype=torch.float16)
 
         image = pipe(
             prompt,
