@@ -1,6 +1,6 @@
 import gradio as gr
 import langdetect
-from transformers import AutoModelForCausalLM, AutoTokenizer, AutoProcessor, BarkModel, pipeline
+from transformers import AutoModelForCausalLM, AutoTokenizer, AutoProcessor, BarkModel, pipeline, T5EncoderModel, BitsAndBytesConfig
 from peft import PeftModel
 from libretranslatepy import LibreTranslateAPI
 import urllib.error
@@ -14,7 +14,7 @@ from einops import rearrange
 from TTS.api import TTS
 import whisper
 from datetime import datetime
-from diffusers import StableDiffusionPipeline, StableDiffusion3Pipeline, StableDiffusionXLPipeline, StableDiffusionImg2ImgPipeline, StableDiffusionDepth2ImgPipeline, ControlNetModel, StableDiffusionControlNetPipeline, AutoencoderKL, StableDiffusionLatentUpscalePipeline, StableDiffusionUpscalePipeline, StableDiffusionInpaintPipeline, StableDiffusionGLIGENPipeline, AnimateDiffPipeline, AnimateDiffVideoToVideoPipeline, MotionAdapter, StableVideoDiffusionPipeline, I2VGenXLPipeline, StableCascadePriorPipeline, StableCascadeDecoderPipeline, DiffusionPipeline, DPMSolverMultistepScheduler, ShapEPipeline, ShapEImg2ImgPipeline, AudioLDM2Pipeline, StableDiffusionInstructPix2PixPipeline
+from diffusers import StableDiffusionPipeline, StableDiffusion3Pipeline, StableDiffusionXLPipeline, StableDiffusionImg2ImgPipeline, StableDiffusionDepth2ImgPipeline, ControlNetModel, StableDiffusionControlNetPipeline, AutoencoderKL, StableDiffusionLatentUpscalePipeline, StableDiffusionUpscalePipeline, StableDiffusionInpaintPipeline, StableDiffusionGLIGENPipeline, AnimateDiffPipeline, AnimateDiffVideoToVideoPipeline, MotionAdapter, StableVideoDiffusionPipeline, I2VGenXLPipeline, StableCascadePriorPipeline, StableCascadeDecoderPipeline, DiffusionPipeline, DPMSolverMultistepScheduler, ShapEPipeline, ShapEImg2ImgPipeline, AudioLDM2Pipeline, StableDiffusionInstructPix2PixPipeline, StableDiffusionLDM3DPipeline
 from diffusers.utils import load_image, export_to_video, export_to_gif, export_to_ply
 from controlnet_aux import OpenposeDetector, LineartDetector, HEDdetector
 from compel import Compel, ReturnedEmbeddingsType
@@ -1980,7 +1980,61 @@ def generate_video(init_image, output_format, video_settings_html, motion_bucket
             torch.cuda.empty_cache()
 
 
-def generate_image_sd3(prompt, negative_prompt, num_inference_steps, guidance_scale, width, height, output_format="png", stop_generation=None):
+def generate_image_ldm3d(prompt, negative_prompt, num_inference_steps, guidance_scale, output_format="png", stop_generation=None):
+    global stop_signal
+    stop_signal = False
+
+    if not prompt:
+        return None, None, "Please enter a prompt!"
+
+    ldm3d_model_path = os.path.join("inputs", "image", "sd_models", "ldm3d")
+
+    if not os.path.exists(ldm3d_model_path):
+        print("Downloading LDM3D model...")
+        os.makedirs(ldm3d_model_path, exist_ok=True)
+        Repo.clone_from("https://huggingface.co/Intel/ldm3d-4c", ldm3d_model_path)
+        print("LDM3D model downloaded")
+
+    try:
+        pipe = StableDiffusionLDM3DPipeline.from_pretrained(ldm3d_model_path, torch_dtype=torch.float16)
+        pipe = pipe.to("cuda")
+
+        output = pipe(
+            prompt=prompt,
+            negative_prompt=negative_prompt,
+            num_inference_steps=num_inference_steps,
+            guidance_scale=guidance_scale,
+        )
+
+        if stop_signal:
+            return None, None, "Generation stopped"
+
+        rgb_image, depth_image = output.rgb[0], output.depth[0]
+
+        today = datetime.now().date()
+        image_dir = os.path.join('outputs', f"StableDiffusion_{today.strftime('%Y%m%d')}")
+        os.makedirs(image_dir, exist_ok=True)
+
+        rgb_filename = f"ldm3d_rgb_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
+        depth_filename = f"ldm3d_depth_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
+
+        rgb_path = os.path.join(image_dir, rgb_filename)
+        depth_path = os.path.join(image_dir, depth_filename)
+
+        rgb_image.save(rgb_path)
+        depth_image.save(depth_path)
+
+        return rgb_path, depth_path, None
+
+    except Exception as e:
+        return None, None, str(e)
+
+    finally:
+        del pipe
+        torch.cuda.empty_cache()
+
+
+def generate_image_sd3(prompt, negative_prompt, num_inference_steps, guidance_scale, width, height, max_sequence_length, output_format="png", stop_generation=None):
     global stop_signal
     stop_signal = False
 
@@ -1994,7 +2048,15 @@ def generate_image_sd3(prompt, negative_prompt, num_inference_steps, guidance_sc
 
     try:
         device = "cuda" if torch.cuda.is_available() else "cpu"
-        pipe = StableDiffusion3Pipeline.from_pretrained(sd3_model_path, torch_dtype=torch.float16)
+
+        quantization_config = BitsAndBytesConfig(load_in_8bit=True)
+
+        text_encoder = T5EncoderModel.from_pretrained(
+            sd3_model_path,
+            subfolder="text_encoder_3",
+            quantization_config=quantization_config,
+        )
+        pipe = StableDiffusion3Pipeline.from_pretrained(sd3_model_path, text_encoder_3=text_encoder, torch_dtype=torch.float16)
         pipe = pipe.to(device)
 
         image = pipe(
@@ -2004,6 +2066,7 @@ def generate_image_sd3(prompt, negative_prompt, num_inference_steps, guidance_sc
             guidance_scale=guidance_scale,
             width=width,
             height=height,
+            max_sequence_length=max_sequence_length,
         ).images[0]
 
         if stop_signal:
@@ -3141,6 +3204,28 @@ video_interface = gr.Interface(
     allow_flagging="never",
 )
 
+ldm3d_interface = gr.Interface(
+    fn=generate_image_ldm3d,
+    inputs=[
+        gr.Textbox(label="Enter your prompt"),
+        gr.Textbox(label="Enter your negative prompt", value=""),
+        gr.Slider(minimum=1, maximum=100, value=50, step=1, label="Steps"),
+        gr.Slider(minimum=1.0, maximum=30.0, value=8, step=0.1, label="Guidance Scale"),
+        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
+        gr.Button(value="Stop generation", interactive=True, variant="stop"),
+    ],
+    outputs=[
+        gr.Image(type="filepath", label="Generated RGB image"),
+        gr.Image(type="filepath", label="Generated Depth image"),
+        gr.Textbox(label="Message", type="text"),
+    ],
+    title="NeuroSandboxWebUI (ALPHA) - StableDiffusion (LDM3D)",
+    description="This user interface allows you to enter a prompt and generate RGB and Depth images using LDM3D. "
+                "You can customize the generation settings from the sliders. "
+                "Try it and see what happens!",
+    allow_flagging="never",
+)
+
 sd3_interface = gr.Interface(
     fn=generate_image_sd3,
     inputs=[
@@ -3150,6 +3235,7 @@ sd3_interface = gr.Interface(
         gr.Slider(minimum=1.0, maximum=30.0, value=8.0, step=0.1, label="CFG"),
         gr.Slider(minimum=256, maximum=2048, value=1024, step=64, label="Width"),
         gr.Slider(minimum=256, maximum=2048, value=1024, step=64, label="Height"),
+        gr.Slider(minimum=64, maximum=2048, value=256, label="Max Length"),
         gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
         gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
@@ -3408,8 +3494,8 @@ system_interface = gr.Interface(
 )
 
 with gr.TabbedInterface(
-        [chat_interface, tts_stt_interface, bark_interface, translate_interface, wav2lip_interface, gr.TabbedInterface([txt2img_interface, img2img_interface, depth2img_interface, pix2pix_interface, controlnet_interface, upscale_interface, inpaint_interface, gligen_interface, animatediff_interface, video_interface, sd3_interface, cascade_interface, extras_interface],
-        tab_names=["txt2img", "img2img", "depth2img", "pix2pix", "controlnet", "upscale", "inpaint", "gligen", "animatediff", "video", "sd3", "cascade", "extras"]),
+        [chat_interface, tts_stt_interface, bark_interface, translate_interface, wav2lip_interface, gr.TabbedInterface([txt2img_interface, img2img_interface, depth2img_interface, pix2pix_interface, controlnet_interface, upscale_interface, inpaint_interface, gligen_interface, animatediff_interface, video_interface, ldm3d_interface, sd3_interface, cascade_interface, extras_interface],
+        tab_names=["txt2img", "img2img", "depth2img", "pix2pix", "controlnet", "upscale", "inpaint", "gligen", "animatediff", "video", "ldm3d", "sd3", "cascade", "extras"]),
                     zeroscope2_interface, triposr_interface, shap_e_interface, audiocraft_interface, audioldm2_interface, demucs_interface, gallery_interface, model_downloader_interface, settings_interface, system_interface],
         tab_names=["LLM", "TTS-STT", "SunoBark", "LibreTranslate", "Wav2Lip", "StableDiffusion", "ZeroScope 2", "TripoSR", "Shap-E", "AudioCraft", "AudioLDM 2", "Demucs", "Gallery", "ModelDownloader", "Settings", "System"]
 ) as app:
@@ -3425,6 +3511,7 @@ with gr.TabbedInterface(
     gligen_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     animatediff_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     video_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
+    ldm3d_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     sd3_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     cascade_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     extras_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
