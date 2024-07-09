@@ -1980,7 +1980,7 @@ def generate_video(init_image, output_format, video_settings_html, motion_bucket
             torch.cuda.empty_cache()
 
 
-def generate_image_ldm3d(prompt, negative_prompt, num_inference_steps, guidance_scale, output_format="png", stop_generation=None):
+def generate_image_ldm3d(prompt, negative_prompt, width, height, num_inference_steps, guidance_scale, output_format="png", stop_generation=None):
     global stop_signal
     stop_signal = False
 
@@ -2002,6 +2002,8 @@ def generate_image_ldm3d(prompt, negative_prompt, num_inference_steps, guidance_
         output = pipe(
             prompt=prompt,
             negative_prompt=negative_prompt,
+            width=width,
+            height=height,
             num_inference_steps=num_inference_steps,
             guidance_scale=guidance_scale,
         )
@@ -3207,7 +3209,9 @@ ldm3d_interface = gr.Interface(
     inputs=[
         gr.Textbox(label="Enter your prompt"),
         gr.Textbox(label="Enter your negative prompt", value=""),
-        gr.Slider(minimum=1, maximum=100, value=50, step=1, label="Steps"),
+        gr.Slider(minimum=256, maximum=2048, value=512, step=64, label="Width"),
+        gr.Slider(minimum=256, maximum=2048, value=512, step=64, label="Height"),
+        gr.Slider(minimum=1, maximum=100, value=40, step=1, label="Steps"),
         gr.Slider(minimum=1.0, maximum=30.0, value=8, step=0.1, label="Guidance Scale"),
         gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
         gr.Button(value="Stop generation", interactive=True, variant="stop"),
