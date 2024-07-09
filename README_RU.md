@@ -394,6 +394,7 @@
 * [StableDiffusion3](https://huggingface.co/stabilityai/stable-diffusion-3-medium-diffusers/blob/main/LICENSE)
 * [StableDiffusionXL](https://huggingface.co/stabilityai/stable-diffusion-xl-base-1.0/blob/main/LICENSE.md)
 * [StableCascade](https://huggingface.co/stabilityai/stable-cascade/blob/main/LICENSE)
+* [LatentDiffusionModel3D](https://huggingface.co/spaces/CompVis/stable-diffusion-license)
 * [StableVideoDiffusion](https://huggingface.co/stabilityai/stable-video-diffusion-img2vid-xt-1-1/blob/main/LICENSE)
 * [I2VGen-XL](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/mit.md)
 * [Rembg](https://github.com/danielgatis/rembg/blob/main/LICENSE.txt)
