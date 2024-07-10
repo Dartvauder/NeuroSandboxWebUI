@@ -20,7 +20,7 @@
 
 ### Wav2Lip: ![5](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/698d9a82-669f-4963-a554-e0d80445d56a)
 
-### StableDiffusion: ![6](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/2bc1187b-08ce-41c8-90d9-1d054fe40d96)
+### StableDiffusion: ![6](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/fe88a846-7433-4297-9fea-ea98e6a2199a)
 
 ### ZeroScope 2: ![7](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/c676471a-9460-42f0-b695-31eb46a1af23)
 
