@@ -2651,33 +2651,38 @@ def get_output_files():
     image_files = []
     video_files = []
     audio_files = []
+    model3d_files = []
 
     for root, dirs, files in os.walk(output_dir):
         for file in files:
             if file.endswith(".txt") or file.endswith(".json"):
                 text_files.append(os.path.join(root, file))
-            elif file.endswith(".png") or file.endswith(".jpeg"):
+            elif file.endswith(".png") or file.endswith(".jpeg") or file.endswith(".gif"):
                 image_files.append(os.path.join(root, file))
             elif file.endswith(".mp4"):
                 video_files.append(os.path.join(root, file))
             elif file.endswith(".wav") or file.endswith(".mp3") or file.endswith(".ogg"):
                 audio_files.append(os.path.join(root, file))
+            elif file.endswith(".obj") or file.endswith(".ply") or file.endswith(".glb"):
+                model3d_files.append(os.path.join(root, file))
 
-    def display_output_file(text_file, image_file, video_file, audio_file):
+    def display_output_file(text_file, image_file, video_file, audio_file, model3d_file):
         if text_file:
             with open(text_file, "r") as f:
                 text_content = f.read()
-            return text_content, None, None, None
+            return text_content, None, None, None, None
         elif image_file:
-            return None, image_file, None, None
+            return None, image_file, None, None, None
         elif video_file:
-            return None, None, video_file, None
+            return None, None, video_file, None, None
         elif audio_file:
-            return None, None, None, audio_file
+            return None, None, None, audio_file, None
+        elif model3d_file:
+            return None, None, None, None, model3d_file
         else:
-            return None, None, None, None
+            return None, None, None, None, None
 
-    return text_files, image_files, video_files, audio_files, display_output_file
+    return text_files, image_files, video_files, audio_files, model3d_files, display_output_file
 
 
 def download_model(model_name_llm, model_name_sd):
@@ -3438,12 +3443,14 @@ gallery_interface = gr.Interface(
         gr.Dropdown(label="Image Files", choices=get_output_files()[1], interactive=True),
         gr.Dropdown(label="Video Files", choices=get_output_files()[2], interactive=True),
         gr.Dropdown(label="Audio Files", choices=get_output_files()[3], interactive=True),
+        gr.Dropdown(label="3D Model Files", choices=get_output_files()[4], interactive=True),
     ],
     outputs=[
         gr.Textbox(label="Text"),
         gr.Image(label="Image", type="filepath"),
         gr.Video(label="Video"),
         gr.Audio(label="Audio", type="filepath"),
+        gr.Model3D(label="3D Model"),
     ],
     title="NeuroSandboxWebUI (ALPHA) - Gallery",
     description="This interface allows you to view files from the outputs directory",
