@@ -1,0 +1,13 @@
+EN:
+
+Create and log into your account at https://huggingface.co/
+Go to your profile settings
+In the "Access Tokens" section, create a new token
+Copy it and paste it into this text document, clearing this instruction
+
+RU:
+
+Создайте и войдите в свою учетную запись на https://huggingface.co/
+Перейдите в настройки профиля
+В разделе "Access Tokens" создайте новый токен
+Скопируйте его и впишите в этот текстовый документ очистив эту инструкцию

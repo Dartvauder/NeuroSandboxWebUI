@@ -14,6 +14,7 @@ from einops import rearrange
 from TTS.api import TTS
 import whisper
 from datetime import datetime
+from huggingface_hub import hf_hub_download
 from diffusers import StableDiffusionPipeline, StableDiffusion3Pipeline, StableDiffusionXLPipeline, StableDiffusionImg2ImgPipeline, StableDiffusionDepth2ImgPipeline, ControlNetModel, StableDiffusionControlNetPipeline, AutoencoderKL, StableDiffusionLatentUpscalePipeline, StableDiffusionUpscalePipeline, StableDiffusionInpaintPipeline, StableDiffusionGLIGENPipeline, AnimateDiffPipeline, AnimateDiffVideoToVideoPipeline, MotionAdapter, StableVideoDiffusionPipeline, I2VGenXLPipeline, StableCascadePriorPipeline, StableCascadeDecoderPipeline, DiffusionPipeline, DPMSolverMultistepScheduler, ShapEPipeline, ShapEImg2ImgPipeline, StableAudioPipeline, AudioLDM2Pipeline, StableDiffusionInstructPix2PixPipeline, StableDiffusionLDM3DPipeline
 from diffusers.utils import load_image, export_to_video, export_to_gif, export_to_ply
 from controlnet_aux import OpenposeDetector, LineartDetector, HEDdetector
@@ -72,6 +73,14 @@ def authenticate(username, password):
     except FileNotFoundError:
         pass
     return False
+
+
+def get_hf_token():
+    token_file = "hftoken.txt"
+    if os.path.exists(token_file):
+        with open(token_file, "r") as f:
+            return f.read().strip()
+    return None
 
 
 def perform_web_search(query, num_results=5, max_length=500):
@@ -2427,7 +2436,8 @@ def generate_3d(prompt, init_image, num_inference_steps, guidance_scale, frame_s
         torch.cuda.empty_cache()
 
 
-def generate_stableaudio(prompt, negative_prompt, num_inference_steps, audio_length, num_waveforms, output_format, stop_generation):
+def generate_stableaudio(prompt, negative_prompt, num_inference_steps, audio_length, num_waveforms, output_format,
+                         stop_generation):
     global stop_signal
     stop_signal = False
 
@@ -2436,8 +2446,19 @@ def generate_stableaudio(prompt, negative_prompt, num_inference_steps, audio_len
     if not os.path.exists(sa_model_path):
         print("Downloading Stable Audio Open model...")
         os.makedirs(sa_model_path, exist_ok=True)
-        Repo.clone_from("https://huggingface.co/audo/stable-audio-open-1.0", sa_model_path)
-        print("Stable Audio Open model downloaded")
+
+        hf_token = get_hf_token()
+        if hf_token is None:
+            return None, "Hugging Face token not found. Please create a file named 'hftoken.txt' in the root directory and paste your token there."
+
+        try:
+            hf_hub_download(repo_id="stabilityai/stable-audio-open-1.0",
+                            filename="model.ckpt",
+                            local_dir=sa_model_path,
+                            token=hf_token)
+            print("Stable Audio Open model downloaded")
+        except Exception as e:
+            return None, f"Error downloading model: {str(e)}"
 
     pipe = StableAudioPipeline.from_pretrained(sa_model_path, torch_dtype=torch.float16)
     pipe = pipe.to("cuda")
