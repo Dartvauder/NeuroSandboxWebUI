@@ -14,7 +14,7 @@ from einops import rearrange
 from TTS.api import TTS
 import whisper
 from datetime import datetime
-from diffusers import StableDiffusionPipeline, StableDiffusion3Pipeline, StableDiffusionXLPipeline, StableDiffusionImg2ImgPipeline, StableDiffusionDepth2ImgPipeline, ControlNetModel, StableDiffusionControlNetPipeline, AutoencoderKL, StableDiffusionLatentUpscalePipeline, StableDiffusionUpscalePipeline, StableDiffusionInpaintPipeline, StableDiffusionGLIGENPipeline, AnimateDiffPipeline, AnimateDiffVideoToVideoPipeline, MotionAdapter, StableVideoDiffusionPipeline, I2VGenXLPipeline, StableCascadePriorPipeline, StableCascadeDecoderPipeline, DiffusionPipeline, DPMSolverMultistepScheduler, ShapEPipeline, ShapEImg2ImgPipeline, AudioLDM2Pipeline, StableDiffusionInstructPix2PixPipeline, StableDiffusionLDM3DPipeline
+from diffusers import StableDiffusionPipeline, StableDiffusion3Pipeline, StableDiffusionXLPipeline, StableDiffusionImg2ImgPipeline, StableDiffusionDepth2ImgPipeline, ControlNetModel, StableDiffusionControlNetPipeline, AutoencoderKL, StableDiffusionLatentUpscalePipeline, StableDiffusionUpscalePipeline, StableDiffusionInpaintPipeline, StableDiffusionGLIGENPipeline, AnimateDiffPipeline, AnimateDiffVideoToVideoPipeline, MotionAdapter, StableVideoDiffusionPipeline, I2VGenXLPipeline, StableCascadePriorPipeline, StableCascadeDecoderPipeline, DiffusionPipeline, DPMSolverMultistepScheduler, ShapEPipeline, ShapEImg2ImgPipeline, StableAudioPipeline, AudioLDM2Pipeline, StableDiffusionInstructPix2PixPipeline, StableDiffusionLDM3DPipeline
 from diffusers.utils import load_image, export_to_video, export_to_gif, export_to_ply
 from controlnet_aux import OpenposeDetector, LineartDetector, HEDdetector
 from compel import Compel, ReturnedEmbeddingsType
@@ -2427,6 +2427,61 @@ def generate_3d(prompt, init_image, num_inference_steps, guidance_scale, frame_s
         torch.cuda.empty_cache()
 
 
+def generate_stableaudio(prompt, negative_prompt, num_inference_steps, audio_length, num_waveforms, output_format, stop_generation):
+    global stop_signal
+    stop_signal = False
+
+    sa_model_path = os.path.join("inputs", "audio", "stableaudio")
+
+    if not os.path.exists(sa_model_path):
+        print("Downloading Stable Audio Open model...")
+        os.makedirs(sa_model_path, exist_ok=True)
+        Repo.clone_from("https://huggingface.co/audo/stable-audio-open-1.0", sa_model_path)
+        print("Stable Audio Open model downloaded")
+
+    pipe = StableAudioPipeline.from_pretrained(sa_model_path, torch_dtype=torch.float16)
+    pipe = pipe.to("cuda")
+
+    generator = torch.Generator("cuda").manual_seed(0)
+
+    try:
+        audio = pipe(
+            prompt,
+            negative_prompt=negative_prompt,
+            num_inference_steps=num_inference_steps,
+            audio_end_in_s=audio_length,
+            num_waveforms_per_prompt=num_waveforms,
+            generator=generator,
+        ).audios
+
+        if stop_signal:
+            return None, "Generation stopped"
+
+        output = audio[0].T.float().cpu().numpy()
+
+        today = datetime.now().date()
+        audio_dir = os.path.join('outputs', f"StableAudio_{today.strftime('%Y%m%d')}")
+        os.makedirs(audio_dir, exist_ok=True)
+        audio_filename = f"stableaudio_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
+        audio_path = os.path.join(audio_dir, audio_filename)
+
+        if output_format == "mp3":
+            sf.write(audio_path, output, pipe.vae.sampling_rate, format='mp3')
+        elif output_format == "ogg":
+            sf.write(audio_path, output, pipe.vae.sampling_rate, format='ogg')
+        else:
+            sf.write(audio_path, output, pipe.vae.sampling_rate)
+
+        return audio_path, None
+
+    except Exception as e:
+        return None, str(e)
+
+    finally:
+        del pipe
+        torch.cuda.empty_cache()
+
+
 def generate_audio_audiocraft(prompt, input_audio=None, model_name=None, audiocraft_settings_html=None, model_type="musicgen",
                               duration=10, top_k=250, top_p=0.0,
                               temperature=1.0, cfg_coef=3.0, enable_multiband=False, output_format="mp3", stop_generation=None):
@@ -3368,6 +3423,28 @@ shap_e_interface = gr.Interface(
     allow_flagging="never",
 )
 
+stableaudio_interface = gr.Interface(
+    fn=generate_stableaudio,
+    inputs=[
+        gr.Textbox(label="Enter your prompt"),
+        gr.Textbox(label="Enter your negative prompt"),
+        gr.Slider(minimum=1, maximum=1000, value=200, step=1, label="Steps"),
+        gr.Slider(minimum=1, maximum=60, value=10, step=1, label="Audio Length (seconds)"),
+        gr.Slider(minimum=1, maximum=10, value=3, step=1, label="Number of Waveforms"),
+        gr.Radio(choices=["wav", "mp3", "ogg"], label="Select output format", value="wav", interactive=True),
+        gr.Button(value="Stop generation", interactive=True, variant="stop"),
+    ],
+    outputs=[
+        gr.Audio(label="Generated audio", type="filepath"),
+        gr.Textbox(label="Message", type="text"),
+    ],
+    title="NeuroSandboxWebUI (ALPHA) - StableAudio",
+    description="This user interface allows you to enter any text and generate audio using StableAudio. "
+                "You can customize the generation settings from the sliders. "
+                "Try it and see what happens!",
+    allow_flagging="never",
+)
+
 audiocraft_interface = gr.Interface(
     fn=generate_audio_audiocraft,
     inputs=[
@@ -3505,8 +3582,8 @@ system_interface = gr.Interface(
 with gr.TabbedInterface(
         [chat_interface, tts_stt_interface, bark_interface, translate_interface, wav2lip_interface, gr.TabbedInterface([txt2img_interface, img2img_interface, depth2img_interface, pix2pix_interface, controlnet_interface, upscale_interface, inpaint_interface, gligen_interface, animatediff_interface, video_interface, ldm3d_interface, sd3_interface, cascade_interface, extras_interface],
         tab_names=["txt2img", "img2img", "depth2img", "pix2pix", "controlnet", "upscale", "inpaint", "gligen", "animatediff", "video", "ldm3d", "sd3", "cascade", "extras"]),
-                    zeroscope2_interface, triposr_interface, shap_e_interface, audiocraft_interface, audioldm2_interface, demucs_interface, gallery_interface, model_downloader_interface, settings_interface, system_interface],
-        tab_names=["LLM", "TTS-STT", "SunoBark", "LibreTranslate", "Wav2Lip", "StableDiffusion", "ZeroScope 2", "TripoSR", "Shap-E", "AudioCraft", "AudioLDM 2", "Demucs", "Gallery", "ModelDownloader", "Settings", "System"]
+                    zeroscope2_interface, triposr_interface, shap_e_interface, stableaudio_interface, audiocraft_interface, audioldm2_interface, demucs_interface, gallery_interface, model_downloader_interface, settings_interface, system_interface],
+        tab_names=["LLM", "TTS-STT", "SunoBark", "LibreTranslate", "Wav2Lip", "StableDiffusion", "ZeroScope 2", "TripoSR", "Shap-E", "StableAudio", "AudioCraft", "AudioLDM 2", "Demucs", "Gallery", "ModelDownloader", "Settings", "System"]
 ) as app:
     chat_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     bark_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
@@ -3527,6 +3604,7 @@ with gr.TabbedInterface(
     zeroscope2_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     triposr_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     shap_e_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
+    stableaudio_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     audiocraft_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     audioldm2_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
 

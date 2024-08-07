@@ -8,8 +8,7 @@ source "$CURRENT_DIR/venv/bin/activate"
 clear
 
 echo "Upgrading pip, setuptools and whell.../Обновление pip, setuptools и wheel..."
-python3 -m pip install --upgrade pip setuptools
-pip install wheel
+pip install wheel setuptools pip --upgrade
 clear
 
 echo "Installing dependencies.../Установка зависимостей..."

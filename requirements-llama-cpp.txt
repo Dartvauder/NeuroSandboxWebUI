@@ -1,2 +1,2 @@
 --extra-index-url https://abetlen.github.io/llama-cpp-python/whl/cu121
-llama-cpp-python==0.2.82
+llama-cpp-python==0.2.87
