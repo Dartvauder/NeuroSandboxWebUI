@@ -14,7 +14,7 @@ from einops import rearrange
 from TTS.api import TTS
 import whisper
 from datetime import datetime
-from huggingface_hub import hf_hub_download
+from huggingface_hub import snapshot_download
 from diffusers import StableDiffusionPipeline, StableDiffusion3Pipeline, StableDiffusionXLPipeline, StableDiffusionImg2ImgPipeline, StableDiffusionDepth2ImgPipeline, ControlNetModel, StableDiffusionControlNetPipeline, AutoencoderKL, StableDiffusionLatentUpscalePipeline, StableDiffusionUpscalePipeline, StableDiffusionInpaintPipeline, StableDiffusionGLIGENPipeline, AnimateDiffPipeline, AnimateDiffVideoToVideoPipeline, MotionAdapter, StableVideoDiffusionPipeline, I2VGenXLPipeline, StableCascadePriorPipeline, StableCascadeDecoderPipeline, DiffusionPipeline, DPMSolverMultistepScheduler, ShapEPipeline, ShapEImg2ImgPipeline, StableAudioPipeline, AudioLDM2Pipeline, StableDiffusionInstructPix2PixPipeline, StableDiffusionLDM3DPipeline
 from diffusers.utils import load_image, export_to_video, export_to_gif, export_to_ply
 from controlnet_aux import OpenposeDetector, LineartDetector, HEDdetector
@@ -2452,10 +2452,9 @@ def generate_stableaudio(prompt, negative_prompt, num_inference_steps, audio_len
             return None, "Hugging Face token not found. Please create a file named 'hftoken.txt' in the root directory and paste your token there."
 
         try:
-            hf_hub_download(repo_id="stabilityai/stable-audio-open-1.0",
-                            filename="model.ckpt",
-                            local_dir=sa_model_path,
-                            token=hf_token)
+            snapshot_download(repo_id="stabilityai/stable-audio-open-1.0",
+                              local_dir=sa_model_path,
+                              token=hf_token)
             print("Stable Audio Open model downloaded")
         except Exception as e:
             return None, f"Error downloading model: {str(e)}"
