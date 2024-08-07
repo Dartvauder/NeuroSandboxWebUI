@@ -3,7 +3,11 @@ from typing import Callable, Optional, Tuple
 import numpy as np
 import torch
 import torch.nn as nn
-from torchmcubes import marching_cubes
+try:
+    from torchmcubes import marching_cubes
+except ImportError:
+    print("Warning: torchmcubes not installed. Some 3D functionality may be limited.")
+    marching_cubes = None
 
 
 class IsosurfaceHelper(nn.Module):

@@ -2431,8 +2431,15 @@ def generate_stableaudio(prompt, negative_prompt, num_inference_steps, audio_len
     global stop_signal
     stop_signal = False
 
-    repo_id = "audo/stable-audio-open-1.0"
-    pipe = StableAudioPipeline.from_pretrained(repo_id, torch_dtype=torch.float16)
+    sa_model_path = os.path.join("inputs", "audio", "stableaudio")
+
+    if not os.path.exists(sa_model_path):
+        print("Downloading Stable Audio Open model...")
+        os.makedirs(sa_model_path, exist_ok=True)
+        Repo.clone_from("https://huggingface.co/audo/stable-audio-open-1.0", sa_model_path)
+        print("Stable Audio Open model downloaded")
+
+    pipe = StableAudioPipeline.from_pretrained(sa_model_path, torch_dtype=torch.float16)
     pipe = pipe.to("cuda")
 
     generator = torch.Generator("cuda").manual_seed(0)
