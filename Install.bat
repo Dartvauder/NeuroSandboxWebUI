@@ -8,7 +8,8 @@ call "%CURRENT_DIR%venv\Scripts\activate.bat"
 cls
 
 echo Upgrading pip, setuptools and whell.../Обновление pip, setuptools и wheel...
-pip install wheel setuptools pip --upgrade
+python -m pip install --upgrade pip
+pip install wheel setuptools
 cls
 
 echo Installing dependencies.../Установка зависимостей...
