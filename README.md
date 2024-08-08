@@ -28,7 +28,7 @@ The goal of the project - to create the easiest possible application to use neur
 
 ### Shap-E: <img width="1117" alt="9" src="https://github.com/user-attachments/assets/2da9ffee-28f7-4c75-aa64-2e74e521569c">
 
-### StableAudio: <img width="1120" alt="10" src="https://github.com/user-attachments/assets/1842e062-cb1e-464a-b50c-ffc26ad11f7d">
+### StableAudio: <img width="1113" alt="10" src="https://github.com/user-attachments/assets/e2e53880-7a52-4f25-aa95-f1479a921e5f">
 
 ### AudioCraft: <img width="1118" alt="11" src="https://github.com/user-attachments/assets/42cceb62-04a2-46a2-a0c4-71fea6254d24">
 
