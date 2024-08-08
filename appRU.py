@@ -2436,7 +2436,7 @@ def generate_3d(prompt, init_image, num_inference_steps, guidance_scale, frame_s
         torch.cuda.empty_cache()
 
 
-def generate_stableaudio(prompt, negative_prompt, num_inference_steps, audio_length, num_waveforms, output_format,
+def generate_stableaudio(prompt, negative_prompt, num_inference_steps, guidance_scale, audio_length, audio_start, num_waveforms, output_format,
                          stop_generation):
     global stop_signal
     stop_signal = False
@@ -2469,7 +2469,9 @@ def generate_stableaudio(prompt, negative_prompt, num_inference_steps, audio_len
             prompt,
             negative_prompt=negative_prompt,
             num_inference_steps=num_inference_steps,
+            guidance_scale=guidance_scale,
             audio_end_in_s=audio_length,
+            audio_start_in_s=audio_start,
             num_waveforms_per_prompt=num_waveforms,
             generator=generator,
         ).audios
@@ -3449,7 +3451,9 @@ stableaudio_interface = gr.Interface(
         gr.Textbox(label="Enter your prompt"),
         gr.Textbox(label="Enter your negative prompt"),
         gr.Slider(minimum=1, maximum=1000, value=200, step=1, label="Steps"),
+        gr.Slider(minimum=0.1, maximum=12, value=4, step=0.1, label="CFG"),
         gr.Slider(minimum=1, maximum=60, value=10, step=1, label="Audio Length (seconds)"),
+        gr.Slider(minimum=1, maximum=60, value=0, step=1, label="Audio Start (seconds)"),
         gr.Slider(minimum=1, maximum=10, value=3, step=1, label="Number of Waveforms"),
         gr.Radio(choices=["wav", "mp3", "ogg"], label="Select output format", value="wav", interactive=True),
         gr.Button(value="Stop generation", interactive=True, variant="stop"),
