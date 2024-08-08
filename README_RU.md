@@ -74,9 +74,9 @@
 
 ## Необходимые зависимости:
 
-* [Python](https://www.python.org/downloads/) (3.10-3.11)
+* [Python](https://www.python.org/downloads/) (3.11)
 * [Git](https://git-scm.com/downloads)
-* [CUDA](https://developer.nvidia.com/cuda-downloads) (12.1) и [cuDNN](https://developer.nvidia.com/cudnn-downloads) (9.1)
+* [CUDA](https://developer.nvidia.com/cuda-downloads) (12.4) и [cuDNN](https://developer.nvidia.com/cudnn-downloads) (9.1)
 * [FFMPEG](https://ffmpeg.org/download.html)
 - C+ компилятор
   - Windows: [VisualStudio](https://visualstudio.microsoft.com/ru/)
