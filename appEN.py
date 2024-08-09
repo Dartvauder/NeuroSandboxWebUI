@@ -2842,7 +2842,7 @@ def generate_video_modelscope(prompt, negative_prompt, num_inference_steps, guid
     if not prompt:
         return None, "Please enter a prompt!"
 
-    modelscope_model_path = os.path.join("inputs", "image", "sd_models", "modelscope")
+    modelscope_model_path = os.path.join("inputs", "video", "modelscope")
 
     if not os.path.exists(modelscope_model_path):
         print("Downloading ModelScope model...")
@@ -2899,14 +2899,14 @@ def generate_video_zeroscope2(prompt, video_to_enhance, strength, num_inference_
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
-    base_model_path = os.path.join("inputs", "image", "zeroscope2", "zeroscope_v2_576w")
+    base_model_path = os.path.join("inputs", "video", "zeroscope2", "zeroscope_v2_576w")
     if not os.path.exists(base_model_path):
         print("Downloading ZeroScope 2 base model...")
         os.makedirs(base_model_path, exist_ok=True)
         Repo.clone_from("https://huggingface.co/cerspense/zeroscope_v2_576w", base_model_path)
         print("ZeroScope 2 base model downloaded")
 
-    enhance_model_path = os.path.join("inputs", "image", "zeroscope2", "zeroscope_v2_XL")
+    enhance_model_path = os.path.join("inputs", "video", "zeroscope2", "zeroscope_v2_XL")
     if not os.path.exists(enhance_model_path):
         print("Downloading ZeroScope 2 enhance model...")
         os.makedirs(enhance_model_path, exist_ok=True)
@@ -2985,7 +2985,7 @@ def generate_video_cogvideox(prompt, negative_prompt, num_inference_steps, guida
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
-    cogvideox_model_path = os.path.join("inputs", "image", "sd_models", "cogvideox")
+    cogvideox_model_path = os.path.join("inputs", "video", "cogvideox")
 
     if not os.path.exists(cogvideox_model_path):
         print("Downloading CogVideoX model...")
@@ -3033,7 +3033,7 @@ def generate_video_latte(prompt, negative_prompt, num_inference_steps, guidance_
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
-    latte_model_path = os.path.join("inputs", "image", "sd_models", "latte")
+    latte_model_path = os.path.join("inputs", "video", "latte")
 
     if not os.path.exists(latte_model_path):
         print("Downloading Latte model...")
@@ -3080,7 +3080,7 @@ def generate_3d_triposr(image, mc_resolution, foreground_ratio=0.85, output_form
     global stop_signal
     stop_signal = False
 
-    model_path = os.path.join("inputs", "image", "triposr")
+    model_path = os.path.join("inputs", "3D", "triposr")
 
     if not os.path.exists(model_path):
         print("Downloading TripoSR model...")
@@ -3144,7 +3144,7 @@ def generate_3d_shap_e(prompt, init_image, num_inference_steps, guidance_scale, 
 
     if init_image:
         model_name = "openai/shap-e-img2img"
-        model_path = os.path.join("inputs", "image", "shap-e", "img2img")
+        model_path = os.path.join("inputs", "3D", "shap-e", "img2img")
         if not os.path.exists(model_path):
             print("Downloading Shap-E img2img model...")
             os.makedirs(model_path, exist_ok=True)
@@ -3162,7 +3162,7 @@ def generate_3d_shap_e(prompt, init_image, num_inference_steps, guidance_scale, 
         ).images
     else:
         model_name = "openai/shap-e"
-        model_path = os.path.join("inputs", "image", "shap-e", "text2img")
+        model_path = os.path.join("inputs", "3D", "shap-e", "text2img")
         if not os.path.exists(model_path):
             print("Downloading Shap-E text2img model...")
             os.makedirs(model_path, exist_ok=True)
