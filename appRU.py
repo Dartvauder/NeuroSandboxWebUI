@@ -4337,10 +4337,39 @@ system_interface = gr.Interface(
 )
 
 with gr.TabbedInterface(
-        [chat_interface, tts_stt_interface, bark_interface, translate_interface, wav2lip_interface, gr.TabbedInterface([txt2img_interface, img2img_interface, depth2img_interface, pix2pix_interface, controlnet_interface, upscale_interface, inpaint_interface, gligen_interface, animatediff_interface, video_interface, ldm3d_interface, sd3_interface, cascade_interface, extras_interface],
-        tab_names=["txt2img", "img2img", "depth2img", "pix2pix", "controlnet", "upscale", "inpaint", "gligen", "animatediff", "video", "ldm3d", "sd3", "cascade", "extras"]),
-                    kandinsky_interface, flux_interface, hunyuandit_interface, lumina_interface, deepfloyd_if_interface, pixart_interface, zeroscope2_interface, cogvideox_interface, latte_interface, triposr_interface, shap_e_interface, stableaudio_interface, audiocraft_interface, audioldm2_interface, demucs_interface, gallery_interface, model_downloader_interface, settings_interface, system_interface],
-        tab_names=["LLM", "TTS-STT", "SunoBark", "LibreTranslate", "Wav2Lip", "StableDiffusion", "Kandinsky", "Flux", "HunyuanDiT", "Lumina-T2X", "DeepFloydIF", "PixArt", "ZeroScope 2", "CogVideoX", "Latte", "TripoSR", "Shap-E", "StableAudio", "AudioCraft", "AudioLDM 2", "Demucs", "Gallery", "ModelDownloader", "Settings", "System"]
+    [
+        gr.TabbedInterface(
+            [chat_interface, tts_stt_interface, translate_interface],
+            tab_names=["LLM", "TTS-STT", "LibreTranslate"]
+        ),
+        gr.TabbedInterface(
+            [
+                gr.TabbedInterface(
+                    [txt2img_interface, img2img_interface, depth2img_interface, pix2pix_interface, controlnet_interface, upscale_interface, inpaint_interface, gligen_interface, animatediff_interface, video_interface, ldm3d_interface, sd3_interface, cascade_interface, extras_interface],
+                    tab_names=["txt2img", "img2img", "depth2img", "pix2pix", "controlnet", "upscale", "inpaint", "gligen", "animatediff", "video", "ldm3d", "sd3", "cascade", "extras"]
+                ),
+                kandinsky_interface, flux_interface, hunyuandit_interface, lumina_interface, deepfloyd_if_interface, pixart_interface
+            ],
+            tab_names=["StableDiffusion", "Kandinsky", "Flux", "HunyuanDiT", "Lumina-T2X", "DeepFloydIF", "PixArt"]
+        ),
+        gr.TabbedInterface(
+            [wav2lip_interface, zeroscope2_interface, cogvideox_interface, latte_interface],
+            tab_names=["Wav2Lip", "ZeroScope 2", "CogVideoX", "Latte"]
+        ),
+        gr.TabbedInterface(
+            [triposr_interface, shap_e_interface],
+            tab_names=["TripoSR", "Shap-E"]
+        ),
+        gr.TabbedInterface(
+            [stableaudio_interface, audiocraft_interface, audioldm2_interface, bark_interface, demucs_interface],
+            tab_names=["StableAudioOpen", "AudioCraft", "AudioLDM 2", "SunoBark", "Demucs"]
+        ),
+        gr.TabbedInterface(
+            [gallery_interface, model_downloader_interface, settings_interface, system_interface],
+            tab_names=["Gallery", "ModelDownloader", "Settings", "System"]
+        )
+    ],
+    tab_names=["Text", "Image", "Video", "3D", "Audio", "Interface"]
 ) as app:
     chat_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     bark_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
