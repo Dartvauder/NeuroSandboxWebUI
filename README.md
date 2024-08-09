@@ -246,11 +246,62 @@ To work with the virtual environment through the terminal, run `./Venv.sh`
 2) Select the options you need
 3) Click the `Submit` button to get the modified image
 
+### Kandinsky:
+
+1) Enter your prompt
+2) Select a model from the drop-down list
+3) Set up the model according to the parameters you need
+4) Click `Submit` to get the generated image
+
+### Flux:
+
+1) Enter your prompt
+2) Select a model from the drop-down list
+3) Set up the model according to the parameters you need
+4) Click `Submit` to get the generated image
+
+### HunyuanDiT:
+
+1) Enter your prompt
+2) Set up the model according to the parameters you need
+3) Click `Submit` to get the generated image
+
+### Lumina-T2X:
+
+1) Enter your prompt
+2) Set up the model according to the parameters you need
+3) Click `Submit` to get the generated image
+
+### DeepFloydIF:
+
+1) Enter your prompt
+2) Set up the model according to the parameters you need
+3) Click `Submit` to get the generated image
+
+### PixArt:
+
+1) Enter your prompt
+2) Select the model from the drop-down list
+3) Set up the model according to the parameters you need
+4) Click `Submit` to get the generated image
+
 ### ZeroScope 2:
 
-1) Enter your request
+1) Enter your prompt
 2) Set up the model according to the parameters you need
-3) Click the `Submit` button to get the generated video
+3) Click `Submit` to get the generated video
+
+### CogVideoX:
+
+1) Enter your prompt
+2) Set up the model according to the parameters you need
+3) Click `Submit` to get the generated video
+
+### Latte:
+
+1) Enter your prompt
+2) Set up the model according to the parameters you need
+3) Click `Submit` to get the generated video
 
 ### TripoSR:
 
