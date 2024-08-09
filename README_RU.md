@@ -18,6 +18,7 @@
 * Вы можете использовать приложение через мобильное устройство в localhost(Через IPv4) или через любое онлайн(Через Share)
 * Гибкий и оптимизированный интерфейс (От Gradio)
 * Аутентификация через admin:admin (Вы можете вписать свои данные для входа в файле GradioAuth.txt)
+* Вы можете добавить свой собственный HuggingFace-Token для загрузки определенных моделей (Вы можете ввести свой токен в файле hftoken.txt)
 * Поддержка Transformers и llama.cpp моделей (LLM)
 * Поддержка diffusers и safetensors моделей (StableDiffusion) - Вкладки txt2img, img2img, depth2img, pix2pix, controlnet, upscale, inpaint, gligen, animatediff, video, ldm3d, sd3, cascade и extras
 * Поддержка дополнительных моделей для генерации изображений: Kandinsky, Flux, HunyuanDiT, Lumina-T2X, DeepFloydIF и PixArt
