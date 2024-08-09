@@ -15,8 +15,9 @@ from TTS.api import TTS
 import whisper
 from datetime import datetime
 from huggingface_hub import snapshot_download
-from diffusers import StableDiffusionPipeline, StableDiffusion3Pipeline, StableDiffusionXLPipeline, StableDiffusionImg2ImgPipeline, StableDiffusionDepth2ImgPipeline, ControlNetModel, StableDiffusionControlNetPipeline, AutoencoderKL, StableDiffusionLatentUpscalePipeline, StableDiffusionUpscalePipeline, StableDiffusionInpaintPipeline, StableDiffusionGLIGENPipeline, AnimateDiffPipeline, AnimateDiffVideoToVideoPipeline, MotionAdapter, StableVideoDiffusionPipeline, I2VGenXLPipeline, StableCascadePriorPipeline, StableCascadeDecoderPipeline, DiffusionPipeline, DPMSolverMultistepScheduler, ShapEPipeline, ShapEImg2ImgPipeline, StableAudioPipeline, AudioLDM2Pipeline, StableDiffusionInstructPix2PixPipeline, StableDiffusionLDM3DPipeline, FluxPipeline, KandinskyPipeline, KandinskyPriorPipeline, KandinskyV22Pipeline, KandinskyV22PriorPipeline, AutoPipelineForText2Image, HunyuanDiTPipeline, LuminaText2ImgPipeline, IFPipeline, IFSuperResolutionPipeline, PixArtAlphaPipeline, PixArtSigmaPipeline, CogVideoXPipeline, LattePipeline, KolorsPipeline, AuraFlowPipeline
+from diffusers import StableDiffusionPipeline, StableDiffusion3Pipeline, StableDiffusionXLPipeline, StableDiffusionImg2ImgPipeline, StableDiffusionDepth2ImgPipeline, ControlNetModel, StableDiffusionControlNetPipeline, AutoencoderKL, StableDiffusionLatentUpscalePipeline, StableDiffusionUpscalePipeline, StableDiffusionInpaintPipeline, StableDiffusionGLIGENPipeline, AnimateDiffPipeline, AnimateDiffVideoToVideoPipeline, MotionAdapter, StableVideoDiffusionPipeline, I2VGenXLPipeline, StableCascadePriorPipeline, StableCascadeDecoderPipeline, DiffusionPipeline, DPMSolverMultistepScheduler, ShapEPipeline, ShapEImg2ImgPipeline, StableAudioPipeline, AudioLDM2Pipeline, StableDiffusionInstructPix2PixPipeline, StableDiffusionLDM3DPipeline, FluxPipeline, KandinskyPipeline, KandinskyPriorPipeline, KandinskyV22Pipeline, KandinskyV22PriorPipeline, AutoPipelineForText2Image, HunyuanDiTPipeline, LuminaText2ImgPipeline, IFPipeline, IFSuperResolutionPipeline, PixArtAlphaPipeline, PixArtSigmaPipeline, CogVideoXPipeline, LattePipeline, KolorsPipeline, AuraFlowPipeline, WuerstchenDecoderPipeline, WuerstchenPriorPipeline
 from diffusers.utils import load_image, export_to_video, export_to_gif, export_to_ply, pt_to_pil
+from diffusers.pipelines.wuerstchen import DEFAULT_STAGE_C_TIMESTEPS
 from controlnet_aux import OpenposeDetector, LineartDetector, HEDdetector
 from compel import Compel, ReturnedEmbeddingsType
 import trimesh
@@ -2592,6 +2593,79 @@ def generate_image_auraflow(prompt, negative_prompt, num_inference_steps, guidan
         torch.cuda.empty_cache()
 
 
+def generate_image_wurstchen(prompt, negative_prompt, width, height, prior_steps, prior_guidance_scale, decoder_steps, decoder_guidance_scale, output_format="png", stop_generation=None):
+    global stop_signal
+    stop_signal = False
+
+    if not prompt:
+        return None, "Please enter a prompt!"
+
+    wurstchen_model_path = os.path.join("inputs", "image", "sd_models", "wurstchen")
+
+    if not os.path.exists(wurstchen_model_path):
+        print("Downloading Würstchen models...")
+        os.makedirs(wurstchen_model_path, exist_ok=True)
+        Repo.clone_from("https://huggingface.co/warp-ai/wuerstchen-prior", os.path.join(wurstchen_model_path, "prior"))
+        Repo.clone_from("https://huggingface.co/warp-ai/wuerstchen", os.path.join(wurstchen_model_path, "decoder"))
+        print("Würstchen models downloaded")
+
+    try:
+        device = "cuda" if torch.cuda.is_available() else "cpu"
+        dtype = torch.float16 if device == "cuda" else torch.float32
+
+        prior_pipeline = WuerstchenPriorPipeline.from_pretrained(
+            os.path.join(wurstchen_model_path, "prior"),
+            torch_dtype=dtype
+        ).to(device)
+
+        decoder_pipeline = WuerstchenDecoderPipeline.from_pretrained(
+            os.path.join(wurstchen_model_path, "decoder"),
+            torch_dtype=dtype
+        ).to(device)
+
+        prior_output = prior_pipeline(
+            prompt=prompt,
+            height=height,
+            width=width,
+            timesteps=DEFAULT_STAGE_C_TIMESTEPS,
+            negative_prompt=negative_prompt,
+            guidance_scale=prior_guidance_scale,
+            num_inference_steps=prior_steps,
+        )
+
+        if stop_signal:
+            return None, "Generation stopped"
+
+        decoder_output = decoder_pipeline(
+            image_embeddings=prior_output.image_embeddings,
+            prompt=prompt,
+            negative_prompt=negative_prompt,
+            guidance_scale=decoder_guidance_scale,
+            num_inference_steps=decoder_steps,
+            output_type="pil",
+        ).images[0]
+
+        if stop_signal:
+            return None, "Generation stopped"
+
+        today = datetime.now().date()
+        image_dir = os.path.join('outputs', f"Wurstchen_{today.strftime('%Y%m%d')}")
+        os.makedirs(image_dir, exist_ok=True)
+        image_filename = f"wurstchen_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
+        image_path = os.path.join(image_dir, image_filename)
+        decoder_output.save(image_path, format=output_format.upper())
+
+        return image_path, None
+
+    except Exception as e:
+        return None, str(e)
+
+    finally:
+        del prior_pipeline
+        del decoder_pipeline
+        torch.cuda.empty_cache()
+
+
 def generate_image_deepfloyd(prompt, negative_prompt, num_inference_steps, guidance_scale, width, height, output_format="png", stop_generation=None):
     global stop_signal
     stop_signal = False
@@ -2751,6 +2825,64 @@ def generate_image_pixart(prompt, negative_prompt, version, num_inference_steps,
         image.save(image_path, format=output_format.upper())
 
         return image_path, None
+
+    except Exception as e:
+        return None, str(e)
+
+    finally:
+        del pipe
+        torch.cuda.empty_cache()
+
+
+def generate_video_modelscope(prompt, negative_prompt, num_inference_steps, guidance_scale, height, width, num_frames,
+                              output_format, stop_generation):
+    global stop_signal
+    stop_signal = False
+
+    if not prompt:
+        return None, "Please enter a prompt!"
+
+    modelscope_model_path = os.path.join("inputs", "image", "sd_models", "modelscope")
+
+    if not os.path.exists(modelscope_model_path):
+        print("Downloading ModelScope model...")
+        os.makedirs(modelscope_model_path, exist_ok=True)
+        Repo.clone_from("https://huggingface.co/damo-vilab/text-to-video-ms-1.7b", modelscope_model_path)
+        print("ModelScope model downloaded")
+
+    try:
+        device = "cuda" if torch.cuda.is_available() else "cpu"
+        pipe = DiffusionPipeline.from_pretrained(modelscope_model_path, torch_dtype=torch.float16, variant="fp16")
+        pipe = pipe.to(device)
+        pipe.enable_model_cpu_offload()
+        pipe.enable_vae_slicing()
+
+        video_frames = pipe(
+            prompt,
+            negative_prompt=negative_prompt,
+            num_inference_steps=num_inference_steps,
+            guidance_scale=guidance_scale,
+            height=height,
+            width=width,
+            num_frames=num_frames
+        ).frames[0]
+
+        if stop_signal:
+            return None, "Generation stopped"
+
+        today = datetime.now().date()
+        video_dir = os.path.join('outputs', f"ModelScope_{today.strftime('%Y%m%d')}")
+        os.makedirs(video_dir, exist_ok=True)
+
+        video_filename = f"modelscope_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
+        video_path = os.path.join(video_dir, video_filename)
+
+        if output_format == "mp4":
+            export_to_video(video_frames, video_path)
+        else:
+            export_to_gif(video_frames, video_path)
+
+        return video_path, None
 
     except Exception as e:
         return None, str(e)
@@ -4157,6 +4289,31 @@ auraflow_interface = gr.Interface(
     allow_flagging="never",
 )
 
+wurstchen_interface = gr.Interface(
+    fn=generate_image_wurstchen,
+    inputs=[
+        gr.Textbox(label="Enter your prompt"),
+        gr.Textbox(label="Enter your negative prompt", value=""),
+        gr.Slider(minimum=256, maximum=2048, value=1536, step=64, label="Width"),
+        gr.Slider(minimum=256, maximum=2048, value=1024, step=64, label="Height"),
+        gr.Slider(minimum=1, maximum=100, value=50, step=1, label="Prior Steps"),
+        gr.Slider(minimum=0.1, maximum=30.0, value=4.0, step=0.1, label="Prior Guidance Scale"),
+        gr.Slider(minimum=1, maximum=100, value=20, step=1, label="Decoder Steps"),
+        gr.Slider(minimum=0.0, maximum=30.0, value=0.0, step=0.1, label="Decoder Guidance Scale"),
+        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
+        gr.Button(value="Stop generation", interactive=True, variant="stop"),
+    ],
+    outputs=[
+        gr.Image(type="filepath", label="Generated image"),
+        gr.Textbox(label="Message", type="text"),
+    ],
+    title="NeuroSandboxWebUI (ALPHA) - Würstchen",
+    description="This user interface allows you to generate images using the Würstchen model. "
+                "Enter a prompt and customize the generation settings. "
+                "Try it and see what happens!",
+    allow_flagging="never",
+)
+
 deepfloyd_if_interface = gr.Interface(
     fn=generate_image_deepfloyd,
     inputs=[
@@ -4204,6 +4361,30 @@ pixart_interface = gr.Interface(
     title="NeuroSandboxWebUI (ALPHA) - PixArt",
     description="This user interface allows you to generate images using PixArt models. "
                 "You can select between Alpha and Sigma versions, and customize the generation settings. "
+                "Try it and see what happens!",
+    allow_flagging="never",
+)
+
+modelscope_interface = gr.Interface(
+    fn=generate_video_modelscope,
+    inputs=[
+        gr.Textbox(label="Enter your prompt"),
+        gr.Textbox(label="Enter your negative prompt", value=""),
+        gr.Slider(minimum=1, maximum=100, value=50, step=1, label="Steps"),
+        gr.Slider(minimum=1.0, maximum=20.0, value=7.5, step=0.1, label="Guidance Scale"),
+        gr.Slider(minimum=256, maximum=1024, value=320, step=64, label="Height"),
+        gr.Slider(minimum=256, maximum=1024, value=576, step=64, label="Width"),
+        gr.Slider(minimum=16, maximum=128, value=64, step=1, label="Number of Frames"),
+        gr.Radio(choices=["mp4", "gif"], label="Select output format", value="mp4", interactive=True),
+        gr.Button(value="Stop generation", interactive=True, variant="stop"),
+    ],
+    outputs=[
+        gr.Video(label="Generated video"),
+        gr.Textbox(label="Message", type="text"),
+    ],
+    title="NeuroSandboxWebUI (ALPHA) - ModelScope",
+    description="This user interface allows you to generate videos using ModelScope. "
+                "Enter a prompt and customize the generation settings. "
                 "Try it and see what happens!",
     allow_flagging="never",
 )
@@ -4490,13 +4671,13 @@ with gr.TabbedInterface(
                     [txt2img_interface, img2img_interface, depth2img_interface, pix2pix_interface, controlnet_interface, upscale_interface, inpaint_interface, gligen_interface, animatediff_interface, video_interface, ldm3d_interface, sd3_interface, cascade_interface, extras_interface],
                     tab_names=["txt2img", "img2img", "depth2img", "pix2pix", "controlnet", "upscale", "inpaint", "gligen", "animatediff", "video", "ldm3d", "sd3", "cascade", "extras"]
                 ),
-                kandinsky_interface, flux_interface, hunyuandit_interface, lumina_interface, kolors_interface, auraflow_interface, deepfloyd_if_interface, pixart_interface
+                kandinsky_interface, flux_interface, hunyuandit_interface, lumina_interface, kolors_interface, auraflow_interface, wurstchen_interface, deepfloyd_if_interface, pixart_interface
             ],
-            tab_names=["StableDiffusion", "Kandinsky", "Flux", "HunyuanDiT", "Lumina-T2X", "Kolors", "AuraFlow", "DeepFloydIF", "PixArt"]
+            tab_names=["StableDiffusion", "Kandinsky", "Flux", "HunyuanDiT", "Lumina-T2X", "Kolors", "AuraFlow", "Würstchen", "DeepFloydIF", "PixArt"]
         ),
         gr.TabbedInterface(
-            [wav2lip_interface, zeroscope2_interface, cogvideox_interface, latte_interface],
-            tab_names=["Wav2Lip", "ZeroScope 2", "CogVideoX", "Latte"]
+            [wav2lip_interface, modelscope_interface, zeroscope2_interface, cogvideox_interface, latte_interface],
+            tab_names=["Wav2Lip", "ModelScope", "ZeroScope 2", "CogVideoX", "Latte"]
         ),
         gr.TabbedInterface(
             [triposr_interface, shap_e_interface],
@@ -4535,8 +4716,10 @@ with gr.TabbedInterface(
     lumina_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     kolors_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     auraflow_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
+    wurstchen_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     deepfloyd_if_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     pixart_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
+    modelscope_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     zeroscope2_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     cogvideox_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     latte_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
