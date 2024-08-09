@@ -10,7 +10,17 @@
 
 Цель проекта — создать максимально простое приложение для использования нейросетевых моделей
 
-### NeuroSandboxWebUI: <img width="1118" alt="MAIN" src="https://github.com/user-attachments/assets/fa9ee0ab-180a-4978-b336-308e1d5ee9c7">
+### Text: <img width="1119" alt="1" src="https://github.com/user-attachments/assets/e1ac4e8e-feb2-484b-a399-61ddc8a098c1">
+
+### Image: <img width="1124" alt="2" src="https://github.com/user-attachments/assets/5748c806-06f8-41ea-9beb-f6619ec503dd">
+
+### Video: <img width="1122" alt="3" src="https://github.com/user-attachments/assets/facd3567-ab40-4cbf-915f-d791b66e4ac3">
+
+### 3D: <img width="1119" alt="4" src="https://github.com/user-attachments/assets/db210c95-5f78-41cd-8689-70d3974b9edc">
+
+### Audio: <img width="1127" alt="5" src="https://github.com/user-attachments/assets/ea7f1bd0-ff85-4873-b9dd-cabd1cc89cee">
+
+### Interface: <img width="1120" alt="6" src="https://github.com/user-attachments/assets/81c4e40c-cf01-488d-adc8-7330f1edd610">
 
 ## Функции:
 
