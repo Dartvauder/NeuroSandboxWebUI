@@ -15,7 +15,7 @@ from TTS.api import TTS
 import whisper
 from datetime import datetime
 from huggingface_hub import snapshot_download
-from diffusers import StableDiffusionPipeline, StableDiffusion3Pipeline, StableDiffusionXLPipeline, StableDiffusionImg2ImgPipeline, StableDiffusionDepth2ImgPipeline, ControlNetModel, StableDiffusionControlNetPipeline, AutoencoderKL, StableDiffusionLatentUpscalePipeline, StableDiffusionUpscalePipeline, StableDiffusionInpaintPipeline, StableDiffusionGLIGENPipeline, AnimateDiffPipeline, AnimateDiffVideoToVideoPipeline, MotionAdapter, StableVideoDiffusionPipeline, I2VGenXLPipeline, StableCascadePriorPipeline, StableCascadeDecoderPipeline, DiffusionPipeline, DPMSolverMultistepScheduler, ShapEPipeline, ShapEImg2ImgPipeline, StableAudioPipeline, AudioLDM2Pipeline, StableDiffusionInstructPix2PixPipeline, StableDiffusionLDM3DPipeline
+from diffusers import StableDiffusionPipeline, StableDiffusion3Pipeline, StableDiffusionXLPipeline, StableDiffusionImg2ImgPipeline, StableDiffusionDepth2ImgPipeline, ControlNetModel, StableDiffusionControlNetPipeline, AutoencoderKL, StableDiffusionLatentUpscalePipeline, StableDiffusionUpscalePipeline, StableDiffusionInpaintPipeline, StableDiffusionGLIGENPipeline, AnimateDiffPipeline, AnimateDiffVideoToVideoPipeline, MotionAdapter, StableVideoDiffusionPipeline, I2VGenXLPipeline, StableCascadePriorPipeline, StableCascadeDecoderPipeline, DiffusionPipeline, DPMSolverMultistepScheduler, ShapEPipeline, ShapEImg2ImgPipeline, StableAudioPipeline, AudioLDM2Pipeline, StableDiffusionInstructPix2PixPipeline, StableDiffusionLDM3DPipeline, FluxPipeline, KandinskyPipeline, KandinskyPriorPipeline, KandinskyV22Pipeline, KandinskyV22PriorPipeline, AutoPipelineForText2Image, HunyuanDiTPipeline, LuminaText2ImgPipeline
 from diffusers.utils import load_image, export_to_video, export_to_gif, export_to_ply
 from controlnet_aux import OpenposeDetector, LineartDetector, HEDdetector
 from compel import Compel, ReturnedEmbeddingsType
@@ -2221,6 +2221,281 @@ def generate_image_extras(input_image, source_image, remove_background, enable_f
         return None, str(e)
 
 
+def generate_image_kandinsky(prompt, negative_prompt, version, num_inference_steps, guidance_scale, height, width, output_format="png",
+                             stop_generation=None):
+    global stop_signal
+    stop_signal = False
+
+    if not prompt:
+        return None, "Please enter a prompt!"
+
+    kandinsky_model_path = os.path.join("inputs", "image", "sd_models", "kandinsky")
+
+    if not os.path.exists(kandinsky_model_path):
+        print(f"Downloading Kandinsky {version} model...")
+        os.makedirs(kandinsky_model_path, exist_ok=True)
+        if version == "2.1":
+            Repo.clone_from("https://huggingface.co/kandinsky-community/kandinsky-2-1-prior",
+                            os.path.join(kandinsky_model_path, "2-1-prior"))
+            Repo.clone_from("https://huggingface.co/kandinsky-community/kandinsky-2-1",
+                            os.path.join(kandinsky_model_path, "2-1"))
+        elif version == "2.2":
+            Repo.clone_from("https://huggingface.co/kandinsky-community/kandinsky-2-2-prior",
+                            os.path.join(kandinsky_model_path, "2-2-prior"))
+            Repo.clone_from("https://huggingface.co/kandinsky-community/kandinsky-2-2-decoder",
+                            os.path.join(kandinsky_model_path, "2-2-decoder"))
+        elif version == "3":
+            Repo.clone_from("https://huggingface.co/kandinsky-community/kandinsky-3",
+                            os.path.join(kandinsky_model_path, "3"))
+        print(f"Kandinsky {version} model downloaded")
+
+    try:
+        if version == "2.1":
+
+            pipe_prior = KandinskyPriorPipeline.from_pretrained(os.path.join(kandinsky_model_path, "2-1-prior"))
+            pipe_prior.to("cuda")
+
+            out = pipe_prior(prompt, negative_prompt=negative_prompt)
+            image_emb = out.image_embeds
+            negative_image_emb = out.negative_image_embeds
+
+            pipe = KandinskyPipeline.from_pretrained(os.path.join(kandinsky_model_path, "2-1"))
+            pipe.to("cuda")
+
+            image = pipe(
+                prompt,
+                negative_prompt=negative_prompt,
+                image_embeds=image_emb,
+                negative_image_embeds=negative_image_emb,
+                height=height,
+                width=width,
+                num_inference_steps=num_inference_steps,
+                guidance_scale=guidance_scale,
+            ).images[0]
+
+        elif version == "2.2":
+
+            pipe_prior = KandinskyV22PriorPipeline.from_pretrained(os.path.join(kandinsky_model_path, "2-2-prior"))
+            pipe_prior.to("cuda")
+
+            image_emb, negative_image_emb = pipe_prior(prompt, negative_prompt=negative_prompt).to_tuple()
+
+            pipe = KandinskyV22Pipeline.from_pretrained(os.path.join(kandinsky_model_path, "2-2-decoder"))
+            pipe.to("cuda")
+
+            image = pipe(
+                prompt=prompt,
+                negative_prompt=negative_prompt,
+                image_embeds=image_emb,
+                negative_image_embeds=negative_image_emb,
+                height=height,
+                width=width,
+                num_inference_steps=num_inference_steps,
+                guidance_scale=guidance_scale,
+            ).images[0]
+
+        elif version == "3":
+
+            pipe = AutoPipelineForText2Image.from_pretrained(
+                os.path.join(kandinsky_model_path, "3"), variant="fp16", torch_dtype=torch.float16
+            )
+            pipe.enable_model_cpu_offload()
+
+            generator = torch.Generator(device="cpu").manual_seed(0)
+            image = pipe(
+                prompt,
+                negative_prompt=negative_prompt,
+                num_inference_steps=num_inference_steps,
+                height=height,
+                width=width,
+                generator=generator,
+                guidance_scale=guidance_scale,
+            ).images[0]
+
+        if stop_signal:
+            return None, "Generation stopped"
+
+        today = datetime.now().date()
+        image_dir = os.path.join('outputs', f"Kandinsky_{today.strftime('%Y%m%d')}")
+        os.makedirs(image_dir, exist_ok=True)
+        image_filename = f"kandinsky_{version}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
+        image_path = os.path.join(image_dir, image_filename)
+        image.save(image_path, format=output_format.upper())
+
+        return image_path, None
+
+    except Exception as e:
+        return None, str(e)
+
+    finally:
+        try:
+            del pipe_prior
+            del pipe
+        except:
+            pass
+        torch.cuda.empty_cache()
+
+
+def generate_image_flux(prompt, model_name, guidance_scale, height, width, num_inference_steps, max_sequence_length, output_format="png", stop_generation=None):
+    global stop_signal
+    stop_signal = False
+
+    if not model_name:
+        return None, "Please select a Flux model!"
+
+    flux_model_path = os.path.join("inputs", "image", "sd_models", "flux", model_name)
+
+    if not os.path.exists(flux_model_path):
+        print(f"Downloading Flux {model_name} model...")
+        os.makedirs(flux_model_path, exist_ok=True)
+        Repo.clone_from(f"https://huggingface.co/black-forest-labs/{model_name}", flux_model_path)
+        print(f"Flux {model_name} model downloaded")
+
+    try:
+        pipe = FluxPipeline.from_pretrained(flux_model_path, torch_dtype=torch.bfloat16)
+        pipe.enable_model_cpu_offload()
+        pipe.enable_sequential_cpu_offload()
+        pipe.vae.enable_slicing()
+        pipe.vae.enable_tiling()
+        pipe.to(torch.float16)
+
+        if model_name == "FLUX.1-schnell":
+            out = pipe(
+                prompt=prompt,
+                guidance_scale=guidance_scale,
+                height=height,
+                width=width,
+                num_inference_steps=num_inference_steps,
+                max_sequence_length=max_sequence_length,
+            ).images[0]
+        else:  # FLUX.1-dev
+            out = pipe(
+                prompt=prompt,
+                guidance_scale=guidance_scale,
+                height=height,
+                width=width,
+                num_inference_steps=num_inference_steps,
+            ).images[0]
+
+        if stop_signal:
+            return None, "Generation stopped"
+
+        today = datetime.now().date()
+        image_dir = os.path.join('outputs', f"Flux_{today.strftime('%Y%m%d')}")
+        os.makedirs(image_dir, exist_ok=True)
+        image_filename = f"flux_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
+        image_path = os.path.join(image_dir, image_filename)
+        out.save(image_path, format=output_format.upper())
+
+        return image_path, None
+
+    except Exception as e:
+        return None, str(e)
+
+    finally:
+        del pipe
+        torch.cuda.empty_cache()
+
+
+def generate_image_hunyuandit(prompt, negative_prompt, num_inference_steps, guidance_scale, height, width, output_format="png", stop_generation=None):
+    global stop_signal
+    stop_signal = False
+
+    if not prompt:
+        return None, "Please enter a prompt!"
+
+    hunyuandit_model_path = os.path.join("inputs", "image", "sd_models", "hunyuandit")
+
+    if not os.path.exists(hunyuandit_model_path):
+        print("Downloading HunyuanDiT model...")
+        os.makedirs(hunyuandit_model_path, exist_ok=True)
+        Repo.clone_from("https://huggingface.co/Tencent-Hunyuan/HunyuanDiT-Diffusers", hunyuandit_model_path)
+        print("HunyuanDiT model downloaded")
+
+    try:
+        pipe = HunyuanDiTPipeline.from_pretrained(hunyuandit_model_path, torch_dtype=torch.float16)
+        pipe.to("cuda")
+
+        image = pipe(
+            prompt=prompt,
+            negative_prompt=negative_prompt,
+            num_inference_steps=num_inference_steps,
+            guidance_scale=guidance_scale,
+            height=height,
+            width=width
+        ).images[0]
+
+        if stop_signal:
+            return None, "Generation stopped"
+
+        today = datetime.now().date()
+        image_dir = os.path.join('outputs', f"HunyuanDiT_{today.strftime('%Y%m%d')}")
+        os.makedirs(image_dir, exist_ok=True)
+        image_filename = f"hunyuandit_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
+        image_path = os.path.join(image_dir, image_filename)
+        image.save(image_path, format=output_format.upper())
+
+        return image_path, None
+
+    except Exception as e:
+        return None, str(e)
+
+    finally:
+        del pipe
+        torch.cuda.empty_cache()
+
+
+def generate_image_lumina(prompt, negative_prompt, num_inference_steps, guidance_scale, height, width, max_sequence_length, output_format="png", stop_generation=None):
+    global stop_signal
+    stop_signal = False
+
+    if not prompt:
+        return None, "Please enter a prompt!"
+
+    lumina_model_path = os.path.join("inputs", "image", "sd_models", "lumina")
+
+    if not os.path.exists(lumina_model_path):
+        print("Downloading Lumina-T2X model...")
+        os.makedirs(lumina_model_path, exist_ok=True)
+        Repo.clone_from("https://huggingface.co/Alpha-VLLM/Lumina-Next-SFT-diffusers", lumina_model_path)
+        print("Lumina-T2X model downloaded")
+
+    try:
+        pipe = LuminaText2ImgPipeline.from_pretrained(
+            lumina_model_path, torch_dtype=torch.bfloat16
+        ).cuda()
+        pipe.enable_model_cpu_offload()
+
+        image = pipe(
+            prompt=prompt,
+            negative_prompt=negative_prompt,
+            num_inference_steps=num_inference_steps,
+            guidance_scale=guidance_scale,
+            height=height,
+            width=width,
+            max_sequence_length=max_sequence_length
+        ).images[0]
+
+        if stop_signal:
+            return None, "Generation stopped"
+
+        today = datetime.now().date()
+        image_dir = os.path.join('outputs', f"Lumina_{today.strftime('%Y%m%d')}")
+        os.makedirs(image_dir, exist_ok=True)
+        image_filename = f"lumina_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
+        image_path = os.path.join(image_dir, image_filename)
+        image.save(image_path, format=output_format.upper())
+
+        return image_path, None
+
+    except Exception as e:
+        return None, str(e)
+
+    finally:
+        del pipe
+        torch.cuda.empty_cache()
+
+
 def generate_video_zeroscope2(prompt, video_to_enhance, strength, num_inference_steps, width, height, num_frames,
                               enable_video_enhance, stop_generation):
     global stop_signal
@@ -3380,6 +3655,101 @@ extras_interface = gr.Interface(
     allow_flagging="never",
 )
 
+kandinsky_interface = gr.Interface(
+    fn=generate_image_kandinsky,
+    inputs=[
+        gr.Textbox(label="Enter your prompt"),
+        gr.Textbox(label="Enter your negative prompt", value=""),
+        gr.Radio(choices=["2.1", "2.2", "3"], label="Kandinsky Version", value="2.2"),
+        gr.Slider(minimum=1, maximum=100, value=50, step=1, label="Steps"),
+        gr.Slider(minimum=0.1, maximum=20, value=4, step=0.1, label="CFG"),
+        gr.Slider(minimum=256, maximum=1024, value=768, step=64, label="Height"),
+        gr.Slider(minimum=256, maximum=1024, value=768, step=64, label="Width"),
+        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
+        gr.Button(value="Stop generation", interactive=True, variant="stop"),
+    ],
+    outputs=[
+        gr.Image(type="filepath", label="Generated image"),
+        gr.Textbox(label="Message", type="text"),
+    ],
+    title="NeuroSandboxWebUI (ALPHA) - Kandinsky",
+    description="This user interface allows you to generate images using Kandinsky models. "
+                "You can select between versions 2.1, 2.2, and 3, and customize the generation settings. "
+                "Try it and see what happens!",
+    allow_flagging="never",
+)
+
+flux_interface = gr.Interface(
+    fn=generate_image_flux,
+    inputs=[
+        gr.Textbox(label="Enter your prompt"),
+        gr.Dropdown(choices=["FLUX.1-schnell", "FLUX.1-dev"], label="Select Flux model", value="FLUX.1-schnell"),
+        gr.Slider(minimum=0.0, maximum=10.0, value=0.0, step=0.1, label="Guidance Scale"),
+        gr.Slider(minimum=256, maximum=2048, value=768, step=64, label="Height"),
+        gr.Slider(minimum=256, maximum=2048, value=1024, step=64, label="Width"),
+        gr.Slider(minimum=1, maximum=100, value=10, step=1, label="Steps"),
+        gr.Slider(minimum=1, maximum=1024, value=256, step=1, label="Max Sequence Length (Schnell only)"),
+        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
+        gr.Button(value="Stop generation", interactive=True, variant="stop"),
+    ],
+    outputs=[
+        gr.Image(type="filepath", label="Generated image"),
+        gr.Textbox(label="Message", type="text"),
+    ],
+    title="NeuroSandboxWebUI (ALPHA) - Flux",
+    description="This user interface allows you to generate images using Flux models. "
+                "You can select between Schnell and Dev models, and customize the generation settings. "
+                "Try it and see what happens!",
+    allow_flagging="never",
+)
+
+hunyuandit_interface = gr.Interface(
+    fn=generate_image_hunyuandit,
+    inputs=[
+        gr.Textbox(label="Enter your prompt"),
+        gr.Textbox(label="Enter your negative prompt", value=""),
+        gr.Slider(minimum=1, maximum=100, value=50, step=1, label="Steps"),
+        gr.Slider(minimum=0.1, maximum=30.0, value=7.5, step=0.1, label="Guidance Scale"),
+        gr.Slider(minimum=256, maximum=2048, value=768, step=64, label="Height"),
+        gr.Slider(minimum=256, maximum=2048, value=768, step=64, label="Width"),
+        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
+        gr.Button(value="Stop generation", interactive=True, variant="stop"),
+    ],
+    outputs=[
+        gr.Image(type="filepath", label="Generated image"),
+        gr.Textbox(label="Message", type="text"),
+    ],
+    title="NeuroSandboxWebUI (ALPHA) - HunyuanDiT",
+    description="This user interface allows you to generate images using HunyuanDiT model. "
+                "Enter a prompt (in English or Chinese) and customize the generation settings. "
+                "Try it and see what happens!",
+    allow_flagging="never",
+)
+
+lumina_interface = gr.Interface(
+    fn=generate_image_lumina,
+    inputs=[
+        gr.Textbox(label="Enter your prompt"),
+        gr.Textbox(label="Enter your negative prompt", value=""),
+        gr.Slider(minimum=1, maximum=100, value=30, step=1, label="Steps"),
+        gr.Slider(minimum=0.1, maximum=30.0, value=4, step=0.1, label="Guidance Scale"),
+        gr.Slider(minimum=256, maximum=2048, value=768, step=64, label="Height"),
+        gr.Slider(minimum=256, maximum=2048, value=768, step=64, label="Width"),
+        gr.Slider(minimum=1, maximum=1024, value=256, step=1, label="Max Sequence Length"),
+        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
+        gr.Button(value="Stop generation", interactive=True, variant="stop"),
+    ],
+    outputs=[
+        gr.Image(type="filepath", label="Generated image"),
+        gr.Textbox(label="Message", type="text"),
+    ],
+    title="NeuroSandboxWebUI (ALPHA) - Lumina-T2X",
+    description="This user interface allows you to generate images using the Lumina-T2X model. "
+                "Enter a prompt and customize the generation settings. "
+                "Try it and see what happens!",
+    allow_flagging="never",
+)
+
 zeroscope2_interface = gr.Interface(
     fn=generate_video_zeroscope2,
     inputs=[
@@ -3606,8 +3976,8 @@ system_interface = gr.Interface(
 with gr.TabbedInterface(
         [chat_interface, tts_stt_interface, bark_interface, translate_interface, wav2lip_interface, gr.TabbedInterface([txt2img_interface, img2img_interface, depth2img_interface, pix2pix_interface, controlnet_interface, upscale_interface, inpaint_interface, gligen_interface, animatediff_interface, video_interface, ldm3d_interface, sd3_interface, cascade_interface, extras_interface],
         tab_names=["txt2img", "img2img", "depth2img", "pix2pix", "controlnet", "upscale", "inpaint", "gligen", "animatediff", "video", "ldm3d", "sd3", "cascade", "extras"]),
-                    zeroscope2_interface, triposr_interface, shap_e_interface, stableaudio_interface, audiocraft_interface, audioldm2_interface, demucs_interface, gallery_interface, model_downloader_interface, settings_interface, system_interface],
-        tab_names=["LLM", "TTS-STT", "SunoBark", "LibreTranslate", "Wav2Lip", "StableDiffusion", "ZeroScope 2", "TripoSR", "Shap-E", "StableAudio", "AudioCraft", "AudioLDM 2", "Demucs", "Gallery", "ModelDownloader", "Settings", "System"]
+                    kandinsky_interface, flux_interface, hunyuandit_interface, lumina_interface, zeroscope2_interface, triposr_interface, shap_e_interface, stableaudio_interface, audiocraft_interface, audioldm2_interface, demucs_interface, gallery_interface, model_downloader_interface, settings_interface, system_interface],
+        tab_names=["LLM", "TTS-STT", "SunoBark", "LibreTranslate", "Wav2Lip", "StableDiffusion", "Kandinsky", "Flux", "HunyuanDiT", "Lumina-T2X", "ZeroScope 2", "TripoSR", "Shap-E", "StableAudio", "AudioCraft", "AudioLDM 2", "Demucs", "Gallery", "ModelDownloader", "Settings", "System"]
 ) as app:
     chat_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     bark_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
@@ -3625,6 +3995,10 @@ with gr.TabbedInterface(
     sd3_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     cascade_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     extras_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
+    kandinsky_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
+    flux_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
+    hunyuandit_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
+    lumina_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     zeroscope2_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     triposr_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     shap_e_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
