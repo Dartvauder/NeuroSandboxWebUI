@@ -2908,7 +2908,7 @@ def generate_3d_triposr(image, mc_resolution, foreground_ratio=0.85, output_form
         torch.cuda.empty_cache()
 
 
-def generate_3d(prompt, init_image, num_inference_steps, guidance_scale, frame_size, stop_generation):
+def generate_3d_shap_e(prompt, init_image, num_inference_steps, guidance_scale, frame_size, stop_generation):
     global stop_signal
     stop_signal = False
 
@@ -4158,7 +4158,7 @@ triposr_interface = gr.Interface(
 )
 
 shap_e_interface = gr.Interface(
-    fn=generate_3d,
+    fn=generate_3d_shap_e,
     inputs=[
         gr.Textbox(label="Enter your prompt"),
         gr.Image(label="Initial image (optional)", type="filepath", interactive=True),
