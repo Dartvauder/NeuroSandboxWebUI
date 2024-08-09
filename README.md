@@ -392,14 +392,15 @@ First of all, I want to thank the developers of [PyCharm](https://www.jetbrains.
 * [ControlNet](https://github.com/lllyasviel/ControlNet/blob/main/LICENSE)
 * [AnimateDiff](https://github.com/guoyww/AnimateDiff/blob/main/LICENSE.txt)
 * [Pix2Pix](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/mit.md)
-* [Kandinsky]()
-* [Flux]()
-* [HunyuanDiT]()
-* [Lumina-T2X]()
-* [DeepFloydIF]()
-* [PixArt]()
-* [CogVideoX]()
-* [Latte]()
+* [Kandinsky 2.1; 2.2; 3](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/apache-2.0.md)
+* [Flux-schnell](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/apache-2.0.md)
+* [Flux-dev](https://huggingface.co/black-forest-labs/FLUX.1-dev/blob/main/LICENSE.md)
+* [HunyuanDiT](https://huggingface.co/Tencent-Hunyuan/HunyuanDiT/blob/main/LICENSE.txt)
+* [Lumina-T2X](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/apache-2.0.md)
+* [DeepFloydIF](https://huggingface.co/spaces/DeepFloyd/deepfloyd-if-license)
+* [PixArt](https://huggingface.co/stabilityai/stable-diffusion-xl-base-1.0/blob/main/LICENSE.md)
+* [CogVideoX](https://huggingface.co/THUDM/CogVideoX-2b/blob/main/LICENSE)
+* [Latte](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/apache-2.0.md)
 
 ## Donation
 
