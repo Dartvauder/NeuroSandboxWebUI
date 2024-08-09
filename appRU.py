@@ -15,7 +15,7 @@ from TTS.api import TTS
 import whisper
 from datetime import datetime
 from huggingface_hub import snapshot_download
-from diffusers import StableDiffusionPipeline, StableDiffusion3Pipeline, StableDiffusionXLPipeline, StableDiffusionImg2ImgPipeline, StableDiffusionDepth2ImgPipeline, ControlNetModel, StableDiffusionControlNetPipeline, AutoencoderKL, StableDiffusionLatentUpscalePipeline, StableDiffusionUpscalePipeline, StableDiffusionInpaintPipeline, StableDiffusionGLIGENPipeline, AnimateDiffPipeline, AnimateDiffVideoToVideoPipeline, MotionAdapter, StableVideoDiffusionPipeline, I2VGenXLPipeline, StableCascadePriorPipeline, StableCascadeDecoderPipeline, DiffusionPipeline, DPMSolverMultistepScheduler, ShapEPipeline, ShapEImg2ImgPipeline, StableAudioPipeline, AudioLDM2Pipeline, StableDiffusionInstructPix2PixPipeline, StableDiffusionLDM3DPipeline, FluxPipeline, KandinskyPipeline, KandinskyPriorPipeline, KandinskyV22Pipeline, KandinskyV22PriorPipeline, AutoPipelineForText2Image, HunyuanDiTPipeline, LuminaText2ImgPipeline, IFPipeline, IFSuperResolutionPipeline, PixArtAlphaPipeline, PixArtSigmaPipeline, CogVideoXPipeline, LattePipeline
+from diffusers import StableDiffusionPipeline, StableDiffusion3Pipeline, StableDiffusionXLPipeline, StableDiffusionImg2ImgPipeline, StableDiffusionDepth2ImgPipeline, ControlNetModel, StableDiffusionControlNetPipeline, AutoencoderKL, StableDiffusionLatentUpscalePipeline, StableDiffusionUpscalePipeline, StableDiffusionInpaintPipeline, StableDiffusionGLIGENPipeline, AnimateDiffPipeline, AnimateDiffVideoToVideoPipeline, MotionAdapter, StableVideoDiffusionPipeline, I2VGenXLPipeline, StableCascadePriorPipeline, StableCascadeDecoderPipeline, DiffusionPipeline, DPMSolverMultistepScheduler, ShapEPipeline, ShapEImg2ImgPipeline, StableAudioPipeline, AudioLDM2Pipeline, StableDiffusionInstructPix2PixPipeline, StableDiffusionLDM3DPipeline, FluxPipeline, KandinskyPipeline, KandinskyPriorPipeline, KandinskyV22Pipeline, KandinskyV22PriorPipeline, AutoPipelineForText2Image, HunyuanDiTPipeline, LuminaText2ImgPipeline, IFPipeline, IFSuperResolutionPipeline, PixArtAlphaPipeline, PixArtSigmaPipeline, CogVideoXPipeline, LattePipeline, KolorsPipeline, AuraFlowPipeline
 from diffusers.utils import load_image, export_to_video, export_to_gif, export_to_ply, pt_to_pil
 from controlnet_aux import OpenposeDetector, LineartDetector, HEDdetector
 from compel import Compel, ReturnedEmbeddingsType
@@ -2496,6 +2496,102 @@ def generate_image_lumina(prompt, negative_prompt, num_inference_steps, guidance
         torch.cuda.empty_cache()
 
 
+def generate_image_kolors(prompt, negative_prompt, guidance_scale, num_inference_steps, max_sequence_length, output_format="png", stop_generation=None):
+    global stop_signal
+    stop_signal = False
+
+    if not prompt:
+        return None, "Please enter a prompt!"
+
+    kolors_model_path = os.path.join("inputs", "image", "sd_models", "kolors")
+
+    if not os.path.exists(kolors_model_path):
+        print("Downloading Kolors model...")
+        os.makedirs(kolors_model_path, exist_ok=True)
+        Repo.clone_from("https://huggingface.co/Kwai-Kolors/Kolors-diffusers", kolors_model_path)
+        print("Kolors model downloaded")
+
+    try:
+        pipe = KolorsPipeline.from_pretrained(kolors_model_path, torch_dtype=torch.float16, variant="fp16")
+        pipe.to("cuda")
+        pipe.scheduler = DPMSolverMultistepScheduler.from_config(pipe.scheduler.config, use_karras_sigmas=True)
+
+        image = pipe(
+            prompt=prompt,
+            negative_prompt=negative_prompt,
+            guidance_scale=guidance_scale,
+            num_inference_steps=num_inference_steps,
+            max_sequence_length=max_sequence_length
+        ).images[0]
+
+        if stop_signal:
+            return None, "Generation stopped"
+
+        today = datetime.now().date()
+        image_dir = os.path.join('outputs', f"Kolors_{today.strftime('%Y%m%d')}")
+        os.makedirs(image_dir, exist_ok=True)
+        image_filename = f"kolors_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
+        image_path = os.path.join(image_dir, image_filename)
+        image.save(image_path, format=output_format.upper())
+
+        return image_path, None
+
+    except Exception as e:
+        return None, str(e)
+
+    finally:
+        del pipe
+        torch.cuda.empty_cache()
+
+def generate_image_auraflow(prompt, negative_prompt, num_inference_steps, guidance_scale, height, width, max_sequence_length, output_format="png", stop_generation=None):
+    global stop_signal
+    stop_signal = False
+
+    if not prompt:
+        return None, "Please enter a prompt!"
+
+    auraflow_model_path = os.path.join("inputs", "image", "sd_models", "auraflow")
+
+    if not os.path.exists(auraflow_model_path):
+        print("Downloading AuraFlow model...")
+        os.makedirs(auraflow_model_path, exist_ok=True)
+        Repo.clone_from("https://huggingface.co/fal/AuraFlow", auraflow_model_path)
+        print("AuraFlow model downloaded")
+
+    try:
+        pipe = AuraFlowPipeline.from_pretrained(auraflow_model_path, torch_dtype=torch.float16)
+        pipe = pipe.to("cuda")
+
+        image = pipe(
+            prompt=prompt,
+            negative_prompt=negative_prompt,
+            num_inference_steps=num_inference_steps,
+            guidance_scale=guidance_scale,
+            height=height,
+            width=width,
+            max_sequence_length=max_sequence_length
+        ).images[0]
+
+        if stop_signal:
+            return None, "Generation stopped"
+
+        today = datetime.now().date()
+        image_dir = os.path.join('outputs', f"AuraFlow_{today.strftime('%Y%m%d')}")
+        os.makedirs(image_dir, exist_ok=True)
+        image_filename = f"auraflow_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
+        image_path = os.path.join(image_dir, image_filename)
+        image.save(image_path, format=output_format.upper())
+
+        return image_path, None
+
+    except Exception as e:
+        return None, str(e)
+
+    finally:
+        del pipe
+        torch.cuda.empty_cache()
+
+
 def generate_image_deepfloyd(prompt, negative_prompt, num_inference_steps, guidance_scale, width, height, output_format="png", stop_generation=None):
     global stop_signal
     stop_signal = False
@@ -4015,6 +4111,52 @@ lumina_interface = gr.Interface(
     allow_flagging="never",
 )
 
+kolors_interface = gr.Interface(
+    fn=generate_image_kolors,
+    inputs=[
+        gr.Textbox(label="Enter your prompt"),
+        gr.Textbox(label="Enter your negative prompt", value=""),
+        gr.Slider(minimum=1.0, maximum=20.0, value=6.5, step=0.1, label="Guidance Scale"),
+        gr.Slider(minimum=1, maximum=100, value=25, step=1, label="Steps"),
+        gr.Slider(minimum=1, maximum=1024, value=256, step=1, label="Max Sequence Length"),
+        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
+        gr.Button(value="Stop generation", interactive=True, variant="stop"),
+    ],
+    outputs=[
+        gr.Image(type="filepath", label="Generated image"),
+        gr.Textbox(label="Message", type="text"),
+    ],
+    title="NeuroSandboxWebUI (ALPHA) - Kolors",
+    description="This user interface allows you to generate images using the Kolors model. "
+                "Enter a prompt and customize the generation settings. "
+                "Try it and see what happens!",
+    allow_flagging="never",
+)
+
+auraflow_interface = gr.Interface(
+    fn=generate_image_auraflow,
+    inputs=[
+        gr.Textbox(label="Enter your prompt"),
+        gr.Textbox(label="Enter your negative prompt", value=""),
+        gr.Slider(minimum=1, maximum=100, value=25, step=1, label="Steps"),
+        gr.Slider(minimum=1.0, maximum=20.0, value=7.5, step=0.1, label="Guidance Scale"),
+        gr.Slider(minimum=256, maximum=1024, value=512, step=64, label="Height"),
+        gr.Slider(minimum=256, maximum=1024, value=512, step=64, label="Width"),
+        gr.Slider(minimum=1, maximum=1024, value=256, step=1, label="Max Sequence Length"),
+        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
+        gr.Button(value="Stop generation", interactive=True, variant="stop"),
+    ],
+    outputs=[
+        gr.Image(type="filepath", label="Generated image"),
+        gr.Textbox(label="Message", type="text"),
+    ],
+    title="NeuroSandboxWebUI (ALPHA) - AuraFlow",
+    description="This user interface allows you to generate images using the AuraFlow model. "
+                "Enter a prompt and customize the generation settings. "
+                "Try it and see what happens!",
+    allow_flagging="never",
+)
+
 deepfloyd_if_interface = gr.Interface(
     fn=generate_image_deepfloyd,
     inputs=[
@@ -4348,9 +4490,9 @@ with gr.TabbedInterface(
                     [txt2img_interface, img2img_interface, depth2img_interface, pix2pix_interface, controlnet_interface, upscale_interface, inpaint_interface, gligen_interface, animatediff_interface, video_interface, ldm3d_interface, sd3_interface, cascade_interface, extras_interface],
                     tab_names=["txt2img", "img2img", "depth2img", "pix2pix", "controlnet", "upscale", "inpaint", "gligen", "animatediff", "video", "ldm3d", "sd3", "cascade", "extras"]
                 ),
-                kandinsky_interface, flux_interface, hunyuandit_interface, lumina_interface, deepfloyd_if_interface, pixart_interface
+                kandinsky_interface, flux_interface, hunyuandit_interface, lumina_interface, kolors_interface, auraflow_interface, deepfloyd_if_interface, pixart_interface
             ],
-            tab_names=["StableDiffusion", "Kandinsky", "Flux", "HunyuanDiT", "Lumina-T2X", "DeepFloydIF", "PixArt"]
+            tab_names=["StableDiffusion", "Kandinsky", "Flux", "HunyuanDiT", "Lumina-T2X", "Kolors", "AuraFlow", "DeepFloydIF", "PixArt"]
         ),
         gr.TabbedInterface(
             [wav2lip_interface, zeroscope2_interface, cogvideox_interface, latte_interface],
@@ -4391,6 +4533,8 @@ with gr.TabbedInterface(
     flux_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     hunyuandit_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     lumina_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
+    kolors_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
+    auraflow_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     deepfloyd_if_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     pixart_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     zeroscope2_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
