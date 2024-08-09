@@ -6,7 +6,7 @@
 
 ## Description:
 
-A simple and convenient interface for using various neural network models. You can communicate with LLM and Moondream2 using text, voice and image input; use StableDiffusion, Kandinsky, Flux, HunyuanDiT, Lumina-T2X, DeepFloydIF and PixArt to generate images; ZeroScope 2, CogVideoX and Latte to generate videos; TripoSR and Shap-E to generate 3D objects; StableAudioOpen, AudioCraft and AudioLDM 2 to generate music and audio; CoquiTTS and SunoBark for text-to-speech; OpenAI-Whisper for speech-to-text; Wav2Lip for lip-sync; Roop to faceswap; Rembg to remove background; CodeFormer for face restore; LibreTranslate for text translation; Demucs for audio file separation. You can also view files from the outputs directory in gallery, download the LLM and StableDiffusion models, change the application settings inside the interface and check system sensors
+A simple and convenient interface for using various neural network models. You can communicate with LLM and Moondream2 using text, voice and image input; use StableDiffusion, Kandinsky, Flux, HunyuanDiT, Lumina-T2X, Kolors, AuraFlow, Würstchen, DeepFloydIF and PixArt to generate images; ModelScope, ZeroScope 2, CogVideoX and Latte to generate videos; TripoSR and Shap-E to generate 3D objects; StableAudioOpen, AudioCraft and AudioLDM 2 to generate music and audio; CoquiTTS and SunoBark for text-to-speech; OpenAI-Whisper for speech-to-text; Wav2Lip for lip-sync; Roop to faceswap; Rembg to remove background; CodeFormer for face restore; LibreTranslate for text translation; Demucs for audio file separation. You can also view files from the outputs directory in gallery, download the LLM and StableDiffusion models, change the application settings inside the interface and check system sensors
 
 The goal of the project - to create the easiest possible application to use neural network models
 
@@ -31,7 +31,7 @@ The goal of the project - to create the easiest possible application to use neur
 * You can add your own HuggingFace-Token to download a specific models (You can enter your token in the hftoken.txt file)
 * Support for Transformers and llama.cpp models (LLM)
 * Support for diffusers and safetensors models (StableDiffusion) - txt2img, img2img, depth2img, pix2pix, controlnet, upscale, inpaint, gligen, animatediff, video, ldm3d, sd3, cascade and extras tabs
-* Support of additional models for image generation: Kandinsky, Flux, HunyuanDiT, Lumina-T2X, DeepFloydIF and PixArt
+* Support of additional models for image generation: Kandinsky, Flux, HunyuanDiT, Lumina-T2X, Kolors, AuraFlow, Würstchen, DeepFloydIF and PixArt
 * StableAudioOpen support
 * AudioCraft support (Models: musicgen, audiogen and magnet)
 * AudioLDM 2 support (Models: audio and music)
@@ -39,7 +39,7 @@ The goal of the project - to create the easiest possible application to use neur
 * Supports Lora, Textual inversion (embedding), Vae, Img2img, Depth, Pix2Pix, Controlnet, Upscale, Inpaint, GLIGEN, AnimateDiff, Videos, LDM3D, SD3, Cascade, Rembg, CodeFormer and Roop models (For StableDiffusion)
 * Support Multiband Diffusion model (For AudioCraft)
 * Support LibreTranslate (Local API)
-* Support ZeroScope 2, CogVideoX and Latte for video generation
+* Support ModelScope, ZeroScope 2, CogVideoX and Latte for video generation
 * Support SunoBark
 * Support Demucs
 * Support Shap-E
@@ -96,7 +96,7 @@ To work with the virtual environment through the terminal, run `./Venv.sh`
 
 ## How to use:
 
-#### Interface has twenty five tabs in six main tabs: LLM, TTS-STT, SunoBark, LibreTranslate, Wav2Lip, StableDiffusion, Kandinsky, Flux, HunyuanDiT, Lumina-T2X, DeepFloydIF, PixArt, ZeroScope 2, CogVideoX, Latte, TripoSR, Shap-E, StableAudio, AudioCraft, AudioLDM 2, Demucs, Gallery, ModelDownloader, Settings and System. Select the one you need and follow the instructions below 
+#### Interface has twenty nine tabs in six main tabs: LLM, TTS-STT, SunoBark, LibreTranslate, Wav2Lip, StableDiffusion, Kandinsky, Flux, HunyuanDiT, Lumina-T2X, Kolors, AuraFlow, Würstchen, DeepFloydIF, PixArt, ModelScope, ZeroScope 2, CogVideoX, Latte, TripoSR, Shap-E, StableAudio, AudioCraft, AudioLDM 2, Demucs, Gallery, ModelDownloader, Settings and System. Select the one you need and follow the instructions below 
 
 ### LLM:
 
@@ -283,6 +283,24 @@ To work with the virtual environment through the terminal, run `./Venv.sh`
 2) Set up the model according to the parameters you need
 3) Click `Submit` to get the generated image
 
+### Kolors:
+
+1) Enter your prompt
+2) Set up the model according to the parameters you need
+3) Click `Submit` to get the generated image
+
+### AuraFlow:
+
+1) Enter your prompt
+2) Set up the model according to the parameters you need
+3) Click `Submit` to get the generated image
+
+### Würstchen:
+
+1) Enter your prompt
+2) Set up the model according to the parameters you need
+3) Click `Submit` to get the generated image
+
 ### DeepFloydIF:
 
 1) Enter your prompt
@@ -295,6 +313,12 @@ To work with the virtual environment through the terminal, run `./Venv.sh`
 2) Select the model from the drop-down list
 3) Set up the model according to the parameters you need
 4) Click `Submit` to get the generated image
+
+### ModelScope:
+
+1) Enter your prompt
+2) Set up the model according to the parameters you need
+3) Click `Submit` to get the generated video
 
 ### ZeroScope 2:
 
@@ -384,7 +408,7 @@ To work with the virtual environment through the terminal, run `./Venv.sh`
 
 * LLM models can be taken from [HuggingFace](https://huggingface.co/models) or from ModelDownloader inside interface 
 * StableDiffusion, vae, inpaint, embedding and lora models can be taken from [CivitAI](https://civitai.com/models) or from ModelDownloader inside interface
-* StableAudioOpen, AudioCraft, AudioLDM 2, TTS, Whisper, Wav2Lip, SunoBark, MoonDream2, Upscale, GLIGEN, Depth, Pix2Pix, Controlnet, AnimateDiff, Videos, LDM3D, SD3, Cascade, Rembg, Roop, CodeFormer, TripoSR, Shap-E, Demucs, Kandinsky, Flux, HunyuanDiT, Lumina-T2X, DeepFloydIF, PixArt, ZeroScope 2, CogVideoX, Latte and Multiband diffusion models are downloads automatically in *inputs* folder when are they used 
+* StableAudioOpen, AudioCraft, AudioLDM 2, TTS, Whisper, Wav2Lip, SunoBark, MoonDream2, Upscale, GLIGEN, Depth, Pix2Pix, Controlnet, AnimateDiff, Videos, LDM3D, SD3, Cascade, Rembg, Roop, CodeFormer, TripoSR, Shap-E, Demucs, Kandinsky, Flux, HunyuanDiT, Lumina-T2X, Kolors, AuraFlow, Würstchen, DeepFloydIF, PixArt, ModelScope, ZeroScope 2, CogVideoX, Latte and Multiband diffusion models are downloads automatically in *inputs* folder when are they used 
 * You can take voices anywhere. Record yours or take a recording from the Internet. Or just use those that are already in the project. The main thing is that it is pre-processed!
 
 ## Wiki
@@ -463,6 +487,10 @@ First of all, I want to thank the developers of [PyCharm](https://www.jetbrains.
 * [PixArt](https://huggingface.co/stabilityai/stable-diffusion-xl-base-1.0/blob/main/LICENSE.md)
 * [CogVideoX](https://huggingface.co/THUDM/CogVideoX-2b/blob/main/LICENSE)
 * [Latte](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/apache-2.0.md)
+* [Kolors](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/apache-2.0.md)
+* [AuraFlow](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/apache-2.0.md)
+* [Würstchen](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/mit.md)
+* [ModelScope](https://spdx.org/licenses/CC-BY-NC-4.0)
 
 ## Donation
 
