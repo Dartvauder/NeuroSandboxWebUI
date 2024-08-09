@@ -15,7 +15,7 @@ from TTS.api import TTS
 import whisper
 from datetime import datetime
 from huggingface_hub import snapshot_download
-from diffusers import StableDiffusionPipeline, StableDiffusion3Pipeline, StableDiffusionXLPipeline, StableDiffusionImg2ImgPipeline, StableDiffusionDepth2ImgPipeline, ControlNetModel, StableDiffusionControlNetPipeline, AutoencoderKL, StableDiffusionLatentUpscalePipeline, StableDiffusionUpscalePipeline, StableDiffusionInpaintPipeline, StableDiffusionGLIGENPipeline, AnimateDiffPipeline, AnimateDiffVideoToVideoPipeline, MotionAdapter, StableVideoDiffusionPipeline, I2VGenXLPipeline, StableCascadePriorPipeline, StableCascadeDecoderPipeline, DiffusionPipeline, DPMSolverMultistepScheduler, ShapEPipeline, ShapEImg2ImgPipeline, StableAudioPipeline, AudioLDM2Pipeline, StableDiffusionInstructPix2PixPipeline, StableDiffusionLDM3DPipeline, FluxPipeline, KandinskyPipeline, KandinskyPriorPipeline, KandinskyV22Pipeline, KandinskyV22PriorPipeline, AutoPipelineForText2Image, HunyuanDiTPipeline, LuminaText2ImgPipeline, IFPipeline, IFSuperResolutionPipeline, PixArtAlphaPipeline, PixArtSigmaPipeline
+from diffusers import StableDiffusionPipeline, StableDiffusion3Pipeline, StableDiffusionXLPipeline, StableDiffusionImg2ImgPipeline, StableDiffusionDepth2ImgPipeline, ControlNetModel, StableDiffusionControlNetPipeline, AutoencoderKL, StableDiffusionLatentUpscalePipeline, StableDiffusionUpscalePipeline, StableDiffusionInpaintPipeline, StableDiffusionGLIGENPipeline, AnimateDiffPipeline, AnimateDiffVideoToVideoPipeline, MotionAdapter, StableVideoDiffusionPipeline, I2VGenXLPipeline, StableCascadePriorPipeline, StableCascadeDecoderPipeline, DiffusionPipeline, DPMSolverMultistepScheduler, ShapEPipeline, ShapEImg2ImgPipeline, StableAudioPipeline, AudioLDM2Pipeline, StableDiffusionInstructPix2PixPipeline, StableDiffusionLDM3DPipeline, FluxPipeline, KandinskyPipeline, KandinskyPriorPipeline, KandinskyV22Pipeline, KandinskyV22PriorPipeline, AutoPipelineForText2Image, HunyuanDiTPipeline, LuminaText2ImgPipeline, IFPipeline, IFSuperResolutionPipeline, PixArtAlphaPipeline, PixArtSigmaPipeline, CogVideoXPipeline, LattePipeline
 from diffusers.utils import load_image, export_to_video, export_to_gif, export_to_ply, pt_to_pil
 from controlnet_aux import OpenposeDetector, LineartDetector, HEDdetector
 from compel import Compel, ReturnedEmbeddingsType
@@ -2751,6 +2751,103 @@ def generate_video_zeroscope2(prompt, video_to_enhance, strength, num_inference_
             torch.cuda.empty_cache()
 
 
+def generate_video_cogvideox(prompt, negative_prompt, num_inference_steps, guidance_scale, height, width, num_frames, fps, stop_generation):
+    global stop_signal
+    stop_signal = False
+
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+
+    cogvideox_model_path = os.path.join("inputs", "image", "sd_models", "cogvideox")
+
+    if not os.path.exists(cogvideox_model_path):
+        print("Downloading CogVideoX model...")
+        os.makedirs(cogvideox_model_path, exist_ok=True)
+        Repo.clone_from("https://huggingface.co/THUDM/CogVideoX-2b", cogvideox_model_path)
+        print("CogVideoX model downloaded")
+
+    try:
+        pipe = CogVideoXPipeline.from_pretrained(cogvideox_model_path, torch_dtype=torch.float16).to(device)
+        pipe.enable_model_cpu_offload()
+
+        video = pipe(
+            prompt=prompt,
+            negative_prompt=negative_prompt,
+            num_inference_steps=num_inference_steps,
+            guidance_scale=guidance_scale,
+            height=height,
+            width=width,
+            num_frames=num_frames
+        ).frames[0]
+
+        if stop_signal:
+            return None, "Generation stopped"
+
+        today = datetime.now().date()
+        video_dir = os.path.join('outputs', f"CogVideoX_{today.strftime('%Y%m%d')}")
+        os.makedirs(video_dir, exist_ok=True)
+
+        video_filename = f"cogvideox_{datetime.now().strftime('%Y%m%d_%H%M%S')}.mp4"
+        video_path = os.path.join(video_dir, video_filename)
+        export_to_video(video, video_path, fps=fps)
+
+        return video_path, None
+
+    except Exception as e:
+        return None, str(e)
+
+    finally:
+        del pipe
+        torch.cuda.empty_cache()
+
+def generate_video_latte(prompt, negative_prompt, num_inference_steps, guidance_scale, height, width, video_length, stop_generation):
+    global stop_signal
+    stop_signal = False
+
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+
+    latte_model_path = os.path.join("inputs", "image", "sd_models", "latte")
+
+    if not os.path.exists(latte_model_path):
+        print("Downloading Latte model...")
+        os.makedirs(latte_model_path, exist_ok=True)
+        Repo.clone_from("https://huggingface.co/maxin-cn/Latte-1", latte_model_path)
+        print("Latte model downloaded")
+
+    try:
+        pipe = LattePipeline.from_pretrained(latte_model_path, torch_dtype=torch.float16).to(device)
+        pipe.enable_model_cpu_offload()
+
+        videos = pipe(
+            prompt=prompt,
+            negative_prompt=negative_prompt,
+            num_inference_steps=num_inference_steps,
+            guidance_scale=guidance_scale,
+            height=height,
+            width=width,
+            video_length=video_length
+        ).frames[0]
+
+        if stop_signal:
+            return None, "Generation stopped"
+
+        today = datetime.now().date()
+        gif_dir = os.path.join('outputs', f"Latte_{today.strftime('%Y%m%d')}")
+        os.makedirs(gif_dir, exist_ok=True)
+
+        gif_filename = f"latte_{datetime.now().strftime('%Y%m%d_%H%M%S')}.gif"
+        gif_path = os.path.join(gif_dir, gif_filename)
+        export_to_gif(videos, gif_path)
+
+        return gif_path, None
+
+    except Exception as e:
+        return None, str(e)
+
+    finally:
+        del pipe
+        torch.cuda.empty_cache()
+
+
 def generate_3d_triposr(image, mc_resolution, foreground_ratio=0.85, output_format="obj", stop_generation=None):
     global stop_signal
     stop_signal = False
@@ -3993,6 +4090,53 @@ zeroscope2_interface = gr.Interface(
     allow_flagging="never",
 )
 
+cogvideox_interface = gr.Interface(
+    fn=generate_video_cogvideox,
+    inputs=[
+        gr.Textbox(label="Enter your prompt"),
+        gr.Textbox(label="Enter your negative prompt", value=""),
+        gr.Slider(minimum=1, maximum=100, value=50, step=1, label="Steps"),
+        gr.Slider(minimum=1.0, maximum=20.0, value=6.0, step=0.1, label="Guidance Scale"),
+        gr.Slider(minimum=256, maximum=1024, value=512, step=64, label="Height"),
+        gr.Slider(minimum=256, maximum=1024, value=512, step=64, label="Width"),
+        gr.Slider(minimum=1, maximum=100, value=16, step=1, label="Number of Frames"),
+        gr.Slider(minimum=1, maximum=60, value=8, step=1, label="FPS"),
+        gr.Button(value="Stop generation", interactive=True, variant="stop"),
+    ],
+    outputs=[
+        gr.Video(label="Generated video"),
+        gr.Textbox(label="Message", type="text"),
+    ],
+    title="NeuroSandboxWebUI (ALPHA) - CogVideoX",
+    description="This user interface allows you to generate videos using CogVideoX. "
+                "Enter a prompt and customize the generation settings. "
+                "Try it and see what happens!",
+    allow_flagging="never",
+)
+
+latte_interface = gr.Interface(
+    fn=generate_video_latte,
+    inputs=[
+        gr.Textbox(label="Enter your prompt"),
+        gr.Textbox(label="Enter your negative prompt", value=""),
+        gr.Slider(minimum=1, maximum=100, value=50, step=1, label="Steps"),
+        gr.Slider(minimum=1.0, maximum=20.0, value=6.0, step=0.1, label="Guidance Scale"),
+        gr.Slider(minimum=256, maximum=1024, value=512, step=64, label="Height"),
+        gr.Slider(minimum=256, maximum=1024, value=512, step=64, label="Width"),
+        gr.Slider(minimum=1, maximum=100, value=16, step=1, label="Video Length"),
+        gr.Button(value="Stop generation", interactive=True, variant="stop"),
+    ],
+    outputs=[
+        gr.Image(type="filepath", label="Generated GIF"),
+        gr.Textbox(label="Message", type="text"),
+    ],
+    title="NeuroSandboxWebUI (ALPHA) - Latte",
+    description="This user interface allows you to generate GIFs using Latte. "
+                "Enter a prompt and customize the generation settings. "
+                "Try it and see what happens!",
+    allow_flagging="never",
+)
+
 triposr_interface = gr.Interface(
     fn=generate_3d_triposr,
     inputs=[
@@ -4195,8 +4339,8 @@ system_interface = gr.Interface(
 with gr.TabbedInterface(
         [chat_interface, tts_stt_interface, bark_interface, translate_interface, wav2lip_interface, gr.TabbedInterface([txt2img_interface, img2img_interface, depth2img_interface, pix2pix_interface, controlnet_interface, upscale_interface, inpaint_interface, gligen_interface, animatediff_interface, video_interface, ldm3d_interface, sd3_interface, cascade_interface, extras_interface],
         tab_names=["txt2img", "img2img", "depth2img", "pix2pix", "controlnet", "upscale", "inpaint", "gligen", "animatediff", "video", "ldm3d", "sd3", "cascade", "extras"]),
-                    kandinsky_interface, flux_interface, hunyuandit_interface, lumina_interface, deepfloyd_if_interface, pixart_interface, zeroscope2_interface, triposr_interface, shap_e_interface, stableaudio_interface, audiocraft_interface, audioldm2_interface, demucs_interface, gallery_interface, model_downloader_interface, settings_interface, system_interface],
-        tab_names=["LLM", "TTS-STT", "SunoBark", "LibreTranslate", "Wav2Lip", "StableDiffusion", "Kandinsky", "Flux", "HunyuanDiT", "Lumina-T2X", "DeepFloydIF", "PixArt", "ZeroScope 2", "TripoSR", "Shap-E", "StableAudio", "AudioCraft", "AudioLDM 2", "Demucs", "Gallery", "ModelDownloader", "Settings", "System"]
+                    kandinsky_interface, flux_interface, hunyuandit_interface, lumina_interface, deepfloyd_if_interface, pixart_interface, zeroscope2_interface, cogvideox_interface, latte_interface, triposr_interface, shap_e_interface, stableaudio_interface, audiocraft_interface, audioldm2_interface, demucs_interface, gallery_interface, model_downloader_interface, settings_interface, system_interface],
+        tab_names=["LLM", "TTS-STT", "SunoBark", "LibreTranslate", "Wav2Lip", "StableDiffusion", "Kandinsky", "Flux", "HunyuanDiT", "Lumina-T2X", "DeepFloydIF", "PixArt", "ZeroScope 2", "CogVideoX", "Latte", "TripoSR", "Shap-E", "StableAudio", "AudioCraft", "AudioLDM 2", "Demucs", "Gallery", "ModelDownloader", "Settings", "System"]
 ) as app:
     chat_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     bark_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
@@ -4221,6 +4365,8 @@ with gr.TabbedInterface(
     deepfloyd_if_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     pixart_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     zeroscope2_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
+    cogvideox_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
+    latte_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     triposr_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     shap_e_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     stableaudio_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
