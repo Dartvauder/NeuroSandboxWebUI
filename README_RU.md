@@ -6,43 +6,11 @@
 
 ## Описание:
 
-Простой и удобный интерфейс для использования различных моделей нейронных сетей. Вы можете общаться с LLM и Moondream2, используя текстовый или голосовой ввод и загрузив изображение, использовать StableDiffusion для генерации изображений, ZeroScope 2 для генерации видео, TripoSR и Shap-E для генерации 3Д обьектов, StableAudioOpen, AudioCraft и AudioLDM 2 для генерации музыки и аудио, CoquiTTS и SunoBark для преобразования текста в речь, OpenAI-Whisper для преобразования речи в текст, Wav2Lip для лицевой синхронизации губ, Roop для замены лица, Rembg для удаления фона, CodeFormer для восстановления лиц, LibreTranslate для перевода текста и Demucs для сепарации аудио файлов. Также вы можете просматривать файлы из папок outputs в галерее, скачать модели LLM и StableDiffusion, изменить настройки приложения внутри интерфейса и проверить датчики системы
+Простой и удобный интерфейс для использования различных моделей нейронных сетей. Вы можете общаться с LLM и Moondream2 используя текстовый или голосовой ввод и загрузив изображение; использовать StableDiffusion, Kandinsky, Flux, HunyuanDiT, Lumina-T2X, DeepFloydIF и PixArt для генерации изображений; ZeroScope 2, CogVideoX и Latte для генерации видео; TripoSR и Shap-E для генерации 3Д обьектов; StableAudioOpen, AudioCraft и AudioLDM 2 для генерации музыки и аудио; CoquiTTS и SunoBark для преобразования текста в речь; OpenAI-Whisper для преобразования речи в текст; Wav2Lip для лицевой синхронизации губ; Roop для замены лица; Rembg для удаления фона; CodeFormer для восстановления лиц; LibreTranslate для перевода текста; Demucs для сепарации аудио файлов. Также вы можете просматривать файлы из папок outputs в галерее, скачать модели LLM и StableDiffusion, изменить настройки приложения внутри интерфейса и проверить датчики системы
 
 Цель проекта — создать максимально простое приложение для использования нейросетевых моделей
 
-### LLM: <img width="1111" alt="1" src="https://github.com/user-attachments/assets/6caf443a-03d0-465a-a96d-3485e6373be1">
-
-### TTS-STT: <img width="1109" alt="2" src="https://github.com/user-attachments/assets/5290db5e-d55c-4ca5-8500-dfd726c846ae">
-
-### SunoBark: <img width="1110" alt="3" src="https://github.com/user-attachments/assets/73a7d006-37d6-4e96-9a73-285bc7960686">
-
-### LibreTranslate: <img width="1115" alt="4" src="https://github.com/user-attachments/assets/1747c931-6052-4972-b012-e74034f78bc0">
-
-### Wav2Lip: <img width="1113" alt="5" src="https://github.com/user-attachments/assets/3135d71a-dcac-4080-b8a8-8d8f41a545bb">
-
-### StableDiffusion: <img width="1109" alt="6" src="https://github.com/user-attachments/assets/2146897a-737d-4a54-8d68-3efb6abc894b">
-
-### ZeroScope 2: <img width="1115" alt="7" src="https://github.com/user-attachments/assets/ae3d6372-a216-4826-9bb7-a5a1ffdddece">
-
-### TripoSR: <img width="1112" alt="8" src="https://github.com/user-attachments/assets/7aade6d0-0c98-4f26-acf8-d9635a3645c0">
-
-### Shap-E: <img width="1117" alt="9" src="https://github.com/user-attachments/assets/2da9ffee-28f7-4c75-aa64-2e74e521569c">
-
-### StableAudio: <img width="1113" alt="10" src="https://github.com/user-attachments/assets/e2e53880-7a52-4f25-aa95-f1479a921e5f">
-
-### AudioCraft: <img width="1118" alt="11" src="https://github.com/user-attachments/assets/42cceb62-04a2-46a2-a0c4-71fea6254d24">
-
-### AudioLDM 2: <img width="1121" alt="12" src="https://github.com/user-attachments/assets/65fd1c9e-19e6-40c4-af89-8671184e3ea0">
-
-### Demucs: <img width="1125" alt="13" src="https://github.com/user-attachments/assets/39fb383c-9d60-433a-8d72-5660df59b10d">
-
-### Gallery: <img width="1129" alt="14" src="https://github.com/user-attachments/assets/bb1d05c6-faaa-4a25-8eba-430e2d814563">
-
-### ModelDownloader: <img width="1130" alt="15" src="https://github.com/user-attachments/assets/a5313b00-2add-4111-be16-deeb27a8d0ff">
-
-### Settings: <img width="1121" alt="16" src="https://github.com/user-attachments/assets/67f2f4c3-59a2-4cd1-9247-2f16d79cdb86">
-
-### System: <img width="1114" alt="17" src="https://github.com/user-attachments/assets/fa7aa876-0510-437e-8fdd-1313e871aac5">
+### NeuroSandboxWebUI: <img width="1118" alt="MAIN" src="https://github.com/user-attachments/assets/fa9ee0ab-180a-4978-b336-308e1d5ee9c7">
 
 ## Функции:
 
@@ -52,6 +20,7 @@
 * Аутентификация через admin:admin (Вы можете вписать свои данные для входа в файле GradioAuth.txt)
 * Поддержка Transformers и llama.cpp моделей (LLM)
 * Поддержка diffusers и safetensors моделей (StableDiffusion) - Вкладки txt2img, img2img, depth2img, pix2pix, controlnet, upscale, inpaint, gligen, animatediff, video, ldm3d, sd3, cascade и extras
+* Поддержка дополнительных моделей для генерации изображений: Kandinsky, Flux, HunyuanDiT, Lumina-T2X, DeepFloydIF и PixArt
 * Поддержка StableAudioOpen
 * Поддержка AudioCraft (Модели: musicgen, audiogen и magnet)
 * Поддержка AudioLDM 2 (Модели: audio и music)
@@ -59,7 +28,7 @@
 * Поддержка Lora, Textual inversion (embedding), Vae, Img2img, Depth, Pix2Pix, Controlnet, Upscale, Inpaint, GLIGEN, AnimateDiff, Videos, LDM3D, SD3, Cascade, Rembg, CodeFormer и Roop моделей (Для StableDiffusion)
 * Поддержка Multiband Diffusion модели (Для AudioCraft)
 * Поддержка LibreTranslate (Локальный API)
-* Поддержка ZeroScope 2
+* Поддержка ZeroScope 2, CogVideoX и Latte для генерации видео
 * Поддержка SunoBark
 * Поддержка Demucs
 * Поддержка Shap-E
@@ -116,7 +85,7 @@
 
 ## Как использовать:
 
-#### Интерфейс имеет семнадцать вкладок: LLM, TTS-STT, SunoBark, LibreTranslate, Wav2Lip StableDiffusion, ZeroScope 2, TripoSR, Shap-E, StableAudio, AudioCraft, AudioLDM 2, Demucs, Галерея, Загрузчик моделей, Настройки и Система. Выберите ту которая вам нужна и следуйте инструкциям ниже
+#### Интерфейс имеет двадцать пять вкладок: LLM, TTS-STT, SunoBark, LibreTranslate, Wav2Lip, StableDiffusion, Kandinsky, Flux, HunyuanDiT, Lumina-T2X, DeepFloydIF, PixArt, ZeroScope 2, CogVideoX, Latte, TripoSR, Shap-E, StableAudio, AudioCraft, AudioLDM 2, Demucs, Галерея, Загрузчик моделей, Настройки и Система. Выберите ту которая вам нужна и следуйте инструкциям ниже
 
 ### LLM:
 
@@ -277,7 +246,58 @@
 2) Выберите нужные вам опции
 3) Нажмите кнопку `Submit`, чтобы получить измененное изображение
 
+### Kandinsky:
+
+1) Введите ваш запрос
+2) Выберите модель из выпадающего списка
+3) Настройте модель по нужным вам параметрам
+4) Нажмите кнопку `Submit`, чтобы получить сгенерированное изображение
+
+### Flux:
+
+1) Введите ваш запрос
+2) Выберите модель из выпадающего списка
+3) Настройте модель по нужным вам параметрам
+4) Нажмите кнопку `Submit`, чтобы получить сгенерированное изображение
+
+### HunyuanDiT:
+
+1) Введите ваш запрос
+2) Настройте модель по нужным вам параметрам
+3) Нажмите кнопку `Submit`, чтобы получить сгенерированное изображение
+
+### Lumina-T2X:
+
+1) Введите ваш запрос
+2) Настройте модель по нужным вам параметрам
+3) Нажмите кнопку `Submit`, чтобы получить сгенерированное изображение
+
+### DeepFloydIF:
+
+1) Введите ваш запрос
+2) Настройте модель по нужным вам параметрам
+3) Нажмите кнопку `Submit`, чтобы получить сгенерированное изображение
+
+### PixArt:
+
+1) Введите ваш запрос
+2) Выберите модель из выпадающего списка
+3) Настройте модель по нужным вам параметрам
+4) Нажмите кнопку `Submit`, чтобы получить сгенерированное изображение
+
 ### ZeroScope 2:
+
+1) Введите ваш запрос
+2) Настройте модель по нужным вам параметрам
+3) Нажмите кнопку `Submit`, чтобы получить сгенерированное видео
+
+### CogVideoX:
+
+1) Введите ваш запрос
+2) Настройте модель по нужным вам параметрам
+3) Нажмите кнопку `Submit`, чтобы получить сгенерированное видео
+
+### Latte:
 
 1) Введите ваш запрос
 2) Настройте модель по нужным вам параметрам
@@ -353,7 +373,7 @@
 
 * LLM модели можно взять с сайта [HuggingFace](https://huggingface.co/models) или из внутреннего интерфейса ModelDownloader
 * Модели StableDiffusion, vae, inpaint, embedding и lora можно взять с сайта [CivitAI](https://civitai.com/models) или из внутреннего интерфейса ModelDownloader
-* StableAudioOpen, AudioCraft, AudioLDM 2, TTS, Whisper, Wav2Lip, SunoBark, MoonDream2, Upscale, GLIGEN, Depth, Pix2Pix, Controlnet, AnimateDiff, Videos, LDM3D, SD3, Cascade, Rembg, Roop, CodeFormer, TripoSR, Shap-E, Demucs, ZeroScope и Multiband diffusion модели скачиваються автоматически в папку *inputs* при их использовании
+* StableAudioOpen, AudioCraft, AudioLDM 2, TTS, Whisper, Wav2Lip, SunoBark, MoonDream2, Upscale, GLIGEN, Depth, Pix2Pix, Controlnet, AnimateDiff, Videos, LDM3D, SD3, Cascade, Rembg, Roop, CodeFormer, TripoSR, Shap-E, Demucs, Kandinsky, Flux, HunyuanDiT, Lumina-T2X, DeepFloydIF, PixArt, ZeroScope 2, CogVideoX, Latte и Multiband diffusion модели скачиваються автоматически в папку *inputs* при их использовании
 * Вы можете использовать голоса откуда угодно. Запишите свой или возьмите запись из интернета. Или просто используйте те, которые уже есть в проекте. Главное, чтобы оно было предварительно обработано!
 
 ## Вики
@@ -423,6 +443,15 @@
 * [ControlNet](https://github.com/lllyasviel/ControlNet/blob/main/LICENSE)
 * [AnimateDiff](https://github.com/guoyww/AnimateDiff/blob/main/LICENSE.txt)
 * [Pix2Pix](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/mit.md)
+* [Kandinsky 2.1; 2.2; 3](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/apache-2.0.md)
+* [Flux-schnell](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/apache-2.0.md)
+* [Flux-dev](https://huggingface.co/black-forest-labs/FLUX.1-dev/blob/main/LICENSE.md)
+* [HunyuanDiT](https://huggingface.co/Tencent-Hunyuan/HunyuanDiT/blob/main/LICENSE.txt)
+* [Lumina-T2X](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/apache-2.0.md)
+* [DeepFloydIF](https://huggingface.co/spaces/DeepFloyd/deepfloyd-if-license)
+* [PixArt](https://huggingface.co/stabilityai/stable-diffusion-xl-base-1.0/blob/main/LICENSE.md)
+* [CogVideoX](https://huggingface.co/THUDM/CogVideoX-2b/blob/main/LICENSE)
+* [Latte](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/apache-2.0.md)
 
 ## Пожертвование
 

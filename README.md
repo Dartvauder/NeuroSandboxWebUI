@@ -6,43 +6,11 @@
 
 ## Description:
 
-A simple and convenient interface for using various neural network models. You can communicate with LLM and Moondream2 using text, voice and image input, use StableDiffusion to generate images, ZeroScope 2 to generate videos, TripoSR and Shap-E to generate 3D objects, StableAudioOpen, AudioCraft and AudioLDM 2 to generate music and audio, CoquiTTS and SunoBark for text-to-speech, OpenAI-Whisper for speech-to-text, Wav2Lip for lip-sync, Roop to faceswap, Rembg to remove background, CodeFormer for face restore, LibreTranslate for text translation and Demucs for audio file separation. You can also view files from the outputs directory in gallery, download the LLM and StableDiffusion models, change the application settings inside the interface and check system sensors
+A simple and convenient interface for using various neural network models. You can communicate with LLM and Moondream2 using text, voice and image input; use StableDiffusion, Kandinsky, Flux, HunyuanDiT, Lumina-T2X, DeepFloydIF and PixArt to generate images; ZeroScope 2, CogVideoX and Latte to generate videos; TripoSR and Shap-E to generate 3D objects; StableAudioOpen, AudioCraft and AudioLDM 2 to generate music and audio; CoquiTTS and SunoBark for text-to-speech; OpenAI-Whisper for speech-to-text; Wav2Lip for lip-sync; Roop to faceswap; Rembg to remove background; CodeFormer for face restore; LibreTranslate for text translation; Demucs for audio file separation. You can also view files from the outputs directory in gallery, download the LLM and StableDiffusion models, change the application settings inside the interface and check system sensors
 
 The goal of the project - to create the easiest possible application to use neural network models
 
-### LLM: <img width="1111" alt="1" src="https://github.com/user-attachments/assets/6caf443a-03d0-465a-a96d-3485e6373be1">
-
-### TTS-STT: <img width="1109" alt="2" src="https://github.com/user-attachments/assets/5290db5e-d55c-4ca5-8500-dfd726c846ae">
-
-### SunoBark: <img width="1110" alt="3" src="https://github.com/user-attachments/assets/73a7d006-37d6-4e96-9a73-285bc7960686">
-
-### LibreTranslate: <img width="1115" alt="4" src="https://github.com/user-attachments/assets/1747c931-6052-4972-b012-e74034f78bc0">
-
-### Wav2Lip: <img width="1113" alt="5" src="https://github.com/user-attachments/assets/3135d71a-dcac-4080-b8a8-8d8f41a545bb">
-
-### StableDiffusion: <img width="1109" alt="6" src="https://github.com/user-attachments/assets/2146897a-737d-4a54-8d68-3efb6abc894b">
-
-### ZeroScope 2: <img width="1115" alt="7" src="https://github.com/user-attachments/assets/ae3d6372-a216-4826-9bb7-a5a1ffdddece">
-
-### TripoSR: <img width="1112" alt="8" src="https://github.com/user-attachments/assets/7aade6d0-0c98-4f26-acf8-d9635a3645c0">
-
-### Shap-E: <img width="1117" alt="9" src="https://github.com/user-attachments/assets/2da9ffee-28f7-4c75-aa64-2e74e521569c">
-
-### StableAudio: <img width="1113" alt="10" src="https://github.com/user-attachments/assets/e2e53880-7a52-4f25-aa95-f1479a921e5f">
-
-### AudioCraft: <img width="1118" alt="11" src="https://github.com/user-attachments/assets/42cceb62-04a2-46a2-a0c4-71fea6254d24">
-
-### AudioLDM 2: <img width="1121" alt="12" src="https://github.com/user-attachments/assets/65fd1c9e-19e6-40c4-af89-8671184e3ea0">
-
-### Demucs: <img width="1125" alt="13" src="https://github.com/user-attachments/assets/39fb383c-9d60-433a-8d72-5660df59b10d">
-
-### Gallery: <img width="1129" alt="14" src="https://github.com/user-attachments/assets/bb1d05c6-faaa-4a25-8eba-430e2d814563">
-
-### ModelDownloader: <img width="1130" alt="15" src="https://github.com/user-attachments/assets/a5313b00-2add-4111-be16-deeb27a8d0ff">
-
-### Settings: <img width="1121" alt="16" src="https://github.com/user-attachments/assets/67f2f4c3-59a2-4cd1-9247-2f16d79cdb86">
-
-### System: <img width="1114" alt="17" src="https://github.com/user-attachments/assets/fa7aa876-0510-437e-8fdd-1313e871aac5">
+### NeuroSandboxWebUI: <img width="1118" alt="MAIN" src="https://github.com/user-attachments/assets/fa9ee0ab-180a-4978-b336-308e1d5ee9c7">
 
 ## Features:
 
@@ -52,6 +20,7 @@ The goal of the project - to create the easiest possible application to use neur
 * Authentication via admin:admin (You can enter your login details in the GradioAuth.txt file)
 * Support for Transformers and llama.cpp models (LLM)
 * Support for diffusers and safetensors models (StableDiffusion) - txt2img, img2img, depth2img, pix2pix, controlnet, upscale, inpaint, gligen, animatediff, video, ldm3d, sd3, cascade and extras tabs
+* Support of additional models for image generation: Kandinsky, Flux, HunyuanDiT, Lumina-T2X, DeepFloydIF and PixArt
 * StableAudioOpen support
 * AudioCraft support (Models: musicgen, audiogen and magnet)
 * AudioLDM 2 support (Models: audio and music)
@@ -59,7 +28,7 @@ The goal of the project - to create the easiest possible application to use neur
 * Supports Lora, Textual inversion (embedding), Vae, Img2img, Depth, Pix2Pix, Controlnet, Upscale, Inpaint, GLIGEN, AnimateDiff, Videos, LDM3D, SD3, Cascade, Rembg, CodeFormer and Roop models (For StableDiffusion)
 * Support Multiband Diffusion model (For AudioCraft)
 * Support LibreTranslate (Local API)
-* Support ZeroScope 2
+* Support ZeroScope 2, CogVideoX and Latte for video generation
 * Support SunoBark
 * Support Demucs
 * Support Shap-E
@@ -116,7 +85,7 @@ To work with the virtual environment through the terminal, run `./Venv.sh`
 
 ## How to use:
 
-#### Interface has seventeen tabs: LLM, TTS-STT, SunoBark, LibreTranslate, Wav2Lip, StableDiffusion, ZeroScope 2, TripoSR, Shap-E, StableAudio, AudioCraft, AudioLDM 2, Demucs, Gallery, ModelDownloader, Settings and System. Select the one you need and follow the instructions below 
+#### Interface has twenty five tabs: LLM, TTS-STT, SunoBark, LibreTranslate, Wav2Lip, StableDiffusion, Kandinsky, Flux, HunyuanDiT, Lumina-T2X, DeepFloydIF, PixArt, ZeroScope 2, CogVideoX, Latte, TripoSR, Shap-E, StableAudio, AudioCraft, AudioLDM 2, Demucs, Gallery, ModelDownloader, Settings and System. Select the one you need and follow the instructions below 
 
 ### LLM:
 
@@ -277,11 +246,62 @@ To work with the virtual environment through the terminal, run `./Venv.sh`
 2) Select the options you need
 3) Click the `Submit` button to get the modified image
 
+### Kandinsky:
+
+1) Enter your prompt
+2) Select a model from the drop-down list
+3) Set up the model according to the parameters you need
+4) Click `Submit` to get the generated image
+
+### Flux:
+
+1) Enter your prompt
+2) Select a model from the drop-down list
+3) Set up the model according to the parameters you need
+4) Click `Submit` to get the generated image
+
+### HunyuanDiT:
+
+1) Enter your prompt
+2) Set up the model according to the parameters you need
+3) Click `Submit` to get the generated image
+
+### Lumina-T2X:
+
+1) Enter your prompt
+2) Set up the model according to the parameters you need
+3) Click `Submit` to get the generated image
+
+### DeepFloydIF:
+
+1) Enter your prompt
+2) Set up the model according to the parameters you need
+3) Click `Submit` to get the generated image
+
+### PixArt:
+
+1) Enter your prompt
+2) Select the model from the drop-down list
+3) Set up the model according to the parameters you need
+4) Click `Submit` to get the generated image
+
 ### ZeroScope 2:
 
-1) Enter your request
+1) Enter your prompt
 2) Set up the model according to the parameters you need
-3) Click the `Submit` button to get the generated video
+3) Click `Submit` to get the generated video
+
+### CogVideoX:
+
+1) Enter your prompt
+2) Set up the model according to the parameters you need
+3) Click `Submit` to get the generated video
+
+### Latte:
+
+1) Enter your prompt
+2) Set up the model according to the parameters you need
+3) Click `Submit` to get the generated video
 
 ### TripoSR:
 
@@ -353,7 +373,7 @@ To work with the virtual environment through the terminal, run `./Venv.sh`
 
 * LLM models can be taken from [HuggingFace](https://huggingface.co/models) or from ModelDownloader inside interface 
 * StableDiffusion, vae, inpaint, embedding and lora models can be taken from [CivitAI](https://civitai.com/models) or from ModelDownloader inside interface
-* StableAudioOpen, AudioCraft, AudioLDM 2, TTS, Whisper, Wav2Lip, SunoBark, MoonDream2, Upscale, GLIGEN, Depth, Pix2Pix, Controlnet, AnimateDiff, Videos, LDM3D, SD3, Cascade, Rembg, Roop, CodeFormer, TripoSR, Shap-E, Demucs, ZeroScope and Multiband diffusion models are downloads automatically in *inputs* folder when are they used 
+* StableAudioOpen, AudioCraft, AudioLDM 2, TTS, Whisper, Wav2Lip, SunoBark, MoonDream2, Upscale, GLIGEN, Depth, Pix2Pix, Controlnet, AnimateDiff, Videos, LDM3D, SD3, Cascade, Rembg, Roop, CodeFormer, TripoSR, Shap-E, Demucs, Kandinsky, Flux, HunyuanDiT, Lumina-T2X, DeepFloydIF, PixArt, ZeroScope 2, CogVideoX, Latte and Multiband diffusion models are downloads automatically in *inputs* folder when are they used 
 * You can take voices anywhere. Record yours or take a recording from the Internet. Or just use those that are already in the project. The main thing is that it is pre-processed!
 
 ## Wiki
@@ -423,6 +443,15 @@ First of all, I want to thank the developers of [PyCharm](https://www.jetbrains.
 * [ControlNet](https://github.com/lllyasviel/ControlNet/blob/main/LICENSE)
 * [AnimateDiff](https://github.com/guoyww/AnimateDiff/blob/main/LICENSE.txt)
 * [Pix2Pix](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/mit.md)
+* [Kandinsky 2.1; 2.2; 3](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/apache-2.0.md)
+* [Flux-schnell](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/apache-2.0.md)
+* [Flux-dev](https://huggingface.co/black-forest-labs/FLUX.1-dev/blob/main/LICENSE.md)
+* [HunyuanDiT](https://huggingface.co/Tencent-Hunyuan/HunyuanDiT/blob/main/LICENSE.txt)
+* [Lumina-T2X](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/apache-2.0.md)
+* [DeepFloydIF](https://huggingface.co/spaces/DeepFloyd/deepfloyd-if-license)
+* [PixArt](https://huggingface.co/stabilityai/stable-diffusion-xl-base-1.0/blob/main/LICENSE.md)
+* [CogVideoX](https://huggingface.co/THUDM/CogVideoX-2b/blob/main/LICENSE)
+* [Latte](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/apache-2.0.md)
 
 ## Donation
 
