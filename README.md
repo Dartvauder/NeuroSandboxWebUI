@@ -20,7 +20,7 @@ The goal of the project - to create the easiest possible application to use neur
 * Authentication via admin:admin (You can enter your login details in the GradioAuth.txt file)
 * Support for Transformers and llama.cpp models (LLM)
 * Support for diffusers and safetensors models (StableDiffusion) - txt2img, img2img, depth2img, pix2pix, controlnet, upscale, inpaint, gligen, animatediff, video, ldm3d, sd3, cascade and extras tabs
-* Support for additional models for image generation: Kandinsky, Flux, HunyuanDiT, Lumina-T2X, DeepFloydIF and PixArt
+* Support of additional models for image generation: Kandinsky, Flux, HunyuanDiT, Lumina-T2X, DeepFloydIF and PixArt
 * StableAudioOpen support
 * AudioCraft support (Models: musicgen, audiogen and magnet)
 * AudioLDM 2 support (Models: audio and music)
