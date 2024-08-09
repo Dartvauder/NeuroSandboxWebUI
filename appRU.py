@@ -15,8 +15,8 @@ from TTS.api import TTS
 import whisper
 from datetime import datetime
 from huggingface_hub import snapshot_download
-from diffusers import StableDiffusionPipeline, StableDiffusion3Pipeline, StableDiffusionXLPipeline, StableDiffusionImg2ImgPipeline, StableDiffusionDepth2ImgPipeline, ControlNetModel, StableDiffusionControlNetPipeline, AutoencoderKL, StableDiffusionLatentUpscalePipeline, StableDiffusionUpscalePipeline, StableDiffusionInpaintPipeline, StableDiffusionGLIGENPipeline, AnimateDiffPipeline, AnimateDiffVideoToVideoPipeline, MotionAdapter, StableVideoDiffusionPipeline, I2VGenXLPipeline, StableCascadePriorPipeline, StableCascadeDecoderPipeline, DiffusionPipeline, DPMSolverMultistepScheduler, ShapEPipeline, ShapEImg2ImgPipeline, StableAudioPipeline, AudioLDM2Pipeline, StableDiffusionInstructPix2PixPipeline, StableDiffusionLDM3DPipeline, FluxPipeline, KandinskyPipeline, KandinskyPriorPipeline, KandinskyV22Pipeline, KandinskyV22PriorPipeline, AutoPipelineForText2Image, HunyuanDiTPipeline, LuminaText2ImgPipeline
-from diffusers.utils import load_image, export_to_video, export_to_gif, export_to_ply
+from diffusers import StableDiffusionPipeline, StableDiffusion3Pipeline, StableDiffusionXLPipeline, StableDiffusionImg2ImgPipeline, StableDiffusionDepth2ImgPipeline, ControlNetModel, StableDiffusionControlNetPipeline, AutoencoderKL, StableDiffusionLatentUpscalePipeline, StableDiffusionUpscalePipeline, StableDiffusionInpaintPipeline, StableDiffusionGLIGENPipeline, AnimateDiffPipeline, AnimateDiffVideoToVideoPipeline, MotionAdapter, StableVideoDiffusionPipeline, I2VGenXLPipeline, StableCascadePriorPipeline, StableCascadeDecoderPipeline, DiffusionPipeline, DPMSolverMultistepScheduler, ShapEPipeline, ShapEImg2ImgPipeline, StableAudioPipeline, AudioLDM2Pipeline, StableDiffusionInstructPix2PixPipeline, StableDiffusionLDM3DPipeline, FluxPipeline, KandinskyPipeline, KandinskyPriorPipeline, KandinskyV22Pipeline, KandinskyV22PriorPipeline, AutoPipelineForText2Image, HunyuanDiTPipeline, LuminaText2ImgPipeline, IFPipeline, IFSuperResolutionPipeline, PixArtAlphaPipeline, PixArtSigmaPipeline
+from diffusers.utils import load_image, export_to_video, export_to_gif, export_to_ply, pt_to_pil
 from controlnet_aux import OpenposeDetector, LineartDetector, HEDdetector
 from compel import Compel, ReturnedEmbeddingsType
 import trimesh
@@ -2496,6 +2496,174 @@ def generate_image_lumina(prompt, negative_prompt, num_inference_steps, guidance
         torch.cuda.empty_cache()
 
 
+def generate_image_deepfloyd(prompt, negative_prompt, num_inference_steps, guidance_scale, width, height, output_format="png", stop_generation=None):
+    global stop_signal
+    stop_signal = False
+
+    if not prompt:
+        return None, None, None, "Please enter a prompt!"
+
+    try:
+        device = "cuda" if torch.cuda.is_available() else "cpu"
+
+        # Stage I
+        pipe_i = IFPipeline.from_pretrained("DeepFloyd/IF-I-XL-v1.0", variant="fp16", torch_dtype=torch.float16)
+        pipe_i.to(device)
+        pipe_i.enable_model_cpu_offload()
+
+        prompt_embeds, negative_embeds = pipe_i.encode_prompt(prompt)
+        image = pipe_i(
+            prompt_embeds=prompt_embeds,
+            negative_prompt_embeds=negative_embeds,
+            num_inference_steps=num_inference_steps,
+            guidance_scale=guidance_scale,
+            width=width,
+            height=height,
+            output_type="pt"
+        ).images
+
+        if stop_signal:
+            return None, None, None, "Generation stopped"
+
+        # Stage II
+        pipe_ii = IFSuperResolutionPipeline.from_pretrained(
+            "DeepFloyd/IF-II-L-v1.0", text_encoder=None, variant="fp16", torch_dtype=torch.float16
+        )
+        pipe_ii.to(device)
+        pipe_ii.enable_model_cpu_offload()
+
+        image = pipe_ii(
+            image=image,
+            prompt_embeds=prompt_embeds,
+            negative_prompt_embeds=negative_embeds,
+            num_inference_steps=num_inference_steps,
+            guidance_scale=guidance_scale,
+            output_type="pt"
+        ).images
+
+        if stop_signal:
+            return None, None, None, "Generation stopped"
+
+        # Stage III
+        safety_modules = {
+            "feature_extractor": pipe_i.feature_extractor,
+            "safety_checker": pipe_i.safety_checker,
+            "watermarker": pipe_i.watermarker,
+        }
+        pipe_iii = DiffusionPipeline.from_pretrained(
+            "stabilityai/stable-diffusion-x4-upscaler", **safety_modules, torch_dtype=torch.float16
+        )
+        pipe_iii.to(device)
+        pipe_iii.enable_model_cpu_offload()
+
+        image = pipe_iii(
+            prompt=prompt,
+            image=image,
+            num_inference_steps=num_inference_steps,
+            guidance_scale=guidance_scale,
+        ).images[0]
+
+        if stop_signal:
+            return None, None, None, "Generation stopped"
+
+        today = datetime.now().date()
+        image_dir = os.path.join('outputs', f"DeepFloydIF_{today.strftime('%Y%m%d')}")
+        os.makedirs(image_dir, exist_ok=True)
+
+        stage_i_filename = f"deepfloyd_if_stage_I_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
+        stage_ii_filename = f"deepfloyd_if_stage_II_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
+        stage_iii_filename = f"deepfloyd_if_stage_III_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
+
+        stage_i_path = os.path.join(image_dir, stage_i_filename)
+        stage_ii_path = os.path.join(image_dir, stage_ii_filename)
+        stage_iii_path = os.path.join(image_dir, stage_iii_filename)
+
+        pt_to_pil(image[0])[0].save(stage_i_path)
+        pt_to_pil(image[0])[0].save(stage_ii_path)
+        image.save(stage_iii_path)
+
+        return stage_i_path, stage_ii_path, stage_iii_path, None
+
+    except Exception as e:
+        return None, None, None, str(e)
+
+    finally:
+        try:
+            del pipe_i
+            del pipe_ii
+            del pipe_iii
+        except:
+            pass
+        torch.cuda.empty_cache()
+
+
+def generate_image_pixart(prompt, negative_prompt, version, num_inference_steps, guidance_scale, height, width,
+                          max_sequence_length, output_format="png", stop_generation=None):
+    global stop_signal
+    stop_signal = False
+
+    if not prompt:
+        return None, "Please enter a prompt!"
+
+    pixart_model_path = os.path.join("inputs", "image", "sd_models", "pixart")
+
+    if not os.path.exists(pixart_model_path):
+        print(f"Downloading PixArt {version} model...")
+        os.makedirs(pixart_model_path, exist_ok=True)
+        if version == "Alpha-512":
+            Repo.clone_from("https://huggingface.co/PixArt-alpha/PixArt-XL-2-512-MS",
+                            os.path.join(pixart_model_path, "Alpha-512"))
+        elif version == "Alpha-1024":
+            Repo.clone_from("https://huggingface.co/PixArt-alpha/PixArt-XL-2-1024-MS",
+                            os.path.join(pixart_model_path, "Alpha-1024"))
+        elif version == "Sigma-512":
+            Repo.clone_from("https://huggingface.co/PixArt-alpha/PixArt-Sigma-XL-2-512-MS",
+                            os.path.join(pixart_model_path, "Sigma-512"))
+        elif version == "Sigma-1024":
+            Repo.clone_from("https://huggingface.co/PixArt-alpha/PixArt-Sigma-XL-2-1024-MS",
+                            os.path.join(pixart_model_path, "Sigma-1024"))
+        print(f"PixArt {version} model downloaded")
+
+    try:
+        if version.startswith("Alpha"):
+            pipe = PixArtAlphaPipeline.from_pretrained(os.path.join(pixart_model_path, version),
+                                                       torch_dtype=torch.float16)
+        else:
+            pipe = PixArtSigmaPipeline.from_pretrained(os.path.join(pixart_model_path, version),
+                                                       torch_dtype=torch.float16)
+
+        pipe.enable_model_cpu_offload()
+
+        image = pipe(
+            prompt=prompt,
+            negative_prompt=negative_prompt,
+            num_inference_steps=num_inference_steps,
+            guidance_scale=guidance_scale,
+            height=height,
+            width=width,
+            max_sequence_length=max_sequence_length
+        ).images[0]
+
+        if stop_signal:
+            return None, "Generation stopped"
+
+        today = datetime.now().date()
+        image_dir = os.path.join('outputs', f"PixArt_{today.strftime('%Y%m%d')}")
+        os.makedirs(image_dir, exist_ok=True)
+        image_filename = f"pixart_{version}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
+        image_path = os.path.join(image_dir, image_filename)
+        image.save(image_path, format=output_format.upper())
+
+        return image_path, None
+
+    except Exception as e:
+        return None, str(e)
+
+    finally:
+        del pipe
+        torch.cuda.empty_cache()
+
+
 def generate_video_zeroscope2(prompt, video_to_enhance, strength, num_inference_steps, width, height, num_frames,
                               enable_video_enhance, stop_generation):
     global stop_signal
@@ -3750,6 +3918,57 @@ lumina_interface = gr.Interface(
     allow_flagging="never",
 )
 
+deepfloyd_if_interface = gr.Interface(
+    fn=generate_image_deepfloyd,
+    inputs=[
+        gr.Textbox(label="Enter your prompt"),
+        gr.Textbox(label="Enter your negative prompt", value=""),
+        gr.Slider(minimum=1, maximum=100, value=50, step=1, label="Steps"),
+        gr.Slider(minimum=0.1, maximum=30.0, value=6, step=0.1, label="Guidance Scale"),
+        gr.Slider(minimum=256, maximum=2048, value=512, step=64, label="Width"),
+        gr.Slider(minimum=256, maximum=2048, value=512, step=64, label="Height"),
+        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
+        gr.Button(value="Stop generation", interactive=True, variant="stop"),
+    ],
+    outputs=[
+        gr.Image(type="filepath", label="Generated image (Stage I)"),
+        gr.Image(type="filepath", label="Generated image (Stage II)"),
+        gr.Image(type="filepath", label="Generated image (Stage III)"),
+        gr.Textbox(label="Message", type="text"),
+    ],
+    title="NeuroSandboxWebUI (ALPHA) - DeepFloyd IF",
+    description="This user interface allows you to generate images using the DeepFloyd IF model. "
+                "Enter a prompt and customize the generation settings. "
+                "The process includes three stages of generation, each producing an image of increasing quality. "
+                "Try it and see what happens!",
+    allow_flagging="never",
+)
+
+pixart_interface = gr.Interface(
+    fn=generate_image_pixart,
+    inputs=[
+        gr.Textbox(label="Enter your prompt"),
+        gr.Textbox(label="Enter your negative prompt", value=""),
+        gr.Radio(choices=["Alpha-512", "Alpha-1024", "Sigma-512", "Sigma-1024"], label="PixArt Version", value="Alpha-512"),
+        gr.Slider(minimum=1, maximum=100, value=30, step=1, label="Steps"),
+        gr.Slider(minimum=0.1, maximum=30.0, value=7.5, step=0.1, label="Guidance Scale"),
+        gr.Slider(minimum=256, maximum=2048, value=512, step=64, label="Height"),
+        gr.Slider(minimum=256, maximum=2048, value=512, step=64, label="Width"),
+        gr.Slider(minimum=1, maximum=1024, value=256, step=1, label="Max Sequence Length"),
+        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
+        gr.Button(value="Stop generation", interactive=True, variant="stop"),
+    ],
+    outputs=[
+        gr.Image(type="filepath", label="Generated image"),
+        gr.Textbox(label="Message", type="text"),
+    ],
+    title="NeuroSandboxWebUI (ALPHA) - PixArt",
+    description="This user interface allows you to generate images using PixArt models. "
+                "You can select between Alpha and Sigma versions, and customize the generation settings. "
+                "Try it and see what happens!",
+    allow_flagging="never",
+)
+
 zeroscope2_interface = gr.Interface(
     fn=generate_video_zeroscope2,
     inputs=[
@@ -3976,8 +4195,8 @@ system_interface = gr.Interface(
 with gr.TabbedInterface(
         [chat_interface, tts_stt_interface, bark_interface, translate_interface, wav2lip_interface, gr.TabbedInterface([txt2img_interface, img2img_interface, depth2img_interface, pix2pix_interface, controlnet_interface, upscale_interface, inpaint_interface, gligen_interface, animatediff_interface, video_interface, ldm3d_interface, sd3_interface, cascade_interface, extras_interface],
         tab_names=["txt2img", "img2img", "depth2img", "pix2pix", "controlnet", "upscale", "inpaint", "gligen", "animatediff", "video", "ldm3d", "sd3", "cascade", "extras"]),
-                    kandinsky_interface, flux_interface, hunyuandit_interface, lumina_interface, zeroscope2_interface, triposr_interface, shap_e_interface, stableaudio_interface, audiocraft_interface, audioldm2_interface, demucs_interface, gallery_interface, model_downloader_interface, settings_interface, system_interface],
-        tab_names=["LLM", "TTS-STT", "SunoBark", "LibreTranslate", "Wav2Lip", "StableDiffusion", "Kandinsky", "Flux", "HunyuanDiT", "Lumina-T2X", "ZeroScope 2", "TripoSR", "Shap-E", "StableAudio", "AudioCraft", "AudioLDM 2", "Demucs", "Gallery", "ModelDownloader", "Settings", "System"]
+                    kandinsky_interface, flux_interface, hunyuandit_interface, lumina_interface, deepfloyd_if_interface, pixart_interface, zeroscope2_interface, triposr_interface, shap_e_interface, stableaudio_interface, audiocraft_interface, audioldm2_interface, demucs_interface, gallery_interface, model_downloader_interface, settings_interface, system_interface],
+        tab_names=["LLM", "TTS-STT", "SunoBark", "LibreTranslate", "Wav2Lip", "StableDiffusion", "Kandinsky", "Flux", "HunyuanDiT", "Lumina-T2X", "DeepFloydIF", "PixArt", "ZeroScope 2", "TripoSR", "Shap-E", "StableAudio", "AudioCraft", "AudioLDM 2", "Demucs", "Gallery", "ModelDownloader", "Settings", "System"]
 ) as app:
     chat_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     bark_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
@@ -3999,6 +4218,8 @@ with gr.TabbedInterface(
     flux_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     hunyuandit_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     lumina_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
+    deepfloyd_if_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
+    pixart_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     zeroscope2_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     triposr_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     shap_e_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
