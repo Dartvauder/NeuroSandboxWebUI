@@ -77,7 +77,7 @@ def authenticate(username, password):
 
 
 def get_hf_token():
-    token_file = "hftoken.txt"
+    token_file = "HF-Token.txt"
     if os.path.exists(token_file):
         with open(token_file, "r") as f:
             return f.read().strip()
