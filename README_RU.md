@@ -12,9 +12,9 @@
 
 ### Text: <img width="1119" alt="1" src="https://github.com/user-attachments/assets/e1ac4e8e-feb2-484b-a399-61ddc8a098c1">
 
-### Image: <img width="1124" alt="2" src="https://github.com/user-attachments/assets/5748c806-06f8-41ea-9beb-f6619ec503dd">
+### Image: <img width="1123" alt="2" src="https://github.com/user-attachments/assets/6ee09668-b084-40fe-9e4f-ae776740f2d5">
 
-### Video: <img width="1122" alt="3" src="https://github.com/user-attachments/assets/facd3567-ab40-4cbf-915f-d791b66e4ac3">
+### Video: <img width="1118" alt="3" src="https://github.com/user-attachments/assets/a568c3ed-3b00-4e21-b802-a3e63f6cf97c">
 
 ### 3D: <img width="1119" alt="4" src="https://github.com/user-attachments/assets/db210c95-5f78-41cd-8689-70d3974b9edc">
 
