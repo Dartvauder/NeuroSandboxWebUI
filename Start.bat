@@ -22,7 +22,7 @@ echo.
 set /p choice=Enter number:
 if "%choice%"=="1" (
     cls
-    start /b py "%CURRENT_DIR%/LaunchFiles/appEN.py"
+    start /b py "%CURRENT_DIR%LaunchFiles\appEN.py"
     timeout /t 120 > NUL
     start http://localhost:7860
     goto end
@@ -30,7 +30,7 @@ if "%choice%"=="1" (
 
 if "%choice%"=="2" (
     cls
-    start /b py "%CURRENT_DIR%/LaunchFiles/appRU.py"
+    start /b py "%CURRENT_DIR%LaunchFiles\appRU.py"
     timeout /t 120 > NUL
     start http://localhost:7860
     goto end
@@ -38,7 +38,7 @@ if "%choice%"=="2" (
 
 if "%choice%"=="3" (
     cls
-    start /b py "%CURRENT_DIR%/LaunchFiles/appAR.py"
+    start /b py "%CURRENT_DIR%LaunchFiles\appAR.py"
     timeout /t 120 > NUL
     start http://localhost:7860
     goto end
@@ -46,7 +46,7 @@ if "%choice%"=="3" (
 
 if "%choice%"=="4" (
     cls
-    start /b py "%CURRENT_DIR%/LaunchFiles/appDE.py"
+    start /b py "%CURRENT_DIR%LaunchFiles\appDE.py"
     timeout /t 120 > NUL
     start http://localhost:7860
     goto end
@@ -54,7 +54,7 @@ if "%choice%"=="4" (
 
 if "%choice%"=="5" (
     cls
-    start /b py "%CURRENT_DIR%/LaunchFiles/appES.py"
+    start /b py "%CURRENT_DIR%LaunchFiles\appES.py"
     timeout /t 120 > NUL
     start http://localhost:7860
     goto end
@@ -62,7 +62,7 @@ if "%choice%"=="5" (
 
 if "%choice%"=="6" (
     cls
-    start /b py "%CURRENT_DIR%/LaunchFiles/appFR.py"
+    start /b py "%CURRENT_DIR%LaunchFiles\appFR.py"
     timeout /t 120 > NUL
     start http://localhost:7860
     goto end
@@ -70,7 +70,7 @@ if "%choice%"=="6" (
 
 if "%choice%"=="7" (
     cls
-    start /b py "%CURRENT_DIR%/LaunchFiles/appJP.py"
+    start /b py "%CURRENT_DIR%LaunchFiles\appJP.py"
     timeout /t 120 > NUL
     start http://localhost:7860
     goto end
@@ -78,7 +78,7 @@ if "%choice%"=="7" (
 
 if "%choice%"=="8" (
     cls
-    start /b py "%CURRENT_DIR%/LaunchFiles/appZH.py"
+    start /b py "%CURRENT_DIR%LaunchFiles\appZH.py"
     timeout /t 120 > NUL
     start http://localhost:7860
     goto end
@@ -86,7 +86,7 @@ if "%choice%"=="8" (
 
 if "%choice%"=="9" (
     cls
-    start /b py "%CURRENT_DIR%/LaunchFiles/appPT.py"
+    start /b py "%CURRENT_DIR%LaunchFiles\appPT.py"
     timeout /t 120 > NUL
     start http://localhost:7860
     goto end
