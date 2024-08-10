@@ -3248,15 +3248,15 @@ def generate_sv34d(input_file, version, elevation_deg=None, stop_generation=None
             return None, "Please upload an image file for 3D-U or 3D-P version!"
 
         if version == "3D-U":
-            command = f"python generative-models/scripts/sampling/simple_video_sample.py --input_path {input_file} --version sv3d_u --checkpoint {model_path} --output_folder {output_dir}"
+            command = f"python generative-models/scripts/sampling/simple_video_sample.py --input_path {input_file} --version sv3d_u --output_folder {output_dir}"
         else:  # 3D-P
             if elevation_deg is None:
                 return None, "Please provide elevation degree for 3D-P version!"
-            command = f"python generative-models/scripts/sampling/simple_video_sample.py --input_path {input_file} --version sv3d_p --checkpoint {model_path} --elevations_deg {elevation_deg} --output_folder {output_dir}"
+            command = f"python generative-models/scripts/sampling/simple_video_sample.py --input_path {input_file} --version sv3d_p --elevations_deg {elevation_deg} --output_folder {output_dir}"
     elif version == "4D":
         if not input_file.lower().endswith('.mp4'):
             return None, "Please upload an MP4 video file for 4D version!"
-        command = f"python generative-models/scripts/sampling/simple_video_sample_4d.py --input_path {input_file} --checkpoint {model_path} --output_folder {output_dir}"
+        command = f"python generative-models/scripts/sampling/simple_video_sample_4d.py --input_path {input_file} --output_folder {output_dir}"
     else:
         return None, "Invalid version selected!"
 
