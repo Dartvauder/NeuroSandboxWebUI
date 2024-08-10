@@ -2,7 +2,7 @@
 
 # ![main](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/4ea0d891-8979-45ad-b052-626c41ae991a)
 * ¡Trabajo en progreso! (ALFA)
-* [English](/README.md)  | [عربي](/README_AR.md) | [Deutsche](/README_DE.md) | Español | [Français](/README_FR.md) | [日本語](/README_JP.md) | [Русский](/README_RU.md) | [漢語](/README_ZH.md) | [Português](/README_PT.md)
+* [English](/README.md)  | [عربي](/Readmes/README_AR.md) | [Deutsche](/Readmes/README_DE.md) | Español | [Français](/Readmes/README_FR.md) | [日本語](/Readmes/README_JP.md) | [Русский](/Readmes/README_RU.md) | [漢語](/Readmes/README_ZH.md) | [Português](/Readmes/README_PT.md)
 
 ## Descripción:
 
