@@ -3136,6 +3136,35 @@ def generate_3d_triposr(image, mc_resolution, foreground_ratio=0.85, output_form
         torch.cuda.empty_cache()
 
 
+def generate_3d_stablefast3d(image, texture_resolution, foreground_ratio, remesh_option, output_format="obj",
+                             stop_generation=None):
+    global stop_signal
+    stop_signal = False
+
+    if not image:
+        return None, "Please upload an image!"
+
+    try:
+        today = datetime.now().date()
+        output_dir = os.path.join('outputs', f"StableFast3D_{today.strftime('%Y%m%d')}")
+        os.makedirs(output_dir, exist_ok=True)
+
+        output_filename = f"3d_object_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
+        output_path = os.path.join(output_dir, output_filename)
+
+        command = f"python StableFast3D/run.py \"{image}\" --output-dir {output_dir} --texture-resolution {texture_resolution} --foreground-ratio {foreground_ratio} --remesh_option {remesh_option}"
+
+        subprocess.run(command, shell=True, check=True)
+
+        if stop_signal:
+            return None, "Generation stopped"
+
+        return output_path, None
+
+    except Exception as e:
+        return None, str(e)
+
+
 def generate_3d_shap_e(prompt, init_image, num_inference_steps, guidance_scale, frame_size, stop_generation):
     global stop_signal
     stop_signal = False
@@ -4555,6 +4584,27 @@ triposr_interface = gr.Interface(
     allow_flagging="never",
 )
 
+stablefast3d_interface = gr.Interface(
+    fn=generate_3d_stablefast3d,
+    inputs=[
+        gr.Image(label="Input image", type="filepath"),
+        gr.Slider(minimum=256, maximum=4096, value=1024, step=256, label="Texture Resolution"),
+        gr.Slider(minimum=0.1, maximum=1.0, value=0.85, step=0.05, label="Foreground Ratio"),
+        gr.Radio(choices=["none", "triangle", "quad"], label="Remesh Option", value="none"),
+        gr.Radio(choices=["obj", "glb"], label="Select output format", value="obj", interactive=True),
+        gr.Button(value="Stop generation", interactive=True, variant="stop"),
+    ],
+    outputs=[
+        gr.Model3D(label="Generated 3D object"),
+        gr.Textbox(label="Message", type="text"),
+    ],
+    title="NeuroSandboxWebUI (ALPHA) - StableFast3D",
+    description="This user interface allows you to generate 3D objects from images using StableFast3D. "
+                "Upload an image and customize the generation settings. "
+                "Try it and see what happens!",
+    allow_flagging="never",
+)
+
 shap_e_interface = gr.Interface(
     fn=generate_3d_shap_e,
     inputs=[
@@ -4774,8 +4824,8 @@ with gr.TabbedInterface(
             tab_names=["Wav2Lip", "ModelScope", "ZeroScope 2", "CogVideoX", "Latte"]
         ),
         gr.TabbedInterface(
-            [triposr_interface, shap_e_interface, sv34d_interface],
-            tab_names=["TripoSR", "Shap-E", "SV34D"]
+            [triposr_interface, stablefast3d_interface, shap_e_interface, sv34d_interface],
+            tab_names=["TripoSR", "StableFast3D", "Shap-E", "SV34D"]
         ),
         gr.TabbedInterface(
             [stableaudio_interface, audiocraft_interface, audioldm2_interface, bark_interface, demucs_interface],
@@ -4818,6 +4868,7 @@ with gr.TabbedInterface(
     cogvideox_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     latte_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     triposr_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
+    stablefast3d_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     shap_e_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     sv34d_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     stableaudio_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
