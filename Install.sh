@@ -16,6 +16,7 @@ echo "Installing dependencies.../Установка зависимостей..."
 pip install --no-deps -r "$CURRENT_DIR/requirements.txt"
 pip install --no-deps -r "$CURRENT_DIR/requirements-cuda.txt"
 pip install --no-deps -r "$CURRENT_DIR/requirements-llama-cpp.txt"
+pip install git+https://github.com/vork/PyNanoInstantMeshes.git
 pip install git+https://github.com/openai/CLIP.git
 pip install git+https://github.com/tatsy/torchmcubes.git
 clear
