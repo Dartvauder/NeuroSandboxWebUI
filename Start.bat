@@ -19,7 +19,7 @@ echo [Versão portuguesa: 9] appPT.py
 echo.
 
 :input
-set /p choice=Enter number/Введите число:
+set /p choice=Enter number:
 if "%choice%"=="1" (
     cls
     start /b py "%CURRENT_DIR%appEN.py"
