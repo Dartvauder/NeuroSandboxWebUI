@@ -3204,6 +3204,56 @@ def generate_3d_shap_e(prompt, init_image, num_inference_steps, guidance_scale, 
         torch.cuda.empty_cache()
 
 
+def generate_sv34d(input_file, version, elevation_deg=None, stop_generation=None):
+    global stop_signal
+    stop_signal = False
+
+    if not input_file:
+        return None, "Please upload an input file!"
+
+    today = datetime.now().date()
+    output_dir = os.path.join('outputs', '3D', f"SV34D_{today.strftime('%Y%m%d')}")
+    os.makedirs(output_dir, exist_ok=True)
+
+    output_filename = f"sv34d_{version}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+    output_path = os.path.join(output_dir, output_filename)
+
+    if version in ["3D-U", "3D-P"]:
+        if not input_file.lower().endswith(('.png', '.jpg', '.jpeg')):
+            return None, "Please upload an image file for 3D-U or 3D-P version!"
+
+        if version == "3D-U":
+            command = f"python generative-models/scripts/sampling/simple_video_sample.py --input_path {input_file} --version sv3d_u --output_folder {output_dir}"
+        else:  # 3D-P
+            if elevation_deg is None:
+                return None, "Please provide elevation degree for 3D-P version!"
+            command = f"python generative-models/scripts/sampling/simple_video_sample.py --input_path {input_file} --version sv3d_p --elevations_deg {elevation_deg} --output_folder {output_dir}"
+    elif version == "4D":
+        if not input_file.lower().endswith('.mp4'):
+            return None, "Please upload an MP4 video file for 4D version!"
+        command = f"python generative-models/scripts/sampling/simple_video_sample_4d.py --input_path {input_file} --output_folder {output_dir}"
+    else:
+        return None, "Invalid version selected!"
+
+    try:
+        subprocess.run(command, shell=True, check=True)
+
+        if stop_signal:
+            return None, "Generation stopped"
+
+        for file in os.listdir(output_dir):
+            if file.startswith(output_filename):
+                return os.path.join(output_dir, file), None
+
+        return None, "Output file not found"
+
+    except subprocess.CalledProcessError as e:
+        return None, f"Error occurred: {str(e)}"
+
+    except Exception as e:
+        return None, str(e)
+
+
 def generate_stableaudio(prompt, negative_prompt, num_inference_steps, guidance_scale, audio_length, audio_start, num_waveforms, output_format,
                          stop_generation):
     global stop_signal
@@ -4501,6 +4551,25 @@ shap_e_interface = gr.Interface(
     allow_flagging="never",
 )
 
+sv34d_interface = gr.Interface(
+    fn=generate_sv34d,
+    inputs=[
+        gr.File(label="Input file (Image for 3D-U and 3D-P, MP4 video for 4D)", type="filepath"),
+        gr.Radio(choices=["3D-U", "3D-P", "4D"], label="Version", value="3D-U"),
+        gr.Slider(minimum=0.0, maximum=90.0, value=10.0, step=0.1, label="Elevation Degree (for 3D-P only)"),
+        gr.Button(value="Stop generation", interactive=True, variant="stop"),
+    ],
+    outputs=[
+        gr.Video(label="Generated output"),
+        gr.Textbox(label="Message", type="text"),
+    ],
+    title="NeuroSandboxWebUI (ALPHA) - SV34D",
+    description="This interface allows you to generate 3D and 4D content using SV34D models. "
+                "Upload an image (PNG, JPG, JPEG) for 3D-U and 3D-P versions, or an MP4 video for 4D version. "
+                "Select the version and customize settings as needed.",
+    allow_flagging="never",
+)
+
 stableaudio_interface = gr.Interface(
     fn=generate_stableaudio,
     inputs=[
@@ -4680,8 +4749,8 @@ with gr.TabbedInterface(
             tab_names=["Wav2Lip", "ModelScope", "ZeroScope 2", "CogVideoX", "Latte"]
         ),
         gr.TabbedInterface(
-            [triposr_interface, shap_e_interface],
-            tab_names=["TripoSR", "Shap-E"]
+            [triposr_interface, shap_e_interface, sv34d_interface],
+            tab_names=["TripoSR", "Shap-E", "SV34D"]
         ),
         gr.TabbedInterface(
             [stableaudio_interface, audiocraft_interface, audioldm2_interface, bark_interface, demucs_interface],
@@ -4725,6 +4794,7 @@ with gr.TabbedInterface(
     latte_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     triposr_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     shap_e_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
+    sv34d_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     stableaudio_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     audiocraft_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     audioldm2_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
