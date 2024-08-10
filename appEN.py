@@ -1422,7 +1422,7 @@ def generate_image_controlnet(prompt, negative_prompt, init_image, stable_diffus
         torch.cuda.empty_cache()
 
 
-def generate_image_upscale(image_path, num_inference_steps, guidance_scale, output_format="png", stop_generation=None):
+def generate_image_upscale_latent(image_path, num_inference_steps, guidance_scale, output_format="png", stop_generation=None):
     global stop_signal
     if stop_signal:
         return None, "Generation stopped"
@@ -1452,6 +1452,43 @@ def generate_image_upscale(image_path, num_inference_steps, guidance_scale, outp
             torch.cuda.empty_cache()
     else:
         return None, "Failed to load upscale model"
+
+
+def generate_image_upscale_realesrgan(image_path, outscale, output_format="png", stop_generation=None):
+    global stop_signal
+    stop_signal = False
+
+    if not image_path:
+        return None, "Please upload an image file!"
+
+    realesrgan_path = os.path.join("inputs", "image", "Real-ESRGAN")
+    if not os.path.exists(realesrgan_path):
+        print("Downloading Real-ESRGAN...")
+        os.makedirs(realesrgan_path, exist_ok=True)
+        Repo.clone_from("https://github.com/xinntao/Real-ESRGAN.git", realesrgan_path)
+        print("Real-ESRGAN downloaded")
+
+    today = datetime.now().date()
+    output_dir = os.path.join('outputs', f"RealESRGAN_{today.strftime('%Y%m%d')}")
+    os.makedirs(output_dir, exist_ok=True)
+
+    output_filename = f"upscaled_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
+    output_path = os.path.join(output_dir, output_filename)
+
+    try:
+        command = f"python {os.path.join(realesrgan_path, 'inference_realesrgan.py')} --model_name RealESRGAN_x4plus --input {image_path} --output {output_dir} --outscale {outscale} --fp16"
+        subprocess.run(command, shell=True, check=True)
+
+        if stop_signal:
+            return None, "Generation stopped"
+
+        return output_path, None
+
+    except subprocess.CalledProcessError as e:
+        return None, f"Error occurred: {str(e)}"
+
+    except Exception as e:
+        return None, str(e)
 
 
 def generate_image_inpaint(prompt, negative_prompt, init_image, mask_image, blur_factor, stable_diffusion_model_name, vae_model_name,
@@ -4079,8 +4116,8 @@ controlnet_interface = gr.Interface(
     allow_flagging="never",
 )
 
-upscale_interface = gr.Interface(
-    fn=generate_image_upscale,
+latent_upscale_interface = gr.Interface(
+    fn=generate_image_upscale_latent,
     inputs=[
         gr.Image(label="Image to upscale", type="filepath"),
         gr.Slider(minimum=1, maximum=100, value=50, step=1, label="Steps"),
@@ -4092,8 +4129,25 @@ upscale_interface = gr.Interface(
         gr.Image(type="filepath", label="Upscaled image"),
         gr.Textbox(label="Message", type="text"),
     ],
-    title="NeuroSandboxWebUI (ALPHA) - StableDiffusion (upscale)",
-    description="This user interface allows you to upload an image and upscale it",
+    title="NeuroSandboxWebUI (ALPHA) - StableDiffusion (upscale-latent)",
+    description="This user interface allows you to upload an image and latent-upscale it",
+    allow_flagging="never",
+)
+
+realesrgan_upscale_interface = gr.Interface(
+    fn=generate_image_upscale_realesrgan,
+    inputs=[
+        gr.Image(label="Image to upscale", type="filepath"),
+        gr.Slider(minimum=0.1, maximum=8, value=4, step=0.1, label="Upscale factor"),
+        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
+        gr.Button(value="Stop generation", interactive=True, variant="stop"),
+    ],
+    outputs=[
+        gr.Image(type="filepath", label="Upscaled image"),
+        gr.Textbox(label="Message", type="text"),
+    ],
+    title="NeuroSandboxWebUI (ALPHA) - StableDiffusion (upscale-realesrgan)",
+    description="This user interface allows you to upload an image and upscale it using Real-ESRGAN",
     allow_flagging="never",
 )
 
@@ -4890,8 +4944,8 @@ with gr.TabbedInterface(
         gr.TabbedInterface(
             [
                 gr.TabbedInterface(
-                    [txt2img_interface, img2img_interface, depth2img_interface, pix2pix_interface, controlnet_interface, upscale_interface, inpaint_interface, gligen_interface, animatediff_interface, video_interface, ldm3d_interface, sd3_interface, cascade_interface, extras_interface],
-                    tab_names=["txt2img", "img2img", "depth2img", "pix2pix", "controlnet", "upscale", "inpaint", "gligen", "animatediff", "video", "ldm3d", "sd3", "cascade", "extras"]
+                    [txt2img_interface, img2img_interface, depth2img_interface, pix2pix_interface, controlnet_interface, latent_upscale_interface, realesrgan_upscale_interface, inpaint_interface, gligen_interface, animatediff_interface, video_interface, ldm3d_interface, sd3_interface, cascade_interface, extras_interface],
+                    tab_names=["txt2img", "img2img", "depth2img", "pix2pix", "controlnet", "upscale(latent)", "upscale(Real-ESRGAN)", "inpaint", "gligen", "animatediff", "video", "ldm3d", "sd3", "cascade", "extras"]
                 ),
                 kandinsky_interface, flux_interface, hunyuandit_interface, lumina_interface, kolors_interface, auraflow_interface, wurstchen_interface, deepfloyd_if_interface, pixart_interface
             ],
@@ -4923,7 +4977,8 @@ with gr.TabbedInterface(
     depth2img_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     pix2pix_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     controlnet_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
-    upscale_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
+    latent_upscale_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
+    realesrgan_upscale_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     inpaint_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     gligen_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     animatediff_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
