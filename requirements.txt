@@ -302,3 +302,11 @@ wsproto==1.2.0
 yapf==0.40.2
 yarl==1.9.4
 zipp==3.18.1
+jaxtyping==0.2.33
+gpytoolbox==0.3.2
+hatchling==1.25.0
+ninja==1.11.1.1
+slangtorch==1.2.3
+trove-classifiers==2024.7.2
+pathspec==0.12.1
+pluggy==1.5.0
