@@ -63,6 +63,7 @@ tts_model = None
 whisper_model = None
 audiocraft_model_path = None
 
+os.chdir(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 def authenticate(username, password):
     try:
