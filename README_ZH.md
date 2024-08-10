@@ -2,7 +2,7 @@
 
 # ![main](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/4ea0d891-8979-45ad-b052-626c41ae991a)
 * 正在进行中！（Alpha版）
-* English | [Русский](/README_RU.md)
+* [English](/README.md) | [Deutsche](/README_DE.md) | [Español](/README_ES.md) | [Français](/README_FR.md) | [Русский](/README_RU.md) | 漢語 | [Português](/README_PT.md)
 
 ## 描述：
 
