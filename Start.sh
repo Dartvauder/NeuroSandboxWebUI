@@ -6,7 +6,7 @@ source "$CURRENT_DIR/venv/bin/activate"
 
 while true; do
     clear
-    echo "Select a file for launch/Выберите файл для запуска: "
+    echo "Select a file for launch: "
     echo [English version: 1] appEN.py
     echo [Русская версия: 2] appRU.py
     echo [النسخة العربية: 3] appAR.py
