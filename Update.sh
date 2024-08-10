@@ -6,7 +6,7 @@ CURRENT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &> /dev/null && pwd)"
 
 source "$CURRENT_DIR/venv/bin/activate"
 
-echo "Updating dependencies.../Обновление зависимостей..."
+echo "Updating dependencies..."
 python3 -m pip install --upgrade pip
 pip install wheel setuptools
 pip install --no-deps -r "$CURRENT_DIR/RequirementsFiles/requirements.txt"
@@ -17,7 +17,7 @@ pip install git+https://github.com/openai/CLIP.git
 pip install git+https://github.com/tatsy/torchmcubes.git
 clear
 
-echo "Application has been updated successfully. Run start.sh/Приложение успешно обновлено. Запустите start.sh"
+echo "Application has been updated successfully. Run start.sh"
 
 deactivate
 
