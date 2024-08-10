@@ -15,7 +15,7 @@ from TTS.api import TTS
 import whisper
 from datetime import datetime
 from huggingface_hub import snapshot_download
-from diffusers import StableDiffusionPipeline, StableDiffusion3Pipeline, StableDiffusionXLPipeline, StableDiffusionImg2ImgPipeline, StableDiffusionDepth2ImgPipeline, ControlNetModel, StableDiffusionControlNetPipeline, AutoencoderKL, StableDiffusionLatentUpscalePipeline, StableDiffusionUpscalePipeline, StableDiffusionInpaintPipeline, StableDiffusionGLIGENPipeline, AnimateDiffPipeline, AnimateDiffVideoToVideoPipeline, MotionAdapter, StableVideoDiffusionPipeline, I2VGenXLPipeline, StableCascadePriorPipeline, StableCascadeDecoderPipeline, DiffusionPipeline, DPMSolverMultistepScheduler, ShapEPipeline, ShapEImg2ImgPipeline, StableAudioPipeline, AudioLDM2Pipeline, StableDiffusionInstructPix2PixPipeline, StableDiffusionLDM3DPipeline, FluxPipeline, KandinskyPipeline, KandinskyPriorPipeline, KandinskyV22Pipeline, KandinskyV22PriorPipeline, AutoPipelineForText2Image, HunyuanDiTPipeline, LuminaText2ImgPipeline, IFPipeline, IFSuperResolutionPipeline, PixArtAlphaPipeline, PixArtSigmaPipeline, CogVideoXPipeline, LattePipeline, KolorsPipeline, AuraFlowPipeline, WuerstchenDecoderPipeline, WuerstchenPriorPipeline
+from diffusers import StableDiffusionPipeline, StableDiffusion3Pipeline, StableDiffusionXLPipeline, StableDiffusionImg2ImgPipeline, StableDiffusionDepth2ImgPipeline, ControlNetModel, StableDiffusionControlNetPipeline, AutoencoderKL, StableDiffusionLatentUpscalePipeline, StableDiffusionUpscalePipeline, StableDiffusionInpaintPipeline, StableDiffusionGLIGENPipeline, AnimateDiffPipeline, AnimateDiffVideoToVideoPipeline, MotionAdapter, StableVideoDiffusionPipeline, I2VGenXLPipeline, StableCascadePriorPipeline, StableCascadeDecoderPipeline, DiffusionPipeline, DPMSolverMultistepScheduler, ShapEPipeline, ShapEImg2ImgPipeline, StableAudioPipeline, AudioLDM2Pipeline, StableDiffusionInstructPix2PixPipeline, StableDiffusionLDM3DPipeline, FluxPipeline, KandinskyPipeline, KandinskyPriorPipeline, KandinskyV22Pipeline, KandinskyV22PriorPipeline, AutoPipelineForText2Image, HunyuanDiTPipeline, LuminaText2ImgPipeline, IFPipeline, IFSuperResolutionPipeline, PixArtAlphaPipeline, PixArtSigmaPipeline, CogVideoXPipeline, LattePipeline, KolorsPipeline, AuraFlowPipeline, WuerstchenDecoderPipeline, WuerstchenPriorPipeline, EulerAncestralDiscreteScheduler
 from diffusers.utils import load_image, export_to_video, export_to_gif, export_to_ply, pt_to_pil
 from diffusers.pipelines.wuerstchen import DEFAULT_STAGE_C_TIMESTEPS
 from controlnet_aux import OpenposeDetector, LineartDetector, HEDdetector
@@ -3318,6 +3318,55 @@ def generate_sv34d(input_file, version, elevation_deg=None, stop_generation=None
         return None, str(e)
 
 
+def generate_3d_zero123plus(input_image, num_inference_steps, output_format="png", stop_generation=None):
+    global stop_signal
+    stop_signal = False
+
+    if not input_image:
+        return None, "Please upload an input image!"
+
+    zero123plus_model_path = os.path.join("inputs", "3D", "zero123plus")
+
+    if not os.path.exists(zero123plus_model_path):
+        print("Downloading Zero123Plus model...")
+        os.makedirs(zero123plus_model_path, exist_ok=True)
+        Repo.clone_from("https://huggingface.co/sudo-ai/zero123plus-v1.2", zero123plus_model_path)
+        print("Zero123Plus model downloaded")
+
+    try:
+        pipeline = DiffusionPipeline.from_pretrained(
+            zero123plus_model_path,
+            custom_pipeline="sudo-ai/zero123plus-pipeline",
+            torch_dtype=torch.float16
+        )
+        pipeline.scheduler = EulerAncestralDiscreteScheduler.from_config(
+            pipeline.scheduler.config, timestep_spacing='trailing'
+        )
+        pipeline.to('cuda:0')
+
+        cond = Image.open(input_image)
+        result = pipeline(cond, num_inference_steps=num_inference_steps).images[0]
+
+        if stop_signal:
+            return None, "Generation stopped"
+
+        today = datetime.now().date()
+        output_dir = os.path.join('outputs', f"Zero123Plus_{today.strftime('%Y%m%d')}")
+        os.makedirs(output_dir, exist_ok=True)
+        output_filename = f"zero123plus_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
+        output_path = os.path.join(output_dir, output_filename)
+        result.save(output_path)
+
+        return output_path, None
+
+    except Exception as e:
+        return None, str(e)
+
+    finally:
+        del pipeline
+        torch.cuda.empty_cache()
+
+
 def generate_stableaudio(prompt, negative_prompt, num_inference_steps, guidance_scale, audio_length, audio_start, num_waveforms, output_format,
                          stop_generation):
     global stop_signal
@@ -4655,6 +4704,25 @@ sv34d_interface = gr.Interface(
     allow_flagging="never",
 )
 
+zero123plus_interface = gr.Interface(
+    fn=generate_3d_zero123plus,
+    inputs=[
+        gr.Image(label="Input image", type="filepath"),
+        gr.Slider(minimum=1, maximum=100, value=75, step=1, label="Inference steps"),
+        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
+        gr.Button(value="Stop generation", interactive=True, variant="stop"),
+    ],
+    outputs=[
+        gr.Image(type="filepath", label="Generated image"),
+        gr.Textbox(label="Message", type="text"),
+    ],
+    title="NeuroSandboxWebUI (ALPHA) - Zero123Plus",
+    description="This user interface allows you to generate 3D-like images using Zero123Plus. "
+                "Upload an input image and customize the number of inference steps. "
+                "Try it and see what happens!",
+    allow_flagging="never",
+)
+
 stableaudio_interface = gr.Interface(
     fn=generate_stableaudio,
     inputs=[
@@ -4834,8 +4902,8 @@ with gr.TabbedInterface(
             tab_names=["Wav2Lip", "ModelScope", "ZeroScope 2", "CogVideoX", "Latte"]
         ),
         gr.TabbedInterface(
-            [triposr_interface, stablefast3d_interface, shap_e_interface, sv34d_interface],
-            tab_names=["TripoSR", "StableFast3D", "Shap-E", "SV34D"]
+            [triposr_interface, stablefast3d_interface, shap_e_interface, sv34d_interface, zero123plus_interface],
+            tab_names=["TripoSR", "StableFast3D", "Shap-E", "SV34D", "Zero123Plus"]
         ),
         gr.TabbedInterface(
             [stableaudio_interface, audiocraft_interface, audioldm2_interface, bark_interface, demucs_interface],
@@ -4881,6 +4949,7 @@ with gr.TabbedInterface(
     stablefast3d_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     shap_e_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     sv34d_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
+    zero123plus_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     stableaudio_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     audiocraft_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     audioldm2_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
