@@ -6,7 +6,7 @@
 
 ## Описание:
 
-Простой и удобный интерфейс для использования различных моделей нейронных сетей. Вы можете общаться с LLM и Moondream2 используя текстовый или голосовой ввод и загрузив изображение; использовать StableDiffusion, Kandinsky, Flux, HunyuanDiT, Lumina-T2X, Kolors, AuraFlow, Würstchen, DeepFloydIF и PixArt для генерации изображений; ModelScope, ZeroScope 2, CogVideoX и Latte для генерации видео; TripoSR и Shap-E для генерации 3Д обьектов; StableAudioOpen, AudioCraft и AudioLDM 2 для генерации музыки и аудио; CoquiTTS и SunoBark для преобразования текста в речь; OpenAI-Whisper для преобразования речи в текст; Wav2Lip для лицевой синхронизации губ; Roop для замены лица; Rembg для удаления фона; CodeFormer для восстановления лиц; LibreTranslate для перевода текста; Demucs для сепарации аудио файлов. Также вы можете просматривать файлы из папок outputs в галерее, скачать модели LLM и StableDiffusion, изменить настройки приложения внутри интерфейса и проверить датчики системы
+Простой и удобный интерфейс для использования различных моделей нейронных сетей. Вы можете общаться с LLM и Moondream2 используя текстовый или голосовой ввод и загрузив изображение; использовать StableDiffusion, Kandinsky, Flux, HunyuanDiT, Lumina-T2X, Kolors, AuraFlow, Würstchen, DeepFloydIF и PixArt для генерации изображений; ModelScope, ZeroScope 2, CogVideoX и Latte для генерации видео; TripoSR, StableFast3D, Shap-E, SV34D и Zero123Plus для генерации 3Д обьектов; StableAudioOpen, AudioCraft и AudioLDM 2 для генерации музыки и аудио; CoquiTTS и SunoBark для преобразования текста в речь; OpenAI-Whisper для преобразования речи в текст; Wav2Lip для лицевой синхронизации губ; Roop для замены лица; Rembg для удаления фона; CodeFormer для восстановления лиц; LibreTranslate для перевода текста; Demucs для сепарации аудио файлов. Также вы можете просматривать файлы из папок outputs в галерее, скачать модели LLM и StableDiffusion, изменить настройки приложения внутри интерфейса и проверить датчики системы
 
 Цель проекта — создать максимально простое приложение для использования нейросетевых моделей
 
@@ -16,7 +16,7 @@
 
 ### Video: <img width="1118" alt="3" src="https://github.com/user-attachments/assets/a568c3ed-3b00-4e21-b802-a3e63f6cf97c">
 
-### 3D: <img width="1119" alt="4" src="https://github.com/user-attachments/assets/db210c95-5f78-41cd-8689-70d3974b9edc">
+### 3D: <img width="1118" alt="4" src="https://github.com/user-attachments/assets/0ba23ac4-aecc-44e6-b252-1fc0f478c75e">
 
 ### Audio: <img width="1127" alt="5" src="https://github.com/user-attachments/assets/ea7f1bd0-ff85-4873-b9dd-cabd1cc89cee">
 
@@ -42,8 +42,7 @@
 * Поддержка ModelScope, ZeroScope 2, CogVideoX и Latte для генерации видео
 * Поддержка SunoBark
 * Поддержка Demucs
-* Поддержка Shap-E
-* Поддержка TripoSR
+* Поддержка TripoSR, StableFast3D, Shap-E, SV34D и Zero123Plus для 3Д генерации
 * Поддержка Wav2Lip
 * Поддержка Multimodal (Moondream 2), LORA (transformers) и WebSearch (with GoogleSearch) для LLM
 * Настройки моделей внутри интерфейса
@@ -96,7 +95,7 @@
 
 ## Как использовать:
 
-#### Интерфейс имеет двадцать девять вкладок в шести главных вкладках: LLM, TTS-STT, SunoBark, LibreTranslate, Wav2Lip, StableDiffusion, Kandinsky, Flux, HunyuanDiT, Lumina-T2X, Kolors, AuraFlow, Würstchen, DeepFloydIF, PixArt, ModelScope, ZeroScope 2, CogVideoX, Latte, TripoSR, Shap-E, StableAudio, AudioCraft, AudioLDM 2, Demucs, Галерея, Загрузчик моделей, Настройки и Система. Выберите ту которая вам нужна и следуйте инструкциям ниже
+#### Интерфейс имеет тридцать две вкладки в шести главных вкладках: LLM, TTS-STT, SunoBark, LibreTranslate, Wav2Lip, StableDiffusion, Kandinsky, Flux, HunyuanDiT, Lumina-T2X, Kolors, AuraFlow, Würstchen, DeepFloydIF, PixArt, ModelScope, ZeroScope 2, CogVideoX, Latte, TripoSR, StableFast3D, Shap-E, SV34D, Zero123Plus, StableAudio, AudioCraft, AudioLDM 2, Demucs, Галерея, Загрузчик моделей, Настройки и Система. Выберите ту которая вам нужна и следуйте инструкциям ниже
 
 ### LLM:
 
@@ -344,11 +343,29 @@
 2) Настройте модель по нужным вам параметрам
 3) Нажмите кнопку `Submit`, чтобы получить сгенерированный 3D-объект
 
+### StableFast3D:
+
+1) Загрузите исходное изображение
+2) Настройте модель по нужным вам параметрам
+3) Нажмите кнопку `Submit`, чтобы получить сгенерированный 3D-объект
+
 ### Shap-E:
 
 1) Введите запрос или загрузите исходное изображение
 2) Настройте модель по нужным вам параметрам
 3) Нажмите кнопку `Submit`, чтобы получить сгенерированный 3D-объект
+
+### SV34D:
+
+1) Загрузите исходное изображение (для 3D) или видео (для 4D)
+2) Настройте модель по нужным вам параметрам
+3) Нажмите кнопку `Submit`, чтобы получить сгенерированное 3D видео
+
+### Zero123Plus:
+
+1) Загрузите исходное изображение
+2) Настройте модель по нужным вам параметрам
+3) Нажмите кнопку `Submit`, чтобы получить сгенерированное 3D вращение изображения
 
 ### StableAudio:
 
@@ -408,7 +425,7 @@
 
 * LLM модели можно взять с сайта [HuggingFace](https://huggingface.co/models) или из внутреннего интерфейса ModelDownloader
 * Модели StableDiffusion, vae, inpaint, embedding и lora можно взять с сайта [CivitAI](https://civitai.com/models) или из внутреннего интерфейса ModelDownloader
-* StableAudioOpen, AudioCraft, AudioLDM 2, TTS, Whisper, Wav2Lip, SunoBark, MoonDream2, Upscale, GLIGEN, Depth, Pix2Pix, Controlnet, AnimateDiff, Videos, LDM3D, SD3, Cascade, Rembg, Roop, CodeFormer, TripoSR, Shap-E, Demucs, Kandinsky, Flux, HunyuanDiT, Lumina-T2X, Kolors, AuraFlow, Würstchen, DeepFloydIF, PixArt, ModelScope, ZeroScope 2, CogVideoX, Latte и Multiband diffusion модели скачиваються автоматически в папку *inputs* при их использовании
+* StableAudioOpen, AudioCraft, AudioLDM 2, TTS, Whisper, Wav2Lip, SunoBark, MoonDream2, Upscale, GLIGEN, Depth, Pix2Pix, Controlnet, AnimateDiff, Videos, LDM3D, SD3, Cascade, Rembg, Roop, CodeFormer, TripoSR, StableFast3D, Shap-E, SV34D, Zero123Plus, Demucs, Kandinsky, Flux, HunyuanDiT, Lumina-T2X, Kolors, AuraFlow, Würstchen, DeepFloydIF, PixArt, ModelScope, ZeroScope 2, CogVideoX, Latte и Multiband diffusion модели скачиваються автоматически в папку *inputs* при их использовании
 * Вы можете использовать голоса откуда угодно. Запишите свой или возьмите запись из интернета. Или просто используйте те, которые уже есть в проекте. Главное, чтобы оно было предварительно обработано!
 
 ## Вики
@@ -491,6 +508,9 @@
 * [AuraFlow](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/apache-2.0.md)
 * [Würstchen](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/mit.md)
 * [ModelScope](https://spdx.org/licenses/CC-BY-NC-4.0)
+* [StableFast3D](https://github.com/Stability-AI/stable-fast-3d/blob/main/LICENSE.md)
+* [SV34D](https://huggingface.co/stabilityai/sv4d/blob/main/LICENSE.md)
+* [Zero123Plus](https://huggingface.co/blog/open_rail)
 
 ## Пожертвование
 

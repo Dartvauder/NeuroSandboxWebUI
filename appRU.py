@@ -15,7 +15,7 @@ from TTS.api import TTS
 import whisper
 from datetime import datetime
 from huggingface_hub import snapshot_download
-from diffusers import StableDiffusionPipeline, StableDiffusion3Pipeline, StableDiffusionXLPipeline, StableDiffusionImg2ImgPipeline, StableDiffusionDepth2ImgPipeline, ControlNetModel, StableDiffusionControlNetPipeline, AutoencoderKL, StableDiffusionLatentUpscalePipeline, StableDiffusionUpscalePipeline, StableDiffusionInpaintPipeline, StableDiffusionGLIGENPipeline, AnimateDiffPipeline, AnimateDiffVideoToVideoPipeline, MotionAdapter, StableVideoDiffusionPipeline, I2VGenXLPipeline, StableCascadePriorPipeline, StableCascadeDecoderPipeline, DiffusionPipeline, DPMSolverMultistepScheduler, ShapEPipeline, ShapEImg2ImgPipeline, StableAudioPipeline, AudioLDM2Pipeline, StableDiffusionInstructPix2PixPipeline, StableDiffusionLDM3DPipeline, FluxPipeline, KandinskyPipeline, KandinskyPriorPipeline, KandinskyV22Pipeline, KandinskyV22PriorPipeline, AutoPipelineForText2Image, HunyuanDiTPipeline, LuminaText2ImgPipeline, IFPipeline, IFSuperResolutionPipeline, PixArtAlphaPipeline, PixArtSigmaPipeline, CogVideoXPipeline, LattePipeline, KolorsPipeline, AuraFlowPipeline, WuerstchenDecoderPipeline, WuerstchenPriorPipeline
+from diffusers import StableDiffusionPipeline, StableDiffusion3Pipeline, StableDiffusionXLPipeline, StableDiffusionImg2ImgPipeline, StableDiffusionDepth2ImgPipeline, ControlNetModel, StableDiffusionControlNetPipeline, AutoencoderKL, StableDiffusionLatentUpscalePipeline, StableDiffusionUpscalePipeline, StableDiffusionInpaintPipeline, StableDiffusionGLIGENPipeline, AnimateDiffPipeline, AnimateDiffVideoToVideoPipeline, MotionAdapter, StableVideoDiffusionPipeline, I2VGenXLPipeline, StableCascadePriorPipeline, StableCascadeDecoderPipeline, DiffusionPipeline, DPMSolverMultistepScheduler, ShapEPipeline, ShapEImg2ImgPipeline, StableAudioPipeline, AudioLDM2Pipeline, StableDiffusionInstructPix2PixPipeline, StableDiffusionLDM3DPipeline, FluxPipeline, KandinskyPipeline, KandinskyPriorPipeline, KandinskyV22Pipeline, KandinskyV22PriorPipeline, AutoPipelineForText2Image, HunyuanDiTPipeline, LuminaText2ImgPipeline, IFPipeline, IFSuperResolutionPipeline, PixArtAlphaPipeline, PixArtSigmaPipeline, CogVideoXPipeline, LattePipeline, KolorsPipeline, AuraFlowPipeline, WuerstchenDecoderPipeline, WuerstchenPriorPipeline, EulerAncestralDiscreteScheduler
 from diffusers.utils import load_image, export_to_video, export_to_gif, export_to_ply, pt_to_pil
 from diffusers.pipelines.wuerstchen import DEFAULT_STAGE_C_TIMESTEPS
 from controlnet_aux import OpenposeDetector, LineartDetector, HEDdetector
@@ -3136,6 +3136,45 @@ def generate_3d_triposr(image, mc_resolution, foreground_ratio=0.85, output_form
         torch.cuda.empty_cache()
 
 
+def generate_3d_stablefast3d(image, texture_resolution, foreground_ratio, remesh_option, output_format="obj",
+                             stop_generation=None):
+    global stop_signal
+    stop_signal = False
+
+    if not image:
+        return None, "Please upload an image!"
+
+    hf_token = get_hf_token()
+    if hf_token is None:
+        return None, "Hugging Face token not found. Please create a file named 'HF-Token.txt' in the root directory and paste your token there."
+
+    try:
+        today = datetime.now().date()
+        output_dir = os.path.join('outputs', f"StableFast3D_{today.strftime('%Y%m%d')}")
+        os.makedirs(output_dir, exist_ok=True)
+
+        output_filename = f"3d_object_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
+        output_path = os.path.join(output_dir, output_filename)
+
+        os.environ["HUGGING_FACE_HUB_TOKEN"] = hf_token
+
+        command = f"python StableFast3D/run.py \"{image}\" --output-dir {output_dir} --texture-resolution {texture_resolution} --foreground-ratio {foreground_ratio} --remesh_option {remesh_option}"
+
+        subprocess.run(command, shell=True, check=True)
+
+        if stop_signal:
+            return None, "Generation stopped"
+
+        return output_path, None
+
+    except Exception as e:
+        return None, str(e)
+
+    finally:
+        if "HUGGING_FACE_HUB_TOKEN" in os.environ:
+            del os.environ["HUGGING_FACE_HUB_TOKEN"]
+
+
 def generate_3d_shap_e(prompt, init_image, num_inference_steps, guidance_scale, frame_size, stop_generation):
     global stop_signal
     stop_signal = False
@@ -3201,6 +3240,130 @@ def generate_3d_shap_e(prompt, init_image, num_inference_steps, guidance_scale, 
 
     finally:
         del pipe
+        torch.cuda.empty_cache()
+
+
+def generate_sv34d(input_file, version, elevation_deg=None, stop_generation=None):
+    global stop_signal
+    stop_signal = False
+
+    if not input_file:
+        return None, "Please upload an input file!"
+
+    model_files = {
+        "3D-U": "https://huggingface.co/stabilityai/sv3d/resolve/main/sv3d_u.safetensors",
+        "3D-P": "https://huggingface.co/stabilityai/sv3d/resolve/main/sv3d_p.safetensors",
+        "4D": "https://huggingface.co/stabilityai/sv4d/resolve/main/sv4d.safetensors"
+    }
+
+    checkpoints_dir = "checkpoints"
+    os.makedirs(checkpoints_dir, exist_ok=True)
+    model_path = os.path.join(checkpoints_dir, f"sv{version.lower()}.safetensors")
+
+    if not os.path.exists(model_path):
+        print(f"Downloading SV34D {version} model...")
+        hf_token = get_hf_token()
+        if hf_token is None:
+            return None, "Hugging Face token not found. Please create a file named 'HF-Token.txt' in the root directory and paste your token there."
+
+        try:
+            response = requests.get(model_files[version], headers={"Authorization": f"Bearer {hf_token}"})
+            response.raise_for_status()
+            with open(model_path, 'wb') as f:
+                f.write(response.content)
+            print(f"SV34D {version} model downloaded")
+        except Exception as e:
+            return None, f"Error downloading model: {str(e)}"
+
+    today = datetime.now().date()
+    output_dir = os.path.join('outputs', '3D', f"SV34D_{today.strftime('%Y%m%d')}")
+    os.makedirs(output_dir, exist_ok=True)
+
+    output_filename = f"sv34d_{version}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+    output_path = os.path.join(output_dir, output_filename)
+
+    if version in ["3D-U", "3D-P"]:
+        if not input_file.lower().endswith(('.png', '.jpg', '.jpeg')):
+            return None, "Please upload an image file for 3D-U or 3D-P version!"
+
+        if version == "3D-U":
+            command = f"python generative-models/scripts/sampling/simple_video_sample.py --input_path {input_file} --version sv3d_u --output_folder {output_dir}"
+        else:  # 3D-P
+            if elevation_deg is None:
+                return None, "Please provide elevation degree for 3D-P version!"
+            command = f"python generative-models/scripts/sampling/simple_video_sample.py --input_path {input_file} --version sv3d_p --elevations_deg {elevation_deg} --output_folder {output_dir}"
+    elif version == "4D":
+        if not input_file.lower().endswith('.mp4'):
+            return None, "Please upload an MP4 video file for 4D version!"
+        command = f"python generative-models/scripts/sampling/simple_video_sample_4d.py --input_path {input_file} --output_folder {output_dir}"
+    else:
+        return None, "Invalid version selected!"
+
+    try:
+        subprocess.run(command, shell=True, check=True)
+
+        if stop_signal:
+            return None, "Generation stopped"
+
+        for file in os.listdir(output_dir):
+            if file.startswith(output_filename):
+                return os.path.join(output_dir, file), None
+
+        return None, "Output file not found"
+
+    except subprocess.CalledProcessError as e:
+        return None, f"Error occurred: {str(e)}"
+
+    except Exception as e:
+        return None, str(e)
+
+
+def generate_3d_zero123plus(input_image, num_inference_steps, output_format="png", stop_generation=None):
+    global stop_signal
+    stop_signal = False
+
+    if not input_image:
+        return None, "Please upload an input image!"
+
+    zero123plus_model_path = os.path.join("inputs", "3D", "zero123plus")
+
+    if not os.path.exists(zero123plus_model_path):
+        print("Downloading Zero123Plus model...")
+        os.makedirs(zero123plus_model_path, exist_ok=True)
+        Repo.clone_from("https://huggingface.co/sudo-ai/zero123plus-v1.2", zero123plus_model_path)
+        print("Zero123Plus model downloaded")
+
+    try:
+        pipeline = DiffusionPipeline.from_pretrained(
+            zero123plus_model_path,
+            custom_pipeline="sudo-ai/zero123plus-pipeline",
+            torch_dtype=torch.float16
+        )
+        pipeline.scheduler = EulerAncestralDiscreteScheduler.from_config(
+            pipeline.scheduler.config, timestep_spacing='trailing'
+        )
+        pipeline.to('cuda:0')
+
+        cond = Image.open(input_image)
+        result = pipeline(cond, num_inference_steps=num_inference_steps).images[0]
+
+        if stop_signal:
+            return None, "Generation stopped"
+
+        today = datetime.now().date()
+        output_dir = os.path.join('outputs', f"Zero123Plus_{today.strftime('%Y%m%d')}")
+        os.makedirs(output_dir, exist_ok=True)
+        output_filename = f"zero123plus_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
+        output_path = os.path.join(output_dir, output_filename)
+        result.save(output_path)
+
+        return output_path, None
+
+    except Exception as e:
+        return None, str(e)
+
+    finally:
+        del pipeline
         torch.cuda.empty_cache()
 
 
@@ -4480,6 +4643,27 @@ triposr_interface = gr.Interface(
     allow_flagging="never",
 )
 
+stablefast3d_interface = gr.Interface(
+    fn=generate_3d_stablefast3d,
+    inputs=[
+        gr.Image(label="Input image", type="filepath"),
+        gr.Slider(minimum=256, maximum=4096, value=1024, step=256, label="Texture Resolution"),
+        gr.Slider(minimum=0.1, maximum=1.0, value=0.85, step=0.05, label="Foreground Ratio"),
+        gr.Radio(choices=["none", "triangle", "quad"], label="Remesh Option", value="none"),
+        gr.Radio(choices=["obj", "glb"], label="Select output format", value="obj", interactive=True),
+        gr.Button(value="Stop generation", interactive=True, variant="stop"),
+    ],
+    outputs=[
+        gr.Model3D(label="Generated 3D object"),
+        gr.Textbox(label="Message", type="text"),
+    ],
+    title="NeuroSandboxWebUI (ALPHA) - StableFast3D",
+    description="This user interface allows you to generate 3D objects from images using StableFast3D. "
+                "Upload an image and customize the generation settings. "
+                "Try it and see what happens!",
+    allow_flagging="never",
+)
+
 shap_e_interface = gr.Interface(
     fn=generate_3d_shap_e,
     inputs=[
@@ -4497,6 +4681,44 @@ shap_e_interface = gr.Interface(
     title="NeuroSandboxWebUI (ALPHA) - Shap-E",
     description="This user interface allows you to generate 3D objects using Shap-E. "
                 "You can enter a text prompt or upload an initial image, and customize the generation settings. "
+                "Try it and see what happens!",
+    allow_flagging="never",
+)
+
+sv34d_interface = gr.Interface(
+    fn=generate_sv34d,
+    inputs=[
+        gr.File(label="Input file (Image for 3D-U and 3D-P, MP4 video for 4D)", type="filepath"),
+        gr.Radio(choices=["3D-U", "3D-P", "4D"], label="Version", value="3D-U"),
+        gr.Slider(minimum=0.0, maximum=90.0, value=10.0, step=0.1, label="Elevation Degree (for 3D-P only)"),
+        gr.Button(value="Stop generation", interactive=True, variant="stop"),
+    ],
+    outputs=[
+        gr.Video(label="Generated output"),
+        gr.Textbox(label="Message", type="text"),
+    ],
+    title="NeuroSandboxWebUI (ALPHA) - SV34D",
+    description="This interface allows you to generate 3D and 4D content using SV34D models. "
+                "Upload an image (PNG, JPG, JPEG) for 3D-U and 3D-P versions, or an MP4 video for 4D version. "
+                "Select the version and customize settings as needed.",
+    allow_flagging="never",
+)
+
+zero123plus_interface = gr.Interface(
+    fn=generate_3d_zero123plus,
+    inputs=[
+        gr.Image(label="Input image", type="filepath"),
+        gr.Slider(minimum=1, maximum=100, value=75, step=1, label="Inference steps"),
+        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
+        gr.Button(value="Stop generation", interactive=True, variant="stop"),
+    ],
+    outputs=[
+        gr.Image(type="filepath", label="Generated image"),
+        gr.Textbox(label="Message", type="text"),
+    ],
+    title="NeuroSandboxWebUI (ALPHA) - Zero123Plus",
+    description="This user interface allows you to generate 3D-like images using Zero123Plus. "
+                "Upload an input image and customize the number of inference steps. "
                 "Try it and see what happens!",
     allow_flagging="never",
 )
@@ -4680,8 +4902,8 @@ with gr.TabbedInterface(
             tab_names=["Wav2Lip", "ModelScope", "ZeroScope 2", "CogVideoX", "Latte"]
         ),
         gr.TabbedInterface(
-            [triposr_interface, shap_e_interface],
-            tab_names=["TripoSR", "Shap-E"]
+            [triposr_interface, stablefast3d_interface, shap_e_interface, sv34d_interface, zero123plus_interface],
+            tab_names=["TripoSR", "StableFast3D", "Shap-E", "SV34D", "Zero123Plus"]
         ),
         gr.TabbedInterface(
             [stableaudio_interface, audiocraft_interface, audioldm2_interface, bark_interface, demucs_interface],
@@ -4724,7 +4946,10 @@ with gr.TabbedInterface(
     cogvideox_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     latte_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     triposr_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
+    stablefast3d_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     shap_e_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
+    sv34d_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
+    zero123plus_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     stableaudio_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     audiocraft_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     audioldm2_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
