@@ -21,4 +21,4 @@ echo "Application has been updated successfully. Run start.sh"
 
 deactivate
 
-read -p "Press enter to continue/Нажмите enter для продолжения"
+read -p "Press enter to continue"
