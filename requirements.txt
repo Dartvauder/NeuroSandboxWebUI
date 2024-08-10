@@ -128,6 +128,7 @@ julius==0.2.7
 keras==3.3.3
 kiwisolver==1.4.5
 kornia==0.7.3
+kornia-rs==0.1.5
 lameenc==1.7.0
 langcodes==3.4.0
 langdetect==1.0.9
