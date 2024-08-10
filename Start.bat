@@ -9,13 +9,13 @@ call "%CURRENT_DIR%venv\Scripts\activate.bat"
 echo Select a file for launch:
 echo [English version: 1] appEN.py
 echo [Русская версия: 2] appRU.py
-echo [English version: 3] appAR.py
-echo [Русская версия: 4] appDE.py
-echo [English version: 5] appES.py
-echo [Русская версия: 6] appFR.py
-echo [English version: 7] appJP.py
-echo [Русская версия: 8] appZH.py
-echo [English version: 9] appPT.py
+echo [النسخة العربية: 3] appAR.py
+echo [Deutsche Version: 4] appDE.py
+echo [Versión en español: 5] appES.py
+echo [Version française: 6] appFR.py
+echo [日本語版: 7] appJP.py
+echo [中文版: 8] appZH.py
+echo [Versão portuguesa: 9] appPT.py
 echo.
 
 :input
