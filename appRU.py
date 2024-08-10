@@ -3144,6 +3144,10 @@ def generate_3d_stablefast3d(image, texture_resolution, foreground_ratio, remesh
     if not image:
         return None, "Please upload an image!"
 
+    hf_token = get_hf_token()
+    if hf_token is None:
+        return None, "Hugging Face token not found. Please create a file named 'HF-Token.txt' in the root directory and paste your token there."
+
     try:
         today = datetime.now().date()
         output_dir = os.path.join('outputs', f"StableFast3D_{today.strftime('%Y%m%d')}")
@@ -3151,6 +3155,8 @@ def generate_3d_stablefast3d(image, texture_resolution, foreground_ratio, remesh
 
         output_filename = f"3d_object_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
         output_path = os.path.join(output_dir, output_filename)
+
+        os.environ["HUGGING_FACE_HUB_TOKEN"] = hf_token
 
         command = f"python StableFast3D/run.py \"{image}\" --output-dir {output_dir} --texture-resolution {texture_resolution} --foreground-ratio {foreground_ratio} --remesh_option {remesh_option}"
 
@@ -3163,6 +3169,10 @@ def generate_3d_stablefast3d(image, texture_resolution, foreground_ratio, remesh
 
     except Exception as e:
         return None, str(e)
+
+    finally:
+        if "HUGGING_FACE_HUB_TOKEN" in os.environ:
+            del os.environ["HUGGING_FACE_HUB_TOKEN"]
 
 
 def generate_3d_shap_e(prompt, init_image, num_inference_steps, guidance_scale, frame_size, stop_generation):
