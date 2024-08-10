@@ -3211,6 +3211,31 @@ def generate_sv34d(input_file, version, elevation_deg=None, stop_generation=None
     if not input_file:
         return None, "Please upload an input file!"
 
+    model_files = {
+        "3D-U": "https://huggingface.co/stabilityai/sv3d/resolve/main/sv3d_u.safetensors",
+        "3D-P": "https://huggingface.co/stabilityai/sv3d/resolve/main/sv3d_p.safetensors",
+        "4D": "https://huggingface.co/stabilityai/sv4d/resolve/main/sv4d.safetensors"
+    }
+
+    checkpoints_dir = "checkpoints"
+    os.makedirs(checkpoints_dir, exist_ok=True)
+    model_path = os.path.join(checkpoints_dir, f"sv{version.lower()}.safetensors")
+
+    if not os.path.exists(model_path):
+        print(f"Downloading SV34D {version} model...")
+        hf_token = get_hf_token()
+        if hf_token is None:
+            return None, "Hugging Face token not found. Please create a file named 'HF-Token.txt' in the root directory and paste your token there."
+
+        try:
+            response = requests.get(model_files[version], headers={"Authorization": f"Bearer {hf_token}"})
+            response.raise_for_status()
+            with open(model_path, 'wb') as f:
+                f.write(response.content)
+            print(f"SV34D {version} model downloaded")
+        except Exception as e:
+            return None, f"Error downloading model: {str(e)}"
+
     today = datetime.now().date()
     output_dir = os.path.join('outputs', '3D', f"SV34D_{today.strftime('%Y%m%d')}")
     os.makedirs(output_dir, exist_ok=True)
@@ -3223,15 +3248,15 @@ def generate_sv34d(input_file, version, elevation_deg=None, stop_generation=None
             return None, "Please upload an image file for 3D-U or 3D-P version!"
 
         if version == "3D-U":
-            command = f"python generative-models/scripts/sampling/simple_video_sample.py --input_path {input_file} --version sv3d_u --output_folder {output_dir}"
+            command = f"python generative-models/scripts/sampling/simple_video_sample.py --input_path {input_file} --version sv3d_u --checkpoint {model_path} --output_folder {output_dir}"
         else:  # 3D-P
             if elevation_deg is None:
                 return None, "Please provide elevation degree for 3D-P version!"
-            command = f"python generative-models/scripts/sampling/simple_video_sample.py --input_path {input_file} --version sv3d_p --elevations_deg {elevation_deg} --output_folder {output_dir}"
+            command = f"python generative-models/scripts/sampling/simple_video_sample.py --input_path {input_file} --version sv3d_p --checkpoint {model_path} --elevations_deg {elevation_deg} --output_folder {output_dir}"
     elif version == "4D":
         if not input_file.lower().endswith('.mp4'):
             return None, "Please upload an MP4 video file for 4D version!"
-        command = f"python generative-models/scripts/sampling/simple_video_sample_4d.py --input_path {input_file} --output_folder {output_dir}"
+        command = f"python generative-models/scripts/sampling/simple_video_sample_4d.py --input_path {input_file} --checkpoint {model_path} --output_folder {output_dir}"
     else:
         return None, "Invalid version selected!"
 
