@@ -23,63 +23,63 @@ while true; do
     case $choice in
         1)
             clear
-            python "$CURRENT_DIR/appEN.py" &
+            python "$CURRENT_DIR/LaunchFiles/appEN.py" &
             sleep 120
             xdg-open "http://localhost:7860"
             break
             ;;
         2)
             clear
-            python "$CURRENT_DIR/appRU.py" &
+            python "$CURRENT_DIR/LaunchFiles/appRU.py" &
             sleep 120
             xdg-open "http://localhost:7860"
             break
             ;;
         3)
             clear
-            python "$CURRENT_DIR/appAR.py" &
+            python "$CURRENT_DIR/LaunchFiles/appAR.py" &
             sleep 120
             xdg-open "http://localhost:7860"
             break
             ;;
         4)
             clear
-            python "$CURRENT_DIR/appDE.py" &
+            python "$CURRENT_DIR/LaunchFiles/appDE.py" &
             sleep 120
             xdg-open "http://localhost:7860"
             break
             ;;
         5)
             clear
-            python "$CURRENT_DIR/appES.py" &
+            python "$CURRENT_DIR/LaunchFiles/appES.py" &
             sleep 120
             xdg-open "http://localhost:7860"
             break
             ;;
         6)
             clear
-            python "$CURRENT_DIR/appFR.py" &
+            python "$CURRENT_DIR/LaunchFiles/appFR.py" &
             sleep 120
             xdg-open "http://localhost:7860"
             break
             ;;
         7)
             clear
-            python "$CURRENT_DIR/appJP.py" &
+            python "$CURRENT_DIR/LaunchFiles/appJP.py" &
             sleep 120
             xdg-open "http://localhost:7860"
             break
             ;;
         8)
             clear
-            python "$CURRENT_DIR/appZH.py" &
+            python "$CURRENT_DIR/LaunchFiles/appZH.py" &
             sleep 120
             xdg-open "http://localhost:7860"
             break
             ;;
         9)
             clear
-            python "$CURRENT_DIR/appPT.py" &
+            python "$CURRENT_DIR/LaunchFiles/appPT.py" &
             sleep 120
             xdg-open "http://localhost:7860"
             break
