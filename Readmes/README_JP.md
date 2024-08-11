@@ -10,17 +10,17 @@
 
 プロジェクトの目標は、ニューラルネットワークモデルを使用するための最も簡単なアプリケーションを作成することです。
 
-### テキスト： 
+### テキスト： <img width="1127" alt="1jp" src="https://github.com/user-attachments/assets/37e91e1b-0e1d-4085-8ae0-b3feaecb72e5">
 
-### 画像： 
+### 画像： <img width="1120" alt="2jp" src="https://github.com/user-attachments/assets/d09e422b-f4e2-46cc-ba94-082e0c6ecebf">
 
-### 動画： 
+### 動画： <img width="1121" alt="3jp" src="https://github.com/user-attachments/assets/ddfe00d4-eede-4bb3-9b6b-03eb0519a491">
 
-### 3D： 
+### 3D： <img width="1120" alt="4jp" src="https://github.com/user-attachments/assets/f2f8522e-1e66-4bd1-afb1-2cabc11b64ef">
 
-### オーディオ： 
+### オーディオ： <img width="1121" alt="5jp" src="https://github.com/user-attachments/assets/a77724c6-daa1-4677-9d45-71c9060f7266">
 
-### インターフェース： 
+### インターフェース： <img width="1121" alt="6jp" src="https://github.com/user-attachments/assets/b01c9acd-a740-473a-8e21-5e7fd79298b2">
 
 ## 特徴：
 
