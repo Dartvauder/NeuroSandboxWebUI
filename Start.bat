@@ -16,6 +16,8 @@ echo [Version française: 6] appFR.py
 echo [日本語版: 7] appJP.py
 echo [中文版: 8] appZH.py
 echo [Versão portuguesa: 9] appPT.py
+echo [Italiano: 10] appIT.py
+echo [हिंदी: 11] appHI.py
 echo.
 
 :input
@@ -87,6 +89,22 @@ if "%choice%"=="8" (
 if "%choice%"=="9" (
     cls
     start /b py "%CURRENT_DIR%LaunchFiles\appPT.py"
+    timeout /t 120 > NUL
+    start http://localhost:7860
+    goto end
+)
+
+if "%choice%"=="10" (
+    cls
+    start /b py "%CURRENT_DIR%LaunchFiles\appIT.py"
+    timeout /t 120 > NUL
+    start http://localhost:7860
+    goto end
+)
+
+if "%choice%"=="11" (
+    cls
+    start /b py "%CURRENT_DIR%LaunchFiles\appHI.py"
     timeout /t 120 > NUL
     start http://localhost:7860
     goto end

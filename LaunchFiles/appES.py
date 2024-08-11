@@ -63,6 +63,7 @@ tts_model = None
 whisper_model = None
 audiocraft_model_path = None
 
+os.chdir(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 def authenticate(username, password):
     try:
@@ -3848,1072 +3849,1072 @@ controlnet_models_list = [None, "openpose", "depth", "canny", "lineart", "scribb
 chat_interface = gr.Interface(
     fn=generate_text_and_speech,
     inputs=[
-        gr.Textbox(label="Enter your request"),
-        gr.Audio(type="filepath", label="Record your request (optional)"),
-        gr.Image(label="Upload your image (optional)", type="filepath"),
-        gr.Dropdown(choices=llm_models_list, label="Select LLM model", value=None),
-        gr.Dropdown(choices=llm_lora_models_list, label="Select LoRA model (optional)", value=None),
-        gr.HTML("<h3>LLM Settings</h3>"),
-        gr.Radio(choices=["transformers", "llama"], label="Select model type", value="transformers"),
-        gr.Slider(minimum=1, maximum=4096, value=512, step=1, label="Max length (for transformers type models)"),
-        gr.Slider(minimum=1, maximum=4096, value=512, step=1, label="Max tokens (for llama type models)"),
-        gr.Slider(minimum=0.0, maximum=2.0, value=0.7, step=0.1, label="Temperature"),
+        gr.Textbox(label="Ingrese su solicitud"),
+        gr.Audio(type="filepath", label="Grabe su solicitud (opcional)"),
+        gr.Image(label="Suba su imagen (opcional)", type="filepath"),
+        gr.Dropdown(choices=llm_models_list, label="Seleccione modelo LLM", value=None),
+        gr.Dropdown(choices=llm_lora_models_list, label="Seleccione modelo LoRA (opcional)", value=None),
+        gr.HTML("<h3>Configuración de LLM</h3>"),
+        gr.Radio(choices=["transformers", "llama"], label="Seleccione tipo de modelo", value="transformers"),
+        gr.Slider(minimum=1, maximum=4096, value=512, step=1, label="Longitud máxima (para modelos tipo transformers)"),
+        gr.Slider(minimum=1, maximum=4096, value=512, step=1, label="Tokens máximos (para modelos tipo llama)"),
+        gr.Slider(minimum=0.0, maximum=2.0, value=0.7, step=0.1, label="Temperatura"),
         gr.Slider(minimum=0.0, maximum=1.0, value=0.9, step=0.1, label="Top P"),
         gr.Slider(minimum=0, maximum=100, value=20, step=1, label="Top K"),
-        gr.Radio(choices=["txt", "json"], label="Select chat history format", value="txt", interactive=True),
-        gr.Checkbox(label="Enable WebSearch", value=False),
-        gr.Checkbox(label="Enable LibreTranslate", value=False),
-        gr.Dropdown(choices=["en", "es", "fr", "de", "it", "pt", "pl", "tr", "ru", "nl", "cs", "ar", "zh", "ja", "hi"], label="Select target language", value="ru", interactive=True),
-        gr.Checkbox(label="Enable Multimodal", value=False),
-        gr.Checkbox(label="Enable TTS", value=False),
-        gr.HTML("<h3>TTS Settings</h3>"),
-        gr.Dropdown(choices=speaker_wavs_list, label="Select voice", interactive=True),
-        gr.Dropdown(choices=["en", "ru"], label="Select language", interactive=True),
-        gr.Slider(minimum=0.0, maximum=1.9, value=1.0, step=0.1, label="TTS Temperature", interactive=True),
-        gr.Slider(minimum=0.0, maximum=1.0, value=0.9, step=0.1, label="TTS Top P", interactive=True),
-        gr.Slider(minimum=0, maximum=100, value=20, step=1, label="TTS Top K", interactive=True),
-        gr.Slider(minimum=0.5, maximum=2.0, value=1.0, step=0.1, label="TTS Speed", interactive=True),
-        gr.Radio(choices=["wav", "mp3", "ogg"], label="Select output format", value="wav", interactive=True),
-        gr.Button(value="Stop generation", interactive=True, variant="stop"),
+        gr.Radio(choices=["txt", "json"], label="Seleccione formato de historial de chat", value="txt", interactive=True),
+        gr.Checkbox(label="Habilitar Búsqueda Web", value=False),
+        gr.Checkbox(label="Habilitar LibreTranslate", value=False),
+        gr.Dropdown(choices=["en", "es", "fr", "de", "it", "pt", "pl", "tr", "ru", "nl", "cs", "ar", "zh", "ja", "hi"], label="Seleccione idioma destino", value="ru", interactive=True),
+        gr.Checkbox(label="Habilitar Multimodal", value=False),
+        gr.Checkbox(label="Habilitar TTS", value=False),
+        gr.HTML("<h3>Configuración de TTS</h3>"),
+        gr.Dropdown(choices=speaker_wavs_list, label="Seleccione voz", interactive=True),
+        gr.Dropdown(choices=["en", "ru"], label="Seleccione idioma", interactive=True),
+        gr.Slider(minimum=0.0, maximum=1.9, value=1.0, step=0.1, label="Temperatura TTS", interactive=True),
+        gr.Slider(minimum=0.0, maximum=1.0, value=0.9, step=0.1, label="Top P TTS", interactive=True),
+        gr.Slider(minimum=0, maximum=100, value=20, step=1, label="Top K TTS", interactive=True),
+        gr.Slider(minimum=0.5, maximum=2.0, value=1.0, step=0.1, label="Velocidad TTS", interactive=True),
+        gr.Radio(choices=["wav", "mp3", "ogg"], label="Seleccione formato de salida", value="wav", interactive=True),
+        gr.Button(value="Detener generación", interactive=True, variant="stop"),
     ],
     outputs=[
-        gr.Chatbot(label="LLM text response", value=[]),
-        gr.Audio(label="LLM audio response", type="filepath"),
+        gr.Chatbot(label="Respuesta de texto LLM", value=[]),
+        gr.Audio(label="Respuesta de audio LLM", type="filepath"),
     ],
     title="NeuroSandboxWebUI (ALPHA) - LLM",
-    description="This user interface allows you to enter any text or audio and receive generated response. You can select the LLM model, "
-                "avatar, voice and language for tts from the drop-down lists. You can also customize the model settings from the sliders. "
-                "Try it and see what happens!",
+    description="Esta interfaz de usuario le permite ingresar cualquier texto o audio y recibir una respuesta generada. Puede seleccionar el modelo LLM, "
+                "avatar, voz e idioma para TTS de las listas desplegables. También puede personalizar la configuración del modelo desde los deslizadores. "
+                "¡Pruébelo y vea qué sucede!",
     allow_flagging="never",
 )
 
 tts_stt_interface = gr.Interface(
     fn=generate_tts_stt,
     inputs=[
-        gr.Textbox(label="Enter text for TTS"),
-        gr.Audio(label="Record audio for STT", type="filepath"),
-        gr.HTML("<h3>TTS Settings</h3>"),
-        gr.Dropdown(choices=speaker_wavs_list, label="Select voice", interactive=True),
-        gr.Dropdown(choices=["en", "es", "fr", "de", "it", "pt", "pl", "tr", "ru", "nl", "cs", "ar", "zh-cn", "ja", "hu", "ko", "hi"], label="Select language", interactive=True),
-        gr.Slider(minimum=0.0, maximum=1.9, value=1.0, step=0.1, label="TTS Temperature", interactive=True),
-        gr.Slider(minimum=0.0, maximum=1.0, value=0.9, step=0.1, label="TTS Top P", interactive=True),
-        gr.Slider(minimum=0, maximum=100, value=20, step=1, label="TTS Top K", interactive=True),
-        gr.Slider(minimum=0.5, maximum=2.0, value=1.0, step=0.1, label="TTS Speed", interactive=True),
-        gr.Radio(choices=["wav", "mp3", "ogg"], label="Select TTS output format", value="wav", interactive=True),
-        gr.Dropdown(choices=["txt", "json"], label="Select STT output format", value="txt", interactive=True),
+        gr.Textbox(label="Ingrese texto para TTS"),
+        gr.Audio(label="Grabe audio para STT", type="filepath"),
+        gr.HTML("<h3>Configuración de TTS</h3>"),
+        gr.Dropdown(choices=speaker_wavs_list, label="Seleccione voz", interactive=True),
+        gr.Dropdown(choices=["en", "es", "fr", "de", "it", "pt", "pl", "tr", "ru", "nl", "cs", "ar", "zh-cn", "ja", "hu", "ko", "hi"], label="Seleccione idioma", interactive=True),
+        gr.Slider(minimum=0.0, maximum=1.9, value=1.0, step=0.1, label="Temperatura TTS", interactive=True),
+        gr.Slider(minimum=0.0, maximum=1.0, value=0.9, step=0.1, label="Top P TTS", interactive=True),
+        gr.Slider(minimum=0, maximum=100, value=20, step=1, label="Top K TTS", interactive=True),
+        gr.Slider(minimum=0.5, maximum=2.0, value=1.0, step=0.1, label="Velocidad TTS", interactive=True),
+        gr.Radio(choices=["wav", "mp3", "ogg"], label="Seleccione formato de salida TTS", value="wav", interactive=True),
+        gr.Dropdown(choices=["txt", "json"], label="Seleccione formato de salida STT", value="txt", interactive=True),
     ],
     outputs=[
-        gr.Audio(label="TTS Audio", type="filepath"),
-        gr.Textbox(label="STT Text"),
+        gr.Audio(label="Audio TTS", type="filepath"),
+        gr.Textbox(label="Texto STT"),
     ],
     title="NeuroSandboxWebUI (ALPHA) - TTS-STT",
-    description="This user interface allows you to enter text for Text-to-Speech(CoquiTTS) and record audio for Speech-to-Text(OpenAIWhisper). "
-                "For TTS, you can select the voice and language, and customize the generation settings from the sliders. "
-                "For STT, simply record your audio and the spoken text will be displayed. "
-                "Try it and see what happens!",
+    description="Esta interfaz de usuario le permite ingresar texto para Texto a Voz (CoquiTTS) y grabar audio para Voz a Texto (OpenAIWhisper). "
+                "Para TTS, puede seleccionar la voz y el idioma, y personalizar la configuración de generación desde los deslizadores. "
+                "Para STT, simplemente grabe su audio y se mostrará el texto hablado. "
+                "¡Pruébelo y vea qué sucede!",
     allow_flagging="never",
 )
 
 bark_interface = gr.Interface(
     fn=generate_bark_audio,
     inputs=[
-        gr.Textbox(label="Enter text for the request"),
-        gr.Dropdown(choices=[None, "v2/en_speaker_1", "v2/ru_speaker_1"], label="Select voice preset", value=None),
-        gr.Slider(minimum=1, maximum=1000, value=100, step=1, label="Max length"),
-        gr.Slider(minimum=0.1, maximum=2.0, value=0.4, step=0.1, label="Fine temperature"),
-        gr.Slider(minimum=0.1, maximum=2.0, value=0.8, step=0.1, label="Coarse temperature"),
-        gr.Radio(choices=["wav", "mp3", "ogg"], label="Select output format", value="wav", interactive=True),
-        gr.Button(value="Stop generation", interactive=True, variant="stop"),
+        gr.Textbox(label="Ingrese texto para la solicitud"),
+        gr.Dropdown(choices=[None, "v2/en_speaker_1", "v2/ru_speaker_1"], label="Seleccione preajuste de voz", value=None),
+        gr.Slider(minimum=1, maximum=1000, value=100, step=1, label="Longitud máxima"),
+        gr.Slider(minimum=0.1, maximum=2.0, value=0.4, step=0.1, label="Temperatura fina"),
+        gr.Slider(minimum=0.1, maximum=2.0, value=0.8, step=0.1, label="Temperatura gruesa"),
+        gr.Radio(choices=["wav", "mp3", "ogg"], label="Seleccione formato de salida", value="wav", interactive=True),
+        gr.Button(value="Detener generación", interactive=True, variant="stop"),
     ],
     outputs=[
-        gr.Audio(label="Generated audio", type="filepath"),
-        gr.Textbox(label="Message", type="text"),
+        gr.Audio(label="Audio generado", type="filepath"),
+        gr.Textbox(label="Mensaje", type="text"),
     ],
     title="NeuroSandboxWebUI (ALPHA) - SunoBark",
-    description="This user interface allows you to enter text and generate audio using SunoBark. "
-                "You can select the voice preset and customize the max length. "
-                "Try it and see what happens!",
+    description="Esta interfaz de usuario le permite ingresar texto y generar audio usando SunoBark. "
+                "Puede seleccionar el preajuste de voz y personalizar la longitud máxima. "
+                "¡Pruébelo y vea qué sucede!",
     allow_flagging="never",
 )
 
 translate_interface = gr.Interface(
     fn=translate_text,
     inputs=[
-        gr.Textbox(label="Enter text to translate"),
-        gr.Dropdown(choices=["en", "es", "fr", "de", "it", "pt", "pl", "tr", "ru", "nl", "cs", "ar", "zh", "ja", "hi"], label="Select source language", value="en"),
-        gr.Dropdown(choices=["en", "es", "fr", "de", "it", "pt", "pl", "tr", "ru", "nl", "cs", "ar", "zh", "ja", "hi"], label="Select target language", value="ru"),
-        gr.Checkbox(label="Enable translate history save", value=False),
-        gr.Radio(choices=["txt", "json"], label="Select translate history format", value="txt", interactive=True),
-        gr.File(label="Upload text file (optional)", file_count="single", interactive=True),
+        gr.Textbox(label="Ingrese texto para traducir"),
+        gr.Dropdown(choices=["en", "es", "fr", "de", "it", "pt", "pl", "tr", "ru", "nl", "cs", "ar", "zh", "ja", "hi"], label="Seleccione idioma de origen", value="en"),
+        gr.Dropdown(choices=["en", "es", "fr", "de", "it", "pt", "pl", "tr", "ru", "nl", "cs", "ar", "zh", "ja", "hi"], label="Seleccione idioma de destino", value="ru"),
+        gr.Checkbox(label="Habilitar guardado del historial de traducción", value=False),
+        gr.Radio(choices=["txt", "json"], label="Seleccione formato del historial de traducción", value="txt", interactive=True),
+        gr.File(label="Subir archivo de texto (opcional)", file_count="single", interactive=True),
     ],
     outputs=[
-        gr.Textbox(label="Translated text"),
+        gr.Textbox(label="Texto traducido"),
     ],
     title="NeuroSandboxWebUI (ALPHA) - LibreTranslate",
-    description="This user interface allows you to enter text and translate it using LibreTranslate. "
-                "Select the source and target languages and click Submit to get the translation. "
-                "Try it and see what happens!",
+    description="Esta interfaz de usuario le permite ingresar texto y traducirlo usando LibreTranslate. "
+                "Seleccione los idiomas de origen y destino y haga clic en Enviar para obtener la traducción. "
+                "¡Pruébelo y vea qué sucede!",
     allow_flagging="never",
 )
 
 wav2lip_interface = gr.Interface(
     fn=generate_wav2lip,
     inputs=[
-        gr.Image(label="Input image", type="filepath"),
-        gr.Audio(label="Input audio", type="filepath"),
+        gr.Image(label="Imagen de entrada", type="filepath"),
+        gr.Audio(label="Audio de entrada", type="filepath"),
         gr.Slider(minimum=1, maximum=60, value=30, step=1, label="FPS"),
-        gr.Textbox(label="Pads", value="0 10 0 0"),
-        gr.Slider(minimum=1, maximum=64, value=16, step=1, label="Face Detection Batch Size"),
-        gr.Slider(minimum=1, maximum=512, value=128, step=1, label="Wav2Lip Batch Size"),
-        gr.Slider(minimum=1, maximum=4, value=1, step=1, label="Resize Factor"),
-        gr.Textbox(label="Crop", value="0 -1 0 -1"),
+        gr.Textbox(label="Rellenos", value="0 10 0 0"),
+        gr.Slider(minimum=1, maximum=64, value=16, step=1, label="Tamaño de lote de detección facial"),
+        gr.Slider(minimum=1, maximum=512, value=128, step=1, label="Tamaño de lote de Wav2Lip"),
+        gr.Slider(minimum=1, maximum=4, value=1, step=1, label="Factor de redimensionamiento"),
+        gr.Textbox(label="Recorte", value="0 -1 0 -1"),
     ],
     outputs=[
-        gr.Video(label="Generated lip-sync"),
-        gr.Textbox(label="Message", type="text"),
+        gr.Video(label="Sincronización labial generada"),
+        gr.Textbox(label="Mensaje", type="text"),
     ],
     title="NeuroSandboxWebUI (ALPHA) - Wav2Lip",
-    description="This user interface allows you to generate talking head videos by combining an image and an audio file using Wav2Lip. "
-                "Upload an image and an audio file, and click Generate to create the talking head video. "
-                "Try it and see what happens!",
+    description="Esta interfaz de usuario le permite generar videos de cabezas parlantes combinando una imagen y un archivo de audio usando Wav2Lip. "
+                "Suba una imagen y un archivo de audio, y haga clic en Generar para crear el video de cabeza parlante. "
+                "¡Pruébelo y vea qué sucede!",
     allow_flagging="never",
 )
 
 txt2img_interface = gr.Interface(
     fn=generate_image_txt2img,
     inputs=[
-        gr.Textbox(label="Enter your prompt"),
-        gr.Textbox(label="Enter your negative prompt", value=""),
-        gr.Dropdown(choices=stable_diffusion_models_list, label="Select StableDiffusion model", value=None),
-        gr.Dropdown(choices=vae_models_list, label="Select VAE model (optional)", value=None),
-        gr.Dropdown(choices=lora_models_list, label="Select LORA models (optional)", value=None, multiselect=True),
-        gr.Dropdown(choices=textual_inversion_models_list, label="Select Embedding models (optional)", value=None, multiselect=True),
-        gr.HTML("<h3>StableDiffusion Settings</h3>"),
-        gr.Radio(choices=["SD", "SD2", "SDXL"], label="Select model type", value="SD"),
+        gr.Textbox(label="Ingrese su prompt"),
+        gr.Textbox(label="Ingrese su prompt negativo", value=""),
+        gr.Dropdown(choices=stable_diffusion_models_list, label="Seleccione modelo StableDiffusion", value=None),
+        gr.Dropdown(choices=vae_models_list, label="Seleccione modelo VAE (opcional)", value=None),
+        gr.Dropdown(choices=lora_models_list, label="Seleccione modelos LORA (opcional)", value=None, multiselect=True),
+        gr.Dropdown(choices=textual_inversion_models_list, label="Seleccione modelos de Embedding (opcional)", value=None, multiselect=True),
+        gr.HTML("<h3>Configuración de StableDiffusion</h3>"),
+        gr.Radio(choices=["SD", "SD2", "SDXL"], label="Seleccione tipo de modelo", value="SD"),
         gr.Dropdown(choices=["euler_ancestral", "euler", "lms", "heun", "dpm", "dpm_solver", "dpm_solver++"],
-                    label="Select sampler", value="euler_ancestral"),
-        gr.Slider(minimum=1, maximum=100, value=30, step=1, label="Steps"),
+                    label="Seleccione muestreador", value="euler_ancestral"),
+        gr.Slider(minimum=1, maximum=100, value=30, step=1, label="Pasos"),
         gr.Slider(minimum=1.0, maximum=30.0, value=8, step=0.1, label="CFG"),
-        gr.Slider(minimum=256, maximum=2048, value=512, step=64, label="Width"),
-        gr.Slider(minimum=256, maximum=2048, value=512, step=64, label="Height"),
-        gr.Slider(minimum=1, maximum=4, value=1, step=1, label="Clip skip"),
-        gr.Checkbox(label="Enable FreeU", value=False),
-        gr.Checkbox(label="Enable Tiled VAE", value=False),
-        gr.Checkbox(label="Enable Upscale", value=False),
-        gr.Radio(choices=["x2", "x4"], label="Upscale size", value="x2"),
-        gr.Slider(minimum=1, maximum=100, value=50, step=1, label="Upscale steps"),
-        gr.Slider(minimum=1.0, maximum=30.0, value=6, step=0.1, label="Upscale CFG"),
-        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
-        gr.Button(value="Stop generation", interactive=True, variant="stop"),
+        gr.Slider(minimum=256, maximum=2048, value=512, step=64, label="Ancho"),
+        gr.Slider(minimum=256, maximum=2048, value=512, step=64, label="Alto"),
+        gr.Slider(minimum=1, maximum=4, value=1, step=1, label="Salto de clip"),
+        gr.Checkbox(label="Habilitar FreeU", value=False),
+        gr.Checkbox(label="Habilitar VAE en mosaico", value=False),
+        gr.Checkbox(label="Habilitar aumento de escala", value=False),
+        gr.Radio(choices=["x2", "x4"], label="Tamaño de aumento de escala", value="x2"),
+        gr.Slider(minimum=1, maximum=100, value=50, step=1, label="Pasos de aumento de escala"),
+        gr.Slider(minimum=1.0, maximum=30.0, value=6, step=0.1, label="CFG de aumento de escala"),
+        gr.Radio(choices=["png", "jpeg"], label="Seleccione formato de salida", value="png", interactive=True),
+        gr.Button(value="Detener generación", interactive=True, variant="stop"),
     ],
     outputs=[
-        gr.Image(type="filepath", label="Generated image"),
-        gr.Textbox(label="Message", type="text"),
+        gr.Image(type="filepath", label="Imagen generada"),
+        gr.Textbox(label="Mensaje", type="text"),
     ],
     title="NeuroSandboxWebUI (ALPHA) - StableDiffusion (txt2img)",
-    description="This user interface allows you to enter any text and generate images using StableDiffusion. "
-                "You can select the model and customize the generation settings from the sliders. "
-                "Try it and see what happens!",
+    description="Esta interfaz de usuario le permite ingresar cualquier texto y generar imágenes usando StableDiffusion. "
+                "Puede seleccionar el modelo y personalizar la configuración de generación desde los deslizadores. "
+                "¡Pruébelo y vea qué sucede!",
     allow_flagging="never",
 )
 
 img2img_interface = gr.Interface(
     fn=generate_image_img2img,
     inputs=[
-        gr.Textbox(label="Enter your prompt"),
-        gr.Textbox(label="Enter your negative prompt", value=""),
-        gr.Image(label="Initial image", type="filepath"),
-        gr.Slider(minimum=0.0, maximum=1.0, value=0.5, step=0.01, label="Strength"),
-        gr.Dropdown(choices=stable_diffusion_models_list, label="Select StableDiffusion model", value=None),
-        gr.Dropdown(choices=vae_models_list, label="Select VAE model (optional)", value=None),
-        gr.HTML("<h3>StableDiffusion Settings</h3>"),
-        gr.Radio(choices=["SD", "SD2", "SDXL"], label="Select model type", value="SD"),
+        gr.Textbox(label="Ingrese su prompt"),
+        gr.Textbox(label="Ingrese su prompt negativo", value=""),
+        gr.Image(label="Imagen inicial", type="filepath"),
+        gr.Slider(minimum=0.0, maximum=1.0, value=0.5, step=0.01, label="Fuerza"),
+        gr.Dropdown(choices=stable_diffusion_models_list, label="Seleccione modelo StableDiffusion", value=None),
+        gr.Dropdown(choices=vae_models_list, label="Seleccione modelo VAE (opcional)", value=None),
+        gr.HTML("<h3>Configuración de StableDiffusion</h3>"),
+        gr.Radio(choices=["SD", "SD2", "SDXL"], label="Seleccione tipo de modelo", value="SD"),
         gr.Dropdown(choices=["euler_ancestral", "euler", "lms", "heun", "dpm", "dpm_solver", "dpm_solver++"],
-                    label="Select sampler", value="euler_ancestral"),
-        gr.Slider(minimum=1, maximum=100, value=30, step=1, label="Steps"),
+                    label="Seleccione muestreador", value="euler_ancestral"),
+        gr.Slider(minimum=1, maximum=100, value=30, step=1, label="Pasos"),
         gr.Slider(minimum=1.0, maximum=30.0, value=8, step=0.1, label="CFG"),
-        gr.Slider(minimum=1, maximum=4, value=1, step=1, label="Clip skip"),
-        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
-        gr.Button(value="Stop generation", interactive=True, variant="stop"),
+        gr.Slider(minimum=1, maximum=4, value=1, step=1, label="Salto de clip"),
+        gr.Radio(choices=["png", "jpeg"], label="Seleccione formato de salida", value="png", interactive=True),
+        gr.Button(value="Detener generación", interactive=True, variant="stop"),
     ],
     outputs=[
-        gr.Image(type="filepath", label="Generated image"),
-        gr.Textbox(label="Message", type="text"),
+        gr.Image(type="filepath", label="Imagen generada"),
+        gr.Textbox(label="Mensaje", type="text"),
     ],
     title="NeuroSandboxWebUI (ALPHA) - StableDiffusion (img2img)",
-    description="This user interface allows you to enter any text and image to generate new images using StableDiffusion. "
-                "You can select the model and customize the generation settings from the sliders. "
-                "Try it and see what happens!",
+    description="Esta interfaz de usuario le permite ingresar cualquier texto e imagen para generar nuevas imágenes usando StableDiffusion. "
+                "Puede seleccionar el modelo y personalizar la configuración de generación desde los deslizadores. "
+                "¡Pruébelo y vea qué sucede!",
     allow_flagging="never",
 )
 
 depth2img_interface = gr.Interface(
     fn=generate_image_depth2img,
     inputs=[
-        gr.Textbox(label="Enter your prompt"),
-        gr.Textbox(label="Enter your negative prompt", value=""),
-        gr.Image(label="Initial image", type="filepath"),
-        gr.HTML("<h3>StableDiffusion Settings</h3>"),
-        gr.Slider(minimum=0.0, maximum=1.0, value=0.7, step=0.01, label="Strength"),
-        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
-        gr.Button(value="Stop generation", interactive=True, variant="stop"),
+        gr.Textbox(label="Ingrese su prompt"),
+        gr.Textbox(label="Ingrese su prompt negativo", value=""),
+        gr.Image(label="Imagen inicial", type="filepath"),
+        gr.HTML("<h3>Configuración de StableDiffusion</h3>"),
+        gr.Slider(minimum=0.0, maximum=1.0, value=0.7, step=0.01, label="Fuerza"),
+        gr.Radio(choices=["png", "jpeg"], label="Seleccione formato de salida", value="png", interactive=True),
+        gr.Button(value="Detener generación", interactive=True, variant="stop"),
     ],
     outputs=[
-        gr.Image(type="filepath", label="Generated image"),
-        gr.Textbox(label="Message", type="text"),
+        gr.Image(type="filepath", label="Imagen generada"),
+        gr.Textbox(label="Mensaje", type="text"),
     ],
     title="NeuroSandboxWebUI (ALPHA) - StableDiffusion (depth2img)",
-    description="This user interface allows you to enter a prompt, an initial image to generate depth-aware images using StableDiffusion. "
-                "Try it and see what happens!",
+    description="Esta interfaz de usuario le permite ingresar un prompt y una imagen inicial para generar imágenes conscientes de la profundidad usando StableDiffusion. "
+                "¡Pruébelo y vea qué sucede!",
     allow_flagging="never",
 )
 
 pix2pix_interface = gr.Interface(
     fn=generate_image_pix2pix,
     inputs=[
-        gr.Textbox(label="Enter your prompt"),
-        gr.Textbox(label="Enter your negative prompt", value=""),
-        gr.Image(label="Initial image", type="filepath"),
-        gr.Slider(minimum=1, maximum=100, value=30, step=1, label="Steps"),
+        gr.Textbox(label="Ingrese su prompt"),
+        gr.Textbox(label="Ingrese su prompt negativo", value=""),
+        gr.Image(label="Imagen inicial", type="filepath"),
+        gr.Slider(minimum=1, maximum=100, value=30, step=1, label="Pasos"),
         gr.Slider(minimum=1.0, maximum=30.0, value=8, step=0.1, label="CFG"),
-        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
-        gr.Button(value="Stop generation", interactive=True, variant="stop"),
+        gr.Radio(choices=["png", "jpeg"], label="Seleccione formato de salida", value="png", interactive=True),
+        gr.Button(value="Detener generación", interactive=True, variant="stop"),
     ],
     outputs=[
-        gr.Image(type="filepath", label="Generated image"),
-        gr.Textbox(label="Message", type="text"),
+        gr.Image(type="filepath", label="Imagen generada"),
+        gr.Textbox(label="Mensaje", type="text"),
     ],
     title="NeuroSandboxWebUI (ALPHA) - StableDiffusion (pix2pix)",
-    description="This user interface allows you to enter a prompt and an initial image to generate new images using Pix2Pix. "
-                "You can customize the generation settings from the sliders. "
-                "Try it and see what happens!",
+    description="Esta interfaz de usuario le permite ingresar un prompt y una imagen inicial para generar nuevas imágenes usando Pix2Pix. "
+                "Puede personalizar la configuración de generación desde los deslizadores. "
+                "¡Pruébelo y vea qué sucede!",
     allow_flagging="never",
 )
 
 controlnet_interface = gr.Interface(
     fn=generate_image_controlnet,
     inputs=[
-        gr.Textbox(label="Enter your prompt"),
-        gr.Textbox(label="Enter your negative prompt", value=""),
-        gr.Image(label="Initial image", type="filepath"),
-        gr.Dropdown(choices=stable_diffusion_models_list, label="Select StableDiffusion model (only SD1.5)", value=None),
-        gr.Dropdown(choices=controlnet_models_list, label="Select ControlNet model", value=None),
-        gr.Slider(minimum=1, maximum=100, value=30, step=1, label="Steps"),
+        gr.Textbox(label="Ingrese su prompt"),
+        gr.Textbox(label="Ingrese su prompt negativo", value=""),
+        gr.Image(label="Imagen inicial", type="filepath"),
+        gr.Dropdown(choices=stable_diffusion_models_list, label="Seleccione modelo StableDiffusion (solo SD1.5)", value=None),
+        gr.Dropdown(choices=controlnet_models_list, label="Seleccione modelo ControlNet", value=None),
+        gr.Slider(minimum=1, maximum=100, value=30, step=1, label="Pasos"),
         gr.Slider(minimum=1.0, maximum=30.0, value=8, step=0.1, label="CFG"),
-        gr.Slider(minimum=256, maximum=2048, value=512, step=64, label="Width"),
-        gr.Slider(minimum=256, maximum=2048, value=512, step=64, label="Height"),
-        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
-        gr.Button(value="Stop generation", interactive=True, variant="stop"),
+        gr.Slider(minimum=256, maximum=2048, value=512, step=64, label="Ancho"),
+        gr.Slider(minimum=256, maximum=2048, value=512, step=64, label="Alto"),
+        gr.Radio(choices=["png", "jpeg"], label="Seleccione formato de salida", value="png", interactive=True),
+        gr.Button(value="Detener generación", interactive=True, variant="stop"),
     ],
     outputs=[
-        gr.Image(type="filepath", label="Generated image"),
-        gr.Textbox(label="Message", type="text"),
+        gr.Image(type="filepath", label="Imagen generada"),
+        gr.Textbox(label="Mensaje", type="text"),
     ],
     title="NeuroSandboxWebUI (ALPHA) - StableDiffusion (controlnet)",
-    description="This user interface allows you to generate images using ControlNet models. "
-                "Upload an initial image, enter a prompt, select a Stable Diffusion model, and customize the generation settings. "
-                "Try it and see what happens!",
+    description="Esta interfaz de usuario le permite generar imágenes usando modelos ControlNet. "
+                "Suba una imagen inicial, ingrese un prompt, seleccione un modelo Stable Diffusion y personalice la configuración de generación. "
+                "¡Pruébelo y vea qué sucede!",
     allow_flagging="never",
 )
 
 latent_upscale_interface = gr.Interface(
     fn=generate_image_upscale_latent,
     inputs=[
-        gr.Image(label="Image to upscale", type="filepath"),
-        gr.Slider(minimum=1, maximum=100, value=50, step=1, label="Steps"),
+        gr.Image(label="Imagen para aumentar de escala", type="filepath"),
+        gr.Slider(minimum=1, maximum=100, value=50, step=1, label="Pasos"),
         gr.Slider(minimum=1.0, maximum=30.0, value=8, step=0.1, label="CFG"),
-        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
-        gr.Button(value="Stop generation", interactive=True, variant="stop"),
+        gr.Radio(choices=["png", "jpeg"], label="Seleccione formato de salida", value="png", interactive=True),
+        gr.Button(value="Detener generación", interactive=True, variant="stop"),
     ],
     outputs=[
-        gr.Image(type="filepath", label="Upscaled image"),
-        gr.Textbox(label="Message", type="text"),
+        gr.Image(type="filepath", label="Imagen con escala aumentada"),
+        gr.Textbox(label="Mensaje", type="text"),
     ],
     title="NeuroSandboxWebUI (ALPHA) - StableDiffusion (upscale-latent)",
-    description="This user interface allows you to upload an image and latent-upscale it",
+    description="Esta interfaz de usuario le permite subir una imagen y aumentar su escala de forma latente",
     allow_flagging="never",
 )
 
 realesrgan_upscale_interface = gr.Interface(
     fn=generate_image_upscale_realesrgan,
     inputs=[
-        gr.Image(label="Image to upscale", type="filepath"),
-        gr.Slider(minimum=0.1, maximum=8, value=4, step=0.1, label="Upscale factor"),
-        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
-        gr.Button(value="Stop generation", interactive=True, variant="stop"),
+        gr.Image(label="Imagen para aumentar de escala", type="filepath"),
+        gr.Slider(minimum=0.1, maximum=8, value=4, step=0.1, label="Factor de aumento de escala"),
+        gr.Radio(choices=["png", "jpeg"], label="Seleccione formato de salida", value="png", interactive=True),
+        gr.Button(value="Detener generación", interactive=True, variant="stop"),
     ],
     outputs=[
-        gr.Image(type="filepath", label="Upscaled image"),
-        gr.Textbox(label="Message", type="text"),
+        gr.Image(type="filepath", label="Imagen con escala aumentada"),
+        gr.Textbox(label="Mensaje", type="text"),
     ],
     title="NeuroSandboxWebUI (ALPHA) - StableDiffusion (upscale-realesrgan)",
-    description="This user interface allows you to upload an image and upscale it using Real-ESRGAN",
+    description="Esta interfaz de usuario le permite subir una imagen y aumentar su escala usando Real-ESRGAN",
     allow_flagging="never",
 )
 
 inpaint_interface = gr.Interface(
     fn=generate_image_inpaint,
     inputs=[
-        gr.Textbox(label="Enter your prompt"),
-        gr.Textbox(label="Enter your negative prompt", value=""),
-        gr.Image(label="Initial image", type="filepath"),
-        gr.ImageEditor(label="Mask image", type="filepath"),
-        gr.Slider(minimum=0, maximum=100, value=0, step=1, label="Mask Blur Factor"),
-        gr.Dropdown(choices=inpaint_models_list, label="Select Inpaint model", value=None),
-        gr.Dropdown(choices=vae_models_list, label="Select VAE model (optional)", value=None),
-        gr.HTML("<h3>StableDiffusion Settings</h3>"),
-        gr.Radio(choices=["SD", "SD2", "SDXL"], label="Select model type", value="SD"),
+        gr.Textbox(label="Ingrese su prompt"),
+        gr.Textbox(label="Ingrese su prompt negativo", value=""),
+        gr.Image(label="Imagen inicial", type="filepath"),
+        gr.ImageEditor(label="Imagen de máscara", type="filepath"),
+        gr.Slider(minimum=0, maximum=100, value=0, step=1, label="Factor de desenfoque de máscara"),
+        gr.Dropdown(choices=inpaint_models_list, label="Seleccione modelo Inpaint", value=None),
+        gr.Dropdown(choices=vae_models_list, label="Seleccione modelo VAE (opcional)", value=None),
+        gr.HTML("<h3>Configuración de StableDiffusion</h3>"),
+        gr.Radio(choices=["SD", "SD2", "SDXL"], label="Seleccione tipo de modelo", value="SD"),
         gr.Dropdown(choices=["euler_ancestral", "euler", "lms", "heun", "dpm", "dpm_solver", "dpm_solver++"],
-                    label="Select sampler", value="euler_ancestral"),
-        gr.Slider(minimum=1, maximum=100, value=30, step=1, label="Steps"),
+                    label="Seleccione muestreador", value="euler_ancestral"),
+        gr.Slider(minimum=1, maximum=100, value=30, step=1, label="Pasos"),
         gr.Slider(minimum=1.0, maximum=30.0, value=8, step=0.1, label="CFG"),
-        gr.Slider(minimum=256, maximum=2048, value=512, step=64, label="Width"),
-        gr.Slider(minimum=256, maximum=2048, value=512, step=64, label="Height"),
-        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
-        gr.Button(value="Stop generation", interactive=True, variant="stop"),
+        gr.Slider(minimum=256, maximum=2048, value=512, step=64, label="Ancho"),
+        gr.Slider(minimum=256, maximum=2048, value=512, step=64, label="Alto"),
+        gr.Radio(choices=["png", "jpeg"], label="Seleccione formato de salida", value="png", interactive=True),
+        gr.Button(value="Detener generación", interactive=True, variant="stop"),
     ],
     outputs=[
-        gr.Image(type="filepath", label="Inpainted image"),
-        gr.Textbox(label="Message", type="text"),
+        gr.Image(type="filepath", label="Imagen inpaintada"),
+        gr.Textbox(label="Mensaje", type="text"),
     ],
     title="NeuroSandboxWebUI (ALPHA) - StableDiffusion (inpaint)",
-    description="This user interface allows you to enter a prompt, an initial image, and a mask image to inpaint using StableDiffusion. "
-                "You can select the model and customize the generation settings from the sliders. "
-                "Try it and see what happens!",
+    description="Esta interfaz de usuario le permite ingresar un prompt, una imagen inicial y una imagen de máscara para realizar inpainting usando StableDiffusion. "
+                "Puede seleccionar el modelo y personalizar la configuración de generación desde los deslizadores. "
+                "¡Pruébelo y vea qué sucede!",
     allow_flagging="never",
 )
 
 gligen_interface = gr.Interface(
     fn=generate_image_gligen,
     inputs=[
-        gr.Textbox(label="Enter your prompt"),
-        gr.Textbox(label="Enter your negative prompt", value=""),
-        gr.Textbox(label="Enter GLIGEN phrases", value=""),
-        gr.Textbox(label="Enter GLIGEN boxes", value=""),
-        gr.Dropdown(choices=stable_diffusion_models_list, label="Select StableDiffusion model", value=None),
-        gr.HTML("<h3>StableDiffusion Settings</h3>"),
-        gr.Radio(choices=["SD", "SD2", "SDXL"], label="Select model type", value="SD"),
+        gr.Textbox(label="Ingrese su prompt"),
+        gr.Textbox(label="Ingrese su prompt negativo", value=""),
+        gr.Textbox(label="Ingrese frases GLIGEN", value=""),
+        gr.Textbox(label="Ingrese cajas GLIGEN", value=""),
+        gr.Dropdown(choices=stable_diffusion_models_list, label="Seleccione modelo StableDiffusion", value=None),
+        gr.HTML("<h3>Configuración de StableDiffusion</h3>"),
+        gr.Radio(choices=["SD", "SD2", "SDXL"], label="Seleccione tipo de modelo", value="SD"),
         gr.Dropdown(choices=["euler_ancestral", "euler", "lms", "heun", "dpm", "dpm_solver", "dpm_solver++"],
-                    label="Select sampler", value="euler_ancestral"),
-        gr.Slider(minimum=1, maximum=100, value=30, step=1, label="Steps"),
+                    label="Seleccione muestreador", value="euler_ancestral"),
+        gr.Slider(minimum=1, maximum=100, value=30, step=1, label="Pasos"),
         gr.Slider(minimum=1.0, maximum=30.0, value=8, step=0.1, label="CFG"),
-        gr.Slider(minimum=256, maximum=2048, value=512, step=64, label="Width"),
-        gr.Slider(minimum=256, maximum=2048, value=512, step=64, label="Height"),
-        gr.Slider(minimum=1, maximum=4, value=1, step=1, label="Clip skip"),
-        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
-        gr.Button(value="Stop generation", interactive=True, variant="stop"),
+        gr.Slider(minimum=256, maximum=2048, value=512, step=64, label="Ancho"),
+        gr.Slider(minimum=256, maximum=2048, value=512, step=64, label="Alto"),
+        gr.Slider(minimum=1, maximum=4, value=1, step=1, label="Salto de clip"),
+        gr.Radio(choices=["png", "jpeg"], label="Seleccione formato de salida", value="png", interactive=True),
+        gr.Button(value="Detener generación", interactive=True, variant="stop"),
     ],
     outputs=[
-        gr.Image(type="filepath", label="Generated image"),
-        gr.Textbox(label="Message", type="text"),
+        gr.Image(type="filepath", label="Imagen generada"),
+        gr.Textbox(label="Mensaje", type="text"),
     ],
     title="NeuroSandboxWebUI (ALPHA) - StableDiffusion (gligen)",
-    description="This user interface allows you to generate images using Stable Diffusion and insert objects using GLIGEN. "
-                "Select the Stable Diffusion model, customize the generation settings, enter a prompt, GLIGEN phrases, and bounding boxes. "
-                "Try it and see what happens!",
+    description="Esta interfaz de usuario le permite generar imágenes usando Stable Diffusion e insertar objetos usando GLIGEN. "
+                "Seleccione el modelo Stable Diffusion, personalice la configuración de generación, ingrese un prompt, frases GLIGEN y cajas delimitadoras. "
+                "¡Pruébelo y vea qué sucede!",
     allow_flagging="never",
 )
 
 animatediff_interface = gr.Interface(
     fn=generate_image_animatediff,
     inputs=[
-        gr.Textbox(label="Enter your prompt"),
-        gr.Textbox(label="Enter your negative prompt", value=""),
-        gr.Image(label="Initial GIF", type="filepath"),
-        gr.Slider(minimum=0.0, maximum=1.0, value=0.5, step=0.01, label="Strength"),
-        gr.Dropdown(choices=stable_diffusion_models_list, label="Select StableDiffusion model (only SD1.5)", value=None),
-        gr.Dropdown(choices=[None, "zoom-in", "zoom-out", "tilt-up", "tilt-down", "pan-right", "pan-left"], label="Select Motion LORA", value=None, multiselect=True),
-        gr.Slider(minimum=1, maximum=200, value=20, step=1, label="Frames"),
-        gr.Slider(minimum=1, maximum=100, value=30, step=1, label="Steps"),
-        gr.Slider(minimum=1.0, maximum=30.0, value=8, step=0.1, label="Guidance Scale"),
-        gr.Slider(minimum=256, maximum=1024, value=512, step=64, label="Width"),
-        gr.Slider(minimum=256, maximum=1024, value=512, step=64, label="Height"),
-        gr.Button(value="Stop generation", interactive=True, variant="stop"),
+        gr.Textbox(label="Ingrese su prompt"),
+        gr.Textbox(label="Ingrese su prompt negativo", value=""),
+        gr.Image(label="GIF inicial", type="filepath"),
+        gr.Slider(minimum=0.0, maximum=1.0, value=0.5, step=0.01, label="Fuerza"),
+        gr.Dropdown(choices=stable_diffusion_models_list, label="Seleccione modelo StableDiffusion (solo SD1.5)", value=None),
+        gr.Dropdown(choices=[None, "zoom-in", "zoom-out", "tilt-up", "tilt-down", "pan-right", "pan-left"], label="Seleccione LORA de movimiento", value=None, multiselect=True),
+        gr.Slider(minimum=1, maximum=200, value=20, step=1, label="Cuadros"),
+        gr.Slider(minimum=1, maximum=100, value=30, step=1, label="Pasos"),
+        gr.Slider(minimum=1.0, maximum=30.0, value=8, step=0.1, label="Escala de guía"),
+        gr.Slider(minimum=256, maximum=1024, value=512, step=64, label="Ancho"),
+        gr.Slider(minimum=256, maximum=1024, value=512, step=64, label="Alto"),
+        gr.Button(value="Detener generación", interactive=True, variant="stop"),
     ],
     outputs=[
-        gr.Image(label="Generated GIF", type="filepath"),
-        gr.Textbox(label="Message", type="text"),
+        gr.Image(label="GIF generado", type="filepath"),
+        gr.Textbox(label="Mensaje", type="text"),
     ],
     title="NeuroSandboxWebUI (ALPHA) - StableDiffusion (animatediff)",
-    description="This user interface allows you to enter a prompt and generate animated GIFs using AnimateDiff. "
-                "You can select the model and customize the generation settings from the sliders. "
-                "Try it and see what happens!",
+    description="Esta interfaz de usuario le permite ingresar un prompt y generar GIFs animados usando AnimateDiff. "
+                "Puede seleccionar el modelo y personalizar la configuración de generación desde los deslizadores. "
+                "¡Pruébelo y vea qué sucede!",
     allow_flagging="never",
 )
 
 video_interface = gr.Interface(
     fn=generate_video,
     inputs=[
-        gr.Image(label="Initial image", type="filepath"),
-        gr.Radio(choices=["mp4", "gif"], label="Select output format", value="mp4", interactive=True),
-        gr.HTML("<h3>SVD Settings (mp4)</h3>"),
-        gr.Slider(minimum=0, maximum=360, value=180, step=1, label="Motion Bucket ID"),
-        gr.Slider(minimum=0.0, maximum=1.0, value=0.1, step=0.01, label="Noise Augmentation Strength"),
+        gr.Image(label="Imagen inicial", type="filepath"),
+        gr.Radio(choices=["mp4", "gif"], label="Seleccione formato de salida", value="mp4", interactive=True),
+        gr.HTML("<h3>Configuración de SVD (mp4)</h3>"),
+        gr.Slider(minimum=0, maximum=360, value=180, step=1, label="ID de cubo de movimiento"),
+        gr.Slider(minimum=0.0, maximum=1.0, value=0.1, step=0.01, label="Fuerza de aumento de ruido"),
         gr.Slider(minimum=1, maximum=60, value=10, step=1, label="FPS"),
-        gr.Slider(minimum=2, maximum=120, value=25, step=1, label="Frames"),
-        gr.Slider(minimum=1, maximum=32, value=8, step=1, label="Decode Chunk Size"),
-        gr.HTML("<h3>I2VGen-xl Settings (gif)</h3>"),
+        gr.Slider(minimum=2, maximum=120, value=25, step=1, label="Cuadros"),
+        gr.Slider(minimum=1, maximum=32, value=8, step=1, label="Tamaño de fragmento de decodificación"),
+        gr.HTML("<h3>Configuración de I2VGen-xl (gif)</h3>"),
         gr.Textbox(label="Prompt", value=""),
-        gr.Textbox(label="Negative Prompt", value=""),
-        gr.Slider(minimum=1, maximum=100, value=50, step=1, label="Steps"),
+        gr.Textbox(label="Prompt negativo", value=""),
+        gr.Slider(minimum=1, maximum=100, value=50, step=1, label="Pasos"),
         gr.Slider(minimum=1.0, maximum=30.0, value=9.0, step=0.1, label="CFG"),
-        gr.Button(value="Stop generation", interactive=True, variant="stop"),
+        gr.Button(value="Detener generación", interactive=True, variant="stop"),
     ],
     outputs=[
-        gr.Video(label="Generated video"),
-        gr.Image(label="Generated GIF", type="filepath"),
-        gr.Textbox(label="Message", type="text"),
+        gr.Video(label="Video generado"),
+        gr.Image(label="GIF generado", type="filepath"),
+        gr.Textbox(label="Mensaje", type="text"),
     ],
     title="NeuroSandboxWebUI (ALPHA) - StableDiffusion (video)",
-    description="This user interface allows you to enter an initial image and generate a video using StableVideoDiffusion(mp4) and I2VGen-xl(gif). "
-                "You can customize the generation settings from the sliders. "
-                "Try it and see what happens!",
+    description="Esta interfaz de usuario le permite ingresar una imagen inicial y generar un video usando StableVideoDiffusion(mp4) y I2VGen-xl(gif). "
+                "Puede personalizar la configuración de generación desde los deslizadores. "
+                "¡Pruébelo y vea qué sucede!",
     allow_flagging="never",
 )
 
 ldm3d_interface = gr.Interface(
     fn=generate_image_ldm3d,
     inputs=[
-        gr.Textbox(label="Enter your prompt"),
-        gr.Textbox(label="Enter your negative prompt", value=""),
-        gr.Slider(minimum=256, maximum=2048, value=512, step=64, label="Width"),
-        gr.Slider(minimum=256, maximum=2048, value=512, step=64, label="Height"),
-        gr.Slider(minimum=1, maximum=100, value=40, step=1, label="Steps"),
-        gr.Slider(minimum=1.0, maximum=30.0, value=8, step=0.1, label="Guidance Scale"),
-        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
-        gr.Button(value="Stop generation", interactive=True, variant="stop"),
+        gr.Textbox(label="Ingrese su prompt"),
+        gr.Textbox(label="Ingrese su prompt negativo", value=""),
+        gr.Slider(minimum=256, maximum=2048, value=512, step=64, label="Ancho"),
+        gr.Slider(minimum=256, maximum=2048, value=512, step=64, label="Alto"),
+        gr.Slider(minimum=1, maximum=100, value=40, step=1, label="Pasos"),
+        gr.Slider(minimum=1.0, maximum=30.0, value=8, step=0.1, label="Escala de guía"),
+        gr.Radio(choices=["png", "jpeg"], label="Seleccione formato de salida", value="png", interactive=True),
+        gr.Button(value="Detener generación", interactive=True, variant="stop"),
     ],
     outputs=[
-        gr.Image(type="filepath", label="Generated RGB image"),
-        gr.Image(type="filepath", label="Generated Depth image"),
-        gr.Textbox(label="Message", type="text"),
+        gr.Image(type="filepath", label="Imagen RGB generada"),
+        gr.Image(type="filepath", label="Imagen de profundidad generada"),
+        gr.Textbox(label="Mensaje", type="text"),
     ],
     title="NeuroSandboxWebUI (ALPHA) - StableDiffusion (LDM3D)",
-    description="This user interface allows you to enter a prompt and generate RGB and Depth images using LDM3D. "
-                "You can customize the generation settings from the sliders. "
-                "Try it and see what happens!",
+    description="Esta interfaz de usuario le permite ingresar un prompt y generar imágenes RGB y de profundidad usando LDM3D. "
+                "Puede personalizar la configuración de generación desde los deslizadores. "
+                "¡Pruébelo y vea qué sucede!",
     allow_flagging="never",
 )
 
 sd3_interface = gr.Interface(
     fn=generate_image_sd3,
     inputs=[
-        gr.Textbox(label="Enter your prompt"),
-        gr.Textbox(label="Enter your negative prompt", value=""),
-        gr.Slider(minimum=1, maximum=100, value=40, step=1, label="Steps"),
+        gr.Textbox(label="Ingrese su prompt"),
+        gr.Textbox(label="Ingrese su prompt negativo", value=""),
+        gr.Slider(minimum=1, maximum=100, value=40, step=1, label="Pasos"),
         gr.Slider(minimum=1.0, maximum=30.0, value=8.0, step=0.1, label="CFG"),
-        gr.Slider(minimum=256, maximum=2048, value=1024, step=64, label="Width"),
-        gr.Slider(minimum=256, maximum=2048, value=1024, step=64, label="Height"),
-        gr.Slider(minimum=64, maximum=2048, value=256, label="Max Length"),
-        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
-        gr.Button(value="Stop generation", interactive=True, variant="stop"),
+        gr.Slider(minimum=256, maximum=2048, value=1024, step=64, label="Ancho"),
+        gr.Slider(minimum=256, maximum=2048, value=1024, step=64, label="Alto"),
+        gr.Slider(minimum=64, maximum=2048, value=256, label="Longitud máxima"),
+        gr.Radio(choices=["png", "jpeg"], label="Seleccione formato de salida", value="png", interactive=True),
+        gr.Button(value="Detener generación", interactive=True, variant="stop"),
     ],
     outputs=[
-        gr.Image(type="filepath", label="Generated image"),
-        gr.Textbox(label="Message", type="text"),
+        gr.Image(type="filepath", label="Imagen generada"),
+        gr.Textbox(label="Mensaje", type="text"),
     ],
     title="NeuroSandboxWebUI (ALPHA) - StableDiffusion (sd3)",
-    description="This user interface allows you to enter any text and generate images using Stable Diffusion 3. "
-                "You can customize the generation settings from the sliders. "
-                "Try it and see what happens!",
+    description="Esta interfaz de usuario le permite ingresar cualquier texto y generar imágenes usando Stable Diffusion 3. "
+                "Puede personalizar la configuración de generación desde los deslizadores. "
+                "¡Pruébelo y vea qué sucede!",
     allow_flagging="never",
 )
 
 cascade_interface = gr.Interface(
     fn=generate_image_cascade,
     inputs=[
-        gr.Textbox(label="Enter your prompt"),
-        gr.Textbox(label="Enter your negative prompt", value=""),
-        gr.HTML("<h3>Stable Cascade Settings</h3>"),
-        gr.Slider(minimum=256, maximum=4096, value=1024, step=64, label="Width"),
-        gr.Slider(minimum=256, maximum=4096, value=1024, step=64, label="Height"),
-        gr.Slider(minimum=1, maximum=100, value=30, step=1, label="Prior Steps"),
-        gr.Slider(minimum=1.0, maximum=30.0, value=4.0, step=0.1, label="Prior Guidance Scale"),
-        gr.Slider(minimum=1, maximum=100, value=20, step=1, label="Decoder Steps"),
-        gr.Slider(minimum=0.0, maximum=30.0, value=8.0, step=0.1, label="Decoder Guidance Scale"),
-        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
-        gr.Button(value="Stop generation", interactive=True, variant="stop"),
+        gr.Textbox(label="Ingrese su prompt"),
+        gr.Textbox(label="Ingrese su prompt negativo", value=""),
+        gr.HTML("<h3>Configuración de Stable Cascade</h3>"),
+        gr.Slider(minimum=256, maximum=4096, value=1024, step=64, label="Ancho"),
+        gr.Slider(minimum=256, maximum=4096, value=1024, step=64, label="Alto"),
+        gr.Slider(minimum=1, maximum=100, value=30, step=1, label="Pasos previos"),
+        gr.Slider(minimum=1.0, maximum=30.0, value=4.0, step=0.1, label="Escala de guía previa"),
+        gr.Slider(minimum=1, maximum=100, value=20, step=1, label="Pasos del decodificador"),
+        gr.Slider(minimum=0.0, maximum=30.0, value=8.0, step=0.1, label="Escala de guía del decodificador"),
+        gr.Radio(choices=["png", "jpeg"], label="Seleccione formato de salida", value="png", interactive=True),
+        gr.Button(value="Detener generación", interactive=True, variant="stop"),
     ],
     outputs=[
-        gr.Image(type="filepath", label="Generated image"),
-        gr.Textbox(label="Message", type="text"),
+        gr.Image(type="filepath", label="Imagen generada"),
+        gr.Textbox(label="Mensaje", type="text"),
     ],
     title="NeuroSandboxWebUI (ALPHA) - StableDiffusion (cascade)",
-    description="This user interface allows you to enter a prompt and generate images using Stable Cascade. "
-                "You can customize the generation settings from the sliders. "
-                "Try it and see what happens!",
+    description="Esta interfaz de usuario le permite ingresar un prompt y generar imágenes usando Stable Cascade. "
+                "Puede personalizar la configuración de generación desde los deslizadores. "
+                "¡Pruébelo y vea qué sucede!",
     allow_flagging="never",
 )
 
 extras_interface = gr.Interface(
     fn=generate_image_extras,
     inputs=[
-        gr.Image(label="Image to modify", type="filepath"),
-        gr.Image(label="Source Image", type="filepath"),
-        gr.Checkbox(label="Remove BackGround", value=False),
-        gr.Checkbox(label="Enable FaceSwap", value=False),
-        gr.Checkbox(label="Enable FaceRestore", value=False),
-        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
-        gr.Button(value="Stop generation", interactive=True, variant="stop"),
+        gr.Image(label="Imagen a modificar", type="filepath"),
+        gr.Image(label="Imagen fuente", type="filepath"),
+        gr.Checkbox(label="Eliminar fondo", value=False),
+        gr.Checkbox(label="Habilitar intercambio de caras", value=False),
+        gr.Checkbox(label="Habilitar restauración facial", value=False),
+        gr.Radio(choices=["png", "jpeg"], label="Seleccione formato de salida", value="png", interactive=True),
+        gr.Button(value="Detener generación", interactive=True, variant="stop"),
     ],
     outputs=[
-        gr.Image(label="Modified image", type="filepath"),
-        gr.Textbox(label="Message", type="text"),
+        gr.Image(label="Imagen modificada", type="filepath"),
+        gr.Textbox(label="Mensaje", type="text"),
     ],
     title="NeuroSandboxWebUI (ALPHA) - StableDiffusion (extras)",
-    description="This user interface allows you to modify the image",
+    description="Esta interfaz de usuario le permite modificar la imagen",
     allow_flagging="never",
 )
 
 kandinsky_interface = gr.Interface(
     fn=generate_image_kandinsky,
     inputs=[
-        gr.Textbox(label="Enter your prompt"),
-        gr.Textbox(label="Enter your negative prompt", value=""),
-        gr.Radio(choices=["2.1", "2.2", "3"], label="Kandinsky Version", value="2.2"),
-        gr.Slider(minimum=1, maximum=100, value=50, step=1, label="Steps"),
+        gr.Textbox(label="Ingrese su prompt"),
+        gr.Textbox(label="Ingrese su prompt negativo", value=""),
+        gr.Radio(choices=["2.1", "2.2", "3"], label="Versión de Kandinsky", value="2.2"),
+        gr.Slider(minimum=1, maximum=100, value=50, step=1, label="Pasos"),
         gr.Slider(minimum=0.1, maximum=20, value=4, step=0.1, label="CFG"),
-        gr.Slider(minimum=256, maximum=1024, value=768, step=64, label="Height"),
-        gr.Slider(minimum=256, maximum=1024, value=768, step=64, label="Width"),
-        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
-        gr.Button(value="Stop generation", interactive=True, variant="stop"),
+        gr.Slider(minimum=256, maximum=1024, value=768, step=64, label="Alto"),
+        gr.Slider(minimum=256, maximum=1024, value=768, step=64, label="Ancho"),
+        gr.Radio(choices=["png", "jpeg"], label="Seleccione formato de salida", value="png", interactive=True),
+        gr.Button(value="Detener generación", interactive=True, variant="stop"),
     ],
     outputs=[
-        gr.Image(type="filepath", label="Generated image"),
-        gr.Textbox(label="Message", type="text"),
+        gr.Image(type="filepath", label="Imagen generada"),
+        gr.Textbox(label="Mensaje", type="text"),
     ],
     title="NeuroSandboxWebUI (ALPHA) - Kandinsky",
-    description="This user interface allows you to generate images using Kandinsky models. "
-                "You can select between versions 2.1, 2.2, and 3, and customize the generation settings. "
-                "Try it and see what happens!",
+    description="Esta interfaz de usuario le permite generar imágenes usando los modelos Kandinsky. "
+                "Puede seleccionar entre las versiones 2.1, 2.2 y 3, y personalizar la configuración de generación. "
+                "¡Pruébelo y vea qué sucede!",
     allow_flagging="never",
 )
 
 flux_interface = gr.Interface(
     fn=generate_image_flux,
     inputs=[
-        gr.Textbox(label="Enter your prompt"),
-        gr.Dropdown(choices=["FLUX.1-schnell", "FLUX.1-dev"], label="Select Flux model", value="FLUX.1-schnell"),
-        gr.Slider(minimum=0.0, maximum=10.0, value=0.0, step=0.1, label="Guidance Scale"),
-        gr.Slider(minimum=256, maximum=2048, value=768, step=64, label="Height"),
-        gr.Slider(minimum=256, maximum=2048, value=1024, step=64, label="Width"),
-        gr.Slider(minimum=1, maximum=100, value=10, step=1, label="Steps"),
-        gr.Slider(minimum=1, maximum=1024, value=256, step=1, label="Max Sequence Length (Schnell only)"),
-        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
-        gr.Button(value="Stop generation", interactive=True, variant="stop"),
+        gr.Textbox(label="Ingrese su prompt"),
+        gr.Dropdown(choices=["FLUX.1-schnell", "FLUX.1-dev"], label="Seleccione modelo Flux", value="FLUX.1-schnell"),
+        gr.Slider(minimum=0.0, maximum=10.0, value=0.0, step=0.1, label="Escala de guía"),
+        gr.Slider(minimum=256, maximum=2048, value=768, step=64, label="Alto"),
+        gr.Slider(minimum=256, maximum=2048, value=1024, step=64, label="Ancho"),
+        gr.Slider(minimum=1, maximum=100, value=10, step=1, label="Pasos"),
+        gr.Slider(minimum=1, maximum=1024, value=256, step=1, label="Longitud máxima de secuencia (solo Schnell)"),
+        gr.Radio(choices=["png", "jpeg"], label="Seleccione formato de salida", value="png", interactive=True),
+        gr.Button(value="Detener generación", interactive=True, variant="stop"),
     ],
     outputs=[
-        gr.Image(type="filepath", label="Generated image"),
-        gr.Textbox(label="Message", type="text"),
+        gr.Image(type="filepath", label="Imagen generada"),
+        gr.Textbox(label="Mensaje", type="text"),
     ],
     title="NeuroSandboxWebUI (ALPHA) - Flux",
-    description="This user interface allows you to generate images using Flux models. "
-                "You can select between Schnell and Dev models, and customize the generation settings. "
-                "Try it and see what happens!",
+    description="Esta interfaz de usuario le permite generar imágenes usando modelos Flux. "
+                "Puede seleccionar entre los modelos Schnell y Dev, y personalizar la configuración de generación. "
+                "¡Pruébelo y vea qué sucede!",
     allow_flagging="never",
 )
 
 hunyuandit_interface = gr.Interface(
     fn=generate_image_hunyuandit,
     inputs=[
-        gr.Textbox(label="Enter your prompt"),
-        gr.Textbox(label="Enter your negative prompt", value=""),
-        gr.Slider(minimum=1, maximum=100, value=50, step=1, label="Steps"),
-        gr.Slider(minimum=0.1, maximum=30.0, value=7.5, step=0.1, label="Guidance Scale"),
-        gr.Slider(minimum=256, maximum=2048, value=768, step=64, label="Height"),
-        gr.Slider(minimum=256, maximum=2048, value=768, step=64, label="Width"),
-        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
-        gr.Button(value="Stop generation", interactive=True, variant="stop"),
+        gr.Textbox(label="Ingrese su prompt"),
+        gr.Textbox(label="Ingrese su prompt negativo", value=""),
+        gr.Slider(minimum=1, maximum=100, value=50, step=1, label="Pasos"),
+        gr.Slider(minimum=0.1, maximum=30.0, value=7.5, step=0.1, label="Escala de guía"),
+        gr.Slider(minimum=256, maximum=2048, value=768, step=64, label="Alto"),
+        gr.Slider(minimum=256, maximum=2048, value=768, step=64, label="Ancho"),
+        gr.Radio(choices=["png", "jpeg"], label="Seleccione formato de salida", value="png", interactive=True),
+        gr.Button(value="Detener generación", interactive=True, variant="stop"),
     ],
     outputs=[
-        gr.Image(type="filepath", label="Generated image"),
-        gr.Textbox(label="Message", type="text"),
+        gr.Image(type="filepath", label="Imagen generada"),
+        gr.Textbox(label="Mensaje", type="text"),
     ],
     title="NeuroSandboxWebUI (ALPHA) - HunyuanDiT",
-    description="This user interface allows you to generate images using HunyuanDiT model. "
-                "Enter a prompt (in English or Chinese) and customize the generation settings. "
-                "Try it and see what happens!",
+    description="Esta interfaz de usuario le permite generar imágenes usando el modelo HunyuanDiT. "
+                "Ingrese un prompt (en inglés o chino) y personalice la configuración de generación. "
+                "¡Pruébelo y vea qué sucede!",
     allow_flagging="never",
 )
 
 lumina_interface = gr.Interface(
     fn=generate_image_lumina,
     inputs=[
-        gr.Textbox(label="Enter your prompt"),
-        gr.Textbox(label="Enter your negative prompt", value=""),
-        gr.Slider(minimum=1, maximum=100, value=30, step=1, label="Steps"),
-        gr.Slider(minimum=0.1, maximum=30.0, value=4, step=0.1, label="Guidance Scale"),
-        gr.Slider(minimum=256, maximum=2048, value=768, step=64, label="Height"),
-        gr.Slider(minimum=256, maximum=2048, value=768, step=64, label="Width"),
-        gr.Slider(minimum=1, maximum=1024, value=256, step=1, label="Max Sequence Length"),
-        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
-        gr.Button(value="Stop generation", interactive=True, variant="stop"),
+        gr.Textbox(label="Ingrese su prompt"),
+        gr.Textbox(label="Ingrese su prompt negativo", value=""),
+        gr.Slider(minimum=1, maximum=100, value=30, step=1, label="Pasos"),
+        gr.Slider(minimum=0.1, maximum=30.0, value=4, step=0.1, label="Escala de guía"),
+        gr.Slider(minimum=256, maximum=2048, value=768, step=64, label="Alto"),
+        gr.Slider(minimum=256, maximum=2048, value=768, step=64, label="Ancho"),
+        gr.Slider(minimum=1, maximum=1024, value=256, step=1, label="Longitud máxima de secuencia"),
+        gr.Radio(choices=["png", "jpeg"], label="Seleccione formato de salida", value="png", interactive=True),
+        gr.Button(value="Detener generación", interactive=True, variant="stop"),
     ],
     outputs=[
-        gr.Image(type="filepath", label="Generated image"),
-        gr.Textbox(label="Message", type="text"),
+        gr.Image(type="filepath", label="Imagen generada"),
+        gr.Textbox(label="Mensaje", type="text"),
     ],
     title="NeuroSandboxWebUI (ALPHA) - Lumina-T2X",
-    description="This user interface allows you to generate images using the Lumina-T2X model. "
-                "Enter a prompt and customize the generation settings. "
-                "Try it and see what happens!",
+    description="Esta interfaz de usuario le permite generar imágenes usando el modelo Lumina-T2X. "
+                "Ingrese un prompt y personalice la configuración de generación. "
+                "¡Pruébelo y vea qué sucede!",
     allow_flagging="never",
 )
 
 kolors_interface = gr.Interface(
     fn=generate_image_kolors,
     inputs=[
-        gr.Textbox(label="Enter your prompt"),
-        gr.Textbox(label="Enter your negative prompt", value=""),
-        gr.Slider(minimum=1.0, maximum=20.0, value=6.5, step=0.1, label="Guidance Scale"),
-        gr.Slider(minimum=1, maximum=100, value=25, step=1, label="Steps"),
-        gr.Slider(minimum=1, maximum=1024, value=256, step=1, label="Max Sequence Length"),
-        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
-        gr.Button(value="Stop generation", interactive=True, variant="stop"),
+        gr.Textbox(label="Ingrese su prompt"),
+        gr.Textbox(label="Ingrese su prompt negativo", value=""),
+        gr.Slider(minimum=1.0, maximum=20.0, value=6.5, step=0.1, label="Escala de guía"),
+        gr.Slider(minimum=1, maximum=100, value=25, step=1, label="Pasos"),
+        gr.Slider(minimum=1, maximum=1024, value=256, step=1, label="Longitud máxima de secuencia"),
+        gr.Radio(choices=["png", "jpeg"], label="Seleccione formato de salida", value="png", interactive=True),
+        gr.Button(value="Detener generación", interactive=True, variant="stop"),
     ],
     outputs=[
-        gr.Image(type="filepath", label="Generated image"),
-        gr.Textbox(label="Message", type="text"),
+        gr.Image(type="filepath", label="Imagen generada"),
+        gr.Textbox(label="Mensaje", type="text"),
     ],
     title="NeuroSandboxWebUI (ALPHA) - Kolors",
-    description="This user interface allows you to generate images using the Kolors model. "
-                "Enter a prompt and customize the generation settings. "
-                "Try it and see what happens!",
+    description="Esta interfaz de usuario le permite generar imágenes usando el modelo Kolors. "
+                "Ingrese un prompt y personalice la configuración de generación. "
+                "¡Pruébelo y vea qué sucede!",
     allow_flagging="never",
 )
 
 auraflow_interface = gr.Interface(
     fn=generate_image_auraflow,
     inputs=[
-        gr.Textbox(label="Enter your prompt"),
-        gr.Textbox(label="Enter your negative prompt", value=""),
-        gr.Slider(minimum=1, maximum=100, value=25, step=1, label="Steps"),
-        gr.Slider(minimum=1.0, maximum=20.0, value=7.5, step=0.1, label="Guidance Scale"),
-        gr.Slider(minimum=256, maximum=1024, value=512, step=64, label="Height"),
-        gr.Slider(minimum=256, maximum=1024, value=512, step=64, label="Width"),
-        gr.Slider(minimum=1, maximum=1024, value=256, step=1, label="Max Sequence Length"),
-        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
-        gr.Button(value="Stop generation", interactive=True, variant="stop"),
+        gr.Textbox(label="Ingrese su prompt"),
+        gr.Textbox(label="Ingrese su prompt negativo", value=""),
+        gr.Slider(minimum=1, maximum=100, value=25, step=1, label="Pasos"),
+        gr.Slider(minimum=1.0, maximum=20.0, value=7.5, step=0.1, label="Escala de guía"),
+        gr.Slider(minimum=256, maximum=1024, value=512, step=64, label="Alto"),
+        gr.Slider(minimum=256, maximum=1024, value=512, step=64, label="Ancho"),
+        gr.Slider(minimum=1, maximum=1024, value=256, step=1, label="Longitud máxima de secuencia"),
+        gr.Radio(choices=["png", "jpeg"], label="Seleccione formato de salida", value="png", interactive=True),
+        gr.Button(value="Detener generación", interactive=True, variant="stop"),
     ],
     outputs=[
-        gr.Image(type="filepath", label="Generated image"),
-        gr.Textbox(label="Message", type="text"),
+        gr.Image(type="filepath", label="Imagen generada"),
+        gr.Textbox(label="Mensaje", type="text"),
     ],
     title="NeuroSandboxWebUI (ALPHA) - AuraFlow",
-    description="This user interface allows you to generate images using the AuraFlow model. "
-                "Enter a prompt and customize the generation settings. "
-                "Try it and see what happens!",
+    description="Esta interfaz de usuario le permite generar imágenes usando el modelo AuraFlow. "
+                "Ingrese un prompt y personalice la configuración de generación. "
+                "¡Pruébelo y vea qué sucede!",
     allow_flagging="never",
 )
 
 wurstchen_interface = gr.Interface(
     fn=generate_image_wurstchen,
     inputs=[
-        gr.Textbox(label="Enter your prompt"),
-        gr.Textbox(label="Enter your negative prompt", value=""),
-        gr.Slider(minimum=256, maximum=2048, value=1536, step=64, label="Width"),
-        gr.Slider(minimum=256, maximum=2048, value=1024, step=64, label="Height"),
-        gr.Slider(minimum=1, maximum=100, value=50, step=1, label="Prior Steps"),
-        gr.Slider(minimum=0.1, maximum=30.0, value=4.0, step=0.1, label="Prior Guidance Scale"),
-        gr.Slider(minimum=1, maximum=100, value=20, step=1, label="Decoder Steps"),
-        gr.Slider(minimum=0.0, maximum=30.0, value=0.0, step=0.1, label="Decoder Guidance Scale"),
-        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
-        gr.Button(value="Stop generation", interactive=True, variant="stop"),
+        gr.Textbox(label="Ingrese su prompt"),
+        gr.Textbox(label="Ingrese su prompt negativo", value=""),
+        gr.Slider(minimum=256, maximum=2048, value=1536, step=64, label="Ancho"),
+        gr.Slider(minimum=256, maximum=2048, value=1024, step=64, label="Alto"),
+        gr.Slider(minimum=1, maximum=100, value=50, step=1, label="Pasos previos"),
+        gr.Slider(minimum=0.1, maximum=30.0, value=4.0, step=0.1, label="Escala de guía previa"),
+        gr.Slider(minimum=1, maximum=100, value=20, step=1, label="Pasos del decodificador"),
+        gr.Slider(minimum=0.0, maximum=30.0, value=0.0, step=0.1, label="Escala de guía del decodificador"),
+        gr.Radio(choices=["png", "jpeg"], label="Seleccione formato de salida", value="png", interactive=True),
+        gr.Button(value="Detener generación", interactive=True, variant="stop"),
     ],
     outputs=[
-        gr.Image(type="filepath", label="Generated image"),
-        gr.Textbox(label="Message", type="text"),
+        gr.Image(type="filepath", label="Imagen generada"),
+        gr.Textbox(label="Mensaje", type="text"),
     ],
     title="NeuroSandboxWebUI (ALPHA) - Würstchen",
-    description="This user interface allows you to generate images using the Würstchen model. "
-                "Enter a prompt and customize the generation settings. "
-                "Try it and see what happens!",
+    description="Esta interfaz de usuario le permite generar imágenes usando el modelo Würstchen. "
+                "Ingrese un prompt y personalice la configuración de generación. "
+                "¡Pruébelo y vea qué sucede!",
     allow_flagging="never",
 )
 
 deepfloyd_if_interface = gr.Interface(
     fn=generate_image_deepfloyd,
     inputs=[
-        gr.Textbox(label="Enter your prompt"),
-        gr.Textbox(label="Enter your negative prompt", value=""),
-        gr.Slider(minimum=1, maximum=100, value=50, step=1, label="Steps"),
-        gr.Slider(minimum=0.1, maximum=30.0, value=6, step=0.1, label="Guidance Scale"),
-        gr.Slider(minimum=256, maximum=2048, value=512, step=64, label="Width"),
-        gr.Slider(minimum=256, maximum=2048, value=512, step=64, label="Height"),
-        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
-        gr.Button(value="Stop generation", interactive=True, variant="stop"),
+        gr.Textbox(label="Ingrese su prompt"),
+        gr.Textbox(label="Ingrese su prompt negativo", value=""),
+        gr.Slider(minimum=1, maximum=100, value=50, step=1, label="Pasos"),
+        gr.Slider(minimum=0.1, maximum=30.0, value=6, step=0.1, label="Escala de guía"),
+        gr.Slider(minimum=256, maximum=2048, value=512, step=64, label="Ancho"),
+        gr.Slider(minimum=256, maximum=2048, value=512, step=64, label="Alto"),
+        gr.Radio(choices=["png", "jpeg"], label="Seleccione formato de salida", value="png", interactive=True),
+        gr.Button(value="Detener generación", interactive=True, variant="stop"),
     ],
     outputs=[
-        gr.Image(type="filepath", label="Generated image (Stage I)"),
-        gr.Image(type="filepath", label="Generated image (Stage II)"),
-        gr.Image(type="filepath", label="Generated image (Stage III)"),
-        gr.Textbox(label="Message", type="text"),
+        gr.Image(type="filepath", label="Imagen generada (Etapa I)"),
+        gr.Image(type="filepath", label="Imagen generada (Etapa II)"),
+        gr.Image(type="filepath", label="Imagen generada (Etapa III)"),
+        gr.Textbox(label="Mensaje", type="text"),
     ],
     title="NeuroSandboxWebUI (ALPHA) - DeepFloyd IF",
-    description="This user interface allows you to generate images using the DeepFloyd IF model. "
-                "Enter a prompt and customize the generation settings. "
-                "The process includes three stages of generation, each producing an image of increasing quality. "
-                "Try it and see what happens!",
+    description="Esta interfaz de usuario le permite generar imágenes usando el modelo DeepFloyd IF. "
+                "Ingrese un prompt y personalice la configuración de generación. "
+                "El proceso incluye tres etapas de generación, cada una produciendo una imagen de calidad creciente. "
+                "¡Pruébelo y vea qué sucede!",
     allow_flagging="never",
 )
 
 pixart_interface = gr.Interface(
     fn=generate_image_pixart,
     inputs=[
-        gr.Textbox(label="Enter your prompt"),
-        gr.Textbox(label="Enter your negative prompt", value=""),
-        gr.Radio(choices=["Alpha-512", "Alpha-1024", "Sigma-512", "Sigma-1024"], label="PixArt Version", value="Alpha-512"),
-        gr.Slider(minimum=1, maximum=100, value=30, step=1, label="Steps"),
-        gr.Slider(minimum=0.1, maximum=30.0, value=7.5, step=0.1, label="Guidance Scale"),
-        gr.Slider(minimum=256, maximum=2048, value=512, step=64, label="Height"),
-        gr.Slider(minimum=256, maximum=2048, value=512, step=64, label="Width"),
-        gr.Slider(minimum=1, maximum=1024, value=256, step=1, label="Max Sequence Length"),
-        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
-        gr.Button(value="Stop generation", interactive=True, variant="stop"),
+        gr.Textbox(label="Ingrese su prompt"),
+        gr.Textbox(label="Ingrese su prompt negativo", value=""),
+        gr.Radio(choices=["Alpha-512", "Alpha-1024", "Sigma-512", "Sigma-1024"], label="Versión de PixArt", value="Alpha-512"),
+        gr.Slider(minimum=1, maximum=100, value=30, step=1, label="Pasos"),
+        gr.Slider(minimum=0.1, maximum=30.0, value=7.5, step=0.1, label="Escala de guía"),
+        gr.Slider(minimum=256, maximum=2048, value=512, step=64, label="Alto"),
+        gr.Slider(minimum=256, maximum=2048, value=512, step=64, label="Ancho"),
+        gr.Slider(minimum=1, maximum=1024, value=256, step=1, label="Longitud máxima de secuencia"),
+        gr.Radio(choices=["png", "jpeg"], label="Seleccione formato de salida", value="png", interactive=True),
+        gr.Button(value="Detener generación", interactive=True, variant="stop"),
     ],
     outputs=[
-        gr.Image(type="filepath", label="Generated image"),
-        gr.Textbox(label="Message", type="text"),
+        gr.Image(type="filepath", label="Imagen generada"),
+        gr.Textbox(label="Mensaje", type="text"),
     ],
     title="NeuroSandboxWebUI (ALPHA) - PixArt",
-    description="This user interface allows you to generate images using PixArt models. "
-                "You can select between Alpha and Sigma versions, and customize the generation settings. "
-                "Try it and see what happens!",
+    description="Esta interfaz de usuario le permite generar imágenes usando modelos PixArt. "
+                "Puede seleccionar entre las versiones Alpha y Sigma, y personalizar la configuración de generación. "
+                "¡Pruébelo y vea qué sucede!",
     allow_flagging="never",
 )
 
 modelscope_interface = gr.Interface(
     fn=generate_video_modelscope,
     inputs=[
-        gr.Textbox(label="Enter your prompt"),
-        gr.Textbox(label="Enter your negative prompt", value=""),
-        gr.Slider(minimum=1, maximum=100, value=50, step=1, label="Steps"),
-        gr.Slider(minimum=1.0, maximum=20.0, value=7.5, step=0.1, label="Guidance Scale"),
-        gr.Slider(minimum=256, maximum=1024, value=320, step=64, label="Height"),
-        gr.Slider(minimum=256, maximum=1024, value=576, step=64, label="Width"),
-        gr.Slider(minimum=16, maximum=128, value=64, step=1, label="Number of Frames"),
-        gr.Radio(choices=["mp4", "gif"], label="Select output format", value="mp4", interactive=True),
-        gr.Button(value="Stop generation", interactive=True, variant="stop"),
+        gr.Textbox(label="Ingrese su prompt"),
+        gr.Textbox(label="Ingrese su prompt negativo", value=""),
+        gr.Slider(minimum=1, maximum=100, value=50, step=1, label="Pasos"),
+        gr.Slider(minimum=1.0, maximum=20.0, value=7.5, step=0.1, label="Escala de guía"),
+        gr.Slider(minimum=256, maximum=1024, value=320, step=64, label="Alto"),
+        gr.Slider(minimum=256, maximum=1024, value=576, step=64, label="Ancho"),
+        gr.Slider(minimum=16, maximum=128, value=64, step=1, label="Número de cuadros"),
+        gr.Radio(choices=["mp4", "gif"], label="Seleccione formato de salida", value="mp4", interactive=True),
+        gr.Button(value="Detener generación", interactive=True, variant="stop"),
     ],
     outputs=[
-        gr.Video(label="Generated video"),
-        gr.Textbox(label="Message", type="text"),
+        gr.Video(label="Video generado"),
+        gr.Textbox(label="Mensaje", type="text"),
     ],
     title="NeuroSandboxWebUI (ALPHA) - ModelScope",
-    description="This user interface allows you to generate videos using ModelScope. "
-                "Enter a prompt and customize the generation settings. "
-                "Try it and see what happens!",
+    description="Esta interfaz de usuario le permite generar videos usando ModelScope. "
+                "Ingrese un prompt y personalice la configuración de generación. "
+                "¡Pruébelo y vea qué sucede!",
     allow_flagging="never",
 )
 
 zeroscope2_interface = gr.Interface(
     fn=generate_video_zeroscope2,
     inputs=[
-        gr.Textbox(label="Enter your prompt"),
-        gr.Video(label="Video to enhance (optional)", interactive=True),
-        gr.Slider(minimum=0.1, maximum=1.0, value=0.5, step=0.1, label="Strength"),
-        gr.Slider(minimum=1, maximum=100, value=40, step=1, label="Steps"),
-        gr.Slider(minimum=256, maximum=1280, value=576, step=64, label="Width"),
-        gr.Slider(minimum=256, maximum=1280, value=320, step=64, label="Height"),
-        gr.Slider(minimum=1, maximum=100, value=36, step=1, label="Frames"),
-        gr.Checkbox(label="Enable Video Enhancement", value=False),
-        gr.Button(value="Stop generation", interactive=True, variant="stop"),
+        gr.Textbox(label="Ingrese su prompt"),
+        gr.Video(label="Video para mejorar (opcional)", interactive=True),
+        gr.Slider(minimum=0.1, maximum=1.0, value=0.5, step=0.1, label="Fuerza"),
+        gr.Slider(minimum=1, maximum=100, value=40, step=1, label="Pasos"),
+        gr.Slider(minimum=256, maximum=1280, value=576, step=64, label="Ancho"),
+        gr.Slider(minimum=256, maximum=1280, value=320, step=64, label="Alto"),
+        gr.Slider(minimum=1, maximum=100, value=36, step=1, label="Cuadros"),
+        gr.Checkbox(label="Habilitar mejora de video", value=False),
+        gr.Button(value="Detener generación", interactive=True, variant="stop"),
     ],
     outputs=[
-        gr.Video(label="Generated video"),
-        gr.Textbox(label="Message", type="text"),
+        gr.Video(label="Video generado"),
+        gr.Textbox(label="Mensaje", type="text"),
     ],
     title="NeuroSandboxWebUI (ALPHA) - ZeroScope 2",
-    description="This user interface allows you to generate and enhance videos using ZeroScope 2 models. "
-                "You can enter a text prompt, upload an optional video for enhancement, and customize the generation settings. "
-                "Try it and see what happens!",
+    description="Esta interfaz de usuario le permite generar y mejorar videos usando modelos ZeroScope 2. "
+                "Puede ingresar un prompt de texto, subir un video opcional para mejorarlo y personalizar la configuración de generación. "
+                "¡Pruébelo y vea qué sucede!",
     allow_flagging="never",
 )
 
 cogvideox_interface = gr.Interface(
     fn=generate_video_cogvideox,
     inputs=[
-        gr.Textbox(label="Enter your prompt"),
-        gr.Textbox(label="Enter your negative prompt", value=""),
-        gr.Slider(minimum=1, maximum=100, value=50, step=1, label="Steps"),
-        gr.Slider(minimum=1.0, maximum=20.0, value=6.0, step=0.1, label="Guidance Scale"),
-        gr.Slider(minimum=256, maximum=1024, value=512, step=64, label="Height"),
-        gr.Slider(minimum=256, maximum=1024, value=512, step=64, label="Width"),
-        gr.Slider(minimum=1, maximum=100, value=16, step=1, label="Number of Frames"),
+        gr.Textbox(label="Ingrese su prompt"),
+        gr.Textbox(label="Ingrese su prompt negativo", value=""),
+        gr.Slider(minimum=1, maximum=100, value=50, step=1, label="Pasos"),
+        gr.Slider(minimum=1.0, maximum=20.0, value=6.0, step=0.1, label="Escala de guía"),
+        gr.Slider(minimum=256, maximum=1024, value=512, step=64, label="Alto"),
+        gr.Slider(minimum=256, maximum=1024, value=512, step=64, label="Ancho"),
+        gr.Slider(minimum=1, maximum=100, value=16, step=1, label="Número de cuadros"),
         gr.Slider(minimum=1, maximum=60, value=8, step=1, label="FPS"),
-        gr.Button(value="Stop generation", interactive=True, variant="stop"),
+        gr.Button(value="Detener generación", interactive=True, variant="stop"),
     ],
     outputs=[
-        gr.Video(label="Generated video"),
-        gr.Textbox(label="Message", type="text"),
+        gr.Video(label="Video generado"),
+        gr.Textbox(label="Mensaje", type="text"),
     ],
     title="NeuroSandboxWebUI (ALPHA) - CogVideoX",
-    description="This user interface allows you to generate videos using CogVideoX. "
-                "Enter a prompt and customize the generation settings. "
-                "Try it and see what happens!",
+    description="Esta interfaz de usuario le permite generar videos usando CogVideoX. "
+                "Ingrese un prompt y personalice la configuración de generación. "
+                "¡Pruébelo y vea qué sucede!",
     allow_flagging="never",
 )
 
 latte_interface = gr.Interface(
     fn=generate_video_latte,
     inputs=[
-        gr.Textbox(label="Enter your prompt"),
-        gr.Textbox(label="Enter your negative prompt", value=""),
-        gr.Slider(minimum=1, maximum=100, value=50, step=1, label="Steps"),
-        gr.Slider(minimum=1.0, maximum=20.0, value=6.0, step=0.1, label="Guidance Scale"),
-        gr.Slider(minimum=256, maximum=1024, value=512, step=64, label="Height"),
-        gr.Slider(minimum=256, maximum=1024, value=512, step=64, label="Width"),
-        gr.Slider(minimum=1, maximum=100, value=16, step=1, label="Video Length"),
-        gr.Button(value="Stop generation", interactive=True, variant="stop"),
+        gr.Textbox(label="Ingrese su prompt"),
+        gr.Textbox(label="Ingrese su prompt negativo", value=""),
+        gr.Slider(minimum=1, maximum=100, value=50, step=1, label="Pasos"),
+        gr.Slider(minimum=1.0, maximum=20.0, value=6.0, step=0.1, label="Escala de guía"),
+        gr.Slider(minimum=256, maximum=1024, value=512, step=64, label="Alto"),
+        gr.Slider(minimum=256, maximum=1024, value=512, step=64, label="Ancho"),
+        gr.Slider(minimum=1, maximum=100, value=16, step=1, label="Longitud del video"),
+        gr.Button(value="Detener generación", interactive=True, variant="stop"),
     ],
     outputs=[
-        gr.Image(type="filepath", label="Generated GIF"),
-        gr.Textbox(label="Message", type="text"),
+        gr.Image(type="filepath", label="GIF generado"),
+        gr.Textbox(label="Mensaje", type="text"),
     ],
     title="NeuroSandboxWebUI (ALPHA) - Latte",
-    description="This user interface allows you to generate GIFs using Latte. "
-                "Enter a prompt and customize the generation settings. "
-                "Try it and see what happens!",
+    description="Esta interfaz de usuario le permite generar GIFs usando Latte. "
+                "Ingrese un prompt y personalice la configuración de generación. "
+                "¡Pruébelo y vea qué sucede!",
     allow_flagging="never",
 )
 
 triposr_interface = gr.Interface(
     fn=generate_3d_triposr,
     inputs=[
-        gr.Image(label="Input image", type="pil"),
-        gr.Slider(minimum=32, maximum=320, value=256, step=32, label="Marching Cubes Resolution"),
-        gr.Slider(minimum=0.5, maximum=1.0, value=0.85, step=0.05, label="Foreground Ratio"),
-        gr.Radio(choices=["obj", "glb"], label="Select output format", value="obj", interactive=True),
-        gr.Button(value="Stop generation", interactive=True, variant="stop"),
+        gr.Image(label="Imagen de entrada", type="pil"),
+        gr.Slider(minimum=32, maximum=320, value=256, step=32, label="Resolución de Marching Cubes"),
+        gr.Slider(minimum=0.5, maximum=1.0, value=0.85, step=0.05, label="Relación de primer plano"),
+        gr.Radio(choices=["obj", "glb"], label="Seleccione formato de salida", value="obj", interactive=True),
+        gr.Button(value="Detener generación", interactive=True, variant="stop"),
     ],
     outputs=[
-        gr.Model3D(label="Generated 3D object"),
-        gr.Textbox(label="Message", type="text"),
+        gr.Model3D(label="Objeto 3D generado"),
+        gr.Textbox(label="Mensaje", type="text"),
     ],
     title="NeuroSandboxWebUI (ALPHA) - TripoSR",
-    description="This user interface allows you to generate 3D objects using TripoSR. "
-                "Upload an image and customize the generation settings. "
-                "Try it and see what happens!",
+    description="Esta interfaz de usuario le permite generar objetos 3D usando TripoSR. "
+                "Suba una imagen y personalice la configuración de generación. "
+                "¡Pruébelo y vea qué sucede!",
     allow_flagging="never",
 )
 
 stablefast3d_interface = gr.Interface(
     fn=generate_3d_stablefast3d,
     inputs=[
-        gr.Image(label="Input image", type="filepath"),
-        gr.Slider(minimum=256, maximum=4096, value=1024, step=256, label="Texture Resolution"),
-        gr.Slider(minimum=0.1, maximum=1.0, value=0.85, step=0.05, label="Foreground Ratio"),
-        gr.Radio(choices=["none", "triangle", "quad"], label="Remesh Option", value="none"),
-        gr.Radio(choices=["obj", "glb"], label="Select output format", value="obj", interactive=True),
-        gr.Button(value="Stop generation", interactive=True, variant="stop"),
+        gr.Image(label="Imagen de entrada", type="filepath"),
+        gr.Slider(minimum=256, maximum=4096, value=1024, step=256, label="Resolución de textura"),
+        gr.Slider(minimum=0.1, maximum=1.0, value=0.85, step=0.05, label="Relación de primer plano"),
+        gr.Radio(choices=["none", "triangle", "quad"], label="Opción de remallado", value="none"),
+        gr.Radio(choices=["obj", "glb"], label="Seleccione formato de salida", value="obj", interactive=True),
+        gr.Button(value="Detener generación", interactive=True, variant="stop"),
     ],
     outputs=[
-        gr.Model3D(label="Generated 3D object"),
-        gr.Textbox(label="Message", type="text"),
+        gr.Model3D(label="Objeto 3D generado"),
+        gr.Textbox(label="Mensaje", type="text"),
     ],
     title="NeuroSandboxWebUI (ALPHA) - StableFast3D",
-    description="This user interface allows you to generate 3D objects from images using StableFast3D. "
-                "Upload an image and customize the generation settings. "
-                "Try it and see what happens!",
+    description="Esta interfaz de usuario le permite generar objetos 3D a partir de imágenes usando StableFast3D. "
+                "Suba una imagen y personalice la configuración de generación. "
+                "¡Pruébelo y vea qué sucede!",
     allow_flagging="never",
 )
 
 shap_e_interface = gr.Interface(
     fn=generate_3d_shap_e,
     inputs=[
-        gr.Textbox(label="Enter your prompt"),
-        gr.Image(label="Initial image (optional)", type="filepath", interactive=True),
-        gr.Slider(minimum=1, maximum=100, value=50, step=1, label="Steps"),
+        gr.Textbox(label="Ingrese su prompt"),
+        gr.Image(label="Imagen inicial (opcional)", type="filepath", interactive=True),
+        gr.Slider(minimum=1, maximum=100, value=50, step=1, label="Pasos"),
         gr.Slider(minimum=1.0, maximum=30.0, value=10.0, step=0.1, label="CFG"),
-        gr.Slider(minimum=64, maximum=512, value=256, step=64, label="Frame size"),
-        gr.Button(value="Stop generation", interactive=True, variant="stop"),
+        gr.Slider(minimum=64, maximum=512, value=256, step=64, label="Tamaño del cuadro"),
+        gr.Button(value="Detener generación", interactive=True, variant="stop"),
     ],
     outputs=[
-        gr.Model3D(label="Generated 3D object"),
-        gr.Textbox(label="Message", type="text"),
+        gr.Model3D(label="Objeto 3D generado"),
+        gr.Textbox(label="Mensaje", type="text"),
     ],
     title="NeuroSandboxWebUI (ALPHA) - Shap-E",
-    description="This user interface allows you to generate 3D objects using Shap-E. "
-                "You can enter a text prompt or upload an initial image, and customize the generation settings. "
-                "Try it and see what happens!",
+    description="Esta interfaz de usuario le permite generar objetos 3D usando Shap-E. "
+                "Puede ingresar un prompt de texto o subir una imagen inicial, y personalizar la configuración de generación. "
+                "¡Pruébelo y vea qué sucede!",
     allow_flagging="never",
 )
 
 sv34d_interface = gr.Interface(
     fn=generate_sv34d,
     inputs=[
-        gr.File(label="Input file (Image for 3D-U and 3D-P, MP4 video for 4D)", type="filepath"),
-        gr.Radio(choices=["3D-U", "3D-P", "4D"], label="Version", value="3D-U"),
-        gr.Slider(minimum=0.0, maximum=90.0, value=10.0, step=0.1, label="Elevation Degree (for 3D-P only)"),
-        gr.Button(value="Stop generation", interactive=True, variant="stop"),
+        gr.File(label="Archivo de entrada (Imagen para 3D-U y 3D-P, video MP4 para 4D)", type="filepath"),
+        gr.Radio(choices=["3D-U", "3D-P", "4D"], label="Versión", value="3D-U"),
+        gr.Slider(minimum=0.0, maximum=90.0, value=10.0, step=0.1, label="Grado de elevación (solo para 3D-P)"),
+        gr.Button(value="Detener generación", interactive=True, variant="stop"),
     ],
     outputs=[
-        gr.Video(label="Generated output"),
-        gr.Textbox(label="Message", type="text"),
+        gr.Video(label="Salida generada"),
+        gr.Textbox(label="Mensaje", type="text"),
     ],
     title="NeuroSandboxWebUI (ALPHA) - SV34D",
-    description="This interface allows you to generate 3D and 4D content using SV34D models. "
-                "Upload an image (PNG, JPG, JPEG) for 3D-U and 3D-P versions, or an MP4 video for 4D version. "
-                "Select the version and customize settings as needed.",
+    description="Esta interfaz le permite generar contenido 3D y 4D usando modelos SV34D. "
+                "Suba una imagen (PNG, JPG, JPEG) para las versiones 3D-U y 3D-P, o un video MP4 para la versión 4D. "
+                "Seleccione la versión y personalice la configuración según sea necesario.",
     allow_flagging="never",
 )
 
 zero123plus_interface = gr.Interface(
     fn=generate_3d_zero123plus,
     inputs=[
-        gr.Image(label="Input image", type="filepath"),
-        gr.Slider(minimum=1, maximum=100, value=75, step=1, label="Inference steps"),
-        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
-        gr.Button(value="Stop generation", interactive=True, variant="stop"),
+        gr.Image(label="Imagen de entrada", type="filepath"),
+        gr.Slider(minimum=1, maximum=100, value=75, step=1, label="Pasos de inferencia"),
+        gr.Radio(choices=["png", "jpeg"], label="Seleccione formato de salida", value="png", interactive=True),
+        gr.Button(value="Detener generación", interactive=True, variant="stop"),
     ],
     outputs=[
-        gr.Image(type="filepath", label="Generated image"),
-        gr.Textbox(label="Message", type="text"),
+        gr.Image(type="filepath", label="Imagen generada"),
+        gr.Textbox(label="Mensaje", type="text"),
     ],
     title="NeuroSandboxWebUI (ALPHA) - Zero123Plus",
-    description="This user interface allows you to generate 3D-like images using Zero123Plus. "
-                "Upload an input image and customize the number of inference steps. "
-                "Try it and see what happens!",
+    description="Esta interfaz de usuario le permite generar imágenes tipo 3D usando Zero123Plus. "
+                "Suba una imagen de entrada y personalice el número de pasos de inferencia. "
+                "¡Pruébelo y vea qué sucede!",
     allow_flagging="never",
 )
 
 stableaudio_interface = gr.Interface(
     fn=generate_stableaudio,
     inputs=[
-        gr.Textbox(label="Enter your prompt"),
-        gr.Textbox(label="Enter your negative prompt"),
-        gr.Slider(minimum=1, maximum=1000, value=200, step=1, label="Steps"),
+        gr.Textbox(label="Ingrese su prompt"),
+        gr.Textbox(label="Ingrese su prompt negativo"),
+        gr.Slider(minimum=1, maximum=1000, value=200, step=1, label="Pasos"),
         gr.Slider(minimum=0.1, maximum=12, value=4, step=0.1, label="CFG"),
-        gr.Slider(minimum=1, maximum=60, value=10, step=1, label="Audio Length (seconds)"),
-        gr.Slider(minimum=1, maximum=60, value=0, step=1, label="Audio Start (seconds)"),
-        gr.Slider(minimum=1, maximum=10, value=3, step=1, label="Number of Waveforms"),
-        gr.Radio(choices=["wav", "mp3", "ogg"], label="Select output format", value="wav", interactive=True),
-        gr.Button(value="Stop generation", interactive=True, variant="stop"),
+        gr.Slider(minimum=1, maximum=60, value=10, step=1, label="Duración del audio (segundos)"),
+        gr.Slider(minimum=1, maximum=60, value=0, step=1, label="Inicio del audio (segundos)"),
+        gr.Slider(minimum=1, maximum=10, value=3, step=1, label="Número de formas de onda"),
+        gr.Radio(choices=["wav", "mp3", "ogg"], label="Seleccione formato de salida", value="wav", interactive=True),
+        gr.Button(value="Detener generación", interactive=True, variant="stop"),
     ],
     outputs=[
-        gr.Audio(label="Generated audio", type="filepath"),
-        gr.Textbox(label="Message", type="text"),
+        gr.Audio(label="Audio generado", type="filepath"),
+        gr.Textbox(label="Mensaje", type="text"),
     ],
     title="NeuroSandboxWebUI (ALPHA) - StableAudio",
-    description="This user interface allows you to enter any text and generate audio using StableAudio. "
-                "You can customize the generation settings from the sliders. "
-                "Try it and see what happens!",
+    description="Esta interfaz de usuario le permite ingresar cualquier texto y generar audio usando StableAudio. "
+                "Puede personalizar la configuración de generación desde los deslizadores. "
+                "¡Pruébelo y vea qué sucede!",
     allow_flagging="never",
 )
 
 audiocraft_interface = gr.Interface(
     fn=generate_audio_audiocraft,
     inputs=[
-        gr.Textbox(label="Enter your prompt"),
-        gr.Audio(type="filepath", label="Melody audio (optional)", interactive=True),
-        gr.Dropdown(choices=audiocraft_models_list, label="Select AudioCraft model", value=None),
-        gr.HTML("<h3>AudioCraft Settings</h3>"),
-        gr.Radio(choices=["musicgen", "audiogen", "magnet"], label="Select model type", value="musicgen"),
-        gr.Slider(minimum=1, maximum=120, value=10, step=1, label="Duration (seconds)"),
+        gr.Textbox(label="Ingrese su prompt"),
+        gr.Audio(type="filepath", label="Audio de melodía (opcional)", interactive=True),
+        gr.Dropdown(choices=audiocraft_models_list, label="Seleccione modelo AudioCraft", value=None),
+        gr.HTML("<h3>Configuración de AudioCraft</h3>"),
+        gr.Radio(choices=["musicgen", "audiogen", "magnet"], label="Seleccione tipo de modelo", value="musicgen"),
+        gr.Slider(minimum=1, maximum=120, value=10, step=1, label="Duración (segundos)"),
         gr.Slider(minimum=1, maximum=1000, value=250, step=1, label="Top K"),
         gr.Slider(minimum=0.0, maximum=1.0, value=0.0, step=0.1, label="Top P"),
-        gr.Slider(minimum=0.0, maximum=1.9, value=1.0, step=0.1, label="Temperature"),
+        gr.Slider(minimum=0.0, maximum=1.9, value=1.0, step=0.1, label="Temperatura"),
         gr.Slider(minimum=1.0, maximum=10.0, value=3.0, step=0.1, label="CFG"),
-        gr.Checkbox(label="Enable Multiband Diffusion", value=False),
-        gr.Radio(choices=["wav", "mp3", "ogg"], label="Select output format (Works only without Multiband Diffusion)", value="wav", interactive=True),
-        gr.Button(value="Stop generation", interactive=True, variant="stop"),
+        gr.Checkbox(label="Habilitar difusión multibanda", value=False),
+        gr.Radio(choices=["wav", "mp3", "ogg"], label="Seleccione formato de salida (Funciona solo sin difusión multibanda)", value="wav", interactive=True),
+        gr.Button(value="Detener generación", interactive=True, variant="stop"),
     ],
     outputs=[
-        gr.Audio(label="Generated audio", type="filepath"),
-        gr.Textbox(label="Message", type="text"),
+        gr.Audio(label="Audio generado", type="filepath"),
+        gr.Textbox(label="Mensaje", type="text"),
     ],
     title="NeuroSandboxWebUI (ALPHA) - AudioCraft",
-    description="This user interface allows you to enter any text and generate audio using AudioCraft. "
-                "You can select the model and customize the generation settings from the sliders. "
-                "Try it and see what happens!",
+    description="Esta interfaz de usuario le permite ingresar cualquier texto y generar audio usando AudioCraft. "
+                "Puede seleccionar el modelo y personalizar la configuración de generación desde los deslizadores. "
+                "¡Pruébelo y vea qué sucede!",
     allow_flagging="never",
 )
 
 audioldm2_interface = gr.Interface(
     fn=generate_audio_audioldm2,
     inputs=[
-        gr.Textbox(label="Enter your prompt"),
-        gr.Textbox(label="Enter your negative prompt", value=""),
-        gr.Dropdown(choices=["cvssp/audioldm2", "cvssp/audioldm2-music"], label="Select AudioLDM 2 model", value="cvssp/audioldm2"),
-        gr.Slider(minimum=1, maximum=1000, value=200, step=1, label="Steps"),
-        gr.Slider(minimum=1, maximum=60, value=10, step=1, label="Length (seconds)"),
-        gr.Slider(minimum=1, maximum=10, value=3, step=1, label="Waveforms number"),
-        gr.Radio(choices=["wav", "mp3", "ogg"], label="Select output format", value="wav", interactive=True),
-        gr.Button(value="Stop generation", interactive=True, variant="stop"),
+        gr.Textbox(label="Ingrese su prompt"),
+        gr.Textbox(label="Ingrese su prompt negativo", value=""),
+        gr.Dropdown(choices=["cvssp/audioldm2", "cvssp/audioldm2-music"], label="Seleccione modelo AudioLDM 2", value="cvssp/audioldm2"),
+        gr.Slider(minimum=1, maximum=1000, value=200, step=1, label="Pasos"),
+        gr.Slider(minimum=1, maximum=60, value=10, step=1, label="Duración (segundos)"),
+        gr.Slider(minimum=1, maximum=10, value=3, step=1, label="Número de formas de onda"),
+        gr.Radio(choices=["wav", "mp3", "ogg"], label="Seleccione formato de salida", value="wav", interactive=True),
+        gr.Button(value="Detener generación", interactive=True, variant="stop"),
     ],
     outputs=[
-        gr.Audio(label="Generated audio", type="filepath"),
-        gr.Textbox(label="Message", type="text"),
+        gr.Audio(label="Audio generado", type="filepath"),
+        gr.Textbox(label="Mensaje", type="text"),
     ],
     title="NeuroSandboxWebUI (ALPHA) - AudioLDM 2",
-    description="This user interface allows you to enter any text and generate audio using AudioLDM 2. "
-                "You can select the model and customize the generation settings from the sliders. "
-                "Try it and see what happens!",
+    description="Esta interfaz de usuario le permite ingresar cualquier texto y generar audio usando AudioLDM 2. "
+                "Puede seleccionar el modelo y personalizar la configuración de generación desde los deslizadores. "
+                "¡Pruébelo y vea qué sucede!",
     allow_flagging="never",
 )
 
 demucs_interface = gr.Interface(
     fn=demucs_separate,
     inputs=[
-        gr.Audio(type="filepath", label="Audio file to separate"),
-        gr.Radio(choices=["wav", "mp3", "ogg"], label="Select output format", value="wav", interactive=True),
+        gr.Audio(type="filepath", label="Archivo de audio a separar"),
+        gr.Radio(choices=["wav", "mp3", "ogg"], label="Seleccione formato de salida", value="wav", interactive=True),
     ],
     outputs=[
-        gr.Audio(label="Vocal", type="filepath"),
+        gr.Audio(label="Voz", type="filepath"),
         gr.Audio(label="Instrumental", type="filepath"),
-        gr.Textbox(label="Message", type="text"),
+        gr.Textbox(label="Mensaje", type="text"),
     ],
     title="NeuroSandboxWebUI (ALPHA) - Demucs",
-    description="This user interface allows you to upload an audio file and separate it into vocal and instrumental using Demucs. "
-                "Try it and see what happens!",
+    description="Esta interfaz de usuario le permite subir un archivo de audio y separarlo en voz e instrumental usando Demucs. "
+                "¡Pruébelo y vea qué sucede!",
     allow_flagging="never",
 )
 
 gallery_interface = gr.Interface(
     fn=lambda *args: get_output_files()[-1](*args),
     inputs=[
-        gr.Dropdown(label="Text Files", choices=get_output_files()[0], interactive=True),
-        gr.Dropdown(label="Image Files", choices=get_output_files()[1], interactive=True),
-        gr.Dropdown(label="Video Files", choices=get_output_files()[2], interactive=True),
-        gr.Dropdown(label="Audio Files", choices=get_output_files()[3], interactive=True),
-        gr.Dropdown(label="3D Model Files", choices=get_output_files()[4], interactive=True),
+        gr.Dropdown(label="Archivos de texto", choices=get_output_files()[0], interactive=True),
+        gr.Dropdown(label="Archivos de imagen", choices=get_output_files()[1], interactive=True),
+        gr.Dropdown(label="Archivos de video", choices=get_output_files()[2], interactive=True),
+        gr.Dropdown(label="Archivos de audio", choices=get_output_files()[3], interactive=True),
+        gr.Dropdown(label="Archivos de modelo 3D", choices=get_output_files()[4], interactive=True),
     ],
     outputs=[
-        gr.Textbox(label="Text"),
-        gr.Image(label="Image", type="filepath"),
+        gr.Textbox(label="Texto"),
+        gr.Image(label="Imagen", type="filepath"),
         gr.Video(label="Video"),
         gr.Audio(label="Audio", type="filepath"),
-        gr.Model3D(label="3D Model"),
+        gr.Model3D(label="Modelo 3D"),
     ],
-    title="NeuroSandboxWebUI (ALPHA) - Gallery",
-    description="This interface allows you to view files from the outputs directory",
+    title="NeuroSandboxWebUI (ALPHA) - Galería",
+    description="Esta interfaz le permite ver archivos del directorio de salidas",
     allow_flagging="never",
 )
 
 model_downloader_interface = gr.Interface(
     fn=download_model,
     inputs=[
-        gr.Dropdown(choices=[None, "StarlingLM(Transformers7B)", "OpenChat(Llama7B.Q4)"], label="Download LLM model", value=None),
-        gr.Dropdown(choices=[None, "Dreamshaper8(SD1.5)", "RealisticVisionV4.0(SDXL)"], label="Download StableDiffusion model", value=None),
+        gr.Dropdown(choices=[None, "StarlingLM(Transformers7B)", "OpenChat(Llama7B.Q4)"], label="Descargar modelo LLM", value=None),
+        gr.Dropdown(choices=[None, "Dreamshaper8(SD1.5)", "RealisticVisionV4.0(SDXL)"], label="Descargar modelo StableDiffusion", value=None),
     ],
     outputs=[
-        gr.Textbox(label="Message", type="text"),
+        gr.Textbox(label="Mensaje", type="text"),
     ],
-    title="NeuroSandboxWebUI (ALPHA) - ModelDownloader",
-    description="This user interface allows you to download LLM and StableDiffusion models",
+    title="NeuroSandboxWebUI (ALPHA) - Descargador de modelos",
+    description="Esta interfaz de usuario le permite descargar modelos LLM y StableDiffusion",
     allow_flagging="never",
 )
 
 settings_interface = gr.Interface(
     fn=settings_interface,
     inputs=[
-        gr.Radio(choices=["True", "False"], label="Share Mode", value="False")
+        gr.Radio(choices=["True", "False"], label="Modo compartido", value="False")
     ],
     outputs=[
-        gr.Textbox(label="Message", type="text")
+        gr.Textbox(label="Mensaje", type="text")
     ],
-    title="NeuroSandboxWebUI (ALPHA) - Settings",
-    description="This user interface allows you to change settings of application",
+    title="NeuroSandboxWebUI (ALPHA) - Configuración",
+    description="Esta interfaz de usuario le permite cambiar la configuración de la aplicación",
     allow_flagging="never",
 )
 
@@ -4921,17 +4922,17 @@ system_interface = gr.Interface(
     fn=get_system_info,
     inputs=[],
     outputs=[
-        gr.Textbox(label="GPU Total Memory"),
-        gr.Textbox(label="GPU Used Memory"),
-        gr.Textbox(label="GPU Free Memory"),
-        gr.Textbox(label="GPU Temperature"),
-        gr.Textbox(label="CPU Temperature"),
-        gr.Textbox(label="RAM Total"),
-        gr.Textbox(label="RAM Used"),
-        gr.Textbox(label="RAM Free"),
+        gr.Textbox(label="Memoria total de GPU"),
+        gr.Textbox(label="Memoria usada de GPU"),
+        gr.Textbox(label="Memoria libre de GPU"),
+        gr.Textbox(label="Temperatura de GPU"),
+        gr.Textbox(label="Temperatura de CPU"),
+        gr.Textbox(label="RAM total"),
+        gr.Textbox(label="RAM usada"),
+        gr.Textbox(label="RAM libre"),
     ],
-    title="NeuroSandboxWebUI (ALPHA) - System",
-    description="This interface displays system information",
+    title="NeuroSandboxWebUI (ALPHA) - Sistema",
+    description="Esta interfaz muestra información del sistema",
     allow_flagging="never",
 )
 
@@ -4965,10 +4966,10 @@ with gr.TabbedInterface(
         ),
         gr.TabbedInterface(
             [gallery_interface, model_downloader_interface, settings_interface, system_interface],
-            tab_names=["Gallery", "ModelDownloader", "Settings", "System"]
+            tab_names=["Galería", "Descargador de modelos", "Configuración", "Sistema"]
         )
     ],
-    tab_names=["Text", "Image", "Video", "3D", "Audio", "Interface"]
+    tab_names=["Texto", "Imagen", "Video", "3D", "Audio", "Interfaz"]
 ) as app:
     chat_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     bark_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
