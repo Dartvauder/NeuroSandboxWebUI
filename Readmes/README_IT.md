@@ -10,17 +10,17 @@ Un'interfaccia semplice e comoda per l'utilizzo di vari modelli di reti neurali.
 
 L'obiettivo del progetto è creare l'applicazione più semplice possibile per utilizzare modelli di reti neurali
 
-### Testo: 
+### Testo: <img width="1124" alt="1it" src="https://github.com/user-attachments/assets/e9940ff8-c84a-41d2-b798-ffcfba921096">
 
-### Immagine: 
+### Immagine: <img width="1120" alt="2it" src="https://github.com/user-attachments/assets/43eb0f85-0509-4780-99d2-7c930b70015a">
 
-### Video: 
+### Video: <img width="1118" alt="3it" src="https://github.com/user-attachments/assets/fc50d218-46cb-4f76-8315-807d6164547f">
 
-### 3D: 
+### 3D: <img width="1121" alt="4it" src="https://github.com/user-attachments/assets/c607c8a4-1926-457f-8e1e-0cb40b247db2">
 
-### Audio: 
+### Audio: <img width="1120" alt="5it" src="https://github.com/user-attachments/assets/ed2f77e4-f523-49f9-a3a0-03ab2e5445ac">
 
-### Interfaccia: 
+### Interfaccia: <img width="1119" alt="6it" src="https://github.com/user-attachments/assets/f14650c0-1b56-42a7-aa56-68955c0e3e89">
 
 ## Caratteristiche:
 
