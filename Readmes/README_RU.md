@@ -10,17 +10,17 @@
 
 Цель проекта — создать максимально простое приложение для использования нейросетевых моделей
 
-### Text: <img width="1119" alt="1" src="https://github.com/user-attachments/assets/e1ac4e8e-feb2-484b-a399-61ddc8a098c1">
+### Текст: <img width="1127" alt="1ru" src="https://github.com/user-attachments/assets/dbcfdd8d-f893-48ff-90b5-55d03d47ab3e">
 
-### Image: <img width="1121" alt="2" src="https://github.com/user-attachments/assets/a5f2cbde-5812-45db-a58a-dbadda5a01ac">
+### Изображение: <img width="1120" alt="2ru" src="https://github.com/user-attachments/assets/5cf53b1a-de30-4a3f-8aee-c70d53cc1c77">
 
-### Video: <img width="1118" alt="3" src="https://github.com/user-attachments/assets/a568c3ed-3b00-4e21-b802-a3e63f6cf97c">
+### Видео: <img width="1118" alt="3ru" src="https://github.com/user-attachments/assets/efe4f62f-d870-46ee-b803-48e00af9b17c">
 
-### 3D: <img width="1118" alt="4" src="https://github.com/user-attachments/assets/0ba23ac4-aecc-44e6-b252-1fc0f478c75e">
+### 3D: <img width="1121" alt="4ru" src="https://github.com/user-attachments/assets/df783a3c-f2bf-439c-85f3-c992a9a8e910">
 
-### Audio: <img width="1127" alt="5" src="https://github.com/user-attachments/assets/ea7f1bd0-ff85-4873-b9dd-cabd1cc89cee">
+### Аудио: <img width="1115" alt="5ru" src="https://github.com/user-attachments/assets/5881226a-df57-4623-bef1-0df71b557ca2">
 
-### Interface: <img width="1120" alt="6" src="https://github.com/user-attachments/assets/81c4e40c-cf01-488d-adc8-7330f1edd610">
+### Интерфейс: <img width="1122" alt="6ru" src="https://github.com/user-attachments/assets/3912f4d0-7d0f-4f51-9863-a16b46f88585">
 
 ## Функции:
 
