@@ -10,17 +10,17 @@
 
 परियोजना का लक्ष्य - न्यूरल नेटवर्क मॉडल का उपयोग करने के लिए संभव सबसे आसान एप्लिकेशन बनाना
 
-### टेक्स्ट: 
+### टेक्स्ट: <img width="1130" alt="1hi" src="https://github.com/user-attachments/assets/da4aa91c-7771-4688-b592-48f67ff350b2">
 
-### छवि: 
+### छवि: <img width="1123" alt="2hi" src="https://github.com/user-attachments/assets/de35be10-579c-4955-bd91-842824367edd">
 
-### वीडियो: 
+### वीडियो: <img width="1121" alt="3hi" src="https://github.com/user-attachments/assets/76ad9a35-593c-4dfc-99b6-85428f242007">
 
-### 3D: 
+### 3D: <img width="1119" alt="4hi" src="https://github.com/user-attachments/assets/0ec4c9d1-68a0-42ae-8016-801b09e8e210">
 
-### ऑडियो: 
+### ऑडियो: <img width="1121" alt="5hi" src="https://github.com/user-attachments/assets/5fc6fb75-e3ec-4c13-a033-da5aed8d0d1c">
 
-### इंटरफ़ेस: 
+### इंटरफ़ेस: <img width="1119" alt="6hi" src="https://github.com/user-attachments/assets/0f45d6d5-1119-48e3-84f5-8e1481ecebfe">
 
 ## विशेषताएं:
 
