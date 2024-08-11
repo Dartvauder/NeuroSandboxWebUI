@@ -10,17 +10,17 @@
 
 该项目的目标是创建一个尽可能简单易用的神经网络模型应用程序
 
-### 文本：<img width="1119" alt="1" src="https://github.com/user-attachments/assets/e1ac4e8e-feb2-484b-a399-61ddc8a098c1">
+### 文本：<img width="1127" alt="1zh" src="https://github.com/user-attachments/assets/c8f71af3-49ac-48e6-be22-45b933fc7b2c">
 
-### 图像：<img width="1121" alt="2" src="https://github.com/user-attachments/assets/a5f2cbde-5812-45db-a58a-dbadda5a01ac">
+### 图像：<img width="1122" alt="2zh" src="https://github.com/user-attachments/assets/865eb4f0-edee-492c-a016-3a33930a8159">
 
-### 视频：<img width="1118" alt="3" src="https://github.com/user-attachments/assets/a568c3ed-3b00-4e21-b802-a3e63f6cf97c">
+### 视频：<img width="1126" alt="3zh" src="https://github.com/user-attachments/assets/a26222d4-cfcd-4869-aa0e-18b984f49d00">
 
-### 3D：<img width="1118" alt="4" src="https://github.com/user-attachments/assets/0ba23ac4-aecc-44e6-b252-1fc0f478c75e">
+### 3D：<img width="1127" alt="4zh" src="https://github.com/user-attachments/assets/84edbd5f-0437-490f-bfb2-2930f8a5d05e">
 
-### 音频：<img width="1127" alt="5" src="https://github.com/user-attachments/assets/ea7f1bd0-ff85-4873-b9dd-cabd1cc89cee">
+### 音频：<img width="1118" alt="5zh" src="https://github.com/user-attachments/assets/b7ff6de8-2aaa-4674-ae95-d9084128ac23">
 
-### 界面：<img width="1120" alt="6" src="https://github.com/user-attachments/assets/81c4e40c-cf01-488d-adc8-7330f1edd610">
+### 界面：<img width="1118" alt="6zh" src="https://github.com/user-attachments/assets/2df0ba1a-f0ea-4a9e-9e71-2c9f7d625051">
 
 ## 功能：
 
