@@ -18,7 +18,7 @@ echo [中文版: 8] appZH.py
 echo [Versão portuguesa: 9] appPT.py
 echo [Italiano: 10] appIT.py
 echo [हिंदी: 11] appHI.py
-echo [हिंदी: 12] appKO.py
+echo [韓國語: 12] appKO.py
 echo.
 
 :input
