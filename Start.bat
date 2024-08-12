@@ -18,6 +18,7 @@ echo [中文版: 8] appZH.py
 echo [Versão portuguesa: 9] appPT.py
 echo [Italiano: 10] appIT.py
 echo [हिंदी: 11] appHI.py
+echo [韓國語: 12] appKO.py
 echo.
 
 :input
@@ -105,6 +106,14 @@ if "%choice%"=="10" (
 if "%choice%"=="11" (
     cls
     start /b py "%CURRENT_DIR%LaunchFiles\appHI.py"
+    timeout /t 120 > NUL
+    start http://localhost:7860
+    goto end
+)
+
+if "%choice%"=="12" (
+    cls
+    start /b py "%CURRENT_DIR%LaunchFiles\appKO.py"
     timeout /t 120 > NUL
     start http://localhost:7860
     goto end

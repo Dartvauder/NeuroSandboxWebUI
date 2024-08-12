@@ -18,6 +18,7 @@ while true; do
     echo [Versão portuguesa: 9] appPT.py
     echo [Italiano: 10] appIT.py
     echo [हिंदी: 11] appHI.py
+    echo [韓國語: 12] appKO.py
     echo
 
     read -p "Enter number: " choice
@@ -96,6 +97,13 @@ while true; do
         11)
             clear
             python "$CURRENT_DIR/LaunchFiles/appHI.py" &
+            sleep 120
+            xdg-open "http://localhost:7860"
+            break
+            ;;
+        12)
+            clear
+            python "$CURRENT_DIR/LaunchFiles/appKO.py" &
             sleep 120
             xdg-open "http://localhost:7860"
             break

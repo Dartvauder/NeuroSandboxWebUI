@@ -2,7 +2,7 @@
 
 # ![main](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/4ea0d891-8979-45ad-b052-626c41ae991a)
 * العمل قيد التقدم! (ألفا)
-* [English](/README.md) | عربي | [Deutsche](/Readmes/README_DE.md) | [Español](/Readmes/README_ES.md) | [Français](/Readmes/README_FR.md) | [日本語](/Readmes/README_JP.md) | [Русский](/Readmes/README_RU.md) | [漢語](/Readmes/README_ZH.md) | [Português](/Readmes/README_PT.md) | [हिंदी](/Readmes/README_HI.md) | [Italiano](/Readmes/README_IT.md)
+* [English](/README.md) | عربي | [Deutsche](/Readmes/README_DE.md) | [Español](/Readmes/README_ES.md) | [Français](/Readmes/README_FR.md) | [日本語](/Readmes/README_JP.md) | [Русский](/Readmes/README_RU.md) | [漢語](/Readmes/README_ZH.md) | [Português](/Readmes/README_PT.md) | [हिंदी](/Readmes/README_HI.md) | [Italiano](/Readmes/README_IT.md) | [韓國語](/Readmes/README_KO.md)
 
 ## الوصف:
 
@@ -10,17 +10,17 @@
 
 الهدف من المشروع - إنشاء أسهل تطبيق ممكن لاستخدام نماذج الشبكات العصبية
 
-### النص: <img width="1119" alt="1" src="https://github.com/user-attachments/assets/e1ac4e8e-feb2-484b-a399-61ddc8a098c1">
+### النص: <img width="1119" alt="1ar" src="https://github.com/user-attachments/assets/e115f987-5988-479a-b37d-97712fce66cc">
 
-### الصورة: <img width="1121" alt="2" src="https://github.com/user-attachments/assets/a5f2cbde-5812-45db-a58a-dbadda5a01ac">
+### الصورة: <img width="1124" alt="2ar" src="https://github.com/user-attachments/assets/9aca4842-73dc-46f0-b295-8fc7758b5b06">
 
-### الفيديو: <img width="1118" alt="3" src="https://github.com/user-attachments/assets/a568c3ed-3b00-4e21-b802-a3e63f6cf97c">
+### الفيديو: <img width="1121" alt="3ar" src="https://github.com/user-attachments/assets/500ebe14-1741-4392-a11c-781c87cc223c">
 
-### ثلاثي الأبعاد: <img width="1118" alt="4" src="https://github.com/user-attachments/assets/0ba23ac4-aecc-44e6-b252-1fc0f478c75e">
+### ثلاثي الأبعاد: <img width="1120" alt="4ar" src="https://github.com/user-attachments/assets/64e3367d-dd83-43cd-ad15-47b24a444c58">
 
-### الصوت: <img width="1127" alt="5" src="https://github.com/user-attachments/assets/ea7f1bd0-ff85-4873-b9dd-cabd1cc89cee">
+### الصوت: <img width="1123" alt="5ar" src="https://github.com/user-attachments/assets/88999b5b-cbe6-43eb-bacc-19c843f159d9">
 
-### الواجهة: <img width="1120" alt="6" src="https://github.com/user-attachments/assets/81c4e40c-cf01-488d-adc8-7330f1edd610">
+### الواجهة: <img width="1118" alt="6ar" src="https://github.com/user-attachments/assets/30db9899-fba7-49f3-8ba7-d310f82af045">
 
 ## الميزات:
 
