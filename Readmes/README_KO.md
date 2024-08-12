@@ -10,17 +10,17 @@
 
 이 프로젝트의 목표는 신경망 모델을 사용하는 가장 쉬운 애플리케이션을 만드는 것입니다.
 
-### 텍스트: 
+### 텍스트: <img width="1121" alt="1ko" src="https://github.com/user-attachments/assets/38a3550b-fd23-478c-b0da-cc1abec656fa">
 
-### 이미지: 
+### 이미지: <img width="1122" alt="2ko" src="https://github.com/user-attachments/assets/5be22a89-1fae-4bd9-906b-e88f2ba6305d">
 
-### 비디오: 
+### 비디오: <img width="1122" alt="3ko" src="https://github.com/user-attachments/assets/e946c138-aa99-476e-8b24-ee340cfeb3cf">
 
-### 3D: 
+### 3D: <img width="1124" alt="4ko" src="https://github.com/user-attachments/assets/4f09a80c-16c3-49bb-bf5e-5cab123803d6">
 
-### 오디오: 
+### 오디오: <img width="1123" alt="5ko" src="https://github.com/user-attachments/assets/fb27b99f-f811-4f91-a7ae-87de33f60531">
 
-### 인터페이스: 
+### 인터페이스: <img width="1124" alt="6ko" src="https://github.com/user-attachments/assets/4ff56b2d-7661-4497-bdaa-d946f7859ccb">
 
 ## 기능:
 
