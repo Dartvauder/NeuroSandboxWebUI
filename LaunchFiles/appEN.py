@@ -15,7 +15,7 @@ from TTS.api import TTS
 import whisper
 from datetime import datetime
 from huggingface_hub import snapshot_download
-from diffusers import StableDiffusionPipeline, StableDiffusion3Pipeline, StableDiffusionXLPipeline, StableDiffusionImg2ImgPipeline, StableDiffusionDepth2ImgPipeline, ControlNetModel, StableDiffusionXLControlNetPipeline, StableDiffusionControlNetPipeline, AutoencoderKL, StableDiffusionLatentUpscalePipeline, StableDiffusionUpscalePipeline, StableDiffusionInpaintPipeline, StableDiffusionGLIGENPipeline, AnimateDiffPipeline, AnimateDiffSDXLPipeline, AnimateDiffVideoToVideoPipeline, MotionAdapter, StableVideoDiffusionPipeline, I2VGenXLPipeline, StableCascadePriorPipeline, StableCascadeDecoderPipeline, DiffusionPipeline, DPMSolverMultistepScheduler, ShapEPipeline, ShapEImg2ImgPipeline, StableAudioPipeline, AudioLDM2Pipeline, StableDiffusionInstructPix2PixPipeline, StableDiffusionLDM3DPipeline, FluxPipeline, KandinskyPipeline, KandinskyPriorPipeline, KandinskyV22Pipeline, KandinskyV22PriorPipeline, AutoPipelineForText2Image, HunyuanDiTPipeline, LuminaText2ImgPipeline, IFPipeline, IFSuperResolutionPipeline, PixArtAlphaPipeline, PixArtSigmaPipeline, CogVideoXPipeline, LattePipeline, KolorsPipeline, AuraFlowPipeline, WuerstchenDecoderPipeline, WuerstchenPriorPipeline, EulerAncestralDiscreteScheduler, DDIMScheduler
+from diffusers import StableDiffusionPipeline, StableDiffusion3Pipeline, StableDiffusionXLPipeline, StableDiffusionImg2ImgPipeline, StableDiffusion3Img2ImgPipeline, SD3ControlNetModel, StableDiffusion3ControlNetPipeline, StableDiffusion3InpaintPipeline, StableDiffusionDepth2ImgPipeline, ControlNetModel, StableDiffusionXLControlNetPipeline, StableDiffusionControlNetPipeline, AutoencoderKL, StableDiffusionLatentUpscalePipeline, StableDiffusionUpscalePipeline, StableDiffusionInpaintPipeline, StableDiffusionGLIGENPipeline, AnimateDiffPipeline, AnimateDiffSDXLPipeline, AnimateDiffVideoToVideoPipeline, MotionAdapter, StableVideoDiffusionPipeline, I2VGenXLPipeline, StableCascadePriorPipeline, StableCascadeDecoderPipeline, DiffusionPipeline, DPMSolverMultistepScheduler, ShapEPipeline, ShapEImg2ImgPipeline, StableAudioPipeline, AudioLDM2Pipeline, StableDiffusionInstructPix2PixPipeline, StableDiffusionLDM3DPipeline, FluxPipeline, KandinskyPipeline, KandinskyPriorPipeline, KandinskyV22Pipeline, KandinskyV22PriorPipeline, AutoPipelineForText2Image, HunyuanDiTPipeline, LuminaText2ImgPipeline, IFPipeline, IFSuperResolutionPipeline, PixArtAlphaPipeline, PixArtSigmaPipeline, CogVideoXPipeline, LattePipeline, KolorsPipeline, AuraFlowPipeline, WuerstchenDecoderPipeline, WuerstchenPriorPipeline, EulerAncestralDiscreteScheduler, DDIMScheduler
 from diffusers.utils import load_image, export_to_video, export_to_gif, export_to_ply, pt_to_pil
 from diffusers.pipelines.wuerstchen import DEFAULT_STAGE_C_TIMESTEPS
 from controlnet_aux import OpenposeDetector, LineartDetector, HEDdetector
@@ -2104,7 +2104,7 @@ def generate_image_ldm3d(prompt, negative_prompt, width, height, num_inference_s
         torch.cuda.empty_cache()
 
 
-def generate_image_sd3(prompt, negative_prompt, num_inference_steps, guidance_scale, width, height, max_sequence_length, output_format="png", stop_generation=None):
+def generate_image_sd3_txt2img(prompt, negative_prompt, num_inference_steps, guidance_scale, width, height, max_sequence_length, output_format="png", stop_generation=None):
     global stop_signal
     stop_signal = False
 
@@ -2144,6 +2144,177 @@ def generate_image_sd3(prompt, negative_prompt, num_inference_steps, guidance_sc
         image_dir = os.path.join('outputs', f"StableDiffusion_{today.strftime('%Y%m%d')}")
         os.makedirs(image_dir, exist_ok=True)
         image_filename = f"sd3_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
+        image_path = os.path.join(image_dir, image_filename)
+        image.save(image_path, format=output_format.upper())
+
+        return image_path, None
+
+    finally:
+        del pipe
+        torch.cuda.empty_cache()
+
+
+def generate_image_sd3_img2img(prompt, negative_prompt, init_image, strength, num_inference_steps, guidance_scale, width, height, max_sequence_length, output_format="png", stop_generation=None):
+    global stop_signal
+    stop_signal = False
+
+    sd3_model_path = os.path.join("inputs", "image", "sd_models", "sd3")
+
+    if not os.path.exists(sd3_model_path):
+        print("Downloading Stable Diffusion 3 model...")
+        os.makedirs(sd3_model_path, exist_ok=True)
+        Repo.clone_from("https://huggingface.co/v2ray/stable-diffusion-3-medium-diffusers", sd3_model_path)
+        print("Stable Diffusion 3 model downloaded")
+
+    try:
+        quantization_config = BitsAndBytesConfig(load_in_8bit=True)
+
+        text_encoder = T5EncoderModel.from_pretrained(
+            sd3_model_path,
+            subfolder="text_encoder_3",
+            quantization_config=quantization_config,
+        )
+        pipe = StableDiffusion3Img2ImgPipeline.from_pretrained(sd3_model_path, device_map="balanced", text_encoder_3=text_encoder, torch_dtype=torch.float16)
+
+        init_image = Image.open(init_image).convert("RGB")
+        init_image = init_image.resize((width, height))
+
+        image = pipe(
+            prompt,
+            negative_prompt=negative_prompt,
+            image=init_image,
+            strength=strength,
+            num_inference_steps=num_inference_steps,
+            guidance_scale=guidance_scale,
+            max_sequence_length=max_sequence_length,
+        ).images[0]
+
+        if stop_signal:
+            return None, "Generation stopped"
+
+        today = datetime.now().date()
+        image_dir = os.path.join('outputs', f"StableDiffusion_{today.strftime('%Y%m%d')}")
+        os.makedirs(image_dir, exist_ok=True)
+        image_filename = f"sd3_img2img_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
+        image_path = os.path.join(image_dir, image_filename)
+        image.save(image_path, format=output_format.upper())
+
+        return image_path, None
+
+    finally:
+        del pipe
+        torch.cuda.empty_cache()
+
+def generate_image_sd3_controlnet(prompt, negative_prompt, init_image, controlnet_model, num_inference_steps, guidance_scale, controlnet_conditioning_scale, width, height, max_sequence_length, output_format="png", stop_generation=None):
+    global stop_signal
+    stop_signal = False
+
+    sd3_model_path = os.path.join("inputs", "image", "sd_models", "sd3")
+    controlnet_path = os.path.join("inputs", "image", "sd_models", "controlnet", f"sd3_{controlnet_model}")
+
+    if not os.path.exists(sd3_model_path):
+        print("Downloading Stable Diffusion 3 model...")
+        os.makedirs(sd3_model_path, exist_ok=True)
+        Repo.clone_from("https://huggingface.co/v2ray/stable-diffusion-3-medium-diffusers", sd3_model_path)
+        print("Stable Diffusion 3 model downloaded")
+
+    if not os.path.exists(controlnet_path):
+        print(f"Downloading SD3 ControlNet {controlnet_model} model...")
+        os.makedirs(controlnet_path, exist_ok=True)
+        Repo.clone_from(f"https://huggingface.co/InstantX/SD3-Controlnet-{controlnet_model}", controlnet_path)
+        print(f"SD3 ControlNet {controlnet_model} model downloaded")
+
+    try:
+        controlnet = SD3ControlNetModel.from_pretrained(controlnet_path, torch_dtype=torch.float16)
+        pipe = StableDiffusion3ControlNetPipeline.from_pretrained(
+            sd3_model_path,
+            controlnet=controlnet,
+            torch_dtype=torch.float16
+        )
+        pipe.to("cuda")
+
+        init_image = Image.open(init_image).convert("RGB")
+        init_image = init_image.resize((width, height))
+
+        if controlnet_model.lower() == "canny":
+            control_image = init_image
+        elif controlnet_model.lower() == "pose":
+            control_image = init_image
+        else:
+            return None, f"Unsupported ControlNet model: {controlnet_model}"
+
+        image = pipe(
+            prompt,
+            negative_prompt=negative_prompt,
+            image=init_image,
+            control_image=control_image,
+            num_inference_steps=num_inference_steps,
+            guidance_scale=guidance_scale,
+            controlnet_conditioning_scale=controlnet_conditioning_scale,
+            max_sequence_length=max_sequence_length,
+        ).images[0]
+
+        if stop_signal:
+            return None, "Generation stopped"
+
+        today = datetime.now().date()
+        image_dir = os.path.join('outputs', f"StableDiffusion_{today.strftime('%Y%m%d')}")
+        os.makedirs(image_dir, exist_ok=True)
+        image_filename = f"sd3_controlnet_{controlnet_model}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
+        image_path = os.path.join(image_dir, image_filename)
+        image.save(image_path, format=output_format.upper())
+
+        return image_path, None
+
+    finally:
+        del pipe
+        torch.cuda.empty_cache()
+
+def generate_image_sd3_inpaint(prompt, negative_prompt, init_image, mask_image, num_inference_steps, guidance_scale, width, height, max_sequence_length, output_format="png", stop_generation=None):
+    global stop_signal
+    stop_signal = False
+
+    sd3_model_path = os.path.join("inputs", "image", "sd_models", "sd3")
+
+    if not os.path.exists(sd3_model_path):
+        print("Downloading Stable Diffusion 3 model...")
+        os.makedirs(sd3_model_path, exist_ok=True)
+        Repo.clone_from("https://huggingface.co/v2ray/stable-diffusion-3-medium-diffusers", sd3_model_path)
+        print("Stable Diffusion 3 model downloaded")
+
+    try:
+        quantization_config = BitsAndBytesConfig(load_in_8bit=True)
+
+        text_encoder = T5EncoderModel.from_pretrained(
+            sd3_model_path,
+            subfolder="text_encoder_3",
+            quantization_config=quantization_config,
+        )
+        pipe = StableDiffusion3InpaintPipeline.from_pretrained(sd3_model_path, device_map="balanced", text_encoder_3=text_encoder, torch_dtype=torch.float16)
+
+        init_image = Image.open(init_image).convert("RGB")
+        init_image = init_image.resize((width, height))
+
+        mask_image = Image.open(mask_image).convert("L")
+        mask_image = mask_image.resize((width, height))
+
+        image = pipe(
+            prompt,
+            negative_prompt=negative_prompt,
+            image=init_image,
+            mask_image=mask_image,
+            num_inference_steps=num_inference_steps,
+            guidance_scale=guidance_scale,
+            max_sequence_length=max_sequence_length,
+        ).images[0]
+
+        if stop_signal:
+            return None, "Generation stopped"
+
+        today = datetime.now().date()
+        image_dir = os.path.join('outputs', f"StableDiffusion_{today.strftime('%Y%m%d')}")
+        os.makedirs(image_dir, exist_ok=True)
+        image_filename = f"sd3_inpaint_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
         image_path = os.path.join(image_dir, image_filename)
         image.save(image_path, format=output_format.upper())
 
@@ -4318,8 +4489,8 @@ ldm3d_interface = gr.Interface(
     allow_flagging="never",
 )
 
-sd3_interface = gr.Interface(
-    fn=generate_image_sd3,
+sd3_txt2img_interface = gr.Interface(
+    fn=generate_image_sd3_txt2img,
     inputs=[
         gr.Textbox(label="Enter your prompt"),
         gr.Textbox(label="Enter your negative prompt", value=""),
@@ -4335,8 +4506,87 @@ sd3_interface = gr.Interface(
         gr.Image(type="filepath", label="Generated image"),
         gr.Textbox(label="Message", type="text"),
     ],
-    title="NeuroSandboxWebUI (ALPHA) - StableDiffusion (sd3)",
+    title="NeuroSandboxWebUI (ALPHA) - StableDiffusion 3 (txt2img)",
     description="This user interface allows you to enter any text and generate images using Stable Diffusion 3. "
+                "You can customize the generation settings from the sliders. "
+                "Try it and see what happens!",
+    allow_flagging="never",
+)
+
+sd3_img2img_interface = gr.Interface(
+    fn=generate_image_sd3_img2img,
+    inputs=[
+        gr.Textbox(label="Enter your prompt"),
+        gr.Textbox(label="Enter your negative prompt", value=""),
+        gr.Image(label="Initial image", type="filepath"),
+        gr.Slider(minimum=0.0, maximum=1.0, value=0.8, step=0.01, label="Strength"),
+        gr.Slider(minimum=1, maximum=100, value=40, step=1, label="Steps"),
+        gr.Slider(minimum=1.0, maximum=30.0, value=8.0, step=0.1, label="CFG"),
+        gr.Slider(minimum=256, maximum=2048, value=1024, step=64, label="Width"),
+        gr.Slider(minimum=256, maximum=2048, value=1024, step=64, label="Height"),
+        gr.Slider(minimum=64, maximum=2048, value=256, label="Max Length"),
+        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
+        gr.Button(value="Stop generation", interactive=True, variant="stop"),
+    ],
+    outputs=[
+        gr.Image(type="filepath", label="Generated image"),
+        gr.Textbox(label="Message", type="text"),
+    ],
+    title="NeuroSandboxWebUI (ALPHA) - StableDiffusion 3 (img2img)",
+    description="This user interface allows you to enter any text and initial image to generate new images using Stable Diffusion 3. "
+                "You can customize the generation settings from the sliders. "
+                "Try it and see what happens!",
+    allow_flagging="never",
+)
+
+sd3_controlnet_interface = gr.Interface(
+    fn=generate_image_sd3_controlnet,
+    inputs=[
+        gr.Textbox(label="Enter your prompt"),
+        gr.Textbox(label="Enter your negative prompt", value=""),
+        gr.Image(label="Initial image", type="filepath"),
+        gr.Dropdown(choices=["Pose", "Canny"], label="Select ControlNet model", value="Pose"),
+        gr.Slider(minimum=1, maximum=100, value=40, step=1, label="Steps"),
+        gr.Slider(minimum=1.0, maximum=30.0, value=8.0, step=0.1, label="CFG"),
+        gr.Slider(minimum=0.1, maximum=1.0, value=0.5, step=0.1, label="ControlNet conditioning scale"),
+        gr.Slider(minimum=256, maximum=2048, value=1024, step=64, label="Width"),
+        gr.Slider(minimum=256, maximum=2048, value=1024, step=64, label="Height"),
+        gr.Slider(minimum=64, maximum=2048, value=256, label="Max Length"),
+        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
+        gr.Button(value="Stop generation", interactive=True, variant="stop"),
+    ],
+    outputs=[
+        gr.Image(type="filepath", label="Generated image"),
+        gr.Textbox(label="Message", type="text"),
+    ],
+    title="NeuroSandboxWebUI (ALPHA) - StableDiffusion 3 (ControlNet)",
+    description="This user interface allows you to use ControlNet models with Stable Diffusion 3. "
+                "You can customize the generation settings from the sliders. "
+                "Try it and see what happens!",
+    allow_flagging="never",
+)
+
+sd3_inpaint_interface = gr.Interface(
+    fn=generate_image_sd3_inpaint,
+    inputs=[
+        gr.Textbox(label="Enter your prompt"),
+        gr.Textbox(label="Enter your negative prompt", value=""),
+        gr.Image(label="Initial image", type="filepath"),
+        gr.ImageEditor(label="Mask image", type="filepath"),
+        gr.Slider(minimum=1, maximum=100, value=40, step=1, label="Steps"),
+        gr.Slider(minimum=1.0, maximum=30.0, value=8.0, step=0.1, label="CFG"),
+        gr.Slider(minimum=256, maximum=2048, value=1024, step=64, label="Width"),
+        gr.Slider(minimum=256, maximum=2048, value=1024, step=64, label="Height"),
+        gr.Slider(minimum=64, maximum=2048, value=256, label="Max Length"),
+        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
+        gr.Button(value="Stop generation", interactive=True, variant="stop"),
+    ],
+    outputs=[
+        gr.Image(type="filepath", label="Generated image"),
+        gr.Textbox(label="Message", type="text"),
+    ],
+    title="NeuroSandboxWebUI (ALPHA) - StableDiffusion 3 (Inpaint)",
+    description="This user interface allows you to perform inpainting using Stable Diffusion 3. "
                 "You can customize the generation settings from the sliders. "
                 "Try it and see what happens!",
     allow_flagging="never",
@@ -4967,7 +5217,10 @@ with gr.TabbedInterface(
         gr.TabbedInterface(
             [
                 gr.TabbedInterface(
-                    [txt2img_interface, img2img_interface, depth2img_interface, pix2pix_interface, controlnet_interface, latent_upscale_interface, realesrgan_upscale_interface, inpaint_interface, gligen_interface, animatediff_interface, video_interface, ldm3d_interface, sd3_interface, cascade_interface, extras_interface],
+                    [txt2img_interface, img2img_interface, depth2img_interface, pix2pix_interface, controlnet_interface, latent_upscale_interface, realesrgan_upscale_interface, inpaint_interface, gligen_interface, animatediff_interface, video_interface, ldm3d_interface,
+                     gr.TabbedInterface([sd3_txt2img_interface, sd3_img2img_interface, sd3_controlnet_interface, sd3_inpaint_interface],
+                                        tab_names=["txt2img", "img2img", "controlnet", "inpaint"]),
+                     cascade_interface, extras_interface],
                     tab_names=["txt2img", "img2img", "depth2img", "pix2pix", "controlnet", "upscale(latent)", "upscale(Real-ESRGAN)", "inpaint", "gligen", "animatediff", "video", "ldm3d", "sd3", "cascade", "extras"]
                 ),
                 kandinsky_interface, flux_interface, hunyuandit_interface, lumina_interface, kolors_interface, auraflow_interface, wurstchen_interface, deepfloyd_if_interface, pixart_interface
@@ -5007,7 +5260,10 @@ with gr.TabbedInterface(
     animatediff_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     video_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     ldm3d_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
-    sd3_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
+    sd3_txt2img_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
+    sd3_img2img_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
+    sd3_controlnet_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
+    sd3_inpaint_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     cascade_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     extras_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     kandinsky_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
