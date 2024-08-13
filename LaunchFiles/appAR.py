@@ -1,6 +1,6 @@
 import gradio as gr
 import langdetect
-from transformers import AutoModelForCausalLM, AutoTokenizer, AutoProcessor, BarkModel, pipeline, T5EncoderModel, BitsAndBytesConfig
+from transformers import AutoModelForCausalLM, AutoTokenizer, AutoProcessor, BarkModel, pipeline, T5EncoderModel, BitsAndBytesConfig, DPTForDepthEstimation, DPTFeatureExtractor
 from peft import PeftModel
 from libretranslatepy import LibreTranslateAPI
 import urllib.error
@@ -15,7 +15,7 @@ from TTS.api import TTS
 import whisper
 from datetime import datetime
 from huggingface_hub import snapshot_download
-from diffusers import StableDiffusionPipeline, StableDiffusion3Pipeline, StableDiffusionXLPipeline, StableDiffusionImg2ImgPipeline, StableDiffusionDepth2ImgPipeline, ControlNetModel, StableDiffusionControlNetPipeline, AutoencoderKL, StableDiffusionLatentUpscalePipeline, StableDiffusionUpscalePipeline, StableDiffusionInpaintPipeline, StableDiffusionGLIGENPipeline, AnimateDiffPipeline, AnimateDiffVideoToVideoPipeline, MotionAdapter, StableVideoDiffusionPipeline, I2VGenXLPipeline, StableCascadePriorPipeline, StableCascadeDecoderPipeline, DiffusionPipeline, DPMSolverMultistepScheduler, ShapEPipeline, ShapEImg2ImgPipeline, StableAudioPipeline, AudioLDM2Pipeline, StableDiffusionInstructPix2PixPipeline, StableDiffusionLDM3DPipeline, FluxPipeline, KandinskyPipeline, KandinskyPriorPipeline, KandinskyV22Pipeline, KandinskyV22PriorPipeline, AutoPipelineForText2Image, HunyuanDiTPipeline, LuminaText2ImgPipeline, IFPipeline, IFSuperResolutionPipeline, PixArtAlphaPipeline, PixArtSigmaPipeline, CogVideoXPipeline, LattePipeline, KolorsPipeline, AuraFlowPipeline, WuerstchenDecoderPipeline, WuerstchenPriorPipeline, EulerAncestralDiscreteScheduler
+from diffusers import StableDiffusionPipeline, StableDiffusion3Pipeline, StableDiffusionXLPipeline, StableDiffusionImg2ImgPipeline, StableDiffusion3Img2ImgPipeline, SD3ControlNetModel, StableDiffusion3ControlNetPipeline, StableDiffusion3InpaintPipeline, StableDiffusionDepth2ImgPipeline, ControlNetModel, StableDiffusionXLControlNetPipeline, StableDiffusionControlNetPipeline, AutoencoderKL, StableDiffusionLatentUpscalePipeline, StableDiffusionUpscalePipeline, StableDiffusionInpaintPipeline, StableDiffusionGLIGENPipeline, AnimateDiffPipeline, AnimateDiffSDXLPipeline, AnimateDiffVideoToVideoPipeline, MotionAdapter, StableVideoDiffusionPipeline, I2VGenXLPipeline, StableCascadePriorPipeline, StableCascadeDecoderPipeline, DiffusionPipeline, DPMSolverMultistepScheduler, ShapEPipeline, ShapEImg2ImgPipeline, StableAudioPipeline, AudioLDM2Pipeline, StableDiffusionInstructPix2PixPipeline, StableDiffusionLDM3DPipeline, FluxPipeline, KandinskyPipeline, KandinskyPriorPipeline, KandinskyV22Pipeline, KandinskyV22PriorPipeline, AutoPipelineForText2Image, HunyuanDiTPipeline, LuminaText2ImgPipeline, IFPipeline, IFSuperResolutionPipeline, PixArtAlphaPipeline, PixArtSigmaPipeline, CogVideoXPipeline, LattePipeline, KolorsPipeline, AuraFlowPipeline, WuerstchenDecoderPipeline, WuerstchenPriorPipeline, EulerAncestralDiscreteScheduler, DDIMScheduler
 from diffusers.utils import load_image, export_to_video, export_to_gif, export_to_ply, pt_to_pil
 from diffusers.pipelines.wuerstchen import DEFAULT_STAGE_C_TIMESTEPS
 from controlnet_aux import OpenposeDetector, LineartDetector, HEDdetector
@@ -1234,7 +1234,7 @@ def generate_image_pix2pix(prompt, negative_prompt, init_image, num_inference_st
         torch.cuda.empty_cache()
 
 
-def generate_image_controlnet(prompt, negative_prompt, init_image, stable_diffusion_model_name, controlnet_model_name,
+def generate_image_controlnet(prompt, negative_prompt, init_image, sd_version, stable_diffusion_model_name, controlnet_model_name,
                               num_inference_steps, guidance_scale, width, height, output_format="png",
                               stop_generation=None):
     global stop_signal
@@ -1262,94 +1262,25 @@ def generate_image_controlnet(prompt, negative_prompt, init_image, stable_diffus
         if controlnet_model_name == "openpose":
             Repo.clone_from("https://huggingface.co/lllyasviel/control_v11p_sd15_openpose", controlnet_model_path)
         elif controlnet_model_name == "depth":
-            Repo.clone_from("https://huggingface.co/lllyasviel/control_v11f1p_sd15_depth", controlnet_model_path)
+            if sd_version == "SD":
+                Repo.clone_from("https://huggingface.co/lllyasviel/control_v11f1p_sd15_depth", controlnet_model_path)
+            else:
+                Repo.clone_from("https://huggingface.co/diffusers/controlnet-depth-sdxl-1.0", controlnet_model_path)
         elif controlnet_model_name == "canny":
-            Repo.clone_from("https://huggingface.co/lllyasviel/control_v11p_sd15_canny", controlnet_model_path)
+            if sd_version == "SD":
+                Repo.clone_from("https://huggingface.co/lllyasviel/control_v11p_sd15_canny", controlnet_model_path)
+            else:
+                Repo.clone_from("https://huggingface.co/diffusers/controlnet-canny-sdxl-1.0", controlnet_model_path)
         elif controlnet_model_name == "lineart":
             Repo.clone_from("https://huggingface.co/lllyasviel/control_v11p_sd15_lineart", controlnet_model_path)
         elif controlnet_model_name == "scribble":
             Repo.clone_from("https://huggingface.co/lllyasviel/control_v11p_sd15_scribble", controlnet_model_path)
         print(f"ControlNet {controlnet_model_name} model downloaded")
 
-    ip_adapter_model_path = os.path.join("inputs", "image", "sd_models", "controlnet", "ip_adapter")
-    if controlnet_model_name == "ip-adapter" or controlnet_model_name == "ip-adapter-face":
-        if not os.path.exists(ip_adapter_model_path):
-            print("Downloading IP-Adapter models...")
-            os.makedirs(ip_adapter_model_path, exist_ok=True)
-            Repo.clone_from("https://huggingface.co/h94/IP-Adapter", ip_adapter_model_path)
-            print("IP-Adapter models downloaded")
-
-    annotator_path = os.path.join("inputs", "image", "sd_models", "controlnet", "Annotators")
-    if not os.path.exists(annotator_path):
-        print("Downloading Annotators...")
-        os.makedirs(annotator_path, exist_ok=True)
-        Repo.clone_from("https://huggingface.co/lllyasviel/Annotators", annotator_path)
-        print("Annotators downloaded")
-
     try:
         device = "cuda" if torch.cuda.is_available() else "cpu"
 
-        if controlnet_model_name == "ip-adapter":
-            pipe = StableDiffusionPipeline.from_single_file(
-                stable_diffusion_model_path,
-                torch_dtype=torch.float16,
-            ).to(device)
-            pipe.load_ip_adapter(ip_adapter_model_path, subfolder="models", weight_name="ip-adapter_sd15.bin")
-            pipe.set_ip_adapter_scale(0.6)
-
-            image = load_image(init_image)
-
-            generator = torch.manual_seed(0)
-
-            compel_proc = Compel(tokenizer=pipe.tokenizer,
-                                 text_encoder=pipe.text_encoder)
-            prompt_embeds = compel_proc(prompt)
-            negative_prompt_embeds = compel_proc(negative_prompt)
-
-            images = pipe(
-                prompt_embeds=prompt_embeds,
-                ip_adapter_image=image,
-                negative_prompt_embeds=negative_prompt_embeds,
-                num_inference_steps=num_inference_steps,
-                guidance_scale=guidance_scale,
-                width=width,
-                height=height,
-                generator=generator,
-            ).images
-
-            image = images[0]
-
-        elif controlnet_model_name == "ip-adapter-face":
-            pipe = StableDiffusionPipeline.from_single_file(
-                stable_diffusion_model_path,
-                torch_dtype=torch.float16,
-            ).to(device)
-            pipe.load_ip_adapter(ip_adapter_model_path, subfolder="models", weight_name="ip-adapter-full-face_sd15.bin")
-            pipe.set_ip_adapter_scale(0.5)
-
-            image = load_image(init_image)
-
-            generator = torch.manual_seed(0)
-
-            compel_proc = Compel(tokenizer=pipe.tokenizer,
-                                 text_encoder=pipe.text_encoder)
-            prompt_embeds = compel_proc(prompt)
-            negative_prompt_embeds = compel_proc(negative_prompt)
-
-            images = pipe(
-                prompt_embeds=prompt_embeds,
-                ip_adapter_image=image,
-                negative_prompt_embeds=negative_prompt_embeds,
-                num_inference_steps=num_inference_steps,
-                guidance_scale=guidance_scale,
-                width=width,
-                height=height,
-                generator=generator,
-            ).images
-
-            image = images[0]
-
-        else:
+        if sd_version == "SD":
             controlnet = ControlNetModel.from_pretrained(controlnet_model_path, torch_dtype=torch.float16)
             pipe = StableDiffusionControlNetPipeline.from_single_file(
                 stable_diffusion_model_path,
@@ -1364,7 +1295,7 @@ def generate_image_controlnet(prompt, negative_prompt, init_image, stable_diffus
             image = Image.open(init_image).convert("RGB")
 
             if controlnet_model_name == "openpose":
-                processor = OpenposeDetector.from_pretrained(annotator_path)
+                processor = OpenposeDetector.from_pretrained("lllyasviel/ControlNet")
                 control_image = processor(image, hand_and_face=True)
             elif controlnet_model_name == "depth":
                 depth_estimator = pipeline('depth-estimation')
@@ -1382,10 +1313,10 @@ def generate_image_controlnet(prompt, negative_prompt, init_image, stable_diffus
                 control_image = np.concatenate([control_image, control_image, control_image], axis=2)
                 control_image = Image.fromarray(control_image)
             elif controlnet_model_name == "lineart":
-                processor = LineartDetector.from_pretrained(annotator_path)
+                processor = LineartDetector.from_pretrained("lllyasviel/Annotators")
                 control_image = processor(image)
             elif controlnet_model_name == "scribble":
-                processor = HEDdetector.from_pretrained(annotator_path)
+                processor = HEDdetector.from_pretrained("lllyasviel/Annotators")
                 control_image = processor(image, scribble=True)
 
             generator = torch.manual_seed(0)
@@ -1399,6 +1330,66 @@ def generate_image_controlnet(prompt, negative_prompt, init_image, stable_diffus
                          num_inference_steps=num_inference_steps, guidance_scale=guidance_scale, width=width,
                          height=height, generator=generator, image=control_image).images[0]
 
+        else:  # SDXL
+            controlnet = ControlNetModel.from_pretrained(
+                controlnet_model_path,
+                torch_dtype=torch.float16,
+                use_safetensors=True
+            )
+            vae = AutoencoderKL.from_pretrained("madebyollin/sdxl-vae-fp16-fix", torch_dtype=torch.float16)
+            pipe = StableDiffusionXLControlNetPipeline.from_pretrained(
+                stable_diffusion_model_path,
+                controlnet=controlnet,
+                vae=vae,
+                torch_dtype=torch.float16,
+                use_safetensors=True,
+            )
+            pipe.enable_model_cpu_offload()
+
+            image = Image.open(init_image).convert("RGB")
+
+            if controlnet_model_name == "depth":
+                depth_estimator = DPTForDepthEstimation.from_pretrained("Intel/dpt-hybrid-midas").to(device)
+                feature_extractor = DPTFeatureExtractor.from_pretrained("Intel/dpt-hybrid-midas")
+
+                def get_depth_map(image):
+                    image = feature_extractor(images=image, return_tensors="pt").pixel_values.to(device)
+                    with torch.no_grad(), torch.autocast(device):
+                        depth_map = depth_estimator(image).predicted_depth
+
+                    depth_map = torch.nn.functional.interpolate(
+                        depth_map.unsqueeze(1),
+                        size=(1024, 1024),
+                        mode="bicubic",
+                        align_corners=False,
+                    )
+                    depth_min = torch.amin(depth_map, dim=[1, 2, 3], keepdim=True)
+                    depth_max = torch.amax(depth_map, dim=[1, 2, 3], keepdim=True)
+                    depth_map = (depth_map - depth_min) / (depth_max - depth_min)
+                    image = torch.cat([depth_map] * 3, dim=1)
+
+                    image = image.permute(0, 2, 3, 1).cpu().numpy()[0]
+                    image = Image.fromarray((image * 255.0).clip(0, 255).astype(np.uint8))
+                    return image
+
+                control_image = get_depth_map(image)
+            elif controlnet_model_name == "canny":
+                image = np.array(image)
+                control_image = cv2.Canny(image, 100, 200)
+                control_image = control_image[:, :, None]
+                control_image = np.concatenate([control_image, control_image, control_image], axis=2)
+                control_image = Image.fromarray(control_image)
+            else:
+                return None, f"ControlNet model {controlnet_model_name} is not supported for SDXL"
+
+            controlnet_conditioning_scale = 0.5
+            image = pipe(
+                prompt, negative_prompt=negative_prompt, image=control_image,
+                controlnet_conditioning_scale=controlnet_conditioning_scale,
+                num_inference_steps=num_inference_steps, guidance_scale=guidance_scale,
+                width=width, height=height
+            ).images[0]
+
         if stop_signal:
             return None, "Generation stopped"
 
@@ -1411,13 +1402,17 @@ def generate_image_controlnet(prompt, negative_prompt, init_image, stable_diffus
 
         return image_path, None
 
-    except (TypeError, ValueError):
-        return None, "Invalid StableDiffusion model type!"
+    except Exception as e:
+        return None, str(e)
 
     finally:
         try:
             del controlnet
             del pipe
+            if 'depth_estimator' in locals():
+                del depth_estimator
+            if 'feature_extractor' in locals():
+                del feature_extractor
         except UnboundLocalError:
             pass
         torch.cuda.empty_cache()
@@ -1760,8 +1755,8 @@ def generate_image_gligen(prompt, negative_prompt, gligen_phrases, gligen_boxes,
         torch.cuda.empty_cache()
 
 
-def generate_image_animatediff(prompt, negative_prompt, input_video, strength, stable_diffusion_model_name, motion_lora_name, num_frames, num_inference_steps,
-                                   guidance_scale, width, height, stop_generation):
+def generate_image_animatediff(prompt, negative_prompt, input_video, strength, model_type, stable_diffusion_model_name, motion_lora_name, num_frames, num_inference_steps,
+                               guidance_scale, width, height, stop_generation):
     global stop_signal
     stop_signal = False
 
@@ -1781,140 +1776,165 @@ def generate_image_animatediff(prompt, negative_prompt, input_video, strength, s
         print("Motion adapter downloaded")
 
     try:
-        if input_video:
-            adapter = MotionAdapter.from_pretrained(motion_adapter_path, torch_dtype=torch.float16)
-            original_config_file = "configs/sd/v1-inference.yaml"
-            stable_diffusion_model = StableDiffusionPipeline.from_single_file(
+        if model_type == "sd":
+            if input_video:
+                adapter = MotionAdapter.from_pretrained(motion_adapter_path, torch_dtype=torch.float16)
+                original_config_file = "configs/sd/v1-inference.yaml"
+                stable_diffusion_model = StableDiffusionPipeline.from_single_file(
+                    stable_diffusion_model_path,
+                    torch_dtype=torch.float16,
+                    variant="fp16",
+                    original_config_file=original_config_file,
+                    device_map="auto",
+                )
+
+                pipe = AnimateDiffVideoToVideoPipeline(
+                    unet=stable_diffusion_model.unet,
+                    text_encoder=stable_diffusion_model.text_encoder,
+                    vae=stable_diffusion_model.vae,
+                    motion_adapter=adapter,
+                    tokenizer=stable_diffusion_model.tokenizer,
+                    feature_extractor=stable_diffusion_model.feature_extractor,
+                    scheduler=stable_diffusion_model.scheduler,
+                )
+
+                pipe.enable_vae_slicing()
+                pipe.enable_model_cpu_offload()
+
+                compel_proc = Compel(tokenizer=stable_diffusion_model.tokenizer,
+                                     text_encoder=stable_diffusion_model.text_encoder)
+                prompt_embeds = compel_proc(prompt)
+                negative_prompt_embeds = compel_proc(negative_prompt)
+
+                output = pipe(
+                    prompt_embeds=prompt_embeds,
+                    negative_prompt_embeds=negative_prompt_embeds,
+                    video=input_video,
+                    strength=strength,
+                    guidance_scale=guidance_scale,
+                    num_inference_steps=num_inference_steps,
+                    generator=torch.manual_seed(-1),
+                )
+
+            else:
+                adapter = MotionAdapter.from_pretrained(motion_adapter_path, torch_dtype=torch.float16)
+                original_config_file = "configs/sd/v1-inference.yaml"
+                stable_diffusion_model = StableDiffusionPipeline.from_single_file(
+                    stable_diffusion_model_path,
+                    torch_dtype=torch.float16,
+                    variant="fp16",
+                    original_config_file=original_config_file,
+                    device_map="auto",
+                )
+
+                pipe = AnimateDiffPipeline(
+                    unet=stable_diffusion_model.unet,
+                    text_encoder=stable_diffusion_model.text_encoder,
+                    vae=stable_diffusion_model.vae,
+                    motion_adapter=adapter,
+                    tokenizer=stable_diffusion_model.tokenizer,
+                    feature_extractor=stable_diffusion_model.feature_extractor,
+                    scheduler=stable_diffusion_model.scheduler,
+                )
+
+                if motion_lora_name:
+                    motion_lora_path = os.path.join("inputs", "image", "sd_models", "motion_lora", motion_lora_name)
+                    if not os.path.exists(motion_lora_path):
+                        print(f"Downloading {motion_lora_name} motion lora...")
+                        os.makedirs(motion_lora_path, exist_ok=True)
+                        if motion_lora_name == "zoom-in":
+                            Repo.clone_from("https://huggingface.co/guoyww/animatediff-motion-lora-zoom-in",
+                                            motion_lora_path)
+                        elif motion_lora_name == "zoom-out":
+                            Repo.clone_from("https://huggingface.co/guoyww/animatediff-motion-lora-zoom-out",
+                                            motion_lora_path)
+                        elif motion_lora_name == "tilt-up":
+                            Repo.clone_from("https://huggingface.co/guoyww/animatediff-motion-lora-tilt-up",
+                                            motion_lora_path)
+                        elif motion_lora_name == "tilt-down":
+                            Repo.clone_from("https://huggingface.co/guoyww/animatediff-motion-lora-tilt-down",
+                                            motion_lora_path)
+                        elif motion_lora_name == "pan-right":
+                            Repo.clone_from("https://huggingface.co/guoyww/animatediff-motion-lora-pan-right",
+                                            motion_lora_path)
+                        elif motion_lora_name == "pan-left":
+                            Repo.clone_from("https://huggingface.co/guoyww/animatediff-motion-lora-pan-left",
+                                            motion_lora_path)
+                        print(f"{motion_lora_name} motion lora downloaded")
+                    pipe.load_lora_weights(motion_lora_path, adapter_name=motion_lora_name)
+
+                pipe.enable_vae_slicing()
+                pipe.enable_model_cpu_offload()
+
+                compel_proc = Compel(tokenizer=stable_diffusion_model.tokenizer,
+                                     text_encoder=stable_diffusion_model.text_encoder)
+                prompt_embeds = compel_proc(prompt)
+                negative_prompt_embeds = compel_proc(negative_prompt)
+
+                output = pipe(
+                    prompt_embeds=prompt_embeds,
+                    negative_prompt_embeds=negative_prompt_embeds,
+                    num_frames=num_frames,
+                    guidance_scale=guidance_scale,
+                    num_inference_steps=num_inference_steps,
+                    generator=torch.manual_seed(-1),
+                    width=width,
+                    height=height,
+                )
+
+        elif model_type == "sdxl":
+            sdxl_adapter_path = os.path.join("inputs", "image", "sd_models", "motion_adapter_sdxl")
+            if not os.path.exists(sdxl_adapter_path):
+                print("Downloading SDXL motion adapter...")
+                os.makedirs(sdxl_adapter_path, exist_ok=True)
+                Repo.clone_from("https://huggingface.co/guoyww/animatediff-motion-adapter-sdxl-beta", sdxl_adapter_path)
+                print("SDXL motion adapter downloaded")
+
+            adapter = MotionAdapter.from_pretrained(sdxl_adapter_path, torch_dtype=torch.float16)
+
+            scheduler = DDIMScheduler.from_pretrained(
                 stable_diffusion_model_path,
+                subfolder="scheduler",
+                clip_sample=False,
+                timestep_spacing="linspace",
+                beta_schedule="linear",
+                steps_offset=1,
+            )
+            pipe = AnimateDiffSDXLPipeline.from_pretrained(
+                stable_diffusion_model_path,
+                motion_adapter=adapter,
+                scheduler=scheduler,
                 torch_dtype=torch.float16,
                 variant="fp16",
-                original_config_file=original_config_file,
-                device_map="auto",
-            )
-
-            pipe = AnimateDiffVideoToVideoPipeline(
-                unet=stable_diffusion_model.unet,
-                text_encoder=stable_diffusion_model.text_encoder,
-                vae=stable_diffusion_model.vae,
-                motion_adapter=adapter,
-                tokenizer=stable_diffusion_model.tokenizer,
-                feature_extractor=stable_diffusion_model.feature_extractor,
-                scheduler=stable_diffusion_model.scheduler,
-            )
+            ).to("cuda")
 
             pipe.enable_vae_slicing()
-            pipe.enable_model_cpu_offload()
-
-            compel_proc = Compel(tokenizer=stable_diffusion_model.tokenizer,
-                                 text_encoder=stable_diffusion_model.text_encoder)
-            prompt_embeds = compel_proc(prompt)
-            negative_prompt_embeds = compel_proc(negative_prompt)
+            pipe.enable_vae_tiling()
 
             output = pipe(
-                prompt_embeds=prompt_embeds,
-                negative_prompt_embeds=negative_prompt_embeds,
-                video=input_video,
-                strength=strength,
-                guidance_scale=guidance_scale,
+                prompt=prompt,
+                negative_prompt=negative_prompt,
                 num_inference_steps=num_inference_steps,
-                generator=torch.manual_seed(-1),
-            )
-
-            if stop_signal:
-                return None, "Generation stopped"
-
-            frames = output.frames[0]
-
-            today = datetime.now().date()
-            output_dir = os.path.join('outputs', f"AnimateDiff_{today.strftime('%Y%m%d')}")
-            os.makedirs(output_dir, exist_ok=True)
-
-            gif_filename = f"animatediff_{datetime.now().strftime('%Y%m%d_%H%M%S')}.gif"
-            gif_path = os.path.join(output_dir, gif_filename)
-            export_to_gif(frames, gif_path)
-
-            return gif_path, None
-
-        else:
-            adapter = MotionAdapter.from_pretrained(motion_adapter_path, torch_dtype=torch.float16)
-            original_config_file = "configs/sd/v1-inference.yaml"
-            stable_diffusion_model = StableDiffusionPipeline.from_single_file(
-                stable_diffusion_model_path,
-                torch_dtype=torch.float16,
-                variant="fp16",
-                original_config_file=original_config_file,
-                device_map="auto",
-            )
-
-            pipe = AnimateDiffPipeline(
-                unet=stable_diffusion_model.unet,
-                text_encoder=stable_diffusion_model.text_encoder,
-                vae=stable_diffusion_model.vae,
-                motion_adapter=adapter,
-                tokenizer=stable_diffusion_model.tokenizer,
-                feature_extractor=stable_diffusion_model.feature_extractor,
-                scheduler=stable_diffusion_model.scheduler,
-            )
-
-            if motion_lora_name:
-                motion_lora_path = os.path.join("inputs", "image", "sd_models", "motion_lora", motion_lora_name)
-                if not os.path.exists(motion_lora_path):
-                    print(f"Downloading {motion_lora_name} motion lora...")
-                    os.makedirs(motion_lora_path, exist_ok=True)
-                    if motion_lora_name == "zoom-in":
-                        Repo.clone_from("https://huggingface.co/guoyww/animatediff-motion-lora-zoom-in",
-                                        motion_lora_path)
-                    elif motion_lora_name == "zoom-out":
-                        Repo.clone_from("https://huggingface.co/guoyww/animatediff-motion-lora-zoom-out",
-                                        motion_lora_path)
-                    elif motion_lora_name == "tilt-up":
-                        Repo.clone_from("https://huggingface.co/guoyww/animatediff-motion-lora-tilt-up",
-                                        motion_lora_path)
-                    elif motion_lora_name == "tilt-down":
-                        Repo.clone_from("https://huggingface.co/guoyww/animatediff-motion-lora-tilt-down",
-                                        motion_lora_path)
-                    elif motion_lora_name == "pan-right":
-                        Repo.clone_from("https://huggingface.co/guoyww/animatediff-motion-lora-pan-right",
-                                        motion_lora_path)
-                    elif motion_lora_name == "pan-left":
-                        Repo.clone_from("https://huggingface.co/guoyww/animatediff-motion-lora-pan-left",
-                                        motion_lora_path)
-                    print(f"{motion_lora_name} motion lora downloaded")
-                pipe.load_lora_weights(motion_lora_path, adapter_name=motion_lora_name)
-
-            pipe.enable_vae_slicing()
-            pipe.enable_model_cpu_offload()
-
-            compel_proc = Compel(tokenizer=stable_diffusion_model.tokenizer,
-                                 text_encoder=stable_diffusion_model.text_encoder)
-            prompt_embeds = compel_proc(prompt)
-            negative_prompt_embeds = compel_proc(negative_prompt)
-
-            output = pipe(
-                prompt_embeds=prompt_embeds,
-                negative_prompt_embeds=negative_prompt_embeds,
-                num_frames=num_frames,
                 guidance_scale=guidance_scale,
-                num_inference_steps=num_inference_steps,
-                generator=torch.manual_seed(-1),
                 width=width,
                 height=height,
+                num_frames=num_frames,
             )
 
-            if stop_signal:
-                return None, "Generation stopped"
+        if stop_signal:
+            return None, "Generation stopped"
 
-            frames = output.frames[0]
+        frames = output.frames[0]
 
-            today = datetime.now().date()
-            output_dir = os.path.join('outputs', f"AnimateDiff_{today.strftime('%Y%m%d')}")
-            os.makedirs(output_dir, exist_ok=True)
+        today = datetime.now().date()
+        output_dir = os.path.join('outputs', f"AnimateDiff_{today.strftime('%Y%m%d')}")
+        os.makedirs(output_dir, exist_ok=True)
 
-            gif_filename = f"animatediff_{datetime.now().strftime('%Y%m%d_%H%M%S')}.gif"
-            gif_path = os.path.join(output_dir, gif_filename)
-            export_to_gif(frames, gif_path)
+        gif_filename = f"animatediff_{datetime.now().strftime('%Y%m%d_%H%M%S')}.gif"
+        gif_path = os.path.join(output_dir, gif_filename)
+        export_to_gif(frames, gif_path)
 
-            return gif_path, None
+        return gif_path, None
 
     finally:
         try:
@@ -2084,7 +2104,7 @@ def generate_image_ldm3d(prompt, negative_prompt, width, height, num_inference_s
         torch.cuda.empty_cache()
 
 
-def generate_image_sd3(prompt, negative_prompt, num_inference_steps, guidance_scale, width, height, max_sequence_length, output_format="png", stop_generation=None):
+def generate_image_sd3_txt2img(prompt, negative_prompt, num_inference_steps, guidance_scale, width, height, max_sequence_length, output_format="png", stop_generation=None):
     global stop_signal
     stop_signal = False
 
@@ -2124,6 +2144,177 @@ def generate_image_sd3(prompt, negative_prompt, num_inference_steps, guidance_sc
         image_dir = os.path.join('outputs', f"StableDiffusion_{today.strftime('%Y%m%d')}")
         os.makedirs(image_dir, exist_ok=True)
         image_filename = f"sd3_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
+        image_path = os.path.join(image_dir, image_filename)
+        image.save(image_path, format=output_format.upper())
+
+        return image_path, None
+
+    finally:
+        del pipe
+        torch.cuda.empty_cache()
+
+
+def generate_image_sd3_img2img(prompt, negative_prompt, init_image, strength, num_inference_steps, guidance_scale, width, height, max_sequence_length, output_format="png", stop_generation=None):
+    global stop_signal
+    stop_signal = False
+
+    sd3_model_path = os.path.join("inputs", "image", "sd_models", "sd3")
+
+    if not os.path.exists(sd3_model_path):
+        print("Downloading Stable Diffusion 3 model...")
+        os.makedirs(sd3_model_path, exist_ok=True)
+        Repo.clone_from("https://huggingface.co/v2ray/stable-diffusion-3-medium-diffusers", sd3_model_path)
+        print("Stable Diffusion 3 model downloaded")
+
+    try:
+        quantization_config = BitsAndBytesConfig(load_in_8bit=True)
+
+        text_encoder = T5EncoderModel.from_pretrained(
+            sd3_model_path,
+            subfolder="text_encoder_3",
+            quantization_config=quantization_config,
+        )
+        pipe = StableDiffusion3Img2ImgPipeline.from_pretrained(sd3_model_path, device_map="balanced", text_encoder_3=text_encoder, torch_dtype=torch.float16)
+
+        init_image = Image.open(init_image).convert("RGB")
+        init_image = init_image.resize((width, height))
+
+        image = pipe(
+            prompt,
+            negative_prompt=negative_prompt,
+            image=init_image,
+            strength=strength,
+            num_inference_steps=num_inference_steps,
+            guidance_scale=guidance_scale,
+            max_sequence_length=max_sequence_length,
+        ).images[0]
+
+        if stop_signal:
+            return None, "Generation stopped"
+
+        today = datetime.now().date()
+        image_dir = os.path.join('outputs', f"StableDiffusion_{today.strftime('%Y%m%d')}")
+        os.makedirs(image_dir, exist_ok=True)
+        image_filename = f"sd3_img2img_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
+        image_path = os.path.join(image_dir, image_filename)
+        image.save(image_path, format=output_format.upper())
+
+        return image_path, None
+
+    finally:
+        del pipe
+        torch.cuda.empty_cache()
+
+def generate_image_sd3_controlnet(prompt, negative_prompt, init_image, controlnet_model, num_inference_steps, guidance_scale, controlnet_conditioning_scale, width, height, max_sequence_length, output_format="png", stop_generation=None):
+    global stop_signal
+    stop_signal = False
+
+    sd3_model_path = os.path.join("inputs", "image", "sd_models", "sd3")
+    controlnet_path = os.path.join("inputs", "image", "sd_models", "controlnet", f"sd3_{controlnet_model}")
+
+    if not os.path.exists(sd3_model_path):
+        print("Downloading Stable Diffusion 3 model...")
+        os.makedirs(sd3_model_path, exist_ok=True)
+        Repo.clone_from("https://huggingface.co/v2ray/stable-diffusion-3-medium-diffusers", sd3_model_path)
+        print("Stable Diffusion 3 model downloaded")
+
+    if not os.path.exists(controlnet_path):
+        print(f"Downloading SD3 ControlNet {controlnet_model} model...")
+        os.makedirs(controlnet_path, exist_ok=True)
+        Repo.clone_from(f"https://huggingface.co/InstantX/SD3-Controlnet-{controlnet_model}", controlnet_path)
+        print(f"SD3 ControlNet {controlnet_model} model downloaded")
+
+    try:
+        controlnet = SD3ControlNetModel.from_pretrained(controlnet_path, torch_dtype=torch.float16)
+        pipe = StableDiffusion3ControlNetPipeline.from_pretrained(
+            sd3_model_path,
+            controlnet=controlnet,
+            torch_dtype=torch.float16
+        )
+        pipe.to("cuda")
+
+        init_image = Image.open(init_image).convert("RGB")
+        init_image = init_image.resize((width, height))
+
+        if controlnet_model.lower() == "canny":
+            control_image = init_image
+        elif controlnet_model.lower() == "pose":
+            control_image = init_image
+        else:
+            return None, f"Unsupported ControlNet model: {controlnet_model}"
+
+        image = pipe(
+            prompt,
+            negative_prompt=negative_prompt,
+            image=init_image,
+            control_image=control_image,
+            num_inference_steps=num_inference_steps,
+            guidance_scale=guidance_scale,
+            controlnet_conditioning_scale=controlnet_conditioning_scale,
+            max_sequence_length=max_sequence_length,
+        ).images[0]
+
+        if stop_signal:
+            return None, "Generation stopped"
+
+        today = datetime.now().date()
+        image_dir = os.path.join('outputs', f"StableDiffusion_{today.strftime('%Y%m%d')}")
+        os.makedirs(image_dir, exist_ok=True)
+        image_filename = f"sd3_controlnet_{controlnet_model}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
+        image_path = os.path.join(image_dir, image_filename)
+        image.save(image_path, format=output_format.upper())
+
+        return image_path, None
+
+    finally:
+        del pipe
+        torch.cuda.empty_cache()
+
+def generate_image_sd3_inpaint(prompt, negative_prompt, init_image, mask_image, num_inference_steps, guidance_scale, width, height, max_sequence_length, output_format="png", stop_generation=None):
+    global stop_signal
+    stop_signal = False
+
+    sd3_model_path = os.path.join("inputs", "image", "sd_models", "sd3")
+
+    if not os.path.exists(sd3_model_path):
+        print("Downloading Stable Diffusion 3 model...")
+        os.makedirs(sd3_model_path, exist_ok=True)
+        Repo.clone_from("https://huggingface.co/v2ray/stable-diffusion-3-medium-diffusers", sd3_model_path)
+        print("Stable Diffusion 3 model downloaded")
+
+    try:
+        quantization_config = BitsAndBytesConfig(load_in_8bit=True)
+
+        text_encoder = T5EncoderModel.from_pretrained(
+            sd3_model_path,
+            subfolder="text_encoder_3",
+            quantization_config=quantization_config,
+        )
+        pipe = StableDiffusion3InpaintPipeline.from_pretrained(sd3_model_path, device_map="balanced", text_encoder_3=text_encoder, torch_dtype=torch.float16)
+
+        init_image = Image.open(init_image).convert("RGB")
+        init_image = init_image.resize((width, height))
+
+        mask_image = Image.open(mask_image).convert("L")
+        mask_image = mask_image.resize((width, height))
+
+        image = pipe(
+            prompt,
+            negative_prompt=negative_prompt,
+            image=init_image,
+            mask_image=mask_image,
+            num_inference_steps=num_inference_steps,
+            guidance_scale=guidance_scale,
+            max_sequence_length=max_sequence_length,
+        ).images[0]
+
+        if stop_signal:
+            return None, "Generation stopped"
+
+        today = datetime.now().date()
+        image_dir = os.path.join('outputs', f"StableDiffusion_{today.strftime('%Y%m%d')}")
+        os.makedirs(image_dir, exist_ok=True)
+        image_filename = f"sd3_inpaint_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
         image_path = os.path.join(image_dir, image_filename)
         image.save(image_path, format=output_format.upper())
 
@@ -4079,6 +4270,7 @@ controlnet_interface = gr.Interface(
         gr.Textbox(label="أدخل الإشارة الخاصة بك"),
         gr.Textbox(label="أدخل الإشارة السلبية الخاصة بك", value=""),
         gr.Image(label="الصورة الأولية", type="filepath"),
+        gr.Radio(choices=["SD", "SDXL"], label="اختر نوع النموذج", value="SD"),
         gr.Dropdown(choices=stable_diffusion_models_list, label="اختر نموذج StableDiffusion (فقط SD1.5)", value=None),
         gr.Dropdown(choices=controlnet_models_list, label="اختر نموذج ControlNet", value=None),
         gr.Slider(minimum=1, maximum=100, value=30, step=1, label="الخطوات"),
@@ -4198,6 +4390,7 @@ animatediff_interface = gr.Interface(
         gr.Textbox(label="أدخل الإشارة السلبية الخاصة بك", value=""),
         gr.Image(label="GIF الأولي", type="filepath"),
         gr.Slider(minimum=0.0, maximum=1.0, value=0.5, step=0.01, label="القوة"),
+        gr.Radio(choices=["sd", "sdxl"], label="اختر نوع النموذج", value="sd"),
         gr.Dropdown(choices=stable_diffusion_models_list, label="اختر نموذج StableDiffusion (فقط SD1.5)", value=None),
         gr.Dropdown(choices=[None, "zoom-in", "zoom-out", "tilt-up", "tilt-down", "pan-right", "pan-left"], label="اختر LORA الحركة", value=None, multiselect=True),
         gr.Slider(minimum=1, maximum=200, value=20, step=1, label="الإطارات"),
@@ -4266,25 +4459,106 @@ ldm3d_interface = gr.Interface(
     allow_flagging="never",
 )
 
-sd3_interface = gr.Interface(
-    fn=generate_image_sd3,
+sd3_txt2img_interface = gr.Interface(
+    fn=generate_image_sd3_txt2img,
     inputs=[
-        gr.Textbox(label="أدخل الإشارة الخاصة بك"),
-        gr.Textbox(label="أدخل الإشارة السلبية الخاصة بك", value=""),
+        gr.Textbox(label="أدخل النص المطلوب"),
+        gr.Textbox(label="أدخل النص السلبي", value=""),
         gr.Slider(minimum=1, maximum=100, value=40, step=1, label="الخطوات"),
-        gr.Slider(minimum=1.0, maximum=30.0, value=8.0, step=0.1, label="CFG"),
+        gr.Slider(minimum=1.0, maximum=30.0, value=8.0, step=0.1, label="التكوين"),
         gr.Slider(minimum=256, maximum=2048, value=1024, step=64, label="العرض"),
         gr.Slider(minimum=256, maximum=2048, value=1024, step=64, label="الارتفاع"),
         gr.Slider(minimum=64, maximum=2048, value=256, label="الحد الأقصى للطول"),
-        gr.Radio(choices=["png", "jpeg"], label="اختر تنسيق الإخراج", value="png", interactive=True),
+        gr.Radio(choices=["png", "jpeg"], label="حدد تنسيق الإخراج", value="png", interactive=True),
         gr.Button(value="إيقاف التوليد", interactive=True, variant="stop"),
     ],
     outputs=[
         gr.Image(type="filepath", label="الصورة المولدة"),
         gr.Textbox(label="الرسالة", type="text"),
     ],
-    title="NeuroSandboxWebUI (ALPHA) - StableDiffusion (sd3)",
-    description="تتيح لك واجهة المستخدم هذه إدخال أي نص وتوليد صور باستخدام Stable Diffusion 3. يمكنك تخصيص إعدادات التوليد باستخدام شرائط التمرير. جربها وانظر ماذا يحدث!",
+    title="NeuroSandboxWebUI (ALPHA) - StableDiffusion 3 (txt2img)",
+    description="تتيح لك واجهة المستخدم هذه إدخال أي نص وتوليد الصور باستخدام Stable Diffusion 3. "
+                "يمكنك تخصيص إعدادات التوليد من شرائط التمرير. "
+                "جربها وانظر ماذا يحدث!",
+    allow_flagging="never",
+)
+
+sd3_img2img_interface = gr.Interface(
+    fn=generate_image_sd3_img2img,
+    inputs=[
+        gr.Textbox(label="أدخل النص المطلوب"),
+        gr.Textbox(label="أدخل النص السلبي", value=""),
+        gr.Image(label="الصورة الأولية", type="filepath"),
+        gr.Slider(minimum=0.0, maximum=1.0, value=0.8, step=0.01, label="القوة"),
+        gr.Slider(minimum=1, maximum=100, value=40, step=1, label="الخطوات"),
+        gr.Slider(minimum=1.0, maximum=30.0, value=8.0, step=0.1, label="التكوين"),
+        gr.Slider(minimum=256, maximum=2048, value=1024, step=64, label="العرض"),
+        gr.Slider(minimum=256, maximum=2048, value=1024, step=64, label="الارتفاع"),
+        gr.Slider(minimum=64, maximum=2048, value=256, label="الحد الأقصى للطول"),
+        gr.Radio(choices=["png", "jpeg"], label="حدد تنسيق الإخراج", value="png", interactive=True),
+        gr.Button(value="إيقاف التوليد", interactive=True, variant="stop"),
+    ],
+    outputs=[
+        gr.Image(type="filepath", label="الصورة المولدة"),
+        gr.Textbox(label="الرسالة", type="text"),
+    ],
+    title="NeuroSandboxWebUI (ALPHA) - StableDiffusion 3 (img2img)",
+    description="تتيح لك واجهة المستخدم هذه إدخال أي نص وصورة أولية لتوليد صور جديدة باستخدام Stable Diffusion 3. "
+                "يمكنك تخصيص إعدادات التوليد من شرائط التمرير. "
+                "جربها وانظر ماذا يحدث!",
+    allow_flagging="never",
+)
+
+sd3_controlnet_interface = gr.Interface(
+    fn=generate_image_sd3_controlnet,
+    inputs=[
+        gr.Textbox(label="أدخل النص المطلوب"),
+        gr.Textbox(label="أدخل النص السلبي", value=""),
+        gr.Image(label="الصورة الأولية", type="filepath"),
+        gr.Dropdown(choices=["Pose", "Canny"], label="حدد نموذج ControlNet", value="Pose"),
+        gr.Slider(minimum=1, maximum=100, value=40, step=1, label="الخطوات"),
+        gr.Slider(minimum=1.0, maximum=30.0, value=8.0, step=0.1, label="التكوين"),
+        gr.Slider(minimum=0.1, maximum=1.0, value=0.5, step=0.1, label="مقياس تكييف ControlNet"),
+        gr.Slider(minimum=256, maximum=2048, value=1024, step=64, label="العرض"),
+        gr.Slider(minimum=256, maximum=2048, value=1024, step=64, label="الارتفاع"),
+        gr.Slider(minimum=64, maximum=2048, value=256, label="الحد الأقصى للطول"),
+        gr.Radio(choices=["png", "jpeg"], label="حدد تنسيق الإخراج", value="png", interactive=True),
+        gr.Button(value="إيقاف التوليد", interactive=True, variant="stop"),
+    ],
+    outputs=[
+        gr.Image(type="filepath", label="الصورة المولدة"),
+        gr.Textbox(label="الرسالة", type="text"),
+    ],
+    title="NeuroSandboxWebUI (ALPHA) - StableDiffusion 3 (ControlNet)",
+    description="تتيح لك واجهة المستخدم هذه استخدام نماذج ControlNet مع Stable Diffusion 3. "
+                "يمكنك تخصيص إعدادات التوليد من شرائط التمرير. "
+                "جربها وانظر ماذا يحدث!",
+    allow_flagging="never",
+)
+
+sd3_inpaint_interface = gr.Interface(
+    fn=generate_image_sd3_inpaint,
+    inputs=[
+        gr.Textbox(label="أدخل النص المطلوب"),
+        gr.Textbox(label="أدخل النص السلبي", value=""),
+        gr.Image(label="الصورة الأولية", type="filepath"),
+        gr.ImageEditor(label="صورة القناع", type="filepath"),
+        gr.Slider(minimum=1, maximum=100, value=40, step=1, label="الخطوات"),
+        gr.Slider(minimum=1.0, maximum=30.0, value=8.0, step=0.1, label="التكوين"),
+        gr.Slider(minimum=256, maximum=2048, value=1024, step=64, label="العرض"),
+        gr.Slider(minimum=256, maximum=2048, value=1024, step=64, label="الارتفاع"),
+        gr.Slider(minimum=64, maximum=2048, value=256, label="الحد الأقصى للطول"),
+        gr.Radio(choices=["png", "jpeg"], label="حدد تنسيق الإخراج", value="png", interactive=True),
+        gr.Button(value="إيقاف التوليد", interactive=True, variant="stop"),
+    ],
+    outputs=[
+        gr.Image(type="filepath", label="الصورة المولدة"),
+        gr.Textbox(label="الرسالة", type="text"),
+    ],
+    title="NeuroSandboxWebUI (ALPHA) - StableDiffusion 3 (Inpaint)",
+    description="تتيح لك واجهة المستخدم هذه إجراء الرسم الداخلي باستخدام Stable Diffusion 3. "
+                "يمكنك تخصيص إعدادات التوليد من شرائط التمرير. "
+                "جربها وانظر ماذا يحدث!",
     allow_flagging="never",
 )
 
@@ -4867,7 +5141,10 @@ with gr.TabbedInterface(
         gr.TabbedInterface(
             [
                 gr.TabbedInterface(
-                    [txt2img_interface, img2img_interface, depth2img_interface, pix2pix_interface, controlnet_interface, latent_upscale_interface, realesrgan_upscale_interface, inpaint_interface, gligen_interface, animatediff_interface, video_interface, ldm3d_interface, sd3_interface, cascade_interface, extras_interface],
+                    [txt2img_interface, img2img_interface, depth2img_interface, pix2pix_interface, controlnet_interface, latent_upscale_interface, realesrgan_upscale_interface, inpaint_interface, gligen_interface, animatediff_interface, video_interface, ldm3d_interface,
+                     gr.TabbedInterface([sd3_txt2img_interface, sd3_img2img_interface, sd3_controlnet_interface, sd3_inpaint_interface],
+                                        tab_names=["txt2img", "img2img", "controlnet", "inpaint"]),
+                     cascade_interface, extras_interface],
                     tab_names=["txt2img", "img2img", "depth2img", "pix2pix", "controlnet", "upscale(latent)", "upscale(Real-ESRGAN)", "inpaint", "gligen", "animatediff", "video", "ldm3d", "sd3", "cascade", "extras"]
                 ),
                 kandinsky_interface, flux_interface, hunyuandit_interface, lumina_interface, kolors_interface, auraflow_interface, wurstchen_interface, deepfloyd_if_interface, pixart_interface
@@ -4907,7 +5184,10 @@ with gr.TabbedInterface(
     animatediff_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     video_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     ldm3d_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
-    sd3_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
+    sd3_txt2img_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
+    sd3_img2img_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
+    sd3_controlnet_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
+    sd3_inpaint_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     cascade_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     extras_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     kandinsky_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
