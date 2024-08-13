@@ -15,7 +15,7 @@ from TTS.api import TTS
 import whisper
 from datetime import datetime
 from huggingface_hub import snapshot_download
-from diffusers import StableDiffusionPipeline, StableDiffusion3Pipeline, StableDiffusionXLPipeline, StableDiffusionImg2ImgPipeline, StableDiffusion3Img2ImgPipeline, SD3ControlNetModel, StableDiffusion3ControlNetPipeline, StableDiffusion3InpaintPipeline, StableDiffusionDepth2ImgPipeline, ControlNetModel, StableDiffusionXLControlNetPipeline, StableDiffusionControlNetPipeline, AutoencoderKL, StableDiffusionLatentUpscalePipeline, StableDiffusionUpscalePipeline, StableDiffusionInpaintPipeline, StableDiffusionGLIGENPipeline, AnimateDiffPipeline, AnimateDiffSDXLPipeline, AnimateDiffVideoToVideoPipeline, MotionAdapter, StableVideoDiffusionPipeline, I2VGenXLPipeline, StableCascadePriorPipeline, StableCascadeDecoderPipeline, DiffusionPipeline, DPMSolverMultistepScheduler, ShapEPipeline, ShapEImg2ImgPipeline, StableAudioPipeline, AudioLDM2Pipeline, StableDiffusionInstructPix2PixPipeline, StableDiffusionLDM3DPipeline, FluxPipeline, KandinskyPipeline, KandinskyPriorPipeline, KandinskyV22Pipeline, KandinskyV22PriorPipeline, AutoPipelineForText2Image, KandinskyImg2ImgPipeline, AutoPipelineForImage2Image, HunyuanDiTPipeline, LuminaText2ImgPipeline, IFPipeline, IFSuperResolutionPipeline, PixArtAlphaPipeline, PixArtSigmaPipeline, CogVideoXPipeline, LattePipeline, KolorsPipeline, AuraFlowPipeline, WuerstchenDecoderPipeline, WuerstchenPriorPipeline, EulerAncestralDiscreteScheduler, DDIMScheduler
+from diffusers import StableDiffusionPipeline, StableDiffusion3Pipeline, StableDiffusionXLPipeline, StableDiffusionImg2ImgPipeline, StableDiffusion3Img2ImgPipeline, SD3ControlNetModel, StableDiffusion3ControlNetPipeline, StableDiffusion3InpaintPipeline, StableDiffusionDepth2ImgPipeline, ControlNetModel, StableDiffusionXLControlNetPipeline, StableDiffusionControlNetPipeline, AutoencoderKL, StableDiffusionLatentUpscalePipeline, StableDiffusionUpscalePipeline, StableDiffusionInpaintPipeline, StableDiffusionGLIGENPipeline, AnimateDiffPipeline, AnimateDiffSDXLPipeline, AnimateDiffVideoToVideoPipeline, MotionAdapter, StableVideoDiffusionPipeline, I2VGenXLPipeline, StableCascadePriorPipeline, StableCascadeDecoderPipeline, DiffusionPipeline, DPMSolverMultistepScheduler, ShapEPipeline, ShapEImg2ImgPipeline, StableAudioPipeline, AudioLDM2Pipeline, StableDiffusionInstructPix2PixPipeline, StableDiffusionLDM3DPipeline, FluxPipeline, KandinskyPipeline, KandinskyPriorPipeline, KandinskyV22Pipeline, KandinskyV22PriorPipeline, AutoPipelineForText2Image, KandinskyImg2ImgPipeline, AutoPipelineForImage2Image, HunyuanDiTPipeline, LuminaText2ImgPipeline, IFPipeline, IFSuperResolutionPipeline, IFImg2ImgPipeline, IFInpaintingPipeline, IFImg2ImgSuperResolutionPipeline, IFInpaintingSuperResolutionPipeline, PixArtAlphaPipeline, PixArtSigmaPipeline, CogVideoXPipeline, LattePipeline, KolorsPipeline, AuraFlowPipeline, WuerstchenDecoderPipeline, WuerstchenPriorPipeline, EulerAncestralDiscreteScheduler, DDIMScheduler
 from diffusers.utils import load_image, export_to_video, export_to_gif, export_to_ply, pt_to_pil
 from diffusers.pipelines.wuerstchen import DEFAULT_STAGE_C_TIMESTEPS
 from controlnet_aux import OpenposeDetector, LineartDetector, HEDdetector
@@ -3011,7 +3011,7 @@ def generate_image_wurstchen(prompt, negative_prompt, width, height, prior_steps
         torch.cuda.empty_cache()
 
 
-def generate_image_deepfloyd(prompt, negative_prompt, num_inference_steps, guidance_scale, width, height, output_format="png", stop_generation=None):
+def generate_image_deepfloyd_txt2img(prompt, negative_prompt, num_inference_steps, guidance_scale, width, height, output_format="png", stop_generation=None):
     global stop_signal
     stop_signal = False
 
@@ -3107,6 +3107,235 @@ def generate_image_deepfloyd(prompt, negative_prompt, num_inference_steps, guida
             del pipe_i
             del pipe_ii
             del pipe_iii
+        except:
+            pass
+        torch.cuda.empty_cache()
+
+
+def generate_image_deepfloyd_img2img(prompt, negative_prompt, init_image, num_inference_steps, guidance_scale, width, height, output_format="png", stop_generation=None):
+    global stop_signal
+    stop_signal = False
+
+    if not prompt or not init_image:
+        return None, None, None, "Please enter a prompt and upload an initial image!"
+
+    try:
+        device = "cuda" if torch.cuda.is_available() else "cpu"
+
+        # Stage I
+        stage_1 = IFImg2ImgPipeline.from_pretrained("DeepFloyd/IF-I-XL-v1.0", variant="fp16", torch_dtype=torch.float16)
+        stage_1.to(device)
+        stage_1.enable_model_cpu_offload()
+
+        # Stage II
+        stage_2 = IFImg2ImgSuperResolutionPipeline.from_pretrained(
+            "DeepFloyd/IF-II-L-v1.0", text_encoder=None, variant="fp16", torch_dtype=torch.float16
+        )
+        stage_2.to(device)
+        stage_2.enable_model_cpu_offload()
+
+        # Stage III
+        safety_modules = {
+            "feature_extractor": stage_1.feature_extractor,
+            "safety_checker": stage_1.safety_checker,
+            "watermarker": stage_1.watermarker,
+        }
+        stage_3 = DiffusionPipeline.from_pretrained(
+            "stabilityai/stable-diffusion-x4-upscaler", **safety_modules, torch_dtype=torch.float16
+        )
+        stage_3.to(device)
+        stage_3.enable_model_cpu_offload()
+
+        original_image = Image.open(init_image).convert("RGB")
+        original_image = original_image.resize((width, height))
+
+        generator = torch.manual_seed(0)
+
+        prompt_embeds, negative_embeds = stage_1.encode_prompt(prompt)
+
+        # Stage I
+        stage_1_output = stage_1(
+            image=original_image,
+            prompt_embeds=prompt_embeds,
+            negative_prompt_embeds=negative_embeds,
+            generator=generator,
+            num_inference_steps=num_inference_steps,
+            guidance_scale=guidance_scale,
+            output_type="pt",
+        ).images
+
+        if stop_signal:
+            return None, None, None, "Generation stopped"
+
+        # Stage II
+        stage_2_output = stage_2(
+            image=stage_1_output,
+            original_image=original_image,
+            prompt_embeds=prompt_embeds,
+            negative_prompt_embeds=negative_embeds,
+            generator=generator,
+            num_inference_steps=num_inference_steps,
+            guidance_scale=guidance_scale,
+            output_type="pt",
+        ).images
+
+        if stop_signal:
+            return None, None, None, "Generation stopped"
+
+        # Stage III
+        stage_3_output = stage_3(
+            prompt=prompt,
+            image=stage_2_output,
+            generator=generator,
+            noise_level=100,
+            num_inference_steps=num_inference_steps,
+            guidance_scale=guidance_scale,
+        ).images[0]
+
+        if stop_signal:
+            return None, None, None, "Generation stopped"
+
+        today = datetime.now().date()
+        image_dir = os.path.join('outputs', f"DeepFloydIF_{today.strftime('%Y%m%d')}")
+        os.makedirs(image_dir, exist_ok=True)
+
+        stage_1_filename = f"deepfloyd_if_img2img_stage_I_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
+        stage_2_filename = f"deepfloyd_if_img2img_stage_II_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
+        stage_3_filename = f"deepfloyd_if_img2img_stage_III_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
+
+        stage_1_path = os.path.join(image_dir, stage_1_filename)
+        stage_2_path = os.path.join(image_dir, stage_2_filename)
+        stage_3_path = os.path.join(image_dir, stage_3_filename)
+
+        pt_to_pil(stage_1_output)[0].save(stage_1_path)
+        pt_to_pil(stage_2_output)[0].save(stage_2_path)
+        stage_3_output.save(stage_3_path)
+
+        return stage_1_path, stage_2_path, stage_3_path, None
+
+    except Exception as e:
+        return None, None, None, str(e)
+
+    finally:
+        try:
+            del stage_1
+            del stage_2
+            del stage_3
+        except:
+            pass
+        torch.cuda.empty_cache()
+
+def generate_image_deepfloyd_inpaint(prompt, negative_prompt, init_image, mask_image, num_inference_steps, guidance_scale, output_format="png", stop_generation=None):
+    global stop_signal
+    stop_signal = False
+
+    if not prompt or not init_image or not mask_image:
+        return None, None, None, "Please enter a prompt, upload an initial image, and provide a mask image!"
+
+    try:
+        device = "cuda" if torch.cuda.is_available() else "cpu"
+
+        # Stage I
+        stage_1 = IFInpaintingPipeline.from_pretrained("DeepFloyd/IF-I-XL-v1.0", variant="fp16", torch_dtype=torch.float16)
+        stage_1.to(device)
+        stage_1.enable_model_cpu_offload()
+
+        # Stage II
+        stage_2 = IFInpaintingSuperResolutionPipeline.from_pretrained(
+            "DeepFloyd/IF-II-L-v1.0", text_encoder=None, variant="fp16", torch_dtype=torch.float16
+        )
+        stage_2.to(device)
+        stage_2.enable_model_cpu_offload()
+
+        # Stage III
+        safety_modules = {
+            "feature_extractor": stage_1.feature_extractor,
+            "safety_checker": stage_1.safety_checker,
+            "watermarker": stage_1.watermarker,
+        }
+        stage_3 = DiffusionPipeline.from_pretrained(
+            "stabilityai/stable-diffusion-x4-upscaler", **safety_modules, torch_dtype=torch.float16
+        )
+        stage_3.to(device)
+        stage_3.enable_model_cpu_offload()
+
+        original_image = Image.open(init_image).convert("RGB")
+        mask_image = Image.open(mask_image).convert("RGB")
+
+        generator = torch.manual_seed(0)
+
+        prompt_embeds, negative_embeds = stage_1.encode_prompt(prompt)
+
+        # Stage I
+        stage_1_output = stage_1(
+            image=original_image,
+            mask_image=mask_image,
+            prompt_embeds=prompt_embeds,
+            negative_prompt_embeds=negative_embeds,
+            generator=generator,
+            num_inference_steps=num_inference_steps,
+            guidance_scale=guidance_scale,
+            output_type="pt",
+        ).images
+
+        if stop_signal:
+            return None, None, None, "Generation stopped"
+
+        # Stage II
+        stage_2_output = stage_2(
+            image=stage_1_output,
+            original_image=original_image,
+            mask_image=mask_image,
+            prompt_embeds=prompt_embeds,
+            negative_prompt_embeds=negative_embeds,
+            generator=generator,
+            num_inference_steps=num_inference_steps,
+            guidance_scale=guidance_scale,
+            output_type="pt",
+        ).images
+
+        if stop_signal:
+            return None, None, None, "Generation stopped"
+
+        # Stage III
+        stage_3_output = stage_3(
+            prompt=prompt,
+            image=stage_2_output,
+            generator=generator,
+            noise_level=100,
+            num_inference_steps=num_inference_steps,
+            guidance_scale=guidance_scale,
+        ).images[0]
+
+        if stop_signal:
+            return None, None, None, "Generation stopped"
+
+        today = datetime.now().date()
+        image_dir = os.path.join('outputs', f"DeepFloydIF_{today.strftime('%Y%m%d')}")
+        os.makedirs(image_dir, exist_ok=True)
+
+        stage_1_filename = f"deepfloyd_if_inpaint_stage_I_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
+        stage_2_filename = f"deepfloyd_if_inpaint_stage_II_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
+        stage_3_filename = f"deepfloyd_if_inpaint_stage_III_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
+
+        stage_1_path = os.path.join(image_dir, stage_1_filename)
+        stage_2_path = os.path.join(image_dir, stage_2_filename)
+        stage_3_path = os.path.join(image_dir, stage_3_filename)
+
+        pt_to_pil(stage_1_output)[0].save(stage_1_path)
+        pt_to_pil(stage_2_output)[0].save(stage_2_path)
+        stage_3_output.save(stage_3_path)
+
+        return stage_1_path, stage_2_path, stage_3_path, None
+
+    except Exception as e:
+        return None, None, None, str(e)
+
+    finally:
+        try:
+            del stage_1
+            del stage_2
+            del stage_3
         except:
             pass
         torch.cuda.empty_cache()
@@ -4951,8 +5180,8 @@ wurstchen_interface = gr.Interface(
     allow_flagging="never",
 )
 
-deepfloyd_if_interface = gr.Interface(
-    fn=generate_image_deepfloyd,
+deepfloyd_if_txt2img_interface = gr.Interface(
+    fn=generate_image_deepfloyd_txt2img,
     inputs=[
         gr.Textbox(label="Enter your prompt"),
         gr.Textbox(label="Enter your negative prompt", value=""),
@@ -4969,12 +5198,70 @@ deepfloyd_if_interface = gr.Interface(
         gr.Image(type="filepath", label="Generated image (Stage III)"),
         gr.Textbox(label="Message", type="text"),
     ],
-    title="NeuroSandboxWebUI (ALPHA) - DeepFloyd IF",
+    title="NeuroSandboxWebUI (ALPHA) - DeepFloyd IF (txt2img)",
     description="This user interface allows you to generate images using the DeepFloyd IF model. "
                 "Enter a prompt and customize the generation settings. "
                 "The process includes three stages of generation, each producing an image of increasing quality. "
                 "Try it and see what happens!",
     allow_flagging="never",
+)
+
+deepfloyd_if_img2img_interface = gr.Interface(
+    fn=generate_image_deepfloyd_img2img,
+    inputs=[
+        gr.Textbox(label="Enter your prompt"),
+        gr.Textbox(label="Enter your negative prompt", value=""),
+        gr.Image(label="Initial image", type="filepath"),
+        gr.Slider(minimum=1, maximum=100, value=50, step=1, label="Steps"),
+        gr.Slider(minimum=0.1, maximum=30.0, value=6, step=0.1, label="Guidance Scale"),
+        gr.Slider(minimum=256, maximum=2048, value=512, step=64, label="Width"),
+        gr.Slider(minimum=256, maximum=2048, value=512, step=64, label="Height"),
+        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
+        gr.Button(value="Stop generation", interactive=True, variant="stop"),
+    ],
+    outputs=[
+        gr.Image(type="filepath", label="Generated image (Stage I)"),
+        gr.Image(type="filepath", label="Generated image (Stage II)"),
+        gr.Image(type="filepath", label="Generated image (Stage III)"),
+        gr.Textbox(label="Message", type="text"),
+    ],
+    title="NeuroSandboxWebUI (ALPHA) - DeepFloyd IF (img2img)",
+    description="This interface allows you to generate images using DeepFloyd IF's image-to-image pipeline. "
+                "Enter a prompt, upload an initial image, and customize the generation settings. "
+                "The process includes three stages of generation, each producing an image of increasing quality. "
+                "Try it and see what happens!",
+    allow_flagging="never",
+)
+
+deepfloyd_if_inpaint_interface = gr.Interface(
+    fn=generate_image_deepfloyd_inpaint,
+    inputs=[
+        gr.Textbox(label="Enter your prompt"),
+        gr.Textbox(label="Enter your negative prompt", value=""),
+        gr.Image(label="Initial image", type="filepath"),
+        gr.ImageEditor(label="Mask image", type="filepath"),
+        gr.Slider(minimum=1, maximum=100, value=50, step=1, label="Steps"),
+        gr.Slider(minimum=0.1, maximum=30.0, value=6, step=0.1, label="Guidance Scale"),
+        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
+        gr.Button(value="Stop generation", interactive=True, variant="stop"),
+    ],
+    outputs=[
+        gr.Image(type="filepath", label="Generated image (Stage I)"),
+        gr.Image(type="filepath", label="Generated image (Stage II)"),
+        gr.Image(type="filepath", label="Generated image (Stage III)"),
+        gr.Textbox(label="Message", type="text"),
+    ],
+    title="NeuroSandboxWebUI (ALPHA) - DeepFloyd IF (inpaint)",
+    description="This interface allows you to perform inpainting using DeepFloyd IF. "
+                "Enter a prompt, upload an initial image and a mask image, and customize the generation settings. "
+                "The process includes three stages of generation, each producing an image of increasing quality. "
+                "Try it and see what happens!",
+    allow_flagging="never",
+)
+
+deepfloyd_if_interface = gr.TabbedInterface(
+    [deepfloyd_if_txt2img_interface, deepfloyd_if_img2img_interface, deepfloyd_if_inpaint_interface],
+    tab_names=["txt2img", "img2img", "inpaint"]
 )
 
 pixart_interface = gr.Interface(
@@ -5421,7 +5708,9 @@ with gr.TabbedInterface(
     kolors_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     auraflow_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     wurstchen_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
-    deepfloyd_if_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
+    deepfloyd_if_txt2img_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
+    deepfloyd_if_img2img_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
+    deepfloyd_if_inpaint_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     pixart_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     modelscope_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     zeroscope2_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
