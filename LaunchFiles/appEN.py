@@ -5026,7 +5026,7 @@ kandinsky_img2img_interface = gr.Interface(
         gr.Image(type="filepath", label="Generated image"),
         gr.Textbox(label="Message", type="text"),
     ],
-    title="NeuroSandboxWebUI (ALPHA) - (img2img)",
+    title="NeuroSandboxWebUI (ALPHA) - Kandinsky (img2img)",
     description="This user interface allows you to generate images using Kandinsky models. "
                 "You can select between versions 2.1, 2.2, and 3, and customize the generation settings. "
                 "Try it and see what happens!",
