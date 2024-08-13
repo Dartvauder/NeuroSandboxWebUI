@@ -4762,8 +4762,8 @@ kandinsky_txt2img_interface = gr.Interface(
         gr.Radio(choices=["2.1", "2.2", "3"], label="Kandinsky Version", value="2.2"),
         gr.Slider(minimum=1, maximum=100, value=50, step=1, label="Steps"),
         gr.Slider(minimum=0.1, maximum=20, value=4, step=0.1, label="CFG"),
-        gr.Slider(minimum=256, maximum=1024, value=768, step=64, label="Height"),
-        gr.Slider(minimum=256, maximum=1024, value=768, step=64, label="Width"),
+        gr.Slider(minimum=256, maximum=2048, value=768, step=64, label="Height"),
+        gr.Slider(minimum=256, maximum=2048, value=768, step=64, label="Width"),
         gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
         gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
@@ -4771,8 +4771,10 @@ kandinsky_txt2img_interface = gr.Interface(
         gr.Image(type="filepath", label="Generated image"),
         gr.Textbox(label="Message", type="text"),
     ],
-    title="Kandinsky (txt2img)",
-    description="Generate images using Kandinsky txt2img",
+    title="NeuroSandboxWebUI (ALPHA) - Kandinsky (txt2img)",
+    description="This user interface allows you to generate images using Kandinsky models. "
+                "You can select between versions 2.1, 2.2, and 3, and customize the generation settings. "
+                "Try it and see what happens!",
     allow_flagging="never",
 )
 
@@ -4786,8 +4788,8 @@ kandinsky_img2img_interface = gr.Interface(
         gr.Slider(minimum=1, maximum=100, value=50, step=1, label="Steps"),
         gr.Slider(minimum=0.1, maximum=20, value=4, step=0.1, label="CFG"),
         gr.Slider(minimum=0.0, maximum=1.0, value=0.8, step=0.01, label="Strength"),
-        gr.Slider(minimum=256, maximum=1024, value=768, step=64, label="Height"),
-        gr.Slider(minimum=256, maximum=1024, value=768, step=64, label="Width"),
+        gr.Slider(minimum=256, maximum=2048, value=768, step=64, label="Height"),
+        gr.Slider(minimum=256, maximum=2048, value=768, step=64, label="Width"),
         gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
         gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
@@ -4795,8 +4797,10 @@ kandinsky_img2img_interface = gr.Interface(
         gr.Image(type="filepath", label="Generated image"),
         gr.Textbox(label="Message", type="text"),
     ],
-    title="Kandinsky (img2img)",
-    description="Generate images using Kandinsky img2img",
+    title="NeuroSandboxWebUI (ALPHA) - (img2img)",
+    description="This user interface allows you to generate images using Kandinsky models. "
+                "You can select between versions 2.1, 2.2, and 3, and customize the generation settings. "
+                "Try it and see what happens!",
     allow_flagging="never",
 )
 
