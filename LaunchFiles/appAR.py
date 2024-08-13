@@ -4270,7 +4270,7 @@ controlnet_interface = gr.Interface(
         gr.Textbox(label="أدخل الإشارة الخاصة بك"),
         gr.Textbox(label="أدخل الإشارة السلبية الخاصة بك", value=""),
         gr.Image(label="الصورة الأولية", type="filepath"),
-        gr.Radio(choices=["SD", "SDXL"], label="Select model type", value="SD"),
+        gr.Radio(choices=["SD", "SDXL"], label="اختر نوع النموذج", value="SD"),
         gr.Dropdown(choices=stable_diffusion_models_list, label="اختر نموذج StableDiffusion (فقط SD1.5)", value=None),
         gr.Dropdown(choices=controlnet_models_list, label="اختر نموذج ControlNet", value=None),
         gr.Slider(minimum=1, maximum=100, value=30, step=1, label="الخطوات"),
