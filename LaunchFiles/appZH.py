@@ -5080,6 +5080,33 @@ kandinsky_img2img_interface = gr.Interface(
     allow_flagging="never",
 )
 
+kandinsky_inpaint_interface = gr.Interface(
+    fn=generate_image_kandinsky_inpaint,
+    inputs=[
+        gr.Textbox(label="输入您的提示词"),
+        gr.Textbox(label="输入您的负面提示词", value=""),
+        gr.Image(label="初始图像", type="filepath"),
+        gr.ImageEditor(label="蒙版图像", type="filepath"),
+        gr.Radio(choices=["2.1", "2.2"], label="Kandinsky 版本", value="2.2"),
+        gr.Slider(minimum=1, maximum=100, value=50, step=1, label="步数"),
+        gr.Slider(minimum=0.1, maximum=20, value=4, step=0.1, label="CFG"),
+        gr.Slider(minimum=0.0, maximum=1.0, value=0.8, step=0.01, label="强度"),
+        gr.Slider(minimum=256, maximum=2048, value=768, step=64, label="高度"),
+        gr.Slider(minimum=256, maximum=2048, value=768, step=64, label="宽度"),
+        gr.Radio(choices=["png", "jpeg"], label="选择输出格式", value="png", interactive=True),
+        gr.Button(value="停止生成", interactive=True, variant="stop"),
+    ],
+    outputs=[
+        gr.Image(type="filepath", label="生成的图像"),
+        gr.Textbox(label="消息", type="text"),
+    ],
+    title="NeuroSandboxWebUI (Alpha) - Kandinsky (inpaint)",
+    description="此用户界面允许您使用Kandinsky模型进行图像修复。"
+                "您可以在2.1和2.2版本之间选择，并自定义生成设置。"
+                "试试看会发生什么！",
+    allow_flagging="never",
+)
+
 kandinsky_interface = gr.TabbedInterface(
     [kandinsky_txt2img_interface, kandinsky_img2img_interface, kandinsky_inpaint_interface],
     tab_names=["txt2img", "img2img", "inpaint"]

@@ -5112,6 +5112,33 @@ kandinsky_img2img_interface = gr.Interface(
     allow_flagging="never",
 )
 
+kandinsky_inpaint_interface = gr.Interface(
+    fn=generate_image_kandinsky_inpaint,
+    inputs=[
+        gr.Textbox(label="Insira seu prompt"),
+        gr.Textbox(label="Insira seu prompt negativo", value=""),
+        gr.Image(label="Imagem inicial", type="filepath"),
+        gr.ImageEditor(label="Imagem de máscara", type="filepath"),
+        gr.Radio(choices=["2.1", "2.2"], label="Versão do Kandinsky", value="2.2"),
+        gr.Slider(minimum=1, maximum=100, value=50, step=1, label="Passos"),
+        gr.Slider(minimum=0.1, maximum=20, value=4, step=0.1, label="CFG"),
+        gr.Slider(minimum=0.0, maximum=1.0, value=0.8, step=0.01, label="Força"),
+        gr.Slider(minimum=256, maximum=2048, value=768, step=64, label="Altura"),
+        gr.Slider(minimum=256, maximum=2048, value=768, step=64, label="Largura"),
+        gr.Radio(choices=["png", "jpeg"], label="Selecione o formato de saída", value="png", interactive=True),
+        gr.Button(value="Parar geração", interactive=True, variant="stop"),
+    ],
+    outputs=[
+        gr.Image(type="filepath", label="Imagem gerada"),
+        gr.Textbox(label="Mensagem", type="text"),
+    ],
+    title="NeuroSandboxWebUI (Alpha) - Kandinsky (inpaint)",
+    description="Esta interface de usuário permite que você faça inpainting usando modelos Kandinsky. "
+                "Você pode escolher entre as versões 2.1 e 2.2 e personalizar as configurações de geração. "
+                "Experimente e veja o que acontece!",
+    allow_flagging="never",
+)
+
 kandinsky_interface = gr.TabbedInterface(
     [kandinsky_txt2img_interface, kandinsky_img2img_interface, kandinsky_inpaint_interface],
     tab_names=["txt2img", "img2img", "inpaint"]
