@@ -15,7 +15,7 @@ from TTS.api import TTS
 import whisper
 from datetime import datetime
 from huggingface_hub import snapshot_download
-from diffusers import StableDiffusionPipeline, StableDiffusion3Pipeline, StableDiffusionXLPipeline, StableDiffusionImg2ImgPipeline, StableDiffusion3Img2ImgPipeline, SD3ControlNetModel, StableDiffusion3ControlNetPipeline, StableDiffusion3InpaintPipeline, StableDiffusionDepth2ImgPipeline, ControlNetModel, StableDiffusionXLControlNetPipeline, StableDiffusionControlNetPipeline, AutoencoderKL, StableDiffusionLatentUpscalePipeline, StableDiffusionUpscalePipeline, StableDiffusionInpaintPipeline, StableDiffusionGLIGENPipeline, AnimateDiffPipeline, AnimateDiffSDXLPipeline, AnimateDiffVideoToVideoPipeline, MotionAdapter, StableVideoDiffusionPipeline, I2VGenXLPipeline, StableCascadePriorPipeline, StableCascadeDecoderPipeline, DiffusionPipeline, DPMSolverMultistepScheduler, ShapEPipeline, ShapEImg2ImgPipeline, StableAudioPipeline, AudioLDM2Pipeline, StableDiffusionInstructPix2PixPipeline, StableDiffusionLDM3DPipeline, FluxPipeline, KandinskyPipeline, KandinskyPriorPipeline, KandinskyV22Pipeline, KandinskyV22PriorPipeline, AutoPipelineForText2Image, KandinskyImg2ImgPipeline, AutoPipelineForImage2Image, HunyuanDiTPipeline, LuminaText2ImgPipeline, IFPipeline, IFSuperResolutionPipeline, IFImg2ImgPipeline, IFInpaintingPipeline, IFImg2ImgSuperResolutionPipeline, IFInpaintingSuperResolutionPipeline, PixArtAlphaPipeline, PixArtSigmaPipeline, CogVideoXPipeline, LattePipeline, KolorsPipeline, AuraFlowPipeline, WuerstchenDecoderPipeline, WuerstchenPriorPipeline, EulerAncestralDiscreteScheduler, DDIMScheduler
+from diffusers import StableDiffusionPipeline, StableDiffusion3Pipeline, StableDiffusionXLPipeline, StableDiffusionImg2ImgPipeline, StableDiffusion3Img2ImgPipeline, SD3ControlNetModel, StableDiffusion3ControlNetPipeline, StableDiffusion3InpaintPipeline, StableDiffusionDepth2ImgPipeline, ControlNetModel, StableDiffusionXLControlNetPipeline, StableDiffusionControlNetPipeline, AutoencoderKL, StableDiffusionLatentUpscalePipeline, StableDiffusionUpscalePipeline, StableDiffusionInpaintPipeline, StableDiffusionGLIGENPipeline, AnimateDiffPipeline, AnimateDiffSDXLPipeline, AnimateDiffVideoToVideoPipeline, MotionAdapter, StableVideoDiffusionPipeline, I2VGenXLPipeline, StableCascadePriorPipeline, StableCascadeDecoderPipeline, DiffusionPipeline, DPMSolverMultistepScheduler, ShapEPipeline, ShapEImg2ImgPipeline, StableAudioPipeline, AudioLDM2Pipeline, StableDiffusionInstructPix2PixPipeline, StableDiffusionLDM3DPipeline, FluxPipeline, KandinskyPipeline, KandinskyPriorPipeline, KandinskyV22Pipeline, KandinskyV22PriorPipeline, AutoPipelineForText2Image, KandinskyImg2ImgPipeline, AutoPipelineForImage2Image, AutoPipelineForInpainting, HunyuanDiTPipeline, LuminaText2ImgPipeline, IFPipeline, IFSuperResolutionPipeline, IFImg2ImgPipeline, IFInpaintingPipeline, IFImg2ImgSuperResolutionPipeline, IFInpaintingSuperResolutionPipeline, PixArtAlphaPipeline, PixArtSigmaPipeline, CogVideoXPipeline, LattePipeline, KolorsPipeline, AuraFlowPipeline, WuerstchenDecoderPipeline, WuerstchenPriorPipeline, EulerAncestralDiscreteScheduler, DDIMScheduler
 from diffusers.utils import load_image, export_to_video, export_to_gif, export_to_ply, pt_to_pil
 from diffusers.pipelines.wuerstchen import DEFAULT_STAGE_C_TIMESTEPS
 from controlnet_aux import OpenposeDetector, LineartDetector, HEDdetector
@@ -2682,6 +2682,85 @@ def generate_image_kandinsky_img2img(prompt, negative_prompt, init_image, versio
         torch.cuda.empty_cache()
 
 
+def generate_image_kandinsky_inpaint(prompt, negative_prompt, init_image, mask_image, version, num_inference_steps, guidance_scale, strength, height, width, output_format="png", stop_generation=None):
+    global stop_signal
+    stop_signal = False
+
+    if not prompt or not init_image or not mask_image:
+        return None, "Please enter a prompt, upload an initial image, and provide a mask image!"
+
+    kandinsky_model_path = os.path.join("inputs", "image", "sd_models", "kandinsky")
+
+    if not os.path.exists(kandinsky_model_path):
+        print(f"Downloading Kandinsky {version} model...")
+        os.makedirs(kandinsky_model_path, exist_ok=True)
+        if version == "2.1":
+            Repo.clone_from("https://huggingface.co/kandinsky-community/kandinsky-2-1-inpainter",
+                            os.path.join(kandinsky_model_path, "2-1-inpainter"))
+        elif version == "2.2":
+            Repo.clone_from("https://huggingface.co/kandinsky-community/kandinsky-2-2-decoder-inpaint",
+                            os.path.join(kandinsky_model_path, "2-2-decoder-inpaint"))
+        print(f"Kandinsky {version} inpainting model downloaded")
+
+    try:
+        device = "cuda" if torch.cuda.is_available() else "cpu"
+
+        if version == "2.1":
+            pipe = AutoPipelineForInpainting.from_pretrained(
+                os.path.join(kandinsky_model_path, "2-1-inpainter"),
+                torch_dtype=torch.float16,
+                variant="fp16"
+            )
+        else:  # version 2.2
+            pipe = AutoPipelineForInpainting.from_pretrained(
+                os.path.join(kandinsky_model_path, "2-2-decoder-inpaint"),
+                torch_dtype=torch.float16
+            )
+
+        pipe.to(device)
+        pipe.enable_model_cpu_offload()
+        if version == "2.1":
+            pipe.enable_xformers_memory_efficient_attention()
+
+        init_image = Image.open(init_image).convert("RGB")
+        init_image = init_image.resize((width, height))
+
+        mask_image = Image.open(mask_image).convert("L")
+        mask_image = mask_image.resize((width, height))
+
+        generator = torch.Generator(device).manual_seed(0)
+
+        image = pipe(
+            prompt=prompt,
+            negative_prompt=negative_prompt,
+            image=init_image,
+            mask_image=mask_image,
+            num_inference_steps=num_inference_steps,
+            guidance_scale=guidance_scale,
+            strength=strength,
+            generator=generator,
+        ).images[0]
+
+        if stop_signal:
+            return None, "Generation stopped"
+
+        today = datetime.now().date()
+        image_dir = os.path.join('outputs', f"Kandinsky_{today.strftime('%Y%m%d')}")
+        os.makedirs(image_dir, exist_ok=True)
+        image_filename = f"kandinsky_{version}_inpaint_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
+        image_path = os.path.join(image_dir, image_filename)
+        image.save(image_path, format=output_format.upper())
+
+        return image_path, None
+
+    except Exception as e:
+        return None, str(e)
+
+    finally:
+        del pipe
+        torch.cuda.empty_cache()
+
+
 def generate_image_flux(prompt, model_name, guidance_scale, height, width, num_inference_steps, max_sequence_length, output_format="png", stop_generation=None):
     global stop_signal
     stop_signal = False
@@ -5033,9 +5112,36 @@ kandinsky_img2img_interface = gr.Interface(
     allow_flagging="never",
 )
 
+kandinsky_inpaint_interface = gr.Interface(
+    fn=generate_image_kandinsky_inpaint,
+    inputs=[
+        gr.Textbox(label="Insira seu prompt"),
+        gr.Textbox(label="Insira seu prompt negativo", value=""),
+        gr.Image(label="Imagem inicial", type="filepath"),
+        gr.ImageEditor(label="Imagem de máscara", type="filepath"),
+        gr.Radio(choices=["2.1", "2.2"], label="Versão do Kandinsky", value="2.2"),
+        gr.Slider(minimum=1, maximum=100, value=50, step=1, label="Passos"),
+        gr.Slider(minimum=0.1, maximum=20, value=4, step=0.1, label="CFG"),
+        gr.Slider(minimum=0.0, maximum=1.0, value=0.8, step=0.01, label="Força"),
+        gr.Slider(minimum=256, maximum=2048, value=768, step=64, label="Altura"),
+        gr.Slider(minimum=256, maximum=2048, value=768, step=64, label="Largura"),
+        gr.Radio(choices=["png", "jpeg"], label="Selecione o formato de saída", value="png", interactive=True),
+        gr.Button(value="Parar geração", interactive=True, variant="stop"),
+    ],
+    outputs=[
+        gr.Image(type="filepath", label="Imagem gerada"),
+        gr.Textbox(label="Mensagem", type="text"),
+    ],
+    title="NeuroSandboxWebUI (Alpha) - Kandinsky (inpaint)",
+    description="Esta interface de usuário permite que você faça inpainting usando modelos Kandinsky. "
+                "Você pode escolher entre as versões 2.1 e 2.2 e personalizar as configurações de geração. "
+                "Experimente e veja o que acontece!",
+    allow_flagging="never",
+)
+
 kandinsky_interface = gr.TabbedInterface(
-    [kandinsky_txt2img_interface, kandinsky_img2img_interface],
-    tab_names=["txt2img", "img2img"]
+    [kandinsky_txt2img_interface, kandinsky_img2img_interface, kandinsky_inpaint_interface],
+    tab_names=["txt2img", "img2img", "inpaint"]
 )
 
 flux_interface = gr.Interface(
@@ -5702,6 +5808,7 @@ with gr.TabbedInterface(
     extras_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     kandinsky_txt2img_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     kandinsky_img2img_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
+    kandinsky_inpaint_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     flux_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     hunyuandit_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     lumina_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
