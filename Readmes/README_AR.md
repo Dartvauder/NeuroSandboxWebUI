@@ -525,3 +525,7 @@
 * محفظة العملات المشفرة (BEP-20) - 0x3d86bdb5f50b92d0d7Eb44F1a833acC5e91aAEcA
 
 * [!["اشترِ لي قهوة"](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/Dartvauder)
+
+## Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=Dartvauder/NeuroSandboxWebUI&type=Date)](https://star-history.com/#Dartvauder/NeuroSandboxWebUI&Date)
