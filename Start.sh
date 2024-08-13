@@ -26,84 +26,84 @@ while true; do
     case $choice in
         1)
             clear
-            python "$CURRENT_DIR/LaunchFiles/appEN.py" &
+            python -c "import os, sys; sys.path.insert(0, os.path.join('$(dirname "${BASH_SOURCE[0]}")', 'LaunchFiles')); import appEN" &
             sleep 120
             xdg-open "http://localhost:7860"
             break
             ;;
         2)
             clear
-            python "$CURRENT_DIR/LaunchFiles/appRU.py" &
+            python -c "import os, sys; sys.path.insert(0, os.path.join('$(dirname "${BASH_SOURCE[0]}")', 'LaunchFiles')); import appRU" &
             sleep 120
             xdg-open "http://localhost:7860"
             break
             ;;
         3)
             clear
-            python "$CURRENT_DIR/LaunchFiles/appAR.py" &
+            python -c "import os, sys; sys.path.insert(0, os.path.join('$(dirname "${BASH_SOURCE[0]}")', 'LaunchFiles')); import appAR" &
             sleep 120
             xdg-open "http://localhost:7860"
             break
             ;;
         4)
             clear
-            python "$CURRENT_DIR/LaunchFiles/appDE.py" &
+            python -c "import os, sys; sys.path.insert(0, os.path.join('$(dirname "${BASH_SOURCE[0]}")', 'LaunchFiles')); import appDE" &
             sleep 120
             xdg-open "http://localhost:7860"
             break
             ;;
         5)
             clear
-            python "$CURRENT_DIR/LaunchFiles/appES.py" &
+            python -c "import os, sys; sys.path.insert(0, os.path.join('$(dirname "${BASH_SOURCE[0]}")', 'LaunchFiles')); import appES" &
             sleep 120
             xdg-open "http://localhost:7860"
             break
             ;;
         6)
             clear
-            python "$CURRENT_DIR/LaunchFiles/appFR.py" &
+            python -c "import os, sys; sys.path.insert(0, os.path.join('$(dirname "${BASH_SOURCE[0]}")', 'LaunchFiles')); import appFR" &
             sleep 120
             xdg-open "http://localhost:7860"
             break
             ;;
         7)
             clear
-            python "$CURRENT_DIR/LaunchFiles/appJP.py" &
+            python -c "import os, sys; sys.path.insert(0, os.path.join('$(dirname "${BASH_SOURCE[0]}")', 'LaunchFiles')); import appJP" &
             sleep 120
             xdg-open "http://localhost:7860"
             break
             ;;
         8)
             clear
-            python "$CURRENT_DIR/LaunchFiles/appZH.py" &
+            python -c "import os, sys; sys.path.insert(0, os.path.join('$(dirname "${BASH_SOURCE[0]}")', 'LaunchFiles')); import appZH" &
             sleep 120
             xdg-open "http://localhost:7860"
             break
             ;;
         9)
             clear
-            python "$CURRENT_DIR/LaunchFiles/appPT.py" &
+            python -c "import os, sys; sys.path.insert(0, os.path.join('$(dirname "${BASH_SOURCE[0]}")', 'LaunchFiles')); import appPT" &
             sleep 120
             xdg-open "http://localhost:7860"
             break
             ;;
         10)
             clear
-            python "$CURRENT_DIR/LaunchFiles/appIT.py" &
+            python -c "import os, sys; sys.path.insert(0, os.path.join('$(dirname "${BASH_SOURCE[0]}")', 'LaunchFiles')); import appIT" &
             sleep 120
             xdg-open "http://localhost:7860"
             break
             ;;
         11)
             clear
-            python "$CURRENT_DIR/LaunchFiles/appHI.py" &
+            python -c "import os, sys; sys.path.insert(0, os.path.join('$(dirname "${BASH_SOURCE[0]}")', 'LaunchFiles')); import appHI" &
             sleep 120
             xdg-open "http://localhost:7860"
             break
             ;;
         12)
             clear
-            python "$CURRENT_DIR/LaunchFiles/appKO.py" &
+            python -c "import os, sys; sys.path.insert(0, os.path.join('$(dirname "${BASH_SOURCE[0]}")', 'LaunchFiles')); import appKO" &
             sleep 120
             xdg-open "http://localhost:7860"
             break
