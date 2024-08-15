@@ -5,6 +5,18 @@ set CURRENT_DIR=%~dp0
 
 call "%CURRENT_DIR%venv\Scripts\activate.bat"
 
+:read_token
+set /p HF_TOKEN=<HF-Token.txt
+if "%HF_TOKEN%"=="" (
+    echo HF-Token.txt is empty or not found. Please add your Hugging Face token to this file.
+    pause
+    exit
+)
+
+:login
+echo Logging in to Hugging Face...
+huggingface-cli login --token %HF_TOKEN% --add-to-git-credential
+
 :menu
 echo Select a file for launch:
 echo [English version: 1] appEN.py
