@@ -4,6 +4,23 @@ CURRENT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &> /dev/null && pwd)"
 
 source "$CURRENT_DIR/venv/bin/activate"
 
+# Read token
+if [ ! -f HF-Token.txt ]; then
+    echo "HF-Token.txt is not found. Please add your Hugging Face token to this file."
+    exit 1
+fi
+
+HF_TOKEN=$(cat HF-Token.txt)
+
+if [ -z "$HF_TOKEN" ]; then
+    echo "HF-Token.txt is empty. Please add your Hugging Face token to this file."
+    exit 1
+fi
+
+# Login to Hugging Face
+echo "Logging in to Hugging Face..."
+huggingface-cli login --token "$HF_TOKEN" --add-to-git-credential
+
 while true; do
     clear
     echo "Select a file for launch: "
