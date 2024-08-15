@@ -10,7 +10,7 @@ set /p HF_TOKEN=<HF-Token.txt
 if "%HF_TOKEN%"=="" (
     echo HF-Token.txt is empty or not found. Please add your Hugging Face token to this file.
     pause
-    exit
+    goto menu
 )
 
 :login
