@@ -244,7 +244,7 @@
 2) 根据您需要的参数设置模型
 3) 点击`Submit`按钮以获取生成的图像
 
-#### sd3：
+#### sd3 (txt2img, img2img, controlnet, inpaint)：
 
 1) 输入您的请求
 2) 根据您需要的参数设置模型
@@ -262,7 +262,7 @@
 2) 选择您需要的选项
 3) 点击`Submit`按钮以获取修改后的图像
 
-### Kandinsky：
+### Kandinsky (txt2img, img2img, inpaint)：
 
 1) 输入您的提示
 2) 从下拉列表中选择模型
@@ -306,7 +306,7 @@
 2) 根据您需要的参数设置模型
 3) 点击`Submit`以获取生成的图像
 
-### DeepFloydIF：
+### DeepFloydIF (txt2img, img2img, inpaint)：
 
 1) 输入您的提示
 2) 根据您需要的参数设置模型
@@ -431,7 +431,7 @@
 
 * LLM模型可以从[HuggingFace](https://huggingface.co/models)获取，或者通过界面内的ModelDownloader获取
 * StableDiffusion、vae、inpaint、embedding和lora模型可以从[CivitAI](https://civitai.com/models)获取，或者通过界面内的ModelDownloader获取
-* StableAudioOpen、AudioCraft、AudioLDM 2、TTS、Whisper、Wav2Lip、SunoBark、MoonDream2、Upscale、GLIGEN、Depth、Pix2Pix、Controlnet、AnimateDiff、Videos、LDM3D、SD3、Cascade、Rembg、Roop、CodeFormer、Real-ESRGAN、TripoSR、StableFast3D、Shap-E、SV34D、Zero123Plus、Demucs、Kandinsky、Flux、HunyuanDiT、Lumina-T2X、Kolors、AuraFlow、Würstchen、DeepFloydIF、PixArt、ModelScope、ZeroScope 2、CogVideoX、Latte和Multiband diffusion模型在使用时会自动下载到*inputs*文件夹中
+* StableAudioOpen, AudioCraft, AudioLDM 2, TTS, Whisper, Wav2Lip, SunoBark, MoonDream2, Upscale, GLIGEN, Depth, Pix2Pix, Controlnet, AnimateDiff, Videos, LDM3D, SD3, Cascade, InstantID, PhotoMaker, IP-Adapter-FaceID, Rembg, Roop, CodeFormer, Real-ESRGAN, TripoSR, StableFast3D, Shap-E, SV34D, Zero123Plus, Demucs, Kandinsky, Flux, HunyuanDiT, Lumina-T2X, Kolors, AuraFlow, AuraSR, Würstchen, DeepFloydIF, PixArt, ModelScope, ZeroScope 2, CogVideoX, Latte和Multiband diffusion模型在使用时会自动下载到*inputs*文件夹中
 * 您可以从任何地方获取语音。录制您自己的声音或从互联网上获取录音。或者直接使用项目中已有的语音。主要是要经过预处理！
 
 ## Wiki
@@ -465,6 +465,10 @@
 * `googlesearch-python` - https://github.com/Nv7-GitHub/googlesearch
 * `torchmcubes` - https://github.com/tatsy/torchmcubes
 * `suno-bark` - https://github.com/suno-ai/bark
+* `PhotoMaker` - https://github.com/TencentARC/PhotoMaker
+* `IP-Adapter` - https://github.com/tencent-ailab/IP-Adapter
+* `PyNanoInstantMeshes` - https://github.com/vork/PyNanoInstantMeshes
+* `CLIP` - https://github.com/openai/CLIP
 
 ## 第三方许可证：
 
@@ -518,6 +522,10 @@
 * [SV34D](https://huggingface.co/stabilityai/sv4d/blob/main/LICENSE.md)
 * [Zero123Plus](https://huggingface.co/blog/open_rail)
 * [Real-ESRGAN](https://github.com/xinntao/Real-ESRGAN/blob/master/LICENSE)
+* [InstantID](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/apache-2.0.md)
+* [PhotoMaker-V2](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/apache-2.0.md)
+* [IP-Adapter-FaceID](https://huggingface.co/h94/IP-Adapter-FaceID)
+* [AuraSR](https://huggingface.co/fal/AuraSR/blob/main/LICENSE.md)
 
 ## 捐赠
 
