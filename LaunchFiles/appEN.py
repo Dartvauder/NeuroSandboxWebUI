@@ -1235,7 +1235,7 @@ def generate_image_pix2pix(prompt, negative_prompt, init_image, num_inference_st
 
 
 def generate_image_controlnet(prompt, negative_prompt, init_image, sd_version, stable_diffusion_model_name, controlnet_model_name,
-                              num_inference_steps, guidance_scale, width, height, output_format="png",
+                              num_inference_steps, guidance_scale, width, height, controlnet_conditioning_scale, output_format="png",
                               stop_generation=None):
     global stop_signal
     stop_signal = False
@@ -1336,11 +1336,9 @@ def generate_image_controlnet(prompt, negative_prompt, init_image, sd_version, s
                 torch_dtype=torch.float16,
                 use_safetensors=True
             )
-            vae = AutoencoderKL.from_pretrained("madebyollin/sdxl-vae-fp16-fix", torch_dtype=torch.float16)
             pipe = StableDiffusionXLControlNetPipeline.from_pretrained(
                 stable_diffusion_model_path,
                 controlnet=controlnet,
-                vae=vae,
                 torch_dtype=torch.float16,
                 use_safetensors=True,
             )
@@ -1382,7 +1380,6 @@ def generate_image_controlnet(prompt, negative_prompt, init_image, sd_version, s
             else:
                 return None, f"ControlNet model {controlnet_model_name} is not supported for SDXL"
 
-            controlnet_conditioning_scale = 0.5
             image = pipe(
                 prompt, negative_prompt=negative_prompt, image=control_image,
                 controlnet_conditioning_scale=controlnet_conditioning_scale,
@@ -1892,18 +1889,9 @@ def generate_image_animatediff(prompt, negative_prompt, input_video, strength, m
 
             adapter = MotionAdapter.from_pretrained(sdxl_adapter_path, torch_dtype=torch.float16)
 
-            scheduler = DDIMScheduler.from_pretrained(
-                stable_diffusion_model_path,
-                subfolder="scheduler",
-                clip_sample=False,
-                timestep_spacing="linspace",
-                beta_schedule="linear",
-                steps_offset=1,
-            )
             pipe = AnimateDiffSDXLPipeline.from_pretrained(
                 stable_diffusion_model_path,
                 motion_adapter=adapter,
-                scheduler=scheduler,
                 torch_dtype=torch.float16,
                 variant="fp16",
             ).to("cuda")
@@ -2800,6 +2788,7 @@ def generate_image_flux(prompt, model_name, guidance_scale, height, width, num_i
                 height=height,
                 width=width,
                 num_inference_steps=num_inference_steps,
+                max_sequence_length=max_sequence_length,
             ).images[0]
 
         if stop_signal:
@@ -4719,6 +4708,7 @@ controlnet_interface = gr.Interface(
         gr.Slider(minimum=1.0, maximum=30.0, value=8, step=0.1, label="CFG"),
         gr.Slider(minimum=256, maximum=2048, value=512, step=64, label="Width"),
         gr.Slider(minimum=256, maximum=2048, value=512, step=64, label="Height"),
+        gr.Slider(minimum=0.1, maximum=1.0, value=0.5, step=0.1, label="ControlNet conditioning scale"),
         gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
         gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
@@ -5153,7 +5143,7 @@ flux_interface = gr.Interface(
         gr.Slider(minimum=256, maximum=2048, value=768, step=64, label="Height"),
         gr.Slider(minimum=256, maximum=2048, value=1024, step=64, label="Width"),
         gr.Slider(minimum=1, maximum=100, value=10, step=1, label="Steps"),
-        gr.Slider(minimum=1, maximum=1024, value=256, step=1, label="Max Sequence Length (Schnell only)"),
+        gr.Slider(minimum=1, maximum=1024, value=256, step=1, label="Max Sequence Length"),
         gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
         gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
