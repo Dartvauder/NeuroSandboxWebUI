@@ -30,13 +30,13 @@ L'objectif du projet est de créer l'application la plus simple possible pour ut
 * Authentification via admin:admin (Vous pouvez saisir vos identifiants dans le fichier GradioAuth.txt)
 * Vous pouvez ajouter votre propre HuggingFace-Token pour télécharger des modèles spécifiques (Vous pouvez saisir votre token dans le fichier HF-Token.txt)
 * Prise en charge des modèles Transformers et llama.cpp (LLM)
-* Prise en charge des modèles diffusers et safetensors (StableDiffusion) - onglets txt2img, img2img, depth2img, pix2pix, controlnet, upscale, inpaint, gligen, animatediff, video, ldm3d, sd3, cascade et extras
+* Prise en charge des modèles diffusers et safetensors (StableDiffusion) - onglets txt2img, img2img, depth2img, pix2pix, controlnet, upscale, inpaint, gligen, animatediff, video, ldm3d, sd3, cascade, adapters et extras
 * Prise en charge de modèles supplémentaires pour la génération d'images : Kandinsky, Flux, HunyuanDiT, Lumina-T2X, Kolors, AuraFlow, Würstchen, DeepFloydIF et PixArt
 * Prise en charge de StableAudioOpen
 * Prise en charge d'AudioCraft (Modèles : musicgen, audiogen et magnet)
 * Prise en charge d'AudioLDM 2 (Modèles : audio et musique)
 * Prise en charge des modèles TTS et Whisper (pour LLM et TTS-STT)
-* Prise en charge des modèles Lora, Textual inversion (embedding), Vae, Img2img, Depth, Pix2Pix, Controlnet, Upscale(latent), Upscale(Real-ESRGAN), Inpaint, GLIGEN, AnimateDiff, Videos, LDM3D, SD3, Cascade, Rembg, CodeFormer et Roop (pour StableDiffusion)
+* Prise en charge des modèles Lora, Textual inversion (embedding), Vae, Img2img, Depth, Pix2Pix, Controlnet, Upscale(latent), Upscale(Real-ESRGAN), Inpaint, GLIGEN, AnimateDiff, Videos, LDM3D, SD3, Cascade, Adapters (InstantID, PhotoMaker, IP-Adapter-FaceID), Rembg, CodeFormer et Roop (pour StableDiffusion)
 * Prise en charge du modèle Multiband Diffusion (pour AudioCraft)
 * Prise en charge de LibreTranslate (API locale)
 * Prise en charge de ModelScope, ZeroScope 2, CogVideoX et Latte pour la génération de vidéos
@@ -95,7 +95,7 @@ Pour travailler avec l'environnement virtuel via le terminal, exécutez `./Venv.
 
 ## Comment utiliser :
 
-#### L'interface comporte trente-deux onglets dans six onglets principaux : LLM, TTS-STT, SunoBark, LibreTranslate, Wav2Lip, StableDiffusion, Kandinsky, Flux, HunyuanDiT, Lumina-T2X, Kolors, AuraFlow, Würstchen, DeepFloydIF, PixArt, ModelScope, ZeroScope 2, CogVideoX, Latte, TripoSR, StableFast3D, Shap-E, SV34D, Zero123Plus, StableAudio, AudioCraft, AudioLDM 2, Demucs, Gallery, ModelDownloader, Settings et System. Sélectionnez celui dont vous avez besoin et suivez les instructions ci-dessous 
+#### L'interface comporte trente-deux onglets dans six onglets principaux (Texte, Image, Vidéo, 3D, Audio et Interface): LLM, TTS-STT, SunoBark, LibreTranslate, Wav2Lip, StableDiffusion, Kandinsky, Flux, HunyuanDiT, Lumina-T2X, Kolors, AuraFlow, Würstchen, DeepFloydIF, PixArt, ModelScope, ZeroScope 2, CogVideoX, Latte, TripoSR, StableFast3D, Shap-E, SV34D, Zero123Plus, StableAudio, AudioCraft, AudioLDM 2, Demucs, Gallery, ModelDownloader, Settings et System. Sélectionnez celui dont vous avez besoin et suivez les instructions ci-dessous 
 
 ### LLM :
 
