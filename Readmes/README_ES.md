@@ -138,7 +138,7 @@ Para trabajar con el entorno virtual a través de la terminal, ejecuta `./Venv.s
 3) Configura el modelo según los parámetros que necesites
 4) Haz clic en el botón `Submit` para recibir la sincronización labial
 
-### StableDiffusion - tiene quince sub-pestañas:
+### StableDiffusion - tiene dieciséis sub-pestañas:
 
 #### txt2img:
 
