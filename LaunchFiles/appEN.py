@@ -15,10 +15,14 @@ from TTS.api import TTS
 import whisper
 from datetime import datetime
 from huggingface_hub import snapshot_download
-from diffusers import StableDiffusionPipeline, StableDiffusion3Pipeline, StableDiffusionXLPipeline, StableDiffusionImg2ImgPipeline, StableDiffusion3Img2ImgPipeline, SD3ControlNetModel, StableDiffusion3ControlNetPipeline, StableDiffusion3InpaintPipeline, StableDiffusionDepth2ImgPipeline, ControlNetModel, StableDiffusionXLControlNetPipeline, StableDiffusionControlNetPipeline, AutoencoderKL, StableDiffusionLatentUpscalePipeline, StableDiffusionUpscalePipeline, StableDiffusionInpaintPipeline, StableDiffusionGLIGENPipeline, AnimateDiffPipeline, AnimateDiffSDXLPipeline, AnimateDiffVideoToVideoPipeline, MotionAdapter, StableVideoDiffusionPipeline, I2VGenXLPipeline, StableCascadePriorPipeline, StableCascadeDecoderPipeline, DiffusionPipeline, DPMSolverMultistepScheduler, ShapEPipeline, ShapEImg2ImgPipeline, StableAudioPipeline, AudioLDM2Pipeline, StableDiffusionInstructPix2PixPipeline, StableDiffusionLDM3DPipeline, FluxPipeline, KandinskyPipeline, KandinskyPriorPipeline, KandinskyV22Pipeline, KandinskyV22PriorPipeline, AutoPipelineForText2Image, KandinskyImg2ImgPipeline, AutoPipelineForImage2Image, AutoPipelineForInpainting, HunyuanDiTPipeline, LuminaText2ImgPipeline, IFPipeline, IFSuperResolutionPipeline, IFImg2ImgPipeline, IFInpaintingPipeline, IFImg2ImgSuperResolutionPipeline, IFInpaintingSuperResolutionPipeline, PixArtAlphaPipeline, PixArtSigmaPipeline, CogVideoXPipeline, LattePipeline, KolorsPipeline, AuraFlowPipeline, WuerstchenDecoderPipeline, WuerstchenPriorPipeline, EulerAncestralDiscreteScheduler, DDIMScheduler
+from diffusers import StableDiffusionPipeline, StableDiffusion3Pipeline, StableDiffusionXLPipeline, StableDiffusionImg2ImgPipeline, StableDiffusion3Img2ImgPipeline, SD3ControlNetModel, StableDiffusion3ControlNetPipeline, StableDiffusion3InpaintPipeline, StableDiffusionDepth2ImgPipeline, ControlNetModel, StableDiffusionXLControlNetPipeline, StableDiffusionControlNetPipeline, AutoencoderKL, StableDiffusionLatentUpscalePipeline, StableDiffusionUpscalePipeline, StableDiffusionInpaintPipeline, StableDiffusionGLIGENPipeline, AnimateDiffPipeline, AnimateDiffSDXLPipeline, AnimateDiffVideoToVideoPipeline, MotionAdapter, StableVideoDiffusionPipeline, I2VGenXLPipeline, StableCascadePriorPipeline, StableCascadeDecoderPipeline, DiffusionPipeline, ShapEPipeline, ShapEImg2ImgPipeline, StableAudioPipeline, AudioLDM2Pipeline, StableDiffusionInstructPix2PixPipeline, StableDiffusionLDM3DPipeline, FluxPipeline, KandinskyPipeline, KandinskyPriorPipeline, KandinskyV22Pipeline, KandinskyV22PriorPipeline, AutoPipelineForText2Image, KandinskyImg2ImgPipeline, AutoPipelineForImage2Image, AutoPipelineForInpainting, HunyuanDiTPipeline, LuminaText2ImgPipeline, IFPipeline, IFSuperResolutionPipeline, IFImg2ImgPipeline, IFInpaintingPipeline, IFImg2ImgSuperResolutionPipeline, IFInpaintingSuperResolutionPipeline, PixArtAlphaPipeline, PixArtSigmaPipeline, CogVideoXPipeline, LattePipeline, KolorsPipeline, AuraFlowPipeline, WuerstchenDecoderPipeline, WuerstchenPriorPipeline, EulerAncestralDiscreteScheduler
 from diffusers.utils import load_image, export_to_video, export_to_gif, export_to_ply, pt_to_pil
 from diffusers.pipelines.wuerstchen import DEFAULT_STAGE_C_TIMESTEPS
+from instantid.pipeline_stable_diffusion_xl_instantid import StableDiffusionXLInstantIDPipeline, draw_kps
+from photomaker import PhotoMakerStableDiffusionXLPipeline
+from ip_adapter.ip_adapter_faceid import IPAdapterFaceID
 from controlnet_aux import OpenposeDetector, LineartDetector, HEDdetector
+from insightface.app import FaceAnalysis
 from compel import Compel, ReturnedEmbeddingsType
 import trimesh
 from tsr.system import TSR
@@ -2386,6 +2390,220 @@ def generate_image_cascade(prompt, negative_prompt, stable_cascade_settings_html
         torch.cuda.empty_cache()
 
 
+def generate_image_instantid(prompt, negative_prompt, face_image, stable_diffusion_model_name, controlnet_conditioning_scale, ip_adapter_scale, num_inference_steps, guidance_scale, width, height, output_format="png", stop_generation=None):
+    global stop_signal
+    stop_signal = False
+
+    if not face_image:
+        return None, "Please upload a face image!"
+
+    if not stable_diffusion_model_name:
+        return None, "Please select a StableDiffusion model!"
+
+    instantid_model_path = os.path.join("inputs", "image", "sd_models", "instantid")
+    if not os.path.exists(instantid_model_path):
+        print("Downloading InstantID model...")
+        os.makedirs(instantid_model_path, exist_ok=True)
+        Repo.clone_from("https://huggingface.co/InstantX/InstantID", instantid_model_path)
+        print("InstantID model downloaded")
+
+    try:
+        app = FaceAnalysis(name='antelopev2', root='./', providers=['CUDAExecutionProvider', 'CPUExecutionProvider'])
+        app.prepare(ctx_id=0, det_size=(640, 640))
+
+        face_adapter = os.path.join(instantid_model_path, "ip-adapter.bin")
+        controlnet_path = os.path.join(instantid_model_path, "ControlNetModel")
+
+        controlnet = ControlNetModel.from_pretrained(controlnet_path, torch_dtype=torch.float16)
+
+        pipe = StableDiffusionXLInstantIDPipeline.from_pretrained(
+            stable_diffusion_model_name, controlnet=controlnet, torch_dtype=torch.float16
+        )
+        pipe.cuda()
+        pipe.load_ip_adapter_instantid(face_adapter)
+
+        face_image = Image.open(face_image).convert("RGB")
+        face_info = app.get(cv2.cvtColor(np.array(face_image), cv2.COLOR_RGB2BGR))
+        face_info = sorted(face_info, key=lambda x:(x['bbox'][2]-x['bbox'][0])*x['bbox'][3]-x['bbox'][1])[-1]
+        face_emb = face_info['embedding']
+        face_kps = draw_kps(face_image, face_info['kps'])
+
+        pipe.set_ip_adapter_scale(ip_adapter_scale)
+
+        image = pipe(
+            prompt,
+            negative_prompt=negative_prompt,
+            image_embeds=face_emb,
+            image=face_kps,
+            controlnet_conditioning_scale=controlnet_conditioning_scale,
+            num_inference_steps=num_inference_steps,
+            guidance_scale=guidance_scale,
+            width=width,
+            height=height
+        ).images[0]
+
+        if stop_signal:
+            return None, "Generation stopped"
+
+        today = datetime.now().date()
+        image_dir = os.path.join('outputs', f"InstantID_{today.strftime('%Y%m%d')}")
+        os.makedirs(image_dir, exist_ok=True)
+        image_filename = f"instantid_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
+        image_path = os.path.join(image_dir, image_filename)
+        image.save(image_path, format=output_format.upper())
+
+        return image_path, None
+
+    except Exception as e:
+        return None, str(e)
+
+    finally:
+        del pipe
+        torch.cuda.empty_cache()
+
+
+def generate_image_photomaker(prompt, negative_prompt, input_images, base_model_path, trigger_word, num_inference_steps,
+                              guidance_scale, width, height, output_format="png", stop_generation=None):
+    global stop_signal
+    stop_signal = False
+
+    if not input_images:
+        return None, "Please upload at least one input image!"
+
+    if not base_model_path:
+        return None, "Please select a base model!"
+
+    photomaker_path = os.path.join("inputs", "image", "sd_models", "photomaker")
+    if not os.path.exists(photomaker_path):
+        print("Downloading PhotoMaker model...")
+        os.makedirs(photomaker_path, exist_ok=True)
+        Repo.clone_from("https://huggingface.co/TencentARC/PhotoMaker-V2", photomaker_path)
+        print("PhotoMaker model downloaded")
+
+    try:
+        device = "cuda" if torch.cuda.is_available() else "cpu"
+
+        pipe = PhotoMakerStableDiffusionXLPipeline.from_pretrained(
+            base_model_path,
+            torch_dtype=torch.float16,
+            use_safetensors=True,
+            variant="fp16"
+        ).to(device)
+
+        pipe.load_photomaker_adapter(
+            photomaker_path,
+            subfolder="",
+            weight_name="photomaker-v2.bin",
+            trigger_word=trigger_word
+        )
+
+        pipe.fuse_lora()
+
+        input_id_images = [load_image(img) for img in input_images]
+
+        generator = torch.Generator(device=device).manual_seed(42)
+        image = pipe(
+            prompt=prompt,
+            input_id_images=input_id_images,
+            negative_prompt=negative_prompt,
+            num_images_per_prompt=1,
+            num_inference_steps=num_inference_steps,
+            guidance_scale=guidance_scale,
+            width=width,
+            height=height,
+            generator=generator,
+        ).images[0]
+
+        if stop_signal:
+            return None, "Generation stopped"
+
+        today = datetime.now().date()
+        image_dir = os.path.join('outputs', f"PhotoMaker_{today.strftime('%Y%m%d')}")
+        os.makedirs(image_dir, exist_ok=True)
+        image_filename = f"photomaker_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
+        image_path = os.path.join(image_dir, image_filename)
+        image.save(image_path, format=output_format.upper())
+
+        return image_path, None
+
+    except Exception as e:
+        return None, str(e)
+
+    finally:
+        del pipe
+        torch.cuda.empty_cache()
+
+
+def generate_image_ip_adapter_faceid(prompt, negative_prompt, face_image, base_model_path, ip_adapter_version,
+                                     num_inference_steps, guidance_scale, width, height, output_format="png",
+                                     stop_generation=None):
+    global stop_signal
+    stop_signal = False
+
+    if not face_image:
+        return None, "Please upload a face image!"
+
+    if not base_model_path:
+        return None, "Please select a base model!"
+
+    ip_adapter_path = os.path.join("inputs", "image", "sd_models", "ip-adapter-faceid")
+    if not os.path.exists(ip_adapter_path):
+        print("Downloading IP-Adapter-FaceID model...")
+        os.makedirs(ip_adapter_path, exist_ok=True)
+        Repo.clone_from("https://huggingface.co/h94/IP-Adapter-FaceID", ip_adapter_path)
+        print("IP-Adapter-FaceID model downloaded")
+
+    try:
+        device = "cuda" if torch.cuda.is_available() else "cpu"
+
+        app = FaceAnalysis(name="buffalo_l", providers=['CUDAExecutionProvider', 'CPUExecutionProvider'])
+        app.prepare(ctx_id=0, det_size=(640, 640))
+        image = cv2.imread(face_image)
+        faces = app.get(image)
+        faceid_embeds = torch.from_numpy(faces[0].normed_embedding).unsqueeze(0).to(device)
+
+        pipe = StableDiffusionPipeline.from_pretrained(
+            base_model_path,
+            torch_dtype=torch.float16,
+        ).to(device)
+
+        ip_ckpt = os.path.join(ip_adapter_path, f"{ip_adapter_version}.bin")
+        ip_model = IPAdapterFaceID(pipe, ip_ckpt, device)
+
+        images = ip_model.generate(
+            prompt=prompt,
+            negative_prompt=negative_prompt,
+            faceid_embeds=faceid_embeds,
+            num_samples=1,
+            width=width,
+            height=height,
+            num_inference_steps=num_inference_steps,
+            guidance_scale=guidance_scale,
+        )
+
+        if stop_signal:
+            return None, "Generation stopped"
+
+        image = images[0]
+
+        today = datetime.now().date()
+        image_dir = os.path.join('outputs', f"IPAdapterFaceID_{today.strftime('%Y%m%d')}")
+        os.makedirs(image_dir, exist_ok=True)
+        image_filename = f"ip_adapter_faceid_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
+        image_path = os.path.join(image_dir, image_filename)
+        image.save(image_path, format=output_format.upper())
+
+        return image_path, None
+
+    except Exception as e:
+        return None, str(e)
+
+    finally:
+        del pipe
+        del ip_model
+        torch.cuda.empty_cache()
+
+
 def generate_image_extras(input_image, source_image, remove_background, enable_faceswap, enable_facerestore, image_output_format, stop_generation):
     if not input_image:
         return None, "Please upload an image file!"
@@ -2928,7 +3146,6 @@ def generate_image_kolors(prompt, negative_prompt, guidance_scale, num_inference
     try:
         pipe = KolorsPipeline.from_pretrained(kolors_model_path, torch_dtype=torch.float16, variant="fp16")
         pipe.to("cuda")
-        pipe.scheduler = DPMSolverMultistepScheduler.from_config(pipe.scheduler.config, use_karras_sigmas=True)
 
         image = pipe(
             prompt=prompt,
@@ -3566,7 +3783,6 @@ def generate_video_zeroscope2(prompt, video_to_enhance, strength, num_inference_
         try:
             enhance_pipe = DiffusionPipeline.from_pretrained(enhance_model_path, torch_dtype=torch.float16)
             enhance_pipe.to(device)
-            enhance_pipe.scheduler = DPMSolverMultistepScheduler.from_config(enhance_pipe.scheduler.config)
             enhance_pipe.enable_model_cpu_offload()
             enhance_pipe.enable_vae_slicing()
 
@@ -3596,7 +3812,6 @@ def generate_video_zeroscope2(prompt, video_to_enhance, strength, num_inference_
     else:
         try:
             base_pipe = DiffusionPipeline.from_pretrained(base_model_path, torch_dtype=torch.float16)
-            base_pipe.scheduler = DPMSolverMultistepScheduler.from_config(base_pipe.scheduler.config)
             base_pipe.to(device)
             base_pipe.enable_model_cpu_offload()
             base_pipe.enable_vae_slicing()
@@ -4448,7 +4663,7 @@ textual_inversion_models_list = [None] + [model for model in os.listdir("inputs/
 inpaint_models_list = [None] + [model.replace(".safetensors", "") for model in
                                 os.listdir("inputs/image/sd_models/inpaint")
                                 if model.endswith(".safetensors") or not model.endswith(".txt")]
-controlnet_models_list = [None, "openpose", "depth", "canny", "lineart", "scribble", "ip-adapter", "ip-adapter-face"]
+controlnet_models_list = [None, "openpose", "depth", "canny", "lineart", "scribble"]
 
 chat_interface = gr.Interface(
     fn=generate_text_and_speech,
@@ -4702,7 +4917,7 @@ controlnet_interface = gr.Interface(
         gr.Textbox(label="Enter your negative prompt", value=""),
         gr.Image(label="Initial image", type="filepath"),
         gr.Radio(choices=["SD", "SDXL"], label="Select model type", value="SD"),
-        gr.Dropdown(choices=stable_diffusion_models_list, label="Select StableDiffusion model (only SD1.5)", value=None),
+        gr.Dropdown(choices=stable_diffusion_models_list, label="Select StableDiffusion model", value=None),
         gr.Dropdown(choices=controlnet_models_list, label="Select ControlNet model", value=None),
         gr.Slider(minimum=1, maximum=100, value=30, step=1, label="Steps"),
         gr.Slider(minimum=1.0, maximum=30.0, value=8, step=0.1, label="CFG"),
@@ -5030,6 +5245,99 @@ cascade_interface = gr.Interface(
                 "You can customize the generation settings from the sliders. "
                 "Try it and see what happens!",
     allow_flagging="never",
+)
+
+instantid_interface = gr.Interface(
+    fn=generate_image_instantid,
+    inputs=[
+        gr.Textbox(label="Enter your prompt"),
+        gr.Textbox(label="Enter your negative prompt", value=""),
+        gr.Image(label="Face image", type="filepath"),
+        gr.Dropdown(choices=stable_diffusion_models_list, label="Select StableDiffusion XL model", value=None),
+        gr.Slider(minimum=0.0, maximum=1.0, value=0.8, step=0.01, label="ControlNet conditioning scale"),
+        gr.Slider(minimum=0.0, maximum=1.0, value=0.8, step=0.01, label="IP-Adapter scale"),
+        gr.Slider(minimum=1, maximum=150, value=30, step=1, label="Steps"),
+        gr.Slider(minimum=1.0, maximum=20.0, value=7.5, step=0.1, label="Guidance Scale (CFG)"),
+        gr.Slider(minimum=256, maximum=2048, value=512, step=64, label="Width"),
+        gr.Slider(minimum=256, maximum=2048, value=768, step=64, label="Height"),
+        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
+        gr.Button(value="Stop generation", interactive=True, variant="stop"),
+    ],
+    outputs=[
+        gr.Image(type="filepath", label="Generated image"),
+        gr.Textbox(label="Message", type="text"),
+    ],
+    title="NeuroSandboxWebUI (ALPHA) - InstantID",
+    description="This user interface allows you to generate images using InstantID. "
+                "Upload a face image, enter a prompt, select a Stable Diffusion model, and customize the generation settings. "
+                "Try it and see what happens!",
+    allow_flagging="never",
+)
+
+photomaker_interface = gr.Interface(
+    fn=generate_image_photomaker,
+    inputs=[
+        gr.Textbox(label="Enter your prompt"),
+        gr.Textbox(label="Enter your negative prompt", value=""),
+        gr.File(label="Upload input images", file_count="multiple", type="filepath"),
+        gr.Textbox(label="Enter trigger word", value="img"),
+        gr.Dropdown(choices=stable_diffusion_models_list, label="Select StableDiffusion XL model", value=None),
+        gr.Slider(minimum=1, maximum=150, value=30, step=1, label="Steps"),
+        gr.Slider(minimum=1.0, maximum=20.0, value=7.5, step=0.1, label="Guidance Scale (CFG)"),
+        gr.Slider(minimum=256, maximum=2048, value=512, step=64, label="Width"),
+        gr.Slider(minimum=256, maximum=2048, value=768, step=64, label="Height"),
+        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
+        gr.Button(value="Stop generation", interactive=True, variant="stop"),
+    ],
+    outputs=[
+        gr.Image(type="filepath", label="Generated image"),
+        gr.Textbox(label="Message", type="text"),
+    ],
+    title="NeuroSandboxWebUI (ALPHA) - PhotoMaker",
+    description="This user interface allows you to generate images using PhotoMaker. "
+                "Upload input images, enter a prompt, select a base model, and customize the generation settings. "
+                "Try it and see what happens!",
+    allow_flagging="never",
+)
+
+ip_adapter_faceid_interface = gr.Interface(
+    fn=generate_image_ip_adapter_faceid,
+    inputs=[
+        gr.Textbox(label="Enter your prompt"),
+        gr.Textbox(label="Enter your negative prompt", value=""),
+        gr.Image(label="Upload face image", type="filepath"),
+        gr.Dropdown(choices=stable_diffusion_models_list, label="Select StableDiffusion model", value=None),
+        gr.Dropdown(
+            choices=[
+                "ip-adapter-faceid-plusv2_sdxl",
+                "ip-adapter-faceid-plusv2_sd15",
+                "ip-adapter-faceid-portrait-v11_sd15",
+                "ip-adapter-faceid-portrait_sdxl"
+            ],
+            label="Select IP-Adapter-FaceID version",
+            value="ip-adapter-faceid-plusv2_sd15"
+        ),
+        gr.Slider(minimum=1, maximum=150, value=30, step=1, label="Steps"),
+        gr.Slider(minimum=1.0, maximum=20.0, value=7.5, step=0.1, label="Guidance Scale (CFG)"),
+        gr.Slider(minimum=256, maximum=2048, value=512, step=64, label="Width"),
+        gr.Slider(minimum=256, maximum=2048, value=768, step=64, label="Height"),
+        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
+        gr.Button(value="Stop generation", interactive=True, variant="stop"),
+    ],
+    outputs=[
+        gr.Image(type="filepath", label="Generated image"),
+        gr.Textbox(label="Message", type="text"),
+    ],
+    title="NeuroSandboxWebUI (ALPHA) - IP-Adapter-FaceID",
+    description="This user interface allows you to generate images using IP-Adapter-FaceID. "
+                "Upload a face image, enter a prompt, select a base model and IP-Adapter version, and customize the generation settings. "
+                "Try it and see what happens!",
+    allow_flagging="never",
+)
+
+adapters_interface = gr.TabbedInterface(
+    [instantid_interface, photomaker_interface, ip_adapter_faceid_interface],
+    tab_names=["InstantID", "PhotoMaker", "IP-Adapter-FaceID"]
 )
 
 extras_interface = gr.Interface(
@@ -5750,8 +6058,8 @@ with gr.TabbedInterface(
                     [txt2img_interface, img2img_interface, depth2img_interface, pix2pix_interface, controlnet_interface, latent_upscale_interface, realesrgan_upscale_interface, inpaint_interface, gligen_interface, animatediff_interface, video_interface, ldm3d_interface,
                      gr.TabbedInterface([sd3_txt2img_interface, sd3_img2img_interface, sd3_controlnet_interface, sd3_inpaint_interface],
                                         tab_names=["txt2img", "img2img", "controlnet", "inpaint"]),
-                     cascade_interface, extras_interface],
-                    tab_names=["txt2img", "img2img", "depth2img", "pix2pix", "controlnet", "upscale(latent)", "upscale(Real-ESRGAN)", "inpaint", "gligen", "animatediff", "video", "ldm3d", "sd3", "cascade", "extras"]
+                     cascade_interface, adapters_interface, extras_interface],
+                    tab_names=["txt2img", "img2img", "depth2img", "pix2pix", "controlnet", "upscale(latent)", "upscale(Real-ESRGAN)", "inpaint", "gligen", "animatediff", "video", "ldm3d", "sd3", "cascade", "adapters", "extras"]
                 ),
                 kandinsky_interface, flux_interface, hunyuandit_interface, lumina_interface, kolors_interface, auraflow_interface, wurstchen_interface, deepfloyd_if_interface, pixart_interface
             ],
