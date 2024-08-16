@@ -30,13 +30,13 @@
 * Аутентификация через admin:admin (Вы можете вписать свои данные для входа в файле GradioAuth.txt)
 * Вы можете добавить свой собственный HuggingFace-Token для загрузки определенных моделей (Вы можете ввести свой токен в файле HF-Token.txt)
 * Поддержка Transformers и llama.cpp моделей (LLM)
-* Поддержка diffusers и safetensors моделей (StableDiffusion) - Вкладки txt2img, img2img, depth2img, pix2pix, controlnet, upscale, inpaint, gligen, animatediff, video, ldm3d, sd3, cascade и extras
+* Поддержка diffusers и safetensors моделей (StableDiffusion) - Вкладки txt2img, img2img, depth2img, pix2pix, controlnet, upscale, inpaint, gligen, animatediff, video, ldm3d, sd3, cascade, adapters и extras
 * Поддержка дополнительных моделей для генерации изображений: Kandinsky, Flux, HunyuanDiT, Lumina-T2X, Kolors, AuraFlow, Würstchen, DeepFloydIF и PixArt
 * Поддержка StableAudioOpen
 * Поддержка AudioCraft (Модели: musicgen, audiogen и magnet)
 * Поддержка AudioLDM 2 (Модели: audio и music)
 * Поддержка TTS и Whisper моделей (Для LLM и TTS-STT)
-* Поддержка Lora, Textual inversion (embedding), Vae, Img2img, Depth, Pix2Pix, Controlnet, Upscale(latent), Upscale(Real-ESRGAN), Inpaint, GLIGEN, AnimateDiff, Videos, LDM3D, SD3, Cascade, Rembg, CodeFormer и Roop моделей (Для StableDiffusion)
+* Поддержка Lora, Textual inversion (embedding), Vae, Img2img, Depth, Pix2Pix, Controlnet, Upscale(latent), Upscale(Real-ESRGAN), Inpaint, GLIGEN, AnimateDiff, Videos, LDM3D, SD3, Cascade, Adapters (InstantID, PhotoMaker, IP-Adapter-FaceID), Rembg, CodeFormer и Roop моделей (Для StableDiffusion)
 * Поддержка Multiband Diffusion модели (Для AudioCraft)
 * Поддержка LibreTranslate (Локальный API)
 * Поддержка ModelScope, ZeroScope 2, CogVideoX и Latte для генерации видео
@@ -95,7 +95,7 @@
 
 ## Как использовать:
 
-#### Интерфейс имеет тридцать две вкладки в шести главных вкладках: LLM, TTS-STT, SunoBark, LibreTranslate, Wav2Lip, StableDiffusion, Kandinsky, Flux, HunyuanDiT, Lumina-T2X, Kolors, AuraFlow, Würstchen, DeepFloydIF, PixArt, ModelScope, ZeroScope 2, CogVideoX, Latte, TripoSR, StableFast3D, Shap-E, SV34D, Zero123Plus, StableAudio, AudioCraft, AudioLDM 2, Demucs, Галерея, Загрузчик моделей, Настройки и Система. Выберите ту которая вам нужна и следуйте инструкциям ниже
+#### Интерфейс имеет тридцать две вкладки в шести главных вкладках (Текст, Изображение, Видео, 3D, Аудио и Интерфейс): LLM, TTS-STT, SunoBark, LibreTranslate, Wav2Lip, StableDiffusion, Kandinsky, Flux, HunyuanDiT, Lumina-T2X, Kolors, AuraFlow, Würstchen, DeepFloydIF, PixArt, ModelScope, ZeroScope 2, CogVideoX, Latte, TripoSR, StableFast3D, Shap-E, SV34D, Zero123Plus, StableAudio, AudioCraft, AudioLDM 2, Demucs, Галерея, Загрузчик моделей, Настройки и Система. Выберите ту которая вам нужна и следуйте инструкциям ниже
 
 ### LLM:
 
