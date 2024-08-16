@@ -256,6 +256,15 @@ Per lavorare con l'ambiente virtuale tramite il terminale, eseguire `./Venv.sh`
 2) Configura il modello secondo i parametri di cui hai bisogno
 3) Clicca sul pulsante `Submit` per ottenere l'immagine generata
 
+#### adapters (InstantID, PhotoMaker e IP-Adapter-FaceID):
+
+1) Per prima cosa carica i tuoi modelli nella cartella: *inputs/image/sd_models*
+2) Carica l'immagine iniziale
+3) Seleziona il tuo modello dall'elenco a discesa
+4) Imposta il modello in base ai parametri di cui hai bisogno
+5) Seleziona la scheda secondaria di cui hai bisogno
+6) Clicca sul pulsante `Submit` per ottenere l'immagine modificata
+
 #### extras:
 
 1) Carica l'immagine iniziale
