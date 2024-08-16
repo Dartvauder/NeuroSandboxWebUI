@@ -244,7 +244,7 @@ Pour travailler avec l'environnement virtuel via le terminal, exécutez `./Venv.
 2) Configurez le modèle selon les paramètres dont vous avez besoin
 3) Cliquez sur le bouton `Submit` pour obtenir les images générées
 
-#### sd3 :
+#### sd3 (txt2img, img2img, controlnet, inpaint):
 
 1) Entrez votre requête
 2) Configurez le modèle selon les paramètres dont vous avez besoin
@@ -262,7 +262,7 @@ Pour travailler avec l'environnement virtuel via le terminal, exécutez `./Venv.
 2) Sélectionnez les options dont vous avez besoin
 3) Cliquez sur le bouton `Submit` pour obtenir l'image modifiée
 
-### Kandinsky :
+### Kandinsky (txt2img, img2img, inpaint):
 
 1) Entrez votre prompt
 2) Sélectionnez un modèle dans la liste déroulante
@@ -306,7 +306,7 @@ Pour travailler avec l'environnement virtuel via le terminal, exécutez `./Venv.
 2) Configurez le modèle selon les paramètres dont vous avez besoin
 3) Cliquez sur `Submit` pour obtenir l'image générée
 
-### DeepFloydIF :
+### DeepFloydIF (txt2img, img2img, inpaint):
 
 1) Entrez votre prompt
 2) Configurez le modèle selon les paramètres dont vous avez besoin
@@ -431,7 +431,7 @@ Pour travailler avec l'environnement virtuel via le terminal, exécutez `./Venv.
 
 * Les modèles LLM peuvent être obtenus sur [HuggingFace](https://huggingface.co/models) ou à partir du ModelDownloader dans l'interface 
 * Les modèles StableDiffusion, vae, inpaint, embedding et lora peuvent être obtenus sur [CivitAI](https://civitai.com/models) ou à partir du ModelDownloader dans l'interface
-* Les modèles StableAudioOpen, AudioCraft, AudioLDM 2, TTS, Whisper, Wav2Lip, SunoBark, MoonDream2, Upscale, GLIGEN, Depth, Pix2Pix, Controlnet, AnimateDiff, Videos, LDM3D, SD3, Cascade, Rembg, Roop, CodeFormer, Real-ESRGAN, TripoSR, StableFast3D, Shap-E, SV34D, Zero123Plus, Demucs, Kandinsky, Flux, HunyuanDiT, Lumina-T2X, Kolors, AuraFlow, Würstchen, DeepFloydIF, PixArt, ModelScope, ZeroScope 2, CogVideoX, Latte et Multiband diffusion sont téléchargés automatiquement dans le dossier *inputs* lorsqu'ils sont utilisés 
+* Les modèles StableAudioOpen, AudioCraft, AudioLDM 2, TTS, Whisper, Wav2Lip, SunoBark, MoonDream2, Upscale, GLIGEN, Depth, Pix2Pix, Controlnet, AnimateDiff, Videos, LDM3D, SD3, Cascade, InstantID, PhotoMaker, IP-Adapter-FaceID, Rembg, Roop, CodeFormer, Real-ESRGAN, TripoSR, StableFast3D, Shap-E, SV34D, Zero123Plus, Demucs, Kandinsky, Flux, HunyuanDiT, Lumina-T2X, Kolors, AuraFlow, AuraSR, Würstchen, DeepFloydIF, PixArt, ModelScope, ZeroScope 2, CogVideoX, Latte et Multiband diffusion sont téléchargés automatiquement dans le dossier *inputs* lorsqu'ils sont utilisés 
 * Vous pouvez prendre des voix n'importe où. Enregistrez les vôtres ou prenez un enregistrement sur Internet. Ou utilisez simplement celles qui sont déjà dans le projet. L'essentiel est qu'elles soient prétraitées !
 
 ## Wiki
@@ -465,6 +465,10 @@ Tout d'abord, je tiens à remercier les développeurs de [PyCharm](https://www.j
 * `googlesearch-python` - https://github.com/Nv7-GitHub/googlesearch
 * `torchmcubes` - https://github.com/tatsy/torchmcubes
 * `suno-bark` - https://github.com/suno-ai/bark
+* `PhotoMaker` - https://github.com/TencentARC/PhotoMaker
+* `IP-Adapter` - https://github.com/tencent-ailab/IP-Adapter
+* `PyNanoInstantMeshes` - https://github.com/vork/PyNanoInstantMeshes
+* `CLIP` - https://github.com/openai/CLIP
 
 ## Licences tierces :
 
@@ -518,6 +522,10 @@ Tout d'abord, je tiens à remercier les développeurs de [PyCharm](https://www.j
 * [SV34D](https://huggingface.co/stabilityai/sv4d/blob/main/LICENSE.md)
 * [Zero123Plus](https://huggingface.co/blog/open_rail)
 * [Real-ESRGAN](https://github.com/xinntao/Real-ESRGAN/blob/master/LICENSE)
+* [InstantID](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/apache-2.0.md)
+* [PhotoMaker-V2](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/apache-2.0.md)
+* [IP-Adapter-FaceID](https://huggingface.co/h94/IP-Adapter-FaceID)
+* [AuraSR](https://huggingface.co/fal/AuraSR/blob/main/LICENSE.md)
 
 ## Don
 
