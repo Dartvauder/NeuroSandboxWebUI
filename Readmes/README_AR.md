@@ -244,7 +244,7 @@
 2) قم بإعداد النموذج وفقًا للمعلمات التي تحتاجها
 3) انقر على زر `Submit` للحصول على الصور المولدة
 
-#### sd3:
+#### sd3 (txt2img, img2img, controlnet, inpaint):
 
 1) أدخل طلبك
 2) قم بإعداد النموذج وفقًا للمعلمات التي تحتاجها
@@ -262,7 +262,7 @@
 2) حدد الخيارات التي تحتاجها
 3) انقر على زر `Submit` للحصول على الصورة المعدلة
 
-### Kandinsky:
+### Kandinsky (txt2img, img2img, inpaint):
 
 1) أدخل الموجه الخاص بك
 2) حدد نموذجًا من القائمة المنسدلة
@@ -306,7 +306,7 @@
 2) قم بإعداد النموذج وفقًا للمعلمات التي تحتاجها
 3) انقر على `Submit` للحصول على الصورة المولدة
 
-### DeepFloydIF:
+### DeepFloydIF (txt2img, img2img, inpaint):
 
 1) أدخل الموجه الخاص بك
 2) قم بإعداد النموذج وفقًا للمعلمات التي تحتاجها
@@ -431,7 +431,7 @@
 
 * يمكن الحصول على نماذج LLM من [HuggingFace](https://huggingface.co/models) أو من ModelDownloader داخل الواجهة 
 * يمكن الحصول على نماذج StableDiffusion و vae و inpaint و embedding و lora من [CivitAI](https://civitai.com/models) أو من ModelDownloader داخل الواجهة
-* يتم تنزيل نماذج StableAudioOpen و AudioCraft و AudioLDM 2 و TTS و Whisper و Wav2Lip و SunoBark و MoonDream2 و Upscale و GLIGEN و Depth و Pix2Pix و Controlnet و AnimateDiff و Videos و LDM3D و SD3 و Cascade و Rembg و Roop و CodeFormer و Real-ESRGAN و TripoSR و StableFast3D و Shap-E و SV34D و Zero123Plus و Demucs و Kandinsky و Flux و HunyuanDiT و Lumina-T2X و Kolors و AuraFlow و Würstchen و DeepFloydIF و PixArt و ModelScope و ZeroScope 2 و CogVideoX و Latte و Multiband diffusion تلقائيًا في مجلد *inputs* عند استخدامها 
+* يتم تنزيل نماذج StableAudioOpen و AudioCraft و AudioLDM 2 و TTS و Whisper و Wav2Lip و SunoBark و MoonDream2 و Upscale و GLIGEN و Depth و Pix2Pix و Controlnet و AnimateDiff و Videos و LDM3D و SD3 و InstantID و PhotoMaker و IP-Adapter-FaceID و Cascade و Rembg و Roop و CodeFormer و Real-ESRGAN و TripoSR و StableFast3D و Shap-E و SV34D و Zero123Plus و Demucs و Kandinsky و Flux و HunyuanDiT و Lumina-T2X و Kolors و AuraFlow و Würstchen و DeepFloydIF و PixArt و ModelScope و ZeroScope 2 و CogVideoX و Latte و Multiband diffusion تلقائيًا في مجلد *inputs* عند استخدامها 
 * يمكنك الحصول على الأصوات من أي مكان. سجل صوتك أو خذ تسجيلًا من الإنترنت. أو فقط استخدم تلك الموجودة بالفعل في المشروع. الشيء الرئيسي هو أن يتم معالجتها مسبقًا!
 
 ## الويكي
@@ -465,6 +465,10 @@
 * `googlesearch-python` - https://github.com/Nv7-GitHub/googlesearch
 * `torchmcubes` - https://github.com/tatsy/torchmcubes
 * `suno-bark` - https://github.com/suno-ai/bark
+* `PhotoMaker` - https://github.com/TencentARC/PhotoMaker
+* `IP-Adapter` - https://github.com/tencent-ailab/IP-Adapter
+* `PyNanoInstantMeshes` - https://github.com/vork/PyNanoInstantMeshes
+* `CLIP` - https://github.com/openai/CLIP
 ## تراخيص الطرف الثالث:
 
 #### العديد من النماذج لها تراخيص خاصة بها للاستخدام. قبل استخدامها، أنصحك بالتعرف عليها:
@@ -517,6 +521,10 @@
 * [SV34D](https://huggingface.co/stabilityai/sv4d/blob/main/LICENSE.md)
 * [Zero123Plus](https://huggingface.co/blog/open_rail)
 * [Real-ESRGAN](https://github.com/xinntao/Real-ESRGAN/blob/master/LICENSE)
+* [InstantID](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/apache-2.0.md)
+* [PhotoMaker-V2](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/apache-2.0.md)
+* [IP-Adapter-FaceID](https://huggingface.co/h94/IP-Adapter-FaceID)
+* [AuraSR](https://huggingface.co/fal/AuraSR/blob/main/LICENSE.md)
 
 ## التبرع
 
