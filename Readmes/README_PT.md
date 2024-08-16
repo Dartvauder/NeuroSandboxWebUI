@@ -138,7 +138,7 @@ Para trabalhar com o ambiente virtual através do terminal, execute `./Venv.sh`
 3) Configure o modelo de acordo com os parâmetros que você precisa
 4) Clique no botão `Submit` para receber a sincronização labial
 
-### StableDiffusion - tem quinze sub-abas:
+### StableDiffusion - tem dezesseis sub-abas:
 
 #### txt2img:
 
