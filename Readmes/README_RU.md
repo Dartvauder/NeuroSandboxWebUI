@@ -12,7 +12,7 @@
 
 ### Текст: <img width="1127" alt="1ru" src="https://github.com/user-attachments/assets/dbcfdd8d-f893-48ff-90b5-55d03d47ab3e">
 
-### Изображение: <img width="1120" alt="2ru" src="https://github.com/user-attachments/assets/5cf53b1a-de30-4a3f-8aee-c70d53cc1c77">
+### Изображение: <img width="1118" alt="2ru" src="https://github.com/user-attachments/assets/9cd3231e-3821-414f-aa43-e2b5e6ad6f9b">
 
 ### Видео: <img width="1118" alt="3ru" src="https://github.com/user-attachments/assets/efe4f62f-d870-46ee-b803-48e00af9b17c">
 
