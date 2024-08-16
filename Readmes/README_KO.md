@@ -12,7 +12,7 @@
 
 ### 텍스트: <img width="1121" alt="1ko" src="https://github.com/user-attachments/assets/38a3550b-fd23-478c-b0da-cc1abec656fa">
 
-### 이미지: <img width="1122" alt="2ko" src="https://github.com/user-attachments/assets/5be22a89-1fae-4bd9-906b-e88f2ba6305d">
+### 이미지: <img width="1117" alt="2ko" src="https://github.com/user-attachments/assets/cf5ccbf2-f339-4dc6-a16b-d2e540143db0">
 
 ### 비디오: <img width="1122" alt="3ko" src="https://github.com/user-attachments/assets/e946c138-aa99-476e-8b24-ee340cfeb3cf">
 
