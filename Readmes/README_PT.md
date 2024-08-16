@@ -30,13 +30,13 @@ O objetivo do projeto - criar o aplicativo mais fácil possível de usar modelos
 * Autenticação via admin:admin (Você pode inserir seus detalhes de login no arquivo GradioAuth.txt)
 * Você pode adicionar seu próprio HuggingFace-Token para baixar modelos específicos (Você pode inserir seu token no arquivo HF-Token.txt)
 * Suporte para modelos Transformers e llama.cpp (LLM)
-* Suporte para modelos diffusers e safetensors (StableDiffusion) - abas txt2img, img2img, depth2img, pix2pix, controlnet, upscale, inpaint, gligen, animatediff, video, ldm3d, sd3, cascade e extras
+* Suporte para modelos diffusers e safetensors (StableDiffusion) - abas txt2img, img2img, depth2img, pix2pix, controlnet, upscale, inpaint, gligen, animatediff, video, ldm3d, sd3, cascade, adapters e extras
 * Suporte de modelos adicionais para geração de imagens: Kandinsky, Flux, HunyuanDiT, Lumina-T2X, Kolors, AuraFlow, Würstchen, DeepFloydIF e PixArt
 * Suporte StableAudioOpen
 * Suporte AudioCraft (Modelos: musicgen, audiogen e magnet)
 * Suporte AudioLDM 2 (Modelos: audio e music)
 * Suporta modelos TTS e Whisper (Para LLM e TTS-STT)
-* Suporta modelos Lora, Textual inversion (embedding), Vae, Img2img, Depth, Pix2Pix, Controlnet, Upscale(latent), Upscale(Real-ESRGAN), Inpaint, GLIGEN, AnimateDiff, Videos, LDM3D, SD3, Cascade, Rembg, CodeFormer e Roop (Para StableDiffusion)
+* Suporta modelos Lora, Textual inversion (embedding), Vae, Img2img, Depth, Pix2Pix, Controlnet, Upscale(latent), Upscale(Real-ESRGAN), Inpaint, GLIGEN, AnimateDiff, Videos, LDM3D, SD3, Cascade, Adapters (InstantID, PhotoMaker, IP-Adapter-FaceID), Rembg, CodeFormer e Roop (Para StableDiffusion)
 * Suporte ao modelo Multiband Diffusion (Para AudioCraft)
 * Suporte LibreTranslate (API Local)
 * Suporte ModelScope, ZeroScope 2, CogVideoX e Latte para geração de vídeo
@@ -95,7 +95,7 @@ Para trabalhar com o ambiente virtual através do terminal, execute `./Venv.sh`
 
 ## Como usar:
 
-#### A interface tem trinta e duas abas em seis abas principais: LLM, TTS-STT, SunoBark, LibreTranslate, Wav2Lip, StableDiffusion, Kandinsky, Flux, HunyuanDiT, Lumina-T2X, Kolors, AuraFlow, Würstchen, DeepFloydIF, PixArt, ModelScope, ZeroScope 2, CogVideoX, Latte, TripoSR, StableFast3D, Shap-E, SV34D, Zero123Plus, StableAudio, AudioCraft, AudioLDM 2, Demucs, Galeria, ModelDownloader, Configurações e Sistema. Selecione a que você precisa e siga as instruções abaixo
+#### A interface tem trinta e duas abas em seis abas principais (Texto, Imagem, Vídeo, 3D, Áudio e Interface): LLM, TTS-STT, SunoBark, LibreTranslate, Wav2Lip, StableDiffusion, Kandinsky, Flux, HunyuanDiT, Lumina-T2X, Kolors, AuraFlow, Würstchen, DeepFloydIF, PixArt, ModelScope, ZeroScope 2, CogVideoX, Latte, TripoSR, StableFast3D, Shap-E, SV34D, Zero123Plus, StableAudio, AudioCraft, AudioLDM 2, Demucs, Galeria, ModelDownloader, Configurações e Sistema. Selecione a que você precisa e siga as instruções abaixo
 
 ### LLM:
 
