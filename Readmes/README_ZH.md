@@ -30,13 +30,13 @@
 * 通过admin:admin进行身份验证（您可以在GradioAuth.txt文件中输入您的登录详细信息）
 * 您可以添加自己的HuggingFace-Token以下载特定模型（您可以在HF-Token.txt文件中输入您的令牌）
 * 支持Transformers和llama.cpp模型（LLM）
-* 支持diffusers和safetensors模型（StableDiffusion）- txt2img、img2img、depth2img、pix2pix、controlnet、upscale、inpaint、gligen、animatediff、video、ldm3d、sd3、cascade和extras选项卡
+* 支持diffusers和safetensors模型（StableDiffusion）- txt2img、img2img、depth2img、pix2pix、controlnet、upscale、inpaint、gligen、animatediff、video、ldm3d、sd3、cascade, adapters和extras选项卡
 * 支持额外的图像生成模型：Kandinsky、Flux、HunyuanDiT、Lumina-T2X、Kolors、AuraFlow、Würstchen、DeepFloydIF和PixArt
 * 支持StableAudioOpen
 * 支持AudioCraft（模型：musicgen、audiogen和magnet）
 * 支持AudioLDM 2（模型：audio和music）
 * 支持TTS和Whisper模型（用于LLM和TTS-STT）
-* 支持Lora、Textual inversion（嵌入）、Vae、Img2img、Depth、Pix2Pix、Controlnet、Upscale（latent）、Upscale（Real-ESRGAN）、Inpaint、GLIGEN、AnimateDiff、Videos、LDM3D、SD3、Cascade、Rembg、CodeFormer和Roop模型（用于StableDiffusion）
+* 支持Lora、Textual inversion（嵌入）、Vae、Img2img、Depth、Pix2Pix、Controlnet、Upscale（latent）、Upscale（Real-ESRGAN）、Inpaint、GLIGEN、AnimateDiff、Videos、LDM3D、SD3、Cascade, Adapters (InstantID, PhotoMaker, IP-Adapter-FaceID), Rembg、CodeFormer和Roop模型（用于StableDiffusion）
 * 支持Multiband Diffusion模型（用于AudioCraft）
 * 支持LibreTranslate（本地API）
 * 支持ModelScope、ZeroScope 2、CogVideoX和Latte进行视频生成
@@ -95,7 +95,7 @@
 
 ## 如何使用：
 
-#### 界面有六个主选项卡中的三十二个子选项卡：LLM、TTS-STT、SunoBark、LibreTranslate、Wav2Lip、StableDiffusion、Kandinsky、Flux、HunyuanDiT、Lumina-T2X、Kolors、AuraFlow、Würstchen、DeepFloydIF、PixArt、ModelScope、ZeroScope 2、CogVideoX、Latte、TripoSR、StableFast3D、Shap-E、SV34D、Zero123Plus、StableAudio、AudioCraft、AudioLDM 2、Demucs、Gallery、ModelDownloader、Settings和System。选择您需要的选项卡并按照以下说明操作
+#### 界面有六个主选项卡中的三十二个子选项卡 (文本, 图像, 视频, 3D, 音频 和 界面)：LLM、TTS-STT、SunoBark、LibreTranslate、Wav2Lip、StableDiffusion、Kandinsky、Flux、HunyuanDiT、Lumina-T2X、Kolors、AuraFlow、Würstchen、DeepFloydIF、PixArt、ModelScope、ZeroScope 2、CogVideoX、Latte、TripoSR、StableFast3D、Shap-E、SV34D、Zero123Plus、StableAudio、AudioCraft、AudioLDM 2、Demucs、Gallery、ModelDownloader、Settings和System。选择您需要的选项卡并按照以下说明操作
 
 ### LLM：
 
