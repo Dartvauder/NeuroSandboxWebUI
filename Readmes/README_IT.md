@@ -12,7 +12,7 @@ L'obiettivo del progetto è creare l'applicazione più semplice possibile per ut
 
 ### Testo: <img width="1124" alt="1it" src="https://github.com/user-attachments/assets/e9940ff8-c84a-41d2-b798-ffcfba921096">
 
-### Immagine: <img width="1120" alt="2it" src="https://github.com/user-attachments/assets/43eb0f85-0509-4780-99d2-7c930b70015a">
+### Immagine: <img width="1124" alt="2it" src="https://github.com/user-attachments/assets/616e66b9-64ea-442e-91fb-79f1e57795ce">
 
 ### Video: <img width="1118" alt="3it" src="https://github.com/user-attachments/assets/fc50d218-46cb-4f76-8315-807d6164547f">
 
