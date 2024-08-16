@@ -244,7 +244,7 @@
 2) 필요한 매개변수에 따라 모델을 설정합니다
 3) `Submit` 버튼을 클릭하여 생성된 이미지를 받습니다
 
-#### sd3:
+#### sd3 (txt2img, img2img, controlnet, inpaint):
 
 1) 요청을 입력합니다
 2) 필요한 매개변수에 따라 모델을 설정합니다
@@ -262,7 +262,7 @@
 2) 필요한 옵션을 선택합니다
 3) `Submit` 버튼을 클릭하여 수정된 이미지를 받습니다
 
-### Kandinsky:
+### Kandinsky (txt2img, img2img, inpaint):
 
 1) 프롬프트를 입력합니다
 2) 드롭다운 목록에서 모델을 선택합니다
@@ -306,7 +306,7 @@
 2) 필요한 매개변수에 따라 모델을 설정합니다
 3) `Submit`을 클릭하여 생성된 이미지를 받습니다
 
-### DeepFloydIF:
+### DeepFloydIF (txt2img, img2img, inpaint):
 
 1) 프롬프트를 입력합니다
 2) 필요한 매개변수에 따라 모델을 설정합니다
@@ -431,7 +431,7 @@
 
 * LLM 모델은 [HuggingFace](https://huggingface.co/models)에서 가져오거나 인터페이스 내의 ModelDownloader에서 가져올 수 있습니다 
 * StableDiffusion, vae, inpaint, embedding 및 lora 모델은 [CivitAI](https://civitai.com/models)에서 가져오거나 인터페이스 내의 ModelDownloader에서 가져올 수 있습니다
-* StableAudioOpen, AudioCraft, AudioLDM 2, TTS, Whisper, Wav2Lip, SunoBark, MoonDream2, Upscale, GLIGEN, Depth, Pix2Pix, Controlnet, AnimateDiff, Videos, LDM3D, SD3, Cascade, Rembg, Roop, CodeFormer, Real-ESRGAN, TripoSR, StableFast3D, Shap-E, SV34D, Zero123Plus, Demucs, Kandinsky, Flux, HunyuanDiT, Lumina-T2X, Kolors, AuraFlow, Würstchen, DeepFloydIF, PixArt, ModelScope, ZeroScope 2, CogVideoX, Latte 및 Multiband diffusion 모델은 사용될 때 *inputs* 폴더에 자동으로 다운로드됩니다 
+* StableAudioOpen, AudioCraft, AudioLDM 2, TTS, Whisper, Wav2Lip, SunoBark, MoonDream2, Upscale, GLIGEN, Depth, Pix2Pix, Controlnet, AnimateDiff, Videos, LDM3D, SD3, Cascade, InstantID, PhotoMaker, IP-Adapter-FaceID, Rembg, Roop, CodeFormer, Real-ESRGAN, TripoSR, StableFast3D, Shap-E, SV34D, Zero123Plus, Demucs, Kandinsky, Flux, HunyuanDiT, Lumina-T2X, Kolors, AuraFlow, AuraSR, Würstchen, DeepFloydIF, PixArt, ModelScope, ZeroScope 2, CogVideoX, Latte 및 Multiband diffusion 모델은 사용될 때 *inputs* 폴더에 자동으로 다운로드됩니다 
 * 음성은 어디에서나 가져올 수 있습니다. 자신의 목소리를 녹음하거나 인터넷에서 녹음을 가져오세요. 또는 프로젝트에 이미 있는 것을 사용하세요. 중요한 것은 사전 처리되어 있어야 한다는 것입니다!
 
 ## 위키
@@ -465,6 +465,10 @@
 * `googlesearch-python` - https://github.com/Nv7-GitHub/googlesearch
 * `torchmcubes` - https://github.com/tatsy/torchmcubes
 * `suno-bark` - https://github.com/suno-ai/bark
+* `PhotoMaker` - https://github.com/TencentARC/PhotoMaker
+* `IP-Adapter` - https://github.com/tencent-ailab/IP-Adapter
+* `PyNanoInstantMeshes` - https://github.com/vork/PyNanoInstantMeshes
+* `CLIP` - https://github.com/openai/CLIP
 
 ## 제3자 라이선스:
 
@@ -518,6 +522,10 @@
 * [SV34D](https://huggingface.co/stabilityai/sv4d/blob/main/LICENSE.md)
 * [Zero123Plus](https://huggingface.co/blog/open_rail)
 * [Real-ESRGAN](https://github.com/xinntao/Real-ESRGAN/blob/master/LICENSE)
+* [InstantID](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/apache-2.0.md)
+* [PhotoMaker-V2](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/apache-2.0.md)
+* [IP-Adapter-FaceID](https://huggingface.co/h94/IP-Adapter-FaceID)
+* [AuraSR](https://huggingface.co/fal/AuraSR/blob/main/LICENSE.md)
 
 ## 후원
 
