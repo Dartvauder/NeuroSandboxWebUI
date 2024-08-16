@@ -138,7 +138,7 @@
 3) 根据您需要的参数设置模型
 4) 点击`Submit`按钮以接收唇形同步结果
 
-### StableDiffusion - 有十五个子选项卡：
+### StableDiffusion - 有十六子选项卡：
 
 #### txt2img：
 
