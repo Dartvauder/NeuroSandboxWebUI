@@ -30,13 +30,13 @@
 * admin:admin을 통한 인증 (GradioAuth.txt 파일에 로그인 세부 정보를 입력할 수 있습니다)
 * 특정 모델을 다운로드하기 위해 자신의 HuggingFace-Token을 추가할 수 있습니다 (HF-Token.txt 파일에 토큰을 입력할 수 있습니다)
 * Transformers 및 llama.cpp 모델 지원 (LLM)
-* diffusers 및 safetensors 모델 지원 (StableDiffusion) - txt2img, img2img, depth2img, pix2pix, controlnet, upscale, inpaint, gligen, animatediff, video, ldm3d, sd3, cascade 및 extras 탭
+* diffusers 및 safetensors 모델 지원 (StableDiffusion) - txt2img, img2img, depth2img, pix2pix, controlnet, upscale, inpaint, gligen, animatediff, video, ldm3d, sd3, cascade, adapters 및 extras 탭
 * 이미지 생성을 위한 추가 모델 지원: Kandinsky, Flux, HunyuanDiT, Lumina-T2X, Kolors, AuraFlow, Würstchen, DeepFloydIF 및 PixArt
 * StableAudioOpen 지원
 * AudioCraft 지원 (모델: musicgen, audiogen 및 magnet)
 * AudioLDM 2 지원 (모델: audio 및 music)
 * TTS 및 Whisper 모델 지원 (LLM 및 TTS-STT용)
-* Lora, Textual inversion (embedding), Vae, Img2img, Depth, Pix2Pix, Controlnet, Upscale(latent), Upscale(Real-ESRGAN), Inpaint, GLIGEN, AnimateDiff, Videos, LDM3D, SD3, Cascade, Rembg, CodeFormer 및 Roop 모델 지원 (StableDiffusion용)
+* Lora, Textual inversion (embedding), Vae, Img2img, Depth, Pix2Pix, Controlnet, Upscale(latent), Upscale(Real-ESRGAN), Inpaint, GLIGEN, AnimateDiff, Videos, LDM3D, SD3, Cascade, Adapters (InstantID, PhotoMaker, IP-Adapter-FaceID), Rembg, CodeFormer 및 Roop 모델 지원 (StableDiffusion용)
 * Multiband Diffusion 모델 지원 (AudioCraft용)
 * LibreTranslate 지원 (로컬 API)
 * 비디오 생성을 위한 ModelScope, ZeroScope 2, CogVideoX 및 Latte 지원
@@ -95,7 +95,7 @@
 
 ## 사용 방법:
 
-#### 인터페이스에는 여섯 개의 메인 탭에 32개의 탭이 있습니다: LLM, TTS-STT, SunoBark, LibreTranslate, Wav2Lip, StableDiffusion, Kandinsky, Flux, HunyuanDiT, Lumina-T2X, Kolors, AuraFlow, Würstchen, DeepFloydIF, PixArt, ModelScope, ZeroScope 2, CogVideoX, Latte, TripoSR, StableFast3D, Shap-E, SV34D, Zero123Plus, StableAudio, AudioCraft, AudioLDM 2, Demucs, Gallery, ModelDownloader, Settings 및 System. 필요한 것을 선택하고 아래 지침을 따르세요 
+#### 인터페이스에는 여섯 개의 메인 탭에 32개의 탭이 있습니다 (텍스트, 이미지, 비디오, 3D, 오디오 및 인터페이스): LLM, TTS-STT, SunoBark, LibreTranslate, Wav2Lip, StableDiffusion, Kandinsky, Flux, HunyuanDiT, Lumina-T2X, Kolors, AuraFlow, Würstchen, DeepFloydIF, PixArt, ModelScope, ZeroScope 2, CogVideoX, Latte, TripoSR, StableFast3D, Shap-E, SV34D, Zero123Plus, StableAudio, AudioCraft, AudioLDM 2, Demucs, Gallery, ModelDownloader, Settings 및 System. 필요한 것을 선택하고 아래 지침을 따르세요 
 
 ### LLM:
 
