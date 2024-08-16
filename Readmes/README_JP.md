@@ -12,7 +12,7 @@
 
 ### テキスト： <img width="1127" alt="1jp" src="https://github.com/user-attachments/assets/37e91e1b-0e1d-4085-8ae0-b3feaecb72e5">
 
-### 画像： <img width="1120" alt="2jp" src="https://github.com/user-attachments/assets/d09e422b-f4e2-46cc-ba94-082e0c6ecebf">
+### 画像： <img width="1119" alt="2jp" src="https://github.com/user-attachments/assets/a6432218-2d16-478a-9656-baabd6dc1dde">
 
 ### 動画： <img width="1121" alt="3jp" src="https://github.com/user-attachments/assets/ddfe00d4-eede-4bb3-9b6b-03eb0519a491">
 
