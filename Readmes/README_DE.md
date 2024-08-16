@@ -95,7 +95,7 @@ Um mit der virtuellen Umgebung über das Terminal zu arbeiten, führen Sie `./Ve
 
 ## Verwendung:
 
-#### Die Oberfläche hat zweiunddreißig Tabs in sechs Haupttabs (Text, Bild, Video, 3D, Audio and Oberfläche): LLM, TTS-STT, SunoBark, LibreTranslate, Wav2Lip, StableDiffusion, Kandinsky, Flux, HunyuanDiT, Lumina-T2X, Kolors, AuraFlow, Würstchen, DeepFloydIF, PixArt, ModelScope, ZeroScope 2, CogVideoX, Latte, TripoSR, StableFast3D, Shap-E, SV34D, Zero123Plus, StableAudio, AudioCraft, AudioLDM 2, Demucs, Galerie, ModelDownloader, Einstellungen und System. Wählen Sie den gewünschten aus und folgen Sie den Anweisungen unten
+#### Die Oberfläche hat zweiunddreißig Tabs in sechs Haupttabs (Text, Bild, Video, 3D, Audio und Oberfläche): LLM, TTS-STT, SunoBark, LibreTranslate, Wav2Lip, StableDiffusion, Kandinsky, Flux, HunyuanDiT, Lumina-T2X, Kolors, AuraFlow, Würstchen, DeepFloydIF, PixArt, ModelScope, ZeroScope 2, CogVideoX, Latte, TripoSR, StableFast3D, Shap-E, SV34D, Zero123Plus, StableAudio, AudioCraft, AudioLDM 2, Demucs, Galerie, ModelDownloader, Einstellungen und System. Wählen Sie den gewünschten aus und folgen Sie den Anweisungen unten
 
 ### LLM:
 
