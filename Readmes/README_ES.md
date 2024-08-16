@@ -12,7 +12,7 @@ El objetivo del proyecto es crear la aplicación más fácil posible para usar m
 
 ### Texto: <img width="1121" alt="1es" src="https://github.com/user-attachments/assets/c0cd46d8-7f7c-48f1-ae8d-3f7df32db2c8">
 
-### Imagen: <img width="1121" alt="2es" src="https://github.com/user-attachments/assets/242f5ca5-802c-4138-bf15-53ab75b0c09a">
+### Imagen: <img width="1122" alt="2es" src="https://github.com/user-attachments/assets/3aa54076-390e-429d-ab8f-b44b7b2e1006">
 
 ### Video: <img width="1120" alt="3es" src="https://github.com/user-attachments/assets/0bcdcc45-66a0-4f14-8772-92e7e549a65e">
 
