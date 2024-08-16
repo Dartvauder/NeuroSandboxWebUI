@@ -244,7 +244,7 @@ Um mit der virtuellen Umgebung über das Terminal zu arbeiten, führen Sie `./Ve
 2) Richten Sie das Modell gemäß den von Ihnen benötigten Parametern ein
 3) Klicken Sie auf die Schaltfläche `Submit`, um die generierten Bilder zu erhalten
 
-#### sd3:
+#### sd3 (txt2img, img2img, controlnet, inpaint):
 
 1) Geben Sie Ihre Anfrage ein
 2) Richten Sie das Modell gemäß den von Ihnen benötigten Parametern ein
@@ -262,7 +262,7 @@ Um mit der virtuellen Umgebung über das Terminal zu arbeiten, führen Sie `./Ve
 2) Wählen Sie die gewünschten Optionen aus
 3) Klicken Sie auf die Schaltfläche `Submit`, um das modifizierte Bild zu erhalten
 
-### Kandinsky:
+### Kandinsky (txt2img, img2img, inpaint):
 
 1) Geben Sie Ihren Prompt ein
 2) Wählen Sie ein Modell aus der Dropdown-Liste
@@ -306,7 +306,7 @@ Um mit der virtuellen Umgebung über das Terminal zu arbeiten, führen Sie `./Ve
 2) Richten Sie das Modell gemäß den von Ihnen benötigten Parametern ein
 3) Klicken Sie auf `Submit`, um das generierte Bild zu erhalten
 
-### DeepFloydIF:
+### DeepFloydIF (txt2img, img2img, inpaint):
 
 1) Geben Sie Ihren Prompt ein
 2) Richten Sie das Modell gemäß den von Ihnen benötigten Parametern ein
@@ -431,7 +431,7 @@ Um mit der virtuellen Umgebung über das Terminal zu arbeiten, führen Sie `./Ve
 
 * LLM Modelle können von [HuggingFace](https://huggingface.co/models) oder vom ModelDownloader innerhalb der Oberfläche bezogen werden
 * StableDiffusion, vae, inpaint, embedding und lora Modelle können von [CivitAI](https://civitai.com/models) oder vom ModelDownloader innerhalb der Oberfläche bezogen werden
-* StableAudioOpen, AudioCraft, AudioLDM 2, TTS, Whisper, Wav2Lip, SunoBark, MoonDream2, Upscale, GLIGEN, Depth, Pix2Pix, Controlnet, AnimateDiff, Videos, LDM3D, SD3, Cascade, Rembg, Roop, CodeFormer, Real-ESRGAN, TripoSR, StableFast3D, Shap-E, SV34D, Zero123Plus, Demucs, Kandinsky, Flux, HunyuanDiT, Lumina-T2X, Kolors, AuraFlow, Würstchen, DeepFloydIF, PixArt, ModelScope, ZeroScope 2, CogVideoX, Latte und Multiband diffusion Modelle werden automatisch im Ordner *inputs* heruntergeladen, wenn sie verwendet werden
+* StableAudioOpen, AudioCraft, AudioLDM 2, TTS, Whisper, Wav2Lip, SunoBark, MoonDream2, Upscale, GLIGEN, Depth, Pix2Pix, Controlnet, AnimateDiff, Videos, LDM3D, SD3, Cascade, InstantID, PhotoMaker, IP-Adapter-FaceID, Rembg, Roop, CodeFormer, Real-ESRGAN, TripoSR, StableFast3D, Shap-E, SV34D, Zero123Plus, Demucs, Kandinsky, Flux, HunyuanDiT, Lumina-T2X, Kolors, AuraFlow, AuraSR, Würstchen, DeepFloydIF, PixArt, ModelScope, ZeroScope 2, CogVideoX, Latte und Multiband diffusion Modelle werden automatisch im Ordner *inputs* heruntergeladen, wenn sie verwendet werden
 * Sie können Stimmen überall hernehmen. Nehmen Sie Ihre eigene auf oder verwenden Sie eine Aufnahme aus dem Internet. Oder verwenden Sie einfach diejenigen, die bereits im Projekt enthalten sind. Die Hauptsache ist, dass sie vorverarbeitet sind!
 
 ## Wiki
@@ -465,6 +465,10 @@ Zuallererst möchte ich den Entwicklern von [PyCharm](https://www.jetbrains.com/
 * `googlesearch-python` - https://github.com/Nv7-GitHub/googlesearch
 * `torchmcubes` - https://github.com/tatsy/torchmcubes
 * `suno-bark` - https://github.com/suno-ai/bark
+* `PhotoMaker` - https://github.com/TencentARC/PhotoMaker
+* `IP-Adapter` - https://github.com/tencent-ailab/IP-Adapter
+* `PyNanoInstantMeshes` - https://github.com/vork/PyNanoInstantMeshes
+* `CLIP` - https://github.com/openai/CLIP
 
 ## Lizenzen von Drittanbietern:
 
@@ -518,6 +522,10 @@ Zuallererst möchte ich den Entwicklern von [PyCharm](https://www.jetbrains.com/
 * [SV34D](https://huggingface.co/stabilityai/sv4d/blob/main/LICENSE.md)
 * [Zero123Plus](https://huggingface.co/blog/open_rail)
 * [Real-ESRGAN](https://github.com/xinntao/Real-ESRGAN/blob/master/LICENSE)
+* [InstantID](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/apache-2.0.md)
+* [PhotoMaker-V2](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/apache-2.0.md)
+* [IP-Adapter-FaceID](https://huggingface.co/h94/IP-Adapter-FaceID)
+* [AuraSR](https://huggingface.co/fal/AuraSR/blob/main/LICENSE.md)
 
 ## Spende
 
