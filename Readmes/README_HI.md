@@ -12,7 +12,7 @@
 
 ### टेक्स्ट: <img width="1130" alt="1hi" src="https://github.com/user-attachments/assets/da4aa91c-7771-4688-b592-48f67ff350b2">
 
-### छवि: <img width="1123" alt="2hi" src="https://github.com/user-attachments/assets/de35be10-579c-4955-bd91-842824367edd">
+### छवि: <img width="1121" alt="2hi" src="https://github.com/user-attachments/assets/e886b3a2-5439-4132-be1b-258dcdcd6179">
 
 ### वीडियो: <img width="1121" alt="3hi" src="https://github.com/user-attachments/assets/76ad9a35-593c-4dfc-99b6-85428f242007">
 
