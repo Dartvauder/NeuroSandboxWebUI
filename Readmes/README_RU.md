@@ -244,7 +244,7 @@
 2) Настройте модель по нужным вам параметрам
 3) Нажмите кнопку `Submit`, чтобы получить сгенерированное изображения
 
-#### sd3:
+#### sd3 (txt2img, img2img, controlnet, inpaint):
 
 1) Введите ваш запрос
 2) Настройте модель по нужным вам параметрам
@@ -262,7 +262,7 @@
 2) Выберите нужные вам опции
 3) Нажмите кнопку `Submit`, чтобы получить измененное изображение
 
-### Kandinsky:
+### Kandinsky (txt2img, img2img, inpaint):
 
 1) Введите ваш запрос
 2) Выберите модель из выпадающего списка
@@ -306,7 +306,7 @@
 2) Настройте модель по нужным вам параметрам
 3) Нажмите кнопку `Submit`, чтобы получить сгенерированное изображение
 
-### DeepFloydIF:
+### DeepFloydIF (txt2img, img2img, inpaint):
 
 1) Введите ваш запрос
 2) Настройте модель по нужным вам параметрам
@@ -431,7 +431,7 @@
 
 * LLM модели можно взять с сайта [HuggingFace](https://huggingface.co/models) или из внутреннего интерфейса ModelDownloader
 * Модели StableDiffusion, vae, inpaint, embedding и lora можно взять с сайта [CivitAI](https://civitai.com/models) или из внутреннего интерфейса ModelDownloader
-* StableAudioOpen, AudioCraft, AudioLDM 2, TTS, Whisper, Wav2Lip, SunoBark, MoonDream2, Upscale, GLIGEN, Depth, Pix2Pix, Controlnet, AnimateDiff, Videos, LDM3D, SD3, Cascade, Rembg, Roop, CodeFormer, Real-ESRGAN, TripoSR, StableFast3D, Shap-E, SV34D, Zero123Plus, Demucs, Kandinsky, Flux, HunyuanDiT, Lumina-T2X, Kolors, AuraFlow, Würstchen, DeepFloydIF, PixArt, ModelScope, ZeroScope 2, CogVideoX, Latte и Multiband diffusion модели скачиваються автоматически в папку *inputs* при их использовании
+* StableAudioOpen, AudioCraft, AudioLDM 2, TTS, Whisper, Wav2Lip, SunoBark, MoonDream2, Upscale, GLIGEN, Depth, Pix2Pix, Controlnet, AnimateDiff, Videos, LDM3D, SD3, Cascade, InstantID, PhotoMaker, IP-Adapter-FaceID, Rembg, Roop, CodeFormer, Real-ESRGAN, TripoSR, StableFast3D, Shap-E, SV34D, Zero123Plus, Demucs, Kandinsky, Flux, HunyuanDiT, Lumina-T2X, Kolors, AuraFlow, AuraSR, Würstchen, DeepFloydIF, PixArt, ModelScope, ZeroScope 2, CogVideoX, Latte и Multiband diffusion модели скачиваються автоматически в папку *inputs* при их использовании
 * Вы можете использовать голоса откуда угодно. Запишите свой или возьмите запись из интернета. Или просто используйте те, которые уже есть в проекте. Главное, чтобы оно было предварительно обработано!
 
 ## Вики
@@ -465,6 +465,10 @@
 * `googlesearch-python` - https://github.com/Nv7-GitHub/googlesearch
 * `torchmcubes` - https://github.com/tatsy/torchmcubes
 * `suno-bark` - https://github.com/suno-ai/bark
+* `PhotoMaker` - https://github.com/TencentARC/PhotoMaker
+* `IP-Adapter` - https://github.com/tencent-ailab/IP-Adapter
+* `PyNanoInstantMeshes` - https://github.com/vork/PyNanoInstantMeshes
+* `CLIP` - https://github.com/openai/CLIP
 
 ## Сторонние лицензии:
 
@@ -518,6 +522,10 @@
 * [SV34D](https://huggingface.co/stabilityai/sv4d/blob/main/LICENSE.md)
 * [Zero123Plus](https://huggingface.co/blog/open_rail)
 * [Real-ESRGAN](https://github.com/xinntao/Real-ESRGAN/blob/master/LICENSE)
+* [InstantID](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/apache-2.0.md)
+* [PhotoMaker-V2](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/apache-2.0.md)
+* [IP-Adapter-FaceID](https://huggingface.co/h94/IP-Adapter-FaceID)
+* [AuraSR](https://huggingface.co/fal/AuraSR/blob/main/LICENSE.md)
 
 ## Пожертвование
 
