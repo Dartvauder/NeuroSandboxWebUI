@@ -35,6 +35,7 @@ import imageio
 from PIL import Image
 from tqdm import tqdm
 from llama_cpp import Llama
+from llama_cpp.llama_chat_format import MoondreamChatHandler
 import requests
 import re
 from selenium import webdriver
@@ -381,10 +382,57 @@ def generate_text_and_speech(input_text, input_audio, input_image, llm_model_nam
         return chat_history, None, None, None
     if enable_multimodal and llm_model_name == "moondream2":
         if llm_model_type == "llama":
-            chat_history.append([None, "Multimodal with 'llama' model type is not supported yet!"])
-            return chat_history, None, None, None
+            moondream2_path = os.path.join("inputs", "text", "llm_models", "moondream2")
+
+            if not os.path.exists(moondream2_path):
+                print("Downloading Moondream2 model...")
+                os.makedirs(moondream2_path, exist_ok=True)
+                Repo.clone_from("https://huggingface.co/vikhyatk/moondream2", moondream2_path)
+                print("Moondream2 model downloaded")
+
+            chat_handler = MoondreamChatHandler.from_pretrained(
+                moondream2_path,
+                filename="*mmproj*",
+            )
+
+            llm = Llama.from_pretrained(
+                moondream2_path,
+                filename="*text-model*",
+                chat_handler=chat_handler,
+                n_ctx=2048
+            )
+
+            if input_image:
+                image_path = input_image
+            else:
+                return chat_history, None, None, "Please upload an image for multimodal input."
+
+            context = ""
+            for human_text, ai_text in chat_history[-5:]:
+                if human_text:
+                    context += f"Human: {human_text}\n"
+                if ai_text:
+                    context += f"AI: {ai_text}\n"
+
+            response = llm.create_chat_completion(
+                messages=[
+                    {
+                        "role": "system",
+                        "content": "You are a helpful AI assistant capable of analyzing images and text.",
+                    },
+                    {
+                        "role": "user",
+                        "content": [
+                            {"type": "text", "text": f"{context}Human: {prompt}"},
+                            {"type": "image_url", "image_url": {"url": f"file://{image_path}"}}
+                        ]
+                    }
+                ]
+            )
+
+            text = response["choices"][0]["message"]["content"]
         model_id = "vikhyatk/moondream2"
-        revision = "2024-05-08"
+        revision = "2024-07-23"
         model, tokenizer = load_moondream2_model(model_id, revision)
 
         try:
@@ -392,10 +440,10 @@ def generate_text_and_speech(input_text, input_audio, input_image, llm_model_nam
             enc_image = model.encode_image(image)
 
             detect_lang = langdetect.detect(prompt)
-            if detect_lang == "en":
-                bot_instruction = "You are a friendly chatbot who always provides useful and meaningful answers based on the given image and text input."
-            else:
+            if detect_lang == "ru":
                 bot_instruction = "Вы дружелюбный чат-бот, который всегда дает полезные и содержательные ответы на основе данного изображения и текстового ввода."
+            else:
+                bot_instruction = "You are a helpful AI assistant capable of analyzing images and text."
 
             context = ""
             for human_text, ai_text in chat_history[-5:]:
@@ -464,10 +512,10 @@ def generate_text_and_speech(input_text, input_audio, input_image, llm_model_nam
             if llm_model:
                 if llm_model_type == "transformers":
                     detect_lang = langdetect.detect(prompt)
-                    if detect_lang == "en":
-                        bot_instruction = "You are a friendly chatbot who always provides useful and meaningful answers in any language"
-                    else:
+                    if detect_lang == "ru":
                         bot_instruction = "Вы дружелюбный чат-бот, который всегда дает полезные и содержательные ответы на любом языке"
+                    else:
+                        bot_instruction = "I am a chatbot created to help with any questions. I use my knowledge and abilities to provide useful and meaningful answers in any language"
 
                     context = ""
                     for human_text, ai_text in chat_history[-10:]:
@@ -527,10 +575,10 @@ def generate_text_and_speech(input_text, input_audio, input_image, llm_model_nam
 
                 elif llm_model_type == "llama":
                     detect_lang = langdetect.detect(prompt)
-                    if detect_lang == "en":
-                        instruction = "I am a chatbot created to help with any questions. I use my knowledge and abilities to provide useful and meaningful answers in any language\n\n"
+                    if detect_lang == "ru":
+                        instruction = "Вы дружелюбный чат-бот, который всегда дает полезные и содержательные ответы на любом языке\n\n"
                     else:
-                        instruction = "Я чат-бот, созданный для помощи по любым вопросам. Я использую свои знания и способности, чтобы давать полезные и содержательные ответы на любом языке\n\n"
+                        instruction = "I am a chatbot created to help with any questions. I use my knowledge and abilities to provide useful and meaningful answers in any language\n\n"
 
                     context = ""
                     for human_text, ai_text in chat_history[-10:]:
