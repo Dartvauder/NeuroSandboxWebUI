@@ -30,13 +30,13 @@
 * المصادقة عبر admin:admin (يمكنك إدخال تفاصيل تسجيل الدخول الخاصة بك في ملف GradioAuth.txt)
 * يمكنك إضافة HuggingFace-Token الخاص بك لتنزيل نماذج معينة (يمكنك إدخال الرمز المميز الخاص بك في ملف HF-Token.txt)
 * دعم نماذج Transformers و llama.cpp (LLM)
-* دعم نماذج diffusers و safetensors (StableDiffusion) - علامات التبويب txt2img و img2img و depth2img و pix2pix و controlnet و upscale و inpaint و gligen و animatediff و video و ldm3d و sd3 و cascade والإضافات
+* دعم نماذج diffusers و safetensors (StableDiffusion) - علامات التبويب txt2img و img2img و depth2img و pix2pix و controlnet و upscale و inpaint و gligen و animatediff و video و ldm3d و sd3 و cascade و adapters و الإضافات
 * دعم نماذج إضافية لإنشاء الصور: Kandinsky و Flux و HunyuanDiT و Lumina-T2X و Kolors و AuraFlow و Würstchen و DeepFloydIF و PixArt
 * دعم StableAudioOpen
 * دعم AudioCraft (النماذج: musicgen و audiogen و magnet)
 * دعم AudioLDM 2 (النماذج: audio و music)
 * دعم نماذج TTS و Whisper (لـ LLM و TTS-STT)
-* دعم نماذج Lora و Textual inversion (embedding) و Vae و Img2img و Depth و Pix2Pix و Controlnet و Upscale(latent) و Upscale(Real-ESRGAN) و Inpaint و GLIGEN و AnimateDiff و Videos و LDM3D و SD3 و Cascade و Rembg و CodeFormer و Roop (لـ StableDiffusion)
+* دعم نماذج Lora و Textual inversion (embedding) و Vae و Img2img و Depth و Pix2Pix و Controlnet و Upscale(latent) و Upscale(Real-ESRGAN) و Inpaint و GLIGEN و AnimateDiff و Videos و LDM3D و SD3 و Cascade و Adapters (InstantID و PhotoMaker و IP-Adapter-FaceID) و Rembg و CodeFormer و Roop (لـ StableDiffusion)
 * دعم نموذج Multiband Diffusion (لـ AudioCraft)
 * دعم LibreTranslate (واجهة برمجة التطبيقات المحلية)
 * دعم ModelScope و ZeroScope 2 و CogVideoX و Latte لإنشاء الفيديو
@@ -95,7 +95,7 @@
 
 ## كيفية الاستخدام:
 
-#### تحتوي الواجهة على اثنين وثلاثين علامة تبويب في ستة علامات تبويب رئيسية: LLM و TTS-STT و SunoBark و LibreTranslate و Wav2Lip و StableDiffusion و Kandinsky و Flux و HunyuanDiT و Lumina-T2X و Kolors و AuraFlow و Würstchen و DeepFloydIF و PixArt و ModelScope و ZeroScope 2 و CogVideoX و Latte و TripoSR و StableFast3D و Shap-E و SV34D و Zero123Plus و StableAudio و AudioCraft و AudioLDM 2 و Demucs و Gallery و ModelDownloader و Settings و System. حدد ما تحتاجه واتبع التعليمات أدناه
+#### تحتوي الواجهة على اثنين وثلاثين علامة تبويب في ستة علامات تبويب رئيسية (النص و الصورة و الفيديو و ثلاثي الأبعاد و الصوت و الواجهة): LLM و TTS-STT و SunoBark و LibreTranslate و Wav2Lip و StableDiffusion و Kandinsky و Flux و HunyuanDiT و Lumina-T2X و Kolors و AuraFlow و Würstchen و DeepFloydIF و PixArt و ModelScope و ZeroScope 2 و CogVideoX و Latte و TripoSR و StableFast3D و Shap-E و SV34D و Zero123Plus و StableAudio و AudioCraft و AudioLDM 2 و Demucs و Gallery و ModelDownloader و Settings و System. حدد ما تحتاجه واتبع التعليمات أدناه
 
 ### LLM:
 
