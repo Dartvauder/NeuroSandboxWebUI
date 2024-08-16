@@ -138,7 +138,7 @@ Um mit der virtuellen Umgebung über das Terminal zu arbeiten, führen Sie `./Ve
 3) Richten Sie das Modell gemäß den von Ihnen benötigten Parametern ein
 4) Klicken Sie auf die Schaltfläche `Submit`, um die Lippensynchronisation zu erhalten
 
-### StableDiffusion - hat fünfzehn Unter-Tabs:
+### StableDiffusion - hat sechzehn Unter-Tabs:
 
 #### txt2img:
 
@@ -255,6 +255,15 @@ Um mit der virtuellen Umgebung über das Terminal zu arbeiten, führen Sie `./Ve
 1) Geben Sie Ihre Anfrage ein
 2) Richten Sie das Modell gemäß den von Ihnen benötigten Parametern ein
 3) Klicken Sie auf die Schaltfläche `Submit`, um das generierte Bild zu erhalten
+
+#### adapters (InstantID, PhotoMaker und IP-Adapter-FaceID):
+
+1) Laden Sie zuerst Ihre Modelle in den Ordner: *inputs/image/sd_models*
+2) Laden Sie das Ausgangsbild hoch
+3) Wählen Sie Ihr Modell aus der Dropdown-Liste
+4) Richten Sie das Modell gemäß den von Ihnen benötigten Parametern ein
+5) Wählen Sie den Unterreiter, den Sie benötigen
+6) Klicken Sie auf die Schaltfläche `Submit`, um das modifizierte Bild zu erhalten
 
 #### extras:
 
