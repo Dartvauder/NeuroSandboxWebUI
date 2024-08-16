@@ -12,7 +12,7 @@ Das Ziel des Projekts ist es, die einfachstmögliche Anwendung zur Nutzung von n
 
 ### Text: <img width="1119" alt="1de" src="https://github.com/user-attachments/assets/43ea7ed4-db45-4382-ab65-e83d64a5539a">
 
-### Bild: <img width="1119" alt="2de" src="https://github.com/user-attachments/assets/f9b9904e-8c13-4a7c-bd9e-c61e057d2a61">
+### Bild: <img width="1129" alt="2de" src="https://github.com/user-attachments/assets/54c4d40a-7404-41b8-b531-576511497372">
 
 ### Video: <img width="1121" alt="3de" src="https://github.com/user-attachments/assets/7b4847e0-d4b4-4d13-ad16-89031585674b">
 
