@@ -4910,12 +4910,13 @@ controlnet_interface = gr.Interface(
         gr.Textbox(label="अपना नकारात्मक प्रॉम्प्ट दर्ज करें", value=""),
         gr.Image(label="प्रारंभिक छवि", type="filepath"),
         gr.Radio(choices=["SD", "SDXL"], label="मॉडल प्रकार चुनें", value="SD"),
-        gr.Dropdown(choices=stable_diffusion_models_list, label="StableDiffusion मॉडल चुनें (केवल SD1.5)", value=None),
+        gr.Dropdown(choices=stable_diffusion_models_list, label="StableDiffusion मॉडल चुनें", value=None),
         gr.Dropdown(choices=controlnet_models_list, label="ControlNet मॉडल चुनें", value=None),
         gr.Slider(minimum=1, maximum=100, value=30, step=1, label="कदम"),
         gr.Slider(minimum=1.0, maximum=30.0, value=8, step=0.1, label="CFG"),
         gr.Slider(minimum=256, maximum=2048, value=512, step=64, label="चौड़ाई"),
         gr.Slider(minimum=256, maximum=2048, value=512, step=64, label="ऊंचाई"),
+        gr.Slider(minimum=0.1, maximum=1.0, value=0.5, step=0.1, label="ControlNet कंडीशनिंग स्केल"),
         gr.Radio(choices=["png", "jpeg"], label="आउटपुट प्रारूप चुनें", value="png", interactive=True),
         gr.Button(value="जनरेशन रोकें", interactive=True, variant="stop"),
     ],
@@ -5225,6 +5226,99 @@ cascade_interface = gr.Interface(
     allow_flagging="never",
 )
 
+instantid_interface = gr.Interface(
+    fn=generate_image_instantid,
+    inputs=[
+        gr.Textbox(label="अपना प्रॉम्प्ट दर्ज करें"),
+        gr.Textbox(label="अपना नकारात्मक प्रॉम्प्ट दर्ज करें", value=""),
+        gr.Image(label="चेहरे की छवि", type="filepath"),
+        gr.Dropdown(choices=stable_diffusion_models_list, label="StableDiffusion XL मॉडल चुनें", value=None),
+        gr.Slider(minimum=0.0, maximum=1.0, value=0.8, step=0.01, label="ControlNet कंडीशनिंग स्केल"),
+        gr.Slider(minimum=0.0, maximum=1.0, value=0.8, step=0.01, label="IP-Adapter स्केल"),
+        gr.Slider(minimum=1, maximum=150, value=30, step=1, label="चरण"),
+        gr.Slider(minimum=1.0, maximum=20.0, value=7.5, step=0.1, label="मार्गदर्शन स्केल (CFG)"),
+        gr.Slider(minimum=256, maximum=2048, value=512, step=64, label="चौड़ाई"),
+        gr.Slider(minimum=256, maximum=2048, value=768, step=64, label="ऊंचाई"),
+        gr.Radio(choices=["png", "jpeg"], label="आउटपुट प्रारूप चुनें", value="png", interactive=True),
+        gr.Button(value="जनरेशन रोकें", interactive=True, variant="stop"),
+    ],
+    outputs=[
+        gr.Image(type="filepath", label="उत्पन्न छवि"),
+        gr.Textbox(label="संदेश", type="text"),
+    ],
+    title="NeuroSandboxWebUI (ALPHA) - InstantID",
+    description="यह उपयोगकर्ता इंटरफ़ेस आपको InstantID का उपयोग करके छवियाँ उत्पन्न करने की अनुमति देता है। "
+                "एक चेहरे की छवि अपलोड करें, एक प्रॉम्प्ट दर्ज करें, एक Stable Diffusion मॉडल चुनें और जनरेशन सेटिंग्स को अनुकूलित करें। "
+                "इसे आज़माएं और देखें क्या होता है!",
+    allow_flagging="never",
+)
+
+photomaker_interface = gr.Interface(
+    fn=generate_image_photomaker,
+    inputs=[
+        gr.Textbox(label="अपना प्रॉम्प्ट दर्ज करें"),
+        gr.Textbox(label="अपना नकारात्मक प्रॉम्प्ट दर्ज करें", value=""),
+        gr.File(label="इनपुट छवियां अपलोड करें", file_count="multiple", type="filepath"),
+        gr.Textbox(label="ट्रिगर शब्द दर्ज करें", value="img"),
+        gr.Dropdown(choices=stable_diffusion_models_list, label="StableDiffusion XL मॉडल चुनें", value=None),
+        gr.Slider(minimum=1, maximum=150, value=30, step=1, label="चरण"),
+        gr.Slider(minimum=1.0, maximum=20.0, value=7.5, step=0.1, label="मार्गदर्शन स्केल (CFG)"),
+        gr.Slider(minimum=256, maximum=2048, value=512, step=64, label="चौड़ाई"),
+        gr.Slider(minimum=256, maximum=2048, value=768, step=64, label="ऊंचाई"),
+        gr.Radio(choices=["png", "jpeg"], label="आउटपुट प्रारूप चुनें", value="png", interactive=True),
+        gr.Button(value="जनरेशन रोकें", interactive=True, variant="stop"),
+    ],
+    outputs=[
+        gr.Image(type="filepath", label="उत्पन्न छवि"),
+        gr.Textbox(label="संदेश", type="text"),
+    ],
+    title="NeuroSandboxWebUI (ALPHA) - PhotoMaker",
+    description="यह उपयोगकर्ता इंटरफ़ेस आपको PhotoMaker का उपयोग करके छवियाँ उत्पन्न करने की अनुमति देता है। "
+                "इनपुट छवियां अपलोड करें, एक प्रॉम्प्ट दर्ज करें, एक बेस मॉडल चुनें और जनरेशन सेटिंग्स को अनुकूलित करें। "
+                "इसे आज़माएं और देखें क्या होता है!",
+    allow_flagging="never",
+)
+
+ip_adapter_faceid_interface = gr.Interface(
+    fn=generate_image_ip_adapter_faceid,
+    inputs=[
+        gr.Textbox(label="अपना प्रॉम्प्ट दर्ज करें"),
+        gr.Textbox(label="अपना नकारात्मक प्रॉम्प्ट दर्ज करें", value=""),
+        gr.Image(label="चेहरे की छवि अपलोड करें", type="filepath"),
+        gr.Dropdown(choices=stable_diffusion_models_list, label="StableDiffusion मॉडल चुनें", value=None),
+        gr.Dropdown(
+            choices=[
+                "ip-adapter-faceid-plusv2_sdxl",
+                "ip-adapter-faceid-plusv2_sd15",
+                "ip-adapter-faceid-portrait-v11_sd15",
+                "ip-adapter-faceid-portrait_sdxl"
+            ],
+            label="IP-Adapter-FaceID संस्करण चुनें",
+            value="ip-adapter-faceid-plusv2_sd15"
+        ),
+        gr.Slider(minimum=1, maximum=150, value=30, step=1, label="चरण"),
+        gr.Slider(minimum=1.0, maximum=20.0, value=7.5, step=0.1, label="मार्गदर्शन स्केल (CFG)"),
+        gr.Slider(minimum=256, maximum=2048, value=512, step=64, label="चौड़ाई"),
+        gr.Slider(minimum=256, maximum=2048, value=768, step=64, label="ऊंचाई"),
+        gr.Radio(choices=["png", "jpeg"], label="आउटपुट प्रारूप चुनें", value="png", interactive=True),
+        gr.Button(value="जनरेशन रोकें", interactive=True, variant="stop"),
+    ],
+    outputs=[
+        gr.Image(type="filepath", label="उत्पन्न छवि"),
+        gr.Textbox(label="संदेश", type="text"),
+    ],
+    title="NeuroSandboxWebUI (ALPHA) - IP-Adapter-FaceID",
+    description="यह उपयोगकर्ता इंटरफ़ेस आपको IP-Adapter-FaceID का उपयोग करके छवियाँ उत्पन्न करने की अनुमति देता है। "
+                "एक चेहरे की छवि अपलोड करें, एक प्रॉम्प्ट दर्ज करें, एक बेस मॉडल और IP-Adapter संस्करण चुनें, और जनरेशन सेटिंग्स को अनुकूलित करें। "
+                "इसे आज़माएं और देखें क्या होता है!",
+    allow_flagging="never",
+)
+
+adapters_interface = gr.TabbedInterface(
+    [instantid_interface, photomaker_interface, ip_adapter_faceid_interface],
+    tab_names=["InstantID", "PhotoMaker", "IP-Adapter-FaceID"]
+)
+
 extras_interface = gr.Interface(
     fn=generate_image_extras,
     inputs=[
@@ -5336,7 +5430,7 @@ flux_interface = gr.Interface(
         gr.Slider(minimum=256, maximum=2048, value=768, step=64, label="ऊंचाई"),
         gr.Slider(minimum=256, maximum=2048, value=1024, step=64, label="चौड़ाई"),
         gr.Slider(minimum=1, maximum=100, value=10, step=1, label="कदम"),
-        gr.Slider(minimum=1, maximum=1024, value=256, step=1, label="अधिकतम अनुक्रम लंबाई (केवल Schnell)"),
+        gr.Slider(minimum=1, maximum=1024, value=256, step=1, label="अधिकतम अनुक्रम लंबाई"),
         gr.Radio(choices=["png", "jpeg"], label="आउटपुट प्रारूप चुनें", value="png", interactive=True),
         gr.Button(value="जनरेशन रोकें", interactive=True, variant="stop"),
     ],
@@ -5417,11 +5511,12 @@ auraflow_interface = gr.Interface(
     inputs=[
         gr.Textbox(label="अपना प्रॉम्प्ट दर्ज करें"),
         gr.Textbox(label="अपना नकारात्मक प्रॉम्प्ट दर्ज करें", value=""),
-        gr.Slider(minimum=1, maximum=100, value=25, step=1, label="कदम"),
+        gr.Slider(minimum=1, maximum=100, value=25, step=1, label="चरण"),
         gr.Slider(minimum=1.0, maximum=20.0, value=7.5, step=0.1, label="मार्गदर्शन स्केल"),
-        gr.Slider(minimum=256, maximum=1024, value=512, step=64, label="ऊंचाई"),
-        gr.Slider(minimum=256, maximum=1024, value=512, step=64, label="चौड़ाई"),
+        gr.Slider(minimum=256, maximum=2048, value=512, step=64, label="ऊंचाई"),
+        gr.Slider(minimum=256, maximum=2048, value=512, step=64, label="चौड़ाई"),
         gr.Slider(minimum=1, maximum=1024, value=256, step=1, label="अधिकतम अनुक्रम लंबाई"),
+        gr.Checkbox(label="AuraSR सक्षम करें", value=False),
         gr.Radio(choices=["png", "jpeg"], label="आउटपुट प्रारूप चुनें", value="png", interactive=True),
         gr.Button(value="जनरेशन रोकें", interactive=True, variant="stop"),
     ],
@@ -5430,7 +5525,10 @@ auraflow_interface = gr.Interface(
         gr.Textbox(label="संदेश", type="text"),
     ],
     title="NeuroSandboxWebUI (ALPHA) - AuraFlow",
-    description="यह उपयोगकर्ता इंटरफ़ेस आपको AuraFlow मॉडल का उपयोग करके छवियाँ उत्पन्न करने की अनुमति देता है। एक प्रॉम्प्ट दर्ज करें और जनरेशन सेटिंग्स को अनुकूलित करें। इसे आजमाएं और देखें क्या होता है!",
+    description="यह उपयोगकर्ता इंटरफ़ेस आपको AuraFlow मॉडल का उपयोग करके छवियाँ उत्पन्न करने की अनुमति देता है। "
+                "एक प्रॉम्प्ट दर्ज करें और जनरेशन सेटिंग्स को अनुकूलित करें। "
+                "आप उत्पन्न छवि के 4x आवर्धन के लिए AuraSR को भी सक्षम कर सकते हैं। "
+                "इसे आज़माएं और देखें क्या होता है!",
     allow_flagging="never",
 )
 
@@ -5904,8 +6002,8 @@ with gr.TabbedInterface(
                     [txt2img_interface, img2img_interface, depth2img_interface, pix2pix_interface, controlnet_interface, latent_upscale_interface, realesrgan_upscale_interface, inpaint_interface, gligen_interface, animatediff_interface, video_interface, ldm3d_interface,
                      gr.TabbedInterface([sd3_txt2img_interface, sd3_img2img_interface, sd3_controlnet_interface, sd3_inpaint_interface],
                                         tab_names=["txt2img", "img2img", "controlnet", "inpaint"]),
-                     cascade_interface, extras_interface],
-                    tab_names=["txt2img", "img2img", "depth2img", "pix2pix", "controlnet", "upscale(latent)", "upscale(Real-ESRGAN)", "inpaint", "gligen", "animatediff", "video", "ldm3d", "sd3", "cascade", "extras"]
+                     cascade_interface, adapters_interface, extras_interface],
+                    tab_names=["txt2img", "img2img", "depth2img", "pix2pix", "controlnet", "upscale(latent)", "upscale(Real-ESRGAN)", "inpaint", "gligen", "animatediff", "video", "ldm3d", "sd3", "cascade", "adapters", "extras"]
                 ),
                 kandinsky_interface, flux_interface, hunyuandit_interface, lumina_interface, kolors_interface, auraflow_interface, wurstchen_interface, deepfloyd_if_interface, pixart_interface
             ],
@@ -5949,6 +6047,9 @@ with gr.TabbedInterface(
     sd3_controlnet_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     sd3_inpaint_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     cascade_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
+    instantid_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
+    photomaker_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
+    ip_adapter_faceid_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     extras_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     kandinsky_txt2img_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     kandinsky_img2img_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)

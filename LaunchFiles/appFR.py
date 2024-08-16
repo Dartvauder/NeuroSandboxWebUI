@@ -4928,12 +4928,13 @@ controlnet_interface = gr.Interface(
         gr.Textbox(label="Entrez votre prompt négatif", value=""),
         gr.Image(label="Image initiale", type="filepath"),
         gr.Radio(choices=["SD", "SDXL"], label="Sélectionnez le type de modèle", value="SD"),
-        gr.Dropdown(choices=stable_diffusion_models_list, label="Sélectionnez le modèle StableDiffusion (uniquement SD1.5)", value=None),
+        gr.Dropdown(choices=stable_diffusion_models_list, label="Sélectionnez le modèle StableDiffusion", value=None),
         gr.Dropdown(choices=controlnet_models_list, label="Sélectionnez le modèle ControlNet", value=None),
         gr.Slider(minimum=1, maximum=100, value=30, step=1, label="Étapes"),
         gr.Slider(minimum=1.0, maximum=30.0, value=8, step=0.1, label="CFG"),
         gr.Slider(minimum=256, maximum=2048, value=512, step=64, label="Largeur"),
         gr.Slider(minimum=256, maximum=2048, value=512, step=64, label="Hauteur"),
+        gr.Slider(minimum=0.1, maximum=1.0, value=0.5, step=0.1, label="Échelle de conditionnement ControlNet"),
         gr.Radio(choices=["png", "jpeg"], label="Sélectionnez le format de sortie", value="png", interactive=True),
         gr.Button(value="Arrêter la génération", interactive=True, variant="stop"),
     ],
@@ -5257,6 +5258,99 @@ cascade_interface = gr.Interface(
     allow_flagging="never",
 )
 
+instantid_interface = gr.Interface(
+    fn=generate_image_instantid,
+    inputs=[
+        gr.Textbox(label="Entrez votre prompt"),
+        gr.Textbox(label="Entrez votre prompt négatif", value=""),
+        gr.Image(label="Image du visage", type="filepath"),
+        gr.Dropdown(choices=stable_diffusion_models_list, label="Sélectionnez le modèle StableDiffusion XL", value=None),
+        gr.Slider(minimum=0.0, maximum=1.0, value=0.8, step=0.01, label="Échelle de conditionnement ControlNet"),
+        gr.Slider(minimum=0.0, maximum=1.0, value=0.8, step=0.01, label="Échelle IP-Adapter"),
+        gr.Slider(minimum=1, maximum=150, value=30, step=1, label="Étapes"),
+        gr.Slider(minimum=1.0, maximum=20.0, value=7.5, step=0.1, label="Échelle de guidage (CFG)"),
+        gr.Slider(minimum=256, maximum=2048, value=512, step=64, label="Largeur"),
+        gr.Slider(minimum=256, maximum=2048, value=768, step=64, label="Hauteur"),
+        gr.Radio(choices=["png", "jpeg"], label="Sélectionnez le format de sortie", value="png", interactive=True),
+        gr.Button(value="Arrêter la génération", interactive=True, variant="stop"),
+    ],
+    outputs=[
+        gr.Image(type="filepath", label="Image générée"),
+        gr.Textbox(label="Message", type="text"),
+    ],
+    title="NeuroSandboxWebUI (ALPHA) - InstantID",
+    description="Cette interface utilisateur vous permet de générer des images en utilisant InstantID. "
+                "Téléchargez une image de visage, entrez un prompt, sélectionnez un modèle Stable Diffusion et personnalisez les paramètres de génération. "
+                "Essayez et voyez ce qui se passe !",
+    allow_flagging="never",
+)
+
+photomaker_interface = gr.Interface(
+    fn=generate_image_photomaker,
+    inputs=[
+        gr.Textbox(label="Entrez votre prompt"),
+        gr.Textbox(label="Entrez votre prompt négatif", value=""),
+        gr.File(label="Télécharger des images d'entrée", file_count="multiple", type="filepath"),
+        gr.Textbox(label="Entrez le mot déclencheur", value="img"),
+        gr.Dropdown(choices=stable_diffusion_models_list, label="Sélectionnez le modèle StableDiffusion XL", value=None),
+        gr.Slider(minimum=1, maximum=150, value=30, step=1, label="Étapes"),
+        gr.Slider(minimum=1.0, maximum=20.0, value=7.5, step=0.1, label="Échelle de guidage (CFG)"),
+        gr.Slider(minimum=256, maximum=2048, value=512, step=64, label="Largeur"),
+        gr.Slider(minimum=256, maximum=2048, value=768, step=64, label="Hauteur"),
+        gr.Radio(choices=["png", "jpeg"], label="Sélectionnez le format de sortie", value="png", interactive=True),
+        gr.Button(value="Arrêter la génération", interactive=True, variant="stop"),
+    ],
+    outputs=[
+        gr.Image(type="filepath", label="Image générée"),
+        gr.Textbox(label="Message", type="text"),
+    ],
+    title="NeuroSandboxWebUI (ALPHA) - PhotoMaker",
+    description="Cette interface utilisateur vous permet de générer des images en utilisant PhotoMaker. "
+                "Téléchargez des images d'entrée, entrez un prompt, sélectionnez un modèle de base et personnalisez les paramètres de génération. "
+                "Essayez et voyez ce qui se passe !",
+    allow_flagging="never",
+)
+
+ip_adapter_faceid_interface = gr.Interface(
+    fn=generate_image_ip_adapter_faceid,
+    inputs=[
+        gr.Textbox(label="Entrez votre prompt"),
+        gr.Textbox(label="Entrez votre prompt négatif", value=""),
+        gr.Image(label="Télécharger l'image du visage", type="filepath"),
+        gr.Dropdown(choices=stable_diffusion_models_list, label="Sélectionnez le modèle StableDiffusion", value=None),
+        gr.Dropdown(
+            choices=[
+                "ip-adapter-faceid-plusv2_sdxl",
+                "ip-adapter-faceid-plusv2_sd15",
+                "ip-adapter-faceid-portrait-v11_sd15",
+                "ip-adapter-faceid-portrait_sdxl"
+            ],
+            label="Sélectionnez la version IP-Adapter-FaceID",
+            value="ip-adapter-faceid-plusv2_sd15"
+        ),
+        gr.Slider(minimum=1, maximum=150, value=30, step=1, label="Étapes"),
+        gr.Slider(minimum=1.0, maximum=20.0, value=7.5, step=0.1, label="Échelle de guidage (CFG)"),
+        gr.Slider(minimum=256, maximum=2048, value=512, step=64, label="Largeur"),
+        gr.Slider(minimum=256, maximum=2048, value=768, step=64, label="Hauteur"),
+        gr.Radio(choices=["png", "jpeg"], label="Sélectionnez le format de sortie", value="png", interactive=True),
+        gr.Button(value="Arrêter la génération", interactive=True, variant="stop"),
+    ],
+    outputs=[
+        gr.Image(type="filepath", label="Image générée"),
+        gr.Textbox(label="Message", type="text"),
+    ],
+    title="NeuroSandboxWebUI (ALPHA) - IP-Adapter-FaceID",
+    description="Cette interface utilisateur vous permet de générer des images en utilisant IP-Adapter-FaceID. "
+                "Téléchargez une image de visage, entrez un prompt, sélectionnez un modèle de base et une version IP-Adapter, et personnalisez les paramètres de génération. "
+                "Essayez et voyez ce qui se passe !",
+    allow_flagging="never",
+)
+
+adapters_interface = gr.TabbedInterface(
+    [instantid_interface, photomaker_interface, ip_adapter_faceid_interface],
+    tab_names=["InstantID", "PhotoMaker", "IP-Adapter-FaceID"]
+)
+
 extras_interface = gr.Interface(
     fn=generate_image_extras,
     inputs=[
@@ -5368,7 +5462,7 @@ flux_interface = gr.Interface(
         gr.Slider(minimum=256, maximum=2048, value=768, step=64, label="Hauteur"),
         gr.Slider(minimum=256, maximum=2048, value=1024, step=64, label="Largeur"),
         gr.Slider(minimum=1, maximum=100, value=10, step=1, label="Étapes"),
-        gr.Slider(minimum=1, maximum=1024, value=256, step=1, label="Longueur maximale de séquence (Schnell uniquement)"),
+        gr.Slider(minimum=1, maximum=1024, value=256, step=1, label="Longueur maximale de séquence"),
         gr.Radio(choices=["png", "jpeg"], label="Sélectionnez le format de sortie", value="png", interactive=True),
         gr.Button(value="Arrêter la génération", interactive=True, variant="stop"),
     ],
@@ -5459,9 +5553,10 @@ auraflow_interface = gr.Interface(
         gr.Textbox(label="Entrez votre prompt négatif", value=""),
         gr.Slider(minimum=1, maximum=100, value=25, step=1, label="Étapes"),
         gr.Slider(minimum=1.0, maximum=20.0, value=7.5, step=0.1, label="Échelle de guidage"),
-        gr.Slider(minimum=256, maximum=1024, value=512, step=64, label="Hauteur"),
-        gr.Slider(minimum=256, maximum=1024, value=512, step=64, label="Largeur"),
+        gr.Slider(minimum=256, maximum=2048, value=512, step=64, label="Hauteur"),
+        gr.Slider(minimum=256, maximum=2048, value=512, step=64, label="Largeur"),
         gr.Slider(minimum=1, maximum=1024, value=256, step=1, label="Longueur maximale de séquence"),
+        gr.Checkbox(label="Activer AuraSR", value=False),
         gr.Radio(choices=["png", "jpeg"], label="Sélectionnez le format de sortie", value="png", interactive=True),
         gr.Button(value="Arrêter la génération", interactive=True, variant="stop"),
     ],
@@ -5472,6 +5567,7 @@ auraflow_interface = gr.Interface(
     title="NeuroSandboxWebUI (ALPHA) - AuraFlow",
     description="Cette interface utilisateur vous permet de générer des images en utilisant le modèle AuraFlow. "
                 "Entrez un prompt et personnalisez les paramètres de génération. "
+                "Vous pouvez également activer AuraSR pour un agrandissement 4x de l'image générée. "
                 "Essayez et voyez ce qui se passe !",
     allow_flagging="never",
 )
@@ -5975,8 +6071,8 @@ with gr.TabbedInterface(
                     [txt2img_interface, img2img_interface, depth2img_interface, pix2pix_interface, controlnet_interface, latent_upscale_interface, realesrgan_upscale_interface, inpaint_interface, gligen_interface, animatediff_interface, video_interface, ldm3d_interface,
                      gr.TabbedInterface([sd3_txt2img_interface, sd3_img2img_interface, sd3_controlnet_interface, sd3_inpaint_interface],
                                         tab_names=["txt2img", "img2img", "controlnet", "inpaint"]),
-                     cascade_interface, extras_interface],
-                    tab_names=["txt2img", "img2img", "depth2img", "pix2pix", "controlnet", "upscale(latent)", "upscale(Real-ESRGAN)", "inpaint", "gligen", "animatediff", "video", "ldm3d", "sd3", "cascade", "extras"]
+                     cascade_interface, adapters_interface, extras_interface],
+                    tab_names=["txt2img", "img2img", "depth2img", "pix2pix", "controlnet", "upscale(latent)", "upscale(Real-ESRGAN)", "inpaint", "gligen", "animatediff", "video", "ldm3d", "sd3", "cascade", "adapters", "extras"]
                 ),
                 kandinsky_interface, flux_interface, hunyuandit_interface, lumina_interface, kolors_interface, auraflow_interface, wurstchen_interface, deepfloyd_if_interface, pixart_interface
             ],
@@ -6020,6 +6116,9 @@ with gr.TabbedInterface(
     sd3_controlnet_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     sd3_inpaint_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     cascade_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
+    instantid_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
+    photomaker_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
+    ip_adapter_faceid_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     extras_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     kandinsky_txt2img_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     kandinsky_img2img_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)

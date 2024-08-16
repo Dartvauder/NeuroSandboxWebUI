@@ -4910,12 +4910,13 @@ controlnet_interface = gr.Interface(
         gr.Textbox(label="부정적 프롬프트 입력", value=""),
         gr.Image(label="초기 이미지", type="filepath"),
         gr.Radio(choices=["SD", "SDXL"], label="모델 유형 선택", value="SD"),
-        gr.Dropdown(choices=stable_diffusion_models_list, label="StableDiffusion 모델 선택 (SD1.5만 해당)", value=None),
+        gr.Dropdown(choices=stable_diffusion_models_list, label="StableDiffusion 모델 선택", value=None),
         gr.Dropdown(choices=controlnet_models_list, label="ControlNet 모델 선택", value=None),
         gr.Slider(minimum=1, maximum=100, value=30, step=1, label="단계"),
         gr.Slider(minimum=1.0, maximum=30.0, value=8, step=0.1, label="CFG"),
         gr.Slider(minimum=256, maximum=2048, value=512, step=64, label="너비"),
         gr.Slider(minimum=256, maximum=2048, value=512, step=64, label="높이"),
+        gr.Slider(minimum=0.1, maximum=1.0, value=0.5, step=0.1, label="ControlNet 조절 스케일"),
         gr.Radio(choices=["png", "jpeg"], label="출력 형식 선택", value="png", interactive=True),
         gr.Button(value="생성 중지", interactive=True, variant="stop"),
     ],
@@ -5225,6 +5226,99 @@ cascade_interface = gr.Interface(
     allow_flagging="never",
 )
 
+instantid_interface = gr.Interface(
+    fn=generate_image_instantid,
+    inputs=[
+        gr.Textbox(label="프롬프트를 입력하세요"),
+        gr.Textbox(label="네거티브 프롬프트를 입력하세요", value=""),
+        gr.Image(label="얼굴 이미지", type="filepath"),
+        gr.Dropdown(choices=stable_diffusion_models_list, label="StableDiffusion XL 모델 선택", value=None),
+        gr.Slider(minimum=0.0, maximum=1.0, value=0.8, step=0.01, label="ControlNet 조절 스케일"),
+        gr.Slider(minimum=0.0, maximum=1.0, value=0.8, step=0.01, label="IP-Adapter 스케일"),
+        gr.Slider(minimum=1, maximum=150, value=30, step=1, label="스텝 수"),
+        gr.Slider(minimum=1.0, maximum=20.0, value=7.5, step=0.1, label="가이던스 스케일 (CFG)"),
+        gr.Slider(minimum=256, maximum=2048, value=512, step=64, label="너비"),
+        gr.Slider(minimum=256, maximum=2048, value=768, step=64, label="높이"),
+        gr.Radio(choices=["png", "jpeg"], label="출력 형식 선택", value="png", interactive=True),
+        gr.Button(value="생성 중지", interactive=True, variant="stop"),
+    ],
+    outputs=[
+        gr.Image(type="filepath", label="생성된 이미지"),
+        gr.Textbox(label="메시지", type="text"),
+    ],
+    title="NeuroSandboxWebUI (ALPHA) - InstantID",
+    description="이 사용자 인터페이스를 사용하면 InstantID를 이용하여 이미지를 생성할 수 있습니다. "
+                "얼굴 이미지를 업로드하고, 프롬프트를 입력하고, Stable Diffusion 모델을 선택한 다음 생성 설정을 조정하세요. "
+                "시도해보고 어떤 일이 일어나는지 확인해보세요!",
+    allow_flagging="never",
+)
+
+photomaker_interface = gr.Interface(
+    fn=generate_image_photomaker,
+    inputs=[
+        gr.Textbox(label="프롬프트를 입력하세요"),
+        gr.Textbox(label="네거티브 프롬프트를 입력하세요", value=""),
+        gr.File(label="입력 이미지 업로드", file_count="multiple", type="filepath"),
+        gr.Textbox(label="트리거 단어 입력", value="img"),
+        gr.Dropdown(choices=stable_diffusion_models_list, label="StableDiffusion XL 모델 선택", value=None),
+        gr.Slider(minimum=1, maximum=150, value=30, step=1, label="스텝 수"),
+        gr.Slider(minimum=1.0, maximum=20.0, value=7.5, step=0.1, label="가이던스 스케일 (CFG)"),
+        gr.Slider(minimum=256, maximum=2048, value=512, step=64, label="너비"),
+        gr.Slider(minimum=256, maximum=2048, value=768, step=64, label="높이"),
+        gr.Radio(choices=["png", "jpeg"], label="출력 형식 선택", value="png", interactive=True),
+        gr.Button(value="생성 중지", interactive=True, variant="stop"),
+    ],
+    outputs=[
+        gr.Image(type="filepath", label="생성된 이미지"),
+        gr.Textbox(label="메시지", type="text"),
+    ],
+    title="NeuroSandboxWebUI (ALPHA) - PhotoMaker",
+    description="이 사용자 인터페이스를 사용하면 PhotoMaker를 이용하여 이미지를 생성할 수 있습니다. "
+                "입력 이미지를 업로드하고, 프롬프트를 입력하고, 기본 모델을 선택한 다음 생성 설정을 조정하세요. "
+                "시도해보고 어떤 일이 일어나는지 확인해보세요!",
+    allow_flagging="never",
+)
+
+ip_adapter_faceid_interface = gr.Interface(
+    fn=generate_image_ip_adapter_faceid,
+    inputs=[
+        gr.Textbox(label="프롬프트를 입력하세요"),
+        gr.Textbox(label="네거티브 프롬프트를 입력하세요", value=""),
+        gr.Image(label="얼굴 이미지 업로드", type="filepath"),
+        gr.Dropdown(choices=stable_diffusion_models_list, label="StableDiffusion 모델 선택", value=None),
+        gr.Dropdown(
+            choices=[
+                "ip-adapter-faceid-plusv2_sdxl",
+                "ip-adapter-faceid-plusv2_sd15",
+                "ip-adapter-faceid-portrait-v11_sd15",
+                "ip-adapter-faceid-portrait_sdxl"
+            ],
+            label="IP-Adapter-FaceID 버전 선택",
+            value="ip-adapter-faceid-plusv2_sd15"
+        ),
+        gr.Slider(minimum=1, maximum=150, value=30, step=1, label="스텝 수"),
+        gr.Slider(minimum=1.0, maximum=20.0, value=7.5, step=0.1, label="가이던스 스케일 (CFG)"),
+        gr.Slider(minimum=256, maximum=2048, value=512, step=64, label="너비"),
+        gr.Slider(minimum=256, maximum=2048, value=768, step=64, label="높이"),
+        gr.Radio(choices=["png", "jpeg"], label="출력 형식 선택", value="png", interactive=True),
+        gr.Button(value="생성 중지", interactive=True, variant="stop"),
+    ],
+    outputs=[
+        gr.Image(type="filepath", label="생성된 이미지"),
+        gr.Textbox(label="메시지", type="text"),
+    ],
+    title="NeuroSandboxWebUI (ALPHA) - IP-Adapter-FaceID",
+    description="이 사용자 인터페이스를 사용하면 IP-Adapter-FaceID를 이용하여 이미지를 생성할 수 있습니다. "
+                "얼굴 이미지를 업로드하고, 프롬프트를 입력하고, 기본 모델과 IP-Adapter 버전을 선택한 다음 생성 설정을 조정하세요. "
+                "시도해보고 어떤 일이 일어나는지 확인해보세요!",
+    allow_flagging="never",
+)
+
+adapters_interface = gr.TabbedInterface(
+    [instantid_interface, photomaker_interface, ip_adapter_faceid_interface],
+    tab_names=["InstantID", "PhotoMaker", "IP-Adapter-FaceID"]
+)
+
 extras_interface = gr.Interface(
     fn=generate_image_extras,
     inputs=[
@@ -5336,7 +5430,7 @@ flux_interface = gr.Interface(
         gr.Slider(minimum=256, maximum=2048, value=768, step=64, label="높이"),
         gr.Slider(minimum=256, maximum=2048, value=1024, step=64, label="너비"),
         gr.Slider(minimum=1, maximum=100, value=10, step=1, label="단계"),
-        gr.Slider(minimum=1, maximum=1024, value=256, step=1, label="최대 시퀀스 길이 (Schnell만 해당)"),
+        gr.Slider(minimum=1, maximum=1024, value=256, step=1, label="최대 시퀀스 길이"),
         gr.Radio(choices=["png", "jpeg"], label="출력 형식 선택", value="png", interactive=True),
         gr.Button(value="생성 중지", interactive=True, variant="stop"),
     ],
@@ -5415,13 +5509,14 @@ kolors_interface = gr.Interface(
 auraflow_interface = gr.Interface(
     fn=generate_image_auraflow,
     inputs=[
-        gr.Textbox(label="프롬프트 입력"),
-        gr.Textbox(label="부정적 프롬프트 입력", value=""),
-        gr.Slider(minimum=1, maximum=100, value=25, step=1, label="단계"),
+        gr.Textbox(label="프롬프트를 입력하세요"),
+        gr.Textbox(label="네거티브 프롬프트를 입력하세요", value=""),
+        gr.Slider(minimum=1, maximum=100, value=25, step=1, label="스텝 수"),
         gr.Slider(minimum=1.0, maximum=20.0, value=7.5, step=0.1, label="가이던스 스케일"),
-        gr.Slider(minimum=256, maximum=1024, value=512, step=64, label="높이"),
-        gr.Slider(minimum=256, maximum=1024, value=512, step=64, label="너비"),
+        gr.Slider(minimum=256, maximum=2048, value=512, step=64, label="높이"),
+        gr.Slider(minimum=256, maximum=2048, value=512, step=64, label="너비"),
         gr.Slider(minimum=1, maximum=1024, value=256, step=1, label="최대 시퀀스 길이"),
+        gr.Checkbox(label="AuraSR 활성화", value=False),
         gr.Radio(choices=["png", "jpeg"], label="출력 형식 선택", value="png", interactive=True),
         gr.Button(value="생성 중지", interactive=True, variant="stop"),
     ],
@@ -5430,7 +5525,10 @@ auraflow_interface = gr.Interface(
         gr.Textbox(label="메시지", type="text"),
     ],
     title="NeuroSandboxWebUI (ALPHA) - AuraFlow",
-    description="이 사용자 인터페이스를 사용하면 AuraFlow 모델을 사용하여 이미지를 생성할 수 있습니다. 프롬프트를 입력하고 생성 설정을 사용자 지정하세요. 시도해 보고 어떤 일이 일어나는지 확인해보세요!",
+    description="이 사용자 인터페이스를 사용하면 AuraFlow 모델을 이용하여 이미지를 생성할 수 있습니다. "
+                "프롬프트를 입력하고 생성 설정을 조정하세요. "
+                "또한 생성된 이미지를 4배 확대하는 AuraSR을 활성화할 수도 있습니다. "
+                "시도해보고 어떤 일이 일어나는지 확인해보세요!",
     allow_flagging="never",
 )
 
@@ -5904,8 +6002,8 @@ with gr.TabbedInterface(
                     [txt2img_interface, img2img_interface, depth2img_interface, pix2pix_interface, controlnet_interface, latent_upscale_interface, realesrgan_upscale_interface, inpaint_interface, gligen_interface, animatediff_interface, video_interface, ldm3d_interface,
                      gr.TabbedInterface([sd3_txt2img_interface, sd3_img2img_interface, sd3_controlnet_interface, sd3_inpaint_interface],
                                         tab_names=["txt2img", "img2img", "controlnet", "inpaint"]),
-                     cascade_interface, extras_interface],
-                    tab_names=["txt2img", "img2img", "depth2img", "pix2pix", "controlnet", "upscale(latent)", "upscale(Real-ESRGAN)", "inpaint", "gligen", "animatediff", "video", "ldm3d", "sd3", "cascade", "extras"]
+                     cascade_interface, adapters_interface, extras_interface],
+                    tab_names=["txt2img", "img2img", "depth2img", "pix2pix", "controlnet", "upscale(latent)", "upscale(Real-ESRGAN)", "inpaint", "gligen", "animatediff", "video", "ldm3d", "sd3", "cascade", "adapters", "extras"]
                 ),
                 kandinsky_interface, flux_interface, hunyuandit_interface, lumina_interface, kolors_interface, auraflow_interface, wurstchen_interface, deepfloyd_if_interface, pixart_interface
             ],
@@ -5949,6 +6047,9 @@ with gr.TabbedInterface(
     sd3_controlnet_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     sd3_inpaint_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     cascade_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
+    instantid_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
+    photomaker_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
+    ip_adapter_faceid_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     extras_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     kandinsky_txt2img_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     kandinsky_img2img_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)

@@ -4910,12 +4910,13 @@ controlnet_interface = gr.Interface(
         gr.Textbox(label="输入您的负面提示", value=""),
         gr.Image(label="初始图像", type="filepath"),
         gr.Radio(choices=["SD", "SDXL"], label="选择模型类型", value="SD"),
-        gr.Dropdown(choices=stable_diffusion_models_list, label="选择StableDiffusion模型（仅限SD1.5）", value=None),
+        gr.Dropdown(choices=stable_diffusion_models_list, label="选择StableDiffusion模型", value=None),
         gr.Dropdown(choices=controlnet_models_list, label="选择ControlNet模型", value=None),
         gr.Slider(minimum=1, maximum=100, value=30, step=1, label="步数"),
         gr.Slider(minimum=1.0, maximum=30.0, value=8, step=0.1, label="CFG"),
         gr.Slider(minimum=256, maximum=2048, value=512, step=64, label="宽度"),
         gr.Slider(minimum=256, maximum=2048, value=512, step=64, label="高度"),
+        gr.Slider(minimum=0.1, maximum=1.0, value=0.5, step=0.1, label="ControlNet调节比例"),
         gr.Radio(choices=["png", "jpeg"], label="选择输出格式", value="png", interactive=True),
         gr.Button(value="停止生成", interactive=True, variant="stop"),
     ],
@@ -5225,6 +5226,99 @@ cascade_interface = gr.Interface(
     allow_flagging="never",
 )
 
+instantid_interface = gr.Interface(
+    fn=generate_image_instantid,
+    inputs=[
+        gr.Textbox(label="输入你的提示词"),
+        gr.Textbox(label="输入你的负面提示词", value=""),
+        gr.Image(label="面部图像", type="filepath"),
+        gr.Dropdown(choices=stable_diffusion_models_list, label="选择StableDiffusion XL模型", value=None),
+        gr.Slider(minimum=0.0, maximum=1.0, value=0.8, step=0.01, label="ControlNet调节比例"),
+        gr.Slider(minimum=0.0, maximum=1.0, value=0.8, step=0.01, label="IP-Adapter比例"),
+        gr.Slider(minimum=1, maximum=150, value=30, step=1, label="步数"),
+        gr.Slider(minimum=1.0, maximum=20.0, value=7.5, step=0.1, label="引导比例 (CFG)"),
+        gr.Slider(minimum=256, maximum=2048, value=512, step=64, label="宽度"),
+        gr.Slider(minimum=256, maximum=2048, value=768, step=64, label="高度"),
+        gr.Radio(choices=["png", "jpeg"], label="选择输出格式", value="png", interactive=True),
+        gr.Button(value="停止生成", interactive=True, variant="stop"),
+    ],
+    outputs=[
+        gr.Image(type="filepath", label="生成的图像"),
+        gr.Textbox(label="消息", type="text"),
+    ],
+    title="NeuroSandboxWebUI (ALPHA) - InstantID",
+    description="这个用户界面允许你使用InstantID生成图像。"
+                "上传一张面部图像，输入提示词，选择Stable Diffusion模型，并自定义生成设置。"
+                "试试看会发生什么！",
+    allow_flagging="never",
+)
+
+photomaker_interface = gr.Interface(
+    fn=generate_image_photomaker,
+    inputs=[
+        gr.Textbox(label="输入你的提示词"),
+        gr.Textbox(label="输入你的负面提示词", value=""),
+        gr.File(label="上传输入图像", file_count="multiple", type="filepath"),
+        gr.Textbox(label="输入触发词", value="img"),
+        gr.Dropdown(choices=stable_diffusion_models_list, label="选择StableDiffusion XL模型", value=None),
+        gr.Slider(minimum=1, maximum=150, value=30, step=1, label="步数"),
+        gr.Slider(minimum=1.0, maximum=20.0, value=7.5, step=0.1, label="引导比例 (CFG)"),
+        gr.Slider(minimum=256, maximum=2048, value=512, step=64, label="宽度"),
+        gr.Slider(minimum=256, maximum=2048, value=768, step=64, label="高度"),
+        gr.Radio(choices=["png", "jpeg"], label="选择输出格式", value="png", interactive=True),
+        gr.Button(value="停止生成", interactive=True, variant="stop"),
+    ],
+    outputs=[
+        gr.Image(type="filepath", label="生成的图像"),
+        gr.Textbox(label="消息", type="text"),
+    ],
+    title="NeuroSandboxWebUI (ALPHA) - PhotoMaker",
+    description="这个用户界面允许你使用PhotoMaker生成图像。"
+                "上传输入图像，输入提示词，选择基础模型，并自定义生成设置。"
+                "试试看会发生什么！",
+    allow_flagging="never",
+)
+
+ip_adapter_faceid_interface = gr.Interface(
+    fn=generate_image_ip_adapter_faceid,
+    inputs=[
+        gr.Textbox(label="输入你的提示词"),
+        gr.Textbox(label="输入你的负面提示词", value=""),
+        gr.Image(label="上传面部图像", type="filepath"),
+        gr.Dropdown(choices=stable_diffusion_models_list, label="选择StableDiffusion模型", value=None),
+        gr.Dropdown(
+            choices=[
+                "ip-adapter-faceid-plusv2_sdxl",
+                "ip-adapter-faceid-plusv2_sd15",
+                "ip-adapter-faceid-portrait-v11_sd15",
+                "ip-adapter-faceid-portrait_sdxl"
+            ],
+            label="选择IP-Adapter-FaceID版本",
+            value="ip-adapter-faceid-plusv2_sd15"
+        ),
+        gr.Slider(minimum=1, maximum=150, value=30, step=1, label="步数"),
+        gr.Slider(minimum=1.0, maximum=20.0, value=7.5, step=0.1, label="引导比例 (CFG)"),
+        gr.Slider(minimum=256, maximum=2048, value=512, step=64, label="宽度"),
+        gr.Slider(minimum=256, maximum=2048, value=768, step=64, label="高度"),
+        gr.Radio(choices=["png", "jpeg"], label="选择输出格式", value="png", interactive=True),
+        gr.Button(value="停止生成", interactive=True, variant="stop"),
+    ],
+    outputs=[
+        gr.Image(type="filepath", label="生成的图像"),
+        gr.Textbox(label="消息", type="text"),
+    ],
+    title="NeuroSandboxWebUI (ALPHA) - IP-Adapter-FaceID",
+    description="这个用户界面允许你使用IP-Adapter-FaceID生成图像。"
+                "上传一张面部图像，输入提示词，选择基础模型和IP-Adapter版本，并自定义生成设置。"
+                "试试看会发生什么！",
+    allow_flagging="never",
+)
+
+adapters_interface = gr.TabbedInterface(
+    [instantid_interface, photomaker_interface, ip_adapter_faceid_interface],
+    tab_names=["InstantID", "PhotoMaker", "IP-Adapter-FaceID"]
+)
+
 extras_interface = gr.Interface(
     fn=generate_image_extras,
     inputs=[
@@ -5336,7 +5430,7 @@ flux_interface = gr.Interface(
         gr.Slider(minimum=256, maximum=2048, value=768, step=64, label="高度"),
         gr.Slider(minimum=256, maximum=2048, value=1024, step=64, label="宽度"),
         gr.Slider(minimum=1, maximum=100, value=10, step=1, label="步数"),
-        gr.Slider(minimum=1, maximum=1024, value=256, step=1, label="最大序列长度（仅限Schnell）"),
+        gr.Slider(minimum=1, maximum=1024, value=256, step=1, label="最大序列长度"),
         gr.Radio(choices=["png", "jpeg"], label="选择输出格式", value="png", interactive=True),
         gr.Button(value="停止生成", interactive=True, variant="stop"),
     ],
@@ -5415,13 +5509,14 @@ kolors_interface = gr.Interface(
 auraflow_interface = gr.Interface(
     fn=generate_image_auraflow,
     inputs=[
-        gr.Textbox(label="输入您的提示"),
-        gr.Textbox(label="输入您的负面提示", value=""),
+        gr.Textbox(label="输入你的提示词"),
+        gr.Textbox(label="输入你的负面提示词", value=""),
         gr.Slider(minimum=1, maximum=100, value=25, step=1, label="步数"),
-        gr.Slider(minimum=1.0, maximum=20.0, value=7.5, step=0.1, label="引导尺度"),
-        gr.Slider(minimum=256, maximum=1024, value=512, step=64, label="高度"),
-        gr.Slider(minimum=256, maximum=1024, value=512, step=64, label="宽度"),
+        gr.Slider(minimum=1.0, maximum=20.0, value=7.5, step=0.1, label="引导比例"),
+        gr.Slider(minimum=256, maximum=2048, value=512, step=64, label="高度"),
+        gr.Slider(minimum=256, maximum=2048, value=512, step=64, label="宽度"),
         gr.Slider(minimum=1, maximum=1024, value=256, step=1, label="最大序列长度"),
+        gr.Checkbox(label="启用AuraSR", value=False),
         gr.Radio(choices=["png", "jpeg"], label="选择输出格式", value="png", interactive=True),
         gr.Button(value="停止生成", interactive=True, variant="stop"),
     ],
@@ -5430,7 +5525,10 @@ auraflow_interface = gr.Interface(
         gr.Textbox(label="消息", type="text"),
     ],
     title="NeuroSandboxWebUI (ALPHA) - AuraFlow",
-    description="此用户界面允许您使用AuraFlow模型生成图像。输入提示并自定义生成设置。尝试一下，看看会发生什么！",
+    description="这个用户界面允许你使用AuraFlow模型生成图像。"
+                "输入提示词并自定义生成设置。"
+                "你还可以启用AuraSR来对生成的图像进行4倍放大。"
+                "试试看会发生什么！",
     allow_flagging="never",
 )
 
@@ -5904,8 +6002,8 @@ with gr.TabbedInterface(
                     [txt2img_interface, img2img_interface, depth2img_interface, pix2pix_interface, controlnet_interface, latent_upscale_interface, realesrgan_upscale_interface, inpaint_interface, gligen_interface, animatediff_interface, video_interface, ldm3d_interface,
                      gr.TabbedInterface([sd3_txt2img_interface, sd3_img2img_interface, sd3_controlnet_interface, sd3_inpaint_interface],
                                         tab_names=["txt2img", "img2img", "controlnet", "inpaint"]),
-                     cascade_interface, extras_interface],
-                    tab_names=["txt2img", "img2img", "depth2img", "pix2pix", "controlnet", "upscale(latent)", "upscale(Real-ESRGAN)", "inpaint", "gligen", "animatediff", "video", "ldm3d", "sd3", "cascade", "extras"]
+                     cascade_interface, adapters_interface, extras_interface],
+                    tab_names=["txt2img", "img2img", "depth2img", "pix2pix", "controlnet", "upscale(latent)", "upscale(Real-ESRGAN)", "inpaint", "gligen", "animatediff", "video", "ldm3d", "sd3", "cascade", "adapters", "extras"]
                 ),
                 kandinsky_interface, flux_interface, hunyuandit_interface, lumina_interface, kolors_interface, auraflow_interface, wurstchen_interface, deepfloyd_if_interface, pixart_interface
             ],
@@ -5949,6 +6047,9 @@ with gr.TabbedInterface(
     sd3_controlnet_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     sd3_inpaint_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     cascade_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
+    instantid_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
+    photomaker_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
+    ip_adapter_faceid_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     extras_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     kandinsky_txt2img_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     kandinsky_img2img_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
