@@ -30,13 +30,13 @@
 * admin:adminによる認証（GradioAuth.txtファイルにログイン詳細を入力可能）
 * 特定のモデルをダウンロードするために自分のHuggingFace-Tokenを追加可能（HF-Token.txtファイルにトークンを入力可能）
 * TransformersとLlama.cppモデル（LLM）のサポート
-* DiffusersとSafetensorsモデル（StableDiffusion）のサポート - txt2img、img2img、depth2img、pix2pix、controlnet、upscale、inpaint、gligen、animatediff、video、ldm3d、sd3、cascadeおよびextrasタブ
+* DiffusersとSafetensorsモデル（StableDiffusion）のサポート - txt2img、img2img、depth2img、pix2pix、controlnet、upscale、inpaint、gligen、animatediff、video、ldm3d、sd3、cascade, adaptersおよびextrasタブ
 * 画像生成のための追加モデルのサポート：Kandinsky、Flux、HunyuanDiT、Lumina-T2X、Kolors、AuraFlow、Würstchen、DeepFloydIF、PixArt
 * StableAudioOpenのサポート
 * AudioCraftのサポート（モデル：musicgen、audiogen、magnet）
 * AudioLDM 2のサポート（モデル：audio、music）
 * TTSとWhisperモデルのサポート（LLMとTTS-STT用）
-* Lora、Textual inversion（embedding）、Vae、Img2img、Depth、Pix2Pix、Controlnet、Upscale（latent）、Upscale（Real-ESRGAN）、Inpaint、GLIGEN、AnimateDiff、Videos、LDM3D、SD3、Cascade、Rembg、CodeFormer、Roopモデルのサポート（StableDiffusion用）
+* Lora、Textual inversion（embedding）、Vae、Img2img、Depth、Pix2Pix、Controlnet、Upscale（latent）、Upscale（Real-ESRGAN）、Inpaint、GLIGEN、AnimateDiff、Videos、LDM3D、SD3、Cascade, Adapters (InstantID, PhotoMaker, IP-Adapter-FaceID), Rembg、CodeFormer、Roopモデルのサポート（StableDiffusion用）
 * Multiband Diffusionモデルのサポート（AudioCraft用）
 * LibreTranslateのサポート（ローカルAPI）
 * ModelScope、ZeroScope 2、CogVideoX、Latteを使用した動画生成のサポート
@@ -95,7 +95,7 @@
 
 ## 使用方法：
 
-#### インターフェースには6つのメインタブに30のタブがあります：LLM、TTS-STT、SunoBark、LibreTranslate、Wav2Lip、StableDiffusion、Kandinsky、Flux、HunyuanDiT、Lumina-T2X、Kolors、AuraFlow、Würstchen、DeepFloydIF、PixArt、ModelScope、ZeroScope 2、CogVideoX、Latte、TripoSR、StableFast3D、Shap-E、SV34D、Zero123Plus、StableAudio、AudioCraft、AudioLDM 2、Demucs、Gallery、ModelDownloader、Settings、System。必要なものを選択し、以下の指示に従ってください。
+#### インターフェースには6つのメインタブに30のタブがあります (テキスト, 画像, 動画, 3D, オーディオ と インターフェース)：LLM、TTS-STT、SunoBark、LibreTranslate、Wav2Lip、StableDiffusion、Kandinsky、Flux、HunyuanDiT、Lumina-T2X、Kolors、AuraFlow、Würstchen、DeepFloydIF、PixArt、ModelScope、ZeroScope 2、CogVideoX、Latte、TripoSR、StableFast3D、Shap-E、SV34D、Zero123Plus、StableAudio、AudioCraft、AudioLDM 2、Demucs、Gallery、ModelDownloader、Settings、System。必要なものを選択し、以下の指示に従ってください。
 
 ### LLM：
 
