@@ -12,7 +12,7 @@ O objetivo do projeto - criar o aplicativo mais fácil possível de usar modelos
 
 ### Texto: <img width="1127" alt="1pt" src="https://github.com/user-attachments/assets/298aa70b-655e-44c5-bc73-f14e4c7c34f4">
 
-### Imagem: <img width="1123" alt="2pt" src="https://github.com/user-attachments/assets/462fff2a-8350-4aed-8bee-8b107a0befe8">
+### Imagem: <img width="1118" alt="2pt" src="https://github.com/user-attachments/assets/ecacd331-ae2b-41f3-b284-fbfe2e1cb74a">
 
 ### Vídeo: <img width="1124" alt="3pt" src="https://github.com/user-attachments/assets/875748bf-efa0-44f9-92e7-204d46ceb914">
 
