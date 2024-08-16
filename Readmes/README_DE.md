@@ -30,13 +30,13 @@ Das Ziel des Projekts ist es, die einfachstmögliche Anwendung zur Nutzung von n
 * Authentifizierung über admin:admin (Sie können Ihre Anmeldedaten in der Datei GradioAuth.txt eingeben)
 * Sie können Ihren eigenen HuggingFace-Token hinzufügen, um bestimmte Modelle herunterzuladen (Sie können Ihren Token in der Datei HF-Token.txt eingeben)
 * Unterstützung für Transformers und llama.cpp Modelle (LLM)
-* Unterstützung für diffusers und safetensors Modelle (StableDiffusion) - txt2img, img2img, depth2img, pix2pix, controlnet, upscale, inpaint, gligen, animatediff, video, ldm3d, sd3, cascade und extras Tabs
+* Unterstützung für diffusers und safetensors Modelle (StableDiffusion) - txt2img, img2img, depth2img, pix2pix, controlnet, upscale, inpaint, gligen, animatediff, video, ldm3d, sd3, cascade, adapters und extras Tabs
 * Unterstützung zusätzlicher Modelle zur Bilderzeugung: Kandinsky, Flux, HunyuanDiT, Lumina-T2X, Kolors, AuraFlow, Würstchen, DeepFloydIF und PixArt
 * StableAudioOpen Unterstützung
 * AudioCraft Unterstützung (Modelle: musicgen, audiogen und magnet)
 * AudioLDM 2 Unterstützung (Modelle: audio und music)
 * Unterstützt TTS und Whisper Modelle (Für LLM und TTS-STT)
-* Unterstützt Lora, Textual inversion (embedding), Vae, Img2img, Depth, Pix2Pix, Controlnet, Upscale(latent), Upscale(Real-ESRGAN), Inpaint, GLIGEN, AnimateDiff, Videos, LDM3D, SD3, Cascade, Rembg, CodeFormer und Roop Modelle (Für StableDiffusion)
+* Unterstützt Lora, Textual inversion (embedding), Vae, Img2img, Depth, Pix2Pix, Controlnet, Upscale(latent), Upscale(Real-ESRGAN), Inpaint, GLIGEN, AnimateDiff, Videos, LDM3D, SD3, Cascade, Adapters (InstantID, PhotoMaker, IP-Adapter-FaceID), Rembg, CodeFormer und Roop Modelle (Für StableDiffusion)
 * Unterstützung des Multiband Diffusion Modells (Für AudioCraft)
 * Unterstützung von LibreTranslate (Lokale API)
 * Unterstützung von ModelScope, ZeroScope 2, CogVideoX und Latte zur Videoerzeugung
@@ -95,7 +95,7 @@ Um mit der virtuellen Umgebung über das Terminal zu arbeiten, führen Sie `./Ve
 
 ## Verwendung:
 
-#### Die Oberfläche hat zweiunddreißig Tabs in sechs Haupttabs: LLM, TTS-STT, SunoBark, LibreTranslate, Wav2Lip, StableDiffusion, Kandinsky, Flux, HunyuanDiT, Lumina-T2X, Kolors, AuraFlow, Würstchen, DeepFloydIF, PixArt, ModelScope, ZeroScope 2, CogVideoX, Latte, TripoSR, StableFast3D, Shap-E, SV34D, Zero123Plus, StableAudio, AudioCraft, AudioLDM 2, Demucs, Galerie, ModelDownloader, Einstellungen und System. Wählen Sie den gewünschten aus und folgen Sie den Anweisungen unten
+#### Die Oberfläche hat zweiunddreißig Tabs in sechs Haupttabs (Text, Bild, Video, 3D, Audio and Oberfläche): LLM, TTS-STT, SunoBark, LibreTranslate, Wav2Lip, StableDiffusion, Kandinsky, Flux, HunyuanDiT, Lumina-T2X, Kolors, AuraFlow, Würstchen, DeepFloydIF, PixArt, ModelScope, ZeroScope 2, CogVideoX, Latte, TripoSR, StableFast3D, Shap-E, SV34D, Zero123Plus, StableAudio, AudioCraft, AudioLDM 2, Demucs, Galerie, ModelDownloader, Einstellungen und System. Wählen Sie den gewünschten aus und folgen Sie den Anweisungen unten
 
 ### LLM:
 
