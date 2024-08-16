@@ -30,13 +30,13 @@
 * admin:admin के माध्यम से प्रमाणीकरण (आप GradioAuth.txt फ़ाइल में अपना लॉगिन विवरण दर्ज कर सकते हैं)
 * आप एक विशिष्ट मॉडल डाउनलोड करने के लिए अपना स्वयं का HuggingFace-Token जोड़ सकते हैं (आप HF-Token.txt फ़ाइल में अपना टोकन दर्ज कर सकते हैं)
 * Transformers और llama.cpp मॉडल के लिए समर्थन (LLM)
-* diffusers और safetensors मॉडल के लिए समर्थन (StableDiffusion) - txt2img, img2img, depth2img, pix2pix, controlnet, upscale, inpaint, gligen, animatediff, video, ldm3d, sd3, cascade और extras टैब
+* diffusers और safetensors मॉडल के लिए समर्थन (StableDiffusion) - txt2img, img2img, depth2img, pix2pix, controlnet, upscale, inpaint, gligen, animatediff, video, ldm3d, sd3, cascade, adapters और extras टैब
 * छवि उत्पादन के लिए अतिरिक्त मॉडल का समर्थन: Kandinsky, Flux, HunyuanDiT, Lumina-T2X, Kolors, AuraFlow, Würstchen, DeepFloydIF और PixArt
 * StableAudioOpen समर्थन
 * AudioCraft समर्थन (मॉडल: musicgen, audiogen और magnet)
 * AudioLDM 2 समर्थन (मॉडल: audio और music)
 * TTS और Whisper मॉडल के लिए समर्थन (LLM और TTS-STT के लिए)
-* Lora, Textual inversion (embedding), Vae, Img2img, Depth, Pix2Pix, Controlnet, Upscale(latent), Upscale(Real-ESRGAN), Inpaint, GLIGEN, AnimateDiff, Videos, LDM3D, SD3, Cascade, Rembg, CodeFormer और Roop मॉडल के लिए समर्थन (StableDiffusion के लिए)
+* Lora, Textual inversion (embedding), Vae, Img2img, Depth, Pix2Pix, Controlnet, Upscale(latent), Upscale(Real-ESRGAN), Inpaint, GLIGEN, AnimateDiff, Videos, LDM3D, SD3, Cascade, Adapters (InstantID, PhotoMaker, IP-Adapter-FaceID), Rembg, CodeFormer और Roop मॉडल के लिए समर्थन (StableDiffusion के लिए)
 * Multiband Diffusion मॉडल के लिए समर्थन (AudioCraft के लिए)
 * LibreTranslate के लिए समर्थन (स्थानीय API)
 * वीडियो उत्पादन के लिए ModelScope, ZeroScope 2, CogVideoX और Latte के लिए समर्थन
@@ -95,7 +95,7 @@
 
 ## कैसे उपयोग करें:
 
-#### इंटरफ़ेस में छह मुख्य टैब में बत्तीस टैब हैं: LLM, TTS-STT, SunoBark, LibreTranslate, Wav2Lip, StableDiffusion, Kandinsky, Flux, HunyuanDiT, Lumina-T2X, Kolors, AuraFlow, Würstchen, DeepFloydIF, PixArt, ModelScope, ZeroScope 2, CogVideoX, Latte, TripoSR, StableFast3D, Shap-E, SV34D, Zero123Plus, StableAudio, AudioCraft, AudioLDM 2, Demucs, Gallery, ModelDownloader, Settings और System। आपको जिसकी आवश्यकता है उसका चयन करें और नीचे दिए गए निर्देशों का पालन करें
+#### इंटरफ़ेस में छह मुख्य टैब में बत्तीस टैब हैं (टेक्स्ट, छवि, वीडियो, 3D, ऑडियो और इंटरफ़ेस): LLM, TTS-STT, SunoBark, LibreTranslate, Wav2Lip, StableDiffusion, Kandinsky, Flux, HunyuanDiT, Lumina-T2X, Kolors, AuraFlow, Würstchen, DeepFloydIF, PixArt, ModelScope, ZeroScope 2, CogVideoX, Latte, TripoSR, StableFast3D, Shap-E, SV34D, Zero123Plus, StableAudio, AudioCraft, AudioLDM 2, Demucs, Gallery, ModelDownloader, Settings और System। आपको जिसकी आवश्यकता है उसका चयन करें और नीचे दिए गए निर्देशों का पालन करें
 
 ### LLM:
 
