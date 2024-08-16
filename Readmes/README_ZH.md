@@ -256,6 +256,15 @@
 2) 根据您需要的参数设置模型
 3) 点击`Submit`按钮以获取生成的图像
 
+#### adapters（InstantID、PhotoMaker 和 IP-Adapter-FaceID：
+
+1) 首先将您的模型上传到文件夹：*inputs/image/sd_models*
+2) 上传初始图像
+3) 从下拉列表中选择您的模型
+4) 根据您需要的参数设置模型
+5) 选择您需要的子选项卡
+6) 点击`Submit`按钮获取修改后的图像
+
 #### extras：
 
 1) 上传初始图像
