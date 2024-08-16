@@ -16,6 +16,8 @@ echo "Installing dependencies..."
 pip install --no-deps -r "$CURRENT_DIR/RequirementsFiles/requirements.txt"
 pip install --no-deps -r "$CURRENT_DIR/RequirementsFiles/requirements-cuda.txt"
 pip install --no-deps -r "$CURRENT_DIR/RequirementsFiles/requirements-llama-cpp.txt"
+pip install git+https://github.com/TencentARC/PhotoMaker.git
+pip install git+https://github.com/tencent-ailab/IP-Adapter.git
 pip install git+https://github.com/vork/PyNanoInstantMeshes.git
 pip install git+https://github.com/openai/CLIP.git
 pip install git+https://github.com/tatsy/torchmcubes.git

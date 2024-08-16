@@ -12,7 +12,7 @@
 
 ### 文本：<img width="1127" alt="1zh" src="https://github.com/user-attachments/assets/c8f71af3-49ac-48e6-be22-45b933fc7b2c">
 
-### 图像：<img width="1122" alt="2zh" src="https://github.com/user-attachments/assets/865eb4f0-edee-492c-a016-3a33930a8159">
+### 图像：<img width="1109" alt="2zh" src="https://github.com/user-attachments/assets/1a7923d1-d112-453b-be96-a85313e18b2b">
 
 ### 视频：<img width="1126" alt="3zh" src="https://github.com/user-attachments/assets/a26222d4-cfcd-4869-aa0e-18b984f49d00">
 
@@ -30,13 +30,13 @@
 * 通过admin:admin进行身份验证（您可以在GradioAuth.txt文件中输入您的登录详细信息）
 * 您可以添加自己的HuggingFace-Token以下载特定模型（您可以在HF-Token.txt文件中输入您的令牌）
 * 支持Transformers和llama.cpp模型（LLM）
-* 支持diffusers和safetensors模型（StableDiffusion）- txt2img、img2img、depth2img、pix2pix、controlnet、upscale、inpaint、gligen、animatediff、video、ldm3d、sd3、cascade和extras选项卡
+* 支持diffusers和safetensors模型（StableDiffusion）- txt2img、img2img、depth2img、pix2pix、controlnet、upscale、inpaint、gligen、animatediff、video、ldm3d、sd3、cascade, adapters和extras选项卡
 * 支持额外的图像生成模型：Kandinsky、Flux、HunyuanDiT、Lumina-T2X、Kolors、AuraFlow、Würstchen、DeepFloydIF和PixArt
 * 支持StableAudioOpen
 * 支持AudioCraft（模型：musicgen、audiogen和magnet）
 * 支持AudioLDM 2（模型：audio和music）
 * 支持TTS和Whisper模型（用于LLM和TTS-STT）
-* 支持Lora、Textual inversion（嵌入）、Vae、Img2img、Depth、Pix2Pix、Controlnet、Upscale（latent）、Upscale（Real-ESRGAN）、Inpaint、GLIGEN、AnimateDiff、Videos、LDM3D、SD3、Cascade、Rembg、CodeFormer和Roop模型（用于StableDiffusion）
+* 支持Lora、Textual inversion（嵌入）、Vae、Img2img、Depth、Pix2Pix、Controlnet、Upscale（latent）、Upscale（Real-ESRGAN）、Inpaint、GLIGEN、AnimateDiff、Videos、LDM3D、SD3、Cascade, Adapters (InstantID, PhotoMaker, IP-Adapter-FaceID), Rembg、CodeFormer和Roop模型（用于StableDiffusion）
 * 支持Multiband Diffusion模型（用于AudioCraft）
 * 支持LibreTranslate（本地API）
 * 支持ModelScope、ZeroScope 2、CogVideoX和Latte进行视频生成
@@ -95,7 +95,7 @@
 
 ## 如何使用：
 
-#### 界面有六个主选项卡中的三十二个子选项卡：LLM、TTS-STT、SunoBark、LibreTranslate、Wav2Lip、StableDiffusion、Kandinsky、Flux、HunyuanDiT、Lumina-T2X、Kolors、AuraFlow、Würstchen、DeepFloydIF、PixArt、ModelScope、ZeroScope 2、CogVideoX、Latte、TripoSR、StableFast3D、Shap-E、SV34D、Zero123Plus、StableAudio、AudioCraft、AudioLDM 2、Demucs、Gallery、ModelDownloader、Settings和System。选择您需要的选项卡并按照以下说明操作
+#### 界面有六个主选项卡中的三十二个子选项卡 (文本, 图像, 视频, 3D, 音频 和 界面)：LLM、TTS-STT、SunoBark、LibreTranslate、Wav2Lip、StableDiffusion、Kandinsky、Flux、HunyuanDiT、Lumina-T2X、Kolors、AuraFlow、Würstchen、DeepFloydIF、PixArt、ModelScope、ZeroScope 2、CogVideoX、Latte、TripoSR、StableFast3D、Shap-E、SV34D、Zero123Plus、StableAudio、AudioCraft、AudioLDM 2、Demucs、Gallery、ModelDownloader、Settings和System。选择您需要的选项卡并按照以下说明操作
 
 ### LLM：
 
@@ -138,7 +138,7 @@
 3) 根据您需要的参数设置模型
 4) 点击`Submit`按钮以接收唇形同步结果
 
-### StableDiffusion - 有十五个子选项卡：
+### StableDiffusion - 有十六子选项卡：
 
 #### txt2img：
 
@@ -244,7 +244,7 @@
 2) 根据您需要的参数设置模型
 3) 点击`Submit`按钮以获取生成的图像
 
-#### sd3：
+#### sd3 (txt2img, img2img, controlnet, inpaint)：
 
 1) 输入您的请求
 2) 根据您需要的参数设置模型
@@ -256,13 +256,22 @@
 2) 根据您需要的参数设置模型
 3) 点击`Submit`按钮以获取生成的图像
 
+#### adapters（InstantID、PhotoMaker 和 IP-Adapter-FaceID：
+
+1) 首先将您的模型上传到文件夹：*inputs/image/sd_models*
+2) 上传初始图像
+3) 从下拉列表中选择您的模型
+4) 根据您需要的参数设置模型
+5) 选择您需要的子选项卡
+6) 点击`Submit`按钮获取修改后的图像
+
 #### extras：
 
 1) 上传初始图像
 2) 选择您需要的选项
 3) 点击`Submit`按钮以获取修改后的图像
 
-### Kandinsky：
+### Kandinsky (txt2img, img2img, inpaint)：
 
 1) 输入您的提示
 2) 从下拉列表中选择模型
@@ -306,7 +315,7 @@
 2) 根据您需要的参数设置模型
 3) 点击`Submit`以获取生成的图像
 
-### DeepFloydIF：
+### DeepFloydIF (txt2img, img2img, inpaint)：
 
 1) 输入您的提示
 2) 根据您需要的参数设置模型
@@ -431,7 +440,7 @@
 
 * LLM模型可以从[HuggingFace](https://huggingface.co/models)获取，或者通过界面内的ModelDownloader获取
 * StableDiffusion、vae、inpaint、embedding和lora模型可以从[CivitAI](https://civitai.com/models)获取，或者通过界面内的ModelDownloader获取
-* StableAudioOpen、AudioCraft、AudioLDM 2、TTS、Whisper、Wav2Lip、SunoBark、MoonDream2、Upscale、GLIGEN、Depth、Pix2Pix、Controlnet、AnimateDiff、Videos、LDM3D、SD3、Cascade、Rembg、Roop、CodeFormer、Real-ESRGAN、TripoSR、StableFast3D、Shap-E、SV34D、Zero123Plus、Demucs、Kandinsky、Flux、HunyuanDiT、Lumina-T2X、Kolors、AuraFlow、Würstchen、DeepFloydIF、PixArt、ModelScope、ZeroScope 2、CogVideoX、Latte和Multiband diffusion模型在使用时会自动下载到*inputs*文件夹中
+* StableAudioOpen, AudioCraft, AudioLDM 2, TTS, Whisper, Wav2Lip, SunoBark, MoonDream2, Upscale, GLIGEN, Depth, Pix2Pix, Controlnet, AnimateDiff, Videos, LDM3D, SD3, Cascade, InstantID, PhotoMaker, IP-Adapter-FaceID, Rembg, Roop, CodeFormer, Real-ESRGAN, TripoSR, StableFast3D, Shap-E, SV34D, Zero123Plus, Demucs, Kandinsky, Flux, HunyuanDiT, Lumina-T2X, Kolors, AuraFlow, AuraSR, Würstchen, DeepFloydIF, PixArt, ModelScope, ZeroScope 2, CogVideoX, Latte和Multiband diffusion模型在使用时会自动下载到*inputs*文件夹中
 * 您可以从任何地方获取语音。录制您自己的声音或从互联网上获取录音。或者直接使用项目中已有的语音。主要是要经过预处理！
 
 ## Wiki
@@ -465,6 +474,10 @@
 * `googlesearch-python` - https://github.com/Nv7-GitHub/googlesearch
 * `torchmcubes` - https://github.com/tatsy/torchmcubes
 * `suno-bark` - https://github.com/suno-ai/bark
+* `PhotoMaker` - https://github.com/TencentARC/PhotoMaker
+* `IP-Adapter` - https://github.com/tencent-ailab/IP-Adapter
+* `PyNanoInstantMeshes` - https://github.com/vork/PyNanoInstantMeshes
+* `CLIP` - https://github.com/openai/CLIP
 
 ## 第三方许可证：
 
@@ -518,6 +531,10 @@
 * [SV34D](https://huggingface.co/stabilityai/sv4d/blob/main/LICENSE.md)
 * [Zero123Plus](https://huggingface.co/blog/open_rail)
 * [Real-ESRGAN](https://github.com/xinntao/Real-ESRGAN/blob/master/LICENSE)
+* [InstantID](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/apache-2.0.md)
+* [PhotoMaker-V2](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/apache-2.0.md)
+* [IP-Adapter-FaceID](https://huggingface.co/h94/IP-Adapter-FaceID)
+* [AuraSR](https://huggingface.co/fal/AuraSR/blob/main/LICENSE.md)
 
 ## 捐赠
 

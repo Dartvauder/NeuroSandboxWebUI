@@ -12,7 +12,7 @@
 
 ### 텍스트: <img width="1121" alt="1ko" src="https://github.com/user-attachments/assets/38a3550b-fd23-478c-b0da-cc1abec656fa">
 
-### 이미지: <img width="1122" alt="2ko" src="https://github.com/user-attachments/assets/5be22a89-1fae-4bd9-906b-e88f2ba6305d">
+### 이미지: <img width="1117" alt="2ko" src="https://github.com/user-attachments/assets/cf5ccbf2-f339-4dc6-a16b-d2e540143db0">
 
 ### 비디오: <img width="1122" alt="3ko" src="https://github.com/user-attachments/assets/e946c138-aa99-476e-8b24-ee340cfeb3cf">
 
@@ -30,13 +30,13 @@
 * admin:admin을 통한 인증 (GradioAuth.txt 파일에 로그인 세부 정보를 입력할 수 있습니다)
 * 특정 모델을 다운로드하기 위해 자신의 HuggingFace-Token을 추가할 수 있습니다 (HF-Token.txt 파일에 토큰을 입력할 수 있습니다)
 * Transformers 및 llama.cpp 모델 지원 (LLM)
-* diffusers 및 safetensors 모델 지원 (StableDiffusion) - txt2img, img2img, depth2img, pix2pix, controlnet, upscale, inpaint, gligen, animatediff, video, ldm3d, sd3, cascade 및 extras 탭
+* diffusers 및 safetensors 모델 지원 (StableDiffusion) - txt2img, img2img, depth2img, pix2pix, controlnet, upscale, inpaint, gligen, animatediff, video, ldm3d, sd3, cascade, adapters 및 extras 탭
 * 이미지 생성을 위한 추가 모델 지원: Kandinsky, Flux, HunyuanDiT, Lumina-T2X, Kolors, AuraFlow, Würstchen, DeepFloydIF 및 PixArt
 * StableAudioOpen 지원
 * AudioCraft 지원 (모델: musicgen, audiogen 및 magnet)
 * AudioLDM 2 지원 (모델: audio 및 music)
 * TTS 및 Whisper 모델 지원 (LLM 및 TTS-STT용)
-* Lora, Textual inversion (embedding), Vae, Img2img, Depth, Pix2Pix, Controlnet, Upscale(latent), Upscale(Real-ESRGAN), Inpaint, GLIGEN, AnimateDiff, Videos, LDM3D, SD3, Cascade, Rembg, CodeFormer 및 Roop 모델 지원 (StableDiffusion용)
+* Lora, Textual inversion (embedding), Vae, Img2img, Depth, Pix2Pix, Controlnet, Upscale(latent), Upscale(Real-ESRGAN), Inpaint, GLIGEN, AnimateDiff, Videos, LDM3D, SD3, Cascade, Adapters (InstantID, PhotoMaker, IP-Adapter-FaceID), Rembg, CodeFormer 및 Roop 모델 지원 (StableDiffusion용)
 * Multiband Diffusion 모델 지원 (AudioCraft용)
 * LibreTranslate 지원 (로컬 API)
 * 비디오 생성을 위한 ModelScope, ZeroScope 2, CogVideoX 및 Latte 지원
@@ -95,7 +95,7 @@
 
 ## 사용 방법:
 
-#### 인터페이스에는 여섯 개의 메인 탭에 32개의 탭이 있습니다: LLM, TTS-STT, SunoBark, LibreTranslate, Wav2Lip, StableDiffusion, Kandinsky, Flux, HunyuanDiT, Lumina-T2X, Kolors, AuraFlow, Würstchen, DeepFloydIF, PixArt, ModelScope, ZeroScope 2, CogVideoX, Latte, TripoSR, StableFast3D, Shap-E, SV34D, Zero123Plus, StableAudio, AudioCraft, AudioLDM 2, Demucs, Gallery, ModelDownloader, Settings 및 System. 필요한 것을 선택하고 아래 지침을 따르세요 
+#### 인터페이스에는 여섯 개의 메인 탭에 32개의 탭이 있습니다 (텍스트, 이미지, 비디오, 3D, 오디오 및 인터페이스): LLM, TTS-STT, SunoBark, LibreTranslate, Wav2Lip, StableDiffusion, Kandinsky, Flux, HunyuanDiT, Lumina-T2X, Kolors, AuraFlow, Würstchen, DeepFloydIF, PixArt, ModelScope, ZeroScope 2, CogVideoX, Latte, TripoSR, StableFast3D, Shap-E, SV34D, Zero123Plus, StableAudio, AudioCraft, AudioLDM 2, Demucs, Gallery, ModelDownloader, Settings 및 System. 필요한 것을 선택하고 아래 지침을 따르세요 
 
 ### LLM:
 
@@ -138,7 +138,7 @@
 3) 필요한 매개변수에 따라 모델을 설정합니다
 4) `Submit` 버튼을 클릭하여 립싱크를 받습니다
 
-### StableDiffusion - 15개의 하위 탭이 있습니다:
+### StableDiffusion - 십육 개의 하위 탭이 있습니다:
 
 #### txt2img:
 
@@ -244,7 +244,7 @@
 2) 필요한 매개변수에 따라 모델을 설정합니다
 3) `Submit` 버튼을 클릭하여 생성된 이미지를 받습니다
 
-#### sd3:
+#### sd3 (txt2img, img2img, controlnet, inpaint):
 
 1) 요청을 입력합니다
 2) 필요한 매개변수에 따라 모델을 설정합니다
@@ -256,13 +256,22 @@
 2) 필요한 매개변수에 따라 모델을 설정합니다
 3) `Submit` 버튼을 클릭하여 생성된 이미지를 받습니다
 
+#### adapters (InstantID, PhotoMaker 및 IP-Adapter-FaceID):
+
+1) 먼저 모델을 이 폴더에 업로드하세요: *inputs/image/sd_models*
+2) 초기 이미지를 업로드하세요
+3) 드롭다운 목록에서 모델을 선택하세요
+4) 필요한 매개변수에 따라 모델을 설정하세요
+5) 필요한 하위 탭을 선택하세요
+6) `Submit` 버튼을 클릭하여 수정된 이미지를 얻으세요
+
 #### extras:
 
 1) 초기 이미지를 업로드합니다
 2) 필요한 옵션을 선택합니다
 3) `Submit` 버튼을 클릭하여 수정된 이미지를 받습니다
 
-### Kandinsky:
+### Kandinsky (txt2img, img2img, inpaint):
 
 1) 프롬프트를 입력합니다
 2) 드롭다운 목록에서 모델을 선택합니다
@@ -306,7 +315,7 @@
 2) 필요한 매개변수에 따라 모델을 설정합니다
 3) `Submit`을 클릭하여 생성된 이미지를 받습니다
 
-### DeepFloydIF:
+### DeepFloydIF (txt2img, img2img, inpaint):
 
 1) 프롬프트를 입력합니다
 2) 필요한 매개변수에 따라 모델을 설정합니다
@@ -431,7 +440,7 @@
 
 * LLM 모델은 [HuggingFace](https://huggingface.co/models)에서 가져오거나 인터페이스 내의 ModelDownloader에서 가져올 수 있습니다 
 * StableDiffusion, vae, inpaint, embedding 및 lora 모델은 [CivitAI](https://civitai.com/models)에서 가져오거나 인터페이스 내의 ModelDownloader에서 가져올 수 있습니다
-* StableAudioOpen, AudioCraft, AudioLDM 2, TTS, Whisper, Wav2Lip, SunoBark, MoonDream2, Upscale, GLIGEN, Depth, Pix2Pix, Controlnet, AnimateDiff, Videos, LDM3D, SD3, Cascade, Rembg, Roop, CodeFormer, Real-ESRGAN, TripoSR, StableFast3D, Shap-E, SV34D, Zero123Plus, Demucs, Kandinsky, Flux, HunyuanDiT, Lumina-T2X, Kolors, AuraFlow, Würstchen, DeepFloydIF, PixArt, ModelScope, ZeroScope 2, CogVideoX, Latte 및 Multiband diffusion 모델은 사용될 때 *inputs* 폴더에 자동으로 다운로드됩니다 
+* StableAudioOpen, AudioCraft, AudioLDM 2, TTS, Whisper, Wav2Lip, SunoBark, MoonDream2, Upscale, GLIGEN, Depth, Pix2Pix, Controlnet, AnimateDiff, Videos, LDM3D, SD3, Cascade, InstantID, PhotoMaker, IP-Adapter-FaceID, Rembg, Roop, CodeFormer, Real-ESRGAN, TripoSR, StableFast3D, Shap-E, SV34D, Zero123Plus, Demucs, Kandinsky, Flux, HunyuanDiT, Lumina-T2X, Kolors, AuraFlow, AuraSR, Würstchen, DeepFloydIF, PixArt, ModelScope, ZeroScope 2, CogVideoX, Latte 및 Multiband diffusion 모델은 사용될 때 *inputs* 폴더에 자동으로 다운로드됩니다 
 * 음성은 어디에서나 가져올 수 있습니다. 자신의 목소리를 녹음하거나 인터넷에서 녹음을 가져오세요. 또는 프로젝트에 이미 있는 것을 사용하세요. 중요한 것은 사전 처리되어 있어야 한다는 것입니다!
 
 ## 위키
@@ -465,6 +474,10 @@
 * `googlesearch-python` - https://github.com/Nv7-GitHub/googlesearch
 * `torchmcubes` - https://github.com/tatsy/torchmcubes
 * `suno-bark` - https://github.com/suno-ai/bark
+* `PhotoMaker` - https://github.com/TencentARC/PhotoMaker
+* `IP-Adapter` - https://github.com/tencent-ailab/IP-Adapter
+* `PyNanoInstantMeshes` - https://github.com/vork/PyNanoInstantMeshes
+* `CLIP` - https://github.com/openai/CLIP
 
 ## 제3자 라이선스:
 
@@ -518,6 +531,10 @@
 * [SV34D](https://huggingface.co/stabilityai/sv4d/blob/main/LICENSE.md)
 * [Zero123Plus](https://huggingface.co/blog/open_rail)
 * [Real-ESRGAN](https://github.com/xinntao/Real-ESRGAN/blob/master/LICENSE)
+* [InstantID](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/apache-2.0.md)
+* [PhotoMaker-V2](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/apache-2.0.md)
+* [IP-Adapter-FaceID](https://huggingface.co/h94/IP-Adapter-FaceID)
+* [AuraSR](https://huggingface.co/fal/AuraSR/blob/main/LICENSE.md)
 
 ## 후원
 

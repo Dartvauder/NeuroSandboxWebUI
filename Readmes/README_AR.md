@@ -12,7 +12,7 @@
 
 ### النص: <img width="1119" alt="1ar" src="https://github.com/user-attachments/assets/e115f987-5988-479a-b37d-97712fce66cc">
 
-### الصورة: <img width="1124" alt="2ar" src="https://github.com/user-attachments/assets/9aca4842-73dc-46f0-b295-8fc7758b5b06">
+### الصورة: <img width="1121" alt="2ar" src="https://github.com/user-attachments/assets/ebe181af-bb7c-424c-bab0-11ac6b94c9eb">
 
 ### الفيديو: <img width="1121" alt="3ar" src="https://github.com/user-attachments/assets/500ebe14-1741-4392-a11c-781c87cc223c">
 
@@ -30,13 +30,13 @@
 * المصادقة عبر admin:admin (يمكنك إدخال تفاصيل تسجيل الدخول الخاصة بك في ملف GradioAuth.txt)
 * يمكنك إضافة HuggingFace-Token الخاص بك لتنزيل نماذج معينة (يمكنك إدخال الرمز المميز الخاص بك في ملف HF-Token.txt)
 * دعم نماذج Transformers و llama.cpp (LLM)
-* دعم نماذج diffusers و safetensors (StableDiffusion) - علامات التبويب txt2img و img2img و depth2img و pix2pix و controlnet و upscale و inpaint و gligen و animatediff و video و ldm3d و sd3 و cascade والإضافات
+* دعم نماذج diffusers و safetensors (StableDiffusion) - علامات التبويب txt2img و img2img و depth2img و pix2pix و controlnet و upscale و inpaint و gligen و animatediff و video و ldm3d و sd3 و cascade و adapters و الإضافات
 * دعم نماذج إضافية لإنشاء الصور: Kandinsky و Flux و HunyuanDiT و Lumina-T2X و Kolors و AuraFlow و Würstchen و DeepFloydIF و PixArt
 * دعم StableAudioOpen
 * دعم AudioCraft (النماذج: musicgen و audiogen و magnet)
 * دعم AudioLDM 2 (النماذج: audio و music)
 * دعم نماذج TTS و Whisper (لـ LLM و TTS-STT)
-* دعم نماذج Lora و Textual inversion (embedding) و Vae و Img2img و Depth و Pix2Pix و Controlnet و Upscale(latent) و Upscale(Real-ESRGAN) و Inpaint و GLIGEN و AnimateDiff و Videos و LDM3D و SD3 و Cascade و Rembg و CodeFormer و Roop (لـ StableDiffusion)
+* دعم نماذج Lora و Textual inversion (embedding) و Vae و Img2img و Depth و Pix2Pix و Controlnet و Upscale(latent) و Upscale(Real-ESRGAN) و Inpaint و GLIGEN و AnimateDiff و Videos و LDM3D و SD3 و Cascade و Adapters (InstantID و PhotoMaker و IP-Adapter-FaceID) و Rembg و CodeFormer و Roop (لـ StableDiffusion)
 * دعم نموذج Multiband Diffusion (لـ AudioCraft)
 * دعم LibreTranslate (واجهة برمجة التطبيقات المحلية)
 * دعم ModelScope و ZeroScope 2 و CogVideoX و Latte لإنشاء الفيديو
@@ -95,7 +95,7 @@
 
 ## كيفية الاستخدام:
 
-#### تحتوي الواجهة على اثنين وثلاثين علامة تبويب في ستة علامات تبويب رئيسية: LLM و TTS-STT و SunoBark و LibreTranslate و Wav2Lip و StableDiffusion و Kandinsky و Flux و HunyuanDiT و Lumina-T2X و Kolors و AuraFlow و Würstchen و DeepFloydIF و PixArt و ModelScope و ZeroScope 2 و CogVideoX و Latte و TripoSR و StableFast3D و Shap-E و SV34D و Zero123Plus و StableAudio و AudioCraft و AudioLDM 2 و Demucs و Gallery و ModelDownloader و Settings و System. حدد ما تحتاجه واتبع التعليمات أدناه
+#### تحتوي الواجهة على اثنين وثلاثين علامة تبويب في ستة علامات تبويب رئيسية (النص و الصورة و الفيديو و ثلاثي الأبعاد و الصوت و الواجهة): LLM و TTS-STT و SunoBark و LibreTranslate و Wav2Lip و StableDiffusion و Kandinsky و Flux و HunyuanDiT و Lumina-T2X و Kolors و AuraFlow و Würstchen و DeepFloydIF و PixArt و ModelScope و ZeroScope 2 و CogVideoX و Latte و TripoSR و StableFast3D و Shap-E و SV34D و Zero123Plus و StableAudio و AudioCraft و AudioLDM 2 و Demucs و Gallery و ModelDownloader و Settings و System. حدد ما تحتاجه واتبع التعليمات أدناه
 
 ### LLM:
 
@@ -138,7 +138,7 @@
 3) قم بإعداد النموذج وفقًا للمعلمات التي تحتاجها
 4) انقر على زر `Submit` لتلقي مزامنة الشفاه
 
-### StableDiffusion - يحتوي على خمسة عشر علامة تبويب فرعية:
+### StableDiffusion - يحتوي على ستة عشر علامة تبويب فرعية:
 
 #### txt2img:
 
@@ -244,7 +244,7 @@
 2) قم بإعداد النموذج وفقًا للمعلمات التي تحتاجها
 3) انقر على زر `Submit` للحصول على الصور المولدة
 
-#### sd3:
+#### sd3 (txt2img, img2img, controlnet, inpaint):
 
 1) أدخل طلبك
 2) قم بإعداد النموذج وفقًا للمعلمات التي تحتاجها
@@ -256,13 +256,22 @@
 2) قم بإعداد النموذج وفقًا للمعلمات التي تحتاجها
 3) انقر على زر `Submit` للحصول على الصورة المولدة
 
+#### adapters (InstantID و PhotoMaker و IP-Adapter-FaceID): 
+
+1) قم أولاً بتحميل النماذج الخاصة بك إلى المجلد: inputs/image/sd_models
+2) قم بإعداد النموذج وفقًا
+3) حدد النموذج الخاص بك من القائمة المنسدلة
+4) قم بإعداد النموذج وفقًا للمعايير التي
+5) حدد علامة التبويب الفرعية التي تحتاجها
+6) انقر على زر `Submit` للحصول على الصورة المعدلة
+
 #### extras:
 
 1) قم بتحميل الصورة الأولية
 2) حدد الخيارات التي تحتاجها
 3) انقر على زر `Submit` للحصول على الصورة المعدلة
 
-### Kandinsky:
+### Kandinsky (txt2img, img2img, inpaint):
 
 1) أدخل الموجه الخاص بك
 2) حدد نموذجًا من القائمة المنسدلة
@@ -306,7 +315,7 @@
 2) قم بإعداد النموذج وفقًا للمعلمات التي تحتاجها
 3) انقر على `Submit` للحصول على الصورة المولدة
 
-### DeepFloydIF:
+### DeepFloydIF (txt2img, img2img, inpaint):
 
 1) أدخل الموجه الخاص بك
 2) قم بإعداد النموذج وفقًا للمعلمات التي تحتاجها
@@ -431,7 +440,7 @@
 
 * يمكن الحصول على نماذج LLM من [HuggingFace](https://huggingface.co/models) أو من ModelDownloader داخل الواجهة 
 * يمكن الحصول على نماذج StableDiffusion و vae و inpaint و embedding و lora من [CivitAI](https://civitai.com/models) أو من ModelDownloader داخل الواجهة
-* يتم تنزيل نماذج StableAudioOpen و AudioCraft و AudioLDM 2 و TTS و Whisper و Wav2Lip و SunoBark و MoonDream2 و Upscale و GLIGEN و Depth و Pix2Pix و Controlnet و AnimateDiff و Videos و LDM3D و SD3 و Cascade و Rembg و Roop و CodeFormer و Real-ESRGAN و TripoSR و StableFast3D و Shap-E و SV34D و Zero123Plus و Demucs و Kandinsky و Flux و HunyuanDiT و Lumina-T2X و Kolors و AuraFlow و Würstchen و DeepFloydIF و PixArt و ModelScope و ZeroScope 2 و CogVideoX و Latte و Multiband diffusion تلقائيًا في مجلد *inputs* عند استخدامها 
+* يتم تنزيل نماذج StableAudioOpen و AudioCraft و AudioLDM 2 و TTS و Whisper و Wav2Lip و SunoBark و MoonDream2 و Upscale و GLIGEN و Depth و Pix2Pix و Controlnet و AnimateDiff و Videos و LDM3D و SD3 و InstantID و PhotoMaker و IP-Adapter-FaceID و Cascade و Rembg و Roop و CodeFormer و Real-ESRGAN و TripoSR و StableFast3D و Shap-E و SV34D و Zero123Plus و Demucs و Kandinsky و Flux و HunyuanDiT و Lumina-T2X و Kolors و AuraFlow و Würstchen و DeepFloydIF و PixArt و ModelScope و ZeroScope 2 و CogVideoX و Latte و Multiband diffusion تلقائيًا في مجلد *inputs* عند استخدامها 
 * يمكنك الحصول على الأصوات من أي مكان. سجل صوتك أو خذ تسجيلًا من الإنترنت. أو فقط استخدم تلك الموجودة بالفعل في المشروع. الشيء الرئيسي هو أن يتم معالجتها مسبقًا!
 
 ## الويكي
@@ -465,6 +474,10 @@
 * `googlesearch-python` - https://github.com/Nv7-GitHub/googlesearch
 * `torchmcubes` - https://github.com/tatsy/torchmcubes
 * `suno-bark` - https://github.com/suno-ai/bark
+* `PhotoMaker` - https://github.com/TencentARC/PhotoMaker
+* `IP-Adapter` - https://github.com/tencent-ailab/IP-Adapter
+* `PyNanoInstantMeshes` - https://github.com/vork/PyNanoInstantMeshes
+* `CLIP` - https://github.com/openai/CLIP
 ## تراخيص الطرف الثالث:
 
 #### العديد من النماذج لها تراخيص خاصة بها للاستخدام. قبل استخدامها، أنصحك بالتعرف عليها:
@@ -517,6 +530,10 @@
 * [SV34D](https://huggingface.co/stabilityai/sv4d/blob/main/LICENSE.md)
 * [Zero123Plus](https://huggingface.co/blog/open_rail)
 * [Real-ESRGAN](https://github.com/xinntao/Real-ESRGAN/blob/master/LICENSE)
+* [InstantID](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/apache-2.0.md)
+* [PhotoMaker-V2](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/apache-2.0.md)
+* [IP-Adapter-FaceID](https://huggingface.co/h94/IP-Adapter-FaceID)
+* [AuraSR](https://huggingface.co/fal/AuraSR/blob/main/LICENSE.md)
 
 ## التبرع
 

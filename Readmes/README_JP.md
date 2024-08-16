@@ -12,7 +12,7 @@
 
 ### テキスト： <img width="1127" alt="1jp" src="https://github.com/user-attachments/assets/37e91e1b-0e1d-4085-8ae0-b3feaecb72e5">
 
-### 画像： <img width="1120" alt="2jp" src="https://github.com/user-attachments/assets/d09e422b-f4e2-46cc-ba94-082e0c6ecebf">
+### 画像： <img width="1119" alt="2jp" src="https://github.com/user-attachments/assets/a6432218-2d16-478a-9656-baabd6dc1dde">
 
 ### 動画： <img width="1121" alt="3jp" src="https://github.com/user-attachments/assets/ddfe00d4-eede-4bb3-9b6b-03eb0519a491">
 
@@ -30,13 +30,13 @@
 * admin:adminによる認証（GradioAuth.txtファイルにログイン詳細を入力可能）
 * 特定のモデルをダウンロードするために自分のHuggingFace-Tokenを追加可能（HF-Token.txtファイルにトークンを入力可能）
 * TransformersとLlama.cppモデル（LLM）のサポート
-* DiffusersとSafetensorsモデル（StableDiffusion）のサポート - txt2img、img2img、depth2img、pix2pix、controlnet、upscale、inpaint、gligen、animatediff、video、ldm3d、sd3、cascadeおよびextrasタブ
+* DiffusersとSafetensorsモデル（StableDiffusion）のサポート - txt2img、img2img、depth2img、pix2pix、controlnet、upscale、inpaint、gligen、animatediff、video、ldm3d、sd3、cascade, adaptersおよびextrasタブ
 * 画像生成のための追加モデルのサポート：Kandinsky、Flux、HunyuanDiT、Lumina-T2X、Kolors、AuraFlow、Würstchen、DeepFloydIF、PixArt
 * StableAudioOpenのサポート
 * AudioCraftのサポート（モデル：musicgen、audiogen、magnet）
 * AudioLDM 2のサポート（モデル：audio、music）
 * TTSとWhisperモデルのサポート（LLMとTTS-STT用）
-* Lora、Textual inversion（embedding）、Vae、Img2img、Depth、Pix2Pix、Controlnet、Upscale（latent）、Upscale（Real-ESRGAN）、Inpaint、GLIGEN、AnimateDiff、Videos、LDM3D、SD3、Cascade、Rembg、CodeFormer、Roopモデルのサポート（StableDiffusion用）
+* Lora、Textual inversion（embedding）、Vae、Img2img、Depth、Pix2Pix、Controlnet、Upscale（latent）、Upscale（Real-ESRGAN）、Inpaint、GLIGEN、AnimateDiff、Videos、LDM3D、SD3、Cascade, Adapters (InstantID, PhotoMaker, IP-Adapter-FaceID), Rembg、CodeFormer、Roopモデルのサポート（StableDiffusion用）
 * Multiband Diffusionモデルのサポート（AudioCraft用）
 * LibreTranslateのサポート（ローカルAPI）
 * ModelScope、ZeroScope 2、CogVideoX、Latteを使用した動画生成のサポート
@@ -95,7 +95,7 @@
 
 ## 使用方法：
 
-#### インターフェースには6つのメインタブに30のタブがあります：LLM、TTS-STT、SunoBark、LibreTranslate、Wav2Lip、StableDiffusion、Kandinsky、Flux、HunyuanDiT、Lumina-T2X、Kolors、AuraFlow、Würstchen、DeepFloydIF、PixArt、ModelScope、ZeroScope 2、CogVideoX、Latte、TripoSR、StableFast3D、Shap-E、SV34D、Zero123Plus、StableAudio、AudioCraft、AudioLDM 2、Demucs、Gallery、ModelDownloader、Settings、System。必要なものを選択し、以下の指示に従ってください。
+#### インターフェースには6つのメインタブに30のタブがあります (テキスト, 画像, 動画, 3D, オーディオ と インターフェース)：LLM、TTS-STT、SunoBark、LibreTranslate、Wav2Lip、StableDiffusion、Kandinsky、Flux、HunyuanDiT、Lumina-T2X、Kolors、AuraFlow、Würstchen、DeepFloydIF、PixArt、ModelScope、ZeroScope 2、CogVideoX、Latte、TripoSR、StableFast3D、Shap-E、SV34D、Zero123Plus、StableAudio、AudioCraft、AudioLDM 2、Demucs、Gallery、ModelDownloader、Settings、System。必要なものを選択し、以下の指示に従ってください。
 
 ### LLM：
 
@@ -138,7 +138,7 @@
 3) 必要なパラメータに応じてモデルを設定します
 4) `Submit` ボタンをクリックして、リップシンクを受け取ります
 
-### StableDiffusion - 15のサブタブがあります：
+### StableDiffusion - 十六 のサブタブがあります：
 
 #### txt2img：
 
@@ -244,7 +244,7 @@
 2) 必要なパラメータに応じてモデルを設定します
 3) `Submit` ボタンをクリックして、生成された画像を取得します
 
-#### sd3：
+#### sd3 (txt2img, img2img, controlnet, inpaint)：
 
 1) リクエストを入力します
 2) 必要なパラメータに応じてモデルを設定します
@@ -256,13 +256,22 @@
 2) 必要なパラメータに応じてモデルを設定します
 3) `Submit` ボタンをクリックして、生成された画像を取得します
 
+#### adapters（InstantID、PhotoMaker、IP-Adapter-FaceID：
+
+1) まず、モデルをこのフォルダにアップロードします：*inputs/image/sd_models*
+2) 初期画像をアップロードします
+3) ドロップダウンリストからモデルを選択します
+4) 必要なパラメータに応じてモデルを設定します
+5) 必要なサブタブを選択します
+6) `Submit`ボタンをクリックして、修正された画像を取得します
+
 #### extras：
 
 1) 初期画像をアップロードします
 2) 必要なオプションを選択します
 3) `Submit` ボタンをクリックして、修正された画像を取得します
 
-### Kandinsky：
+### Kandinsky (txt2img, img2img, inpaint)：
 
 1) プロンプトを入力します
 2) ドロップダウンリストからモデルを選択します
@@ -306,7 +315,7 @@
 2) 必要なパラメータに応じてモデルを設定します
 3) `Submit` をクリックして、生成された画像を取得します
 
-### DeepFloydIF：
+### DeepFloydIF (txt2img, img2img, inpaint)：
 
 1) プロンプトを入力します
 2) 必要なパラメータに応じてモデルを設定します
@@ -431,7 +440,7 @@
 
 * LLMモデルは [HuggingFace](https://huggingface.co/models) またはインターフェース内のModelDownloaderから入手できます
 * StableDiffusion、vae、inpaint、embedding、loraモデルは [CivitAI](https://civitai.com/models) またはインターフェース内のModelDownloaderから入手できます
-* StableAudioOpen、AudioCraft、AudioLDM 2、TTS、Whisper、Wav2Lip、SunoBark、MoonDream2、Upscale、GLIGEN、Depth、Pix2Pix、Controlnet、AnimateDiff、Videos、LDM3D、SD3、Cascade、Rembg、Roop、CodeFormer、Real-ESRGAN、TripoSR、StableFast3D、Shap-E、SV34D、Zero123Plus、Demucs、Kandinsky、Flux、HunyuanDiT、Lumina-T2X、Kolors、AuraFlow、Würstchen、DeepFloydIF、PixArt、ModelScope、ZeroScope 2、CogVideoX、Latteおよびmultiband diffusionモデルは、使用時に *inputs* フォルダに自動的にダウンロードされます
+* StableAudioOpen, AudioCraft, AudioLDM 2, TTS, Whisper, Wav2Lip, SunoBark, MoonDream2, Upscale, GLIGEN, Depth, Pix2Pix, Controlnet, AnimateDiff, Videos, LDM3D, SD3, Cascade, InstantID, PhotoMaker, IP-Adapter-FaceID, Rembg, Roop, CodeFormer, Real-ESRGAN, TripoSR, StableFast3D, Shap-E, SV34D, Zero123Plus, Demucs, Kandinsky, Flux, HunyuanDiT, Lumina-T2X, Kolors, AuraFlow, AuraSR, Würstchen, DeepFloydIF, PixArt, ModelScope, ZeroScope 2, CogVideoX, Latteおよびmultiband diffusionモデルは、使用時に *inputs* フォルダに自動的にダウンロードされます
 * 音声はどこからでも入手できます。自分で録音するか、インターネットから録音を入手してください。または、プロジェクトにすでにあるものを使用してください。重要なのは、事前に処理されていることです！
 
 ## Wiki
@@ -465,6 +474,10 @@
 * `googlesearch-python` - https://github.com/Nv7-GitHub/googlesearch
 * `torchmcubes` - https://github.com/tatsy/torchmcubes
 * `suno-bark` - https://github.com/suno-ai/bark
+* `PhotoMaker` - https://github.com/TencentARC/PhotoMaker
+* `IP-Adapter` - https://github.com/tencent-ailab/IP-Adapter
+* `PyNanoInstantMeshes` - https://github.com/vork/PyNanoInstantMeshes
+* `CLIP` - https://github.com/openai/CLIP
 
 ## サードパーティライセンス：
 
@@ -518,6 +531,10 @@
 * [SV34D](https://huggingface.co/stabilityai/sv4d/blob/main/LICENSE.md)
 * [Zero123Plus](https://huggingface.co/blog/open_rail)
 * [Real-ESRGAN](https://github.com/xinntao/Real-ESRGAN/blob/master/LICENSE)
+* [InstantID](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/apache-2.0.md)
+* [PhotoMaker-V2](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/apache-2.0.md)
+* [IP-Adapter-FaceID](https://huggingface.co/h94/IP-Adapter-FaceID)
+* [AuraSR](https://huggingface.co/fal/AuraSR/blob/main/LICENSE.md)
 
 ## 寄付
 
