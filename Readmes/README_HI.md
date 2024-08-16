@@ -244,7 +244,7 @@
 2) आपको आवश्यक पैरामीटर के अनुसार मॉडल सेट करें
 3) जनरेट की गई छवियाँ प्राप्त करने के लिए `Submit` बटन पर क्लिक करें
 
-#### sd3:
+#### sd3 (txt2img, img2img, controlnet, inpaint):
 
 1) अपना अनुरोध दर्ज करें
 2) आपको आवश्यक पैरामीटर के अनुसार मॉडल सेट करें
@@ -262,7 +262,7 @@
 2) आपको आवश्यक विकल्पों का चयन करें
 3) संशोधित छवि प्राप्त करने के लिए `Submit` बटन पर क्लिक करें
 
-### Kandinsky:
+### Kandinsky (txt2img, img2img, inpaint):
 
 1) अपना प्रॉम्प्ट दर्ज करें
 2) ड्रॉप-डाउन सूची से एक मॉडल का चयन करें
@@ -306,7 +306,7 @@
 2) आपको आवश्यक पैरामीटर के अनुसार मॉडल सेट करें
 3) जनरेट की गई छवि प्राप्त करने के लिए `Submit` पर क्लिक करें
 
-### DeepFloydIF:
+### DeepFloydIF (txt2img, img2img, inpaint):
 
 1) अपना प्रॉम्प्ट दर्ज करें
 2) आपको आवश्यक पैरामीटर के अनुसार मॉडल सेट करें
@@ -431,7 +431,7 @@
 
 * LLM मॉडल [HuggingFace](https://huggingface.co/models) से या इंटरफेस के अंदर ModelDownloader से लिए जा सकते हैं 
 * StableDiffusion, vae, inpaint, embedding और lora मॉडल [CivitAI](https://civitai.com/models) से या इंटरफेस के अंदर ModelDownloader से लिए जा सकते हैं
-* StableAudioOpen, AudioCraft, AudioLDM 2, TTS, Whisper, Wav2Lip, SunoBark, MoonDream2, Upscale, GLIGEN, Depth, Pix2Pix, Controlnet, AnimateDiff, Videos, LDM3D, SD3, Cascade, Rembg, Roop, CodeFormer, Real-ESRGAN, TripoSR, StableFast3D, Shap-E, SV34D, Zero123Plus, Demucs, Kandinsky, Flux, HunyuanDiT, Lumina-T2X, Kolors, AuraFlow, Würstchen, DeepFloydIF, PixArt, ModelScope, ZeroScope 2, CogVideoX, Latte और Multiband diffusion मॉडल उपयोग किए जाने पर *inputs* फ़ोल्डर में स्वचालित रूप से डाउनलोड होते हैं 
+* StableAudioOpen, AudioCraft, AudioLDM 2, TTS, Whisper, Wav2Lip, SunoBark, MoonDream2, Upscale, GLIGEN, Depth, Pix2Pix, Controlnet, AnimateDiff, Videos, LDM3D, SD3, Cascade, InstantID, PhotoMaker, IP-Adapter-FaceID, Rembg, Roop, CodeFormer, Real-ESRGAN, TripoSR, StableFast3D, Shap-E, SV34D, Zero123Plus, Demucs, Kandinsky, Flux, HunyuanDiT, Lumina-T2X, Kolors, AuraFlow, AuraSR, Würstchen, DeepFloydIF, PixArt, ModelScope, ZeroScope 2, CogVideoX, Latte और Multiband diffusion मॉडल उपयोग किए जाने पर *inputs* फ़ोल्डर में स्वचालित रूप से डाउनलोड होते हैं 
 * आप कहीं से भी आवाजें ले सकते हैं। अपनी खुद की रिकॉर्ड करें या इंटरनेट से रिकॉर्डिंग लें। या बस उन्हें इस्तेमाल करें जो पहले से ही प्रोजेक्ट में हैं। मुख्य बात यह है कि यह पहले से संसाधित हो!
 
 ## विकी
@@ -465,6 +465,10 @@
 * `googlesearch-python` - https://github.com/Nv7-GitHub/googlesearch
 * `torchmcubes` - https://github.com/tatsy/torchmcubes
 * `suno-bark` - https://github.com/suno-ai/bark
+* `PhotoMaker` - https://github.com/TencentARC/PhotoMaker
+* `IP-Adapter` - https://github.com/tencent-ailab/IP-Adapter
+* `PyNanoInstantMeshes` - https://github.com/vork/PyNanoInstantMeshes
+* `CLIP` - https://github.com/openai/CLIP
 
 ## तृतीय-पक्ष लाइसेंस:
 
@@ -518,6 +522,10 @@
 * [SV34D](https://huggingface.co/stabilityai/sv4d/blob/main/LICENSE.md)
 * [Zero123Plus](https://huggingface.co/blog/open_rail)
 * [Real-ESRGAN](https://github.com/xinntao/Real-ESRGAN/blob/master/LICENSE)
+* [InstantID](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/apache-2.0.md)
+* [PhotoMaker-V2](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/apache-2.0.md)
+* [IP-Adapter-FaceID](https://huggingface.co/h94/IP-Adapter-FaceID)
+* [AuraSR](https://huggingface.co/fal/AuraSR/blob/main/LICENSE.md)
 
 ## दान
 
