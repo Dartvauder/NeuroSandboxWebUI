@@ -12,7 +12,7 @@
 
 ### 文本：<img width="1127" alt="1zh" src="https://github.com/user-attachments/assets/c8f71af3-49ac-48e6-be22-45b933fc7b2c">
 
-### 图像：<img width="1122" alt="2zh" src="https://github.com/user-attachments/assets/865eb4f0-edee-492c-a016-3a33930a8159">
+### 图像：<img width="1109" alt="2zh" src="https://github.com/user-attachments/assets/1a7923d1-d112-453b-be96-a85313e18b2b">
 
 ### 视频：<img width="1126" alt="3zh" src="https://github.com/user-attachments/assets/a26222d4-cfcd-4869-aa0e-18b984f49d00">
 
