@@ -12,7 +12,7 @@
 
 ### النص: <img width="1119" alt="1ar" src="https://github.com/user-attachments/assets/e115f987-5988-479a-b37d-97712fce66cc">
 
-### الصورة: <img width="1124" alt="2ar" src="https://github.com/user-attachments/assets/9aca4842-73dc-46f0-b295-8fc7758b5b06">
+### الصورة: <img width="1121" alt="2ar" src="https://github.com/user-attachments/assets/ebe181af-bb7c-424c-bab0-11ac6b94c9eb">
 
 ### الفيديو: <img width="1121" alt="3ar" src="https://github.com/user-attachments/assets/500ebe14-1741-4392-a11c-781c87cc223c">
 
