@@ -256,6 +256,15 @@ Para trabajar con el entorno virtual a través de la terminal, ejecuta `./Venv.s
 2) Configura el modelo según los parámetros que necesites
 3) Haz clic en el botón `Submit` para obtener la imagen generada
 
+#### adapters (InstantID, PhotoMaker e IP-Adapter-FaceID):
+
+1) Primero suba sus modelos a la carpeta: *inputs/image/sd_models*
+2) Suba la imagen inicial
+3) Seleccione su modelo de la lista desplegable
+4) Configure el modelo según los parámetros que necesite
+5) Seleccione la subpestaña que necesite
+6) Haga clic en el botón `Submit` para obtener la imagen modificada
+
 #### extras:
 
 1) Sube la imagen inicial
