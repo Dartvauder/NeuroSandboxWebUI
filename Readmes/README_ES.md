@@ -30,13 +30,13 @@ El objetivo del proyecto es crear la aplicación más fácil posible para usar m
 * Autenticación a través de admin:admin (Puedes ingresar tus detalles de inicio de sesión en el archivo GradioAuth.txt)
 * Puedes agregar tu propio HuggingFace-Token para descargar modelos específicos (Puedes ingresar tu token en el archivo HF-Token.txt)
 * Soporte para modelos Transformers y llama.cpp (LLM)
-* Soporte para modelos diffusers y safetensors (StableDiffusion) - pestañas txt2img, img2img, depth2img, pix2pix, controlnet, upscale, inpaint, gligen, animatediff, video, ldm3d, sd3, cascade y extras
+* Soporte para modelos diffusers y safetensors (StableDiffusion) - pestañas txt2img, img2img, depth2img, pix2pix, controlnet, upscale, inpaint, gligen, animatediff, video, ldm3d, sd3, cascade, adapters y extras
 * Soporte de modelos adicionales para generación de imágenes: Kandinsky, Flux, HunyuanDiT, Lumina-T2X, Kolors, AuraFlow, Würstchen, DeepFloydIF y PixArt
 * Soporte StableAudioOpen
 * Soporte AudioCraft (Modelos: musicgen, audiogen y magnet)
 * Soporte AudioLDM 2 (Modelos: audio y música)
 * Soporta modelos TTS y Whisper (Para LLM y TTS-STT)
-* Soporta modelos Lora, Textual inversion (embedding), Vae, Img2img, Depth, Pix2Pix, Controlnet, Upscale(latent), Upscale(Real-ESRGAN), Inpaint, GLIGEN, AnimateDiff, Videos, LDM3D, SD3, Cascade, Rembg, CodeFormer y Roop (Para StableDiffusion)
+* Soporta modelos Lora, Textual inversion (embedding), Vae, Img2img, Depth, Pix2Pix, Controlnet, Upscale(latent), Upscale(Real-ESRGAN), Inpaint, GLIGEN, AnimateDiff, Videos, LDM3D, SD3, Cascade, Adapters (InstantID, PhotoMaker, IP-Adapter-FaceID), Rembg, CodeFormer y Roop (Para StableDiffusion)
 * Soporte para el modelo Multiband Diffusion (Para AudioCraft)
 * Soporte LibreTranslate (API Local)
 * Soporte ModelScope, ZeroScope 2, CogVideoX y Latte para generación de video
@@ -95,7 +95,7 @@ Para trabajar con el entorno virtual a través de la terminal, ejecuta `./Venv.s
 
 ## Cómo usar:
 
-#### La interfaz tiene treinta y dos pestañas en seis pestañas principales: LLM, TTS-STT, SunoBark, LibreTranslate, Wav2Lip, StableDiffusion, Kandinsky, Flux, HunyuanDiT, Lumina-T2X, Kolors, AuraFlow, Würstchen, DeepFloydIF, PixArt, ModelScope, ZeroScope 2, CogVideoX, Latte, TripoSR, StableFast3D, Shap-E, SV34D, Zero123Plus, StableAudio, AudioCraft, AudioLDM 2, Demucs, Galería, ModelDownloader, Configuración y Sistema. Selecciona la que necesites y sigue las instrucciones a continuación
+#### La interfaz tiene treinta y dos pestañas en seis pestañas principales (Texto, Imagen, Video, 3D, Audio y Interfaz): LLM, TTS-STT, SunoBark, LibreTranslate, Wav2Lip, StableDiffusion, Kandinsky, Flux, HunyuanDiT, Lumina-T2X, Kolors, AuraFlow, Würstchen, DeepFloydIF, PixArt, ModelScope, ZeroScope 2, CogVideoX, Latte, TripoSR, StableFast3D, Shap-E, SV34D, Zero123Plus, StableAudio, AudioCraft, AudioLDM 2, Demucs, Galería, ModelDownloader, Configuración y Sistema. Selecciona la que necesites y sigue las instrucciones a continuación
 
 ### LLM:
 
