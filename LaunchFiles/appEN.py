@@ -21,6 +21,7 @@ from diffusers.pipelines.wuerstchen import DEFAULT_STAGE_C_TIMESTEPS
 from instantid.pipeline_stable_diffusion_xl_instantid import StableDiffusionXLInstantIDPipeline, draw_kps
 from photomaker import PhotoMakerStableDiffusionXLPipeline
 from ip_adapter.ip_adapter_faceid import IPAdapterFaceID
+from aura_sr import AuraSR
 from controlnet_aux import OpenposeDetector, LineartDetector, HEDdetector
 from insightface.app import FaceAnalysis
 from compel import Compel, ReturnedEmbeddingsType
@@ -3174,7 +3175,8 @@ def generate_image_kolors(prompt, negative_prompt, guidance_scale, num_inference
         del pipe
         torch.cuda.empty_cache()
 
-def generate_image_auraflow(prompt, negative_prompt, num_inference_steps, guidance_scale, height, width, max_sequence_length, output_format="png", stop_generation=None):
+
+def generate_image_auraflow(prompt, negative_prompt, num_inference_steps, guidance_scale, height, width, max_sequence_length, enable_aurasr, output_format="png", stop_generation=None):
     global stop_signal
     stop_signal = False
 
@@ -3182,12 +3184,19 @@ def generate_image_auraflow(prompt, negative_prompt, num_inference_steps, guidan
         return None, "Please enter a prompt!"
 
     auraflow_model_path = os.path.join("inputs", "image", "sd_models", "auraflow")
+    aurasr_model_path = os.path.join("inputs", "image", "sd_models", "auraflow", "aurasr")
 
     if not os.path.exists(auraflow_model_path):
         print("Downloading AuraFlow model...")
         os.makedirs(auraflow_model_path, exist_ok=True)
-        Repo.clone_from("https://huggingface.co/fal/AuraFlow", auraflow_model_path)
+        Repo.clone_from("https://huggingface.co/fal/AuraFlow-v0.3", auraflow_model_path)
         print("AuraFlow model downloaded")
+
+    if not os.path.exists(aurasr_model_path):
+        print("Downloading AuraSR model...")
+        os.makedirs(aurasr_model_path, exist_ok=True)
+        Repo.clone_from("https://huggingface.co/fal/AuraSR", aurasr_model_path)
+        print("AuraSR model downloaded")
 
     try:
         pipe = AuraFlowPipeline.from_pretrained(auraflow_model_path, torch_dtype=torch.float16)
@@ -3205,6 +3214,11 @@ def generate_image_auraflow(prompt, negative_prompt, num_inference_steps, guidan
 
         if stop_signal:
             return None, "Generation stopped"
+
+        if enable_aurasr:
+            aura_sr = AuraSR.from_pretrained(aurasr_model_path)
+            image = image.resize((256, 256))
+            image = aura_sr.upscale_4x_overlapped(image)
 
         today = datetime.now().date()
         image_dir = os.path.join('outputs', f"AuraFlow_{today.strftime('%Y%m%d')}")
@@ -5542,6 +5556,7 @@ auraflow_interface = gr.Interface(
         gr.Slider(minimum=256, maximum=1024, value=512, step=64, label="Height"),
         gr.Slider(minimum=256, maximum=1024, value=512, step=64, label="Width"),
         gr.Slider(minimum=1, maximum=1024, value=256, step=1, label="Max Sequence Length"),
+        gr.Checkbox(label="Enable AuraSR", value=False),
         gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
         gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
@@ -5552,6 +5567,7 @@ auraflow_interface = gr.Interface(
     title="NeuroSandboxWebUI (ALPHA) - AuraFlow",
     description="This user interface allows you to generate images using the AuraFlow model. "
                 "Enter a prompt and customize the generation settings. "
+                "You can also enable AuraSR for 4x upscaling of the generated image. "
                 "Try it and see what happens!",
     allow_flagging="never",
 )
@@ -6100,6 +6116,9 @@ with gr.TabbedInterface(
     sd3_controlnet_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     sd3_inpaint_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     cascade_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
+    instantid_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
+    photomaker_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
+    ip_adapter_faceid_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     extras_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     kandinsky_txt2img_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     kandinsky_img2img_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
