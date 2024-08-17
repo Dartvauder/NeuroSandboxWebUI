@@ -10,17 +10,17 @@ Prosty i wygodny interfejs do korzystania z różnych modeli sieci neuronowych. 
 
 Celem projektu jest stworzenie jak najprostszej w użyciu aplikacji do korzystania z modeli sieci neuronowych.
 
-### Tekst: <img width="1119" alt="1" src="https://github.com/user-attachments/assets/e1ac4e8e-feb2-484b-a399-61ddc8a098c1">
+### Tekst: <img width="1115" alt="1pl" src="https://github.com/user-attachments/assets/d1f520e6-900b-42f7-9aa5-90d9fb5090b0">
 
-### Obraz: <img width="1121" alt="2" src="https://github.com/user-attachments/assets/e6d08f90-86b2-4111-9535-4d0d14099b0d">
+### Obraz: <img width="1118" alt="2pl" src="https://github.com/user-attachments/assets/c712b411-3317-4e55-93c9-cd684271f5f5">
 
-### Wideo: <img width="1118" alt="3" src="https://github.com/user-attachments/assets/a568c3ed-3b00-4e21-b802-a3e63f6cf97c">
+### Wideo: <img width="1118" alt="3pl" src="https://github.com/user-attachments/assets/ea17ffab-7cf2-4ff3-b48a-0b8aec9faaa0">
 
-### 3D: <img width="1118" alt="4" src="https://github.com/user-attachments/assets/0ba23ac4-aecc-44e6-b252-1fc0f478c75e">
+### 3D: <img width="1121" alt="4pl" src="https://github.com/user-attachments/assets/f971b18a-3e0d-4d42-8a79-0abb0ae2662e">
 
-### Audio: <img width="1116" alt="5" src="https://github.com/user-attachments/assets/5aaca0f3-8f69-42aa-9aa9-5dca06bb08e4">
+### Audio: <img width="1120" alt="5pl" src="https://github.com/user-attachments/assets/011dad91-e92c-4221-82c7-c058def17239">
 
-### Interfejs: <img width="1120" alt="6" src="https://github.com/user-attachments/assets/81c4e40c-cf01-488d-adc8-7330f1edd610">
+### Interfejs: <img width="1118" alt="6pl" src="https://github.com/user-attachments/assets/7f4b676c-011e-431c-a2a0-a7e488466211">
 
 ## Funkcje:
 
