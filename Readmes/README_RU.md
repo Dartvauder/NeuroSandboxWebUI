@@ -18,7 +18,7 @@
 
 ### 3D: <img width="1121" alt="4ru" src="https://github.com/user-attachments/assets/df783a3c-f2bf-439c-85f3-c992a9a8e910">
 
-### Аудио: <img width="1115" alt="5ru" src="https://github.com/user-attachments/assets/5881226a-df57-4623-bef1-0df71b557ca2">
+### Аудио: <img width="1115" alt="5ru" src="https://github.com/user-attachments/assets/194486aa-126d-4d98-8639-426d6dd39795">
 
 ### Интерфейс: <img width="1122" alt="6ru" src="https://github.com/user-attachments/assets/3912f4d0-7d0f-4f51-9863-a16b46f88585">
 
