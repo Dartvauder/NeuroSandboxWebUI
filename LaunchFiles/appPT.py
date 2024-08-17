@@ -4865,6 +4865,7 @@ bark_interface = gr.Interface(
     ],
     outputs=[
         gr.Audio(label="Áudio gerado", type="filepath"),
+        gr.Image(label="Espectrograma de Mel", type="filepath"),
         gr.Textbox(label="Mensagem", type="text"),
     ],
     title="NeuroSandboxWebUI (ALPHA) - SunoBark",
@@ -5047,6 +5048,7 @@ controlnet_interface = gr.Interface(
     ],
     outputs=[
         gr.Image(type="filepath", label="Imagem gerada"),
+        gr.Image(type="filepath", label="Imagem de controle do ControlNet"),
         gr.Textbox(label="Mensagem", type="text"),
     ],
     title="NeuroSandboxWebUI (ALPHA) - StableDiffusion (controlnet)",
@@ -5304,6 +5306,7 @@ sd3_controlnet_interface = gr.Interface(
     ],
     outputs=[
         gr.Image(type="filepath", label="Imagem gerada"),
+        gr.Image(type="filepath", label="Imagem de controle do ControlNet"),
         gr.Textbox(label="Mensagem", type="text"),
     ],
     title="NeuroSandboxWebUI (ALPHA) - StableDiffusion 3 (ControlNet)",
@@ -6023,6 +6026,7 @@ stableaudio_interface = gr.Interface(
     ],
     outputs=[
         gr.Audio(label="Áudio gerado", type="filepath"),
+        gr.Image(label="Espectrograma de Mel", type="filepath"),
         gr.Textbox(label="Mensagem", type="text"),
     ],
     title="NeuroSandboxWebUI (ALPHA) - StableAudio",
@@ -6051,6 +6055,7 @@ audiocraft_interface = gr.Interface(
     ],
     outputs=[
         gr.Audio(label="Áudio gerado", type="filepath"),
+        gr.Image(label="Espectrograma de Mel", type="filepath"),
         gr.Textbox(label="Mensagem", type="text"),
     ],
     title="NeuroSandboxWebUI (ALPHA) - AudioCraft",
@@ -6074,6 +6079,7 @@ audioldm2_interface = gr.Interface(
     ],
     outputs=[
         gr.Audio(label="Áudio gerado", type="filepath"),
+        gr.Image(label="Espectrograma de Mel", type="filepath"),
         gr.Textbox(label="Mensagem", type="text"),
     ],
     title="NeuroSandboxWebUI (ALPHA) - AudioLDM 2",

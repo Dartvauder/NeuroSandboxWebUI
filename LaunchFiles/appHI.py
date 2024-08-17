@@ -4860,6 +4860,7 @@ bark_interface = gr.Interface(
     ],
     outputs=[
         gr.Audio(label="उत्पन्न ऑडियो", type="filepath"),
+        gr.Image(label="मेल-स्पेक्ट्रोग्राम", type="filepath"),
         gr.Textbox(label="संदेश", type="text"),
     ],
     title="NeuroSandboxWebUI (ALPHA) - SunoBark",
@@ -5029,6 +5030,7 @@ controlnet_interface = gr.Interface(
     ],
     outputs=[
         gr.Image(type="filepath", label="उत्पन्न छवि"),
+        gr.Image(type="filepath", label="कंट्रोलनेट नियंत्रण छवि"),
         gr.Textbox(label="संदेश", type="text"),
     ],
     title="NeuroSandboxWebUI (ALPHA) - StableDiffusion (controlnet)",
@@ -5274,6 +5276,7 @@ sd3_controlnet_interface = gr.Interface(
     ],
     outputs=[
         gr.Image(type="filepath", label="उत्पन्न छवि"),
+        gr.Image(type="filepath", label="कंट्रोलनेट नियंत्रण छवि"),
         gr.Textbox(label="संदेश", type="text"),
     ],
     title="NeuroSandboxWebUI (ALPHA) - StableDiffusion 3 (ControlNet)",
@@ -5961,6 +5964,7 @@ stableaudio_interface = gr.Interface(
     ],
     outputs=[
         gr.Audio(label="उत्पन्न ऑडियो", type="filepath"),
+        gr.Image(label="मेल-स्पेक्ट्रोग्राम", type="filepath"),
         gr.Textbox(label="संदेश", type="text"),
     ],
     title="NeuroSandboxWebUI (ALPHA) - StableAudio",
@@ -5987,6 +5991,7 @@ audiocraft_interface = gr.Interface(
     ],
     outputs=[
         gr.Audio(label="उत्पन्न ऑडियो", type="filepath"),
+        gr.Image(label="मेल-स्पेक्ट्रोग्राम", type="filepath"),
         gr.Textbox(label="संदेश", type="text"),
     ],
     title="NeuroSandboxWebUI (ALPHA) - AudioCraft",
@@ -6008,6 +6013,7 @@ audioldm2_interface = gr.Interface(
     ],
     outputs=[
         gr.Audio(label="उत्पन्न ऑडियो", type="filepath"),
+        gr.Image(label="मेल-स्पेक्ट्रोग्राम", type="filepath"),
         gr.Textbox(label="संदेश", type="text"),
     ],
     title="NeuroSandboxWebUI (ALPHA) - AudioLDM 2",

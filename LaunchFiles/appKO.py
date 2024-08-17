@@ -4860,6 +4860,7 @@ bark_interface = gr.Interface(
     ],
     outputs=[
         gr.Audio(label="생성된 오디오", type="filepath"),
+        gr.Image(label="멜 스펙트로그램", type="filepath"),
         gr.Textbox(label="메시지", type="text"),
     ],
     title="NeuroSandboxWebUI (ALPHA) - SunoBark",
@@ -5029,6 +5030,7 @@ controlnet_interface = gr.Interface(
     ],
     outputs=[
         gr.Image(type="filepath", label="생성된 이미지"),
+        gr.Image(type="filepath", label="ControlNet 제어 이미지"),
         gr.Textbox(label="메시지", type="text"),
     ],
     title="NeuroSandboxWebUI (ALPHA) - StableDiffusion (controlnet)",
@@ -5274,6 +5276,7 @@ sd3_controlnet_interface = gr.Interface(
     ],
     outputs=[
         gr.Image(type="filepath", label="생성된 이미지"),
+        gr.Image(type="filepath", label="ControlNet 제어 이미지"),
         gr.Textbox(label="메시지", type="text"),
     ],
     title="NeuroSandboxWebUI (ALPHA) - StableDiffusion 3 (ControlNet)",
@@ -5961,6 +5964,7 @@ stableaudio_interface = gr.Interface(
     ],
     outputs=[
         gr.Audio(label="생성된 오디오", type="filepath"),
+        gr.Image(label="멜 스펙트로그램", type="filepath"),
         gr.Textbox(label="메시지", type="text"),
     ],
     title="NeuroSandboxWebUI (ALPHA) - StableAudio",
@@ -5987,6 +5991,7 @@ audiocraft_interface = gr.Interface(
     ],
     outputs=[
         gr.Audio(label="생성된 오디오", type="filepath"),
+        gr.Image(label="멜 스펙트로그램", type="filepath"),
         gr.Textbox(label="메시지", type="text"),
     ],
     title="NeuroSandboxWebUI (ALPHA) - AudioCraft",
@@ -6008,6 +6013,7 @@ audioldm2_interface = gr.Interface(
     ],
     outputs=[
         gr.Audio(label="생성된 오디오", type="filepath"),
+        gr.Image(label="멜 스펙트로그램", type="filepath"),
         gr.Textbox(label="메시지", type="text"),
     ],
     title="NeuroSandboxWebUI (ALPHA) - AudioLDM 2",
