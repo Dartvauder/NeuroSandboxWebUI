@@ -18,7 +18,7 @@
 
 ### 3D: <img width="1119" alt="4hi" src="https://github.com/user-attachments/assets/0ec4c9d1-68a0-42ae-8016-801b09e8e210">
 
-### ऑडियो: <img width="1121" alt="5hi" src="https://github.com/user-attachments/assets/5fc6fb75-e3ec-4c13-a033-da5aed8d0d1c">
+### ऑडियो: <img width="1115" alt="5hi" src="https://github.com/user-attachments/assets/5c83ffdc-211f-4eda-b2dd-5a81baae9d20">
 
 ### इंटरफ़ेस: <img width="1119" alt="6hi" src="https://github.com/user-attachments/assets/0f45d6d5-1119-48e3-84f5-8e1481ecebfe">
 
