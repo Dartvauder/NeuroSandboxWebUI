@@ -31,6 +31,8 @@ echo [Versão portuguesa: 9] appPT.py
 echo [Italiano: 10] appIT.py
 echo [हिंदी: 11] appHI.py
 echo [韓國語: 12] appKO.py
+echo [Polski: 13] appPL.py
+echo [Türkçe: 14] appTR.py
 echo.
 
 :input
@@ -126,6 +128,22 @@ if "%choice%"=="11" (
 if "%choice%"=="12" (
     cls
     start /b py -c "import os, sys; sys.path.insert(0, os.path.join(os.path.dirname(__name__), 'LaunchFiles')); import appKO"
+    timeout /t 120 > NUL
+    start http://localhost:7860
+    goto end
+)
+
+if "%choice%"=="13" (
+    cls
+    start /b py -c "import os, sys; sys.path.insert(0, os.path.join(os.path.dirname(__name__), 'LaunchFiles')); import appPL"
+    timeout /t 120 > NUL
+    start http://localhost:7860
+    goto end
+)
+
+if "%choice%"=="14" (
+    cls
+    start /b py -c "import os, sys; sys.path.insert(0, os.path.join(os.path.dirname(__name__), 'LaunchFiles')); import appTR"
     timeout /t 120 > NUL
     start http://localhost:7860
     goto end
