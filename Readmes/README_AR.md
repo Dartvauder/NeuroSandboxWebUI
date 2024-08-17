@@ -18,7 +18,7 @@
 
 ### ثلاثي الأبعاد: <img width="1120" alt="4ar" src="https://github.com/user-attachments/assets/64e3367d-dd83-43cd-ad15-47b24a444c58">
 
-### الصوت: <img width="1123" alt="5ar" src="https://github.com/user-attachments/assets/88999b5b-cbe6-43eb-bacc-19c843f159d9">
+### الصوت: <img width="1119" alt="5ar" src="https://github.com/user-attachments/assets/1072d45d-21fe-46c1-9680-e411f82bfc44">
 
 ### الواجهة: <img width="1118" alt="6ar" src="https://github.com/user-attachments/assets/30db9899-fba7-49f3-8ba7-d310f82af045">
 
