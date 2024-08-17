@@ -18,7 +18,7 @@ Das Ziel des Projekts ist es, die einfachstmögliche Anwendung zur Nutzung von n
 
 ### 3D: <img width="1120" alt="4de" src="https://github.com/user-attachments/assets/892283fb-83f9-4165-a7da-3a251b6a781e">
 
-### Audio: <img width="1119" alt="5de" src="https://github.com/user-attachments/assets/0218e7e1-654b-4b71-a0fe-e71768b928d3">
+### Audio: <img width="1114" alt="5de" src="https://github.com/user-attachments/assets/26a25e0e-3b90-433a-a24d-477f4bdc2229">
 
 ### Oberfläche: <img width="1118" alt="6de" src="https://github.com/user-attachments/assets/04ba5785-3b2a-4b39-928e-9968df18da8f">
 
