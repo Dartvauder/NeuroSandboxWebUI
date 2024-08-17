@@ -18,7 +18,7 @@ O objetivo do projeto - criar o aplicativo mais fácil possível de usar modelos
 
 ### 3D: <img width="1120" alt="4pt" src="https://github.com/user-attachments/assets/6a2a9842-8955-4d46-a253-798ee27bf96f">
 
-### Áudio: <img width="1124" alt="5pt" src="https://github.com/user-attachments/assets/fd530f6a-22c1-4797-8b6e-d9c0ccc79200">
+### Áudio: <img width="1118" alt="5pt" src="https://github.com/user-attachments/assets/e05297d1-bd95-4bd5-98c0-51af9b3f24b4">
 
 ### Interface: <img width="1124" alt="6pt" src="https://github.com/user-attachments/assets/f168fba8-9f18-4f62-bfc5-59cc291acb04">
 
