@@ -18,7 +18,7 @@
 
 ### 3D：<img width="1127" alt="4zh" src="https://github.com/user-attachments/assets/84edbd5f-0437-490f-bfb2-2930f8a5d05e">
 
-### 音频：<img width="1118" alt="5zh" src="https://github.com/user-attachments/assets/b7ff6de8-2aaa-4674-ae95-d9084128ac23">
+### 音频：<img width="1118" alt="5zh" src="https://github.com/user-attachments/assets/c51c05f2-d980-4366-b1bf-c4f57b680da1">
 
 ### 界面：<img width="1118" alt="6zh" src="https://github.com/user-attachments/assets/2df0ba1a-f0ea-4a9e-9e71-2c9f7d625051">
 
