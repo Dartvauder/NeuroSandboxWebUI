@@ -2,7 +2,7 @@
 
 # ![main](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/4ea0d891-8979-45ad-b052-626c41ae991a)
 * Travail en cours ! (ALPHA)
-* [English](/README.md)  | [عربي](/Readmes/README_AR.md) | [Deutsche](/Readmes/README_DE.md) | [Español](/Readmes/README_ES.md) | Français | [日本語](/Readmes/README_JP.md) | [Русский](/Readmes/README_RU.md) | [漢語](/Readmes/README_ZH.md) | [Português](/Readmes/README_PT.md) | [हिंदी](/Readmes/README_HI.md) | [Italiano](/Readmes/README_IT.md) | [韓國語](/Readmes/README_KO.md)
+* [English](/README.md)  | [عربي](/Readmes/README_AR.md) | [Deutsche](/Readmes/README_DE.md) | [Español](/Readmes/README_ES.md) | Français | [日本語](/Readmes/README_JP.md) | [Русский](/Readmes/README_RU.md) | [漢語](/Readmes/README_ZH.md) | [Português](/Readmes/README_PT.md) | [हिंदी](/Readmes/README_HI.md) | [Italiano](/Readmes/README_IT.md) | [韓國語](/Readmes/README_KO.md) | [Polski](/Readmes/README_PL.md) | [Türkçe](/Readmes/README_TR.md)
 
 ## Description :
 
@@ -18,7 +18,7 @@ L'objectif du projet est de créer l'application la plus simple possible pour ut
 
 ### 3D : <img width="1120" alt="4fr" src="https://github.com/user-attachments/assets/41cf6d89-6dd7-4f7b-b6c2-b72d40a032de">
 
-### Audio : <img width="1117" alt="5fr" src="https://github.com/user-attachments/assets/b331e58a-fe4a-4c30-b960-bbd7cc9aac72">
+### Audio : <img width="1115" alt="5fr" src="https://github.com/user-attachments/assets/0e07a169-39a9-4883-b555-08a50838a041">
 
 ### Interface : <img width="1118" alt="6fr" src="https://github.com/user-attachments/assets/5bfe164e-d697-430f-8571-746203b37ee9">
 

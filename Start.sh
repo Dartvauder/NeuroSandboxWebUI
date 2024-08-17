@@ -34,6 +34,8 @@ while true; do
     echo [Italiano: 10] appIT.py
     echo [हिंदी: 11] appHI.py
     echo [韓國語: 12] appKO.py
+    echo [Polski: 13] appPL.py
+    echo [Türkçe: 14] appTR.py
     echo
 
     read -p "Enter number: " choice
@@ -119,6 +121,20 @@ while true; do
         12)
             clear
             python -c "import os, sys; sys.path.insert(0, os.path.join('$(dirname "${BASH_SOURCE[0]}")', 'LaunchFiles')); import appKO" &
+            sleep 120
+            xdg-open "http://localhost:7860"
+            break
+            ;;
+        13)
+            clear
+            python -c "import os, sys; sys.path.insert(0, os.path.join('$(dirname "${BASH_SOURCE[0]}")', 'LaunchFiles')); import appPL" &
+            sleep 120
+            xdg-open "http://localhost:7860"
+            break
+            ;;
+        14)
+            clear
+            python -c "import os, sys; sys.path.insert(0, os.path.join('$(dirname "${BASH_SOURCE[0]}")', 'LaunchFiles')); import appTR" &
             sleep 120
             xdg-open "http://localhost:7860"
             break

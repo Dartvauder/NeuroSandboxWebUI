@@ -5,6 +5,11 @@ from peft import PeftModel
 from libretranslatepy import LibreTranslateAPI
 import urllib.error
 import soundfile as sf
+from pydub import AudioSegment
+from scipy.io import wavfile
+import matplotlib.pyplot as plt
+import librosa
+import librosa.display
 import os
 import cv2
 import subprocess
@@ -70,6 +75,7 @@ whisper_model = None
 audiocraft_model_path = None
 
 os.chdir(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 
 def authenticate(username, password):
     try:
@@ -143,6 +149,36 @@ def remove_bg(src_img_path, out_img_path):
 
     with open(out_img_path, "wb") as output_file:
         output_file.write(output_data)
+
+
+def generate_mel_spectrogram(audio_path):
+    audio_format = audio_path.split('.')[-1].lower()
+
+    if audio_format == 'wav':
+        sr, y = wavfile.read(audio_path)
+        y = y.astype(np.float32) / np.iinfo(y.dtype).max
+    else:
+        audio = AudioSegment.from_file(audio_path, format=audio_format)
+        y = np.array(audio.get_array_of_samples()).astype(np.float32) / 32768.0
+        sr = audio.frame_rate
+
+    if len(y.shape) > 1:
+        y = np.mean(y, axis=1)
+
+    S = librosa.feature.melspectrogram(y=y, sr=sr, n_mels=128, fmax=8000)
+    S_dB = librosa.power_to_db(S, ref=np.max)
+
+    plt.figure(figsize=(10, 4))
+    img = librosa.display.specshow(S_dB, x_axis='time', y_axis='mel', sr=sr, fmax=8000)
+    plt.colorbar(img, format='%+2.0f dB')
+    plt.title('Mel-spectrogram')
+    plt.tight_layout()
+
+    spectrogram_path = audio_path.rsplit('.', 1)[0] + '_melspec.png'
+    plt.savefig(spectrogram_path)
+    plt.close()
+
+    return spectrogram_path
 
 
 def load_model(model_name, model_type, n_ctx=None):
@@ -776,7 +812,7 @@ def generate_bark_audio(text, voice_preset, max_length, fine_temperature, coarse
     stop_signal = False
 
     if not text:
-        return None, "Please enter text for the request!"
+        return None, None, "Please enter text for the request!"
 
     bark_model_path = os.path.join("inputs", "audio", "bark")
 
@@ -802,7 +838,7 @@ def generate_bark_audio(text, voice_preset, max_length, fine_temperature, coarse
         model.enable_cpu_offload()
 
         if stop_signal:
-            return None, "Generation stopped"
+            return None, None, "Generation stopped"
 
         today = datetime.now().date()
         audio_dir = os.path.join('outputs', f"Bark_{today.strftime('%Y%m%d')}")
@@ -820,10 +856,12 @@ def generate_bark_audio(text, voice_preset, max_length, fine_temperature, coarse
         else:
             sf.write(audio_path, audio_array, 24000)
 
-        return audio_path, None
+        spectrogram_path = generate_mel_spectrogram(audio_path)
+
+        return audio_path, spectrogram_path, None
 
     except Exception as e:
-        return None, str(e)
+        return None, None, str(e)
 
     finally:
         del model
@@ -1294,19 +1332,19 @@ def generate_image_controlnet(prompt, negative_prompt, init_image, sd_version, s
     stop_signal = False
 
     if not init_image:
-        return None, "Please, upload an initial image!"
+        return None, None, "Please, upload an initial image!"
 
     if not stable_diffusion_model_name:
-        return None, "Please, select a StableDiffusion model!"
+        return None, None, "Please, select a StableDiffusion model!"
 
     if not controlnet_model_name:
-        return None, "Please, select a ControlNet model!"
+        return None, None, "Please, select a ControlNet model!"
 
     stable_diffusion_model_path = os.path.join("inputs", "image", "sd_models",
                                                f"{stable_diffusion_model_name}.safetensors")
 
     if not os.path.exists(stable_diffusion_model_path):
-        return None, f"StableDiffusion model not found: {stable_diffusion_model_path}"
+        return None, None, f"StableDiffusion model not found: {stable_diffusion_model_path}"
 
     controlnet_model_path = os.path.join("inputs", "image", "sd_models", "controlnet", controlnet_model_name)
     if not os.path.exists(controlnet_model_path):
@@ -1431,7 +1469,7 @@ def generate_image_controlnet(prompt, negative_prompt, init_image, sd_version, s
                 control_image = np.concatenate([control_image, control_image, control_image], axis=2)
                 control_image = Image.fromarray(control_image)
             else:
-                return None, f"ControlNet model {controlnet_model_name} is not supported for SDXL"
+                return None, None, f"ControlNet model {controlnet_model_name} is not supported for SDXL"
 
             image = pipe(
                 prompt, negative_prompt=negative_prompt, image=control_image,
@@ -1441,19 +1479,24 @@ def generate_image_controlnet(prompt, negative_prompt, init_image, sd_version, s
             ).images[0]
 
         if stop_signal:
-            return None, "Generation stopped"
+            return None, None, "Generation stopped"
 
         today = datetime.now().date()
         image_dir = os.path.join('outputs', f"StableDiffusion_{today.strftime('%Y%m%d')}")
         os.makedirs(image_dir, exist_ok=True)
+
         image_filename = f"controlnet_{controlnet_model_name}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
         image_path = os.path.join(image_dir, image_filename)
         image.save(image_path, format=output_format.upper())
 
-        return image_path, None
+        control_image_filename = f"controlnet_{controlnet_model_name}_control_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
+        control_image_path = os.path.join(image_dir, control_image_filename)
+        control_image.save(control_image_path, format=output_format.upper())
+
+        return image_path, control_image_path, None
 
     except Exception as e:
-        return None, str(e)
+        return None, None, str(e)
 
     finally:
         try:
@@ -2246,9 +2289,13 @@ def generate_image_sd3_img2img(prompt, negative_prompt, init_image, strength, nu
         del pipe
         torch.cuda.empty_cache()
 
+
 def generate_image_sd3_controlnet(prompt, negative_prompt, init_image, controlnet_model, num_inference_steps, guidance_scale, controlnet_conditioning_scale, width, height, max_sequence_length, output_format="png", stop_generation=None):
     global stop_signal
     stop_signal = False
+
+    if not init_image:
+        return None, None, "Please upload an initial image!"
 
     sd3_model_path = os.path.join("inputs", "image", "sd_models", "sd3")
     controlnet_path = os.path.join("inputs", "image", "sd_models", "controlnet", f"sd3_{controlnet_model}")
@@ -2282,7 +2329,7 @@ def generate_image_sd3_controlnet(prompt, negative_prompt, init_image, controlne
         elif controlnet_model.lower() == "pose":
             control_image = init_image
         else:
-            return None, f"Unsupported ControlNet model: {controlnet_model}"
+            return None, None, f"Unsupported ControlNet model: {controlnet_model}"
 
         image = pipe(
             prompt,
@@ -2296,20 +2343,26 @@ def generate_image_sd3_controlnet(prompt, negative_prompt, init_image, controlne
         ).images[0]
 
         if stop_signal:
-            return None, "Generation stopped"
+            return None, None, "Generation stopped"
 
         today = datetime.now().date()
         image_dir = os.path.join('outputs', f"StableDiffusion_{today.strftime('%Y%m%d')}")
         os.makedirs(image_dir, exist_ok=True)
+
         image_filename = f"sd3_controlnet_{controlnet_model}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
         image_path = os.path.join(image_dir, image_filename)
         image.save(image_path, format=output_format.upper())
 
-        return image_path, None
+        control_image_filename = f"sd3_controlnet_{controlnet_model}_control_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
+        control_image_path = os.path.join(image_dir, control_image_filename)
+        control_image.save(control_image_path, format=output_format.upper())
+
+        return image_path, control_image_path, None
 
     finally:
         del pipe
         torch.cuda.empty_cache()
+
 
 def generate_image_sd3_inpaint(prompt, negative_prompt, init_image, mask_image, num_inference_steps, guidance_scale, width, height, max_sequence_length, output_format="png", stop_generation=None):
     global stop_signal
@@ -4296,7 +4349,7 @@ def generate_stableaudio(prompt, negative_prompt, num_inference_steps, guidance_
 
         hf_token = get_hf_token()
         if hf_token is None:
-            return None, "Hugging Face token not found. Please create a file named 'hftoken.txt' in the root directory and paste your token there."
+            return None, None, "Hugging Face token not found. Please create a file named 'hftoken.txt' in the root directory and paste your token there."
 
         try:
             snapshot_download(repo_id="stabilityai/stable-audio-open-1.0",
@@ -4304,7 +4357,7 @@ def generate_stableaudio(prompt, negative_prompt, num_inference_steps, guidance_
                               token=hf_token)
             print("Stable Audio Open model downloaded")
         except Exception as e:
-            return None, f"Error downloading model: {str(e)}"
+            return None, None, f"Error downloading model: {str(e)}"
 
     pipe = StableAudioPipeline.from_pretrained(sa_model_path, torch_dtype=torch.float16)
     pipe = pipe.to("cuda")
@@ -4324,7 +4377,7 @@ def generate_stableaudio(prompt, negative_prompt, num_inference_steps, guidance_
         ).audios
 
         if stop_signal:
-            return None, "Generation stopped"
+            return None, None, "Generation stopped"
 
         output = audio[0].T.float().cpu().numpy()
 
@@ -4341,10 +4394,12 @@ def generate_stableaudio(prompt, negative_prompt, num_inference_steps, guidance_
         else:
             sf.write(audio_path, output, pipe.vae.sampling_rate)
 
-        return audio_path, None
+        spectrogram_path = generate_mel_spectrogram(audio_path)
+
+        return audio_path, spectrogram_path, None
 
     except Exception as e:
-        return None, str(e)
+        return None, None, str(e)
 
     finally:
         del pipe
@@ -4360,10 +4415,10 @@ def generate_audio_audiocraft(prompt, input_audio=None, model_name=None, audiocr
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
     if not model_name:
-        return None, "Please, select an AudioCraft model!"
+        return None, None, "Please, select an AudioCraft model!"
 
     if enable_multiband and model_type in ["audiogen", "magnet"]:
-        return None, "Multiband Diffusion is not supported with 'audiogen' or 'magnet' model types. Please select 'musicgen' or disable Multiband Diffusion"
+        return None, None, "Multiband Diffusion is not supported with 'audiogen' or 'magnet' model types. Please select 'musicgen' or disable Multiband Diffusion"
 
     if not audiocraft_model_path:
         audiocraft_model_path = load_audiocraft_model(model_name)
@@ -4383,9 +4438,9 @@ def generate_audio_audiocraft(prompt, input_audio=None, model_name=None, audiocr
             model = MAGNeT.get_pretrained(audiocraft_model_path)
             model.set_generation_params()
         else:
-            return None, "Invalid model type!"
+            return None, None, "Invalid model type!"
     except (ValueError, AssertionError):
-        return None, "The selected model is not compatible with the chosen model type"
+        return None, None, "The selected model is not compatible with the chosen model type"
 
     mbd = None
 
@@ -4404,7 +4459,7 @@ def generate_audio_audiocraft(prompt, input_audio=None, model_name=None, audiocr
             if wav.ndim > 2:
                 wav = wav.squeeze()
             if stop_signal:
-                return None, "Generation stopped"
+                return None, None, "Generation stopped"
         else:
             descriptions = [prompt]
             model.set_generation_params(duration=duration, top_k=top_k, top_p=top_p, temperature=temperature,
@@ -4417,12 +4472,12 @@ def generate_audio_audiocraft(prompt, input_audio=None, model_name=None, audiocr
             if wav.ndim > 2:
                 wav = wav.squeeze()
             if stop_signal:
-                return None, "Generation stopped"
+                return None, None, "Generation stopped"
         progress_bar.close()
 
         if mbd:
             if stop_signal:
-                return None, "Generation stopped"
+                return None, None, "Generation stopped"
             tokens = rearrange(tokens, "b n d -> n b d")
             wav_diffusion = mbd.tokens_to_wav(tokens)
             wav_diffusion = wav_diffusion.squeeze()
@@ -4447,12 +4502,14 @@ def generate_audio_audiocraft(prompt, input_audio=None, model_name=None, audiocr
         else:
             audio_write(audio_path, wav.cpu(), model.sample_rate, strategy="loudness", loudness_compressor=True)
 
+        spectrogram_path = generate_mel_spectrogram(audio_path)
+
         if output_format == "mp3":
-            return audio_path + ".mp3", None
+            return audio_path + ".mp3", spectrogram_path, None
         elif output_format == "ogg":
-            return audio_path + ".ogg", None
+            return audio_path + ".ogg", spectrogram_path, None
         else:
-            return audio_path + ".wav", None
+            return audio_path + ".wav", spectrogram_path, None
 
     finally:
         del model
@@ -4467,7 +4524,7 @@ def generate_audio_audioldm2(prompt, negative_prompt, model_name, num_inference_
     stop_signal = False
 
     if not model_name:
-        return None, "Please, select an AudioLDM 2 model!"
+        return None, None, "Please, select an AudioLDM 2 model!"
 
     model_path = os.path.join("inputs", "audio", "audioldm2", model_name)
 
@@ -4495,7 +4552,7 @@ def generate_audio_audioldm2(prompt, negative_prompt, model_name, num_inference_
         ).audios
 
         if stop_signal:
-            return None, "Generation stopped"
+            return None, None, "Generation stopped"
 
         today = datetime.now().date()
         audio_dir = os.path.join('outputs', f"AudioLDM2_{today.strftime('%Y%m%d')}")
@@ -4510,7 +4567,9 @@ def generate_audio_audioldm2(prompt, negative_prompt, model_name, num_inference_
         else:
             scipy.io.wavfile.write(audio_path, rate=16000, data=audio[0])
 
-        return audio_path, None
+        spectrogram_path = generate_mel_spectrogram(audio_path)
+
+        return audio_path, spectrogram_path, None,
 
     finally:
         del pipe
@@ -4797,7 +4856,7 @@ bark_interface = gr.Interface(
     fn=generate_bark_audio,
     inputs=[
         gr.Textbox(label="Enter text for the request"),
-        gr.Dropdown(choices=[None, "v2/en_speaker_1", "v2/ru_speaker_1"], label="Select voice preset", value=None),
+        gr.Dropdown(choices=[None, "v2/en_speaker_1", "v2/ru_speaker_1", "v2/de_speaker_1", "v2/fr_speaker_1", "v2/es_speaker_1", "v2/hi_speaker_1", "v2/it_speaker_1", "v2/ja_speaker_1", "v2/ko_speaker_1", "v2/pt_speaker_1", "v2/zh_speaker_1", "v2/tr_speaker_1", "v2/pl_speaker_1"], label="Select voice preset", value=None),
         gr.Slider(minimum=1, maximum=1000, value=100, step=1, label="Max length"),
         gr.Slider(minimum=0.1, maximum=2.0, value=0.4, step=0.1, label="Fine temperature"),
         gr.Slider(minimum=0.1, maximum=2.0, value=0.8, step=0.1, label="Coarse temperature"),
@@ -4806,6 +4865,7 @@ bark_interface = gr.Interface(
     ],
     outputs=[
         gr.Audio(label="Generated audio", type="filepath"),
+        gr.Image(label="Mel-Spectrogram", type="filepath"),
         gr.Textbox(label="Message", type="text"),
     ],
     title="NeuroSandboxWebUI (ALPHA) - SunoBark",
@@ -4988,6 +5048,7 @@ controlnet_interface = gr.Interface(
     ],
     outputs=[
         gr.Image(type="filepath", label="Generated image"),
+        gr.Image(type="filepath", label="ControlNet control image"),
         gr.Textbox(label="Message", type="text"),
     ],
     title="NeuroSandboxWebUI (ALPHA) - StableDiffusion (controlnet)",
@@ -5245,6 +5306,7 @@ sd3_controlnet_interface = gr.Interface(
     ],
     outputs=[
         gr.Image(type="filepath", label="Generated image"),
+        gr.Image(type="filepath", label="ControlNet control image"),
         gr.Textbox(label="Message", type="text"),
     ],
     title="NeuroSandboxWebUI (ALPHA) - StableDiffusion 3 (ControlNet)",
@@ -5964,6 +6026,7 @@ stableaudio_interface = gr.Interface(
     ],
     outputs=[
         gr.Audio(label="Generated audio", type="filepath"),
+        gr.Image(label="Mel-Spectrogram", type="filepath"),
         gr.Textbox(label="Message", type="text"),
     ],
     title="NeuroSandboxWebUI (ALPHA) - StableAudio",
@@ -5992,6 +6055,7 @@ audiocraft_interface = gr.Interface(
     ],
     outputs=[
         gr.Audio(label="Generated audio", type="filepath"),
+        gr.Image(label="Mel-Spectrogram", type="filepath"),
         gr.Textbox(label="Message", type="text"),
     ],
     title="NeuroSandboxWebUI (ALPHA) - AudioCraft",
@@ -6015,6 +6079,7 @@ audioldm2_interface = gr.Interface(
     ],
     outputs=[
         gr.Audio(label="Generated audio", type="filepath"),
+        gr.Image(label="Mel-Spectrogram", type="filepath"),
         gr.Textbox(label="Message", type="text"),
     ],
     title="NeuroSandboxWebUI (ALPHA) - AudioLDM 2",

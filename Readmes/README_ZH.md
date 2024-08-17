@@ -2,7 +2,7 @@
 
 # ![main](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/4ea0d891-8979-45ad-b052-626c41ae991a)
 * 正在进行中！（Alpha版）
-* [English](/README.md)  | [عربي](/Readmes/README_AR.md) | [Deutsche](/Readmes/README_DE.md) | [Español](/Readmes/README_ES.md) | [Français](/Readmes/README_FR.md) | [日本語](/Readmes/README_JP.md) | [Русский](/Readmes/README_RU.md) | 漢語 | [Português](/Readmes/README_PT.md) | [हिंदी](/Readmes/README_HI.md) | [Italiano](/Readmes/README_IT.md) | [韓國語](/Readmes/README_KO.md)
+* [English](/README.md)  | [عربي](/Readmes/README_AR.md) | [Deutsche](/Readmes/README_DE.md) | [Español](/Readmes/README_ES.md) | [Français](/Readmes/README_FR.md) | [日本語](/Readmes/README_JP.md) | [Русский](/Readmes/README_RU.md) | 漢語 | [Português](/Readmes/README_PT.md) | [हिंदी](/Readmes/README_HI.md) | [Italiano](/Readmes/README_IT.md) | [韓國語](/Readmes/README_KO.md) | [Polski](/Readmes/README_PL.md) | [Türkçe](/Readmes/README_TR.md)
 
 ## 描述：
 
@@ -18,7 +18,7 @@
 
 ### 3D：<img width="1127" alt="4zh" src="https://github.com/user-attachments/assets/84edbd5f-0437-490f-bfb2-2930f8a5d05e">
 
-### 音频：<img width="1118" alt="5zh" src="https://github.com/user-attachments/assets/b7ff6de8-2aaa-4674-ae95-d9084128ac23">
+### 音频：<img width="1118" alt="5zh" src="https://github.com/user-attachments/assets/c51c05f2-d980-4366-b1bf-c4f57b680da1">
 
 ### 界面：<img width="1118" alt="6zh" src="https://github.com/user-attachments/assets/2df0ba1a-f0ea-4a9e-9e71-2c9f7d625051">
 

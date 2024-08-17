@@ -2,7 +2,7 @@
 
 # ![main](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/4ea0d891-8979-45ad-b052-626c41ae991a)
 * Trabalho em andamento! (ALFA)
-* [English](/README.md) | [عربي](/Readmes/README_AR.md) | [Deutsche](/Readmes/README_DE.md) | [Español](/Readmes/README_ES.md) | [Français](/Readmes/README_FR.md) | [日本語](/Readmes/README_JP.md) | [Русский](/Readmes/README_RU.md) | [漢語](/Readmes/README_ZH.md) | Português | [हिंदी](/Readmes/README_HI.md) | [Italiano](/Readmes/README_IT.md) | [韓國語](/Readmes/README_KO.md)
+* [English](/README.md) | [عربي](/Readmes/README_AR.md) | [Deutsche](/Readmes/README_DE.md) | [Español](/Readmes/README_ES.md) | [Français](/Readmes/README_FR.md) | [日本語](/Readmes/README_JP.md) | [Русский](/Readmes/README_RU.md) | [漢語](/Readmes/README_ZH.md) | Português | [हिंदी](/Readmes/README_HI.md) | [Italiano](/Readmes/README_IT.md) | [韓國語](/Readmes/README_KO.md) | [Polski](/Readmes/README_PL.md) | [Türkçe](/Readmes/README_TR.md)
 
 ## Descrição:
 
@@ -18,7 +18,7 @@ O objetivo do projeto - criar o aplicativo mais fácil possível de usar modelos
 
 ### 3D: <img width="1120" alt="4pt" src="https://github.com/user-attachments/assets/6a2a9842-8955-4d46-a253-798ee27bf96f">
 
-### Áudio: <img width="1124" alt="5pt" src="https://github.com/user-attachments/assets/fd530f6a-22c1-4797-8b6e-d9c0ccc79200">
+### Áudio: <img width="1118" alt="5pt" src="https://github.com/user-attachments/assets/e05297d1-bd95-4bd5-98c0-51af9b3f24b4">
 
 ### Interface: <img width="1124" alt="6pt" src="https://github.com/user-attachments/assets/f168fba8-9f18-4f62-bfc5-59cc291acb04">
 
