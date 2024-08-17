@@ -10,17 +10,17 @@
 
 Projenin amacı - sinir ağı modellerini kullanmak için mümkün olan en kolay uygulamayı oluşturmak
 
-### Metin: <img width="1119" alt="1" src="https://github.com/user-attachments/assets/e1ac4e8e-feb2-484b-a399-61ddc8a098c1">
+### Metin: <img width="1118" alt="1tr" src="https://github.com/user-attachments/assets/5d991beb-cac2-4996-acb5-9343547a0a90">
 
-### Görüntü: <img width="1121" alt="2" src="https://github.com/user-attachments/assets/e6d08f90-86b2-4111-9535-4d0d14099b0d">
+### Görüntü: <img width="1123" alt="2tr" src="https://github.com/user-attachments/assets/35b30df1-d7aa-46d7-af12-bc101bcdea73">
 
-### Video: <img width="1118" alt="3" src="https://github.com/user-attachments/assets/a568c3ed-3b00-4e21-b802-a3e63f6cf97c">
+### Video: <img width="1120" alt="3tr" src="https://github.com/user-attachments/assets/ba3ca3e3-0b96-400d-820b-8c71142749e3">
 
-### 3D: <img width="1118" alt="4" src="https://github.com/user-attachments/assets/0ba23ac4-aecc-44e6-b252-1fc0f478c75e">
+### 3D: <img width="1114" alt="4tr" src="https://github.com/user-attachments/assets/73c8dbef-0c53-417a-b26b-4794bfb42da3">
 
-### Ses: <img width="1116" alt="5" src="https://github.com/user-attachments/assets/5aaca0f3-8f69-42aa-9aa9-5dca06bb08e4">
+### Ses: <img width="1115" alt="5tr" src="https://github.com/user-attachments/assets/f28b51e4-0f6b-48f3-8ebf-f53b90e6ef4f">
 
-### Arayüz: <img width="1120" alt="6" src="https://github.com/user-attachments/assets/81c4e40c-cf01-488d-adc8-7330f1edd610">
+### Arayüz: <img width="1120" alt="6tr" src="https://github.com/user-attachments/assets/9d64c9d6-5446-4525-95f5-540282390247">
 
 ## Özellikler:
 
