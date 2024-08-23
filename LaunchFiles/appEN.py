@@ -16,11 +16,12 @@ import subprocess
 import json
 import torch
 from einops import rearrange
+import random
 from TTS.api import TTS
 import whisper
 from datetime import datetime
 from huggingface_hub import snapshot_download
-from diffusers import StableDiffusionPipeline, StableDiffusion3Pipeline, StableDiffusionXLPipeline, StableDiffusionImg2ImgPipeline, StableDiffusion3Img2ImgPipeline, SD3ControlNetModel, StableDiffusion3ControlNetPipeline, StableDiffusion3InpaintPipeline, StableDiffusionDepth2ImgPipeline, ControlNetModel, StableDiffusionXLControlNetPipeline, StableDiffusionControlNetPipeline, AutoencoderKL, StableDiffusionLatentUpscalePipeline, StableDiffusionUpscalePipeline, StableDiffusionInpaintPipeline, StableDiffusionGLIGENPipeline, AnimateDiffPipeline, AnimateDiffSDXLPipeline, AnimateDiffVideoToVideoPipeline, MotionAdapter, StableVideoDiffusionPipeline, I2VGenXLPipeline, StableCascadePriorPipeline, StableCascadeDecoderPipeline, DiffusionPipeline, ShapEPipeline, ShapEImg2ImgPipeline, StableAudioPipeline, AudioLDM2Pipeline, StableDiffusionInstructPix2PixPipeline, StableDiffusionLDM3DPipeline, FluxPipeline, KandinskyPipeline, KandinskyPriorPipeline, KandinskyV22Pipeline, KandinskyV22PriorPipeline, AutoPipelineForText2Image, KandinskyImg2ImgPipeline, AutoPipelineForImage2Image, AutoPipelineForInpainting, HunyuanDiTPipeline, LuminaText2ImgPipeline, IFPipeline, IFSuperResolutionPipeline, IFImg2ImgPipeline, IFInpaintingPipeline, IFImg2ImgSuperResolutionPipeline, IFInpaintingSuperResolutionPipeline, PixArtAlphaPipeline, PixArtSigmaPipeline, CogVideoXPipeline, LattePipeline, KolorsPipeline, AuraFlowPipeline, WuerstchenDecoderPipeline, WuerstchenPriorPipeline
+from diffusers import StableDiffusionPipeline, StableDiffusion3Pipeline, StableDiffusionXLPipeline, StableDiffusionImg2ImgPipeline, StableDiffusion3Img2ImgPipeline, SD3ControlNetModel, StableDiffusion3ControlNetPipeline, StableDiffusion3InpaintPipeline, StableDiffusionDepth2ImgPipeline, ControlNetModel, StableDiffusionXLControlNetPipeline, StableDiffusionControlNetPipeline, AutoencoderKL, StableDiffusionLatentUpscalePipeline, StableDiffusionUpscalePipeline, StableDiffusionInpaintPipeline, StableDiffusionGLIGENPipeline, AnimateDiffPipeline, AnimateDiffSDXLPipeline, AnimateDiffVideoToVideoPipeline, MotionAdapter, StableVideoDiffusionPipeline, I2VGenXLPipeline, StableCascadePriorPipeline, StableCascadeDecoderPipeline, DiffusionPipeline, ShapEPipeline, ShapEImg2ImgPipeline, StableAudioPipeline, AudioLDM2Pipeline, StableDiffusionInstructPix2PixPipeline, StableDiffusionLDM3DPipeline, FluxPipeline, KandinskyPipeline, KandinskyPriorPipeline, KandinskyV22Pipeline, KandinskyV22PriorPipeline, AutoPipelineForText2Image, KandinskyImg2ImgPipeline, AutoPipelineForImage2Image, AutoPipelineForInpainting, HunyuanDiTPipeline, LuminaText2ImgPipeline, IFPipeline, IFSuperResolutionPipeline, IFImg2ImgPipeline, IFInpaintingPipeline, IFImg2ImgSuperResolutionPipeline, IFInpaintingSuperResolutionPipeline, PixArtAlphaPipeline, PixArtSigmaPipeline, CogVideoXPipeline, LattePipeline, KolorsPipeline, AuraFlowPipeline, WuerstchenDecoderPipeline, WuerstchenPriorPipeline, StableDiffusionSAGPipeline, PIAPipeline
 from diffusers.utils import load_image, export_to_video, export_to_gif, export_to_ply, pt_to_pil
 from diffusers.pipelines.wuerstchen import DEFAULT_STAGE_C_TIMESTEPS
 from instantid.pipeline_stable_diffusion_xl_instantid import StableDiffusionXLInstantIDPipeline, draw_kps
@@ -926,7 +927,7 @@ def generate_wav2lip(image_path, audio_path, fps, pads, face_det_batch_size, wav
 def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name, vae_model_name, lora_model_names, textual_inversion_model_names, stable_diffusion_settings_html,
                            stable_diffusion_model_type, stable_diffusion_sampler, stable_diffusion_steps,
                            stable_diffusion_cfg, stable_diffusion_width, stable_diffusion_height,
-                           stable_diffusion_clip_skip, num_images_per_prompt, enable_freeu=False, enable_tiled_vae=False, enable_upscale=False, upscale_factor="x2", upscale_steps=50, upscale_cfg=6, output_format="png", stop_generation=None):
+                           stable_diffusion_clip_skip, seed, num_images_per_prompt, enable_freeu, freeu_s1, freeu_s2, freeu_b1, freeu_b2, enable_sag, sag_scale, enable_pag, pag_scale, enable_tiled_vae=False, output_format="png", stop_generation=None):
     global stop_signal
     stop_signal = False
 
@@ -940,29 +941,40 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
         return None, f"StableDiffusion model not found: {stable_diffusion_model_path}"
 
     try:
-        if stable_diffusion_model_type == "SD":
-            original_config_file = "configs/sd/v1-inference.yaml"
-            vae_config_file = "configs/sd/v1-inference.yaml"
-            stable_diffusion_model = StableDiffusionPipeline.from_single_file(
+        if enable_sag:
+            stable_diffusion_model = StableDiffusionSAGPipeline.from_single_file(
                 stable_diffusion_model_path, use_safetensors=True, device_map="auto",
-                original_config_file=original_config_file, torch_dtype=torch.float16, variant="fp16"
+                torch_dtype=torch.float16, variant="fp16"
             )
-        elif stable_diffusion_model_type == "SD2":
-            original_config_file = "configs/sd/v2-inference.yaml"
-            vae_config_file = "configs/sd/v2-inference.yaml"
-            stable_diffusion_model = StableDiffusionPipeline.from_single_file(
+        elif enable_pag:
+            stable_diffusion_model = AutoPipelineForText2Image.from_single_file(
                 stable_diffusion_model_path, use_safetensors=True, device_map="auto",
-                original_config_file=original_config_file, torch_dtype=torch.float16, variant="fp16"
-            )
-        elif stable_diffusion_model_type == "SDXL":
-            original_config_file = "configs/sd/sd_xl_base.yaml"
-            vae_config_file = "configs/sd/sd_xl_base.yaml"
-            stable_diffusion_model = StableDiffusionXLPipeline.from_single_file(
-                stable_diffusion_model_path, use_safetensors=True, device_map="auto", attention_slice=1,
-                original_config_file=original_config_file, torch_dtype=torch.float16, variant="fp16"
+                torch_dtype=torch.float16, variant="fp16", enable_pag=True
             )
         else:
-            return None, "Invalid StableDiffusion model type!"
+            if stable_diffusion_model_type == "SD":
+                original_config_file = "configs/sd/v1-inference.yaml"
+                vae_config_file = "configs/sd/v1-inference.yaml"
+                stable_diffusion_model = StableDiffusionPipeline.from_single_file(
+                    stable_diffusion_model_path, use_safetensors=True, device_map="auto",
+                    original_config_file=original_config_file, torch_dtype=torch.float16, variant="fp16"
+                )
+            elif stable_diffusion_model_type == "SD2":
+                original_config_file = "configs/sd/v2-inference.yaml"
+                vae_config_file = "configs/sd/v2-inference.yaml"
+                stable_diffusion_model = StableDiffusionPipeline.from_single_file(
+                    stable_diffusion_model_path, use_safetensors=True, device_map="auto",
+                    original_config_file=original_config_file, torch_dtype=torch.float16, variant="fp16"
+                )
+            elif stable_diffusion_model_type == "SDXL":
+                original_config_file = "configs/sd/sd_xl_base.yaml"
+                vae_config_file = "configs/sd/sd_xl_base.yaml"
+                stable_diffusion_model = StableDiffusionXLPipeline.from_single_file(
+                    stable_diffusion_model_path, use_safetensors=True, device_map="auto", attention_slice=1,
+                    original_config_file=original_config_file, torch_dtype=torch.float16, variant="fp16"
+                )
+            else:
+                return None, "Invalid StableDiffusion model type!"
     except (ValueError, KeyError):
         return None, "The selected model is not compatible with the chosen model type"
 
@@ -981,7 +993,7 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
     stable_diffusion_model.safety_checker = None
 
     if enable_freeu:
-        stable_diffusion_model.enable_freeu(s1=0.9, s2=0.2, b1=1.2, b2=1.4)
+        stable_diffusion_model.enable_freeu(s1=freeu_s1, s2=freeu_s2, b1=freeu_b1, b2=freeu_b2)
 
     if enable_tiled_vae:
         stable_diffusion_model.enable_vae_tiling()
@@ -1007,6 +1019,12 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
                 stable_diffusion_model.load_textual_inversion(textual_inversion_model_path)
 
     try:
+        if seed == "" or seed is None:
+            seed = random.randint(0, 2 ** 32 - 1)
+        else:
+            seed = int(seed)
+        generator = torch.Generator(device).manual_seed(seed)
+
         if stable_diffusion_model_type == "SDXL":
             compel = Compel(
                 tokenizer=[stable_diffusion_model.tokenizer, stable_diffusion_model.tokenizer_2],
@@ -1020,7 +1038,32 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
                                             num_inference_steps=stable_diffusion_steps,
                                             guidance_scale=stable_diffusion_cfg, height=stable_diffusion_height,
                                             width=stable_diffusion_width, clip_skip=stable_diffusion_clip_skip,
-                                            sampler=stable_diffusion_sampler, num_images_per_prompt=num_images_per_prompt).images
+                                            sampler=stable_diffusion_sampler, num_images_per_prompt=num_images_per_prompt,
+                                            generator=generator).images
+        elif enable_sag:
+            images = stable_diffusion_model(
+                prompt=prompt,
+                negative_prompt=negative_prompt,
+                num_inference_steps=stable_diffusion_steps,
+                guidance_scale=stable_diffusion_cfg,
+                height=stable_diffusion_height,
+                width=stable_diffusion_width,
+                sag_scale=sag_scale,
+                num_images_per_prompt=num_images_per_prompt,
+                generator=generator
+            ).images
+        elif enable_pag:
+            images = stable_diffusion_model(
+                prompt=prompt,
+                negative_prompt=negative_prompt,
+                num_inference_steps=stable_diffusion_steps,
+                guidance_scale=stable_diffusion_cfg,
+                height=stable_diffusion_height,
+                width=stable_diffusion_width,
+                pag_scale=pag_scale,
+                num_images_per_prompt=num_images_per_prompt,
+                generator=generator
+            ).images
         else:
             compel_proc = Compel(tokenizer=stable_diffusion_model.tokenizer,
                                  text_encoder=stable_diffusion_model.text_encoder)
@@ -1031,20 +1074,11 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
                                             num_inference_steps=stable_diffusion_steps,
                                             guidance_scale=stable_diffusion_cfg, height=stable_diffusion_height,
                                             width=stable_diffusion_width, clip_skip=stable_diffusion_clip_skip,
-                                            sampler=stable_diffusion_sampler, num_images_per_prompt=num_images_per_prompt).images
+                                            sampler=stable_diffusion_sampler, num_images_per_prompt=num_images_per_prompt,
+                                            generator=generator).images
 
         if stop_signal:
             return None, "Generation stopped"
-
-        if enable_upscale:
-            upscale_factor_value = 2 if upscale_factor == "x2" else 4
-            upscaler = load_upscale_model(upscale_factor_value)
-            if upscaler:
-                if upscale_factor == "x2":
-                    upscaled_image = upscaler(prompt=prompt, image=images, num_inference_steps=upscale_steps, guidance_scale=upscale_cfg).images[0]
-                else:
-                    upscaled_image = upscaler(prompt=prompt, image=images, num_inference_steps=upscale_steps, guidance_scale=upscale_cfg)["images"][0]
-                images = upscaled_image
 
         image_paths = []
         for i, image in enumerate(images):
@@ -1056,7 +1090,7 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
             image.save(image_path, format=output_format.upper())
             image_paths.append(image_path)
 
-        return image_paths, None
+        return image_paths, f"Images generated successfully. Seed used: {seed}"
 
     finally:
         del stable_diffusion_model
@@ -2033,6 +2067,78 @@ def generate_image_animatediff(prompt, negative_prompt, input_video, strength, m
             del pipe
             del adapter
             del stable_diffusion_model
+        except UnboundLocalError:
+            pass
+        torch.cuda.empty_cache()
+
+
+def generate_image_pia(prompt, negative_prompt, init_image, stable_diffusion_model_name, strength, num_frames,
+                       num_inference_steps, guidance_scale, height, width, output_format="gif", stop_generation=None):
+    global stop_signal
+    stop_signal = False
+
+    if not init_image:
+        return None, "Please upload an initial image!"
+
+    if not stable_diffusion_model_name:
+        return None, "Please, select a StableDiffusion model!"
+
+    stable_diffusion_model_path = os.path.join("inputs", "image", "sd_models",
+                                               f"{stable_diffusion_model_name}.safetensors")
+
+    if not os.path.exists(stable_diffusion_model_path):
+        return None, f"StableDiffusion model not found: {stable_diffusion_model_path}"
+
+    pia_adapter_path = os.path.join("inputs", "image", "sd_models", "pia_adapter")
+    if not os.path.exists(pia_adapter_path):
+        print("Downloading PIA adapter...")
+        os.makedirs(pia_adapter_path, exist_ok=True)
+        Repo.clone_from("https://huggingface.co/openmmlab/PIA-condition-adapter", pia_adapter_path)
+        print("PIA adapter downloaded")
+
+    try:
+        adapter = MotionAdapter.from_pretrained(pia_adapter_path)
+        pipe = PIAPipeline.from_pretrained(stable_diffusion_model_path, motion_adapter=adapter)
+
+        pipe.enable_free_init(method="butterworth", use_fast_sampling=True)
+        pipe.enable_model_cpu_offload()
+        pipe.enable_vae_slicing()
+
+        image = Image.open(init_image).convert("RGB")
+        image = image.resize((width, height))
+
+        output = pipe(
+            image=image,
+            prompt=prompt,
+            negative_prompt=negative_prompt,
+            strength=strength,
+            num_frames=num_frames,
+            num_inference_steps=num_inference_steps,
+            guidance_scale=guidance_scale,
+        )
+
+        if stop_signal:
+            return None, "Generation stopped"
+
+        frames = output.frames[0]
+
+        today = datetime.now().date()
+        output_dir = os.path.join('outputs', f"PIA_{today.strftime('%Y%m%d')}")
+        os.makedirs(output_dir, exist_ok=True)
+
+        gif_filename = f"pia_{datetime.now().strftime('%Y%m%d_%H%M%S')}.gif"
+        gif_path = os.path.join(output_dir, gif_filename)
+        export_to_gif(frames, gif_path)
+
+        return gif_path, None
+
+    except Exception as e:
+        return None, str(e)
+
+    finally:
+        try:
+            del pipe
+            del adapter
         except UnboundLocalError:
             pass
         torch.cuda.empty_cache()
@@ -5140,13 +5246,18 @@ txt2img_interface = gr.Interface(
         gr.Slider(minimum=256, maximum=2048, value=512, step=64, label="Width"),
         gr.Slider(minimum=256, maximum=2048, value=512, step=64, label="Height"),
         gr.Slider(minimum=1, maximum=4, value=1, step=1, label="Clip skip"),
+        gr.Textbox(label="Seed (optional)", value=""),
         gr.Slider(minimum=1, maximum=4, value=1, step=1, label="Number of images to generate"),
         gr.Checkbox(label="Enable FreeU", value=False),
+        gr.Slider(minimum=0.1, maximum=4, value=0.9, step=0.1, label="FreeU-S1"),
+        gr.Slider(minimum=0.1, maximum=4, value=0.2, step=0.1, label="FreeU-S2"),
+        gr.Slider(minimum=0.1, maximum=4, value=1.2, step=0.1, label="FreeU-B1"),
+        gr.Slider(minimum=0.1, maximum=4, value=1.4, step=0.1, label="FreeU-B2"),
+        gr.Checkbox(label="Enable SAG", value=False),
+        gr.Slider(minimum=0.0, maximum=1.0, value=0.75, step=0.01, label="SAG Scale"),
+        gr.Checkbox(label="Enable PAG", value=False),
+        gr.Slider(minimum=0.0, maximum=1.0, value=0.3, step=0.01, label="PAG Scale"),
         gr.Checkbox(label="Enable Tiled VAE", value=False),
-        gr.Checkbox(label="Enable Upscale", value=False),
-        gr.Radio(choices=["x2", "x4"], label="Upscale size", value="x2"),
-        gr.Slider(minimum=1, maximum=100, value=50, step=1, label="Upscale steps"),
-        gr.Slider(minimum=1.0, maximum=30.0, value=6, step=0.1, label="Upscale CFG"),
         gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
         gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
@@ -5392,6 +5503,32 @@ animatediff_interface = gr.Interface(
     ],
     title="NeuroSandboxWebUI (ALPHA) - StableDiffusion (animatediff)",
     description="This user interface allows you to enter a prompt and generate animated GIFs using AnimateDiff. "
+                "You can select the model and customize the generation settings from the sliders. "
+                "Try it and see what happens!",
+    allow_flagging="never",
+)
+
+pia_interface = gr.Interface(
+    fn=generate_image_pia,
+    inputs=[
+        gr.Textbox(label="Enter your prompt"),
+        gr.Textbox(label="Enter your negative prompt", value=""),
+        gr.Image(label="Initial image", type="filepath"),
+        gr.Dropdown(choices=stable_diffusion_models_list, label="Select StableDiffusion model", value=None),
+        gr.Slider(minimum=0.0, maximum=1.0, value=0.8, step=0.01, label="Strength"),
+        gr.Slider(minimum=1, maximum=100, value=16, step=1, label="Number of frames"),
+        gr.Slider(minimum=1, maximum=100, value=40, step=1, label="Steps"),
+        gr.Slider(minimum=1.0, maximum=30.0, value=8, step=0.1, label="Guidance Scale"),
+        gr.Slider(minimum=256, maximum=1024, value=512, step=64, label="Height"),
+        gr.Slider(minimum=256, maximum=1024, value=768, step=64, label="Width"),
+        gr.Button(value="Stop generation", interactive=True, variant="stop"),
+    ],
+    outputs=[
+        gr.Image(label="Generated GIF", type="filepath"),
+        gr.Textbox(label="Message", type="text"),
+    ],
+    title="NeuroSandboxWebUI (ALPHA) - StableDiffusion (PIA)",
+    description="This user interface allows you to enter a prompt and initial image to generate animated GIFs using PIA. "
                 "You can select the model and customize the generation settings from the sliders. "
                 "Try it and see what happens!",
     allow_flagging="never",
@@ -6400,11 +6537,11 @@ with gr.TabbedInterface(
         gr.TabbedInterface(
             [
                 gr.TabbedInterface(
-                    [txt2img_interface, img2img_interface, depth2img_interface, pix2pix_interface, controlnet_interface, latent_upscale_interface, realesrgan_upscale_interface, inpaint_interface, gligen_interface, animatediff_interface, video_interface, ldm3d_interface,
+                    [txt2img_interface, img2img_interface, depth2img_interface, pix2pix_interface, controlnet_interface, latent_upscale_interface, realesrgan_upscale_interface, inpaint_interface, gligen_interface, animatediff_interface, pia_interface, video_interface, ldm3d_interface,
                      gr.TabbedInterface([sd3_txt2img_interface, sd3_img2img_interface, sd3_controlnet_interface, sd3_inpaint_interface],
                                         tab_names=["txt2img", "img2img", "controlnet", "inpaint"]),
                      cascade_interface, adapters_interface, extras_interface],
-                    tab_names=["txt2img", "img2img", "depth2img", "pix2pix", "controlnet", "upscale(latent)", "upscale(Real-ESRGAN)", "inpaint", "gligen", "animatediff", "video", "ldm3d", "sd3", "cascade", "adapters", "extras"]
+                    tab_names=["txt2img", "img2img", "depth2img", "pix2pix", "controlnet", "upscale(latent)", "upscale(Real-ESRGAN)", "inpaint", "gligen", "animatediff", "pia", "video", "ldm3d", "sd3", "cascade", "adapters", "extras"]
                 ),
                 kandinsky_interface, flux_interface, hunyuandit_interface, lumina_interface, kolors_interface, auraflow_interface, wurstchen_interface, deepfloyd_if_interface, pixart_interface
             ],
@@ -6441,6 +6578,7 @@ with gr.TabbedInterface(
     inpaint_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     gligen_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     animatediff_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
+    pia_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     video_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     ldm3d_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     sd3_txt2img_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
