@@ -404,18 +404,28 @@ stop_signal = False
 chat_history = []
 
 
-def generate_text_and_speech(input_text, input_audio, input_image, llm_model_name, llm_lora_model_name, llm_settings_html, llm_model_type, max_length, max_tokens,
+def generate_text_and_speech(input_text, system_prompt, input_audio, input_image, llm_model_name, llm_lora_model_name, llm_settings_html, llm_model_type, max_length, max_tokens,
                              temperature, top_p, top_k, chat_history_format, enable_web_search, enable_libretranslate, target_lang, enable_multimodal, enable_tts, tts_settings_html,
                              speaker_wav, language, tts_temperature, tts_top_p, tts_top_k, tts_speed, output_format, stop_generation):
     global chat_history, chat_dir, tts_model, whisper_model, stop_signal
     stop_signal = False
     if not input_text and not input_audio:
         chat_history.append(["Please, enter your request!", None])
-        return chat_history, None, None, None
+        yield chat_history, None, None, None
+        return
     prompt = transcribe_audio(input_audio) if input_audio else input_text
     if not llm_model_name:
         chat_history.append([None, "Please, select a LLM model!"])
-        return chat_history, None, None, None
+        yield chat_history, None, None, None
+        return
+
+    if not system_prompt:
+        system_prompt = "You are a helpful assistant."
+
+    if enable_web_search:
+        search_results = perform_web_search(prompt)
+        system_prompt += f"\n\nWeb search results:\n{search_results}"
+
     if enable_multimodal and llm_model_name == "moondream2":
         if llm_model_type == "llama":
             moondream2_path = os.path.join("inputs", "text", "llm_models", "moondream2")
@@ -454,22 +464,15 @@ def generate_text_and_speech(input_text, input_audio, input_image, llm_model_nam
             if not chat_history or chat_history[-1][1] is not None:
                 chat_history.append([prompt, ""])
 
-            for chunk in llm.create_chat_completion(
-                    messages=[
-                        {
-                            "role": "system",
-                            "content": "You are a helpful AI assistant capable of analyzing images and text.",
-                        },
-                        {
-                            "role": "user",
-                            "content": [
-                                {"type": "text", "text": f"{context}Human: {prompt}"},
-                                {"type": "image_url", "image_url": {"url": f"file://{image_path}"}}
-                            ]
-                        }
-                    ],
-                    stream=True
-            ):
+            messages = [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": [
+                    {"type": "text", "text": f"{context}Human: {prompt}"},
+                    {"type": "image_url", "image_url": {"url": f"file://{image_path}"}}
+                ]}
+            ]
+
+            for chunk in llm.create_chat_completion(messages=messages, stream=True):
                 if stop_signal:
                     break
                 text = chunk["choices"][0]["delta"].get("content", "")
@@ -485,12 +488,6 @@ def generate_text_and_speech(input_text, input_audio, input_image, llm_model_nam
                 image = Image.open(input_image)
                 enc_image = model.encode_image(image)
 
-                detect_lang = langdetect.detect(prompt)
-                if detect_lang == "ru":
-                    bot_instruction = "Вы дружелюбный чат-бот, который всегда дает полезные и содержательные ответы на основе данного изображения и текстового ввода."
-                else:
-                    bot_instruction = "You are a helpful AI assistant capable of analyzing images and text."
-
                 context = ""
                 for human_text, ai_text in chat_history[-5:]:
                     if human_text:
@@ -498,7 +495,7 @@ def generate_text_and_speech(input_text, input_audio, input_image, llm_model_nam
                     if ai_text:
                         context += f"AI: {ai_text}\n"
 
-                prompt_with_context = f"{bot_instruction}\n\n{context}Human: {prompt}\nAI:"
+                prompt_with_context = f"{system_prompt}\n\n{context}Human: {prompt}\nAI:"
 
                 if not chat_history or chat_history[-1][1] is not None:
                     chat_history.append([prompt, ""])
@@ -514,36 +511,14 @@ def generate_text_and_speech(input_text, input_audio, input_image, llm_model_nam
                 del tokenizer
                 torch.cuda.empty_cache()
 
-        if not chat_dir:
-            now = datetime.now()
-            chat_dir = os.path.join('outputs', f"LLM_{now.strftime('%Y%m%d_%H%M%S')}")
-            os.makedirs(chat_dir)
-            os.makedirs(os.path.join(chat_dir, 'text'))
-            os.makedirs(os.path.join(chat_dir, 'audio'))
-        chat_history_path = os.path.join(chat_dir, 'text', f'chat_history.{chat_history_format}')
-        if chat_history_format == "txt":
-            with open(chat_history_path, "a", encoding="utf-8") as f:
-                f.write(f"Human: {prompt}\n")
-                if chat_history[-1][1]:
-                    f.write(f"AI: {chat_history[-1][1]}\n\n")
-        elif chat_history_format == "json":
-            chat_history_json = []
-            if os.path.exists(chat_history_path):
-                with open(chat_history_path, "r", encoding="utf-8") as f:
-                    chat_history_json = json.load(f)
-            chat_history_json.append(
-                ["Human: " + prompt, "AI: " + (chat_history[-1][1] if chat_history[-1][1] else "")])
-            with open(chat_history_path, "w", encoding="utf-8") as f:
-                json.dump(chat_history_json, f, ensure_ascii=False, indent=4)
-
-        yield chat_history, None, chat_dir, None
     else:
         tokenizer, llm_model, error_message = load_model(llm_model_name, llm_model_type)
         if llm_lora_model_name:
             tokenizer, llm_model, error_message = load_lora_model(llm_model_name, llm_lora_model_name, llm_model_type)
         if error_message:
             chat_history.append([None, error_message])
-            return chat_history, None, None, None
+            yield chat_history, None, None, None
+            return
         tts_model = None
         whisper_model = None
         text = None
@@ -555,7 +530,8 @@ def generate_text_and_speech(input_text, input_audio, input_image, llm_model_nam
                     tts_model = load_tts_model()
                 if not speaker_wav or not language:
                     chat_history.append([None, "Please, select a voice and language for TTS!"])
-                    return chat_history, None, None, None
+                    yield chat_history, None, None, None
+                    return
                 device = "cuda" if torch.cuda.is_available() else "cpu"
                 tts_model = tts_model.to(device)
             if input_audio:
@@ -564,42 +540,26 @@ def generate_text_and_speech(input_text, input_audio, input_image, llm_model_nam
                 device = "cuda" if torch.cuda.is_available() else "cpu"
                 whisper_model = whisper_model.to(device)
             if llm_model:
+                context = ""
+                for human_text, ai_text in chat_history[-10:]:
+                    if human_text:
+                        context += f"Human: {human_text}\n"
+                    if ai_text:
+                        context += f"AI: {ai_text}\n"
+
+                messages = [
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": context + prompt}
+                ]
+
                 if llm_model_type == "transformers":
-                    detect_lang = langdetect.detect(prompt)
-                    if detect_lang == "ru":
-                        bot_instruction = "Вы дружелюбный чат-бот, который всегда дает полезные и содержательные ответы на любом языке"
-                    else:
-                        bot_instruction = "I am a chatbot created to help with any questions. I use my knowledge and abilities to provide useful and meaningful answers in any language"
-
-                    context = ""
-                    for human_text, ai_text in chat_history[-10:]:
-                        if human_text:
-                            context += f"Human: {human_text}\n"
-                        if ai_text:
-                            context += f"AI: {ai_text}\n"
-
-                    messages = [
-                        {
-                            "role": "system",
-                            "content": bot_instruction,
-                        },
-                        {"role": "user", "content": context + prompt},
-                    ]
-
-                    tokenizer.padding_side = "left"
-                    tokenizer.pad_token = tokenizer.eos_token
                     device = "cuda" if torch.cuda.is_available() else "cpu"
-                    model_inputs = tokenizer.apply_chat_template(messages, add_generation_prompt=True, padding=True,
-                                                                 return_tensors="pt").to(device)
-                    input_length = model_inputs.shape[1]
 
-                    if enable_web_search:
-                        search_results = perform_web_search(prompt)
-                        prompt_with_search = f"{prompt}\nWeb search results:\n{search_results}"
-                        messages[1]["content"] = context + prompt_with_search
-                        model_inputs = tokenizer.apply_chat_template(messages, add_generation_prompt=True, padding=True,
-                                                                     return_tensors="pt").to(device)
-                        input_length = model_inputs.shape[1]
+                    tokenizer.pad_token = tokenizer.eos_token
+                    tokenizer.padding_side = "left"
+
+                    full_prompt = f"{system_prompt}\n\n{context}Human: {prompt}\nAssistant:"
+                    inputs = tokenizer(full_prompt, return_tensors="pt", padding=True, truncation=True).to(device)
 
                     text = ""
                     if not chat_history or chat_history[-1][1] is not None:
@@ -608,52 +568,41 @@ def generate_text_and_speech(input_text, input_audio, input_image, llm_model_nam
                     for i in range(max_length):
                         if stop_signal:
                             break
-                        next_token = llm_model.generate(
-                            model_inputs,
-                            max_new_tokens=1,
-                            do_sample=True,
-                            top_p=top_p,
-                            top_k=top_k,
-                            temperature=temperature,
-                            repetition_penalty=1.1,
-                            no_repeat_ngram_size=2,
-                        )
-                        next_token_text = tokenizer.decode(next_token[0, -1:], skip_special_tokens=True)
-                        text += next_token_text
-                        chat_history[-1][1] = text
-                        yield chat_history, None, chat_dir, None
+
+                        with torch.no_grad():
+                            output = llm_model.generate(
+                                **inputs,
+                                max_new_tokens=max_length,
+                                do_sample=True,
+                                top_p=top_p,
+                                top_k=top_k,
+                                temperature=temperature,
+                                repetition_penalty=1.1,
+                                no_repeat_ngram_size=2,
+                            )
+
+                        next_token = output[0][inputs['input_ids'].shape[1]:]
+                        next_token_text = tokenizer.decode(next_token, skip_special_tokens=True)
 
                         if next_token_text.strip() == "":
                             break
 
-                        model_inputs = torch.cat([model_inputs, next_token[:, -1:]], dim=-1)
+                        text += next_token_text
+                        chat_history[-1][1] = text
+                        yield chat_history, None, chat_dir, None
+
+                        inputs = tokenizer(full_prompt + text, return_tensors="pt", padding=True, truncation=True).to(
+                            device)
 
                 elif llm_model_type == "llama":
-                    detect_lang = langdetect.detect(prompt)
-                    if detect_lang == "ru":
-                        instruction = "Вы дружелюбный чат-бот, который всегда дает полезные и содержательные ответы на любом языке\n\n"
-                    else:
-                        instruction = "I am a chatbot created to help with any questions. I use my knowledge and abilities to provide useful and meaningful answers in any language\n\n"
-
-                    context = ""
-                    for human_text, ai_text in chat_history[-10:]:
-                        if human_text:
-                            context += f"Human: {human_text}\n"
-                        if ai_text:
-                            context += f"Assistant: {ai_text}\n"
-
-                    prompt_with_context = instruction + context + "Human: " + prompt + "\nAssistant: "
-
-                    if enable_web_search:
-                        search_results = perform_web_search(prompt)
-                        prompt_with_context = f"{prompt_with_context}\nWeb search results:\n{search_results}\nAssistant: "
-
                     text = ""
                     if not chat_history or chat_history[-1][1] is not None:
                         chat_history.append([prompt, ""])
 
+                    full_prompt = f"{system_prompt}\n\n{context}Human: {prompt}\nAssistant:"
+
                     for token in llm_model(
-                            prompt_with_context,
+                            full_prompt,
                             max_tokens=max_tokens,
                             stop=["Human:", "\n"],
                             stream=True,
@@ -663,21 +612,25 @@ def generate_text_and_speech(input_text, input_audio, input_image, llm_model_nam
                             top_k=top_k,
                             repeat_penalty=1.1,
                     ):
+
                         if stop_signal:
                             break
                         text += token['choices'][0]['text']
+
                         chat_history[-1][1] = text
+
                         yield chat_history, None, chat_dir, None
 
                 if enable_libretranslate:
                     try:
                         translator = LibreTranslateAPI("http://127.0.0.1:5000")
+                        detect_lang = langdetect.detect(text)
                         translation = translator.translate(text, detect_lang, target_lang)
                         text = translation
                     except urllib.error.URLError:
-                        chat_history.append(
-                            [None, "LibreTranslate is not running. Please start the LibreTranslate server."])
+                        chat_history.append([None, "LibreTranslate is not running. Please start the LibreTranslate server."])
                         yield chat_history, None, None, None
+                        return
 
                 if not chat_dir:
                     now = datetime.now()
@@ -692,17 +645,18 @@ def generate_text_and_speech(input_text, input_audio, input_image, llm_model_nam
                         if text:
                             f.write(f"AI: {text}\n\n")
                 elif chat_history_format == "json":
-                    chat_history = []
+                    chat_history_json = []
                     if os.path.exists(chat_history_path):
                         with open(chat_history_path, "r", encoding="utf-8") as f:
-                            chat_history = json.load(f)
-                    chat_history.append(["Human: " + prompt, "AI: " + (text if text else "")])
+                            chat_history_json = json.load(f)
+                    chat_history_json.append(["Human: " + prompt, "AI: " + (text if text else "")])
                     with open(chat_history_path, "w", encoding="utf-8") as f:
-                        json.dump(chat_history, f, ensure_ascii=False, indent=4)
+                        json.dump(chat_history_json, f, ensure_ascii=False, indent=4)
                 if enable_tts and text:
                     if stop_signal:
                         chat_history.append([prompt, text])
                         yield chat_history, None, chat_dir, "Generation stopped"
+                        return
                     enable_text_splitting = False
                     repetition_penalty = 2.0
                     length_penalty = 1.0
@@ -711,8 +665,7 @@ def generate_text_and_speech(input_text, input_audio, input_image, llm_model_nam
                         for part in text_parts:
                             wav = tts_model.tts(text=part.strip(), speaker_wav=f"inputs/audio/voices/{speaker_wav}",
                                                 language=language,
-                                                temperature=tts_temperature, top_p=tts_top_p, top_k=tts_top_k,
-                                                speed=tts_speed,
+                                                temperature=tts_temperature, top_p=tts_top_p, top_k=tts_top_k, speed=tts_speed,
                                                 repetition_penalty=repetition_penalty, length_penalty=length_penalty)
                             now = datetime.now()
                             audio_filename = f"TTS_{now.strftime('%Y%m%d_%H%M%S')}.{output_format}"
@@ -724,10 +677,8 @@ def generate_text_and_speech(input_text, input_audio, input_image, llm_model_nam
                             else:
                                 sf.write(audio_path, wav, 22050)
                     else:
-                        wav = tts_model.tts(text=text, speaker_wav=f"inputs/audio/voices/{speaker_wav}",
-                                            language=language,
-                                            temperature=tts_temperature, top_p=tts_top_p, top_k=tts_top_k,
-                                            speed=tts_speed,
+                        wav = tts_model.tts(text=text, speaker_wav=f"inputs/audio/voices/{speaker_wav}", language=language,
+                                            temperature=tts_temperature, top_p=tts_top_p, top_k=tts_top_k, speed=tts_speed,
                                             repetition_penalty=repetition_penalty, length_penalty=length_penalty)
                         now = datetime.now()
                         audio_filename = f"TTS_{now.strftime('%Y%m%d_%H%M%S')}.{output_format}"
@@ -4806,6 +4757,7 @@ chat_interface = gr.Interface(
     fn=generate_text_and_speech,
     inputs=[
         gr.Textbox(label="Enter your request"),
+        gr.Textbox(label="Enter your system prompt"),
         gr.Audio(type="filepath", label="Record your request (optional)"),
         gr.Image(label="Upload your image (optional)", type="filepath"),
         gr.Dropdown(choices=llm_models_list, label="Select LLM model", value=None),
