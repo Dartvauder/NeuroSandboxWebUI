@@ -1068,7 +1068,7 @@ def generate_image_img2img(prompt, negative_prompt, init_image,
                            strength, stable_diffusion_model_name, vae_model_name, stable_diffusion_settings_html,
                            stable_diffusion_model_type,
                            stable_diffusion_sampler, stable_diffusion_steps, stable_diffusion_cfg,
-                           stable_diffusion_clip_skip, output_format="png", stop_generation=None):
+                           stable_diffusion_clip_skip, num_images_per_prompt, output_format="png", stop_generation=None):
     global stop_signal
     stop_signal = False
 
@@ -1149,7 +1149,7 @@ def generate_image_img2img(prompt, negative_prompt, init_image,
             images = stable_diffusion_model(prompt_embeds=prompt_embeds, pooled_prompt_embeds=pooled_prompt_embeds, negative_prompt=negative_prompt,
                                             num_inference_steps=stable_diffusion_steps,
                                             guidance_scale=stable_diffusion_cfg, clip_skip=stable_diffusion_clip_skip,
-                                            sampler=stable_diffusion_sampler, image=init_image, strength=strength)
+                                            sampler=stable_diffusion_sampler, image=init_image, strength=strength, num_images_per_prompt=num_images_per_prompt).images
         else:
             compel_proc = Compel(tokenizer=stable_diffusion_model.tokenizer,
                                  text_encoder=stable_diffusion_model.text_encoder)
@@ -1159,20 +1159,22 @@ def generate_image_img2img(prompt, negative_prompt, init_image,
             images = stable_diffusion_model(prompt_embeds=prompt_embeds, negative_prompt_embeds=negative_prompt_embeds,
                                             num_inference_steps=stable_diffusion_steps,
                                             guidance_scale=stable_diffusion_cfg, clip_skip=stable_diffusion_clip_skip,
-                                            sampler=stable_diffusion_sampler, image=init_image, strength=strength)
+                                            sampler=stable_diffusion_sampler, image=init_image, strength=strength, num_images_per_prompt=num_images_per_prompt).images
 
         if stop_signal:
             return None, "Generation stopped"
-        image = images["images"][0]
 
-        today = datetime.now().date()
-        image_dir = os.path.join('outputs', f"StableDiffusion_{today.strftime('%Y%m%d')}")
-        os.makedirs(image_dir, exist_ok=True)
-        image_filename = f"img2img_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
-        image_path = os.path.join(image_dir, image_filename)
-        image.save(image_path, format=output_format.upper())
+        image_paths = []
+        for i, image in enumerate(images):
+            today = datetime.now().date()
+            image_dir = os.path.join('outputs', f"StableDiffusion_{today.strftime('%Y%m%d')}")
+            os.makedirs(image_dir, exist_ok=True)
+            image_filename = f"img2img_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{i}.{output_format}"
+            image_path = os.path.join(image_dir, image_filename)
+            image.save(image_path, format=output_format.upper())
+            image_paths.append(image_path)
 
-        return image_path, None
+        return image_paths, None
 
     except Exception as e:
         return None, str(e)
@@ -1182,7 +1184,7 @@ def generate_image_img2img(prompt, negative_prompt, init_image,
         torch.cuda.empty_cache()
 
 
-def generate_image_depth2img(prompt, negative_prompt, init_image, stable_diffusion_settings_html, strength,
+def generate_image_depth2img(prompt, negative_prompt, init_image, stable_diffusion_settings_html, strength, num_images_per_prompt,
                              output_format="png", stop_generation=None):
     global stop_signal
     stop_signal = False
@@ -1229,19 +1231,22 @@ def generate_image_depth2img(prompt, negative_prompt, init_image, stable_diffusi
         prompt_embeds = compel_proc(prompt)
         negative_prompt_embeds = compel_proc(negative_prompt)
 
-        image = stable_diffusion_model(prompt_embeds=prompt_embeds, negative_prompt_embeds=negative_prompt_embeds, image=init_image, strength=strength).images[0]
+        images = stable_diffusion_model(prompt_embeds=prompt_embeds, negative_prompt_embeds=negative_prompt_embeds, image=init_image, strength=strength, num_images_per_prompt=num_images_per_prompt).images
 
         if stop_signal:
             return None, "Generation stopped"
 
-        today = datetime.now().date()
-        image_dir = os.path.join('outputs', f"StableDiffusion_{today.strftime('%Y%m%d')}")
-        os.makedirs(image_dir, exist_ok=True)
-        image_filename = f"depth2img_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
-        image_path = os.path.join(image_dir, image_filename)
-        image.save(image_path, format=output_format.upper())
+        image_paths = []
+        for i, image in enumerate(images):
+            today = datetime.now().date()
+            image_dir = os.path.join('outputs', f"StableDiffusion_{today.strftime('%Y%m%d')}")
+            os.makedirs(image_dir, exist_ok=True)
+            image_filename = f"depth2img_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{i}.{output_format}"
+            image_path = os.path.join(image_dir, image_filename)
+            image.save(image_path, format=output_format.upper())
+            image_paths.append(image_path)
 
-        return image_path, None
+        return image_paths, None
 
     finally:
         del stable_diffusion_model
@@ -1249,7 +1254,7 @@ def generate_image_depth2img(prompt, negative_prompt, init_image, stable_diffusi
 
 
 def generate_image_pix2pix(prompt, negative_prompt, init_image, num_inference_steps, guidance_scale,
-                           output_format="png", stop_generation=None):
+                           num_images_per_prompt, output_format="png", stop_generation=None):
     global stop_signal
     stop_signal = False
 
@@ -1277,21 +1282,23 @@ def generate_image_pix2pix(prompt, negative_prompt, init_image, num_inference_st
         prompt_embeds = compel_proc(prompt)
         negative_prompt_embeds = compel_proc(negative_prompt)
 
-        image = pipe(prompt_embeds=prompt_embeds, negative_prompt_embeds=negative_prompt_embeds,
-                     image=image, num_inference_steps=num_inference_steps, image_guidance_scale=guidance_scale).images[
-            0]
+        images = pipe(prompt_embeds=prompt_embeds, negative_prompt_embeds=negative_prompt_embeds,
+                      image=image, num_inference_steps=num_inference_steps, image_guidance_scale=guidance_scale, num_images_per_prompt=num_images_per_prompt).images
 
         if stop_signal:
             return None, "Generation stopped"
 
-        today = datetime.now().date()
-        image_dir = os.path.join('outputs', f"StableDiffusion_{today.strftime('%Y%m%d')}")
-        os.makedirs(image_dir, exist_ok=True)
-        image_filename = f"pix2pix_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
-        image_path = os.path.join(image_dir, image_filename)
-        image.save(image_path, format=output_format.upper())
+        image_paths = []
+        for i, image in enumerate(images):
+            today = datetime.now().date()
+            image_dir = os.path.join('outputs', f"StableDiffusion_{today.strftime('%Y%m%d')}")
+            os.makedirs(image_dir, exist_ok=True)
+            image_filename = f"pix2pix_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{i}.{output_format}"
+            image_path = os.path.join(image_dir, image_filename)
+            image.save(image_path, format=output_format.upper())
+            image_paths.append(image_path)
 
-        return image_path, None
+        return image_paths, None
 
     finally:
         del pipe
@@ -1299,7 +1306,7 @@ def generate_image_pix2pix(prompt, negative_prompt, init_image, num_inference_st
 
 
 def generate_image_controlnet(prompt, negative_prompt, init_image, sd_version, stable_diffusion_model_name, controlnet_model_name,
-                              num_inference_steps, guidance_scale, width, height, controlnet_conditioning_scale, output_format="png",
+                              num_inference_steps, guidance_scale, width, height, controlnet_conditioning_scale, num_images_per_prompt, output_format="png",
                               stop_generation=None):
     global stop_signal
     stop_signal = False
@@ -1390,9 +1397,9 @@ def generate_image_controlnet(prompt, negative_prompt, init_image, sd_version, s
             prompt_embeds = compel_proc(prompt)
             negative_prompt_embeds = compel_proc(negative_prompt)
 
-            image = pipe(prompt_embeds=prompt_embeds, negative_prompt_embeds=negative_prompt_embeds,
+            images = pipe(prompt_embeds=prompt_embeds, negative_prompt_embeds=negative_prompt_embeds,
                          num_inference_steps=num_inference_steps, guidance_scale=guidance_scale, width=width,
-                         height=height, generator=generator, image=control_image).images[0]
+                         height=height, generator=generator, image=control_image, num_images_per_prompt=num_images_per_prompt).images
 
         else:  # SDXL
             controlnet = ControlNetModel.from_pretrained(
@@ -1444,29 +1451,41 @@ def generate_image_controlnet(prompt, negative_prompt, init_image, sd_version, s
             else:
                 return None, None, f"ControlNet model {controlnet_model_name} is not supported for SDXL"
 
-            image = pipe(
-                prompt, negative_prompt=negative_prompt, image=control_image,
+            compel = Compel(
+                tokenizer=[pipe.tokenizer, pipe.tokenizer_2],
+                text_encoder=[pipe.text_encoder, pipe.text_encoder_2],
+                returned_embeddings_type=ReturnedEmbeddingsType.PENULTIMATE_HIDDEN_STATES_NON_NORMALIZED,
+                requires_pooled=[False, True]
+            )
+            prompt_embeds, pooled_prompt_embeds = compel(prompt)
+
+            images = pipe(
+                prompt_embeds=prompt_embeds, pooled_prompt_embeds=pooled_prompt_embeds, negative_prompt=negative_prompt, image=control_image,
                 controlnet_conditioning_scale=controlnet_conditioning_scale,
                 num_inference_steps=num_inference_steps, guidance_scale=guidance_scale,
-                width=width, height=height
-            ).images[0]
+                width=width, height=height, num_images_per_prompt=num_images_per_prompt).images
 
         if stop_signal:
             return None, None, "Generation stopped"
 
-        today = datetime.now().date()
-        image_dir = os.path.join('outputs', f"StableDiffusion_{today.strftime('%Y%m%d')}")
-        os.makedirs(image_dir, exist_ok=True)
+        image_paths = []
+        control_image_paths = []
+        for i, (image, control_image) in enumerate(zip(images, [control_image] * len(images))):
+            today = datetime.now().date()
+            image_dir = os.path.join('outputs', f"StableDiffusion_{today.strftime('%Y%m%d')}")
+            os.makedirs(image_dir, exist_ok=True)
 
-        image_filename = f"controlnet_{controlnet_model_name}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
-        image_path = os.path.join(image_dir, image_filename)
-        image.save(image_path, format=output_format.upper())
+            image_filename = f"controlnet_{controlnet_model_name}_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{i}.{output_format}"
+            image_path = os.path.join(image_dir, image_filename)
+            image.save(image_path, format=output_format.upper())
+            image_paths.append(image_path)
 
-        control_image_filename = f"controlnet_{controlnet_model_name}_control_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
-        control_image_path = os.path.join(image_dir, control_image_filename)
-        control_image.save(control_image_path, format=output_format.upper())
+            control_image_filename = f"controlnet_{controlnet_model_name}_control_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{i}.{output_format}"
+            control_image_path = os.path.join(image_dir, control_image_filename)
+            control_image.save(control_image_path, format=output_format.upper())
+            control_image_paths.append(control_image_path)
 
-        return image_path, control_image_path, None
+        return image_paths, control_image_paths, None
 
     except Exception as e:
         return None, None, str(e)
@@ -1484,7 +1503,7 @@ def generate_image_controlnet(prompt, negative_prompt, init_image, sd_version, s
         torch.cuda.empty_cache()
 
 
-def generate_image_upscale_latent(image_path, upscale_factor, num_inference_steps, guidance_scale, output_format="png", stop_generation=None):
+def generate_image_upscale_latent(image_path, upscale_factor, num_inference_steps, guidance_scale, num_images_per_prompt, output_format="png", stop_generation=None):
     global stop_signal
     if stop_signal:
         return None, "Generation stopped"
@@ -1498,16 +1517,19 @@ def generate_image_upscale_latent(image_path, upscale_factor, num_inference_step
     if upscaler:
         try:
             image = Image.open(image_path).convert("RGB")
-            upscaled_image = upscaler(prompt="", image=image, num_inference_steps=num_inference_steps, guidance_scale=guidance_scale).images[0]
+            upscaled_images = upscaler(prompt="", image=image, num_inference_steps=num_inference_steps, guidance_scale=guidance_scale, num_images_per_prompt=num_images_per_prompt).images
 
-            today = datetime.now().date()
-            image_dir = os.path.join('outputs', f"StableDiffusion_{today.strftime('%Y%m%d')}")
-            os.makedirs(image_dir, exist_ok=True)
-            image_filename = f"upscaled_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
-            image_path = os.path.join(image_dir, image_filename)
-            upscaled_image.save(image_path, format=output_format.upper())
+            image_paths = []
+            for i, upscaled_image in enumerate(upscaled_images):
+                today = datetime.now().date()
+                image_dir = os.path.join('outputs', f"StableDiffusion_{today.strftime('%Y%m%d')}")
+                os.makedirs(image_dir, exist_ok=True)
+                image_filename = f"upscaled_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{i}.{output_format}"
+                image_path = os.path.join(image_dir, image_filename)
+                upscaled_image.save(image_path, format=output_format.upper())
+                image_paths.append(image_path)
 
-            return image_path, None
+            return image_paths, None
 
         finally:
             del upscaler
@@ -1555,7 +1577,7 @@ def generate_image_upscale_realesrgan(image_path, outscale, output_format="png",
 
 def generate_image_inpaint(prompt, negative_prompt, init_image, mask_image, blur_factor, stable_diffusion_model_name, vae_model_name,
                            stable_diffusion_settings_html, stable_diffusion_model_type, stable_diffusion_sampler,
-                           stable_diffusion_steps, stable_diffusion_cfg, width, height, output_format="png", stop_generation=None):
+                           stable_diffusion_steps, stable_diffusion_cfg, width, height, num_images_per_prompt, output_format="png", stop_generation=None):
     global stop_signal
     stop_signal = False
 
@@ -1657,7 +1679,7 @@ def generate_image_inpaint(prompt, negative_prompt, init_image, mask_image, blur
                                             image=init_image,
                                             mask_image=blurred_mask, width=width, height=height,
                                             num_inference_steps=stable_diffusion_steps,
-                                            guidance_scale=stable_diffusion_cfg, sampler=stable_diffusion_sampler)
+                                            guidance_scale=stable_diffusion_cfg, sampler=stable_diffusion_sampler, num_images_per_prompt=num_images_per_prompt).images
         else:
             compel_proc = Compel(tokenizer=stable_diffusion_model.tokenizer,
                                  text_encoder=stable_diffusion_model.text_encoder)
@@ -1668,20 +1690,22 @@ def generate_image_inpaint(prompt, negative_prompt, init_image, mask_image, blur
                                             image=init_image,
                                             mask_image=blurred_mask, width=width, height=height,
                                             num_inference_steps=stable_diffusion_steps,
-                                            guidance_scale=stable_diffusion_cfg, sampler=stable_diffusion_sampler)
+                                            guidance_scale=stable_diffusion_cfg, sampler=stable_diffusion_sampler, num_images_per_prompt=num_images_per_prompt).images
 
         if stop_signal:
             return None, "Generation stopped"
-        image = images["images"][0]
 
-        today = datetime.now().date()
-        image_dir = os.path.join('outputs', f"StableDiffusion_{today.strftime('%Y%m%d')}")
-        os.makedirs(image_dir, exist_ok=True)
-        image_filename = f"inpaint_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
-        image_path = os.path.join(image_dir, image_filename)
-        image.save(image_path, format=output_format.upper())
+        image_paths = []
+        for i, image in enumerate(images):
+            today = datetime.now().date()
+            image_dir = os.path.join('outputs', f"StableDiffusion_{today.strftime('%Y%m%d')}")
+            os.makedirs(image_dir, exist_ok=True)
+            image_filename = f"inpaint_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{i}.{output_format}"
+            image_path = os.path.join(image_dir, image_filename)
+            image.save(image_path, format=output_format.upper())
+            image_paths.append(image_path)
 
-        return image_path, None
+        return image_paths, None
 
     finally:
         del stable_diffusion_model
@@ -1691,7 +1715,7 @@ def generate_image_inpaint(prompt, negative_prompt, init_image, mask_image, blur
 def generate_image_gligen(prompt, negative_prompt, gligen_phrases, gligen_boxes, stable_diffusion_model_name, stable_diffusion_settings_html,
                           stable_diffusion_model_type, stable_diffusion_sampler, stable_diffusion_steps,
                           stable_diffusion_cfg, stable_diffusion_width, stable_diffusion_height,
-                          stable_diffusion_clip_skip, output_format="png", stop_generation=None):
+                          stable_diffusion_clip_skip, num_images_per_prompt, output_format="png", stop_generation=None):
     global stop_signal
     stop_signal = False
 
@@ -1752,22 +1776,22 @@ def generate_image_gligen(prompt, negative_prompt, gligen_phrases, gligen_boxes,
             )
             prompt_embeds, pooled_prompt_embeds = compel(prompt)
 
-            image = stable_diffusion_model(prompt_embeds=prompt_embeds, pooled_prompt_embeds=pooled_prompt_embeds, negative_prompt=negative_prompt,
+            images = stable_diffusion_model(prompt_embeds=prompt_embeds, pooled_prompt_embeds=pooled_prompt_embeds, negative_prompt=negative_prompt,
                                            num_inference_steps=stable_diffusion_steps,
                                            guidance_scale=stable_diffusion_cfg, height=stable_diffusion_height,
                                            width=stable_diffusion_width, clip_skip=stable_diffusion_clip_skip,
-                                           sampler=stable_diffusion_sampler)["images"][0]
+                                           sampler=stable_diffusion_sampler, num_images_per_prompt=num_images_per_prompt).images
         else:
             compel_proc = Compel(tokenizer=stable_diffusion_model.tokenizer,
                                  text_encoder=stable_diffusion_model.text_encoder)
             prompt_embeds = compel_proc(prompt)
             negative_prompt_embeds = compel_proc(negative_prompt)
 
-            image = stable_diffusion_model(prompt_embeds=prompt_embeds, negative_prompt_embeds=negative_prompt_embeds,
+            images = stable_diffusion_model(prompt_embeds=prompt_embeds, negative_prompt_embeds=negative_prompt_embeds,
                                            num_inference_steps=stable_diffusion_steps,
                                            guidance_scale=stable_diffusion_cfg, height=stable_diffusion_height,
                                            width=stable_diffusion_width, clip_skip=stable_diffusion_clip_skip,
-                                           sampler=stable_diffusion_sampler)["images"][0]
+                                           sampler=stable_diffusion_sampler, num_images_per_prompt=num_images_per_prompt).images
 
         if stop_signal:
             return None, "Generation stopped"
@@ -1796,7 +1820,7 @@ def generate_image_gligen(prompt, negative_prompt, gligen_phrases, gligen_boxes,
             prompt_embeds=prompt_embeds,
             negative_prompt_embeds=negative_prompt_embeds,
             gligen_phrases=gligen_phrases,
-            gligen_inpaint_image=image,
+            gligen_inpaint_image=images,
             gligen_boxes=[gligen_boxes],
             gligen_scheduled_sampling_beta=1,
             output_type="pil",
@@ -1806,14 +1830,17 @@ def generate_image_gligen(prompt, negative_prompt, gligen_phrases, gligen_boxes,
         if stop_signal:
             return None, "Generation stopped"
 
-        today = datetime.now().date()
-        image_dir = os.path.join('outputs', f"StableDiffusion_{today.strftime('%Y%m%d')}")
-        os.makedirs(image_dir, exist_ok=True)
-        image_filename = f"gligen_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
-        image_path = os.path.join(image_dir, image_filename)
-        images[0].save(image_path)
+        image_paths = []
+        for i, image in enumerate(images):
+            today = datetime.now().date()
+            image_dir = os.path.join('outputs', f"StableDiffusion_{today.strftime('%Y%m%d')}")
+            os.makedirs(image_dir, exist_ok=True)
+            image_filename = f"gligen_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{i}.{output_format}"
+            image_path = os.path.join(image_dir, image_filename)
+            image.save(image_path, format=output_format.upper())
+            image_paths.append(image_path)
 
-        return image_path, None
+        return image_paths, None
 
     finally:
         del stable_diffusion_model
@@ -1968,8 +1995,17 @@ def generate_image_animatediff(prompt, negative_prompt, input_video, strength, m
             pipe.enable_vae_slicing()
             pipe.enable_vae_tiling()
 
+            compel = Compel(
+                tokenizer=[pipe.tokenizer, pipe.tokenizer_2],
+                text_encoder=[pipe.text_encoder, pipe.text_encoder_2],
+                returned_embeddings_type=ReturnedEmbeddingsType.PENULTIMATE_HIDDEN_STATES_NON_NORMALIZED,
+                requires_pooled=[False, True]
+            )
+            prompt_embeds, pooled_prompt_embeds = compel(prompt)
+
             output = pipe(
-                prompt=prompt,
+                prompt_embeds=prompt_embeds,
+                pooled_prompt_embeds=pooled_prompt_embeds,
                 negative_prompt=negative_prompt,
                 num_inference_steps=num_inference_steps,
                 guidance_scale=guidance_scale,
@@ -2105,7 +2141,7 @@ def generate_video(init_image, output_format, video_settings_html, motion_bucket
             torch.cuda.empty_cache()
 
 
-def generate_image_ldm3d(prompt, negative_prompt, width, height, num_inference_steps, guidance_scale, output_format="png", stop_generation=None):
+def generate_image_ldm3d(prompt, negative_prompt, width, height, num_inference_steps, guidance_scale, num_images_per_prompt, output_format="png", stop_generation=None):
     global stop_signal
     stop_signal = False
 
@@ -2124,34 +2160,45 @@ def generate_image_ldm3d(prompt, negative_prompt, width, height, num_inference_s
         pipe = StableDiffusionLDM3DPipeline.from_pretrained(ldm3d_model_path, torch_dtype=torch.float16)
         pipe = pipe.to("cuda")
 
+        compel_proc = Compel(tokenizer=pipe.tokenizer,
+                             text_encoder=pipe.text_encoder)
+        prompt_embeds = compel_proc(prompt)
+        negative_prompt_embeds = compel_proc(negative_prompt)
+
         output = pipe(
-            prompt=prompt,
-            negative_prompt=negative_prompt,
+            prompt_embeds=prompt_embeds,
+            negative_prompt_embeds=negative_prompt_embeds,
             width=width,
             height=height,
             num_inference_steps=num_inference_steps,
             guidance_scale=guidance_scale,
+            num_images_per_prompt=num_images_per_prompt,
         )
 
         if stop_signal:
             return None, None, "Generation stopped"
 
-        rgb_image, depth_image = output.rgb[0], output.depth[0]
+        rgb_image_paths = []
+        depth_image_paths = []
 
-        today = datetime.now().date()
-        image_dir = os.path.join('outputs', f"StableDiffusion_{today.strftime('%Y%m%d')}")
-        os.makedirs(image_dir, exist_ok=True)
+        for i, (rgb_image, depth_image) in enumerate(zip(output.rgb, output.depth)):
+            today = datetime.now().date()
+            image_dir = os.path.join('outputs', f"StableDiffusion_{today.strftime('%Y%m%d')}")
+            os.makedirs(image_dir, exist_ok=True)
 
-        rgb_filename = f"ldm3d_rgb_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
-        depth_filename = f"ldm3d_depth_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
+            rgb_filename = f"ldm3d_rgb_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{i}.{output_format}"
+            depth_filename = f"ldm3d_depth_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{i}.{output_format}"
 
-        rgb_path = os.path.join(image_dir, rgb_filename)
-        depth_path = os.path.join(image_dir, depth_filename)
+            rgb_path = os.path.join(image_dir, rgb_filename)
+            depth_path = os.path.join(image_dir, depth_filename)
 
-        rgb_image.save(rgb_path)
-        depth_image.save(depth_path)
+            rgb_image.save(rgb_path)
+            depth_image.save(depth_path)
 
-        return rgb_path, depth_path, None
+            rgb_image_paths.append(rgb_path)
+            depth_image_paths.append(depth_path)
+
+        return rgb_image_paths, depth_image_paths, None
 
     except Exception as e:
         return None, None, str(e)
@@ -2161,7 +2208,7 @@ def generate_image_ldm3d(prompt, negative_prompt, width, height, num_inference_s
         torch.cuda.empty_cache()
 
 
-def generate_image_sd3_txt2img(prompt, negative_prompt, num_inference_steps, guidance_scale, width, height, max_sequence_length, output_format="png", stop_generation=None):
+def generate_image_sd3_txt2img(prompt, negative_prompt, num_inference_steps, guidance_scale, width, height, max_sequence_length, num_images_per_prompt, output_format="png", stop_generation=None):
     global stop_signal
     stop_signal = False
 
@@ -2184,34 +2231,47 @@ def generate_image_sd3_txt2img(prompt, negative_prompt, num_inference_steps, gui
         )
         pipe = StableDiffusion3Pipeline.from_pretrained(sd3_model_path, device_map="balanced", text_encoder_3=text_encoder, torch_dtype=torch.float16)
 
-        image = pipe(
-            prompt,
+        compel = Compel(
+            tokenizer=[pipe.tokenizer, pipe.tokenizer_2],
+            text_encoder=[pipe.text_encoder, pipe.text_encoder_2],
+            returned_embeddings_type=ReturnedEmbeddingsType.PENULTIMATE_HIDDEN_STATES_NON_NORMALIZED,
+            requires_pooled=[False, True]
+        )
+        prompt_embeds, pooled_prompt_embeds = compel(prompt)
+
+        images = pipe(
+            prompt_embeds=prompt_embeds,
+            pooled_prompt_embeds=pooled_prompt_embeds,
             negative_prompt=negative_prompt,
             num_inference_steps=num_inference_steps,
             guidance_scale=guidance_scale,
             width=width,
             height=height,
             max_sequence_length=max_sequence_length,
-        ).images[0]
+            num_images_per_prompt=num_images_per_prompt
+        ).images
 
         if stop_signal:
             return None, "Generation stopped"
 
-        today = datetime.now().date()
-        image_dir = os.path.join('outputs', f"StableDiffusion_{today.strftime('%Y%m%d')}")
-        os.makedirs(image_dir, exist_ok=True)
-        image_filename = f"sd3_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
-        image_path = os.path.join(image_dir, image_filename)
-        image.save(image_path, format=output_format.upper())
+        image_paths = []
+        for i, image in enumerate(images):
+            today = datetime.now().date()
+            image_dir = os.path.join('outputs', f"StableDiffusion_{today.strftime('%Y%m%d')}")
+            os.makedirs(image_dir, exist_ok=True)
+            image_filename = f"sd3_txt2img_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{i}.{output_format}"
+            image_path = os.path.join(image_dir, image_filename)
+            image.save(image_path, format=output_format.upper())
+            image_paths.append(image_path)
 
-        return image_path, None
+        return image_paths, None
 
     finally:
         del pipe
         torch.cuda.empty_cache()
 
 
-def generate_image_sd3_img2img(prompt, negative_prompt, init_image, strength, num_inference_steps, guidance_scale, width, height, max_sequence_length, output_format="png", stop_generation=None):
+def generate_image_sd3_img2img(prompt, negative_prompt, init_image, strength, num_inference_steps, guidance_scale, width, height, max_sequence_length, num_images_per_prompt, output_format="png", stop_generation=None):
     global stop_signal
     stop_signal = False
 
@@ -2236,34 +2296,47 @@ def generate_image_sd3_img2img(prompt, negative_prompt, init_image, strength, nu
         init_image = Image.open(init_image).convert("RGB")
         init_image = init_image.resize((width, height))
 
-        image = pipe(
-            prompt,
+        compel = Compel(
+            tokenizer=[pipe.tokenizer, pipe.tokenizer_2],
+            text_encoder=[pipe.text_encoder, pipe.text_encoder_2],
+            returned_embeddings_type=ReturnedEmbeddingsType.PENULTIMATE_HIDDEN_STATES_NON_NORMALIZED,
+            requires_pooled=[False, True]
+        )
+        prompt_embeds, pooled_prompt_embeds = compel(prompt)
+
+        images = pipe(
+            prompt_embeds=prompt_embeds,
+            pooled_prompt_embeds=pooled_prompt_embeds,
             negative_prompt=negative_prompt,
             image=init_image,
             strength=strength,
             num_inference_steps=num_inference_steps,
             guidance_scale=guidance_scale,
             max_sequence_length=max_sequence_length,
-        ).images[0]
+            num_images_per_prompt=num_images_per_prompt,
+        ).images
 
         if stop_signal:
             return None, "Generation stopped"
 
-        today = datetime.now().date()
-        image_dir = os.path.join('outputs', f"StableDiffusion_{today.strftime('%Y%m%d')}")
-        os.makedirs(image_dir, exist_ok=True)
-        image_filename = f"sd3_img2img_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
-        image_path = os.path.join(image_dir, image_filename)
-        image.save(image_path, format=output_format.upper())
+        image_paths = []
+        for i, image in enumerate(images):
+            today = datetime.now().date()
+            image_dir = os.path.join('outputs', f"StableDiffusion_{today.strftime('%Y%m%d')}")
+            os.makedirs(image_dir, exist_ok=True)
+            image_filename = f"sd3_img2img_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{i}.{output_format}"
+            image_path = os.path.join(image_dir, image_filename)
+            image.save(image_path, format=output_format.upper())
+            image_paths.append(image_path)
 
-        return image_path, None
+        return image_paths, None
 
     finally:
         del pipe
         torch.cuda.empty_cache()
 
 
-def generate_image_sd3_controlnet(prompt, negative_prompt, init_image, controlnet_model, num_inference_steps, guidance_scale, controlnet_conditioning_scale, width, height, max_sequence_length, output_format="png", stop_generation=None):
+def generate_image_sd3_controlnet(prompt, negative_prompt, init_image, controlnet_model, num_inference_steps, guidance_scale, controlnet_conditioning_scale, width, height, max_sequence_length, num_images_per_prompt, output_format="png", stop_generation=None):
     global stop_signal
     stop_signal = False
 
@@ -2304,8 +2377,17 @@ def generate_image_sd3_controlnet(prompt, negative_prompt, init_image, controlne
         else:
             return None, None, f"Unsupported ControlNet model: {controlnet_model}"
 
-        image = pipe(
-            prompt,
+        compel = Compel(
+            tokenizer=[pipe.tokenizer, pipe.tokenizer_2],
+            text_encoder=[pipe.text_encoder, pipe.text_encoder_2],
+            returned_embeddings_type=ReturnedEmbeddingsType.PENULTIMATE_HIDDEN_STATES_NON_NORMALIZED,
+            requires_pooled=[False, True]
+        )
+        prompt_embeds, pooled_prompt_embeds = compel(prompt)
+
+        images = pipe(
+            prompt_embeds=prompt_embeds,
+            pooled_prompt_embeds=pooled_prompt_embeds,
             negative_prompt=negative_prompt,
             image=init_image,
             control_image=control_image,
@@ -2313,31 +2395,37 @@ def generate_image_sd3_controlnet(prompt, negative_prompt, init_image, controlne
             guidance_scale=guidance_scale,
             controlnet_conditioning_scale=controlnet_conditioning_scale,
             max_sequence_length=max_sequence_length,
-        ).images[0]
+            num_images_per_prompt=num_images_per_prompt,
+        ).images
 
         if stop_signal:
             return None, None, "Generation stopped"
 
-        today = datetime.now().date()
-        image_dir = os.path.join('outputs', f"StableDiffusion_{today.strftime('%Y%m%d')}")
-        os.makedirs(image_dir, exist_ok=True)
+        image_paths = []
+        control_image_paths = []
+        for i, (image, control_image) in enumerate(zip(images, [control_image] * len(images))):
+            today = datetime.now().date()
+            image_dir = os.path.join('outputs', f"StableDiffusion_{today.strftime('%Y%m%d')}")
+            os.makedirs(image_dir, exist_ok=True)
 
-        image_filename = f"sd3_controlnet_{controlnet_model}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
-        image_path = os.path.join(image_dir, image_filename)
-        image.save(image_path, format=output_format.upper())
+            image_filename = f"sd3_controlnet_{controlnet_model}_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{i}.{output_format}"
+            image_path = os.path.join(image_dir, image_filename)
+            image.save(image_path, format=output_format.upper())
+            image_paths.append(image_path)
 
-        control_image_filename = f"sd3_controlnet_{controlnet_model}_control_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
-        control_image_path = os.path.join(image_dir, control_image_filename)
-        control_image.save(control_image_path, format=output_format.upper())
+            control_image_filename = f"sd3_controlnet_{controlnet_model}_control_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{i}.{output_format}"
+            control_image_path = os.path.join(image_dir, control_image_filename)
+            control_image.save(control_image_path, format=output_format.upper())
+            control_image_paths.append(control_image_path)
 
-        return image_path, control_image_path, None
+        return image_paths, control_image_paths, None
 
     finally:
         del pipe
         torch.cuda.empty_cache()
 
 
-def generate_image_sd3_inpaint(prompt, negative_prompt, init_image, mask_image, num_inference_steps, guidance_scale, width, height, max_sequence_length, output_format="png", stop_generation=None):
+def generate_image_sd3_inpaint(prompt, negative_prompt, init_image, mask_image, num_inference_steps, guidance_scale, width, height, max_sequence_length, num_images_per_prompt, output_format="png", stop_generation=None):
     global stop_signal
     stop_signal = False
 
@@ -2365,27 +2453,40 @@ def generate_image_sd3_inpaint(prompt, negative_prompt, init_image, mask_image, 
         mask_image = Image.open(mask_image).convert("L")
         mask_image = mask_image.resize((width, height))
 
-        image = pipe(
-            prompt,
+        compel = Compel(
+            tokenizer=[pipe.tokenizer, pipe.tokenizer_2],
+            text_encoder=[pipe.text_encoder, pipe.text_encoder_2],
+            returned_embeddings_type=ReturnedEmbeddingsType.PENULTIMATE_HIDDEN_STATES_NON_NORMALIZED,
+            requires_pooled=[False, True]
+        )
+        prompt_embeds, pooled_prompt_embeds = compel(prompt)
+
+        images = pipe(
+            prompt_embeds=prompt_embeds,
+            pooled_prompt_embeds=pooled_prompt_embeds,
             negative_prompt=negative_prompt,
             image=init_image,
             mask_image=mask_image,
             num_inference_steps=num_inference_steps,
             guidance_scale=guidance_scale,
             max_sequence_length=max_sequence_length,
-        ).images[0]
+            num_images_per_prompt=num_images_per_prompt,
+        ).images
 
         if stop_signal:
             return None, "Generation stopped"
 
-        today = datetime.now().date()
-        image_dir = os.path.join('outputs', f"StableDiffusion_{today.strftime('%Y%m%d')}")
-        os.makedirs(image_dir, exist_ok=True)
-        image_filename = f"sd3_inpaint_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
-        image_path = os.path.join(image_dir, image_filename)
-        image.save(image_path, format=output_format.upper())
+        image_paths = []
+        for i, image in enumerate(images):
+            today = datetime.now().date()
+            image_dir = os.path.join('outputs', f"StableDiffusion_{today.strftime('%Y%m%d')}")
+            os.makedirs(image_dir, exist_ok=True)
+            image_filename = f"sd3_inpaint_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{i}.{output_format}"
+            image_path = os.path.join(image_dir, image_filename)
+            image.save(image_path, format=output_format.upper())
+            image_paths.append(image_path)
 
-        return image_path, None
+        return image_paths, None
 
     finally:
         del pipe
@@ -2393,7 +2494,7 @@ def generate_image_sd3_inpaint(prompt, negative_prompt, init_image, mask_image, 
 
 
 def generate_image_cascade(prompt, negative_prompt, stable_cascade_settings_html, width, height, prior_steps, prior_guidance_scale,
-                           decoder_steps, decoder_guidance_scale, output_format="png",
+                           decoder_steps, decoder_guidance_scale, num_images_per_prompt, output_format="png",
                            stop_generation=None):
     global stop_signal
     stop_signal = False
@@ -2425,39 +2526,60 @@ def generate_image_cascade(prompt, negative_prompt, stable_cascade_settings_html
     decoder.enable_model_cpu_offload()
 
     try:
+        compel = Compel(
+            tokenizer=[prior.tokenizer, prior.tokenizer_2],
+            text_encoder=[prior.text_encoder, prior.text_encoder_2],
+            returned_embeddings_type=ReturnedEmbeddingsType.PENULTIMATE_HIDDEN_STATES_NON_NORMALIZED,
+            requires_pooled=[False, True]
+        )
+        prompt_embeds, pooled_prompt_embeds = compel(prompt)
+
         prior_output = prior(
-            prompt=prompt,
+            prompt_embeds=prompt_embeds,
+            pooled_prompt_embeds=pooled_prompt_embeds,
             height=height,
             width=width,
             negative_prompt=negative_prompt,
             guidance_scale=prior_guidance_scale,
-            num_images_per_prompt=1,
+            num_images_per_prompt=num_images_per_prompt,
             num_inference_steps=prior_steps
         )
 
         if stop_signal:
             return None, "Generation stopped"
 
+        compel = Compel(
+            tokenizer=[decoder.tokenizer, decoder.tokenizer_2],
+            text_encoder=[decoder.text_encoder, decoder.text_encoder_2],
+            returned_embeddings_type=ReturnedEmbeddingsType.PENULTIMATE_HIDDEN_STATES_NON_NORMALIZED,
+            requires_pooled=[False, True]
+        )
+        prompt_embeds, pooled_prompt_embeds = compel(prompt)
+
         decoder_output = decoder(
             image_embeddings=prior_output.image_embeddings.to(torch.float16),
-            prompt=prompt,
+            prompt_embeds=prompt_embeds,
+            pooled_prompt_embeds=pooled_prompt_embeds,
             negative_prompt=negative_prompt,
             guidance_scale=decoder_guidance_scale,
             output_type="pil",
             num_inference_steps=decoder_steps
-        ).images[0]
+        ).images
 
         if stop_signal:
             return None, "Generation stopped"
 
-        today = datetime.now().date()
-        image_dir = os.path.join('outputs', f"StableDiffusion_{today.strftime('%Y%m%d')}")
-        os.makedirs(image_dir, exist_ok=True)
-        image_filename = f"cascade_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
-        image_path = os.path.join(image_dir, image_filename)
-        decoder_output.save(image_path)
+        image_paths = []
+        for i, image in enumerate(decoder_output):
+            today = datetime.now().date()
+            image_dir = os.path.join('outputs', f"StableDiffusion_{today.strftime('%Y%m%d')}")
+            os.makedirs(image_dir, exist_ok=True)
+            image_filename = f"cascade_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{i}.{output_format}"
+            image_path = os.path.join(image_dir, image_filename)
+            image.save(image_path, format=output_format.upper())
+            image_paths.append(image_path)
 
-        return image_path, None
+        return image_paths, None
 
     finally:
         del prior
@@ -3122,6 +3244,7 @@ def generate_image_hunyuandit(prompt, negative_prompt, num_inference_steps, guid
     try:
         pipe = HunyuanDiTPipeline.from_pretrained(hunyuandit_model_path, torch_dtype=torch.float16)
         pipe.to("cuda")
+        pipe.transformer.enable_forward_chunking(chunk_size=1, dim=1)
 
         image = pipe(
             prompt=prompt,
@@ -3341,6 +3464,9 @@ def generate_image_wurstchen(prompt, negative_prompt, width, height, prior_steps
             torch_dtype=dtype
         ).to(device)
 
+        prior_pipeline.prior = torch.compile(prior_pipeline.prior, mode="reduce-overhead", fullgraph=True)
+        decoder_pipeline.decoder = torch.compile(decoder_pipeline.decoder, mode="reduce-overhead", fullgraph=True)
+
         prior_output = prior_pipeline(
             prompt=prompt,
             height=height,
@@ -3391,13 +3517,39 @@ def generate_image_deepfloyd_txt2img(prompt, negative_prompt, num_inference_step
     if not prompt:
         return None, None, None, "Please enter a prompt!"
 
+    deepfloydI_model_path = os.path.join("inputs", "image", "sd_models", "deepfloydI")
+    deepfloydII_model_path = os.path.join("inputs", "image", "sd_models", "deepfloydII")
+    upscale_model_path = os.path.join("inputs", "image", "sd_models", "upscale", "x4-upscaler")
+
+    if not os.path.exists(deepfloydI_model_path):
+        print("Downloading DeepfloydIF-I-XL-v1.0 model")
+        os.makedirs(deepfloydI_model_path, exist_ok=True)
+        Repo.clone_from("https://huggingface.co/DeepFloyd/IF-I-XL-v1.0", os.path.join(deepfloydI_model_path))
+        print("DeepfloydIF-I-XL-v1.0 model downloaded")
+
+    if not os.path.exists(deepfloydII_model_path):
+        print("Downloading DeepFloydIF-II-L-v1.0 model")
+        os.makedirs(deepfloydII_model_path, exist_ok=True)
+        Repo.clone_from("https://huggingface.co/DeepFloyd/IF-II-L-v1.0", os.path.join(deepfloydII_model_path))
+        print("DeepFloydIF-II-L-v1.0 model downloaded")
+
+    if not os.path.exists(upscale_model_path):
+        print("Downloading 4x-Upscale models...")
+        os.makedirs(upscale_model_path, exist_ok=True)
+        Repo.clone_from("https://huggingface.co/stabilityai/stable-diffusion-x4-upscaler", os.path.join(upscale_model_path))
+        print("Deepfloyd models downloaded")
+
     try:
         device = "cuda" if torch.cuda.is_available() else "cpu"
 
         # Stage I
-        pipe_i = IFPipeline.from_pretrained("DeepFloyd/IF-I-XL-v1.0", variant="fp16", torch_dtype=torch.float16)
+        pipe_i = IFPipeline.from_pretrained(deepfloydI_model_path, variant="fp16", torch_dtype=torch.float16)
+        text_encoder = T5EncoderModel.from_pretrained(
+            deepfloydI_model_path, subfolder="text_encoder", device_map="auto", load_in_8bit=True, variant="8bit"
+        )
         pipe_i.to(device)
         pipe_i.enable_model_cpu_offload()
+        pipe_i.enable_sequential_cpu_offload()
 
         prompt_embeds, negative_embeds = pipe_i.encode_prompt(prompt)
         image = pipe_i(
@@ -3407,7 +3559,8 @@ def generate_image_deepfloyd_txt2img(prompt, negative_prompt, num_inference_step
             guidance_scale=guidance_scale,
             width=width,
             height=height,
-            output_type="pt"
+            output_type="pt",
+            text_encoder=text_encoder,
         ).images
 
         if stop_signal:
@@ -3415,10 +3568,11 @@ def generate_image_deepfloyd_txt2img(prompt, negative_prompt, num_inference_step
 
         # Stage II
         pipe_ii = IFSuperResolutionPipeline.from_pretrained(
-            "DeepFloyd/IF-II-L-v1.0", text_encoder=None, variant="fp16", torch_dtype=torch.float16
+            deepfloydII_model_path, text_encoder=None, variant="fp16", torch_dtype=torch.float16
         )
         pipe_ii.to(device)
         pipe_ii.enable_model_cpu_offload()
+        pipe_ii.enable_sequential_cpu_offload()
 
         image = pipe_ii(
             image=image,
@@ -3439,10 +3593,11 @@ def generate_image_deepfloyd_txt2img(prompt, negative_prompt, num_inference_step
             "watermarker": pipe_i.watermarker,
         }
         pipe_iii = DiffusionPipeline.from_pretrained(
-            "stabilityai/stable-diffusion-x4-upscaler", **safety_modules, torch_dtype=torch.float16
+            upscale_model_path, **safety_modules, torch_dtype=torch.float16
         )
         pipe_iii.to(device)
         pipe_iii.enable_model_cpu_offload()
+        pipe_iii.enable_sequential_cpu_offload()
 
         image = pipe_iii(
             prompt=prompt,
@@ -3492,20 +3647,48 @@ def generate_image_deepfloyd_img2img(prompt, negative_prompt, init_image, num_in
     if not prompt or not init_image:
         return None, None, None, "Please enter a prompt and upload an initial image!"
 
+    deepfloydI_model_path = os.path.join("inputs", "image", "sd_models", "deepfloydI")
+    deepfloydII_model_path = os.path.join("inputs", "image", "sd_models", "deepfloydII")
+    upscale_model_path = os.path.join("inputs", "image", "sd_models", "upscale", "x4-upscaler")
+
+    if not os.path.exists(deepfloydI_model_path):
+        print("Downloading DeepfloydIF-I-XL-v1.0 model")
+        os.makedirs(deepfloydI_model_path, exist_ok=True)
+        Repo.clone_from("https://huggingface.co/DeepFloyd/IF-I-XL-v1.0", os.path.join(deepfloydI_model_path))
+        print("DeepfloydIF-I-XL-v1.0 model downloaded")
+
+    if not os.path.exists(deepfloydII_model_path):
+        print("Downloading DeepFloydIF-II-L-v1.0 model")
+        os.makedirs(deepfloydII_model_path, exist_ok=True)
+        Repo.clone_from("https://huggingface.co/DeepFloyd/IF-II-L-v1.0", os.path.join(deepfloydII_model_path))
+        print("DeepFloydIF-II-L-v1.0 model downloaded")
+
+    if not os.path.exists(upscale_model_path):
+        print("Downloading 4x-Upscale models...")
+        os.makedirs(upscale_model_path, exist_ok=True)
+        Repo.clone_from("https://huggingface.co/stabilityai/stable-diffusion-x4-upscaler",
+                        os.path.join(upscale_model_path))
+        print("Deepfloyd models downloaded")
+
     try:
         device = "cuda" if torch.cuda.is_available() else "cpu"
 
         # Stage I
-        stage_1 = IFImg2ImgPipeline.from_pretrained("DeepFloyd/IF-I-XL-v1.0", variant="fp16", torch_dtype=torch.float16)
+        stage_1 = IFImg2ImgPipeline.from_pretrained(deepfloydI_model_path, variant="fp16", torch_dtype=torch.float16)
+        text_encoder = T5EncoderModel.from_pretrained(
+            deepfloydI_model_path, subfolder="text_encoder", device_map="auto", load_in_8bit=True, variant="8bit"
+        )
         stage_1.to(device)
         stage_1.enable_model_cpu_offload()
+        stage_1.enable_sequential_cpu_offload()
 
         # Stage II
         stage_2 = IFImg2ImgSuperResolutionPipeline.from_pretrained(
-            "DeepFloyd/IF-II-L-v1.0", text_encoder=None, variant="fp16", torch_dtype=torch.float16
+            deepfloydII_model_path, text_encoder=None, variant="fp16", torch_dtype=torch.float16
         )
         stage_2.to(device)
         stage_2.enable_model_cpu_offload()
+        stage_2.enable_sequential_cpu_offload()
 
         # Stage III
         safety_modules = {
@@ -3514,10 +3697,11 @@ def generate_image_deepfloyd_img2img(prompt, negative_prompt, init_image, num_in
             "watermarker": stage_1.watermarker,
         }
         stage_3 = DiffusionPipeline.from_pretrained(
-            "stabilityai/stable-diffusion-x4-upscaler", **safety_modules, torch_dtype=torch.float16
+            upscale_model_path, **safety_modules, torch_dtype=torch.float16
         )
         stage_3.to(device)
         stage_3.enable_model_cpu_offload()
+        stage_3.enable_sequential_cpu_offload()
 
         original_image = Image.open(init_image).convert("RGB")
         original_image = original_image.resize((width, height))
@@ -3535,6 +3719,7 @@ def generate_image_deepfloyd_img2img(prompt, negative_prompt, init_image, num_in
             num_inference_steps=num_inference_steps,
             guidance_scale=guidance_scale,
             output_type="pt",
+            text_encoder=text_encoder
         ).images
 
         if stop_signal:
@@ -3598,6 +3783,7 @@ def generate_image_deepfloyd_img2img(prompt, negative_prompt, init_image, num_in
             pass
         torch.cuda.empty_cache()
 
+
 def generate_image_deepfloyd_inpaint(prompt, negative_prompt, init_image, mask_image, num_inference_steps, guidance_scale, output_format="png", stop_generation=None):
     global stop_signal
     stop_signal = False
@@ -3605,20 +3791,48 @@ def generate_image_deepfloyd_inpaint(prompt, negative_prompt, init_image, mask_i
     if not prompt or not init_image or not mask_image:
         return None, None, None, "Please enter a prompt, upload an initial image, and provide a mask image!"
 
+    deepfloydI_model_path = os.path.join("inputs", "image", "sd_models", "deepfloydI")
+    deepfloydII_model_path = os.path.join("inputs", "image", "sd_models", "deepfloydII")
+    upscale_model_path = os.path.join("inputs", "image", "sd_models", "upscale", "x4-upscaler")
+
+    if not os.path.exists(deepfloydI_model_path):
+        print("Downloading DeepfloydIF-I-XL-v1.0 model")
+        os.makedirs(deepfloydI_model_path, exist_ok=True)
+        Repo.clone_from("https://huggingface.co/DeepFloyd/IF-I-XL-v1.0", os.path.join(deepfloydI_model_path))
+        print("DeepfloydIF-I-XL-v1.0 model downloaded")
+
+    if not os.path.exists(deepfloydII_model_path):
+        print("Downloading DeepFloydIF-II-L-v1.0 model")
+        os.makedirs(deepfloydII_model_path, exist_ok=True)
+        Repo.clone_from("https://huggingface.co/DeepFloyd/IF-II-L-v1.0", os.path.join(deepfloydII_model_path))
+        print("DeepFloydIF-II-L-v1.0 model downloaded")
+
+    if not os.path.exists(upscale_model_path):
+        print("Downloading 4x-Upscale models...")
+        os.makedirs(upscale_model_path, exist_ok=True)
+        Repo.clone_from("https://huggingface.co/stabilityai/stable-diffusion-x4-upscaler",
+                        os.path.join(upscale_model_path))
+        print("Deepfloyd models downloaded")
+
     try:
         device = "cuda" if torch.cuda.is_available() else "cpu"
 
         # Stage I
-        stage_1 = IFInpaintingPipeline.from_pretrained("DeepFloyd/IF-I-XL-v1.0", variant="fp16", torch_dtype=torch.float16)
+        stage_1 = IFInpaintingPipeline.from_pretrained(deepfloydI_model_path, variant="fp16", torch_dtype=torch.float16)
+        text_encoder = T5EncoderModel.from_pretrained(
+            deepfloydI_model_path, subfolder="text_encoder", device_map="auto", load_in_8bit=True, variant="8bit"
+        )
         stage_1.to(device)
         stage_1.enable_model_cpu_offload()
+        stage_1.enable_sequential_cpu_offload()
 
         # Stage II
         stage_2 = IFInpaintingSuperResolutionPipeline.from_pretrained(
-            "DeepFloyd/IF-II-L-v1.0", text_encoder=None, variant="fp16", torch_dtype=torch.float16
+            deepfloydII_model_path, text_encoder=None, variant="fp16", torch_dtype=torch.float16
         )
         stage_2.to(device)
         stage_2.enable_model_cpu_offload()
+        stage_2.enable_sequential_cpu_offload()
 
         # Stage III
         safety_modules = {
@@ -3627,10 +3841,11 @@ def generate_image_deepfloyd_inpaint(prompt, negative_prompt, init_image, mask_i
             "watermarker": stage_1.watermarker,
         }
         stage_3 = DiffusionPipeline.from_pretrained(
-            "stabilityai/stable-diffusion-x4-upscaler", **safety_modules, torch_dtype=torch.float16
+            upscale_model_path, **safety_modules, torch_dtype=torch.float16
         )
         stage_3.to(device)
         stage_3.enable_model_cpu_offload()
+        stage_3.enable_sequential_cpu_offload()
 
         original_image = Image.open(init_image).convert("RGB")
         mask_image = Image.open(mask_image).convert("RGB")
@@ -3649,6 +3864,7 @@ def generate_image_deepfloyd_inpaint(prompt, negative_prompt, init_image, mask_i
             num_inference_steps=num_inference_steps,
             guidance_scale=guidance_scale,
             output_type="pt",
+            text_encoder=text_encoder
         ).images
 
         if stop_signal:
@@ -3743,11 +3959,25 @@ def generate_image_pixart(prompt, negative_prompt, version, num_inference_steps,
 
     try:
         if version.startswith("Alpha"):
+            text_encoder = T5EncoderModel.from_pretrained(
+                pixart_model_path,
+                subfolder="text_encoder",
+                load_in_8bit=True,
+                device_map="auto",
+
+            )
             pipe = PixArtAlphaPipeline.from_pretrained(os.path.join(pixart_model_path, version),
-                                                       torch_dtype=torch.float16)
+                                                       torch_dtype=torch.float16, text_encoder=text_encoder)
         else:
+            text_encoder = T5EncoderModel.from_pretrained(
+                pixart_model_path,
+                subfolder="text_encoder",
+                load_in_8bit=True,
+                device_map="auto",
+
+            )
             pipe = PixArtSigmaPipeline.from_pretrained(os.path.join(pixart_model_path, version),
-                                                       torch_dtype=torch.float16)
+                                                       torch_dtype=torch.float16, text_encoder=text_encoder)
 
         pipe.enable_model_cpu_offload()
 
@@ -3758,7 +3988,7 @@ def generate_image_pixart(prompt, negative_prompt, version, num_inference_steps,
             guidance_scale=guidance_scale,
             height=height,
             width=width,
-            max_sequence_length=max_sequence_length
+            max_sequence_length=max_sequence_length,
         ).images[0]
 
         if stop_signal:
@@ -3971,6 +4201,7 @@ def generate_video_cogvideox(prompt, negative_prompt, num_inference_steps, guida
     finally:
         del pipe
         torch.cuda.empty_cache()
+
 
 def generate_video_latte(prompt, negative_prompt, num_inference_steps, guidance_scale, height, width, video_length, stop_generation):
     global stop_signal
@@ -4921,7 +5152,7 @@ txt2img_interface = gr.Interface(
         gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
     outputs=[
-        gr.Gallery(label="Generated images", show_label=False, elem_id="gallery", columns=[2], rows=[2], object_fit="contain", height="auto"),
+        gr.Gallery(label="Generated images", elem_id="gallery", columns=[2], rows=[2], object_fit="contain", height="auto"),
         gr.Textbox(label="Message", type="text"),
     ],
     title="NeuroSandboxWebUI (ALPHA) - StableDiffusion (txt2img)",
@@ -4947,11 +5178,12 @@ img2img_interface = gr.Interface(
         gr.Slider(minimum=1, maximum=100, value=30, step=1, label="Steps"),
         gr.Slider(minimum=1.0, maximum=30.0, value=8, step=0.1, label="CFG"),
         gr.Slider(minimum=1, maximum=4, value=1, step=1, label="Clip skip"),
+        gr.Slider(minimum=1, maximum=4, value=1, step=1, label="Number of images to generate"),
         gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
         gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
     outputs=[
-        gr.Image(type="filepath", label="Generated image"),
+        gr.Gallery(label="Generated images", elem_id="gallery", columns=[2], rows=[2], object_fit="contain", height="auto"),
         gr.Textbox(label="Message", type="text"),
     ],
     title="NeuroSandboxWebUI (ALPHA) - StableDiffusion (img2img)",
@@ -4969,11 +5201,12 @@ depth2img_interface = gr.Interface(
         gr.Image(label="Initial image", type="filepath"),
         gr.HTML("<h3>StableDiffusion Settings</h3>"),
         gr.Slider(minimum=0.0, maximum=1.0, value=0.7, step=0.01, label="Strength"),
+        gr.Slider(minimum=1, maximum=4, value=1, step=1, label="Number of images to generate"),
         gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
         gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
     outputs=[
-        gr.Image(type="filepath", label="Generated image"),
+        gr.Gallery(label="Generated images", elem_id="gallery", columns=[2], rows=[2], object_fit="contain", height="auto"),
         gr.Textbox(label="Message", type="text"),
     ],
     title="NeuroSandboxWebUI (ALPHA) - StableDiffusion (depth2img)",
@@ -4990,11 +5223,12 @@ pix2pix_interface = gr.Interface(
         gr.Image(label="Initial image", type="filepath"),
         gr.Slider(minimum=1, maximum=100, value=30, step=1, label="Steps"),
         gr.Slider(minimum=1.0, maximum=30.0, value=8, step=0.1, label="CFG"),
+        gr.Slider(minimum=1, maximum=4, value=1, step=1, label="Number of images to generate"),
         gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
         gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
     outputs=[
-        gr.Image(type="filepath", label="Generated image"),
+        gr.Gallery(label="Generated images", elem_id="gallery", columns=[2], rows=[2], object_fit="contain", height="auto"),
         gr.Textbox(label="Message", type="text"),
     ],
     title="NeuroSandboxWebUI (ALPHA) - StableDiffusion (pix2pix)",
@@ -5018,12 +5252,13 @@ controlnet_interface = gr.Interface(
         gr.Slider(minimum=256, maximum=2048, value=512, step=64, label="Width"),
         gr.Slider(minimum=256, maximum=2048, value=512, step=64, label="Height"),
         gr.Slider(minimum=0.1, maximum=1.0, value=0.5, step=0.1, label="ControlNet conditioning scale"),
+        gr.Slider(minimum=1, maximum=4, value=1, step=1, label="Number of images to generate"),
         gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
         gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
     outputs=[
-        gr.Image(type="filepath", label="Generated image"),
-        gr.Image(type="filepath", label="ControlNet control image"),
+        gr.Gallery(label="Generated images", elem_id="gallery", columns=[2], rows=[2], object_fit="contain", height="auto"),
+        gr.Gallery(label="ControlNet control images", show_label=False, elem_id="gallery", columns=[2], rows=[2], object_fit="contain", height="auto"),
         gr.Textbox(label="Message", type="text"),
     ],
     title="NeuroSandboxWebUI (ALPHA) - StableDiffusion (controlnet)",
@@ -5040,11 +5275,12 @@ latent_upscale_interface = gr.Interface(
         gr.Radio(choices=["x2", "x4"], label="Upscale size", value="x2"),
         gr.Slider(minimum=1, maximum=100, value=50, step=1, label="Steps"),
         gr.Slider(minimum=1.0, maximum=30.0, value=8, step=0.1, label="CFG"),
+        gr.Slider(minimum=1, maximum=4, value=1, step=1, label="Number of images to generate"),
         gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
         gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
     outputs=[
-        gr.Image(type="filepath", label="Upscaled image"),
+        gr.Gallery(label="Generated images", elem_id="gallery", columns=[2], rows=[2], object_fit="contain", height="auto"),
         gr.Textbox(label="Message", type="text"),
     ],
     title="NeuroSandboxWebUI (ALPHA) - StableDiffusion (upscale-latent)",
@@ -5087,11 +5323,12 @@ inpaint_interface = gr.Interface(
         gr.Slider(minimum=1.0, maximum=30.0, value=8, step=0.1, label="CFG"),
         gr.Slider(minimum=256, maximum=2048, value=512, step=64, label="Width"),
         gr.Slider(minimum=256, maximum=2048, value=512, step=64, label="Height"),
+        gr.Slider(minimum=1, maximum=4, value=1, step=1, label="Number of images to generate"),
         gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
         gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
     outputs=[
-        gr.Image(type="filepath", label="Inpainted image"),
+        gr.Gallery(label="Generated images", elem_id="gallery", columns=[2], rows=[2], object_fit="contain", height="auto"),
         gr.Textbox(label="Message", type="text"),
     ],
     title="NeuroSandboxWebUI (ALPHA) - StableDiffusion (inpaint)",
@@ -5118,11 +5355,12 @@ gligen_interface = gr.Interface(
         gr.Slider(minimum=256, maximum=2048, value=512, step=64, label="Width"),
         gr.Slider(minimum=256, maximum=2048, value=512, step=64, label="Height"),
         gr.Slider(minimum=1, maximum=4, value=1, step=1, label="Clip skip"),
+        gr.Slider(minimum=1, maximum=4, value=1, step=1, label="Number of images to generate"),
         gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
         gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
     outputs=[
-        gr.Image(type="filepath", label="Generated image"),
+        gr.Gallery(label="Generated images", elem_id="gallery", columns=[2], rows=[2], object_fit="contain", height="auto"),
         gr.Textbox(label="Message", type="text"),
     ],
     title="NeuroSandboxWebUI (ALPHA) - StableDiffusion (gligen)",
@@ -5199,12 +5437,13 @@ ldm3d_interface = gr.Interface(
         gr.Slider(minimum=256, maximum=2048, value=512, step=64, label="Height"),
         gr.Slider(minimum=1, maximum=100, value=40, step=1, label="Steps"),
         gr.Slider(minimum=1.0, maximum=30.0, value=8, step=0.1, label="Guidance Scale"),
+        gr.Slider(minimum=1, maximum=4, value=1, step=1, label="Number of images to generate"),
         gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
         gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
     outputs=[
-        gr.Image(type="filepath", label="Generated RGB image"),
-        gr.Image(type="filepath", label="Generated Depth image"),
+        gr.Gallery(label="Generated RGBs", elem_id="gallery", columns=[2], rows=[2], object_fit="contain", height="auto"),
+        gr.Gallery(label="Generated Depth images", elem_id="gallery", columns=[2], rows=[2], object_fit="contain", height="auto"),
         gr.Textbox(label="Message", type="text"),
     ],
     title="NeuroSandboxWebUI (ALPHA) - StableDiffusion (LDM3D)",
@@ -5224,11 +5463,12 @@ sd3_txt2img_interface = gr.Interface(
         gr.Slider(minimum=256, maximum=2048, value=1024, step=64, label="Width"),
         gr.Slider(minimum=256, maximum=2048, value=1024, step=64, label="Height"),
         gr.Slider(minimum=64, maximum=2048, value=256, label="Max Length"),
+        gr.Slider(minimum=1, maximum=4, value=1, step=1, label="Number of images to generate"),
         gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
         gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
     outputs=[
-        gr.Image(type="filepath", label="Generated image"),
+        gr.Gallery(label="Generated images", elem_id="gallery", columns=[2], rows=[2], object_fit="contain", height="auto"),
         gr.Textbox(label="Message", type="text"),
     ],
     title="NeuroSandboxWebUI (ALPHA) - StableDiffusion 3 (txt2img)",
@@ -5250,11 +5490,12 @@ sd3_img2img_interface = gr.Interface(
         gr.Slider(minimum=256, maximum=2048, value=1024, step=64, label="Width"),
         gr.Slider(minimum=256, maximum=2048, value=1024, step=64, label="Height"),
         gr.Slider(minimum=64, maximum=2048, value=256, label="Max Length"),
+        gr.Slider(minimum=1, maximum=4, value=1, step=1, label="Number of images to generate"),
         gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
         gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
     outputs=[
-        gr.Image(type="filepath", label="Generated image"),
+        gr.Gallery(label="Generated images", elem_id="gallery", columns=[2], rows=[2], object_fit="contain", height="auto"),
         gr.Textbox(label="Message", type="text"),
     ],
     title="NeuroSandboxWebUI (ALPHA) - StableDiffusion 3 (img2img)",
@@ -5277,12 +5518,13 @@ sd3_controlnet_interface = gr.Interface(
         gr.Slider(minimum=256, maximum=2048, value=1024, step=64, label="Width"),
         gr.Slider(minimum=256, maximum=2048, value=1024, step=64, label="Height"),
         gr.Slider(minimum=64, maximum=2048, value=256, label="Max Length"),
+        gr.Slider(minimum=1, maximum=4, value=1, step=1, label="Number of images to generate"),
         gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
         gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
     outputs=[
-        gr.Image(type="filepath", label="Generated image"),
-        gr.Image(type="filepath", label="ControlNet control image"),
+        gr.Gallery(label="Generated images", elem_id="gallery", columns=[2], rows=[2], object_fit="contain", height="auto"),
+        gr.Gallery(label="ControlNet control images", show_label=False, elem_id="gallery", columns=[2], rows=[2], object_fit="contain", height="auto"),
         gr.Textbox(label="Message", type="text"),
     ],
     title="NeuroSandboxWebUI (ALPHA) - StableDiffusion 3 (ControlNet)",
@@ -5304,11 +5546,12 @@ sd3_inpaint_interface = gr.Interface(
         gr.Slider(minimum=256, maximum=2048, value=1024, step=64, label="Width"),
         gr.Slider(minimum=256, maximum=2048, value=1024, step=64, label="Height"),
         gr.Slider(minimum=64, maximum=2048, value=256, label="Max Length"),
+        gr.Slider(minimum=1, maximum=4, value=1, step=1, label="Number of images to generate"),
         gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
         gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
     outputs=[
-        gr.Image(type="filepath", label="Generated image"),
+        gr.Gallery(label="Generated images", elem_id="gallery", columns=[2], rows=[2], object_fit="contain", height="auto"),
         gr.Textbox(label="Message", type="text"),
     ],
     title="NeuroSandboxWebUI (ALPHA) - StableDiffusion 3 (Inpaint)",
@@ -5330,11 +5573,12 @@ cascade_interface = gr.Interface(
         gr.Slider(minimum=1.0, maximum=30.0, value=4.0, step=0.1, label="Prior Guidance Scale"),
         gr.Slider(minimum=1, maximum=100, value=20, step=1, label="Decoder Steps"),
         gr.Slider(minimum=0.0, maximum=30.0, value=8.0, step=0.1, label="Decoder Guidance Scale"),
+        gr.Slider(minimum=1, maximum=4, value=1, step=1, label="Number of images to generate"),
         gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
         gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
     outputs=[
-        gr.Image(type="filepath", label="Generated image"),
+        gr.Gallery(label="Generated images", elem_id="gallery", columns=[2], rows=[2], object_fit="contain", height="auto"),
         gr.Textbox(label="Message", type="text"),
     ],
     title="NeuroSandboxWebUI (ALPHA) - StableDiffusion (cascade)",
