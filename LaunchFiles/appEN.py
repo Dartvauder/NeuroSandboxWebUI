@@ -5257,7 +5257,7 @@ controlnet_interface = gr.Interface(
     ],
     outputs=[
         gr.Gallery(label="Generated images", elem_id="gallery", columns=[2], rows=[2], object_fit="contain", height="auto"),
-        gr.Gallery(label="ControlNet control images", show_label=False, elem_id="gallery", columns=[2], rows=[2], object_fit="contain", height="auto"),
+        gr.Gallery(label="ControlNet control images", elem_id="gallery", columns=[2], rows=[2], object_fit="contain", height="auto"),
         gr.Textbox(label="Message", type="text"),
     ],
     title="NeuroSandboxWebUI (ALPHA) - StableDiffusion (controlnet)",
@@ -5523,7 +5523,7 @@ sd3_controlnet_interface = gr.Interface(
     ],
     outputs=[
         gr.Gallery(label="Generated images", elem_id="gallery", columns=[2], rows=[2], object_fit="contain", height="auto"),
-        gr.Gallery(label="ControlNet control images", show_label=False, elem_id="gallery", columns=[2], rows=[2], object_fit="contain", height="auto"),
+        gr.Gallery(label="ControlNet control images", elem_id="gallery", columns=[2], rows=[2], object_fit="contain", height="auto"),
         gr.Textbox(label="Message", type="text"),
     ],
     title="NeuroSandboxWebUI (ALPHA) - StableDiffusion 3 (ControlNet)",
