@@ -1338,7 +1338,7 @@ def generate_image_pix2pix(prompt, negative_prompt, init_image, num_inference_st
         torch.cuda.empty_cache()
 
 
-def generate_image_controlnet(prompt, negative_prompt, init_image, sd_version, stable_diffusion_model_name, controlnet_model_name,
+def generate_image_controlnet(prompt, negative_prompt, init_image, sd_version, stable_diffusion_sampler, stable_diffusion_model_name, controlnet_model_name,
                               num_inference_steps, guidance_scale, width, height, controlnet_conditioning_scale, num_images_per_prompt, output_format="png",
                               stop_generation=None):
     global stop_signal
@@ -1432,7 +1432,7 @@ def generate_image_controlnet(prompt, negative_prompt, init_image, sd_version, s
 
             images = pipe(prompt_embeds=prompt_embeds, negative_prompt_embeds=negative_prompt_embeds,
                          num_inference_steps=num_inference_steps, guidance_scale=guidance_scale, width=width,
-                         height=height, generator=generator, image=control_image, num_images_per_prompt=num_images_per_prompt).images
+                         height=height, generator=generator, image=control_image, sampler=stable_diffusion_sampler, num_images_per_prompt=num_images_per_prompt).images
 
         else:  # SDXL
             controlnet = ControlNetModel.from_pretrained(
@@ -1496,7 +1496,7 @@ def generate_image_controlnet(prompt, negative_prompt, init_image, sd_version, s
                 prompt_embeds=prompt_embeds, pooled_prompt_embeds=pooled_prompt_embeds, negative_prompt=negative_prompt, image=control_image,
                 controlnet_conditioning_scale=controlnet_conditioning_scale,
                 num_inference_steps=num_inference_steps, guidance_scale=guidance_scale,
-                width=width, height=height, num_images_per_prompt=num_images_per_prompt).images
+                width=width, height=height, sampler=stable_diffusion_sampler, num_images_per_prompt=num_images_per_prompt).images
 
         if stop_signal:
             return None, None, "Generation stopped"
@@ -1628,21 +1628,21 @@ def generate_image_inpaint(prompt, negative_prompt, init_image, mask_image, blur
 
     try:
         if stable_diffusion_model_type == "SD":
-            original_config_file = "configs/sd/v1-inference.yaml"
+            original_config_file = "configs/sd/v1-inpainting-inference.yaml"
             vae_config_file = "configs/sd/v1-inference.yaml"
             stable_diffusion_model = StableDiffusionInpaintPipeline.from_single_file(
                 stable_diffusion_model_path, use_safetensors=True, device_map="auto",
                 original_config_file=original_config_file, torch_dtype=torch.float16, variant="fp16"
             )
         elif stable_diffusion_model_type == "SD2":
-            original_config_file = "configs/sd/v2-inference.yaml"
+            original_config_file = "configs/sd/v1-inpainting-inference.yaml"
             vae_config_file = "configs/sd/v2-inference.yaml"
             stable_diffusion_model = StableDiffusionInpaintPipeline.from_single_file(
                 stable_diffusion_model_path, use_safetensors=True, device_map="auto",
                 original_config_file=original_config_file, torch_dtype=torch.float16, variant="fp16"
             )
         elif stable_diffusion_model_type == "SDXL":
-            original_config_file = "configs/sd/sd_xl_base.yaml"
+            original_config_file = "configs/sd/sd_xl_inpaint.yaml"
             vae_config_file = "configs/sd/sd_xl_base.yaml"
             stable_diffusion_model = StableDiffusionInpaintPipeline.from_single_file(
                 stable_diffusion_model_path, use_safetensors=True, device_map="auto", attention_slice=1,
@@ -1745,9 +1745,10 @@ def generate_image_inpaint(prompt, negative_prompt, init_image, mask_image, blur
         torch.cuda.empty_cache()
 
 
-def generate_image_outpaint(prompt, negative_prompt, init_image, stable_diffusion_model_name,
+def generate_image_outpaint(prompt, negative_prompt, init_image, stable_diffusion_model_name, stable_diffusion_settings_html,
+                            stable_diffusion_model_type, stable_diffusion_sampler,
                             stable_diffusion_steps, stable_diffusion_cfg,
-                            outpaint_direction, outpaint_expansion, output_format="png", stop_generation=None):
+                            outpaint_direction, outpaint_expansion, num_images_per_prompt, output_format="png", stop_generation=None):
     global stop_signal
     stop_signal = False
 
@@ -1757,19 +1758,47 @@ def generate_image_outpaint(prompt, negative_prompt, init_image, stable_diffusio
     if not stable_diffusion_model_name:
         return None, "Please select a StableDiffusion model!"
 
-    stable_diffusion_model_path = os.path.join("inputs", "image", "sd_models",
+    stable_diffusion_model_path = os.path.join("inputs", "image", "sd_models", "inpaint",
                                                f"{stable_diffusion_model_name}.safetensors")
 
     if not os.path.exists(stable_diffusion_model_path):
         return None, f"StableDiffusion model not found: {stable_diffusion_model_path}"
 
     try:
-        pipe = StableDiffusionInpaintPipeline.from_single_file(
-            stable_diffusion_model_path,
-            torch_dtype=torch.float16,
-            use_safetensors=True,
-            variant="fp16"
-        ).to("cuda")
+        if stable_diffusion_model_type == "SD":
+            original_config_file = "configs/sd/v1-inpainting-inference.yaml"
+            pipe = StableDiffusionInpaintPipeline.from_single_file(
+                stable_diffusion_model_path, use_safetensors=True, device_map="auto",
+                original_config_file=original_config_file, torch_dtype=torch.float16, variant="fp16"
+            )
+        elif stable_diffusion_model_type == "SD2":
+            original_config_file = "configs/sd/v1-inpainting-inference.yaml"
+            pipe = StableDiffusionInpaintPipeline.from_single_file(
+                stable_diffusion_model_path, use_safetensors=True, device_map="auto",
+                original_config_file=original_config_file, torch_dtype=torch.float16, variant="fp16"
+            )
+        elif stable_diffusion_model_type == "SDXL":
+            original_config_file = "configs/sd/sd_xl_inpaint.yaml"
+            pipe = StableDiffusionInpaintPipeline.from_single_file(
+                stable_diffusion_model_path, use_safetensors=True, device_map="auto", attention_slice=1,
+                original_config_file=original_config_file, torch_dtype=torch.float16, variant="fp16"
+            )
+        else:
+            return None, "Invalid StableDiffusion model type!"
+
+        device = "cuda" if torch.cuda.is_available() else "cpu"
+
+        if XFORMERS_AVAILABLE:
+            pipe.enable_xformers_memory_efficient_attention(attention_op=None)
+            pipe.vae.enable_xformers_memory_efficient_attention(attention_op=None)
+            pipe.unet.enable_xformers_memory_efficient_attention(attention_op=None)
+
+        pipe.to(device)
+        pipe.text_encoder.to(device)
+        pipe.vae.to(device)
+        pipe.unet.to(device)
+
+        pipe.safety_checker = None
 
         init_image = Image.open(init_image).convert("RGB")
         init_width, init_height = init_image.size
@@ -1805,14 +1834,45 @@ def generate_image_outpaint(prompt, negative_prompt, init_image, stable_diffusio
         else:  # 'down'
             mask_draw.rectangle([0, init_height, new_width, new_height], fill=255)
 
-        result = pipe(
-            prompt=prompt,
-            negative_prompt=negative_prompt,
-            image=new_image,
-            mask_image=mask,
-            num_inference_steps=stable_diffusion_steps,
-            guidance_scale=stable_diffusion_cfg,
-        ).images[0]
+        if stable_diffusion_model_type == "SDXL":
+            compel = Compel(
+                tokenizer=[pipe.tokenizer, pipe.tokenizer_2],
+                text_encoder=[pipe.text_encoder, pipe.text_encoder_2],
+                returned_embeddings_type=ReturnedEmbeddingsType.PENULTIMATE_HIDDEN_STATES_NON_NORMALIZED,
+                requires_pooled=[False, True]
+            )
+            prompt_embeds, pooled_prompt_embeds = compel(prompt)
+
+            results = pipe(
+                prompt_embeds=prompt_embeds,
+                pooled_prompt_embeds=pooled_prompt_embeds,
+                negative_prompt=negative_prompt,
+                image=new_image,
+                mask_image=mask,
+                num_inference_steps=stable_diffusion_steps,
+                guidance_scale=stable_diffusion_cfg,
+                width=new_width,
+                height=new_height,
+                sampler=stable_diffusion_sampler,
+                num_images_per_prompt=num_images_per_prompt,
+            ).images
+        else:
+            compel_proc = Compel(tokenizer=pipe.tokenizer, text_encoder=pipe.text_encoder)
+            prompt_embeds = compel_proc(prompt)
+            negative_prompt_embeds = compel_proc(negative_prompt)
+
+            results = pipe(
+                prompt_embeds=prompt_embeds,
+                negative_prompt_embeds=negative_prompt_embeds,
+                image=new_image,
+                mask_image=mask,
+                num_inference_steps=stable_diffusion_steps,
+                guidance_scale=stable_diffusion_cfg,
+                width=new_width,
+                height=new_height,
+                sampler=stable_diffusion_sampler,
+                num_images_per_prompt=num_images_per_prompt,
+            ).images
 
         if stop_signal:
             return None, "Generation stopped"
@@ -1820,16 +1880,21 @@ def generate_image_outpaint(prompt, negative_prompt, init_image, stable_diffusio
         today = datetime.now().date()
         image_dir = os.path.join('outputs', f"StableDiffusion_{today.strftime('%Y%m%d')}")
         os.makedirs(image_dir, exist_ok=True)
-        image_filename = f"outpaint_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
-        image_path = os.path.join(image_dir, image_filename)
-        result.save(image_path, format=output_format.upper())
 
-        return image_path, None
+        image_paths = []
+        for i, result in enumerate(results):
+            image_filename = f"outpaint_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{i}.{output_format}"
+            image_path = os.path.join(image_dir, image_filename)
+            result.save(image_path, format=output_format.upper())
+            image_paths.append(image_path)
+
+        return image_paths, None
 
     except Exception as e:
         return None, str(e)
 
     finally:
+        del pipe
         torch.cuda.empty_cache()
 
 
@@ -1969,7 +2034,7 @@ def generate_image_gligen(prompt, negative_prompt, gligen_phrases, gligen_boxes,
         torch.cuda.empty_cache()
 
 
-def generate_image_animatediff(prompt, negative_prompt, input_video, strength, model_type, stable_diffusion_model_name, motion_lora_name, num_frames, num_inference_steps,
+def generate_image_animatediff(prompt, negative_prompt, input_video, strength, model_type, stable_diffusion_sampler, stable_diffusion_model_name, motion_lora_name, num_frames, num_inference_steps,
                                guidance_scale, width, height, stop_generation):
     global stop_signal
     stop_signal = False
@@ -2091,9 +2156,9 @@ def generate_image_animatediff(prompt, negative_prompt, input_video, strength, m
                     num_frames=num_frames,
                     guidance_scale=guidance_scale,
                     num_inference_steps=num_inference_steps,
-                    generator=torch.manual_seed(-1),
                     width=width,
                     height=height,
+                    sampler=stable_diffusion_sampler,
                 )
 
         elif model_type == "sdxl":
@@ -2132,6 +2197,7 @@ def generate_image_animatediff(prompt, negative_prompt, input_video, strength, m
                 guidance_scale=guidance_scale,
                 width=width,
                 height=height,
+                sampler=stable_diffusion_sampler,
                 num_frames=num_frames,
             )
 
@@ -2422,7 +2488,8 @@ def generate_image_sd3_txt2img(prompt, negative_prompt, num_inference_steps, gui
             subfolder="text_encoder_3",
             quantization_config=quantization_config,
         )
-        pipe = StableDiffusion3Pipeline.from_pretrained(sd3_model_path, device_map="balanced", text_encoder_3=text_encoder, torch_dtype=torch.float16)
+        original_config_file = "configs/sd/sd3-inference.yaml"
+        pipe = StableDiffusion3Pipeline.from_pretrained(sd3_model_path, original_config_file=original_config_file, device_map="balanced", text_encoder_3=text_encoder, torch_dtype=torch.float16)
 
         compel = Compel(
             tokenizer=[pipe.tokenizer, pipe.tokenizer_2],
@@ -2484,7 +2551,8 @@ def generate_image_sd3_img2img(prompt, negative_prompt, init_image, strength, nu
             subfolder="text_encoder_3",
             quantization_config=quantization_config,
         )
-        pipe = StableDiffusion3Img2ImgPipeline.from_pretrained(sd3_model_path, device_map="balanced", text_encoder_3=text_encoder, torch_dtype=torch.float16)
+        original_config_file = "configs/sd/sd3-inference.yaml"
+        pipe = StableDiffusion3Img2ImgPipeline.from_pretrained(sd3_model_path, original_config_file=original_config_file, device_map="balanced", text_encoder_3=text_encoder, torch_dtype=torch.float16)
 
         init_image = Image.open(init_image).convert("RGB")
         init_image = init_image.resize((width, height))
@@ -2553,8 +2621,10 @@ def generate_image_sd3_controlnet(prompt, negative_prompt, init_image, controlne
 
     try:
         controlnet = SD3ControlNetModel.from_pretrained(controlnet_path, torch_dtype=torch.float16)
+        original_config_file = "configs/sd/sd3-inference.yaml"
         pipe = StableDiffusion3ControlNetPipeline.from_pretrained(
             sd3_model_path,
+            original_config_file=original_config_file,
             controlnet=controlnet,
             torch_dtype=torch.float16
         )
@@ -2638,7 +2708,8 @@ def generate_image_sd3_inpaint(prompt, negative_prompt, init_image, mask_image, 
             subfolder="text_encoder_3",
             quantization_config=quantization_config,
         )
-        pipe = StableDiffusion3InpaintPipeline.from_pretrained(sd3_model_path, device_map="balanced", text_encoder_3=text_encoder, torch_dtype=torch.float16)
+        original_config_file = "configs/sd/sd3-inference.yaml"
+        pipe = StableDiffusion3InpaintPipeline.from_pretrained(sd3_model_path, original_config_file=original_config_file, device_map="balanced", text_encoder_3=text_encoder, torch_dtype=torch.float16)
 
         init_image = Image.open(init_image).convert("RGB")
         init_image = init_image.resize((width, height))
@@ -5443,6 +5514,8 @@ controlnet_interface = gr.Interface(
         gr.Textbox(label="Enter your negative prompt", value=""),
         gr.Image(label="Initial image", type="filepath"),
         gr.Radio(choices=["SD", "SDXL"], label="Select model type", value="SD"),
+        gr.Dropdown(choices=["euler_ancestral", "euler", "lms", "heun", "dpm", "dpm_solver", "dpm_solver++"],
+                    label="Select sampler", value="euler_ancestral"),
         gr.Dropdown(choices=stable_diffusion_models_list, label="Select StableDiffusion model", value=None),
         gr.Dropdown(choices=controlnet_models_list, label="Select ControlNet model", value=None),
         gr.Slider(minimum=1, maximum=100, value=30, step=1, label="Steps"),
@@ -5542,21 +5615,27 @@ outpaint_interface = gr.Interface(
         gr.Textbox(label="Enter your prompt"),
         gr.Textbox(label="Enter your negative prompt", value=""),
         gr.Image(label="Initial image", type="filepath"),
-        gr.Dropdown(choices=stable_diffusion_models_list, label="Select StableDiffusion model", value=None),
+        gr.Dropdown(choices=inpaint_models_list, label="Select StableDiffusion model", value=None),
+        gr.HTML("<h3>StableDiffusion Settings</h3>"),
+        gr.Radio(choices=["SD", "SD2", "SDXL"], label="Select model type", value="SD"),
+        gr.Dropdown(choices=["euler_ancestral", "euler", "lms", "heun", "dpm", "dpm_solver", "dpm_solver++"],
+                    label="Select sampler", value="euler_ancestral"),
         gr.Slider(minimum=1, maximum=100, value=30, step=1, label="Steps"),
         gr.Slider(minimum=1.0, maximum=30.0, value=8, step=0.1, label="CFG"),
         gr.Radio(choices=["left", "right", "up", "down"], label="Outpaint direction", value="right"),
-        gr.Slider(minimum=10, maximum=100, value=50, step=1, label="Expansion percentage"),
+        gr.Slider(minimum=10, maximum=200, value=50, step=1, label="Expansion percentage"),
+        gr.Slider(minimum=1, maximum=4, value=1, step=1, label="Number of images to generate"),
         gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
         gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
     outputs=[
-        gr.Image(label="Generated image", type="filepath"),
+        gr.Gallery(label="Generated images", elem_id="gallery", columns=[2], rows=[2], object_fit="contain", height="auto"),
         gr.Textbox(label="Message", type="text"),
     ],
     title="NeuroSandboxWebUI (ALPHA) - StableDiffusion (outpaint)",
     description="This user interface allows you to expand an existing image using outpainting with StableDiffusion. "
-                "Upload an image, enter a prompt, select a direction to expand, and customize the generation settings. "
+                "Upload an image, enter a prompt, select a model type and direction to expand, and customize the generation settings. "
+                "The image will be expanded according to the chosen percentage. "
                 "Try it and see what happens!",
     allow_flagging="never",
 )
@@ -5601,6 +5680,8 @@ animatediff_interface = gr.Interface(
         gr.Image(label="Initial GIF", type="filepath"),
         gr.Slider(minimum=0.0, maximum=1.0, value=0.5, step=0.01, label="Strength"),
         gr.Radio(choices=["sd", "sdxl"], label="Select model type", value="sd"),
+        gr.Dropdown(choices=["euler_ancestral", "euler", "lms", "heun", "dpm", "dpm_solver", "dpm_solver++"],
+                    label="Select sampler", value="euler_ancestral"),
         gr.Dropdown(choices=stable_diffusion_models_list, label="Select StableDiffusion model (only SD1.5)", value=None),
         gr.Dropdown(choices=[None, "zoom-in", "zoom-out", "tilt-up", "tilt-down", "pan-right", "pan-left"], label="Select Motion LORA", value=None, multiselect=True),
         gr.Slider(minimum=1, maximum=200, value=20, step=1, label="Frames"),
