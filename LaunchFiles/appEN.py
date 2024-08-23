@@ -445,7 +445,7 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, input_image
                 moondream2_path,
                 filename="*text-model*",
                 chat_handler=chat_handler,
-                n_ctx=2048
+                n_ctx=2048,
             )
 
             if input_image:
@@ -472,7 +472,7 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, input_image
                 ]}
             ]
 
-            for chunk in llm.create_chat_completion(messages=messages, stream=True):
+            for chunk in llm.create_chat_completion(messages=messages):
                 if stop_signal:
                     break
                 text = chunk["choices"][0]["delta"].get("content", "")
@@ -500,7 +500,7 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, input_image
                 if not chat_history or chat_history[-1][1] is not None:
                     chat_history.append([prompt, ""])
 
-                for token in model.answer_question(enc_image, prompt_with_context, tokenizer, stream=True):
+                for token in model.answer_question(enc_image, prompt_with_context, tokenizer):
                     if stop_signal:
                         break
                     chat_history[-1][1] += token
@@ -926,7 +926,7 @@ def generate_wav2lip(image_path, audio_path, fps, pads, face_det_batch_size, wav
 def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name, vae_model_name, lora_model_names, textual_inversion_model_names, stable_diffusion_settings_html,
                            stable_diffusion_model_type, stable_diffusion_sampler, stable_diffusion_steps,
                            stable_diffusion_cfg, stable_diffusion_width, stable_diffusion_height,
-                           stable_diffusion_clip_skip, enable_freeu=False, enable_tiled_vae=False, enable_upscale=False, upscale_factor="x2", upscale_steps=50, upscale_cfg=6, output_format="png", stop_generation=None):
+                           stable_diffusion_clip_skip, num_images_per_prompt, enable_freeu=False, enable_tiled_vae=False, enable_upscale=False, upscale_factor="x2", upscale_steps=50, upscale_cfg=6, output_format="png", stop_generation=None):
     global stop_signal
     stop_signal = False
 
@@ -1020,7 +1020,7 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
                                             num_inference_steps=stable_diffusion_steps,
                                             guidance_scale=stable_diffusion_cfg, height=stable_diffusion_height,
                                             width=stable_diffusion_width, clip_skip=stable_diffusion_clip_skip,
-                                            sampler=stable_diffusion_sampler)
+                                            sampler=stable_diffusion_sampler, num_images_per_prompt=num_images_per_prompt).images
         else:
             compel_proc = Compel(tokenizer=stable_diffusion_model.tokenizer,
                                  text_encoder=stable_diffusion_model.text_encoder)
@@ -1031,30 +1031,33 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
                                             num_inference_steps=stable_diffusion_steps,
                                             guidance_scale=stable_diffusion_cfg, height=stable_diffusion_height,
                                             width=stable_diffusion_width, clip_skip=stable_diffusion_clip_skip,
-                                            sampler=stable_diffusion_sampler)
+                                            sampler=stable_diffusion_sampler, num_images_per_prompt=num_images_per_prompt).images
 
         if stop_signal:
             return None, "Generation stopped"
-        image = images["images"][0]
 
         if enable_upscale:
             upscale_factor_value = 2 if upscale_factor == "x2" else 4
             upscaler = load_upscale_model(upscale_factor_value)
             if upscaler:
+                image = images["images"][0]
                 if upscale_factor == "x2":
                     upscaled_image = upscaler(prompt=prompt, image=image, num_inference_steps=upscale_steps, guidance_scale=upscale_cfg).images[0]
                 else:
                     upscaled_image = upscaler(prompt=prompt, image=image, num_inference_steps=upscale_steps, guidance_scale=upscale_cfg)["images"][0]
                 image = upscaled_image
 
-        today = datetime.now().date()
-        image_dir = os.path.join('outputs', f"StableDiffusion_{today.strftime('%Y%m%d')}")
-        os.makedirs(image_dir, exist_ok=True)
-        image_filename = f"txt2img_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
-        image_path = os.path.join(image_dir, image_filename)
-        image.save(image_path, format=output_format.upper())
+        image_paths = []
+        for i, image in enumerate(images):
+            today = datetime.now().date()
+            image_dir = os.path.join('outputs', f"StableDiffusion_{today.strftime('%Y%m%d')}")
+            os.makedirs(image_dir, exist_ok=True)
+            image_filename = f"txt2img_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{i}.{output_format}"
+            image_path = os.path.join(image_dir, image_filename)
+            image.save(image_path, format=output_format.upper())
+            image_paths.append(image_path)
 
-        return image_path, None
+        return image_paths, None
 
     finally:
         del stable_diffusion_model
@@ -1481,7 +1484,7 @@ def generate_image_controlnet(prompt, negative_prompt, init_image, sd_version, s
         torch.cuda.empty_cache()
 
 
-def generate_image_upscale_latent(image_path, num_inference_steps, guidance_scale, output_format="png", stop_generation=None):
+def generate_image_upscale_latent(image_path, upscale_factor, num_inference_steps, guidance_scale, output_format="png", stop_generation=None):
     global stop_signal
     if stop_signal:
         return None, "Generation stopped"
@@ -1489,7 +1492,7 @@ def generate_image_upscale_latent(image_path, num_inference_steps, guidance_scal
     if not image_path:
         return None, "Please, upload an initial image!"
 
-    upscale_factor = 2
+    upscale_factor = upscale_factor
     upscaler = load_upscale_model(upscale_factor)
 
     if upscaler:
@@ -4777,9 +4780,9 @@ chat_interface = gr.Interface(
         gr.Checkbox(label="Enable TTS", value=False),
         gr.HTML("<h3>TTS Settings</h3>"),
         gr.Dropdown(choices=speaker_wavs_list, label="Select voice", interactive=True),
-        gr.Dropdown(choices=["en", "ru"], label="Select language", interactive=True),
-        gr.Slider(minimum=0.0, maximum=1.9, value=1.0, step=0.1, label="TTS Temperature", interactive=True),
-        gr.Slider(minimum=0.0, maximum=1.0, value=0.9, step=0.1, label="TTS Top P", interactive=True),
+        gr.Dropdown(choices=["en", "es", "fr", "de", "it", "pt", "pl", "tr", "ru", "nl", "cs", "ar", "zh-cn", "ja", "hu", "ko", "hi"], label="Select language", interactive=True),
+        gr.Slider(minimum=0.1, maximum=1.9, value=1.0, step=0.1, label="TTS Temperature", interactive=True),
+        gr.Slider(minimum=0.01, maximum=1.0, value=0.9, step=0.01, label="TTS Top P", interactive=True),
         gr.Slider(minimum=0, maximum=100, value=20, step=1, label="TTS Top K", interactive=True),
         gr.Slider(minimum=0.5, maximum=2.0, value=1.0, step=0.1, label="TTS Speed", interactive=True),
         gr.Radio(choices=["wav", "mp3", "ogg"], label="Select output format", value="wav", interactive=True),
@@ -4804,8 +4807,8 @@ tts_stt_interface = gr.Interface(
         gr.HTML("<h3>TTS Settings</h3>"),
         gr.Dropdown(choices=speaker_wavs_list, label="Select voice", interactive=True),
         gr.Dropdown(choices=["en", "es", "fr", "de", "it", "pt", "pl", "tr", "ru", "nl", "cs", "ar", "zh-cn", "ja", "hu", "ko", "hi"], label="Select language", interactive=True),
-        gr.Slider(minimum=0.0, maximum=1.9, value=1.0, step=0.1, label="TTS Temperature", interactive=True),
-        gr.Slider(minimum=0.0, maximum=1.0, value=0.9, step=0.1, label="TTS Top P", interactive=True),
+        gr.Slider(minimum=0.1, maximum=1.9, value=1.0, step=0.1, label="TTS Temperature", interactive=True),
+        gr.Slider(minimum=0.01, maximum=1.0, value=0.9, step=0.01, label="TTS Top P", interactive=True),
         gr.Slider(minimum=0, maximum=100, value=20, step=1, label="TTS Top K", interactive=True),
         gr.Slider(minimum=0.5, maximum=2.0, value=1.0, step=0.1, label="TTS Speed", interactive=True),
         gr.Radio(choices=["wav", "mp3", "ogg"], label="Select TTS output format", value="wav", interactive=True),
@@ -4907,6 +4910,7 @@ txt2img_interface = gr.Interface(
         gr.Slider(minimum=256, maximum=2048, value=512, step=64, label="Width"),
         gr.Slider(minimum=256, maximum=2048, value=512, step=64, label="Height"),
         gr.Slider(minimum=1, maximum=4, value=1, step=1, label="Clip skip"),
+        gr.Slider(minimum=1, maximum=4, value=1, step=1, label="Number of images to generate"),
         gr.Checkbox(label="Enable FreeU", value=False),
         gr.Checkbox(label="Enable Tiled VAE", value=False),
         gr.Checkbox(label="Enable Upscale", value=False),
@@ -4917,7 +4921,7 @@ txt2img_interface = gr.Interface(
         gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
     outputs=[
-        gr.Image(type="filepath", label="Generated image"),
+        gr.Gallery(label="Generated images", show_label=False, elem_id="gallery", columns=[2], rows=[2], object_fit="contain", height="auto"),
         gr.Textbox(label="Message", type="text"),
     ],
     title="NeuroSandboxWebUI (ALPHA) - StableDiffusion (txt2img)",
@@ -5033,6 +5037,7 @@ latent_upscale_interface = gr.Interface(
     fn=generate_image_upscale_latent,
     inputs=[
         gr.Image(label="Image to upscale", type="filepath"),
+        gr.Radio(choices=["x2", "x4"], label="Upscale size", value="x2"),
         gr.Slider(minimum=1, maximum=100, value=50, step=1, label="Steps"),
         gr.Slider(minimum=1.0, maximum=30.0, value=8, step=0.1, label="CFG"),
         gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
