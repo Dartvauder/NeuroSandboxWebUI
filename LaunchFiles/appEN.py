@@ -441,7 +441,8 @@ def generate_text_and_speech(input_text, input_audio, input_image, llm_model_nam
             if input_image:
                 image_path = input_image
             else:
-                return chat_history, None, None, "Please upload an image for multimodal input."
+                yield chat_history, None, None, "Please upload an image for multimodal input."
+                return
 
             context = ""
             for human_text, ai_text in chat_history[-5:]:
@@ -450,51 +451,68 @@ def generate_text_and_speech(input_text, input_audio, input_image, llm_model_nam
                 if ai_text:
                     context += f"AI: {ai_text}\n"
 
-            response = llm.create_chat_completion(
-                messages=[
-                    {
-                        "role": "system",
-                        "content": "You are a helpful AI assistant capable of analyzing images and text.",
-                    },
-                    {
-                        "role": "user",
-                        "content": [
-                            {"type": "text", "text": f"{context}Human: {prompt}"},
-                            {"type": "image_url", "image_url": {"url": f"file://{image_path}"}}
-                        ]
-                    }
-                ]
-            )
+            if not chat_history or chat_history[-1][1] is not None:
+                chat_history.append([prompt, ""])
 
-            text = response["choices"][0]["message"]["content"]
-        model_id = "vikhyatk/moondream2"
-        revision = "2024-07-23"
-        model, tokenizer = load_moondream2_model(model_id, revision)
+            for chunk in llm.create_chat_completion(
+                    messages=[
+                        {
+                            "role": "system",
+                            "content": "You are a helpful AI assistant capable of analyzing images and text.",
+                        },
+                        {
+                            "role": "user",
+                            "content": [
+                                {"type": "text", "text": f"{context}Human: {prompt}"},
+                                {"type": "image_url", "image_url": {"url": f"file://{image_path}"}}
+                            ]
+                        }
+                    ],
+                    stream=True
+            ):
+                if stop_signal:
+                    break
+                text = chunk["choices"][0]["delta"].get("content", "")
+                chat_history[-1][1] += text
+                yield chat_history, None, chat_dir, None
 
-        try:
-            image = Image.open(input_image)
-            enc_image = model.encode_image(image)
+        else:
+            model_id = "vikhyatk/moondream2"
+            revision = "2024-07-23"
+            model, tokenizer = load_moondream2_model(model_id, revision)
 
-            detect_lang = langdetect.detect(prompt)
-            if detect_lang == "ru":
-                bot_instruction = "Вы дружелюбный чат-бот, который всегда дает полезные и содержательные ответы на основе данного изображения и текстового ввода."
-            else:
-                bot_instruction = "You are a helpful AI assistant capable of analyzing images and text."
+            try:
+                image = Image.open(input_image)
+                enc_image = model.encode_image(image)
 
-            context = ""
-            for human_text, ai_text in chat_history[-5:]:
-                if human_text:
-                    context += f"Human: {human_text}\n"
-                if ai_text:
-                    context += f"AI: {ai_text}\n"
+                detect_lang = langdetect.detect(prompt)
+                if detect_lang == "ru":
+                    bot_instruction = "Вы дружелюбный чат-бот, который всегда дает полезные и содержательные ответы на основе данного изображения и текстового ввода."
+                else:
+                    bot_instruction = "You are a helpful AI assistant capable of analyzing images and text."
 
-            prompt_with_context = f"{bot_instruction}\n\n{context}Human: {prompt}\nAI:"
+                context = ""
+                for human_text, ai_text in chat_history[-5:]:
+                    if human_text:
+                        context += f"Human: {human_text}\n"
+                    if ai_text:
+                        context += f"AI: {ai_text}\n"
 
-            text = model.answer_question(enc_image, prompt_with_context, tokenizer)
-        finally:
-            del model
-            del tokenizer
-            torch.cuda.empty_cache()
+                prompt_with_context = f"{bot_instruction}\n\n{context}Human: {prompt}\nAI:"
+
+                if not chat_history or chat_history[-1][1] is not None:
+                    chat_history.append([prompt, ""])
+
+                for token in model.answer_question(enc_image, prompt_with_context, tokenizer, stream=True):
+                    if stop_signal:
+                        break
+                    chat_history[-1][1] += token
+                    yield chat_history, None, chat_dir, None
+
+            finally:
+                del model
+                del tokenizer
+                torch.cuda.empty_cache()
 
         if not chat_dir:
             now = datetime.now()
@@ -506,19 +524,19 @@ def generate_text_and_speech(input_text, input_audio, input_image, llm_model_nam
         if chat_history_format == "txt":
             with open(chat_history_path, "a", encoding="utf-8") as f:
                 f.write(f"Human: {prompt}\n")
-                if text:
-                    f.write(f"AI: {text}\n\n")
+                if chat_history[-1][1]:
+                    f.write(f"AI: {chat_history[-1][1]}\n\n")
         elif chat_history_format == "json":
-            chat_history = []
+            chat_history_json = []
             if os.path.exists(chat_history_path):
                 with open(chat_history_path, "r", encoding="utf-8") as f:
-                    chat_history = json.load(f)
-            chat_history.append(["Human: " + prompt, "AI: " + (text if text else "")])
+                    chat_history_json = json.load(f)
+            chat_history_json.append(
+                ["Human: " + prompt, "AI: " + (chat_history[-1][1] if chat_history[-1][1] else "")])
             with open(chat_history_path, "w", encoding="utf-8") as f:
-                json.dump(chat_history, f, ensure_ascii=False, indent=4)
+                json.dump(chat_history_json, f, ensure_ascii=False, indent=4)
 
-        chat_history.append([prompt, text])
-        return chat_history, None, chat_dir, None
+        yield chat_history, None, chat_dir, None
     else:
         tokenizer, llm_model, error_message = load_model(llm_model_name, llm_model_type)
         if llm_lora_model_name:
@@ -575,9 +593,6 @@ def generate_text_and_speech(input_text, input_audio, input_image, llm_model_nam
                                                                  return_tensors="pt").to(device)
                     input_length = model_inputs.shape[1]
 
-                    progress_bar = tqdm(total=max_length, desc="Generating text")
-                    progress_tokens = 0
-
                     if enable_web_search:
                         search_results = perform_web_search(prompt)
                         prompt_with_search = f"{prompt}\nWeb search results:\n{search_results}"
@@ -586,28 +601,32 @@ def generate_text_and_speech(input_text, input_audio, input_image, llm_model_nam
                                                                      return_tensors="pt").to(device)
                         input_length = model_inputs.shape[1]
 
-                    generated_ids = llm_model.generate(
-                        model_inputs,
-                        do_sample=True,
-                        max_new_tokens=max_length,
-                        top_p=top_p,
-                        top_k=top_k,
-                        temperature=temperature,
-                        repetition_penalty=1.1,
-                        num_beams=5,
-                        no_repeat_ngram_size=2,
-                    )
+                    text = ""
+                    if not chat_history or chat_history[-1][1] is not None:
+                        chat_history.append([prompt, ""])
 
-                    progress_tokens = max_length
-                    progress_bar.update(progress_tokens - progress_bar.n)
+                    for i in range(max_length):
+                        if stop_signal:
+                            break
+                        next_token = llm_model.generate(
+                            model_inputs,
+                            max_new_tokens=1,
+                            do_sample=True,
+                            top_p=top_p,
+                            top_k=top_k,
+                            temperature=temperature,
+                            repetition_penalty=1.1,
+                            no_repeat_ngram_size=2,
+                        )
+                        next_token_text = tokenizer.decode(next_token[0, -1:], skip_special_tokens=True)
+                        text += next_token_text
+                        chat_history[-1][1] = text
+                        yield chat_history, None, chat_dir, None
 
-                    if stop_signal:
-                        chat_history.append([prompt, "Generation stopped"])
-                        return chat_history, None, None
+                        if next_token_text.strip() == "":
+                            break
 
-                    progress_bar.close()
-
-                    text = tokenizer.batch_decode(generated_ids[:, input_length:], skip_special_tokens=True)[0]
+                        model_inputs = torch.cat([model_inputs, next_token[:, -1:]], dim=-1)
 
                 elif llm_model_type == "llama":
                     detect_lang = langdetect.detect(prompt)
@@ -625,34 +644,30 @@ def generate_text_and_speech(input_text, input_audio, input_image, llm_model_nam
 
                     prompt_with_context = instruction + context + "Human: " + prompt + "\nAssistant: "
 
-                    progress_bar = tqdm(total=max_tokens, desc="Generating text")
-                    progress_tokens = 0
-
                     if enable_web_search:
                         search_results = perform_web_search(prompt)
                         prompt_with_context = f"{prompt_with_context}\nWeb search results:\n{search_results}\nAssistant: "
 
-                    output = llm_model(
-                        prompt_with_context,
-                        max_tokens=max_tokens,
-                        stop=["Human:", "\n"],
-                        echo=False,
-                        temperature=temperature,
-                        top_p=top_p,
-                        top_k=top_k,
-                        repeat_penalty=1.1,
-                    )
+                    text = ""
+                    if not chat_history or chat_history[-1][1] is not None:
+                        chat_history.append([prompt, ""])
 
-                    progress_tokens = max_tokens
-                    progress_bar.update(progress_tokens - progress_bar.n)
-
-                    if stop_signal:
-                        chat_history.append([prompt, "Generation stopped"])
-                        return chat_history, None, None
-
-                    progress_bar.close()
-
-                    text = output['choices'][0]['text']
+                    for token in llm_model(
+                            prompt_with_context,
+                            max_tokens=max_tokens,
+                            stop=["Human:", "\n"],
+                            stream=True,
+                            echo=False,
+                            temperature=temperature,
+                            top_p=top_p,
+                            top_k=top_k,
+                            repeat_penalty=1.1,
+                    ):
+                        if stop_signal:
+                            break
+                        text += token['choices'][0]['text']
+                        chat_history[-1][1] = text
+                        yield chat_history, None, chat_dir, None
 
                 if enable_libretranslate:
                     try:
@@ -660,42 +675,59 @@ def generate_text_and_speech(input_text, input_audio, input_image, llm_model_nam
                         translation = translator.translate(text, detect_lang, target_lang)
                         text = translation
                     except urllib.error.URLError:
-                        chat_history.append([None, "LibreTranslate is not running. Please start the LibreTranslate server."])
-                        return chat_history, None, None, None
+                        chat_history.append(
+                            [None, "LibreTranslate is not running. Please start the LibreTranslate server."])
+                        yield chat_history, None, None, None
 
-            if not chat_dir:
-                now = datetime.now()
-                chat_dir = os.path.join('outputs', f"LLM_{now.strftime('%Y%m%d_%H%M%S')}")
-                os.makedirs(chat_dir)
-                os.makedirs(os.path.join(chat_dir, 'text'))
-                os.makedirs(os.path.join(chat_dir, 'audio'))
-            chat_history_path = os.path.join(chat_dir, 'text', f'chat_history.{chat_history_format}')
-            if chat_history_format == "txt":
-                with open(chat_history_path, "a", encoding="utf-8") as f:
-                    f.write(f"Human: {prompt}\n")
-                    if text:
-                        f.write(f"AI: {text}\n\n")
-            elif chat_history_format == "json":
-                chat_history = []
-                if os.path.exists(chat_history_path):
-                    with open(chat_history_path, "r", encoding="utf-8") as f:
-                        chat_history = json.load(f)
-                chat_history.append(["Human: " + prompt, "AI: " + (text if text else "")])
-                with open(chat_history_path, "w", encoding="utf-8") as f:
-                    json.dump(chat_history, f, ensure_ascii=False, indent=4)
-            if enable_tts and text:
-                if stop_signal:
-                    chat_history.append([prompt, text])
-                    return chat_history, None, chat_dir, "Generation stopped"
-                enable_text_splitting = False
-                repetition_penalty = 2.0
-                length_penalty = 1.0
-                if enable_text_splitting:
-                    text_parts = text.split(".")
-                    for part in text_parts:
-                        wav = tts_model.tts(text=part.strip(), speaker_wav=f"inputs/audio/voices/{speaker_wav}",
+                if not chat_dir:
+                    now = datetime.now()
+                    chat_dir = os.path.join('outputs', f"LLM_{now.strftime('%Y%m%d_%H%M%S')}")
+                    os.makedirs(chat_dir)
+                    os.makedirs(os.path.join(chat_dir, 'text'))
+                    os.makedirs(os.path.join(chat_dir, 'audio'))
+                chat_history_path = os.path.join(chat_dir, 'text', f'chat_history.{chat_history_format}')
+                if chat_history_format == "txt":
+                    with open(chat_history_path, "a", encoding="utf-8") as f:
+                        f.write(f"Human: {prompt}\n")
+                        if text:
+                            f.write(f"AI: {text}\n\n")
+                elif chat_history_format == "json":
+                    chat_history = []
+                    if os.path.exists(chat_history_path):
+                        with open(chat_history_path, "r", encoding="utf-8") as f:
+                            chat_history = json.load(f)
+                    chat_history.append(["Human: " + prompt, "AI: " + (text if text else "")])
+                    with open(chat_history_path, "w", encoding="utf-8") as f:
+                        json.dump(chat_history, f, ensure_ascii=False, indent=4)
+                if enable_tts and text:
+                    if stop_signal:
+                        chat_history.append([prompt, text])
+                        yield chat_history, None, chat_dir, "Generation stopped"
+                    enable_text_splitting = False
+                    repetition_penalty = 2.0
+                    length_penalty = 1.0
+                    if enable_text_splitting:
+                        text_parts = text.split(".")
+                        for part in text_parts:
+                            wav = tts_model.tts(text=part.strip(), speaker_wav=f"inputs/audio/voices/{speaker_wav}",
+                                                language=language,
+                                                temperature=tts_temperature, top_p=tts_top_p, top_k=tts_top_k,
+                                                speed=tts_speed,
+                                                repetition_penalty=repetition_penalty, length_penalty=length_penalty)
+                            now = datetime.now()
+                            audio_filename = f"TTS_{now.strftime('%Y%m%d_%H%M%S')}.{output_format}"
+                            audio_path = os.path.join(chat_dir, 'audio', audio_filename)
+                            if output_format == "mp3":
+                                sf.write(audio_path, wav, 22050, format='mp3')
+                            elif output_format == "ogg":
+                                sf.write(audio_path, wav, 22050, format='ogg')
+                            else:
+                                sf.write(audio_path, wav, 22050)
+                    else:
+                        wav = tts_model.tts(text=text, speaker_wav=f"inputs/audio/voices/{speaker_wav}",
                                             language=language,
-                                            temperature=tts_temperature, top_p=tts_top_p, top_k=tts_top_k, speed=tts_speed,
+                                            temperature=tts_temperature, top_p=tts_top_p, top_k=tts_top_k,
+                                            speed=tts_speed,
                                             repetition_penalty=repetition_penalty, length_penalty=length_penalty)
                         now = datetime.now()
                         audio_filename = f"TTS_{now.strftime('%Y%m%d_%H%M%S')}.{output_format}"
@@ -706,19 +738,6 @@ def generate_text_and_speech(input_text, input_audio, input_image, llm_model_nam
                             sf.write(audio_path, wav, 22050, format='ogg')
                         else:
                             sf.write(audio_path, wav, 22050)
-                else:
-                    wav = tts_model.tts(text=text, speaker_wav=f"inputs/audio/voices/{speaker_wav}", language=language,
-                                        temperature=tts_temperature, top_p=tts_top_p, top_k=tts_top_k, speed=tts_speed,
-                                        repetition_penalty=repetition_penalty, length_penalty=length_penalty)
-                    now = datetime.now()
-                    audio_filename = f"TTS_{now.strftime('%Y%m%d_%H%M%S')}.{output_format}"
-                    audio_path = os.path.join(chat_dir, 'audio', audio_filename)
-                    if output_format == "mp3":
-                        sf.write(audio_path, wav, 22050, format='mp3')
-                    elif output_format == "ogg":
-                        sf.write(audio_path, wav, 22050, format='ogg')
-                    else:
-                        sf.write(audio_path, wav, 22050)
         finally:
             if tokenizer is not None:
                 del tokenizer
@@ -730,8 +749,8 @@ def generate_text_and_speech(input_text, input_audio, input_image, llm_model_nam
                 del whisper_model
             torch.cuda.empty_cache()
 
-    chat_history.append([prompt, text])
-    return chat_history, audio_path, chat_dir, None
+        chat_history[-1][1] = text
+        yield chat_history, audio_path, chat_dir, None
 
 
 def generate_tts_stt(text, audio, tts_settings_html, speaker_wav, language, tts_temperature, tts_top_p, tts_top_k, tts_speed, tts_output_format, stt_output_format):
@@ -4815,7 +4834,7 @@ chat_interface = gr.Interface(
         gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
     outputs=[
-        gr.Chatbot(label="LLM text response", value=[]),
+        gr.Chatbot(label="LLM text response", value=[], avatar_images=["avatars/user.png", "avatars/ai.png"]),
         gr.Audio(label="LLM audio response", type="filepath"),
     ],
     title="NeuroSandboxWebUI (ALPHA) - LLM",
