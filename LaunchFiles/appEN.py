@@ -38,7 +38,7 @@ from git import Repo
 import numpy as np
 import scipy
 import imageio
-from PIL import Image
+from PIL import Image, ImageDraw
 from tqdm import tqdm
 from llama_cpp import Llama
 from llama_cpp.llama_chat_format import MoondreamChatHandler
@@ -1742,6 +1742,94 @@ def generate_image_inpaint(prompt, negative_prompt, init_image, mask_image, blur
 
     finally:
         del stable_diffusion_model
+        torch.cuda.empty_cache()
+
+
+def generate_image_outpaint(prompt, negative_prompt, init_image, stable_diffusion_model_name,
+                            stable_diffusion_steps, stable_diffusion_cfg,
+                            outpaint_direction, outpaint_expansion, output_format="png", stop_generation=None):
+    global stop_signal
+    stop_signal = False
+
+    if not init_image:
+        return None, "Please upload an initial image!"
+
+    if not stable_diffusion_model_name:
+        return None, "Please select a StableDiffusion model!"
+
+    stable_diffusion_model_path = os.path.join("inputs", "image", "sd_models",
+                                               f"{stable_diffusion_model_name}.safetensors")
+
+    if not os.path.exists(stable_diffusion_model_path):
+        return None, f"StableDiffusion model not found: {stable_diffusion_model_path}"
+
+    try:
+        pipe = StableDiffusionInpaintPipeline.from_single_file(
+            stable_diffusion_model_path,
+            torch_dtype=torch.float16,
+            use_safetensors=True,
+            variant="fp16"
+        ).to("cuda")
+
+        init_image = Image.open(init_image).convert("RGB")
+        init_width, init_height = init_image.size
+
+        if outpaint_direction in ['left', 'right']:
+            new_width = int(init_width * (1 + outpaint_expansion / 100))
+            new_height = init_height
+        else:  # 'up' or 'down'
+            new_width = init_width
+            new_height = int(init_height * (1 + outpaint_expansion / 100))
+
+        new_image = Image.new('RGB', (new_width, new_height), (0, 0, 0))
+
+        if outpaint_direction == 'left':
+            paste_position = (new_width - init_width, 0)
+        elif outpaint_direction == 'right':
+            paste_position = (0, 0)
+        elif outpaint_direction == 'up':
+            paste_position = (0, new_height - init_height)
+        else:  # 'down'
+            paste_position = (0, 0)
+
+        new_image.paste(init_image, paste_position)
+
+        mask = Image.new('L', (new_width, new_height), 0)
+        mask_draw = ImageDraw.Draw(mask)
+        if outpaint_direction == 'left':
+            mask_draw.rectangle([0, 0, new_width - init_width, new_height], fill=255)
+        elif outpaint_direction == 'right':
+            mask_draw.rectangle([init_width, 0, new_width, new_height], fill=255)
+        elif outpaint_direction == 'up':
+            mask_draw.rectangle([0, 0, new_width, new_height - init_height], fill=255)
+        else:  # 'down'
+            mask_draw.rectangle([0, init_height, new_width, new_height], fill=255)
+
+        result = pipe(
+            prompt=prompt,
+            negative_prompt=negative_prompt,
+            image=new_image,
+            mask_image=mask,
+            num_inference_steps=stable_diffusion_steps,
+            guidance_scale=stable_diffusion_cfg,
+        ).images[0]
+
+        if stop_signal:
+            return None, "Generation stopped"
+
+        today = datetime.now().date()
+        image_dir = os.path.join('outputs', f"StableDiffusion_{today.strftime('%Y%m%d')}")
+        os.makedirs(image_dir, exist_ok=True)
+        image_filename = f"outpaint_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
+        image_path = os.path.join(image_dir, image_filename)
+        result.save(image_path, format=output_format.upper())
+
+        return image_path, None
+
+    except Exception as e:
+        return None, str(e)
+
+    finally:
         torch.cuda.empty_cache()
 
 
@@ -5448,6 +5536,31 @@ inpaint_interface = gr.Interface(
     allow_flagging="never",
 )
 
+outpaint_interface = gr.Interface(
+    fn=generate_image_outpaint,
+    inputs=[
+        gr.Textbox(label="Enter your prompt"),
+        gr.Textbox(label="Enter your negative prompt", value=""),
+        gr.Image(label="Initial image", type="filepath"),
+        gr.Dropdown(choices=stable_diffusion_models_list, label="Select StableDiffusion model", value=None),
+        gr.Slider(minimum=1, maximum=100, value=30, step=1, label="Steps"),
+        gr.Slider(minimum=1.0, maximum=30.0, value=8, step=0.1, label="CFG"),
+        gr.Radio(choices=["left", "right", "up", "down"], label="Outpaint direction", value="right"),
+        gr.Slider(minimum=10, maximum=100, value=50, step=1, label="Expansion percentage"),
+        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
+        gr.Button(value="Stop generation", interactive=True, variant="stop"),
+    ],
+    outputs=[
+        gr.Image(label="Generated image", type="filepath"),
+        gr.Textbox(label="Message", type="text"),
+    ],
+    title="NeuroSandboxWebUI (ALPHA) - StableDiffusion (outpaint)",
+    description="This user interface allows you to expand an existing image using outpainting with StableDiffusion. "
+                "Upload an image, enter a prompt, select a direction to expand, and customize the generation settings. "
+                "Try it and see what happens!",
+    allow_flagging="never",
+)
+
 gligen_interface = gr.Interface(
     fn=generate_image_gligen,
     inputs=[
@@ -6537,11 +6650,11 @@ with gr.TabbedInterface(
         gr.TabbedInterface(
             [
                 gr.TabbedInterface(
-                    [txt2img_interface, img2img_interface, depth2img_interface, pix2pix_interface, controlnet_interface, latent_upscale_interface, realesrgan_upscale_interface, inpaint_interface, gligen_interface, animatediff_interface, pia_interface, video_interface, ldm3d_interface,
+                    [txt2img_interface, img2img_interface, depth2img_interface, pix2pix_interface, controlnet_interface, latent_upscale_interface, realesrgan_upscale_interface, inpaint_interface, outpaint_interface, gligen_interface, animatediff_interface, pia_interface, video_interface, ldm3d_interface,
                      gr.TabbedInterface([sd3_txt2img_interface, sd3_img2img_interface, sd3_controlnet_interface, sd3_inpaint_interface],
                                         tab_names=["txt2img", "img2img", "controlnet", "inpaint"]),
                      cascade_interface, adapters_interface, extras_interface],
-                    tab_names=["txt2img", "img2img", "depth2img", "pix2pix", "controlnet", "upscale(latent)", "upscale(Real-ESRGAN)", "inpaint", "gligen", "animatediff", "pia", "video", "ldm3d", "sd3", "cascade", "adapters", "extras"]
+                    tab_names=["txt2img", "img2img", "depth2img", "pix2pix", "controlnet", "upscale(latent)", "upscale(Real-ESRGAN)", "inpaint", "outpaint", "gligen", "animatediff", "pia", "video", "ldm3d", "sd3", "cascade", "adapters", "extras"]
                 ),
                 kandinsky_interface, flux_interface, hunyuandit_interface, lumina_interface, kolors_interface, auraflow_interface, wurstchen_interface, deepfloyd_if_interface, pixart_interface
             ],
@@ -6576,6 +6689,7 @@ with gr.TabbedInterface(
     latent_upscale_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     realesrgan_upscale_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     inpaint_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
+    outpaint_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     gligen_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     animatediff_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     pia_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
