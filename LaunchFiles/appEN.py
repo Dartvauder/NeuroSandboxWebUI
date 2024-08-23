@@ -1040,12 +1040,11 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
             upscale_factor_value = 2 if upscale_factor == "x2" else 4
             upscaler = load_upscale_model(upscale_factor_value)
             if upscaler:
-                image = images["images"][0]
                 if upscale_factor == "x2":
-                    upscaled_image = upscaler(prompt=prompt, image=image, num_inference_steps=upscale_steps, guidance_scale=upscale_cfg).images[0]
+                    upscaled_image = upscaler(prompt=prompt, image=images, num_inference_steps=upscale_steps, guidance_scale=upscale_cfg).images[0]
                 else:
-                    upscaled_image = upscaler(prompt=prompt, image=image, num_inference_steps=upscale_steps, guidance_scale=upscale_cfg)["images"][0]
-                image = upscaled_image
+                    upscaled_image = upscaler(prompt=prompt, image=images, num_inference_steps=upscale_steps, guidance_scale=upscale_cfg)["images"][0]
+                images = upscaled_image
 
         image_paths = []
         for i, image in enumerate(images):
@@ -4998,11 +4997,11 @@ chat_interface = gr.Interface(
         gr.Dropdown(choices=llm_lora_models_list, label="Select LoRA model (optional)", value=None),
         gr.HTML("<h3>LLM Settings</h3>"),
         gr.Radio(choices=["transformers", "llama"], label="Select model type", value="transformers"),
-        gr.Slider(minimum=1, maximum=4096, value=512, step=1, label="Max length (for transformers type models)"),
-        gr.Slider(minimum=1, maximum=4096, value=512, step=1, label="Max tokens (for llama type models)"),
-        gr.Slider(minimum=0.0, maximum=2.0, value=0.7, step=0.1, label="Temperature"),
-        gr.Slider(minimum=0.0, maximum=1.0, value=0.9, step=0.1, label="Top P"),
-        gr.Slider(minimum=0, maximum=100, value=20, step=1, label="Top K"),
+        gr.Slider(minimum=256, maximum=4096, value=512, step=1, label="Max length (for transformers type models)"),
+        gr.Slider(minimum=256, maximum=4096, value=512, step=1, label="Max tokens (for llama type models)"),
+        gr.Slider(minimum=0.1, maximum=2.0, value=0.7, step=0.1, label="Temperature"),
+        gr.Slider(minimum=0.01, maximum=1.0, value=0.9, step=0.01, label="Top P"),
+        gr.Slider(minimum=1, maximum=100, value=20, step=1, label="Top K"),
         gr.Radio(choices=["txt", "json"], label="Select chat history format", value="txt", interactive=True),
         gr.Checkbox(label="Enable WebSearch", value=False),
         gr.Checkbox(label="Enable LibreTranslate", value=False),
@@ -5014,7 +5013,7 @@ chat_interface = gr.Interface(
         gr.Dropdown(choices=["en", "es", "fr", "de", "it", "pt", "pl", "tr", "ru", "nl", "cs", "ar", "zh-cn", "ja", "hu", "ko", "hi"], label="Select language", interactive=True),
         gr.Slider(minimum=0.1, maximum=1.9, value=1.0, step=0.1, label="TTS Temperature", interactive=True),
         gr.Slider(minimum=0.01, maximum=1.0, value=0.9, step=0.01, label="TTS Top P", interactive=True),
-        gr.Slider(minimum=0, maximum=100, value=20, step=1, label="TTS Top K", interactive=True),
+        gr.Slider(minimum=1, maximum=100, value=20, step=1, label="TTS Top K", interactive=True),
         gr.Slider(minimum=0.5, maximum=2.0, value=1.0, step=0.1, label="TTS Speed", interactive=True),
         gr.Radio(choices=["wav", "mp3", "ogg"], label="Select output format", value="wav", interactive=True),
         gr.Button(value="Stop generation", interactive=True, variant="stop"),
@@ -5040,7 +5039,7 @@ tts_stt_interface = gr.Interface(
         gr.Dropdown(choices=["en", "es", "fr", "de", "it", "pt", "pl", "tr", "ru", "nl", "cs", "ar", "zh-cn", "ja", "hu", "ko", "hi"], label="Select language", interactive=True),
         gr.Slider(minimum=0.1, maximum=1.9, value=1.0, step=0.1, label="TTS Temperature", interactive=True),
         gr.Slider(minimum=0.01, maximum=1.0, value=0.9, step=0.01, label="TTS Top P", interactive=True),
-        gr.Slider(minimum=0, maximum=100, value=20, step=1, label="TTS Top K", interactive=True),
+        gr.Slider(minimum=1, maximum=100, value=20, step=1, label="TTS Top K", interactive=True),
         gr.Slider(minimum=0.5, maximum=2.0, value=1.0, step=0.1, label="TTS Speed", interactive=True),
         gr.Radio(choices=["wav", "mp3", "ogg"], label="Select TTS output format", value="wav", interactive=True),
         gr.Dropdown(choices=["txt", "json"], label="Select STT output format", value="txt", interactive=True),
@@ -5062,7 +5061,7 @@ bark_interface = gr.Interface(
     inputs=[
         gr.Textbox(label="Enter text for the request"),
         gr.Dropdown(choices=[None, "v2/en_speaker_1", "v2/ru_speaker_1", "v2/de_speaker_1", "v2/fr_speaker_1", "v2/es_speaker_1", "v2/hi_speaker_1", "v2/it_speaker_1", "v2/ja_speaker_1", "v2/ko_speaker_1", "v2/pt_speaker_1", "v2/zh_speaker_1", "v2/tr_speaker_1", "v2/pl_speaker_1"], label="Select voice preset", value=None),
-        gr.Slider(minimum=1, maximum=1000, value=100, step=1, label="Max length"),
+        gr.Slider(minimum=100, maximum=1000, value=200, step=1, label="Max length"),
         gr.Slider(minimum=0.1, maximum=2.0, value=0.4, step=0.1, label="Fine temperature"),
         gr.Slider(minimum=0.1, maximum=2.0, value=0.8, step=0.1, label="Coarse temperature"),
         gr.Radio(choices=["wav", "mp3", "ogg"], label="Select output format", value="wav", interactive=True),
