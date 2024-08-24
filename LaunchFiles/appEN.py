@@ -361,51 +361,6 @@ def load_multiband_diffusion_model():
     return "cuda" if torch.cuda.is_available() else "cpu"
 
 
-def load_upscale_model(upscale_factor):
-    global stop_signal
-    if stop_signal:
-        return None, "Generation stopped"
-    original_config_file = None
-
-    if upscale_factor == 2:
-        upscale_model_name = "stabilityai/sd-x2-latent-upscaler"
-        upscale_model_path = os.path.join("inputs", "image", "sd_models", "upscale", "x2-upscaler")
-    else:
-        upscale_model_name = "stabilityai/stable-diffusion-x4-upscaler"
-        upscale_model_path = os.path.join("inputs", "image", "sd_models", "upscale", "x4-upscaler")
-        original_config_file = "configs/sd/x4-upscaling.yaml"
-
-    if not os.path.exists(upscale_model_path):
-        print(f"Downloading Upscale model: {upscale_model_name}")
-        os.makedirs(upscale_model_path, exist_ok=True)
-        Repo.clone_from(f"https://huggingface.co/{upscale_model_name}", upscale_model_path)
-        print(f"Upscale model {upscale_model_name} downloaded")
-
-    device = "cuda" if torch.cuda.is_available() else "cpu"
-
-    if upscale_factor == 2:
-        upscaler = StableDiffusionLatentUpscalePipeline.from_pretrained(
-            upscale_model_path,
-            revision="fp16",
-            torch_dtype=torch.float16
-        )
-    else:
-        upscaler = StableDiffusionUpscalePipeline.from_pretrained(
-            upscale_model_path,
-            original_config_file=original_config_file,
-            revision="fp16",
-            torch_dtype=torch.float16
-        )
-
-    upscaler.to(device)
-    upscaler.enable_attention_slicing()
-    if XFORMERS_AVAILABLE:
-        upscaler.enable_xformers_memory_efficient_attention(attention_op=None)
-
-    upscaler.upscale_factor = upscale_factor
-    return upscaler
-
-
 stop_signal = False
 
 chat_history = []
@@ -1603,7 +1558,7 @@ def generate_image_controlnet(prompt, negative_prompt, init_image, sd_version, s
         torch.cuda.empty_cache()
 
 
-def generate_image_upscale_latent(image_path, upscale_factor, num_inference_steps, guidance_scale, output_format="png", stop_generation=None):
+def generate_image_upscale_latent(prompt, image_path, upscale_factor, num_inference_steps, guidance_scale, seed, output_format="png", stop_generation=None):
     global stop_signal
     if stop_signal:
         return None, "Generation stopped"
@@ -1611,45 +1566,108 @@ def generate_image_upscale_latent(image_path, upscale_factor, num_inference_step
     if not image_path:
         return None, "Please, upload an initial image!"
 
-    upscale_factor = upscale_factor
-    upscaler = load_upscale_model(upscale_factor)
-
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
-    if XFORMERS_AVAILABLE:
-        upscaler.enable_xformers_memory_efficient_attention(attention_op=None)
-        upscaler.vae.enable_xformers_memory_efficient_attention(attention_op=None)
-        upscaler.unet.enable_xformers_memory_efficient_attention(attention_op=None)
+    if upscale_factor == "x2":
+        model_id = "stabilityai/sd-x2-latent-upscaler"
+        model_path = os.path.join("inputs", "image", "sd_models", "upscale", "x2-upscaler")
+        if not os.path.exists(model_path):
+            print(f"Downloading Upscale model: {model_id}")
+            os.makedirs(model_path, exist_ok=True)
+            Repo.clone_from(f"https://huggingface.co/{model_id}", model_path)
+            print(f"Upscale model {model_id} downloaded")
 
-    upscaler.to(device)
-    upscaler.text_encoder.to(device)
-    upscaler.vae.to(device)
-    upscaler.unet.to(device)
+        upscaler = StableDiffusionLatentUpscalePipeline.from_pretrained(
+            model_path,
+            torch_dtype=torch.float16
+        )
+        if XFORMERS_AVAILABLE:
+            upscaler.enable_xformers_memory_efficient_attention(attention_op=None)
+            upscaler.vae.enable_xformers_memory_efficient_attention(attention_op=None)
+            upscaler.unet.enable_xformers_memory_efficient_attention(attention_op=None)
 
-    upscaler.safety_checker = None
+        upscaler.to(device)
+        upscaler.text_encoder.to(device)
+        upscaler.vae.to(device)
+        upscaler.unet.to(device)
 
-    if upscaler:
-        try:
-            image = Image.open(image_path).convert("RGB")
-            upscaled_image = upscaler(prompt="", image=image, num_inference_steps=num_inference_steps, guidance_scale=guidance_scale).images
+        upscaler.safety_checker = None
 
-            today = datetime.now().date()
-            image_dir = os.path.join('outputs', f"StableDiffusion_{today.strftime('%Y%m%d')}")
-            os.makedirs(image_dir, exist_ok=True)
-            image_filename = f"upscaled_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
-            image_path = os.path.join(image_dir, image_filename)
-            upscaled_image.save(image_path, format=output_format.upper())
+        if seed == "" or seed is None:
+            seed = random.randint(0, 2 ** 32 - 1)
+        else:
+            seed = int(seed)
+        generator = torch.Generator(device).manual_seed(seed)
 
-            return image_path, None
+        init_image = Image.open(image_path).convert("RGB")
+        init_image = init_image.resize((512, 512))
 
-        finally:
-            del upscaler
-            torch.cuda.empty_cache()
+        low_res_latents = upscaler(prompt=prompt, image=init_image, output_type="latent", generator=generator).images
+
+        upscaled_image = upscaler(
+            prompt=prompt,
+            image=low_res_latents,
+            num_inference_steps=num_inference_steps,
+            guidance_scale=guidance_scale,
+            generator=generator,
+        ).images[0]
+
     else:
-        return None, "Failed to load upscale model"
+        model_id = "stabilityai/stable-diffusion-x4-upscaler"
+        model_path = os.path.join("inputs", "image", "sd_models", "upscale", "x4-upscaler")
+        if not os.path.exists(model_path):
+            print(f"Downloading Upscale model: {model_id}")
+            os.makedirs(model_path, exist_ok=True)
+            Repo.clone_from(f"https://huggingface.co/{model_id}", model_path)
+            print(f"Upscale model {model_id} downloaded")
+
+        upscaler = StableDiffusionUpscalePipeline.from_pretrained(
+            model_path,
+            torch_dtype=torch.float16
+        )
+        if XFORMERS_AVAILABLE:
+            upscaler.enable_xformers_memory_efficient_attention(attention_op=None)
+            upscaler.vae.enable_xformers_memory_efficient_attention(attention_op=None)
+            upscaler.unet.enable_xformers_memory_efficient_attention(attention_op=None)
+
+        upscaler.to(device)
+        upscaler.text_encoder.to(device)
+        upscaler.vae.to(device)
+        upscaler.unet.to(device)
+
+        upscaler.safety_checker = None
+
+        if seed == "" or seed is None:
+            seed = random.randint(0, 2 ** 32 - 1)
+        else:
+            seed = int(seed)
+        generator = torch.Generator(device).manual_seed(seed)
+
+        low_res_img = Image.open(image_path).convert("RGB")
+        low_res_img = low_res_img.resize((128, 128))
+
+        upscaled_image = upscaler(
+            prompt=prompt,
+            image=low_res_img,
+            num_inference_steps=num_inference_steps,
+            guidance_scale=guidance_scale,
+            generator=generator,
+        ).images[0]
+
+    if stop_signal:
+        return None, "Generation stopped"
+
+    today = datetime.now().date()
+    image_dir = os.path.join('outputs', f"StableDiffusion_{today.strftime('%Y%m%d')}")
+    os.makedirs(image_dir, exist_ok=True)
+    image_filename = f"upscaled_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
+    image_path = os.path.join(image_dir, image_filename)
+    upscaled_image.save(image_path, format=output_format.upper())
+
+    return image_path, None
 
 
-def generate_image_upscale_realesrgan(image_path, outscale, output_format="png", stop_generation=None):
+def generate_image_upscale_realesrgan(image_path, model_name, outscale, face_enhance, tile, tile_pad, pre_pad, output_format="png", stop_generation=None):
     global stop_signal
     stop_signal = False
 
@@ -1657,11 +1675,6 @@ def generate_image_upscale_realesrgan(image_path, outscale, output_format="png",
         return None, "Please upload an image file!"
 
     realesrgan_path = os.path.join("inputs", "image", "Real-ESRGAN")
-    if not os.path.exists(realesrgan_path):
-        print("Downloading Real-ESRGAN...")
-        os.makedirs(realesrgan_path, exist_ok=True)
-        Repo.clone_from("https://github.com/xinntao/Real-ESRGAN.git", realesrgan_path)
-        print("Real-ESRGAN downloaded")
 
     today = datetime.now().date()
     output_dir = os.path.join('outputs', f"RealESRGAN_{today.strftime('%Y%m%d')}")
@@ -1671,7 +1684,11 @@ def generate_image_upscale_realesrgan(image_path, outscale, output_format="png",
         input_filename = os.path.basename(image_path)
         input_name, input_ext = os.path.splitext(input_filename)
 
-        command = f"python {os.path.join(realesrgan_path, 'inference_realesrgan.py')} --model_name RealESRGAN_x4plus --input {image_path} --output {output_dir} --outscale {outscale}"
+        command = f"python {os.path.join(realesrgan_path, 'inference_realesrgan.py')} --model_name {model_name} --input {image_path} --output {output_dir} --outscale {outscale} --tile {tile} --tile_pad {tile_pad} --pre_pad {pre_pad}"
+
+        if face_enhance:
+            command += " --face_enhance"
+
         subprocess.run(command, shell=True, check=True)
 
         if stop_signal:
@@ -1734,7 +1751,7 @@ def generate_image_inpaint(prompt, negative_prompt, init_image, mask_image, blur
         elif stable_diffusion_model_type == "SDXL":
             original_config_file = "configs/sd/sd_xl_inpaint.yaml"
             vae_config_file = "configs/sd/sd_xl_base.yaml"
-            stable_diffusion_model = StableDiffusionInpaintPipeline.from_single_file(
+            stable_diffusion_model = AutoPipelineForInpainting.from_pretrained(
                 stable_diffusion_model_path, use_safetensors=True, device_map="auto", attention_slice=1,
                 original_config_file=original_config_file, torch_dtype=torch.float16, variant="fp16"
             )
@@ -1875,7 +1892,7 @@ def generate_image_outpaint(prompt, negative_prompt, init_image, stable_diffusio
             )
         elif stable_diffusion_model_type == "SDXL":
             original_config_file = "configs/sd/sd_xl_inpaint.yaml"
-            pipe = StableDiffusionInpaintPipeline.from_single_file(
+            pipe = AutoPipelineForInpainting.from_pretrained(
                 stable_diffusion_model_path, use_safetensors=True, device_map="auto", attention_slice=1,
                 original_config_file=original_config_file, torch_dtype=torch.float16, variant="fp16"
             )
@@ -5883,10 +5900,12 @@ controlnet_interface = gr.Interface(
 latent_upscale_interface = gr.Interface(
     fn=generate_image_upscale_latent,
     inputs=[
+        gr.Textbox(label="Prompt (optional)", value=""),
         gr.Image(label="Image to upscale", type="filepath"),
         gr.Radio(choices=["x2", "x4"], label="Upscale size", value="x2"),
         gr.Slider(minimum=1, maximum=100, value=50, step=1, label="Steps"),
-        gr.Slider(minimum=1.0, maximum=30.0, value=8, step=0.1, label="CFG"),
+        gr.Slider(minimum=0.0, maximum=30.0, value=4, step=0.1, label="CFG"),
+        gr.Textbox(label="Seed (optional)", value=""),
         gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
         gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
@@ -5895,7 +5914,7 @@ latent_upscale_interface = gr.Interface(
         gr.Textbox(label="Message", type="text"),
     ],
     title="NeuroSandboxWebUI (ALPHA) - StableDiffusion (upscale-latent)",
-    description="This user interface allows you to upload an image and latent-upscale it",
+    description="This user interface allows you to upload an image and latent-upscale it using x2 or x4 upscale factor",
     allow_flagging="never",
 )
 
@@ -5903,7 +5922,12 @@ realesrgan_upscale_interface = gr.Interface(
     fn=generate_image_upscale_realesrgan,
     inputs=[
         gr.Image(label="Image to upscale", type="filepath"),
-        gr.Slider(minimum=0.1, maximum=8, value=4, step=0.1, label="Upscale factor"),
+        gr.Radio(choices=["RealESRGAN_x2plus", "RealESRNet_x4plus", "RealESRGAN_x4plus", "realesr-general-x4v3", "RealESRGAN_x4plus_anime_6B"], label="Select model", value="RealESRGAN_x4plus"),
+        gr.Slider(minimum=0.1, maximum=4, value=2, step=0.1, label="Upscale factor"),
+        gr.Checkbox(label="Enable Face Enhance", value=False),
+        gr.Slider(minimum=0, maximum=10, value=0, step=1, label="Tile"),
+        gr.Slider(minimum=0, maximum=100, value=10, step=1, label="Tile_pad"),
+        gr.Slider(minimum=0, maximum=50, value=0, step=1, label="Pre_pad"),
         gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
         gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
@@ -5912,7 +5936,7 @@ realesrgan_upscale_interface = gr.Interface(
         gr.Textbox(label="Message", type="text"),
     ],
     title="NeuroSandboxWebUI (ALPHA) - StableDiffusion (upscale-realesrgan)",
-    description="This user interface allows you to upload an image and upscale it using Real-ESRGAN",
+    description="This user interface allows you to upload an image and upscale it using Real-ESRGAN models",
     allow_flagging="never",
 )
 
