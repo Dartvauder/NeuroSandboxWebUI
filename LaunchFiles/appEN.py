@@ -2092,7 +2092,6 @@ def generate_image_animatediff(prompt, negative_prompt, input_video, strength, m
                     strength=strength,
                     guidance_scale=guidance_scale,
                     num_inference_steps=num_inference_steps,
-                    generator=torch.manual_seed(-1),
                 )
 
             else:
@@ -2467,7 +2466,7 @@ def generate_image_ldm3d(prompt, negative_prompt, width, height, num_inference_s
         torch.cuda.empty_cache()
 
 
-def generate_image_sd3_txt2img(prompt, negative_prompt, num_inference_steps, guidance_scale, width, height, max_sequence_length, num_images_per_prompt, output_format="png", stop_generation=None):
+def generate_image_sd3_txt2img(prompt, negative_prompt, stable_diffusion_sampler, num_inference_steps, guidance_scale, width, height, max_sequence_length, num_images_per_prompt, output_format="png", stop_generation=None):
     global stop_signal
     stop_signal = False
 
@@ -2476,7 +2475,7 @@ def generate_image_sd3_txt2img(prompt, negative_prompt, num_inference_steps, gui
     if not os.path.exists(sd3_model_path):
         print("Downloading Stable Diffusion 3 model...")
         os.makedirs(sd3_model_path, exist_ok=True)
-        Repo.clone_from("https://huggingface.co/v2ray/stable-diffusion-3-medium-diffusers", sd3_model_path)
+        Repo.clone_from("https://huggingface.co/stabilityai/stable-diffusion-3-medium-diffusers", sd3_model_path)
         print("Stable Diffusion 3 model downloaded")
 
     try:
@@ -2490,6 +2489,20 @@ def generate_image_sd3_txt2img(prompt, negative_prompt, num_inference_steps, gui
         )
         original_config_file = "configs/sd/sd3-inference.yaml"
         pipe = StableDiffusion3Pipeline.from_pretrained(sd3_model_path, original_config_file=original_config_file, device_map="balanced", text_encoder_3=text_encoder, torch_dtype=torch.float16)
+
+        device = "cuda" if torch.cuda.is_available() else "cpu"
+
+        if XFORMERS_AVAILABLE:
+            pipe.enable_xformers_memory_efficient_attention(attention_op=None)
+            pipe.vae.enable_xformers_memory_efficient_attention(attention_op=None)
+            pipe.unet.enable_xformers_memory_efficient_attention(attention_op=None)
+
+        pipe.to(device)
+        pipe.text_encoder.to(device)
+        pipe.vae.to(device)
+        pipe.unet.to(device)
+
+        pipe.safety_checker = None
 
         compel = Compel(
             tokenizer=[pipe.tokenizer, pipe.tokenizer_2],
@@ -2508,7 +2521,8 @@ def generate_image_sd3_txt2img(prompt, negative_prompt, num_inference_steps, gui
             width=width,
             height=height,
             max_sequence_length=max_sequence_length,
-            num_images_per_prompt=num_images_per_prompt
+            num_images_per_prompt=num_images_per_prompt,
+            sampler=stable_diffusion_sampler,
         ).images
 
         if stop_signal:
@@ -2531,7 +2545,7 @@ def generate_image_sd3_txt2img(prompt, negative_prompt, num_inference_steps, gui
         torch.cuda.empty_cache()
 
 
-def generate_image_sd3_img2img(prompt, negative_prompt, init_image, strength, num_inference_steps, guidance_scale, width, height, max_sequence_length, num_images_per_prompt, output_format="png", stop_generation=None):
+def generate_image_sd3_img2img(prompt, negative_prompt, init_image, strength, stable_diffusion_sampler, num_inference_steps, guidance_scale, width, height, max_sequence_length, num_images_per_prompt, output_format="png", stop_generation=None):
     global stop_signal
     stop_signal = False
 
@@ -2540,7 +2554,7 @@ def generate_image_sd3_img2img(prompt, negative_prompt, init_image, strength, nu
     if not os.path.exists(sd3_model_path):
         print("Downloading Stable Diffusion 3 model...")
         os.makedirs(sd3_model_path, exist_ok=True)
-        Repo.clone_from("https://huggingface.co/v2ray/stable-diffusion-3-medium-diffusers", sd3_model_path)
+        Repo.clone_from("https://huggingface.co/stabilityai/stable-diffusion-3-medium-diffusers", sd3_model_path)
         print("Stable Diffusion 3 model downloaded")
 
     try:
@@ -2556,6 +2570,20 @@ def generate_image_sd3_img2img(prompt, negative_prompt, init_image, strength, nu
 
         init_image = Image.open(init_image).convert("RGB")
         init_image = init_image.resize((width, height))
+
+        device = "cuda" if torch.cuda.is_available() else "cpu"
+
+        if XFORMERS_AVAILABLE:
+            pipe.enable_xformers_memory_efficient_attention(attention_op=None)
+            pipe.vae.enable_xformers_memory_efficient_attention(attention_op=None)
+            pipe.unet.enable_xformers_memory_efficient_attention(attention_op=None)
+
+        pipe.to(device)
+        pipe.text_encoder.to(device)
+        pipe.vae.to(device)
+        pipe.unet.to(device)
+
+        pipe.safety_checker = None
 
         compel = Compel(
             tokenizer=[pipe.tokenizer, pipe.tokenizer_2],
@@ -2575,6 +2603,7 @@ def generate_image_sd3_img2img(prompt, negative_prompt, init_image, strength, nu
             guidance_scale=guidance_scale,
             max_sequence_length=max_sequence_length,
             num_images_per_prompt=num_images_per_prompt,
+            sampler=stable_diffusion_sampler,
         ).images
 
         if stop_signal:
@@ -2597,7 +2626,7 @@ def generate_image_sd3_img2img(prompt, negative_prompt, init_image, strength, nu
         torch.cuda.empty_cache()
 
 
-def generate_image_sd3_controlnet(prompt, negative_prompt, init_image, controlnet_model, num_inference_steps, guidance_scale, controlnet_conditioning_scale, width, height, max_sequence_length, num_images_per_prompt, output_format="png", stop_generation=None):
+def generate_image_sd3_controlnet(prompt, negative_prompt, init_image, controlnet_model, stable_diffusion_sampler, num_inference_steps, guidance_scale, controlnet_conditioning_scale, width, height, max_sequence_length, num_images_per_prompt, output_format="png", stop_generation=None):
     global stop_signal
     stop_signal = False
 
@@ -2610,7 +2639,7 @@ def generate_image_sd3_controlnet(prompt, negative_prompt, init_image, controlne
     if not os.path.exists(sd3_model_path):
         print("Downloading Stable Diffusion 3 model...")
         os.makedirs(sd3_model_path, exist_ok=True)
-        Repo.clone_from("https://huggingface.co/v2ray/stable-diffusion-3-medium-diffusers", sd3_model_path)
+        Repo.clone_from("https://huggingface.co/stabilityai/stable-diffusion-3-medium-diffusers", sd3_model_path)
         print("Stable Diffusion 3 model downloaded")
 
     if not os.path.exists(controlnet_path):
@@ -2640,6 +2669,20 @@ def generate_image_sd3_controlnet(prompt, negative_prompt, init_image, controlne
         else:
             return None, None, f"Unsupported ControlNet model: {controlnet_model}"
 
+        device = "cuda" if torch.cuda.is_available() else "cpu"
+
+        if XFORMERS_AVAILABLE:
+            pipe.enable_xformers_memory_efficient_attention(attention_op=None)
+            pipe.vae.enable_xformers_memory_efficient_attention(attention_op=None)
+            pipe.unet.enable_xformers_memory_efficient_attention(attention_op=None)
+
+        pipe.to(device)
+        pipe.text_encoder.to(device)
+        pipe.vae.to(device)
+        pipe.unet.to(device)
+
+        pipe.safety_checker = None
+
         compel = Compel(
             tokenizer=[pipe.tokenizer, pipe.tokenizer_2],
             text_encoder=[pipe.text_encoder, pipe.text_encoder_2],
@@ -2659,6 +2702,7 @@ def generate_image_sd3_controlnet(prompt, negative_prompt, init_image, controlne
             controlnet_conditioning_scale=controlnet_conditioning_scale,
             max_sequence_length=max_sequence_length,
             num_images_per_prompt=num_images_per_prompt,
+            sampler=stable_diffusion_sampler,
         ).images
 
         if stop_signal:
@@ -2688,7 +2732,7 @@ def generate_image_sd3_controlnet(prompt, negative_prompt, init_image, controlne
         torch.cuda.empty_cache()
 
 
-def generate_image_sd3_inpaint(prompt, negative_prompt, init_image, mask_image, num_inference_steps, guidance_scale, width, height, max_sequence_length, num_images_per_prompt, output_format="png", stop_generation=None):
+def generate_image_sd3_inpaint(prompt, negative_prompt, init_image, mask_image, stable_diffusion_sampler, num_inference_steps, guidance_scale, width, height, max_sequence_length, num_images_per_prompt, output_format="png", stop_generation=None):
     global stop_signal
     stop_signal = False
 
@@ -2697,7 +2741,7 @@ def generate_image_sd3_inpaint(prompt, negative_prompt, init_image, mask_image, 
     if not os.path.exists(sd3_model_path):
         print("Downloading Stable Diffusion 3 model...")
         os.makedirs(sd3_model_path, exist_ok=True)
-        Repo.clone_from("https://huggingface.co/v2ray/stable-diffusion-3-medium-diffusers", sd3_model_path)
+        Repo.clone_from("https://huggingface.co/stabilityai/stable-diffusion-3-medium-diffusers", sd3_model_path)
         print("Stable Diffusion 3 model downloaded")
 
     try:
@@ -2717,6 +2761,20 @@ def generate_image_sd3_inpaint(prompt, negative_prompt, init_image, mask_image, 
         mask_image = Image.open(mask_image).convert("L")
         mask_image = mask_image.resize((width, height))
 
+        device = "cuda" if torch.cuda.is_available() else "cpu"
+
+        if XFORMERS_AVAILABLE:
+            pipe.enable_xformers_memory_efficient_attention(attention_op=None)
+            pipe.vae.enable_xformers_memory_efficient_attention(attention_op=None)
+            pipe.unet.enable_xformers_memory_efficient_attention(attention_op=None)
+
+        pipe.to(device)
+        pipe.text_encoder.to(device)
+        pipe.vae.to(device)
+        pipe.unet.to(device)
+
+        pipe.safety_checker = None
+
         compel = Compel(
             tokenizer=[pipe.tokenizer, pipe.tokenizer_2],
             text_encoder=[pipe.text_encoder, pipe.text_encoder_2],
@@ -2735,6 +2793,7 @@ def generate_image_sd3_inpaint(prompt, negative_prompt, init_image, mask_image, 
             guidance_scale=guidance_scale,
             max_sequence_length=max_sequence_length,
             num_images_per_prompt=num_images_per_prompt,
+            sampler=stable_diffusion_sampler,
         ).images
 
         if stop_signal:
@@ -5788,6 +5847,8 @@ sd3_txt2img_interface = gr.Interface(
     inputs=[
         gr.Textbox(label="Enter your prompt"),
         gr.Textbox(label="Enter your negative prompt", value=""),
+        gr.Dropdown(choices=["euler_ancestral", "euler", "lms", "heun", "dpm", "dpm_solver", "dpm_solver++"],
+                    label="Select sampler", value="euler_ancestral"),
         gr.Slider(minimum=1, maximum=100, value=40, step=1, label="Steps"),
         gr.Slider(minimum=1.0, maximum=30.0, value=8.0, step=0.1, label="CFG"),
         gr.Slider(minimum=256, maximum=2048, value=1024, step=64, label="Width"),
@@ -5815,6 +5876,8 @@ sd3_img2img_interface = gr.Interface(
         gr.Textbox(label="Enter your negative prompt", value=""),
         gr.Image(label="Initial image", type="filepath"),
         gr.Slider(minimum=0.0, maximum=1.0, value=0.8, step=0.01, label="Strength"),
+        gr.Dropdown(choices=["euler_ancestral", "euler", "lms", "heun", "dpm", "dpm_solver", "dpm_solver++"],
+                    label="Select sampler", value="euler_ancestral"),
         gr.Slider(minimum=1, maximum=100, value=40, step=1, label="Steps"),
         gr.Slider(minimum=1.0, maximum=30.0, value=8.0, step=0.1, label="CFG"),
         gr.Slider(minimum=256, maximum=2048, value=1024, step=64, label="Width"),
@@ -5842,6 +5905,8 @@ sd3_controlnet_interface = gr.Interface(
         gr.Textbox(label="Enter your negative prompt", value=""),
         gr.Image(label="Initial image", type="filepath"),
         gr.Dropdown(choices=["Pose", "Canny"], label="Select ControlNet model", value="Pose"),
+        gr.Dropdown(choices=["euler_ancestral", "euler", "lms", "heun", "dpm", "dpm_solver", "dpm_solver++"],
+                    label="Select sampler", value="euler_ancestral"),
         gr.Slider(minimum=1, maximum=100, value=40, step=1, label="Steps"),
         gr.Slider(minimum=1.0, maximum=30.0, value=8.0, step=0.1, label="CFG"),
         gr.Slider(minimum=0.1, maximum=1.0, value=0.5, step=0.1, label="ControlNet conditioning scale"),
@@ -5871,6 +5936,8 @@ sd3_inpaint_interface = gr.Interface(
         gr.Textbox(label="Enter your negative prompt", value=""),
         gr.Image(label="Initial image", type="filepath"),
         gr.ImageEditor(label="Mask image", type="filepath"),
+        gr.Dropdown(choices=["euler_ancestral", "euler", "lms", "heun", "dpm", "dpm_solver", "dpm_solver++"],
+                    label="Select sampler", value="euler_ancestral"),
         gr.Slider(minimum=1, maximum=100, value=40, step=1, label="Steps"),
         gr.Slider(minimum=1.0, maximum=30.0, value=8.0, step=0.1, label="CFG"),
         gr.Slider(minimum=256, maximum=2048, value=1024, step=64, label="Width"),
