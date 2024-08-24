@@ -23,6 +23,10 @@ pip install git+https://github.com/openai/CLIP.git
 pip install git+https://github.com/tatsy/torchmcubes.git
 clear
 
+echo "Post-installing patches..."
+python3 "$CURRENT_DIR%RequirementsFiles\post_install.py"
+clear
+
 echo "Application has been installed successfully. Run start.sh"
 
 deactivate

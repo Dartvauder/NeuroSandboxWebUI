@@ -1589,17 +1589,29 @@ def generate_image_upscale_realesrgan(image_path, outscale, output_format="png",
     output_dir = os.path.join('outputs', f"RealESRGAN_{today.strftime('%Y%m%d')}")
     os.makedirs(output_dir, exist_ok=True)
 
-    output_filename = f"upscaled_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
-    output_path = os.path.join(output_dir, output_filename)
-
     try:
-        command = f"python {os.path.join(realesrgan_path, 'inference_realesrgan.py')} --model_name RealESRGAN_x4plus --input {image_path} --output {output_dir} --outscale {outscale} --fp16"
+        input_filename = os.path.basename(image_path)
+        input_name, input_ext = os.path.splitext(input_filename)
+
+        command = f"python {os.path.join(realesrgan_path, 'inference_realesrgan.py')} --model_name RealESRGAN_x4plus --input {image_path} --output {output_dir} --outscale {outscale}"
         subprocess.run(command, shell=True, check=True)
 
         if stop_signal:
             return None, "Generation stopped"
 
-        return output_path, None
+        expected_output_filename = f"{input_name}_out{input_ext}"
+        output_path = os.path.join(output_dir, expected_output_filename)
+
+        if os.path.exists(output_path):
+            if output_format.lower() != input_ext[1:].lower():
+                new_output_filename = f"{input_name}_out.{output_format}"
+                new_output_path = os.path.join(output_dir, new_output_filename)
+                Image.open(output_path).save(new_output_path)
+                output_path = new_output_path
+
+            return output_path, None
+        else:
+            return None, "Output file not found"
 
     except subprocess.CalledProcessError as e:
         return None, f"Error occurred: {str(e)}"
@@ -4889,8 +4901,6 @@ def generate_stableaudio(prompt, negative_prompt, num_inference_steps, guidance_
     pipe = StableAudioPipeline.from_pretrained(sa_model_path, torch_dtype=torch.float16)
     pipe = pipe.to("cuda")
 
-    generator = torch.Generator("cuda").manual_seed(0)
-
     try:
         audio = pipe(
             prompt,
@@ -4900,7 +4910,6 @@ def generate_stableaudio(prompt, negative_prompt, num_inference_steps, guidance_
             audio_end_in_s=audio_length,
             audio_start_in_s=audio_start,
             num_waveforms_per_prompt=num_waveforms,
-            generator=generator,
         ).audios
 
         if stop_signal:

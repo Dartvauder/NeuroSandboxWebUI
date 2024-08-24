@@ -23,6 +23,10 @@ pip install git+https://github.com/openai/CLIP.git
 pip install git+https://github.com/tatsy/torchmcubes.git
 cls
 
+echo Post-installing patches...
+python "%CURRENT_DIR%RequirementsFiles\post_install.py"
+cls
+
 echo Application has been installed successfully. Run start.bat
 
 call "%CURRENT_DIR%venv\Scripts\deactivate.bat"
