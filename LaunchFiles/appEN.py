@@ -2200,6 +2200,12 @@ def generate_image_animatediff(prompt, negative_prompt, input_video, strength, m
 
         if model_type == "sd":
             if input_video:
+                gif = Image.open(input_video)
+                frames = []
+                for frame in range(0, gif.n_frames):
+                    gif.seek(frame)
+                    frames.append(gif.copy().convert('RGB').resize((width, height)))
+
                 adapter = MotionAdapter.from_pretrained(motion_adapter_path, torch_dtype=torch.float16)
                 original_config_file = "configs/sd/v1-inference.yaml"
                 stable_diffusion_model = StableDiffusionPipeline.from_single_file(
@@ -2243,7 +2249,7 @@ def generate_image_animatediff(prompt, negative_prompt, input_video, strength, m
                 output = pipe(
                     prompt_embeds=prompt_embeds,
                     negative_prompt_embeds=negative_prompt_embeds,
-                    video=input_video,
+                    video=frames,
                     strength=strength,
                     guidance_scale=guidance_scale,
                     num_inference_steps=num_inference_steps,
@@ -3273,7 +3279,6 @@ def generate_image_instantid(prompt, negative_prompt, face_image, stable_diffusi
         return None, str(e)
 
     finally:
-        del pipe
         torch.cuda.empty_cache()
 
 
@@ -6049,8 +6054,8 @@ animatediff_interface = gr.Interface(
         gr.Image(label="Initial GIF", type="filepath"),
         gr.Slider(minimum=0.0, maximum=1.0, value=0.5, step=0.01, label="Strength"),
         gr.Radio(choices=["sd", "sdxl"], label="Select model type", value="sd"),
-        gr.Dropdown(choices=stable_diffusion_models_list, label="Select StableDiffusion model (only SD1.5)", value=None),
-        gr.Dropdown(choices=[None, "zoom-in", "zoom-out", "tilt-up", "tilt-down", "pan-right", "pan-left"], label="Select Motion LORA", value=None, multiselect=True),
+        gr.Dropdown(choices=stable_diffusion_models_list, label="Select StableDiffusion model", value=None),
+        gr.Dropdown(choices=[None, "zoom-in", "zoom-out", "tilt-up", "tilt-down", "pan-right", "pan-left"], label="Select Motion LORA", value=None),
         gr.Slider(minimum=2, maximum=25, value=16, step=1, label="Frames"),
         gr.Slider(minimum=1, maximum=100, value=30, step=1, label="Steps"),
         gr.Slider(minimum=1.0, maximum=30.0, value=8, step=0.1, label="Guidance Scale"),
