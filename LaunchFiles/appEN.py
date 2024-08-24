@@ -219,22 +219,28 @@ def load_lora_model(base_model_name, lora_model_name, model_type):
     if stop_signal:
         return None, None, "Generation stopped"
 
-    if model_type == "llama":
-        return None, None, "LORA model with 'llama' model type is not supported yet!"
-
     base_model_path = f"inputs/text/llm_models/{base_model_name}"
     lora_model_path = f"inputs/text/llm_models/lora/{lora_model_name}"
 
     try:
         device = "cuda" if torch.cuda.is_available() else "cpu"
-        base_model = AutoModelForCausalLM.from_pretrained(base_model_path).to(device)
-        model = PeftModel.from_pretrained(base_model, lora_model_path).to(device)
-        merged_model = model.merge_and_unload()
-        tokenizer = AutoTokenizer.from_pretrained(base_model_path)
-        return tokenizer, merged_model, None
+        if model_type == "llama":
+            model = Llama(base_model_path, n_gpu_layers=-1 if device == "cuda" else 0, lora_path=lora_model_path)
+            tokenizer = None
+            return tokenizer, model, None
+        else:
+            base_model = AutoModelForCausalLM.from_pretrained(base_model_path).to(device)
+            model = PeftModel.from_pretrained(base_model, lora_model_path).to(device)
+            merged_model = model.merge_and_unload()
+            tokenizer = AutoTokenizer.from_pretrained(base_model_path)
+            return tokenizer, merged_model, None
+    except Exception as e:
+        return None, None, str(e)
     finally:
-        del tokenizer
-        del merged_model
+        if 'tokenizer' in locals():
+            del tokenizer
+        if 'merged_model' in locals():
+            del merged_model
         torch.cuda.empty_cache()
 
 
@@ -2101,12 +2107,6 @@ def generate_image_gligen(prompt, negative_prompt, gligen_phrases, gligen_boxes,
         pipe = StableDiffusionGLIGENPipeline.from_pretrained(
             os.path.join(gligen_model_path, "inpainting"), variant="fp16", torch_dtype=torch.float16
         )
-        pipe = pipe.to("cuda")
-
-        if XFORMERS_AVAILABLE:
-            pipe.enable_xformers_memory_efficient_attention(attention_op=None)
-            pipe.vae.enable_xformers_memory_efficient_attention(attention_op=None)
-            pipe.unet.enable_xformers_memory_efficient_attention(attention_op=None)
 
         pipe.to(device)
         pipe.text_encoder.to(device)
@@ -2152,7 +2152,7 @@ def generate_image_gligen(prompt, negative_prompt, gligen_phrases, gligen_boxes,
         torch.cuda.empty_cache()
 
 
-def generate_image_animatediff(prompt, negative_prompt, input_video, strength, model_type, stable_diffusion_sampler, stable_diffusion_model_name, motion_lora_name, num_frames, num_inference_steps,
+def generate_image_animatediff(prompt, negative_prompt, input_video, strength, model_type, stable_diffusion_model_name, motion_lora_name, num_frames, num_inference_steps,
                                guidance_scale, width, height, clip_skip, seed, stop_generation):
     global stop_signal
     stop_signal = False
@@ -2207,9 +2207,9 @@ def generate_image_animatediff(prompt, negative_prompt, input_video, strength, m
                 pipe.enable_model_cpu_offload()
 
                 if XFORMERS_AVAILABLE:
-                    pipe.enable_xformers_memory_efficient_attention(attention_op=None)
-                    pipe.vae.enable_xformers_memory_efficient_attention(attention_op=None)
-                    pipe.unet.enable_xformers_memory_efficient_attention(attention_op=None)
+                    stable_diffusion_model.enable_xformers_memory_efficient_attention(attention_op=None)
+                    stable_diffusion_model.vae.enable_xformers_memory_efficient_attention(attention_op=None)
+                    stable_diffusion_model.unet.enable_xformers_memory_efficient_attention(attention_op=None)
 
                 pipe.to(device)
                 pipe.text_encoder.to(device)
@@ -2230,7 +2230,6 @@ def generate_image_animatediff(prompt, negative_prompt, input_video, strength, m
                     strength=strength,
                     guidance_scale=guidance_scale,
                     num_inference_steps=num_inference_steps,
-                    sampler=stable_diffusion_sampler,
                     generator=generator,
                     clip_skip=clip_skip,
                 )
@@ -2286,9 +2285,9 @@ def generate_image_animatediff(prompt, negative_prompt, input_video, strength, m
                 pipe.enable_model_cpu_offload()
 
                 if XFORMERS_AVAILABLE:
-                    pipe.enable_xformers_memory_efficient_attention(attention_op=None)
-                    pipe.vae.enable_xformers_memory_efficient_attention(attention_op=None)
-                    pipe.unet.enable_xformers_memory_efficient_attention(attention_op=None)
+                    stable_diffusion_model.enable_xformers_memory_efficient_attention(attention_op=None)
+                    stable_diffusion_model.vae.enable_xformers_memory_efficient_attention(attention_op=None)
+                    stable_diffusion_model.unet.enable_xformers_memory_efficient_attention(attention_op=None)
 
                 pipe.to(device)
                 pipe.text_encoder.to(device)
@@ -2310,7 +2309,6 @@ def generate_image_animatediff(prompt, negative_prompt, input_video, strength, m
                     num_inference_steps=num_inference_steps,
                     width=width,
                     height=height,
-                    sampler=stable_diffusion_sampler,
                     generator=generator,
                     clip_skip=clip_skip,
                 )
@@ -2363,7 +2361,6 @@ def generate_image_animatediff(prompt, negative_prompt, input_video, strength, m
                 guidance_scale=guidance_scale,
                 width=width,
                 height=height,
-                sampler=stable_diffusion_sampler,
                 num_frames=num_frames,
                 generator=generator,
                 clip_skip=clip_skip,
@@ -6028,8 +6025,6 @@ animatediff_interface = gr.Interface(
         gr.Image(label="Initial GIF", type="filepath"),
         gr.Slider(minimum=0.0, maximum=1.0, value=0.5, step=0.01, label="Strength"),
         gr.Radio(choices=["sd", "sdxl"], label="Select model type", value="sd"),
-        gr.Dropdown(choices=["euler_ancestral", "euler", "lms", "heun", "dpm", "dpm_solver", "dpm_solver++"],
-                    label="Select sampler", value="euler_ancestral"),
         gr.Dropdown(choices=stable_diffusion_models_list, label="Select StableDiffusion model (only SD1.5)", value=None),
         gr.Dropdown(choices=[None, "zoom-in", "zoom-out", "tilt-up", "tilt-down", "pan-right", "pan-left"], label="Select Motion LORA", value=None, multiselect=True),
         gr.Slider(minimum=2, maximum=25, value=16, step=1, label="Frames"),
