@@ -927,7 +927,7 @@ def generate_wav2lip(image_path, audio_path, fps, pads, face_det_batch_size, wav
 def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name, vae_model_name, lora_model_names, textual_inversion_model_names, stable_diffusion_settings_html,
                            stable_diffusion_model_type, stable_diffusion_sampler, stable_diffusion_steps,
                            stable_diffusion_cfg, stable_diffusion_width, stable_diffusion_height,
-                           stable_diffusion_clip_skip, seed, num_images_per_prompt, enable_freeu, freeu_s1, freeu_s2, freeu_b1, freeu_b2, enable_sag, sag_scale, enable_pag, pag_scale, enable_tiled_vae=False, output_format="png", stop_generation=None):
+                           stable_diffusion_clip_skip, num_images_per_prompt, enable_freeu, freeu_s1, freeu_s2, freeu_b1, freeu_b2, enable_sag, sag_scale, enable_pag, pag_scale, enable_tiled_vae, seed, output_format="png", stop_generation=None):
     global stop_signal
     stop_signal = False
 
@@ -1048,6 +1048,7 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
                 guidance_scale=stable_diffusion_cfg,
                 height=stable_diffusion_height,
                 width=stable_diffusion_width,
+                clip_skip=stable_diffusion_clip_skip,
                 sag_scale=sag_scale,
                 num_images_per_prompt=num_images_per_prompt,
                 generator=generator
@@ -1060,6 +1061,7 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
                 guidance_scale=stable_diffusion_cfg,
                 height=stable_diffusion_height,
                 width=stable_diffusion_width,
+                clip_skip=stable_diffusion_clip_skip,
                 pag_scale=pag_scale,
                 num_images_per_prompt=num_images_per_prompt,
                 generator=generator
@@ -1101,7 +1103,7 @@ def generate_image_img2img(prompt, negative_prompt, init_image,
                            strength, stable_diffusion_model_name, vae_model_name, stable_diffusion_settings_html,
                            stable_diffusion_model_type,
                            stable_diffusion_sampler, stable_diffusion_steps, stable_diffusion_cfg,
-                           stable_diffusion_clip_skip, num_images_per_prompt, output_format="png", stop_generation=None):
+                           stable_diffusion_clip_skip, num_images_per_prompt, seed, output_format="png", stop_generation=None):
     global stop_signal
     stop_signal = False
 
@@ -1167,6 +1169,12 @@ def generate_image_img2img(prompt, negative_prompt, init_image,
             stable_diffusion_model.vae = vae.to(device)
 
     try:
+        if seed == "" or seed is None:
+            seed = random.randint(0, 2 ** 32 - 1)
+        else:
+            seed = int(seed)
+        generator = torch.Generator(device).manual_seed(seed)
+
         init_image = Image.open(init_image).convert("RGB")
         init_image = stable_diffusion_model.image_processor.preprocess(init_image)
 
@@ -1180,7 +1188,7 @@ def generate_image_img2img(prompt, negative_prompt, init_image,
             prompt_embeds, pooled_prompt_embeds = compel(prompt)
 
             images = stable_diffusion_model(prompt_embeds=prompt_embeds, pooled_prompt_embeds=pooled_prompt_embeds, negative_prompt=negative_prompt,
-                                            num_inference_steps=stable_diffusion_steps,
+                                            num_inference_steps=stable_diffusion_steps, generator=generator,
                                             guidance_scale=stable_diffusion_cfg, clip_skip=stable_diffusion_clip_skip,
                                             sampler=stable_diffusion_sampler, image=init_image, strength=strength, num_images_per_prompt=num_images_per_prompt).images
         else:
@@ -1190,7 +1198,7 @@ def generate_image_img2img(prompt, negative_prompt, init_image,
             negative_prompt_embeds = compel_proc(negative_prompt)
 
             images = stable_diffusion_model(prompt_embeds=prompt_embeds, negative_prompt_embeds=negative_prompt_embeds,
-                                            num_inference_steps=stable_diffusion_steps,
+                                            num_inference_steps=stable_diffusion_steps, generator=generator,
                                             guidance_scale=stable_diffusion_cfg, clip_skip=stable_diffusion_clip_skip,
                                             sampler=stable_diffusion_sampler, image=init_image, strength=strength, num_images_per_prompt=num_images_per_prompt).images
 
@@ -1207,7 +1215,7 @@ def generate_image_img2img(prompt, negative_prompt, init_image,
             image.save(image_path, format=output_format.upper())
             image_paths.append(image_path)
 
-        return image_paths, None
+        return image_paths, f"Images generated successfully. Seed used: {seed}"
 
     except Exception as e:
         return None, str(e)
@@ -1217,8 +1225,8 @@ def generate_image_img2img(prompt, negative_prompt, init_image,
         torch.cuda.empty_cache()
 
 
-def generate_image_depth2img(prompt, negative_prompt, init_image, stable_diffusion_settings_html, strength, num_images_per_prompt,
-                             output_format="png", stop_generation=None):
+def generate_image_depth2img(prompt, negative_prompt, init_image, stable_diffusion_settings_html, strength, clip_skip, num_images_per_prompt,
+                             seed, output_format="png", stop_generation=None):
     global stop_signal
     stop_signal = False
 
@@ -1259,12 +1267,18 @@ def generate_image_depth2img(prompt, negative_prompt, init_image, stable_diffusi
     try:
         init_image = Image.open(init_image).convert("RGB")
 
+        if seed == "" or seed is None:
+            seed = random.randint(0, 2 ** 32 - 1)
+        else:
+            seed = int(seed)
+        generator = torch.Generator(device).manual_seed(seed)
+
         compel_proc = Compel(tokenizer=stable_diffusion_model.tokenizer,
                              text_encoder=stable_diffusion_model.text_encoder)
         prompt_embeds = compel_proc(prompt)
         negative_prompt_embeds = compel_proc(negative_prompt)
 
-        images = stable_diffusion_model(prompt_embeds=prompt_embeds, negative_prompt_embeds=negative_prompt_embeds, image=init_image, strength=strength, num_images_per_prompt=num_images_per_prompt).images
+        images = stable_diffusion_model(prompt_embeds=prompt_embeds, negative_prompt_embeds=negative_prompt_embeds, image=init_image, strength=strength, num_images_per_prompt=num_images_per_prompt, clip_skip=clip_skip, generator=generator).images
 
         if stop_signal:
             return None, "Generation stopped"
@@ -1279,7 +1293,7 @@ def generate_image_depth2img(prompt, negative_prompt, init_image, stable_diffusi
             image.save(image_path, format=output_format.upper())
             image_paths.append(image_path)
 
-        return image_paths, None
+        return image_paths, f"Images generated successfully. Seed used: {seed}"
 
     finally:
         del stable_diffusion_model
@@ -1287,7 +1301,7 @@ def generate_image_depth2img(prompt, negative_prompt, init_image, stable_diffusi
 
 
 def generate_image_pix2pix(prompt, negative_prompt, init_image, num_inference_steps, guidance_scale,
-                           num_images_per_prompt, output_format="png", stop_generation=None):
+                           clip_skip, num_images_per_prompt, seed, output_format="png", stop_generation=None):
     global stop_signal
     stop_signal = False
 
@@ -1310,13 +1324,31 @@ def generate_image_pix2pix(prompt, negative_prompt, init_image, num_inference_st
 
         image = Image.open(init_image).convert("RGB")
 
+        if XFORMERS_AVAILABLE:
+            pipe.enable_xformers_memory_efficient_attention(attention_op=None)
+            pipe.vae.enable_xformers_memory_efficient_attention(attention_op=None)
+            pipe.unet.enable_xformers_memory_efficient_attention(attention_op=None)
+
+        pipe.to(device)
+        pipe.text_encoder.to(device)
+        pipe.vae.to(device)
+        pipe.unet.to(device)
+
+        pipe.safety_checker = None
+
+        if seed == "" or seed is None:
+            seed = random.randint(0, 2 ** 32 - 1)
+        else:
+            seed = int(seed)
+        generator = torch.Generator(device).manual_seed(seed)
+
         compel_proc = Compel(tokenizer=pipe.tokenizer,
                              text_encoder=pipe.text_encoder)
         prompt_embeds = compel_proc(prompt)
         negative_prompt_embeds = compel_proc(negative_prompt)
 
         images = pipe(prompt_embeds=prompt_embeds, negative_prompt_embeds=negative_prompt_embeds,
-                      image=image, num_inference_steps=num_inference_steps, image_guidance_scale=guidance_scale, num_images_per_prompt=num_images_per_prompt).images
+                      image=image, clip_skip=clip_skip, num_inference_steps=num_inference_steps, image_guidance_scale=guidance_scale, num_images_per_prompt=num_images_per_prompt, generator=generator).images
 
         if stop_signal:
             return None, "Generation stopped"
@@ -1331,7 +1363,7 @@ def generate_image_pix2pix(prompt, negative_prompt, init_image, num_inference_st
             image.save(image_path, format=output_format.upper())
             image_paths.append(image_path)
 
-        return image_paths, None
+        return image_paths, f"Images generated successfully. Seed used: {seed}"
 
     finally:
         del pipe
@@ -1339,7 +1371,7 @@ def generate_image_pix2pix(prompt, negative_prompt, init_image, num_inference_st
 
 
 def generate_image_controlnet(prompt, negative_prompt, init_image, sd_version, stable_diffusion_sampler, stable_diffusion_model_name, controlnet_model_name,
-                              num_inference_steps, guidance_scale, width, height, controlnet_conditioning_scale, num_images_per_prompt, output_format="png",
+                              num_inference_steps, guidance_scale, width, height, controlnet_conditioning_scale, clip_skip, num_images_per_prompt, seed, output_format="png",
                               stop_generation=None):
     global stop_signal
     stop_signal = False
@@ -1384,6 +1416,12 @@ def generate_image_controlnet(prompt, negative_prompt, init_image, sd_version, s
     try:
         device = "cuda" if torch.cuda.is_available() else "cpu"
 
+        if seed == "" or seed is None:
+            seed = random.randint(0, 2 ** 32 - 1)
+        else:
+            seed = int(seed)
+        generator = torch.Generator(device).manual_seed(seed)
+
         if sd_version == "SD":
             controlnet = ControlNetModel.from_pretrained(controlnet_model_path, torch_dtype=torch.float16)
             pipe = StableDiffusionControlNetPipeline.from_single_file(
@@ -1394,7 +1432,18 @@ def generate_image_controlnet(prompt, negative_prompt, init_image, sd_version, s
                 use_safetensors=True,
             )
             pipe.enable_model_cpu_offload()
+
+            if XFORMERS_AVAILABLE:
+                pipe.enable_xformers_memory_efficient_attention(attention_op=None)
+                pipe.vae.enable_xformers_memory_efficient_attention(attention_op=None)
+                pipe.unet.enable_xformers_memory_efficient_attention(attention_op=None)
+
             pipe.to(device)
+            pipe.text_encoder.to(device)
+            pipe.vae.to(device)
+            pipe.unet.to(device)
+
+            pipe.safety_checker = None
 
             image = Image.open(init_image).convert("RGB")
 
@@ -1432,7 +1481,7 @@ def generate_image_controlnet(prompt, negative_prompt, init_image, sd_version, s
 
             images = pipe(prompt_embeds=prompt_embeds, negative_prompt_embeds=negative_prompt_embeds,
                          num_inference_steps=num_inference_steps, guidance_scale=guidance_scale, width=width,
-                         height=height, generator=generator, image=control_image, sampler=stable_diffusion_sampler, num_images_per_prompt=num_images_per_prompt).images
+                         height=height, clip_skip=clip_skip, generator=generator, image=control_image, sampler=stable_diffusion_sampler, num_images_per_prompt=num_images_per_prompt).images
 
         else:  # SDXL
             controlnet = ControlNetModel.from_pretrained(
@@ -1447,6 +1496,18 @@ def generate_image_controlnet(prompt, negative_prompt, init_image, sd_version, s
                 use_safetensors=True,
             )
             pipe.enable_model_cpu_offload()
+
+            if XFORMERS_AVAILABLE:
+                pipe.enable_xformers_memory_efficient_attention(attention_op=None)
+                pipe.vae.enable_xformers_memory_efficient_attention(attention_op=None)
+                pipe.unet.enable_xformers_memory_efficient_attention(attention_op=None)
+
+            pipe.to(device)
+            pipe.text_encoder.to(device)
+            pipe.vae.to(device)
+            pipe.unet.to(device)
+
+            pipe.safety_checker = None
 
             image = Image.open(init_image).convert("RGB")
 
@@ -1494,8 +1555,8 @@ def generate_image_controlnet(prompt, negative_prompt, init_image, sd_version, s
 
             images = pipe(
                 prompt_embeds=prompt_embeds, pooled_prompt_embeds=pooled_prompt_embeds, negative_prompt=negative_prompt, image=control_image,
-                controlnet_conditioning_scale=controlnet_conditioning_scale,
-                num_inference_steps=num_inference_steps, guidance_scale=guidance_scale,
+                controlnet_conditioning_scale=controlnet_conditioning_scale, generator=generator,
+                num_inference_steps=num_inference_steps, guidance_scale=guidance_scale, clip_skip=clip_skip,
                 width=width, height=height, sampler=stable_diffusion_sampler, num_images_per_prompt=num_images_per_prompt).images
 
         if stop_signal:
@@ -1518,7 +1579,7 @@ def generate_image_controlnet(prompt, negative_prompt, init_image, sd_version, s
             control_image.save(control_image_path, format=output_format.upper())
             control_image_paths.append(control_image_path)
 
-        return image_paths, control_image_paths, None
+        return image_paths, control_image_paths, f"Images generated successfully. Seed used: {seed}"
 
     except Exception as e:
         return None, None, str(e)
@@ -1536,7 +1597,7 @@ def generate_image_controlnet(prompt, negative_prompt, init_image, sd_version, s
         torch.cuda.empty_cache()
 
 
-def generate_image_upscale_latent(image_path, upscale_factor, num_inference_steps, guidance_scale, num_images_per_prompt, output_format="png", stop_generation=None):
+def generate_image_upscale_latent(image_path, upscale_factor, num_inference_steps, guidance_scale, output_format="png", stop_generation=None):
     global stop_signal
     if stop_signal:
         return None, "Generation stopped"
@@ -1547,22 +1608,33 @@ def generate_image_upscale_latent(image_path, upscale_factor, num_inference_step
     upscale_factor = upscale_factor
     upscaler = load_upscale_model(upscale_factor)
 
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+
+    if XFORMERS_AVAILABLE:
+        upscaler.enable_xformers_memory_efficient_attention(attention_op=None)
+        upscaler.vae.enable_xformers_memory_efficient_attention(attention_op=None)
+        upscaler.unet.enable_xformers_memory_efficient_attention(attention_op=None)
+
+    upscaler.to(device)
+    upscaler.text_encoder.to(device)
+    upscaler.vae.to(device)
+    upscaler.unet.to(device)
+
+    upscaler.safety_checker = None
+
     if upscaler:
         try:
             image = Image.open(image_path).convert("RGB")
-            upscaled_images = upscaler(prompt="", image=image, num_inference_steps=num_inference_steps, guidance_scale=guidance_scale, num_images_per_prompt=num_images_per_prompt).images
+            upscaled_image = upscaler(prompt="", image=image, num_inference_steps=num_inference_steps, guidance_scale=guidance_scale).images
 
-            image_paths = []
-            for i, upscaled_image in enumerate(upscaled_images):
-                today = datetime.now().date()
-                image_dir = os.path.join('outputs', f"StableDiffusion_{today.strftime('%Y%m%d')}")
-                os.makedirs(image_dir, exist_ok=True)
-                image_filename = f"upscaled_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{i}.{output_format}"
-                image_path = os.path.join(image_dir, image_filename)
-                upscaled_image.save(image_path, format=output_format.upper())
-                image_paths.append(image_path)
+            today = datetime.now().date()
+            image_dir = os.path.join('outputs', f"StableDiffusion_{today.strftime('%Y%m%d')}")
+            os.makedirs(image_dir, exist_ok=True)
+            image_filename = f"upscaled_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
+            image_path = os.path.join(image_dir, image_filename)
+            upscaled_image.save(image_path, format=output_format.upper())
 
-            return image_paths, None
+            return image_path, None
 
         finally:
             del upscaler
@@ -1622,7 +1694,7 @@ def generate_image_upscale_realesrgan(image_path, outscale, output_format="png",
 
 def generate_image_inpaint(prompt, negative_prompt, init_image, mask_image, blur_factor, stable_diffusion_model_name, vae_model_name,
                            stable_diffusion_settings_html, stable_diffusion_model_type, stable_diffusion_sampler,
-                           stable_diffusion_steps, stable_diffusion_cfg, width, height, num_images_per_prompt, output_format="png", stop_generation=None):
+                           stable_diffusion_steps, stable_diffusion_cfg, width, height, clip_skip, num_images_per_prompt, seed, output_format="png", stop_generation=None):
     global stop_signal
     stop_signal = False
 
@@ -1711,6 +1783,12 @@ def generate_image_inpaint(prompt, negative_prompt, init_image, mask_image, blur
         else:
             blurred_mask = mask_array
 
+        if seed == "" or seed is None:
+            seed = random.randint(0, 2 ** 32 - 1)
+        else:
+            seed = int(seed)
+        generator = torch.Generator(device).manual_seed(seed)
+
         if stable_diffusion_model_type == "SDXL":
             compel = Compel(
                 tokenizer=[stable_diffusion_model.tokenizer, stable_diffusion_model.tokenizer_2],
@@ -1721,7 +1799,7 @@ def generate_image_inpaint(prompt, negative_prompt, init_image, mask_image, blur
             prompt_embeds, pooled_prompt_embeds = compel(prompt)
 
             images = stable_diffusion_model(prompt_embeds=prompt_embeds, pooled_prompt_embeds=pooled_prompt_embeds, negative_prompt=negative_prompt,
-                                            image=init_image,
+                                            image=init_image, generator=generator, clip_skip=clip_skip,
                                             mask_image=blurred_mask, width=width, height=height,
                                             num_inference_steps=stable_diffusion_steps,
                                             guidance_scale=stable_diffusion_cfg, sampler=stable_diffusion_sampler, num_images_per_prompt=num_images_per_prompt).images
@@ -1732,7 +1810,7 @@ def generate_image_inpaint(prompt, negative_prompt, init_image, mask_image, blur
             negative_prompt_embeds = compel_proc(negative_prompt)
 
             images = stable_diffusion_model(prompt_embeds=prompt_embeds, negative_prompt_embeds=negative_prompt_embeds,
-                                            image=init_image,
+                                            image=init_image, generator=generator, clip_skip=clip_skip,
                                             mask_image=blurred_mask, width=width, height=height,
                                             num_inference_steps=stable_diffusion_steps,
                                             guidance_scale=stable_diffusion_cfg, sampler=stable_diffusion_sampler, num_images_per_prompt=num_images_per_prompt).images
@@ -1750,7 +1828,7 @@ def generate_image_inpaint(prompt, negative_prompt, init_image, mask_image, blur
             image.save(image_path, format=output_format.upper())
             image_paths.append(image_path)
 
-        return image_paths, None
+        return image_paths, f"Images generated successfully. Seed used: {seed}"
 
     finally:
         del stable_diffusion_model
@@ -1760,7 +1838,7 @@ def generate_image_inpaint(prompt, negative_prompt, init_image, mask_image, blur
 def generate_image_outpaint(prompt, negative_prompt, init_image, stable_diffusion_model_name, stable_diffusion_settings_html,
                             stable_diffusion_model_type, stable_diffusion_sampler,
                             stable_diffusion_steps, stable_diffusion_cfg,
-                            outpaint_direction, outpaint_expansion, num_images_per_prompt, output_format="png", stop_generation=None):
+                            outpaint_direction, outpaint_expansion, clip_skip, num_images_per_prompt, seed, output_format="png", stop_generation=None):
     global stop_signal
     stop_signal = False
 
@@ -1811,6 +1889,12 @@ def generate_image_outpaint(prompt, negative_prompt, init_image, stable_diffusio
         pipe.unet.to(device)
 
         pipe.safety_checker = None
+
+        if seed == "" or seed is None:
+            seed = random.randint(0, 2 ** 32 - 1)
+        else:
+            seed = int(seed)
+        generator = torch.Generator(device).manual_seed(seed)
 
         init_image = Image.open(init_image).convert("RGB")
         init_width, init_height = init_image.size
@@ -1867,6 +1951,8 @@ def generate_image_outpaint(prompt, negative_prompt, init_image, stable_diffusio
                 height=new_height,
                 sampler=stable_diffusion_sampler,
                 num_images_per_prompt=num_images_per_prompt,
+                clip_skip=clip_skip,
+                generator=generator,
             ).images
         else:
             compel_proc = Compel(tokenizer=pipe.tokenizer, text_encoder=pipe.text_encoder)
@@ -1884,6 +1970,8 @@ def generate_image_outpaint(prompt, negative_prompt, init_image, stable_diffusio
                 height=new_height,
                 sampler=stable_diffusion_sampler,
                 num_images_per_prompt=num_images_per_prompt,
+                clip_skip=clip_skip,
+                generator=generator,
             ).images
 
         if stop_signal:
@@ -1900,7 +1988,7 @@ def generate_image_outpaint(prompt, negative_prompt, init_image, stable_diffusio
             result.save(image_path, format=output_format.upper())
             image_paths.append(image_path)
 
-        return image_paths, None
+        return image_paths, f"Images generated successfully. Seed used: {seed}"
 
     except Exception as e:
         return None, str(e)
@@ -1913,7 +2001,7 @@ def generate_image_outpaint(prompt, negative_prompt, init_image, stable_diffusio
 def generate_image_gligen(prompt, negative_prompt, gligen_phrases, gligen_boxes, stable_diffusion_model_name, stable_diffusion_settings_html,
                           stable_diffusion_model_type, stable_diffusion_sampler, stable_diffusion_steps,
                           stable_diffusion_cfg, stable_diffusion_width, stable_diffusion_height,
-                          stable_diffusion_clip_skip, num_images_per_prompt, output_format="png", stop_generation=None):
+                          stable_diffusion_clip_skip, num_images_per_prompt, seed, output_format="png", stop_generation=None):
     global stop_signal
     stop_signal = False
 
@@ -1965,6 +2053,12 @@ def generate_image_gligen(prompt, negative_prompt, gligen_phrases, gligen_boxes,
     stable_diffusion_model.safety_checker = None
 
     try:
+        if seed == "" or seed is None:
+            seed = random.randint(0, 2 ** 32 - 1)
+        else:
+            seed = int(seed)
+        generator = torch.Generator(device).manual_seed(seed)
+
         if stable_diffusion_model_type == "SDXL":
             compel = Compel(
                 tokenizer=[stable_diffusion_model.tokenizer, stable_diffusion_model.tokenizer_2],
@@ -1975,7 +2069,7 @@ def generate_image_gligen(prompt, negative_prompt, gligen_phrases, gligen_boxes,
             prompt_embeds, pooled_prompt_embeds = compel(prompt)
 
             images = stable_diffusion_model(prompt_embeds=prompt_embeds, pooled_prompt_embeds=pooled_prompt_embeds, negative_prompt=negative_prompt,
-                                           num_inference_steps=stable_diffusion_steps,
+                                           num_inference_steps=stable_diffusion_steps, generator=generator,
                                            guidance_scale=stable_diffusion_cfg, height=stable_diffusion_height,
                                            width=stable_diffusion_width, clip_skip=stable_diffusion_clip_skip,
                                            sampler=stable_diffusion_sampler, num_images_per_prompt=num_images_per_prompt).images
@@ -1986,7 +2080,7 @@ def generate_image_gligen(prompt, negative_prompt, gligen_phrases, gligen_boxes,
             negative_prompt_embeds = compel_proc(negative_prompt)
 
             images = stable_diffusion_model(prompt_embeds=prompt_embeds, negative_prompt_embeds=negative_prompt_embeds,
-                                           num_inference_steps=stable_diffusion_steps,
+                                           num_inference_steps=stable_diffusion_steps, generator=generator,
                                            guidance_scale=stable_diffusion_cfg, height=stable_diffusion_height,
                                            width=stable_diffusion_width, clip_skip=stable_diffusion_clip_skip,
                                            sampler=stable_diffusion_sampler, num_images_per_prompt=num_images_per_prompt).images
@@ -2008,6 +2102,18 @@ def generate_image_gligen(prompt, negative_prompt, gligen_phrases, gligen_boxes,
             os.path.join(gligen_model_path, "inpainting"), variant="fp16", torch_dtype=torch.float16
         )
         pipe = pipe.to("cuda")
+
+        if XFORMERS_AVAILABLE:
+            pipe.enable_xformers_memory_efficient_attention(attention_op=None)
+            pipe.vae.enable_xformers_memory_efficient_attention(attention_op=None)
+            pipe.unet.enable_xformers_memory_efficient_attention(attention_op=None)
+
+        pipe.to(device)
+        pipe.text_encoder.to(device)
+        pipe.vae.to(device)
+        pipe.unet.to(device)
+
+        pipe.safety_checker = None
 
         compel_proc = Compel(tokenizer=pipe.tokenizer,
                              text_encoder=pipe.text_encoder)
@@ -2038,7 +2144,7 @@ def generate_image_gligen(prompt, negative_prompt, gligen_phrases, gligen_boxes,
             image.save(image_path, format=output_format.upper())
             image_paths.append(image_path)
 
-        return image_paths, None
+        return image_paths, f"Images generated successfully. Seed used: {seed}"
 
     finally:
         del stable_diffusion_model
@@ -2047,7 +2153,7 @@ def generate_image_gligen(prompt, negative_prompt, gligen_phrases, gligen_boxes,
 
 
 def generate_image_animatediff(prompt, negative_prompt, input_video, strength, model_type, stable_diffusion_sampler, stable_diffusion_model_name, motion_lora_name, num_frames, num_inference_steps,
-                               guidance_scale, width, height, stop_generation):
+                               guidance_scale, width, height, clip_skip, seed, stop_generation):
     global stop_signal
     stop_signal = False
 
@@ -2067,6 +2173,14 @@ def generate_image_animatediff(prompt, negative_prompt, input_video, strength, m
         print("Motion adapter downloaded")
 
     try:
+        device = "cuda" if torch.cuda.is_available() else "cpu"
+
+        if seed == "" or seed is None:
+            seed = random.randint(0, 2 ** 32 - 1)
+        else:
+            seed = int(seed)
+        generator = torch.Generator(device).manual_seed(seed)
+
         if model_type == "sd":
             if input_video:
                 adapter = MotionAdapter.from_pretrained(motion_adapter_path, torch_dtype=torch.float16)
@@ -2092,6 +2206,18 @@ def generate_image_animatediff(prompt, negative_prompt, input_video, strength, m
                 pipe.enable_vae_slicing()
                 pipe.enable_model_cpu_offload()
 
+                if XFORMERS_AVAILABLE:
+                    pipe.enable_xformers_memory_efficient_attention(attention_op=None)
+                    pipe.vae.enable_xformers_memory_efficient_attention(attention_op=None)
+                    pipe.unet.enable_xformers_memory_efficient_attention(attention_op=None)
+
+                pipe.to(device)
+                pipe.text_encoder.to(device)
+                pipe.vae.to(device)
+                pipe.unet.to(device)
+
+                pipe.safety_checker = None
+
                 compel_proc = Compel(tokenizer=stable_diffusion_model.tokenizer,
                                      text_encoder=stable_diffusion_model.text_encoder)
                 prompt_embeds = compel_proc(prompt)
@@ -2104,6 +2230,9 @@ def generate_image_animatediff(prompt, negative_prompt, input_video, strength, m
                     strength=strength,
                     guidance_scale=guidance_scale,
                     num_inference_steps=num_inference_steps,
+                    sampler=stable_diffusion_sampler,
+                    generator=generator,
+                    clip_skip=clip_skip,
                 )
 
             else:
@@ -2156,6 +2285,18 @@ def generate_image_animatediff(prompt, negative_prompt, input_video, strength, m
                 pipe.enable_vae_slicing()
                 pipe.enable_model_cpu_offload()
 
+                if XFORMERS_AVAILABLE:
+                    pipe.enable_xformers_memory_efficient_attention(attention_op=None)
+                    pipe.vae.enable_xformers_memory_efficient_attention(attention_op=None)
+                    pipe.unet.enable_xformers_memory_efficient_attention(attention_op=None)
+
+                pipe.to(device)
+                pipe.text_encoder.to(device)
+                pipe.vae.to(device)
+                pipe.unet.to(device)
+
+                pipe.safety_checker = None
+
                 compel_proc = Compel(tokenizer=stable_diffusion_model.tokenizer,
                                      text_encoder=stable_diffusion_model.text_encoder)
                 prompt_embeds = compel_proc(prompt)
@@ -2170,6 +2311,8 @@ def generate_image_animatediff(prompt, negative_prompt, input_video, strength, m
                     width=width,
                     height=height,
                     sampler=stable_diffusion_sampler,
+                    generator=generator,
+                    clip_skip=clip_skip,
                 )
 
         elif model_type == "sdxl":
@@ -2192,6 +2335,18 @@ def generate_image_animatediff(prompt, negative_prompt, input_video, strength, m
             pipe.enable_vae_slicing()
             pipe.enable_vae_tiling()
 
+            if XFORMERS_AVAILABLE:
+                pipe.enable_xformers_memory_efficient_attention(attention_op=None)
+                pipe.vae.enable_xformers_memory_efficient_attention(attention_op=None)
+                pipe.unet.enable_xformers_memory_efficient_attention(attention_op=None)
+
+            pipe.to(device)
+            pipe.text_encoder.to(device)
+            pipe.vae.to(device)
+            pipe.unet.to(device)
+
+            pipe.safety_checker = None
+
             compel = Compel(
                 tokenizer=[pipe.tokenizer, pipe.tokenizer_2],
                 text_encoder=[pipe.text_encoder, pipe.text_encoder_2],
@@ -2210,6 +2365,8 @@ def generate_image_animatediff(prompt, negative_prompt, input_video, strength, m
                 height=height,
                 sampler=stable_diffusion_sampler,
                 num_frames=num_frames,
+                generator=generator,
+                clip_skip=clip_skip,
             )
 
         if stop_signal:
@@ -2225,7 +2382,7 @@ def generate_image_animatediff(prompt, negative_prompt, input_video, strength, m
         gif_path = os.path.join(output_dir, gif_filename)
         export_to_gif(frames, gif_path)
 
-        return gif_path, None
+        return gif_path, f"GIF generated successfully. Seed used: {seed}"
 
     finally:
         try:
@@ -2238,7 +2395,7 @@ def generate_image_animatediff(prompt, negative_prompt, input_video, strength, m
 
 
 def generate_image_pia(prompt, negative_prompt, init_image, stable_diffusion_model_name, strength, num_frames,
-                       num_inference_steps, guidance_scale, height, width, output_format="gif", stop_generation=None):
+                       num_inference_steps, guidance_scale, height, width, clip_skip, seed, stop_generation=None):
     global stop_signal
     stop_signal = False
 
@@ -2269,6 +2426,24 @@ def generate_image_pia(prompt, negative_prompt, init_image, stable_diffusion_mod
         pipe.enable_model_cpu_offload()
         pipe.enable_vae_slicing()
 
+        device = "cuda" if torch.cuda.is_available() else "cpu"
+
+        if seed == "" or seed is None:
+            seed = random.randint(0, 2 ** 32 - 1)
+        else:
+            seed = int(seed)
+        generator = torch.Generator(device).manual_seed(seed)
+
+        if XFORMERS_AVAILABLE:
+            pipe.enable_xformers_memory_efficient_attention(attention_op=None)
+            pipe.vae.enable_xformers_memory_efficient_attention(attention_op=None)
+            pipe.unet.enable_xformers_memory_efficient_attention(attention_op=None)
+
+        pipe.to(device)
+        pipe.text_encoder.to(device)
+        pipe.vae.to(device)
+        pipe.unet.to(device)
+
         image = Image.open(init_image).convert("RGB")
         image = image.resize((width, height))
 
@@ -2280,6 +2455,8 @@ def generate_image_pia(prompt, negative_prompt, init_image, stable_diffusion_mod
             num_frames=num_frames,
             num_inference_steps=num_inference_steps,
             guidance_scale=guidance_scale,
+            generator=generator,
+            clip_skip=clip_skip,
         )
 
         if stop_signal:
@@ -2295,7 +2472,7 @@ def generate_image_pia(prompt, negative_prompt, init_image, stable_diffusion_mod
         gif_path = os.path.join(output_dir, gif_filename)
         export_to_gif(frames, gif_path)
 
-        return gif_path, None
+        return gif_path, f"GIF generated successfully. Seed used: {seed}"
 
     except Exception as e:
         return None, str(e)
@@ -2310,7 +2487,7 @@ def generate_image_pia(prompt, negative_prompt, init_image, stable_diffusion_mod
 
 
 def generate_video(init_image, output_format, video_settings_html, motion_bucket_id, noise_aug_strength, fps, num_frames, decode_chunk_size,
-                   iv2gen_xl_settings_html, prompt, negative_prompt, num_inference_steps, guidance_scale, stop_generation):
+                   iv2gen_xl_settings_html, prompt, negative_prompt, num_inference_steps, guidance_scale, seed, stop_generation):
     global stop_signal
     stop_signal = False
 
@@ -2338,14 +2515,27 @@ def generate_video(init_image, output_format, video_settings_html, motion_bucket
                 torch_dtype=torch.float16,
                 variant="fp16"
             )
-            pipe.to(device)
             pipe.enable_model_cpu_offload()
             pipe.unet.enable_forward_chunking()
+
+            if XFORMERS_AVAILABLE:
+                pipe.enable_xformers_memory_efficient_attention(attention_op=None)
+                pipe.vae.enable_xformers_memory_efficient_attention(attention_op=None)
+                pipe.unet.enable_xformers_memory_efficient_attention(attention_op=None)
+
+            pipe.to(device)
+            pipe.text_encoder.to(device)
+            pipe.vae.to(device)
+            pipe.unet.to(device)
 
             image = load_image(init_image)
             image = image.resize((1024, 576))
 
-            generator = torch.manual_seed(0)
+            if seed == "" or seed is None:
+                seed = random.randint(0, 2 ** 32 - 1)
+            else:
+                seed = int(seed)
+            generator = torch.Generator(device).manual_seed(seed)
             frames = pipe(image, decode_chunk_size=decode_chunk_size, generator=generator,
                           motion_bucket_id=motion_bucket_id, noise_aug_strength=noise_aug_strength, num_frames=num_frames).frames[0]
 
@@ -2356,7 +2546,7 @@ def generate_video(init_image, output_format, video_settings_html, motion_bucket
             video_path = os.path.join(video_dir, video_filename)
             export_to_video(frames, video_path, fps=fps)
 
-            return video_path, None, None
+            return video_path, None, f"MP4 generated successfully. Seed used: {seed}"
 
         finally:
             try:
@@ -2378,12 +2568,25 @@ def generate_video(init_image, output_format, video_settings_html, motion_bucket
         try:
             device = "cuda" if torch.cuda.is_available() else "cpu"
             pipe = I2VGenXLPipeline.from_pretrained(video_model_path, torch_dtype=torch.float16, variant="fp16")
-            pipe.to(device)
             pipe.enable_model_cpu_offload()
+
+            if XFORMERS_AVAILABLE:
+                pipe.enable_xformers_memory_efficient_attention(attention_op=None)
+                pipe.vae.enable_xformers_memory_efficient_attention(attention_op=None)
+                pipe.unet.enable_xformers_memory_efficient_attention(attention_op=None)
+
+            pipe.to(device)
+            pipe.text_encoder.to(device)
+            pipe.vae.to(device)
+            pipe.unet.to(device)
 
             image = load_image(init_image).convert("RGB")
 
-            generator = torch.manual_seed(0)
+            if seed == "" or seed is None:
+                seed = random.randint(0, 2 ** 32 - 1)
+            else:
+                seed = int(seed)
+            generator = torch.Generator(device).manual_seed(seed)
 
             frames = pipe(
                 prompt=prompt,
@@ -2401,7 +2604,7 @@ def generate_video(init_image, output_format, video_settings_html, motion_bucket
             video_path = os.path.join(video_dir, video_filename)
             export_to_gif(frames, video_path)
 
-            return None, video_path, None
+            return None, video_path, f"GIF generated successfully. Seed used: {seed}"
 
         finally:
             try:
@@ -2411,7 +2614,7 @@ def generate_video(init_image, output_format, video_settings_html, motion_bucket
             torch.cuda.empty_cache()
 
 
-def generate_image_ldm3d(prompt, negative_prompt, width, height, num_inference_steps, guidance_scale, num_images_per_prompt, output_format="png", stop_generation=None):
+def generate_image_ldm3d(prompt, negative_prompt, width, height, num_inference_steps, guidance_scale, num_images_per_prompt, seed, output_format="png", stop_generation=None):
     global stop_signal
     stop_signal = False
 
@@ -2428,7 +2631,23 @@ def generate_image_ldm3d(prompt, negative_prompt, width, height, num_inference_s
 
     try:
         pipe = StableDiffusionLDM3DPipeline.from_pretrained(ldm3d_model_path, torch_dtype=torch.float16)
-        pipe = pipe.to("cuda")
+        device = "cuda" if torch.cuda.is_available() else "cpu"
+
+        if XFORMERS_AVAILABLE:
+            pipe.enable_xformers_memory_efficient_attention(attention_op=None)
+            pipe.vae.enable_xformers_memory_efficient_attention(attention_op=None)
+            pipe.unet.enable_xformers_memory_efficient_attention(attention_op=None)
+
+        pipe.to(device)
+        pipe.text_encoder.to(device)
+        pipe.vae.to(device)
+        pipe.unet.to(device)
+
+        if seed == "" or seed is None:
+            seed = random.randint(0, 2 ** 32 - 1)
+        else:
+            seed = int(seed)
+        generator = torch.Generator(device).manual_seed(seed)
 
         compel_proc = Compel(tokenizer=pipe.tokenizer,
                              text_encoder=pipe.text_encoder)
@@ -2443,6 +2662,7 @@ def generate_image_ldm3d(prompt, negative_prompt, width, height, num_inference_s
             num_inference_steps=num_inference_steps,
             guidance_scale=guidance_scale,
             num_images_per_prompt=num_images_per_prompt,
+            generator=generator,
         )
 
         if stop_signal:
@@ -2468,7 +2688,7 @@ def generate_image_ldm3d(prompt, negative_prompt, width, height, num_inference_s
             rgb_image_paths.append(rgb_path)
             depth_image_paths.append(depth_path)
 
-        return rgb_image_paths, depth_image_paths, None
+        return rgb_image_paths, depth_image_paths, f"Images generated successfully. Seed used: {seed}"
 
     except Exception as e:
         return None, None, str(e)
@@ -2478,7 +2698,7 @@ def generate_image_ldm3d(prompt, negative_prompt, width, height, num_inference_s
         torch.cuda.empty_cache()
 
 
-def generate_image_sd3_txt2img(prompt, negative_prompt, stable_diffusion_sampler, num_inference_steps, guidance_scale, width, height, max_sequence_length, num_images_per_prompt, output_format="png", stop_generation=None):
+def generate_image_sd3_txt2img(prompt, negative_prompt, stable_diffusion_sampler, num_inference_steps, guidance_scale, width, height, max_sequence_length, clip_skip, num_images_per_prompt, seed, output_format="png", stop_generation=None):
     global stop_signal
     stop_signal = False
 
@@ -2514,7 +2734,11 @@ def generate_image_sd3_txt2img(prompt, negative_prompt, stable_diffusion_sampler
         pipe.vae.to(device)
         pipe.unet.to(device)
 
-        pipe.safety_checker = None
+        if seed == "" or seed is None:
+            seed = random.randint(0, 2 ** 32 - 1)
+        else:
+            seed = int(seed)
+        generator = torch.Generator(device).manual_seed(seed)
 
         compel = Compel(
             tokenizer=[pipe.tokenizer, pipe.tokenizer_2],
@@ -2535,6 +2759,8 @@ def generate_image_sd3_txt2img(prompt, negative_prompt, stable_diffusion_sampler
             max_sequence_length=max_sequence_length,
             num_images_per_prompt=num_images_per_prompt,
             sampler=stable_diffusion_sampler,
+            clip_skip=clip_skip,
+            generator=generator,
         ).images
 
         if stop_signal:
@@ -2550,14 +2776,14 @@ def generate_image_sd3_txt2img(prompt, negative_prompt, stable_diffusion_sampler
             image.save(image_path, format=output_format.upper())
             image_paths.append(image_path)
 
-        return image_paths, None
+        return image_paths, f"Images generated successfully. Seed used: {seed}"
 
     finally:
         del pipe
         torch.cuda.empty_cache()
 
 
-def generate_image_sd3_img2img(prompt, negative_prompt, init_image, strength, stable_diffusion_sampler, num_inference_steps, guidance_scale, width, height, max_sequence_length, num_images_per_prompt, output_format="png", stop_generation=None):
+def generate_image_sd3_img2img(prompt, negative_prompt, init_image, strength, stable_diffusion_sampler, num_inference_steps, guidance_scale, width, height, max_sequence_length, clip_skip, num_images_per_prompt, seed, output_format="png", stop_generation=None):
     global stop_signal
     stop_signal = False
 
@@ -2595,7 +2821,11 @@ def generate_image_sd3_img2img(prompt, negative_prompt, init_image, strength, st
         pipe.vae.to(device)
         pipe.unet.to(device)
 
-        pipe.safety_checker = None
+        if seed == "" or seed is None:
+            seed = random.randint(0, 2 ** 32 - 1)
+        else:
+            seed = int(seed)
+        generator = torch.Generator(device).manual_seed(seed)
 
         compel = Compel(
             tokenizer=[pipe.tokenizer, pipe.tokenizer_2],
@@ -2616,6 +2846,8 @@ def generate_image_sd3_img2img(prompt, negative_prompt, init_image, strength, st
             max_sequence_length=max_sequence_length,
             num_images_per_prompt=num_images_per_prompt,
             sampler=stable_diffusion_sampler,
+            clip_skip=clip_skip,
+            generator=generator,
         ).images
 
         if stop_signal:
@@ -2631,14 +2863,14 @@ def generate_image_sd3_img2img(prompt, negative_prompt, init_image, strength, st
             image.save(image_path, format=output_format.upper())
             image_paths.append(image_path)
 
-        return image_paths, None
+        return image_paths, f"Images generated successfully. Seed used: {seed}"
 
     finally:
         del pipe
         torch.cuda.empty_cache()
 
 
-def generate_image_sd3_controlnet(prompt, negative_prompt, init_image, controlnet_model, stable_diffusion_sampler, num_inference_steps, guidance_scale, controlnet_conditioning_scale, width, height, max_sequence_length, num_images_per_prompt, output_format="png", stop_generation=None):
+def generate_image_sd3_controlnet(prompt, negative_prompt, init_image, controlnet_model, stable_diffusion_sampler, num_inference_steps, guidance_scale, controlnet_conditioning_scale, width, height, max_sequence_length, clip_skip, num_images_per_prompt, seed, output_format="png", stop_generation=None):
     global stop_signal
     stop_signal = False
 
@@ -2669,7 +2901,6 @@ def generate_image_sd3_controlnet(prompt, negative_prompt, init_image, controlne
             controlnet=controlnet,
             torch_dtype=torch.float16
         )
-        pipe.to("cuda")
 
         init_image = Image.open(init_image).convert("RGB")
         init_image = init_image.resize((width, height))
@@ -2693,7 +2924,11 @@ def generate_image_sd3_controlnet(prompt, negative_prompt, init_image, controlne
         pipe.vae.to(device)
         pipe.unet.to(device)
 
-        pipe.safety_checker = None
+        if seed == "" or seed is None:
+            seed = random.randint(0, 2 ** 32 - 1)
+        else:
+            seed = int(seed)
+        generator = torch.Generator(device).manual_seed(seed)
 
         compel = Compel(
             tokenizer=[pipe.tokenizer, pipe.tokenizer_2],
@@ -2715,6 +2950,8 @@ def generate_image_sd3_controlnet(prompt, negative_prompt, init_image, controlne
             max_sequence_length=max_sequence_length,
             num_images_per_prompt=num_images_per_prompt,
             sampler=stable_diffusion_sampler,
+            clip_skip=clip_skip,
+            generator=generator,
         ).images
 
         if stop_signal:
@@ -2737,14 +2974,14 @@ def generate_image_sd3_controlnet(prompt, negative_prompt, init_image, controlne
             control_image.save(control_image_path, format=output_format.upper())
             control_image_paths.append(control_image_path)
 
-        return image_paths, control_image_paths, None
+        return image_paths, control_image_paths, f"Images generated successfully. Seed used: {seed}"
 
     finally:
         del pipe
         torch.cuda.empty_cache()
 
 
-def generate_image_sd3_inpaint(prompt, negative_prompt, init_image, mask_image, stable_diffusion_sampler, num_inference_steps, guidance_scale, width, height, max_sequence_length, num_images_per_prompt, output_format="png", stop_generation=None):
+def generate_image_sd3_inpaint(prompt, negative_prompt, init_image, mask_image, stable_diffusion_sampler, num_inference_steps, guidance_scale, width, height, max_sequence_length, clip_skip, num_images_per_prompt, seed, output_format="png", stop_generation=None):
     global stop_signal
     stop_signal = False
 
@@ -2785,7 +3022,11 @@ def generate_image_sd3_inpaint(prompt, negative_prompt, init_image, mask_image, 
         pipe.vae.to(device)
         pipe.unet.to(device)
 
-        pipe.safety_checker = None
+        if seed == "" or seed is None:
+            seed = random.randint(0, 2 ** 32 - 1)
+        else:
+            seed = int(seed)
+        generator = torch.Generator(device).manual_seed(seed)
 
         compel = Compel(
             tokenizer=[pipe.tokenizer, pipe.tokenizer_2],
@@ -2806,6 +3047,8 @@ def generate_image_sd3_inpaint(prompt, negative_prompt, init_image, mask_image, 
             max_sequence_length=max_sequence_length,
             num_images_per_prompt=num_images_per_prompt,
             sampler=stable_diffusion_sampler,
+            clip_skip=clip_skip,
+            generator=generator,
         ).images
 
         if stop_signal:
@@ -2821,7 +3064,7 @@ def generate_image_sd3_inpaint(prompt, negative_prompt, init_image, mask_image, 
             image.save(image_path, format=output_format.upper())
             image_paths.append(image_path)
 
-        return image_paths, None
+        return image_paths, f"Images generated successfully. Seed used: {seed}"
 
     finally:
         del pipe
@@ -2829,7 +3072,7 @@ def generate_image_sd3_inpaint(prompt, negative_prompt, init_image, mask_image, 
 
 
 def generate_image_cascade(prompt, negative_prompt, stable_cascade_settings_html, width, height, prior_steps, prior_guidance_scale,
-                           decoder_steps, decoder_guidance_scale, num_images_per_prompt, output_format="png",
+                           decoder_steps, decoder_guidance_scale, num_images_per_prompt, seed, output_format="png",
                            stop_generation=None):
     global stop_signal
     stop_signal = False
@@ -2860,6 +3103,31 @@ def generate_image_cascade(prompt, negative_prompt, stable_cascade_settings_html
     prior.enable_model_cpu_offload()
     decoder.enable_model_cpu_offload()
 
+    if XFORMERS_AVAILABLE:
+        prior.enable_xformers_memory_efficient_attention(attention_op=None)
+        prior.vae.enable_xformers_memory_efficient_attention(attention_op=None)
+        prior.unet.enable_xformers_memory_efficient_attention(attention_op=None)
+
+        decoder.enable_xformers_memory_efficient_attention(attention_op=None)
+        decoder.vae.enable_xformers_memory_efficient_attention(attention_op=None)
+        decoder.unet.enable_xformers_memory_efficient_attention(attention_op=None)
+
+    prior.to(device)
+    prior.text_encoder.to(device)
+    prior.vae.to(device)
+    prior.unet.to(device)
+
+    decoder.to(device)
+    decoder.text_encoder.to(device)
+    decoder.vae.to(device)
+    decoder.unet.to(device)
+
+    if seed == "" or seed is None:
+        seed = random.randint(0, 2 ** 32 - 1)
+    else:
+        seed = int(seed)
+    generator = torch.Generator(device).manual_seed(seed)
+
     try:
         compel = Compel(
             tokenizer=[prior.tokenizer, prior.tokenizer_2],
@@ -2877,7 +3145,8 @@ def generate_image_cascade(prompt, negative_prompt, stable_cascade_settings_html
             negative_prompt=negative_prompt,
             guidance_scale=prior_guidance_scale,
             num_images_per_prompt=num_images_per_prompt,
-            num_inference_steps=prior_steps
+            num_inference_steps=prior_steps,
+            generator=generator,
         )
 
         if stop_signal:
@@ -2914,7 +3183,7 @@ def generate_image_cascade(prompt, negative_prompt, stable_cascade_settings_html
             image.save(image_path, format=output_format.upper())
             image_paths.append(image_path)
 
-        return image_paths, None
+        return image_paths, f"Images generated successfully. Seed used: {seed}"
 
     finally:
         del prior
@@ -5473,7 +5742,6 @@ txt2img_interface = gr.Interface(
         gr.Slider(minimum=256, maximum=2048, value=512, step=64, label="Width"),
         gr.Slider(minimum=256, maximum=2048, value=512, step=64, label="Height"),
         gr.Slider(minimum=1, maximum=4, value=1, step=1, label="Clip skip"),
-        gr.Textbox(label="Seed (optional)", value=""),
         gr.Slider(minimum=1, maximum=4, value=1, step=1, label="Number of images to generate"),
         gr.Checkbox(label="Enable FreeU", value=False),
         gr.Slider(minimum=0.1, maximum=4, value=0.9, step=0.1, label="FreeU-S1"),
@@ -5485,6 +5753,7 @@ txt2img_interface = gr.Interface(
         gr.Checkbox(label="Enable PAG", value=False),
         gr.Slider(minimum=0.0, maximum=1.0, value=0.3, step=0.01, label="PAG Scale"),
         gr.Checkbox(label="Enable Tiled VAE", value=False),
+        gr.Textbox(label="Seed (optional)", value=""),
         gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
         gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
@@ -5516,6 +5785,7 @@ img2img_interface = gr.Interface(
         gr.Slider(minimum=1.0, maximum=30.0, value=8, step=0.1, label="CFG"),
         gr.Slider(minimum=1, maximum=4, value=1, step=1, label="Clip skip"),
         gr.Slider(minimum=1, maximum=4, value=1, step=1, label="Number of images to generate"),
+        gr.Textbox(label="Seed (optional)", value=""),
         gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
         gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
@@ -5538,7 +5808,9 @@ depth2img_interface = gr.Interface(
         gr.Image(label="Initial image", type="filepath"),
         gr.HTML("<h3>StableDiffusion Settings</h3>"),
         gr.Slider(minimum=0.0, maximum=1.0, value=0.7, step=0.01, label="Strength"),
+        gr.Slider(minimum=1, maximum=4, value=1, step=1, label="Clip skip"),
         gr.Slider(minimum=1, maximum=4, value=1, step=1, label="Number of images to generate"),
+        gr.Textbox(label="Seed (optional)", value=""),
         gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
         gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
@@ -5560,7 +5832,9 @@ pix2pix_interface = gr.Interface(
         gr.Image(label="Initial image", type="filepath"),
         gr.Slider(minimum=1, maximum=100, value=30, step=1, label="Steps"),
         gr.Slider(minimum=1.0, maximum=30.0, value=8, step=0.1, label="CFG"),
+        gr.Slider(minimum=1, maximum=4, value=1, step=1, label="Clip skip"),
         gr.Slider(minimum=1, maximum=4, value=1, step=1, label="Number of images to generate"),
+        gr.Textbox(label="Seed (optional)", value=""),
         gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
         gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
@@ -5591,7 +5865,9 @@ controlnet_interface = gr.Interface(
         gr.Slider(minimum=256, maximum=2048, value=512, step=64, label="Width"),
         gr.Slider(minimum=256, maximum=2048, value=512, step=64, label="Height"),
         gr.Slider(minimum=0.1, maximum=1.0, value=0.5, step=0.1, label="ControlNet conditioning scale"),
+        gr.Slider(minimum=1, maximum=4, value=1, step=1, label="Clip skip"),
         gr.Slider(minimum=1, maximum=4, value=1, step=1, label="Number of images to generate"),
+        gr.Textbox(label="Seed (optional)", value=""),
         gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
         gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
@@ -5614,12 +5890,11 @@ latent_upscale_interface = gr.Interface(
         gr.Radio(choices=["x2", "x4"], label="Upscale size", value="x2"),
         gr.Slider(minimum=1, maximum=100, value=50, step=1, label="Steps"),
         gr.Slider(minimum=1.0, maximum=30.0, value=8, step=0.1, label="CFG"),
-        gr.Slider(minimum=1, maximum=4, value=1, step=1, label="Number of images to generate"),
         gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
         gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
     outputs=[
-        gr.Gallery(label="Generated images", elem_id="gallery", columns=[2], rows=[2], object_fit="contain", height="auto"),
+        gr.Image(type="filepath", label="Upscaled image"),
         gr.Textbox(label="Message", type="text"),
     ],
     title="NeuroSandboxWebUI (ALPHA) - StableDiffusion (upscale-latent)",
@@ -5662,7 +5937,9 @@ inpaint_interface = gr.Interface(
         gr.Slider(minimum=1.0, maximum=30.0, value=8, step=0.1, label="CFG"),
         gr.Slider(minimum=256, maximum=2048, value=512, step=64, label="Width"),
         gr.Slider(minimum=256, maximum=2048, value=512, step=64, label="Height"),
+        gr.Slider(minimum=1, maximum=4, value=1, step=1, label="Clip skip"),
         gr.Slider(minimum=1, maximum=4, value=1, step=1, label="Number of images to generate"),
+        gr.Textbox(label="Seed (optional)", value=""),
         gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
         gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
@@ -5692,7 +5969,9 @@ outpaint_interface = gr.Interface(
         gr.Slider(minimum=1.0, maximum=30.0, value=8, step=0.1, label="CFG"),
         gr.Radio(choices=["left", "right", "up", "down"], label="Outpaint direction", value="right"),
         gr.Slider(minimum=10, maximum=200, value=50, step=1, label="Expansion percentage"),
+        gr.Slider(minimum=1, maximum=4, value=1, step=1, label="Clip skip"),
         gr.Slider(minimum=1, maximum=4, value=1, step=1, label="Number of images to generate"),
+        gr.Textbox(label="Seed (optional)", value=""),
         gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
         gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
@@ -5726,6 +6005,7 @@ gligen_interface = gr.Interface(
         gr.Slider(minimum=256, maximum=2048, value=512, step=64, label="Height"),
         gr.Slider(minimum=1, maximum=4, value=1, step=1, label="Clip skip"),
         gr.Slider(minimum=1, maximum=4, value=1, step=1, label="Number of images to generate"),
+        gr.Textbox(label="Seed (optional)", value=""),
         gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
         gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
@@ -5752,11 +6032,13 @@ animatediff_interface = gr.Interface(
                     label="Select sampler", value="euler_ancestral"),
         gr.Dropdown(choices=stable_diffusion_models_list, label="Select StableDiffusion model (only SD1.5)", value=None),
         gr.Dropdown(choices=[None, "zoom-in", "zoom-out", "tilt-up", "tilt-down", "pan-right", "pan-left"], label="Select Motion LORA", value=None, multiselect=True),
-        gr.Slider(minimum=1, maximum=200, value=20, step=1, label="Frames"),
+        gr.Slider(minimum=2, maximum=25, value=16, step=1, label="Frames"),
         gr.Slider(minimum=1, maximum=100, value=30, step=1, label="Steps"),
         gr.Slider(minimum=1.0, maximum=30.0, value=8, step=0.1, label="Guidance Scale"),
-        gr.Slider(minimum=256, maximum=1024, value=512, step=64, label="Width"),
-        gr.Slider(minimum=256, maximum=1024, value=512, step=64, label="Height"),
+        gr.Slider(minimum=256, maximum=2048, value=512, step=64, label="Width"),
+        gr.Slider(minimum=256, maximum=2048, value=512, step=64, label="Height"),
+        gr.Slider(minimum=1, maximum=4, value=1, step=1, label="Clip skip"),
+        gr.Textbox(label="Seed (optional)", value=""),
         gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
     outputs=[
@@ -5783,6 +6065,8 @@ pia_interface = gr.Interface(
         gr.Slider(minimum=1.0, maximum=30.0, value=8, step=0.1, label="Guidance Scale"),
         gr.Slider(minimum=256, maximum=1024, value=512, step=64, label="Height"),
         gr.Slider(minimum=256, maximum=1024, value=768, step=64, label="Width"),
+        gr.Slider(minimum=1, maximum=4, value=1, step=1, label="Clip skip"),
+        gr.Textbox(label="Seed (optional)", value=""),
         gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
     outputs=[
@@ -5812,6 +6096,7 @@ video_interface = gr.Interface(
         gr.Textbox(label="Negative Prompt", value=""),
         gr.Slider(minimum=1, maximum=100, value=50, step=1, label="Steps"),
         gr.Slider(minimum=1.0, maximum=30.0, value=9.0, step=0.1, label="CFG"),
+        gr.Textbox(label="Seed (optional)", value=""),
         gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
     outputs=[
@@ -5836,6 +6121,7 @@ ldm3d_interface = gr.Interface(
         gr.Slider(minimum=1, maximum=100, value=40, step=1, label="Steps"),
         gr.Slider(minimum=1.0, maximum=30.0, value=8, step=0.1, label="Guidance Scale"),
         gr.Slider(minimum=1, maximum=4, value=1, step=1, label="Number of images to generate"),
+        gr.Textbox(label="Seed (optional)", value=""),
         gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
         gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
@@ -5863,7 +6149,9 @@ sd3_txt2img_interface = gr.Interface(
         gr.Slider(minimum=256, maximum=2048, value=1024, step=64, label="Width"),
         gr.Slider(minimum=256, maximum=2048, value=1024, step=64, label="Height"),
         gr.Slider(minimum=64, maximum=2048, value=256, label="Max Length"),
+        gr.Slider(minimum=1, maximum=4, value=1, step=1, label="Clip skip"),
         gr.Slider(minimum=1, maximum=4, value=1, step=1, label="Number of images to generate"),
+        gr.Textbox(label="Seed (optional)", value=""),
         gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
         gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
@@ -5892,7 +6180,9 @@ sd3_img2img_interface = gr.Interface(
         gr.Slider(minimum=256, maximum=2048, value=1024, step=64, label="Width"),
         gr.Slider(minimum=256, maximum=2048, value=1024, step=64, label="Height"),
         gr.Slider(minimum=64, maximum=2048, value=256, label="Max Length"),
+        gr.Slider(minimum=1, maximum=4, value=1, step=1, label="Clip skip"),
         gr.Slider(minimum=1, maximum=4, value=1, step=1, label="Number of images to generate"),
+        gr.Textbox(label="Seed (optional)", value=""),
         gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
         gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
@@ -5922,7 +6212,9 @@ sd3_controlnet_interface = gr.Interface(
         gr.Slider(minimum=256, maximum=2048, value=1024, step=64, label="Width"),
         gr.Slider(minimum=256, maximum=2048, value=1024, step=64, label="Height"),
         gr.Slider(minimum=64, maximum=2048, value=256, label="Max Length"),
+        gr.Slider(minimum=1, maximum=4, value=1, step=1, label="Clip skip"),
         gr.Slider(minimum=1, maximum=4, value=1, step=1, label="Number of images to generate"),
+        gr.Textbox(label="Seed (optional)", value=""),
         gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
         gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
@@ -5952,7 +6244,9 @@ sd3_inpaint_interface = gr.Interface(
         gr.Slider(minimum=256, maximum=2048, value=1024, step=64, label="Width"),
         gr.Slider(minimum=256, maximum=2048, value=1024, step=64, label="Height"),
         gr.Slider(minimum=64, maximum=2048, value=256, label="Max Length"),
+        gr.Slider(minimum=1, maximum=4, value=1, step=1, label="Clip skip"),
         gr.Slider(minimum=1, maximum=4, value=1, step=1, label="Number of images to generate"),
+        gr.Textbox(label="Seed (optional)", value=""),
         gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
         gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
@@ -5980,6 +6274,7 @@ cascade_interface = gr.Interface(
         gr.Slider(minimum=1, maximum=100, value=20, step=1, label="Decoder Steps"),
         gr.Slider(minimum=0.0, maximum=30.0, value=8.0, step=0.1, label="Decoder Guidance Scale"),
         gr.Slider(minimum=1, maximum=4, value=1, step=1, label="Number of images to generate"),
+        gr.Textbox(label="Seed (optional)", value=""),
         gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
         gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
