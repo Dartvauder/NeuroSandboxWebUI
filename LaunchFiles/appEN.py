@@ -885,7 +885,7 @@ def generate_wav2lip(image_path, audio_path, fps, pads, face_det_batch_size, wav
         return None, str(e)
 
 
-def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name, vae_model_name, lora_model_names, textual_inversion_model_names, stable_diffusion_settings_html,
+def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name, vae_model_name, lora_model_names, lora_scales, textual_inversion_model_names, stable_diffusion_settings_html,
                            stable_diffusion_model_type, stable_diffusion_sampler, stable_diffusion_steps,
                            stable_diffusion_cfg, stable_diffusion_width, stable_diffusion_height,
                            stable_diffusion_clip_skip, num_images_per_prompt, enable_freeu, freeu_s1, freeu_s2, freeu_b1, freeu_b2, enable_sag, sag_scale, enable_pag, pag_scale, enable_tiled_vae, seed, output_format="png", stop_generation=None):
@@ -967,17 +967,66 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
                                                  variant="fp16")
             stable_diffusion_model.vae = vae.to(device)
 
-    if lora_model_names is not None:
-        for lora_model_name in lora_model_names:
-            lora_model_path = os.path.join("inputs", "image", "sd_models", "lora", lora_model_name)
-            stable_diffusion_model.load_lora_weights(lora_model_path)
+    if isinstance(lora_scales, str):
+        lora_scales = [float(scale.strip()) for scale in lora_scales.split(',') if scale.strip()]
+    elif isinstance(lora_scales, (int, float)):
+        lora_scales = [float(lora_scales)]
 
-    if textual_inversion_model_names is not None:
+    lora_loaded = False
+    if lora_model_names and lora_scales:
+        if len(lora_model_names) != len(lora_scales):
+            print(
+                f"Warning: Number of LoRA models ({len(lora_model_names)}) does not match number of scales ({len(lora_scales)}). Using available scales.")
+
+        for i, lora_model_name in enumerate(lora_model_names):
+            if i < len(lora_scales):
+                lora_scale = lora_scales[i]
+            else:
+                lora_scale = 1.0
+
+            lora_model_path = os.path.join("inputs", "image", "sd_models", "lora", lora_model_name)
+            if os.path.exists(lora_model_path):
+                adapter_name = os.path.splitext(os.path.basename(lora_model_name))[0]
+                try:
+                    stable_diffusion_model.load_lora_weights(lora_model_path, adapter_name=adapter_name)
+                    stable_diffusion_model.fuse_lora(lora_scale=lora_scale)
+                    lora_loaded = True
+                    print(f"Loaded LoRA {lora_model_name} with scale {lora_scale}")
+                except Exception as e:
+                    print(f"Error loading LoRA {lora_model_name}: {str(e)}")
+
+    # Textual Inversion processing
+    ti_loaded = False
+    if textual_inversion_model_names:
         for textual_inversion_model_name in textual_inversion_model_names:
             textual_inversion_model_path = os.path.join("inputs", "image", "sd_models", "embedding",
                                                         textual_inversion_model_name)
             if os.path.exists(textual_inversion_model_path):
-                stable_diffusion_model.load_textual_inversion(textual_inversion_model_path)
+                try:
+                    token = f"<{os.path.splitext(textual_inversion_model_name)[0]}>"
+                    stable_diffusion_model.load_textual_inversion(textual_inversion_model_path, token=token)
+                    ti_loaded = True
+                    print(f"Loaded textual inversion: {token}")
+                except Exception as e:
+                    print(f"Error loading Textual Inversion {textual_inversion_model_name}: {str(e)}")
+
+    def process_prompt_with_ti(input_prompt, textual_inversion_model_names):
+        processed_prompt = input_prompt
+        for ti_name in textual_inversion_model_names:
+            base_name = os.path.splitext(ti_name)[0]
+            token = f"<{base_name}>"
+            if base_name in processed_prompt or token.lower() in processed_prompt or token.upper() in processed_prompt:
+                processed_prompt = processed_prompt.replace(base_name, token)
+                processed_prompt = processed_prompt.replace(token.lower(), token)
+                processed_prompt = processed_prompt.replace(token.upper(), token)
+                print(f"Applied Textual Inversion token: {token}")
+
+        if processed_prompt != input_prompt:
+            print(f"Prompt changed from '{input_prompt}' to '{processed_prompt}'")
+        else:
+            print("No Textual Inversion tokens applied to this prompt")
+
+        return processed_prompt
 
     try:
         if seed == "" or seed is None:
@@ -986,6 +1035,9 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
             seed = int(seed)
         generator = torch.Generator(device).manual_seed(seed)
 
+        processed_prompt = process_prompt_with_ti(prompt, textual_inversion_model_names)
+        processed_negative_prompt = process_prompt_with_ti(negative_prompt, textual_inversion_model_names)
+
         if stable_diffusion_model_type == "SDXL":
             compel = Compel(
                 tokenizer=[stable_diffusion_model.tokenizer, stable_diffusion_model.tokenizer_2],
@@ -993,7 +1045,8 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
                 returned_embeddings_type=ReturnedEmbeddingsType.PENULTIMATE_HIDDEN_STATES_NON_NORMALIZED,
                 requires_pooled=[False, True]
             )
-            prompt_embeds, pooled_prompt_embeds = compel(prompt)
+            prompt_embeds, pooled_prompt_embeds = compel(processed_prompt)
+            negative_prompt = processed_negative_prompt
             images = stable_diffusion_model(prompt_embeds=prompt_embeds, pooled_prompt_embeds=pooled_prompt_embeds,
                                             negative_prompt=negative_prompt,
                                             num_inference_steps=stable_diffusion_steps,
@@ -1030,8 +1083,8 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
         else:
             compel_proc = Compel(tokenizer=stable_diffusion_model.tokenizer,
                                  text_encoder=stable_diffusion_model.text_encoder)
-            prompt_embeds = compel_proc(prompt)
-            negative_prompt_embeds = compel_proc(negative_prompt)
+            prompt_embeds = compel_proc(processed_prompt)
+            negative_prompt_embeds = compel_proc(processed_negative_prompt)
 
             images = stable_diffusion_model(prompt_embeds=prompt_embeds, negative_prompt_embeds=negative_prompt_embeds,
                                             num_inference_steps=stable_diffusion_steps,
@@ -2228,6 +2281,7 @@ def generate_image_animatediff(prompt, negative_prompt, input_video, strength, m
 
                 pipe.enable_vae_slicing()
                 pipe.enable_model_cpu_offload()
+                pipe.enable_free_init(method="butterworth", use_fast_sampling=False)
 
                 if XFORMERS_AVAILABLE:
                     stable_diffusion_model.enable_xformers_memory_efficient_attention(attention_op=None)
@@ -2306,6 +2360,7 @@ def generate_image_animatediff(prompt, negative_prompt, input_video, strength, m
 
                 pipe.enable_vae_slicing()
                 pipe.enable_model_cpu_offload()
+                pipe.enable_free_init(method="butterworth", use_fast_sampling=False)
 
                 if XFORMERS_AVAILABLE:
                     stable_diffusion_model.enable_xformers_memory_efficient_attention(attention_op=None)
@@ -2355,6 +2410,7 @@ def generate_image_animatediff(prompt, negative_prompt, input_video, strength, m
 
             pipe.enable_vae_slicing()
             pipe.enable_vae_tiling()
+            pipe.enable_free_init(method="butterworth", use_fast_sampling=False)
 
             if XFORMERS_AVAILABLE:
                 pipe.enable_xformers_memory_efficient_attention(attention_op=None)
@@ -5751,6 +5807,7 @@ txt2img_interface = gr.Interface(
         gr.Dropdown(choices=stable_diffusion_models_list, label="Select StableDiffusion model", value=None),
         gr.Dropdown(choices=vae_models_list, label="Select VAE model (optional)", value=None),
         gr.Dropdown(choices=lora_models_list, label="Select LORA models (optional)", value=None, multiselect=True),
+        gr.Textbox(label="LoRA Scales"),
         gr.Dropdown(choices=textual_inversion_models_list, label="Select Embedding models (optional)", value=None, multiselect=True),
         gr.HTML("<h3>StableDiffusion Settings</h3>"),
         gr.Radio(choices=["SD", "SD2", "SDXL"], label="Select model type", value="SD"),
