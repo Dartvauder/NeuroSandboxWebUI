@@ -1011,6 +1011,9 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
                     print(f"Error loading Textual Inversion {textual_inversion_model_name}: {str(e)}")
 
     def process_prompt_with_ti(input_prompt, textual_inversion_model_names):
+        if not textual_inversion_model_names:
+            return input_prompt
+
         processed_prompt = input_prompt
         for ti_name in textual_inversion_model_names:
             base_name = os.path.splitext(ti_name)[0]
