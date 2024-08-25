@@ -2499,7 +2499,7 @@ def generate_image_pia(prompt, negative_prompt, init_image, stable_diffusion_mod
 
     try:
         adapter = MotionAdapter.from_pretrained(pia_adapter_path)
-        pipe = PIAPipeline.from_pretrained(stable_diffusion_model_path, motion_adapter=adapter)
+        pipe = PIAPipeline.from_single_file(stable_diffusion_model_path, motion_adapter=adapter)
 
         pipe.enable_free_init(method="butterworth", use_fast_sampling=True)
         pipe.enable_model_cpu_offload()
@@ -6144,7 +6144,7 @@ pia_interface = gr.Interface(
         gr.Image(label="Initial image", type="filepath"),
         gr.Dropdown(choices=stable_diffusion_models_list, label="Select StableDiffusion model", value=None),
         gr.Slider(minimum=0.0, maximum=1.0, value=0.8, step=0.01, label="Strength"),
-        gr.Slider(minimum=1, maximum=100, value=16, step=1, label="Number of frames"),
+        gr.Slider(minimum=1, maximum=25, value=16, step=1, label="Number of frames"),
         gr.Slider(minimum=1, maximum=100, value=40, step=1, label="Steps"),
         gr.Slider(minimum=1.0, maximum=30.0, value=8, step=0.1, label="Guidance Scale"),
         gr.Slider(minimum=256, maximum=1024, value=512, step=64, label="Height"),
