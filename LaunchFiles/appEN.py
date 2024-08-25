@@ -57,7 +57,7 @@ from audiocraft.models import MusicGen, AudioGen, MultiBandDiffusion, MAGNeT
 from audiocraft.data.audio import audio_write
 import psutil
 import GPUtil
-from cpuinfo import get_cpu_info
+import WinTmp
 from pynvml import nvmlInit, nvmlDeviceGetHandleByIndex, nvmlDeviceGetTemperature, NVML_TEMPERATURE_GPU
 
 XFORMERS_AVAILABLE = False
@@ -2957,7 +2957,7 @@ def generate_image_sd3_controlnet(prompt, negative_prompt, init_image, controlne
         return None, None, "Please upload an initial image!"
 
     sd3_model_path = os.path.join("inputs", "image", "sd_models", "sd3")
-    controlnet_path = os.path.join("inputs", "image", "sd_models", "controlnet", f"sd3_{controlnet_model}")
+    controlnet_path = os.path.join("inputs", "image", "sd_models", "sd3", "controlnet", f"sd3_{controlnet_model}")
 
     if not os.path.exists(sd3_model_path):
         print("Downloading Stable Diffusion 3 model...")
@@ -3544,7 +3544,7 @@ def generate_image_kandinsky_txt2img(prompt, negative_prompt, version, num_infer
     if not prompt:
         return None, "Please enter a prompt!"
 
-    kandinsky_model_path = os.path.join("inputs", "image", "sd_models", "kandinsky")
+    kandinsky_model_path = os.path.join("inputs", "image", "kandinsky")
 
     if not os.path.exists(kandinsky_model_path):
         print(f"Downloading Kandinsky {version} model...")
@@ -3658,7 +3658,7 @@ def generate_image_kandinsky_img2img(prompt, negative_prompt, init_image, versio
     if not prompt or not init_image:
         return None, "Please enter a prompt and upload an initial image!"
 
-    kandinsky_model_path = os.path.join("inputs", "image", "sd_models", "kandinsky")
+    kandinsky_model_path = os.path.join("inputs", "image", "kandinsky")
 
     if not os.path.exists(kandinsky_model_path):
         print(f"Downloading Kandinsky {version} model...")
@@ -3774,7 +3774,7 @@ def generate_image_kandinsky_inpaint(prompt, negative_prompt, init_image, mask_i
     if not prompt or not init_image or not mask_image:
         return None, "Please enter a prompt, upload an initial image, and provide a mask image!"
 
-    kandinsky_model_path = os.path.join("inputs", "image", "sd_models", "kandinsky")
+    kandinsky_model_path = os.path.join("inputs", "image", "kandinsky")
 
     if not os.path.exists(kandinsky_model_path):
         print(f"Downloading Kandinsky {version} model...")
@@ -3853,7 +3853,7 @@ def generate_image_flux(prompt, model_name, guidance_scale, height, width, num_i
     if not model_name:
         return None, "Please select a Flux model!"
 
-    flux_model_path = os.path.join("inputs", "image", "sd_models", "flux", model_name)
+    flux_model_path = os.path.join("inputs", "image", "flux", model_name)
 
     if not os.path.exists(flux_model_path):
         print(f"Downloading Flux {model_name} model...")
@@ -3915,7 +3915,7 @@ def generate_image_hunyuandit(prompt, negative_prompt, num_inference_steps, guid
     if not prompt:
         return None, "Please enter a prompt!"
 
-    hunyuandit_model_path = os.path.join("inputs", "image", "sd_models", "hunyuandit")
+    hunyuandit_model_path = os.path.join("inputs", "image", "hunyuandit")
 
     if not os.path.exists(hunyuandit_model_path):
         print("Downloading HunyuanDiT model...")
@@ -3964,7 +3964,7 @@ def generate_image_lumina(prompt, negative_prompt, num_inference_steps, guidance
     if not prompt:
         return None, "Please enter a prompt!"
 
-    lumina_model_path = os.path.join("inputs", "image", "sd_models", "lumina")
+    lumina_model_path = os.path.join("inputs", "image", "lumina")
 
     if not os.path.exists(lumina_model_path):
         print("Downloading Lumina-T2X model...")
@@ -4015,7 +4015,7 @@ def generate_image_kolors(prompt, negative_prompt, guidance_scale, num_inference
     if not prompt:
         return None, "Please enter a prompt!"
 
-    kolors_model_path = os.path.join("inputs", "image", "sd_models", "kolors")
+    kolors_model_path = os.path.join("inputs", "image", "kolors")
 
     if not os.path.exists(kolors_model_path):
         print("Downloading Kolors model...")
@@ -4062,8 +4062,8 @@ def generate_image_auraflow(prompt, negative_prompt, num_inference_steps, guidan
     if not prompt:
         return None, "Please enter a prompt!"
 
-    auraflow_model_path = os.path.join("inputs", "image", "sd_models", "auraflow")
-    aurasr_model_path = os.path.join("inputs", "image", "sd_models", "auraflow", "aurasr")
+    auraflow_model_path = os.path.join("inputs", "image", "auraflow")
+    aurasr_model_path = os.path.join("inputs", "image", "auraflow", "aurasr")
 
     if not os.path.exists(auraflow_model_path):
         print("Downloading AuraFlow model...")
@@ -4123,7 +4123,7 @@ def generate_image_wurstchen(prompt, negative_prompt, width, height, prior_steps
     if not prompt:
         return None, "Please enter a prompt!"
 
-    wurstchen_model_path = os.path.join("inputs", "image", "sd_models", "wurstchen")
+    wurstchen_model_path = os.path.join("inputs", "image", "wurstchen")
 
     if not os.path.exists(wurstchen_model_path):
         print("Downloading Würstchen models...")
@@ -4199,8 +4199,8 @@ def generate_image_deepfloyd_txt2img(prompt, negative_prompt, num_inference_step
     if not prompt:
         return None, None, None, "Please enter a prompt!"
 
-    deepfloydI_model_path = os.path.join("inputs", "image", "sd_models", "deepfloydI")
-    deepfloydII_model_path = os.path.join("inputs", "image", "sd_models", "deepfloydII")
+    deepfloydI_model_path = os.path.join("inputs", "image", "deepfloydI")
+    deepfloydII_model_path = os.path.join("inputs", "image", "deepfloydII")
     upscale_model_path = os.path.join("inputs", "image", "sd_models", "upscale", "x4-upscaler")
 
     if not os.path.exists(deepfloydI_model_path):
@@ -4329,8 +4329,8 @@ def generate_image_deepfloyd_img2img(prompt, negative_prompt, init_image, num_in
     if not prompt or not init_image:
         return None, None, None, "Please enter a prompt and upload an initial image!"
 
-    deepfloydI_model_path = os.path.join("inputs", "image", "sd_models", "deepfloydI")
-    deepfloydII_model_path = os.path.join("inputs", "image", "sd_models", "deepfloydII")
+    deepfloydI_model_path = os.path.join("inputs", "image", "deepfloydI")
+    deepfloydII_model_path = os.path.join("inputs", "image", "deepfloydII")
     upscale_model_path = os.path.join("inputs", "image", "sd_models", "upscale", "x4-upscaler")
 
     if not os.path.exists(deepfloydI_model_path):
@@ -4473,8 +4473,8 @@ def generate_image_deepfloyd_inpaint(prompt, negative_prompt, init_image, mask_i
     if not prompt or not init_image or not mask_image:
         return None, None, None, "Please enter a prompt, upload an initial image, and provide a mask image!"
 
-    deepfloydI_model_path = os.path.join("inputs", "image", "sd_models", "deepfloydI")
-    deepfloydII_model_path = os.path.join("inputs", "image", "sd_models", "deepfloydII")
+    deepfloydI_model_path = os.path.join("inputs", "image", "deepfloydI")
+    deepfloydII_model_path = os.path.join("inputs", "image", "deepfloydII")
     upscale_model_path = os.path.join("inputs", "image", "sd_models", "upscale", "x4-upscaler")
 
     if not os.path.exists(deepfloydI_model_path):
@@ -4620,7 +4620,7 @@ def generate_image_pixart(prompt, negative_prompt, version, num_inference_steps,
     if not prompt:
         return None, "Please enter a prompt!"
 
-    pixart_model_path = os.path.join("inputs", "image", "sd_models", "pixart")
+    pixart_model_path = os.path.join("inputs", "image", "pixart")
 
     if not os.path.exists(pixart_model_path):
         print(f"Downloading PixArt {version} model...")
@@ -5192,15 +5192,15 @@ def generate_3d_zero123plus(input_image, num_inference_steps, output_format="png
         print("Zero123Plus model downloaded")
 
     try:
-        pipeline = DiffusionPipeline.from_pretrained(
+        pipe = DiffusionPipeline.from_pretrained(
             zero123plus_model_path,
             custom_pipeline="sudo-ai/zero123plus-pipeline",
             torch_dtype=torch.float16
         )
-        pipeline.to('cuda:0')
+        pipe.to('cuda:0')
 
         cond = Image.open(input_image)
-        result = pipeline(cond, num_inference_steps=num_inference_steps).images[0]
+        result = pipe(cond, num_inference_steps=num_inference_steps).images[0]
 
         if stop_signal:
             return None, "Generation stopped"
@@ -5533,20 +5533,25 @@ def get_output_files():
                 model3d_files.append(os.path.join(root, file))
 
     def display_output_file(text_file, image_file, video_file, audio_file, model3d_file):
+        results = [None, None, None, None, None]
+
         if text_file:
             with open(text_file, "r") as f:
-                text_content = f.read()
-            return text_content, None, None, None, None
-        elif image_file:
-            return None, image_file, None, None, None
-        elif video_file:
-            return None, None, video_file, None, None
-        elif audio_file:
-            return None, None, None, audio_file, None
-        elif model3d_file:
-            return None, None, None, None, model3d_file
-        else:
-            return None, None, None, None, None
+                results[0] = f.read()
+
+        if image_file:
+            results[1] = image_file
+
+        if video_file:
+            results[2] = video_file
+
+        if audio_file:
+            results[3] = audio_file
+
+        if model3d_file:
+            results[4] = model3d_file
+
+        return tuple(results)
 
     return text_files, image_files, video_files, audio_files, model3d_files, display_output_file
 
@@ -5619,8 +5624,7 @@ def get_system_info():
     handle = nvmlDeviceGetHandleByIndex(0)
     gpu_temp = nvmlDeviceGetTemperature(handle, NVML_TEMPERATURE_GPU)
 
-    cpu_info = get_cpu_info()
-    cpu_temp = cpu_info.get("cpu_temp", None)
+    cpu_temp = (WinTmp.CPU_Temp())
 
     ram = psutil.virtual_memory()
     ram_total = f"{ram.total // (1024 ** 3)} GB"
