@@ -2473,98 +2473,6 @@ def generate_image_animatediff(prompt, negative_prompt, input_video, strength, m
         torch.cuda.empty_cache()
 
 
-def generate_image_pia(prompt, negative_prompt, init_image, stable_diffusion_model_name, strength, num_frames,
-                       num_inference_steps, guidance_scale, height, width, clip_skip, seed, stop_generation=None):
-    global stop_signal
-    stop_signal = False
-
-    if not init_image:
-        return None, "Please upload an initial image!"
-
-    if not stable_diffusion_model_name:
-        return None, "Please, select a StableDiffusion model!"
-
-    stable_diffusion_model_path = os.path.join("inputs", "image", "sd_models",
-                                               f"{stable_diffusion_model_name}.safetensors")
-
-    if not os.path.exists(stable_diffusion_model_path):
-        return None, f"StableDiffusion model not found: {stable_diffusion_model_path}"
-
-    pia_adapter_path = os.path.join("inputs", "image", "sd_models", "pia_adapter")
-    if not os.path.exists(pia_adapter_path):
-        print("Downloading PIA adapter...")
-        os.makedirs(pia_adapter_path, exist_ok=True)
-        Repo.clone_from("https://huggingface.co/openmmlab/PIA-condition-adapter", pia_adapter_path)
-        print("PIA adapter downloaded")
-
-    try:
-        adapter = MotionAdapter.from_pretrained(pia_adapter_path)
-        pipe = PIAPipeline.from_single_file(stable_diffusion_model_path, motion_adapter=adapter)
-
-        pipe.enable_free_init(method="butterworth", use_fast_sampling=True)
-        pipe.enable_model_cpu_offload()
-        pipe.enable_vae_slicing()
-
-        device = "cuda" if torch.cuda.is_available() else "cpu"
-
-        if seed == "" or seed is None:
-            seed = random.randint(0, 2 ** 32 - 1)
-        else:
-            seed = int(seed)
-        generator = torch.Generator(device).manual_seed(seed)
-
-        if XFORMERS_AVAILABLE:
-            pipe.enable_xformers_memory_efficient_attention(attention_op=None)
-            pipe.vae.enable_xformers_memory_efficient_attention(attention_op=None)
-            pipe.unet.enable_xformers_memory_efficient_attention(attention_op=None)
-
-        pipe.to(device)
-        pipe.text_encoder.to(device)
-        pipe.vae.to(device)
-        pipe.unet.to(device)
-
-        image = Image.open(init_image).convert("RGB")
-        image = image.resize((width, height))
-
-        output = pipe(
-            image=image,
-            prompt=prompt,
-            negative_prompt=negative_prompt,
-            strength=strength,
-            num_frames=num_frames,
-            num_inference_steps=num_inference_steps,
-            guidance_scale=guidance_scale,
-            generator=generator,
-            clip_skip=clip_skip,
-        )
-
-        if stop_signal:
-            return None, "Generation stopped"
-
-        frames = output.frames[0]
-
-        today = datetime.now().date()
-        output_dir = os.path.join('outputs', f"PIA_{today.strftime('%Y%m%d')}")
-        os.makedirs(output_dir, exist_ok=True)
-
-        gif_filename = f"pia_{datetime.now().strftime('%Y%m%d_%H%M%S')}.gif"
-        gif_path = os.path.join(output_dir, gif_filename)
-        export_to_gif(frames, gif_path)
-
-        return gif_path, f"GIF generated successfully. Seed used: {seed}"
-
-    except Exception as e:
-        return None, str(e)
-
-    finally:
-        try:
-            del pipe
-            del adapter
-        except UnboundLocalError:
-            pass
-        torch.cuda.empty_cache()
-
-
 def generate_video(init_image, output_format, video_settings_html, motion_bucket_id, noise_aug_strength, fps, num_frames, decode_chunk_size,
                    iv2gen_xl_settings_html, prompt, negative_prompt, num_inference_steps, guidance_scale, seed, stop_generation):
     global stop_signal
@@ -3341,7 +3249,7 @@ def generate_image_instantid(prompt, negative_prompt, face_image, stable_diffusi
         torch.cuda.empty_cache()
 
 
-def generate_image_photomaker(prompt, negative_prompt, input_images, base_model_path, trigger_word, num_inference_steps,
+def generate_image_photomaker(prompt, negative_prompt, input_images, sdxl_model_name, photomaker_model_name, trigger_word, num_inference_steps,
                               guidance_scale, width, height, output_format="png", stop_generation=None):
     global stop_signal
     stop_signal = False
@@ -3349,28 +3257,36 @@ def generate_image_photomaker(prompt, negative_prompt, input_images, base_model_
     if not input_images:
         return None, "Please upload at least one input image!"
 
-    if not base_model_path:
-        return None, "Please select a base model!"
+    if not sdxl_model_name:
+        return None, "Please select an SDXL model!"
 
     photomaker_path = os.path.join("inputs", "image", "sd_models", "photomaker")
+    sdxl_model_path = os.path.join("inputs", "image", "sd_models", "photomakerSDXLmodel")
+
     if not os.path.exists(photomaker_path):
         print("Downloading PhotoMaker model...")
         os.makedirs(photomaker_path, exist_ok=True)
-        Repo.clone_from("https://huggingface.co/TencentARC/PhotoMaker-V2", photomaker_path)
+        snapshot_download(repo_id=photomaker_model_name, local_dir=photomaker_path)
         print("PhotoMaker model downloaded")
+
+    if not os.path.exists(sdxl_model_path):
+        print(f"Downloading SDXL model: {sdxl_model_name}...")
+        os.makedirs(sdxl_model_path, exist_ok=True)
+        snapshot_download(repo_id=sdxl_model_name, local_dir=sdxl_model_path)
+        print(f"SDXL model {sdxl_model_name} downloaded")
 
     try:
         device = "cuda" if torch.cuda.is_available() else "cpu"
 
         pipe = PhotoMakerStableDiffusionXLPipeline.from_pretrained(
-            base_model_path,
+            sdxl_model_name,
             torch_dtype=torch.float16,
             use_safetensors=True,
-            variant="fp16"
+            variant="fp16",
         ).to(device)
 
         pipe.load_photomaker_adapter(
-            photomaker_path,
+            photomaker_model_name,
             subfolder="",
             weight_name="photomaker-v2.bin",
             trigger_word=trigger_word
@@ -3380,17 +3296,14 @@ def generate_image_photomaker(prompt, negative_prompt, input_images, base_model_
 
         input_id_images = [load_image(img) for img in input_images]
 
-        generator = torch.Generator(device=device).manual_seed(42)
         image = pipe(
             prompt=prompt,
             input_id_images=input_id_images,
             negative_prompt=negative_prompt,
-            num_images_per_prompt=1,
             num_inference_steps=num_inference_steps,
             guidance_scale=guidance_scale,
             width=width,
             height=height,
-            generator=generator,
         ).images[0]
 
         if stop_signal:
@@ -3405,11 +3318,7 @@ def generate_image_photomaker(prompt, negative_prompt, input_images, base_model_
 
         return image_path, None
 
-    except Exception as e:
-        return None, str(e)
-
     finally:
-        del pipe
         torch.cuda.empty_cache()
 
 
@@ -6140,34 +6049,6 @@ animatediff_interface = gr.Interface(
     allow_flagging="never",
 )
 
-pia_interface = gr.Interface(
-    fn=generate_image_pia,
-    inputs=[
-        gr.Textbox(label="Enter your prompt"),
-        gr.Textbox(label="Enter your negative prompt", value=""),
-        gr.Image(label="Initial image", type="filepath"),
-        gr.Dropdown(choices=stable_diffusion_models_list, label="Select StableDiffusion model", value=None),
-        gr.Slider(minimum=0.0, maximum=1.0, value=0.8, step=0.01, label="Strength"),
-        gr.Slider(minimum=1, maximum=25, value=16, step=1, label="Number of frames"),
-        gr.Slider(minimum=1, maximum=100, value=40, step=1, label="Steps"),
-        gr.Slider(minimum=1.0, maximum=30.0, value=8, step=0.1, label="Guidance Scale"),
-        gr.Slider(minimum=256, maximum=1024, value=512, step=64, label="Height"),
-        gr.Slider(minimum=256, maximum=1024, value=768, step=64, label="Width"),
-        gr.Slider(minimum=1, maximum=4, value=1, step=1, label="Clip skip"),
-        gr.Textbox(label="Seed (optional)", value=""),
-        gr.Button(value="Stop generation", interactive=True, variant="stop"),
-    ],
-    outputs=[
-        gr.Image(label="Generated GIF", type="filepath"),
-        gr.Textbox(label="Message", type="text"),
-    ],
-    title="NeuroSandboxWebUI (ALPHA) - StableDiffusion (PIA)",
-    description="This user interface allows you to enter a prompt and initial image to generate animated GIFs using PIA. "
-                "You can select the model and customize the generation settings from the sliders. "
-                "Try it and see what happens!",
-    allow_flagging="never",
-)
-
 video_interface = gr.Interface(
     fn=generate_video,
     inputs=[
@@ -6410,11 +6291,12 @@ photomaker_interface = gr.Interface(
         gr.Textbox(label="Enter your prompt"),
         gr.Textbox(label="Enter your negative prompt", value=""),
         gr.File(label="Upload input images", file_count="multiple", type="filepath"),
-        gr.Textbox(label="Enter trigger word", value="img"),
-        gr.Dropdown(choices=stable_diffusion_models_list, label="Select StableDiffusion XL model", value=None),
-        gr.Slider(minimum=1, maximum=150, value=30, step=1, label="Steps"),
-        gr.Slider(minimum=1.0, maximum=20.0, value=7.5, step=0.1, label="Guidance Scale (CFG)"),
-        gr.Slider(minimum=256, maximum=2048, value=512, step=64, label="Width"),
+        gr.Dropdown(choices=["Lykon/dreamshaper-xl-v2-turbo"], label="Select SDXL model", value="Lykon/dreamshaper-xl-v2-turbo"),
+        gr.Dropdown(choices=["TencentARC/PhotoMaker-V2"], label="Select PhotoMaker model", value="TencentARC/PhotoMaker-V2"),
+        gr.Textbox(label="Enter trigger word", value="'img'"),
+        gr.Slider(minimum=1, maximum=150, value=8, step=1, label="Steps"),
+        gr.Slider(minimum=1.0, maximum=20.0, value=2, step=0.1, label="Guidance Scale (CFG)"),
+        gr.Slider(minimum=256, maximum=2048, value=1024, step=64, label="Width"),
         gr.Slider(minimum=256, maximum=2048, value=768, step=64, label="Height"),
         gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
         gr.Button(value="Stop generation", interactive=True, variant="stop"),
@@ -7190,11 +7072,11 @@ with gr.TabbedInterface(
         gr.TabbedInterface(
             [
                 gr.TabbedInterface(
-                    [txt2img_interface, img2img_interface, depth2img_interface, pix2pix_interface, controlnet_interface, latent_upscale_interface, realesrgan_upscale_interface, inpaint_interface, outpaint_interface, gligen_interface, animatediff_interface, pia_interface, video_interface, ldm3d_interface,
+                    [txt2img_interface, img2img_interface, depth2img_interface, pix2pix_interface, controlnet_interface, latent_upscale_interface, realesrgan_upscale_interface, inpaint_interface, outpaint_interface, gligen_interface, animatediff_interface, video_interface, ldm3d_interface,
                      gr.TabbedInterface([sd3_txt2img_interface, sd3_img2img_interface, sd3_controlnet_interface, sd3_inpaint_interface],
                                         tab_names=["txt2img", "img2img", "controlnet", "inpaint"]),
                      cascade_interface, adapters_interface, extras_interface],
-                    tab_names=["txt2img", "img2img", "depth2img", "pix2pix", "controlnet", "upscale(latent)", "upscale(Real-ESRGAN)", "inpaint", "outpaint", "gligen", "animatediff", "pia", "video", "ldm3d", "sd3", "cascade", "adapters", "extras"]
+                    tab_names=["txt2img", "img2img", "depth2img", "pix2pix", "controlnet", "upscale(latent)", "upscale(Real-ESRGAN)", "inpaint", "outpaint", "gligen", "animatediff", "video", "ldm3d", "sd3", "cascade", "adapters", "extras"]
                 ),
                 kandinsky_interface, flux_interface, hunyuandit_interface, lumina_interface, kolors_interface, auraflow_interface, wurstchen_interface, deepfloyd_if_interface, pixart_interface
             ],
@@ -7232,7 +7114,6 @@ with gr.TabbedInterface(
     outpaint_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     gligen_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     animatediff_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
-    pia_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     video_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     ldm3d_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     sd3_txt2img_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
