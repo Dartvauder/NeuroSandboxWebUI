@@ -33,7 +33,7 @@ from diffusers.utils import (
     replace_example_docstring,
 )
 from diffusers.utils.torch_utils import is_compiled_module, is_torch_version
-from diffusers.pipelines.stable_diffusion_xl import StableDiffusionXLPipelineOutput
+from diffusers.pipelines.stable_diffusion_xl import StableDiffusionXLPipeline
 
 from diffusers import StableDiffusionXLControlNetPipeline
 from diffusers.pipelines.controlnet.multicontrolnet import MultiControlNetModel
@@ -784,4 +784,4 @@ class StableDiffusionXLInstantIDPipeline(StableDiffusionXLControlNetPipeline):
         if not return_dict:
             return (image,)
 
-        return StableDiffusionXLPipelineOutput(images=image)
+        return StableDiffusionXLPipeline(images=image)
