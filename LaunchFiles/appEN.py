@@ -914,26 +914,17 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
             )
         else:
             if stable_diffusion_model_type == "SD":
-                original_config_file = "configs/sd/v1-inference.yaml"
-                vae_config_file = "configs/sd/v1-inference.yaml"
                 stable_diffusion_model = StableDiffusionPipeline.from_single_file(
                     stable_diffusion_model_path, use_safetensors=True, device_map="auto",
-                    original_config_file=original_config_file, torch_dtype=torch.float16, variant="fp16"
-                )
+                    torch_dtype=torch.float16, variant="fp16")
             elif stable_diffusion_model_type == "SD2":
-                original_config_file = "configs/sd/v2-inference.yaml"
-                vae_config_file = "configs/sd/v2-inference.yaml"
                 stable_diffusion_model = StableDiffusionPipeline.from_single_file(
                     stable_diffusion_model_path, use_safetensors=True, device_map="auto",
-                    original_config_file=original_config_file, torch_dtype=torch.float16, variant="fp16"
-                )
+                    torch_dtype=torch.float16, variant="fp16")
             elif stable_diffusion_model_type == "SDXL":
-                original_config_file = "configs/sd/sd_xl_base.yaml"
-                vae_config_file = "configs/sd/sd_xl_base.yaml"
                 stable_diffusion_model = StableDiffusionXLPipeline.from_single_file(
                     stable_diffusion_model_path, use_safetensors=True, device_map="auto", attention_slice=1,
-                    original_config_file=original_config_file, torch_dtype=torch.float16, variant="fp16"
-                )
+                    torch_dtype=torch.float16, variant="fp16")
             else:
                 return None, "Invalid StableDiffusion model type!"
     except (ValueError, KeyError):
@@ -963,7 +954,7 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
         vae_model_path = os.path.join("inputs", "image", "sd_models", "vae", f"{vae_model_name}.safetensors")
         if os.path.exists(vae_model_path):
             vae = AutoencoderKL.from_single_file(vae_model_path, device_map="auto",
-                                                 original_config_file=vae_config_file, torch_dtype=torch.float16,
+                                                 torch_dtype=torch.float16,
                                                  variant="fp16")
             stable_diffusion_model.vae = vae.to(device)
 
@@ -995,7 +986,6 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
                 except Exception as e:
                     print(f"Error loading LoRA {lora_model_name}: {str(e)}")
 
-    # Textual Inversion processing
     ti_loaded = False
     if textual_inversion_model_names:
         for textual_inversion_model_name in textual_inversion_model_names:
@@ -1138,26 +1128,17 @@ def generate_image_img2img(prompt, negative_prompt, init_image,
 
     try:
         if stable_diffusion_model_type == "SD":
-            original_config_file = "configs/sd/v1-inference.yaml"
-            vae_config_file = "configs/sd/v1-inference.yaml"
             stable_diffusion_model = StableDiffusionImg2ImgPipeline.from_single_file(
                 stable_diffusion_model_path, use_safetensors=True, device_map="auto",
-                original_config_file=original_config_file, torch_dtype=torch.float16, variant="fp16"
-            )
+                torch_dtype=torch.float16, variant="fp16")
         elif stable_diffusion_model_type == "SD2":
-            original_config_file = "configs/sd/v2-inference.yaml"
-            vae_config_file = "configs/sd/v2-inference.yaml"
-            stable_diffusion_model = StableDiffusionPipeline.from_single_file(
-                stable_diffusion_model_path, use_safetensors=True, device_map="auto",
-                original_config_file=original_config_file, torch_dtype=torch.float16, variant="fp16"
-            )
-        elif stable_diffusion_model_type == "SDXL":
-            original_config_file = "configs/sd/sd_xl_base.yaml"
-            vae_config_file = "configs/sd/sd_xl_base.yaml"
             stable_diffusion_model = StableDiffusionImg2ImgPipeline.from_single_file(
+                stable_diffusion_model_path, use_safetensors=True, device_map="auto",
+                torch_dtype=torch.float16, variant="fp16")
+        elif stable_diffusion_model_type == "SDXL":
+            stable_diffusion_model = AutoPipelineForImage2Image.from_single_file(
                 stable_diffusion_model_path, use_safetensors=True, device_map="auto", attention_slice=1,
-                original_config_file=original_config_file, torch_dtype=torch.float16, variant="fp16"
-            )
+                torch_dtype=torch.float16, variant="fp16")
         else:
             return None, "Invalid StableDiffusion model type!"
     except (ValueError, KeyError):
@@ -1181,7 +1162,7 @@ def generate_image_img2img(prompt, negative_prompt, init_image,
         vae_model_path = os.path.join("inputs", "image", "sd_models", "vae", f"{vae_model_name}.safetensors")
         if os.path.exists(vae_model_path):
             vae = AutoencoderKL.from_single_file(vae_model_path, device_map=device,
-                                                 original_config_file=vae_config_file, torch_dtype=torch.float16,
+                                                 torch_dtype=torch.float16,
                                                  variant="fp16")
             stable_diffusion_model.vae = vae.to(device)
 
@@ -1259,10 +1240,9 @@ def generate_image_depth2img(prompt, negative_prompt, init_image, stable_diffusi
         print("Depth2img model downloaded")
 
     try:
-        original_config_file = "configs/sd/v2-inference.yaml"
         stable_diffusion_model = StableDiffusionDepth2ImgPipeline.from_pretrained(
             stable_diffusion_model_path, use_safetensors=True,
-            original_config_file=original_config_file, torch_dtype=torch.float16, variant="fp16",
+            torch_dtype=torch.float16, variant="fp16",
         )
     except (ValueError, KeyError):
         return None, "Failed to load the depth2img model"
@@ -1791,25 +1771,19 @@ def generate_image_inpaint(prompt, negative_prompt, init_image, mask_image, blur
 
     try:
         if stable_diffusion_model_type == "SD":
-            original_config_file = "configs/sd/v1-inpainting-inference.yaml"
-            vae_config_file = "configs/sd/v1-inference.yaml"
             stable_diffusion_model = StableDiffusionInpaintPipeline.from_single_file(
                 stable_diffusion_model_path, use_safetensors=True, device_map="auto",
-                original_config_file=original_config_file, torch_dtype=torch.float16, variant="fp16"
+                torch_dtype=torch.float16, variant="fp16"
             )
         elif stable_diffusion_model_type == "SD2":
-            original_config_file = "configs/sd/v1-inpainting-inference.yaml"
-            vae_config_file = "configs/sd/v2-inference.yaml"
             stable_diffusion_model = StableDiffusionInpaintPipeline.from_single_file(
                 stable_diffusion_model_path, use_safetensors=True, device_map="auto",
-                original_config_file=original_config_file, torch_dtype=torch.float16, variant="fp16"
+                torch_dtype=torch.float16, variant="fp16"
             )
         elif stable_diffusion_model_type == "SDXL":
-            original_config_file = "configs/sd/sd_xl_inpaint.yaml"
-            vae_config_file = "configs/sd/sd_xl_base.yaml"
             stable_diffusion_model = AutoPipelineForInpainting.from_pretrained(
                 stable_diffusion_model_path, use_safetensors=True, device_map="auto", attention_slice=1,
-                original_config_file=original_config_file, torch_dtype=torch.float16, variant="fp16"
+                torch_dtype=torch.float16, variant="fp16"
             )
         else:
             return None, "Invalid StableDiffusion model type!"
@@ -1834,7 +1808,7 @@ def generate_image_inpaint(prompt, negative_prompt, init_image, mask_image, blur
         vae_model_path = os.path.join("inputs", "image", "sd_models", "vae", f"{vae_model_name}.safetensors")
         if os.path.exists(vae_model_path):
             vae = AutoencoderKL.from_single_file(vae_model_path, device_map="auto",
-                                                 original_config_file=vae_config_file, torch_dtype=torch.float16,
+                                                 torch_dtype=torch.float16,
                                                  variant="fp16")
             stable_diffusion_model.vae = vae.to(device)
 
@@ -1935,22 +1909,19 @@ def generate_image_outpaint(prompt, negative_prompt, init_image, stable_diffusio
 
     try:
         if stable_diffusion_model_type == "SD":
-            original_config_file = "configs/sd/v1-inpainting-inference.yaml"
             pipe = StableDiffusionInpaintPipeline.from_single_file(
                 stable_diffusion_model_path, use_safetensors=True, device_map="auto",
-                original_config_file=original_config_file, torch_dtype=torch.float16, variant="fp16"
+                torch_dtype=torch.float16, variant="fp16"
             )
         elif stable_diffusion_model_type == "SD2":
-            original_config_file = "configs/sd/v1-inpainting-inference.yaml"
             pipe = StableDiffusionInpaintPipeline.from_single_file(
                 stable_diffusion_model_path, use_safetensors=True, device_map="auto",
-                original_config_file=original_config_file, torch_dtype=torch.float16, variant="fp16"
+                torch_dtype=torch.float16, variant="fp16"
             )
         elif stable_diffusion_model_type == "SDXL":
-            original_config_file = "configs/sd/sd_xl_inpaint.yaml"
             pipe = AutoPipelineForInpainting.from_pretrained(
                 stable_diffusion_model_path, use_safetensors=True, device_map="auto", attention_slice=1,
-                original_config_file=original_config_file, torch_dtype=torch.float16, variant="fp16"
+                torch_dtype=torch.float16, variant="fp16"
             )
         else:
             return None, "Invalid StableDiffusion model type!"
@@ -2095,22 +2066,19 @@ def generate_image_gligen(prompt, negative_prompt, gligen_phrases, gligen_boxes,
 
     try:
         if stable_diffusion_model_type == "SD":
-            original_config_file = "configs/sd/v1-inference.yaml"
             stable_diffusion_model = StableDiffusionPipeline.from_single_file(
                 stable_diffusion_model_path, use_safetensors=True, device_map="auto",
-                original_config_file=original_config_file, torch_dtype=torch.float16, variant="fp16"
+                torch_dtype=torch.float16, variant="fp16"
             )
         elif stable_diffusion_model_type == "SD2":
-            original_config_file = "configs/sd/v2-inference.yaml"
             stable_diffusion_model = StableDiffusionPipeline.from_single_file(
                 stable_diffusion_model_path, use_safetensors=True, device_map="auto",
-                original_config_file=original_config_file, torch_dtype=torch.float16, variant="fp16"
+                torch_dtype=torch.float16, variant="fp16"
             )
         elif stable_diffusion_model_type == "SDXL":
-            original_config_file = "configs/sd/sd_xl_base.yaml"
             stable_diffusion_model = StableDiffusionXLPipeline.from_single_file(
                 stable_diffusion_model_path, use_safetensors=True, device_map="auto", attention_slice=1,
-                original_config_file=original_config_file, torch_dtype=torch.float16, variant="fp16"
+                torch_dtype=torch.float16, variant="fp16"
             )
         else:
             return None, "Invalid StableDiffusion model type!"
@@ -2263,12 +2231,10 @@ def generate_image_animatediff(prompt, negative_prompt, input_video, strength, m
                     frames.append(gif.copy().convert('RGB').resize((width, height)))
 
                 adapter = MotionAdapter.from_pretrained(motion_adapter_path, torch_dtype=torch.float16)
-                original_config_file = "configs/sd/v1-inference.yaml"
                 stable_diffusion_model = StableDiffusionPipeline.from_single_file(
                     stable_diffusion_model_path,
                     torch_dtype=torch.float16,
                     variant="fp16",
-                    original_config_file=original_config_file,
                     device_map="auto",
                 )
 
@@ -2316,12 +2282,10 @@ def generate_image_animatediff(prompt, negative_prompt, input_video, strength, m
 
             else:
                 adapter = MotionAdapter.from_pretrained(motion_adapter_path, torch_dtype=torch.float16)
-                original_config_file = "configs/sd/v1-inference.yaml"
                 stable_diffusion_model = StableDiffusionPipeline.from_single_file(
                     stable_diffusion_model_path,
                     torch_dtype=torch.float16,
                     variant="fp16",
-                    original_config_file=original_config_file,
                     device_map="auto",
                 )
 
@@ -2505,16 +2469,6 @@ def generate_video(init_image, output_format, video_settings_html, motion_bucket
             pipe.enable_model_cpu_offload()
             pipe.unet.enable_forward_chunking()
 
-            if XFORMERS_AVAILABLE:
-                pipe.enable_xformers_memory_efficient_attention(attention_op=None)
-                pipe.vae.enable_xformers_memory_efficient_attention(attention_op=None)
-                pipe.unet.enable_xformers_memory_efficient_attention(attention_op=None)
-
-            pipe.to(device)
-            pipe.text_encoder.to(device)
-            pipe.vae.to(device)
-            pipe.unet.to(device)
-
             image = load_image(init_image)
             image = image.resize((1024, 576))
 
@@ -2556,16 +2510,6 @@ def generate_video(init_image, output_format, video_settings_html, motion_bucket
             device = "cuda" if torch.cuda.is_available() else "cpu"
             pipe = I2VGenXLPipeline.from_pretrained(video_model_path, torch_dtype=torch.float16, variant="fp16")
             pipe.enable_model_cpu_offload()
-
-            if XFORMERS_AVAILABLE:
-                pipe.enable_xformers_memory_efficient_attention(attention_op=None)
-                pipe.vae.enable_xformers_memory_efficient_attention(attention_op=None)
-                pipe.unet.enable_xformers_memory_efficient_attention(attention_op=None)
-
-            pipe.to(device)
-            pipe.text_encoder.to(device)
-            pipe.vae.to(device)
-            pipe.unet.to(device)
 
             image = load_image(init_image).convert("RGB")
 
@@ -2619,16 +2563,6 @@ def generate_image_ldm3d(prompt, negative_prompt, width, height, num_inference_s
     try:
         pipe = StableDiffusionLDM3DPipeline.from_pretrained(ldm3d_model_path, torch_dtype=torch.float16)
         device = "cuda" if torch.cuda.is_available() else "cpu"
-
-        if XFORMERS_AVAILABLE:
-            pipe.enable_xformers_memory_efficient_attention(attention_op=None)
-            pipe.vae.enable_xformers_memory_efficient_attention(attention_op=None)
-            pipe.unet.enable_xformers_memory_efficient_attention(attention_op=None)
-
-        pipe.to(device)
-        pipe.text_encoder.to(device)
-        pipe.vae.to(device)
-        pipe.unet.to(device)
 
         if seed == "" or seed is None:
             seed = random.randint(0, 2 ** 32 - 1)
@@ -3002,9 +2936,6 @@ def generate_image_cascade(prompt, negative_prompt, stable_cascade_settings_html
     except (ValueError, OSError):
         return None, "Failed to load the Stable Cascade models"
 
-    prior.enable_model_cpu_offload()
-    decoder.enable_model_cpu_offload()
-
     if seed == "" or seed is None:
         seed = random.randint(0, 2 ** 32 - 1)
     else:
@@ -3012,6 +2943,7 @@ def generate_image_cascade(prompt, negative_prompt, stable_cascade_settings_html
     generator = torch.Generator(device).manual_seed(seed)
 
     try:
+        prior.enable_model_cpu_offload()
 
         prior_output = prior(
             prompt=prompt,
@@ -3026,6 +2958,8 @@ def generate_image_cascade(prompt, negative_prompt, stable_cascade_settings_html
 
         if stop_signal:
             return None, "Generation stopped"
+
+        decoder.enable_model_cpu_offload()
 
         decoder_output = decoder(
             image_embeddings=prior_output.image_embeddings.to(torch.float16),
