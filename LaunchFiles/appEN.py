@@ -21,7 +21,7 @@ from TTS.api import TTS
 import whisper
 from datetime import datetime
 from huggingface_hub import snapshot_download
-from diffusers import StableDiffusionPipeline, StableDiffusion3Pipeline, StableDiffusionXLPipeline, StableDiffusionImg2ImgPipeline, StableDiffusion3Img2ImgPipeline, SD3ControlNetModel, StableDiffusion3ControlNetPipeline, StableDiffusion3InpaintPipeline, StableDiffusionDepth2ImgPipeline, ControlNetModel, StableDiffusionXLControlNetPipeline, StableDiffusionControlNetPipeline, AutoencoderKL, StableDiffusionLatentUpscalePipeline, StableDiffusionUpscalePipeline, StableDiffusionInpaintPipeline, StableDiffusionGLIGENPipeline, AnimateDiffPipeline, AnimateDiffSDXLPipeline, AnimateDiffVideoToVideoPipeline, MotionAdapter, StableVideoDiffusionPipeline, I2VGenXLPipeline, StableCascadePriorPipeline, StableCascadeDecoderPipeline, DiffusionPipeline, ShapEPipeline, ShapEImg2ImgPipeline, StableAudioPipeline, AudioLDM2Pipeline, StableDiffusionInstructPix2PixPipeline, StableDiffusionLDM3DPipeline, FluxPipeline, KandinskyPipeline, KandinskyPriorPipeline, KandinskyV22Pipeline, KandinskyV22PriorPipeline, AutoPipelineForText2Image, KandinskyImg2ImgPipeline, AutoPipelineForImage2Image, AutoPipelineForInpainting, HunyuanDiTPipeline, LuminaText2ImgPipeline, IFPipeline, IFSuperResolutionPipeline, IFImg2ImgPipeline, IFInpaintingPipeline, IFImg2ImgSuperResolutionPipeline, IFInpaintingSuperResolutionPipeline, PixArtAlphaPipeline, PixArtSigmaPipeline, CogVideoXPipeline, LattePipeline, KolorsPipeline, AuraFlowPipeline, WuerstchenDecoderPipeline, WuerstchenPriorPipeline, StableDiffusionSAGPipeline
+from diffusers import StableDiffusionPipeline, StableDiffusion3Pipeline, StableDiffusionXLPipeline, StableDiffusionImg2ImgPipeline, StableDiffusionXLImg2ImgPipeline, StableDiffusion3Img2ImgPipeline, SD3ControlNetModel, StableDiffusion3ControlNetPipeline, StableDiffusion3InpaintPipeline, StableDiffusionDepth2ImgPipeline, ControlNetModel, StableDiffusionXLControlNetPipeline, StableDiffusionControlNetPipeline, AutoencoderKL, StableDiffusionLatentUpscalePipeline, StableDiffusionUpscalePipeline, StableDiffusionInpaintPipeline, StableDiffusionGLIGENPipeline, AnimateDiffPipeline, AnimateDiffSDXLPipeline, AnimateDiffVideoToVideoPipeline, MotionAdapter, StableVideoDiffusionPipeline, I2VGenXLPipeline, StableCascadePriorPipeline, StableCascadeDecoderPipeline, DiffusionPipeline, ShapEPipeline, ShapEImg2ImgPipeline, StableAudioPipeline, AudioLDM2Pipeline, StableDiffusionInstructPix2PixPipeline, StableDiffusionLDM3DPipeline, FluxPipeline, KandinskyPipeline, KandinskyPriorPipeline, KandinskyV22Pipeline, KandinskyV22PriorPipeline, AutoPipelineForText2Image, KandinskyImg2ImgPipeline, AutoPipelineForImage2Image, AutoPipelineForInpainting, HunyuanDiTPipeline, LuminaText2ImgPipeline, IFPipeline, IFSuperResolutionPipeline, IFImg2ImgPipeline, IFInpaintingPipeline, IFImg2ImgSuperResolutionPipeline, IFInpaintingSuperResolutionPipeline, PixArtAlphaPipeline, PixArtSigmaPipeline, CogVideoXPipeline, LattePipeline, KolorsPipeline, AuraFlowPipeline, WuerstchenDecoderPipeline, WuerstchenPriorPipeline, StableDiffusionSAGPipeline
 from diffusers.utils import load_image, export_to_video, export_to_gif, export_to_ply, pt_to_pil
 from diffusers.pipelines.wuerstchen import DEFAULT_STAGE_C_TIMESTEPS
 from aura_sr import AuraSR
@@ -1132,7 +1132,7 @@ def generate_image_img2img(prompt, negative_prompt, init_image,
                 stable_diffusion_model_path, use_safetensors=True, device_map="auto",
                 torch_dtype=torch.float16, variant="fp16")
         elif stable_diffusion_model_type == "SDXL":
-            stable_diffusion_model = AutoPipelineForImage2Image.from_single_file(
+            stable_diffusion_model = StableDiffusionXLImg2ImgPipeline.from_single_file(
                 stable_diffusion_model_path, use_safetensors=True, device_map="auto", attention_slice=1,
                 torch_dtype=torch.float16, variant="fp16")
         else:
@@ -1745,6 +1745,50 @@ def generate_image_upscale_realesrgan(image_path, model_name, outscale, face_enh
 
     except Exception as e:
         return None, str(e)
+
+
+def generate_image_sdxl_refiner(prompt, init_image, output_format="png", stop_generation=None):
+    global stop_signal
+    stop_signal = False
+
+    if not prompt or not init_image:
+        return None, "Please enter a prompt and upload an initial image!"
+
+    sdxl_refiner_path = os.path.join("inputs", "image", "sd_models", "sdxl-refiner-1.0")
+
+    if not os.path.exists(sdxl_refiner_path):
+        print("Downloading SDXL Refiner model...")
+        os.makedirs(sdxl_refiner_path, exist_ok=True)
+        Repo.clone_from("https://huggingface.co/stabilityai/stable-diffusion-xl-refiner-1.0", sdxl_refiner_path)
+        print("SDXL Refiner model downloaded")
+
+    try:
+        pipe = StableDiffusionXLImg2ImgPipeline.from_pretrained(
+            sdxl_refiner_path, torch_dtype=torch.float16, variant="fp16", use_safetensors=True
+        )
+        pipe = pipe.to("cuda")
+
+        init_image = Image.open(init_image).convert("RGB")
+        image = pipe(prompt, image=init_image).images[0]
+
+        if stop_signal:
+            return None, "Generation stopped"
+
+        today = datetime.now().date()
+        image_dir = os.path.join('outputs', f"StableDiffusion_{today.strftime('%Y%m%d')}")
+        os.makedirs(image_dir, exist_ok=True)
+        image_filename = f"sdxl_refiner_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
+        image_path = os.path.join(image_dir, image_filename)
+        image.save(image_path, format=output_format.upper())
+
+        return image_path, None
+
+    except Exception as e:
+        return None, str(e)
+
+    finally:
+        del pipe
+        torch.cuda.empty_cache()
 
 
 def generate_image_inpaint(prompt, negative_prompt, init_image, mask_image, blur_factor, stable_diffusion_model_name, vae_model_name,
@@ -4198,6 +4242,57 @@ def generate_image_pixart(prompt, negative_prompt, version, num_inference_steps,
         torch.cuda.empty_cache()
 
 
+def generate_image_playgroundv2(prompt, negative_prompt, height, width, num_inference_steps, guidance_scale, output_format="png", stop_generation=None):
+    global stop_signal
+    stop_signal = False
+
+    playgroundv2_model_path = os.path.join("inputs", "image", "playgroundv2")
+
+    if not os.path.exists(playgroundv2_model_path):
+        print("Downloading PlaygroundV2.5 model...")
+        os.makedirs(playgroundv2_model_path, exist_ok=True)
+        Repo.clone_from("https://huggingface.co/playgroundai/playground-v2.5-1024px-aesthetic", playgroundv2_model_path)
+        print("PlaygroundV2.5 model downloaded")
+
+    try:
+        pipe = DiffusionPipeline.from_pretrained(
+            playgroundv2_model_path,
+            torch_dtype=torch.float16,
+            variant="fp16"
+        ).to("cuda")
+
+        if stop_signal:
+            return None, "Generation stopped"
+
+        image = pipe(
+            prompt=prompt,
+            negative_prompt=negative_prompt,
+            height=height,
+            width=width,
+            num_inference_steps=num_inference_steps,
+            guidance_scale=guidance_scale
+        ).images[0]
+
+        if stop_signal:
+            return None, "Generation stopped"
+
+        today = datetime.now().date()
+        image_dir = os.path.join('outputs', f"PlaygroundV2_{today.strftime('%Y%m%d')}")
+        os.makedirs(image_dir, exist_ok=True)
+        image_filename = f"playgroundv2_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
+        image_path = os.path.join(image_dir, image_filename)
+        image.save(image_path, format=output_format.upper())
+
+        return image_path, None
+
+    except Exception as e:
+        return None, str(e)
+
+    finally:
+        del pipe
+        torch.cuda.empty_cache()
+
+
 def generate_video_modelscope(prompt, negative_prompt, num_inference_steps, guidance_scale, height, width, num_frames,
                               output_format, stop_generation):
     global stop_signal
@@ -5514,6 +5609,24 @@ realesrgan_upscale_interface = gr.Interface(
     allow_flagging="never",
 )
 
+sdxl_refiner_interface = gr.Interface(
+    fn=generate_image_sdxl_refiner,
+    inputs=[
+        gr.Textbox(label="Enter your prompt"),
+        gr.Image(label="Initial image", type="filepath"),
+        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
+        gr.Button(value="Stop generation", interactive=True, variant="stop"),
+    ],
+    outputs=[
+        gr.Image(type="filepath", label="Refined image"),
+        gr.Textbox(label="Message", type="text"),
+    ],
+    title="NeuroSandboxWebUI (ALPHA) - SDXL Refiner",
+    description="This interface allows you to refine images using the SDXL Refiner model. "
+                "Enter a prompt, upload an initial image, and see the refined result.",
+    allow_flagging="never",
+)
+
 inpaint_interface = gr.Interface(
     fn=generate_image_inpaint,
     inputs=[
@@ -6201,6 +6314,29 @@ pixart_interface = gr.Interface(
     allow_flagging="never",
 )
 
+playgroundv2_interface = gr.Interface(
+    fn=generate_image_playgroundv2,
+    inputs=[
+        gr.Textbox(label="Enter your prompt"),
+        gr.Textbox(label="Enter your negative prompt", value=""),
+        gr.Slider(minimum=256, maximum=2048, value=1024, step=64, label="Height"),
+        gr.Slider(minimum=256, maximum=2048, value=1024, step=64, label="Width"),
+        gr.Slider(minimum=1, maximum=100, value=50, step=1, label="Steps"),
+        gr.Slider(minimum=0.1, maximum=30.0, value=3.0, step=0.1, label="Guidance Scale"),
+        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
+        gr.Button(value="Stop generation", interactive=True, variant="stop"),
+    ],
+    outputs=[
+        gr.Image(type="filepath", label="Generated image"),
+        gr.Textbox(label="Message", type="text"),
+    ],
+    title="NeuroSandboxWebUI (ALPHA) - PlaygroundV2.5",
+    description="This user interface allows you to generate images using PlaygroundV2.5. "
+                "Enter a prompt and customize the generation settings. "
+                "Try it and see what happens!",
+    allow_flagging="never",
+)
+
 modelscope_interface = gr.Interface(
     fn=generate_video_modelscope,
     inputs=[
@@ -6566,15 +6702,15 @@ with gr.TabbedInterface(
         gr.TabbedInterface(
             [
                 gr.TabbedInterface(
-                    [txt2img_interface, img2img_interface, depth2img_interface, pix2pix_interface, controlnet_interface, latent_upscale_interface, realesrgan_upscale_interface, inpaint_interface, outpaint_interface, gligen_interface, animatediff_interface, video_interface, ldm3d_interface,
+                    [txt2img_interface, img2img_interface, depth2img_interface, pix2pix_interface, controlnet_interface, latent_upscale_interface, realesrgan_upscale_interface, sdxl_refiner_interface, inpaint_interface, outpaint_interface, gligen_interface, animatediff_interface, video_interface, ldm3d_interface,
                      gr.TabbedInterface([sd3_txt2img_interface, sd3_img2img_interface, sd3_controlnet_interface, sd3_inpaint_interface],
                                         tab_names=["txt2img", "img2img", "controlnet", "inpaint"]),
                      cascade_interface, extras_interface],
-                    tab_names=["txt2img", "img2img", "depth2img", "pix2pix", "controlnet", "upscale(latent)", "upscale(Real-ESRGAN)", "inpaint", "outpaint", "gligen", "animatediff", "video", "ldm3d", "sd3", "cascade", "extras"]
+                    tab_names=["txt2img", "img2img", "depth2img", "pix2pix", "controlnet", "upscale(latent)", "upscale(Real-ESRGAN)", "refiner", "inpaint", "outpaint", "gligen", "animatediff", "video", "ldm3d", "sd3", "cascade", "extras"]
                 ),
-                kandinsky_interface, flux_interface, hunyuandit_interface, lumina_interface, kolors_interface, auraflow_interface, wurstchen_interface, deepfloyd_if_interface, pixart_interface
+                kandinsky_interface, flux_interface, hunyuandit_interface, lumina_interface, kolors_interface, auraflow_interface, wurstchen_interface, deepfloyd_if_interface, pixart_interface, playgroundv2_interface
             ],
-            tab_names=["StableDiffusion", "Kandinsky", "Flux", "HunyuanDiT", "Lumina-T2X", "Kolors", "AuraFlow", "Würstchen", "DeepFloydIF", "PixArt"]
+            tab_names=["StableDiffusion", "Kandinsky", "Flux", "HunyuanDiT", "Lumina-T2X", "Kolors", "AuraFlow", "Würstchen", "DeepFloydIF", "PixArt", "PlaygroundV2.5"]
         ),
         gr.TabbedInterface(
             [wav2lip_interface, modelscope_interface, zeroscope2_interface, cogvideox_interface, latte_interface],
@@ -6604,6 +6740,7 @@ with gr.TabbedInterface(
     controlnet_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     latent_upscale_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     realesrgan_upscale_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
+    sdxl_refiner_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     inpaint_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     outpaint_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     gligen_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
@@ -6629,6 +6766,7 @@ with gr.TabbedInterface(
     deepfloyd_if_img2img_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     deepfloyd_if_inpaint_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     pixart_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
+    playgroundv2_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     modelscope_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     zeroscope2_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     cogvideox_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
