@@ -6,13 +6,13 @@
 
 ## Description:
 
-A simple and convenient interface for using various neural network models. You can communicate with LLM and Moondream2 using text, voice and image input; use StableDiffusion, Kandinsky, Flux, HunyuanDiT, Lumina-T2X, Kolors, AuraFlow, Würstchen, DeepFloydIF and PixArt to generate images; ModelScope, ZeroScope 2, CogVideoX and Latte to generate videos; TripoSR, StableFast3D, Shap-E, SV34D and Zero123Plus to generate 3D objects; StableAudioOpen, AudioCraft and AudioLDM 2 to generate music and audio; CoquiTTS and SunoBark for text-to-speech; OpenAI-Whisper for speech-to-text; Wav2Lip for lip-sync; Roop to faceswap; Rembg to remove background; CodeFormer for face restore; LibreTranslate for text translation; Demucs for audio file separation. You can also view files from the outputs directory in gallery, download the LLM and StableDiffusion models, change the application settings inside the interface and check system sensors
+A simple and convenient interface for using various neural network models. You can communicate with LLM and Moondream2 using text, voice and image input; use StableDiffusion, Kandinsky, Flux, HunyuanDiT, Lumina-T2X, Kolors, AuraFlow, Würstchen, DeepFloydIF, PixArt and PlaygroundV2.5, to generate images; ModelScope, ZeroScope 2, CogVideoX and Latte to generate videos; TripoSR, StableFast3D, Shap-E, SV34D and Zero123Plus to generate 3D objects; StableAudioOpen, AudioCraft and AudioLDM 2 to generate music and audio; CoquiTTS and SunoBark for text-to-speech; OpenAI-Whisper for speech-to-text; Wav2Lip for lip-sync; Roop to faceswap; Rembg to remove background; CodeFormer for face restore; LibreTranslate for text translation; Demucs for audio file separation. You can also view files from the outputs directory in gallery, download the LLM and StableDiffusion models, change the application settings inside the interface and check system sensors
 
 The goal of the project - to create the easiest possible application to use neural network models
 
 ### Text: <img width="1116" alt="1" src="https://github.com/user-attachments/assets/c33205c4-4366-4bc7-98ba-687df9e10e4f">
 
-### Image: <img width="1115" alt="2" src="https://github.com/user-attachments/assets/b2454567-f1ea-4617-be1e-2d0ccadd4132">
+### Image: <img width="1120" alt="2" src="https://github.com/user-attachments/assets/37013bbb-0387-4b78-a9dd-1ea52910aa75">
 
 ### Video: <img width="1118" alt="3" src="https://github.com/user-attachments/assets/a568c3ed-3b00-4e21-b802-a3e63f6cf97c">
 
@@ -24,19 +24,19 @@ The goal of the project - to create the easiest possible application to use neur
 
 ## Features:
 
-* Easy installation via install.bat(Windows) or install.sh(Linux)
-* You can use the application via your mobile device in localhost(Via IPv4) or anywhere online(Via Share)
+* Easy installation via install.bat (Windows) or install.sh (Linux)
+* You can use the application via your mobile device in localhost (Via IPv4) or anywhere online (Via Share)
 * Flexible and optimized interface (By Gradio)
 * Authentication via admin:admin (You can enter your login details in the GradioAuth.txt file)
 * You can add your own HuggingFace-Token to download a specific models (You can enter your token in the HF-Token.txt file)
 * Support for Transformers and llama.cpp models (LLM)
-* Support for diffusers and safetensors models (StableDiffusion) - txt2img, img2img, depth2img, pix2pix, controlnet, upscale, inpaint, outpaint, gligen, animatediff, video, ldm3d, sd3, cascade, adapters and extras tabs
-* Support of additional models for image generation: Kandinsky, Flux, HunyuanDiT, Lumina-T2X, Kolors, AuraFlow, Würstchen, DeepFloydIF and PixArt
+* Support for diffusers and safetensors models (StableDiffusion) - txt2img, img2img, depth2img, pix2pix, controlnet, upscale (latent), upscale (Real-ESRGAN), refiner, inpaint, outpaint, gligen, animatediff, video, ldm3d, sd3, cascade, and extras tabs
+* Support of additional models for image generation: Kandinsky, Flux, HunyuanDiT, Lumina-T2X, Kolors, AuraFlow, Würstchen, DeepFloydIF, PixArt and PlaygroundV2.5
 * StableAudioOpen support
 * AudioCraft support (Models: musicgen, audiogen and magnet)
 * AudioLDM 2 support (Models: audio and music)
 * Supports TTS and Whisper models (For LLM and TTS-STT)
-* Supports Lora, Textual inversion (embedding), Vae, Img2img, Depth, Pix2Pix, Controlnet, Upscale(latent), Upscale(Real-ESRGAN), Inpaint, Outpaint, GLIGEN, AnimateDiff, Videos, LDM3D, SD3, Cascade, Adapters (InstantID, PhotoMaker, IP-Adapter-FaceID), Rembg, CodeFormer and Roop models (For StableDiffusion)
+* Supports Lora, Textual inversion (embedding), Vae, Img2img, Depth, Pix2Pix, Controlnet, Upscale (latent and Real-ESRGAN), Refiner, Inpaint, Outpaint, GLIGEN, AnimateDiff, Videos, LDM3D, SD3, Cascade, Rembg, CodeFormer and Roop models (For StableDiffusion)
 * Support Multiband Diffusion model (For AudioCraft)
 * Support LibreTranslate (Local API)
 * Support ModelScope, ZeroScope 2, CogVideoX and Latte for video generation
@@ -95,7 +95,7 @@ To work with the virtual environment through the terminal, run `./Venv.sh`
 
 ## How to use:
 
-#### Interface has thirty two tabs in six main tabs (Text, Image, Video, 3D, Audio and Interface): LLM, TTS-STT, SunoBark, LibreTranslate, Wav2Lip, StableDiffusion, Kandinsky, Flux, HunyuanDiT, Lumina-T2X, Kolors, AuraFlow, Würstchen, DeepFloydIF, PixArt, ModelScope, ZeroScope 2, CogVideoX, Latte, TripoSR, StableFast3D, Shap-E, SV34D, Zero123Plus, StableAudio, AudioCraft, AudioLDM 2, Demucs, Gallery, ModelDownloader, Settings and System. Select the one you need and follow the instructions below 
+#### Interface has thirty three tabs in six main tabs (Text, Image, Video, 3D, Audio and Interface): LLM, TTS-STT, SunoBark, LibreTranslate, Wav2Lip, StableDiffusion, Kandinsky, Flux, HunyuanDiT, Lumina-T2X, Kolors, AuraFlow, Würstchen, DeepFloydIF, PixArt, PlaygroundV2.5, ModelScope, ZeroScope 2, CogVideoX, Latte, TripoSR, StableFast3D, Shap-E, SV34D, Zero123Plus, StableAudio, AudioCraft, AudioLDM 2, Demucs, Gallery, ModelDownloader, Settings and System. Select the one you need and follow the instructions below 
 
 ### LLM:
 
@@ -149,7 +149,7 @@ To work with the virtual environment through the terminal, run `./Venv.sh`
 4) Set up the model according to the parameters you need
 5) Enter your request (+ and - for prompt weighting)
 6) Click the `Submit` button to get the generated image
-#### Optional: You can select your `vae`, `embedding` and `lora` models to improve the generation method, also you can enable `upscale` to increase the size of the generated image 
+#### Optional: You can select your `vae`, `embedding` and `lora` models to improve the generation method
 #### vae = *inputs/image/sd_models/vae*
 #### lora = *inputs/image/sd_models/lora*
 #### embedding = *inputs/image/sd_models/embedding*
@@ -163,7 +163,7 @@ To work with the virtual environment through the terminal, run `./Venv.sh`
 5) Upload the initial image with which the generation will take place
 6) Enter your request (+ and - for prompt weighting)
 7) Click the `Submit` button to get the generated image
-#### Optional: You can select your `vae` model
+#### Optional: You can select your `vae` model to improve the generation method
 #### vae = *inputs/image/sd_models/vae*
 
 #### depth2img:
@@ -189,17 +189,22 @@ To work with the virtual environment through the terminal, run `./Venv.sh`
 5) Enter your request (+ and - for prompt weighting)
 6) Click the `Submit` button to get the generated image
 
-#### upscale(latent):
+#### upscale (latent):
 
 1) Upload the initial image
 2) Set up the model according to the parameters you need
 3) Click the `Submit` button to get the upscaled image
 
-#### upscale(Real-ESRGAN):
+#### upscale (Real-ESRGAN):
 
 1) Upload the initial image
 2) Set up the model according to the parameters you need
 3) Click the `Submit` button to get the upscaled image
+
+#### refiner (SDXL):
+
+1) Upload the initial image
+2) Click the `Submit` button to get the refined image
 
 #### inpaint:
 
@@ -211,7 +216,7 @@ To work with the virtual environment through the terminal, run `./Venv.sh`
 6) In `mask image`, select the brush, then the palette and change the color to `#FFFFFF`
 7) Draw a place for generation and enter your request (+ and - for prompt weighting)
 8) Click the `Submit` button to get the inpainted image
-#### Optional: You can select your `vae` model
+#### Optional: You can select your `vae` model to improve the generation method
 #### vae = *inputs/image/sd_models/vae*
 
 #### outpaint:
@@ -266,15 +271,6 @@ To work with the virtual environment through the terminal, run `./Venv.sh`
 1) Enter your request
 2) Set up the model according to the parameters you need
 3) Click the `Submit` button to get the generated image
-
-#### adapters (InstantID, PhotoMaker and IP-Adapter-FaceID):
-
-1) First upload your models to the folder: *inputs/image/sd_models*
-2) Upload the initial image
-3) Select your model from the drop-down list
-4) Set up the model according to the parameters you need
-5) Select the sub-tab for you need
-6) Click the `Submit` button to get the modified image
 
 #### extras:
 
@@ -338,6 +334,12 @@ To work with the virtual environment through the terminal, run `./Venv.sh`
 2) Select the model from the drop-down list
 3) Set up the model according to the parameters you need
 4) Click `Submit` to get the generated image
+
+### PlaygroundV2.5:
+
+1) Enter your prompt
+2) Set up the model according to the parameters you need
+3) Click `Submit` to get the generated image
 
 ### ModelScope:
 
@@ -451,7 +453,7 @@ To work with the virtual environment through the terminal, run `./Venv.sh`
 
 * LLM models can be taken from [HuggingFace](https://huggingface.co/models) or from ModelDownloader inside interface 
 * StableDiffusion, vae, inpaint, embedding and lora models can be taken from [CivitAI](https://civitai.com/models) or from ModelDownloader inside interface
-* StableAudioOpen, AudioCraft, AudioLDM 2, TTS, Whisper, Wav2Lip, SunoBark, MoonDream2, Upscale, GLIGEN, Depth, Pix2Pix, Controlnet, AnimateDiff, Videos, LDM3D, SD3, Cascade, InstantID, PhotoMaker, IP-Adapter-FaceID, Rembg, Roop, CodeFormer, Real-ESRGAN, TripoSR, StableFast3D, Shap-E, SV34D, Zero123Plus, Demucs, Kandinsky, Flux, HunyuanDiT, Lumina-T2X, Kolors, AuraFlow, AuraSR, Würstchen, DeepFloydIF, PixArt, ModelScope, ZeroScope 2, CogVideoX, Latte and Multiband diffusion models are downloads automatically in *inputs* folder when are they used 
+* StableAudioOpen, AudioCraft, AudioLDM 2, TTS, Whisper, Wav2Lip, SunoBark, MoonDream2, Upscale, Refiner, GLIGEN, Depth, Pix2Pix, Controlnet, AnimateDiff, Videos, LDM3D, SD3, Cascade, InstantID, PhotoMaker, IP-Adapter-FaceID, Rembg, Roop, CodeFormer, Real-ESRGAN, TripoSR, StableFast3D, Shap-E, SV34D, Zero123Plus, Demucs, Kandinsky, Flux, HunyuanDiT, Lumina-T2X, Kolors, AuraFlow, AuraSR, Würstchen, DeepFloydIF, PixArt, PlaygroundV2.5, ModelScope, ZeroScope 2, CogVideoX, Latte and Multiband diffusion models are downloads automatically in *inputs* folder when are they used 
 * You can take voices anywhere. Record yours or take a recording from the Internet. Or just use those that are already in the project. The main thing is that it is pre-processed!
 
 ## Wiki
@@ -542,9 +544,8 @@ First of all, I want to thank the developers of [PyCharm](https://www.jetbrains.
 * [SV34D](https://huggingface.co/stabilityai/sv4d/blob/main/LICENSE.md)
 * [Zero123Plus](https://huggingface.co/blog/open_rail)
 * [Real-ESRGAN](https://github.com/xinntao/Real-ESRGAN/blob/master/LICENSE)
-* [InstantID](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/apache-2.0.md)
-* [PhotoMaker-V2](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/apache-2.0.md)
-* [IP-Adapter-FaceID](https://huggingface.co/h94/IP-Adapter-FaceID)
+* [Refiner](https://huggingface.co/stabilityai/stable-diffusion-xl-base-1.0/blob/main/LICENSE.md)
+* [PlaygroundV2.5](https://huggingface.co/playgroundai/playground-v2.5-1024px-aesthetic/blob/main/LICENSE.md)
 * [AuraSR](https://huggingface.co/fal/AuraSR/blob/main/LICENSE.md)
 
 ## Donation
