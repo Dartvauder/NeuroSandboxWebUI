@@ -2796,7 +2796,7 @@ def generate_image_sd3_controlnet(prompt, negative_prompt, init_image, controlne
 
     try:
         device = "cuda" if torch.cuda.is_available() else "cpu"
-        controlnet = SD3ControlNetModel.from_pretrained(controlnet_path, torch_dtype=torch.float16).to(device)
+        controlnet = SD3ControlNetModel.from_pretrained(controlnet_path, torch_dtype=torch.float16)
         pipe = StableDiffusion3ControlNetPipeline.from_pretrained(
             sd3_model_path,
             controlnet=controlnet,
