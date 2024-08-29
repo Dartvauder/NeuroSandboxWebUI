@@ -2277,18 +2277,21 @@ def generate_image_animatediff(prompt, negative_prompt, input_video, strength, m
                 video = load_video(input_video)
 
                 adapter = MotionAdapter.from_pretrained(motion_adapter_path, torch_dtype=torch.float16)
-                pipe = StableDiffusionPipeline.from_single_file(
+                stable_diffusion_model = StableDiffusionPipeline.from_single_file(
                     stable_diffusion_model_path,
                     torch_dtype=torch.float16,
                     variant="fp16",
-                    device_map="auto",
-                )
+                ).to(device)
 
-                pipe = AnimateDiffVideoToVideoPipeline.from_pipe(
-                    pipe,
+                pipe = AnimateDiffVideoToVideoPipeline(
+                    unet=stable_diffusion_model.unet,
+                    text_encoder=stable_diffusion_model.text_encoder,
+                    vae=stable_diffusion_model.vae,
                     motion_adapter=adapter,
-                    torch_dtype=torch.float16
-                )
+                    tokenizer=stable_diffusion_model.tokenizer,
+                    feature_extractor=stable_diffusion_model.feature_extractor,
+                    scheduler=stable_diffusion_model.scheduler,
+                ).to(device)
 
                 pipe.safety_checker = None
 
@@ -2310,18 +2313,21 @@ def generate_image_animatediff(prompt, negative_prompt, input_video, strength, m
 
             else:
                 adapter = MotionAdapter.from_pretrained(motion_adapter_path, torch_dtype=torch.float16)
-                pipe = StableDiffusionPipeline.from_single_file(
+                stable_diffusion_model = StableDiffusionPipeline.from_single_file(
                     stable_diffusion_model_path,
                     torch_dtype=torch.float16,
                     variant="fp16",
-                    device_map="auto",
-                )
+                ).to(device)
 
-                pipe = AnimateDiffPipeline.from_pipe(
-                    pipe,
+                pipe = AnimateDiffPipeline(
+                    unet=stable_diffusion_model.unet,
+                    text_encoder=stable_diffusion_model.text_encoder,
+                    vae=stable_diffusion_model.vae,
                     motion_adapter=adapter,
-                    torch_dtype=torch.float16
-                )
+                    tokenizer=stable_diffusion_model.tokenizer,
+                    feature_extractor=stable_diffusion_model.feature_extractor,
+                    scheduler=stable_diffusion_model.scheduler,
+                ).to(device)
 
                 if motion_lora_name:
                     motion_lora_path = os.path.join("inputs", "image", "sd_models", "motion_lora", motion_lora_name)
@@ -2381,13 +2387,23 @@ def generate_image_animatediff(prompt, negative_prompt, input_video, strength, m
                 print("SDXL motion adapter downloaded")
 
             adapter = MotionAdapter.from_pretrained(sdxl_adapter_path, torch_dtype=torch.float16)
-
-            pipe = AnimateDiffSDXLPipeline.from_single_file(
+            stable_diffusion_model = StableDiffusionXLPipeline.from_single_file(
                 stable_diffusion_model_path,
-                motion_adapter=adapter,
                 torch_dtype=torch.float16,
                 variant="fp16",
-            ).to("cuda")
+            ).to(device)
+
+            pipe = AnimateDiffSDXLPipeline(
+                unet=stable_diffusion_model.unet,
+                text_encoder=stable_diffusion_model.text_encoder,
+                text_encoder_2=stable_diffusion_model.text_encoder_2,
+                vae=stable_diffusion_model.vae,
+                motion_adapter=adapter,
+                tokenizer=stable_diffusion_model.tokenizer,
+                tokenizer_2=stable_diffusion_model.tokenizer_2,
+                feature_extractor=stable_diffusion_model.feature_extractor,
+                scheduler=stable_diffusion_model.scheduler,
+            ).to(device)
 
             pipe.enable_vae_slicing()
             pipe.enable_vae_tiling()
@@ -2434,6 +2450,7 @@ def generate_image_animatediff(prompt, negative_prompt, input_video, strength, m
     finally:
         try:
             del pipe
+            del stable_diffusion_model
             del adapter
         except UnboundLocalError:
             pass
@@ -4420,23 +4437,38 @@ def generate_video_zeroscope2(prompt, video_to_enhance, strength, num_inference_
             torch.cuda.empty_cache()
 
 
-def generate_video_cogvideox(prompt, negative_prompt, num_inference_steps, guidance_scale, height, width, num_frames, fps, stop_generation):
+def generate_video_cogvideox(prompt, negative_prompt, cogvideox_version, num_inference_steps, guidance_scale, height, width, num_frames, fps, stop_generation):
     global stop_signal
     stop_signal = False
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
-    cogvideox_model_path = os.path.join("inputs", "video", "cogvideox")
+    cogvideox_2bmodel_path = os.path.join("inputs", "video", "cogvideox", "2B")
+    cogvideox_5bmodel_path = os.path.join("inputs", "video", "cogvideox", "5B")
 
-    if not os.path.exists(cogvideox_model_path):
-        print("Downloading CogVideoX model...")
-        os.makedirs(cogvideox_model_path, exist_ok=True)
-        Repo.clone_from("https://huggingface.co/THUDM/CogVideoX-2b", cogvideox_model_path)
-        print("CogVideoX model downloaded")
+    if not os.path.exists(cogvideox_2bmodel_path):
+        print("Downloading CogVideoX-2B model...")
+        os.makedirs(cogvideox_2bmodel_path, exist_ok=True)
+        Repo.clone_from("https://huggingface.co/THUDM/CogVideoX-2b", cogvideox_2bmodel_path)
+        print("CogVideoX-2B model downloaded")
+
+    if not os.path.exists(cogvideox_5bmodel_path):
+        print("Downloading CogVideoX-5B model...")
+        os.makedirs(cogvideox_5bmodel_path, exist_ok=True)
+        Repo.clone_from("https://huggingface.co/THUDM/CogVideoX-2b", cogvideox_5bmodel_path)
+        print("CogVideoX-5B model downloaded")
 
     try:
-        pipe = CogVideoXPipeline.from_pretrained(cogvideox_model_path, torch_dtype=torch.float16).to(device)
-        pipe.enable_model_cpu_offload()
+        if cogvideox_version == "2B":
+            pipe = CogVideoXPipeline.from_pretrained(cogvideox_2bmodel_path, torch_dtype=torch.float16).to(device)
+            pipe.enable_model_cpu_offload()
+            pipe.enable_sequential_cpu_offload()
+            pipe.vae.enable_slicing()
+            pipe.vae.enable_tiling()
+        else:
+            pipe = CogVideoXPipeline.from_pretrained(cogvideox_5bmodel_path, torch_dtype=torch.bfloat16).to(device)
+            pipe.enable_model_cpu_offload()
+            pipe.vae.enable_tiling()
 
         video = pipe(
             prompt=prompt,
@@ -6374,6 +6406,7 @@ cogvideox_interface = gr.Interface(
     inputs=[
         gr.Textbox(label="Enter your prompt"),
         gr.Textbox(label="Enter your negative prompt", value=""),
+        gr.Radio(choices=["2B", "5B"], label="Select CogVideoX model version", value="2B"),
         gr.Slider(minimum=1, maximum=100, value=50, step=1, label="Steps"),
         gr.Slider(minimum=1.0, maximum=20.0, value=6.0, step=0.1, label="Guidance Scale"),
         gr.Slider(minimum=256, maximum=1024, value=512, step=64, label="Height"),
