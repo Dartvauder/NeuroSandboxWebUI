@@ -21,7 +21,7 @@ from TTS.api import TTS
 import whisper
 from datetime import datetime
 from huggingface_hub import snapshot_download
-from diffusers import StableDiffusionPipeline, StableDiffusion3Pipeline, StableDiffusionXLPipeline, StableDiffusionImg2ImgPipeline, StableDiffusionXLImg2ImgPipeline, StableDiffusion3Img2ImgPipeline, SD3ControlNetModel, StableDiffusion3ControlNetPipeline, StableDiffusion3InpaintPipeline, StableDiffusionDepth2ImgPipeline, ControlNetModel, StableDiffusionXLControlNetPipeline, StableDiffusionControlNetPipeline, AutoencoderKL, StableDiffusionLatentUpscalePipeline, StableDiffusionUpscalePipeline, StableDiffusionInpaintPipeline, StableDiffusionGLIGENPipeline, AnimateDiffPipeline, AnimateDiffSDXLPipeline, AnimateDiffVideoToVideoPipeline, MotionAdapter, StableVideoDiffusionPipeline, I2VGenXLPipeline, StableCascadePriorPipeline, StableCascadeDecoderPipeline, DiffusionPipeline, ShapEPipeline, ShapEImg2ImgPipeline, StableAudioPipeline, AudioLDM2Pipeline, StableDiffusionInstructPix2PixPipeline, StableDiffusionLDM3DPipeline, FluxPipeline, KandinskyPipeline, KandinskyPriorPipeline, KandinskyV22Pipeline, KandinskyV22PriorPipeline, AutoPipelineForText2Image, KandinskyImg2ImgPipeline, AutoPipelineForImage2Image, AutoPipelineForInpainting, HunyuanDiTPipeline, LuminaText2ImgPipeline, IFPipeline, IFSuperResolutionPipeline, IFImg2ImgPipeline, IFInpaintingPipeline, IFImg2ImgSuperResolutionPipeline, IFInpaintingSuperResolutionPipeline, PixArtAlphaPipeline, PixArtSigmaPipeline, CogVideoXPipeline, LattePipeline, KolorsPipeline, AuraFlowPipeline, WuerstchenDecoderPipeline, WuerstchenPriorPipeline, StableDiffusionSAGPipeline
+from diffusers import StableDiffusionPipeline, StableDiffusion3Pipeline, StableDiffusionXLPipeline, StableDiffusionImg2ImgPipeline, StableDiffusionXLImg2ImgPipeline, StableDiffusion3Img2ImgPipeline, SD3ControlNetModel, StableDiffusion3ControlNetPipeline, StableDiffusion3InpaintPipeline, StableDiffusionXLInpaintPipeline, StableDiffusionDepth2ImgPipeline, ControlNetModel, StableDiffusionXLControlNetPipeline, StableDiffusionControlNetPipeline, AutoencoderKL, StableDiffusionLatentUpscalePipeline, StableDiffusionUpscalePipeline, StableDiffusionInpaintPipeline, StableDiffusionGLIGENPipeline, AnimateDiffPipeline, AnimateDiffSDXLPipeline, AnimateDiffVideoToVideoPipeline, MotionAdapter, StableVideoDiffusionPipeline, I2VGenXLPipeline, StableCascadePriorPipeline, StableCascadeDecoderPipeline, DiffusionPipeline, ShapEPipeline, ShapEImg2ImgPipeline, StableAudioPipeline, AudioLDM2Pipeline, StableDiffusionInstructPix2PixPipeline, StableDiffusionLDM3DPipeline, FluxPipeline, KandinskyPipeline, KandinskyPriorPipeline, KandinskyV22Pipeline, KandinskyV22PriorPipeline, AutoPipelineForText2Image, KandinskyImg2ImgPipeline, AutoPipelineForImage2Image, AutoPipelineForInpainting, HunyuanDiTPipeline, LuminaText2ImgPipeline, IFPipeline, IFSuperResolutionPipeline, IFImg2ImgPipeline, IFInpaintingPipeline, IFImg2ImgSuperResolutionPipeline, IFInpaintingSuperResolutionPipeline, PixArtAlphaPipeline, PixArtSigmaPipeline, CogVideoXPipeline, LattePipeline, KolorsPipeline, AuraFlowPipeline, WuerstchenDecoderPipeline, WuerstchenPriorPipeline, StableDiffusionSAGPipeline
 from diffusers.utils import load_image, export_to_video, export_to_gif, export_to_ply, pt_to_pil
 from diffusers.pipelines.wuerstchen import DEFAULT_STAGE_C_TIMESTEPS
 from aura_sr import AuraSR
@@ -1482,7 +1482,7 @@ def generate_image_controlnet(prompt, negative_prompt, init_image, sd_version, s
                 torch_dtype=torch.float16,
                 use_safetensors=True
             )
-            pipe = StableDiffusionXLControlNetPipeline.from_pretrained(
+            pipe = StableDiffusionXLControlNetPipeline.from_single_file(
                 stable_diffusion_model_path,
                 controlnet=controlnet,
                 torch_dtype=torch.float16,
@@ -1821,7 +1821,7 @@ def generate_image_inpaint(prompt, negative_prompt, init_image, mask_image, blur
                 torch_dtype=torch.float16, variant="fp16"
             )
         elif stable_diffusion_model_type == "SDXL":
-            stable_diffusion_model = AutoPipelineForInpainting.from_pretrained(
+            stable_diffusion_model = StableDiffusionXLInpaintPipeline.from_single_file(
                 stable_diffusion_model_path, use_safetensors=True, device_map="auto", attention_slice=1,
                 torch_dtype=torch.float16, variant="fp16"
             )
@@ -1959,7 +1959,7 @@ def generate_image_outpaint(prompt, negative_prompt, init_image, stable_diffusio
                 torch_dtype=torch.float16, variant="fp16"
             )
         elif stable_diffusion_model_type == "SDXL":
-            pipe = AutoPipelineForInpainting.from_pretrained(
+            pipe = StableDiffusionXLInpaintPipeline.from_single_file(
                 stable_diffusion_model_path, use_safetensors=True, device_map="auto", attention_slice=1,
                 torch_dtype=torch.float16, variant="fp16"
             )
@@ -2264,54 +2264,41 @@ def generate_image_animatediff(prompt, negative_prompt, input_video, strength, m
 
         if model_type == "sd":
             if input_video:
-                images = []
-                vid = imageio.get_reader(input_video)
+                def load_video(input_video: str):
+                    images = []
+                    vid = imageio.get_reader(input_video)
 
-                for frame in vid:
-                    pil_image = Image.fromarray(frame)
-                    images.append(pil_image)
+                    for frame in vid:
+                        pil_image = Image.fromarray(frame)
+                        images.append(pil_image)
+
+                    return images
+
+                video = load_video(input_video)
 
                 adapter = MotionAdapter.from_pretrained(motion_adapter_path, torch_dtype=torch.float16)
-                stable_diffusion_model = StableDiffusionPipeline.from_single_file(
+                pipe = StableDiffusionPipeline.from_single_file(
                     stable_diffusion_model_path,
                     torch_dtype=torch.float16,
                     variant="fp16",
                     device_map="auto",
                 )
 
-                pipe = AnimateDiffVideoToVideoPipeline(
-                    unet=stable_diffusion_model.unet,
-                    text_encoder=stable_diffusion_model.text_encoder,
-                    vae=stable_diffusion_model.vae,
+                pipe = AnimateDiffVideoToVideoPipeline.from_pipe(
+                    pipe,
                     motion_adapter=adapter,
-                    tokenizer=stable_diffusion_model.tokenizer,
-                    feature_extractor=stable_diffusion_model.feature_extractor,
-                    scheduler=stable_diffusion_model.scheduler,
+                    torch_dtype=torch.float16
                 )
-
-                pipe.enable_vae_slicing()
-                pipe.enable_model_cpu_offload()
-                pipe.enable_free_init(method="butterworth", use_fast_sampling=False)
-
-                if XFORMERS_AVAILABLE:
-                    stable_diffusion_model.enable_xformers_memory_efficient_attention(attention_op=None)
-                    stable_diffusion_model.vae.enable_xformers_memory_efficient_attention(attention_op=None)
-                    stable_diffusion_model.unet.enable_xformers_memory_efficient_attention(attention_op=None)
-
-                pipe.to(device)
-                pipe.text_encoder.to(device)
-                pipe.vae.to(device)
-                pipe.unet.to(device)
 
                 pipe.safety_checker = None
 
-                compel_proc = Compel(tokenizer=stable_diffusion_model.tokenizer,
-                                     text_encoder=stable_diffusion_model.text_encoder)
+                compel_proc = Compel(tokenizer=pipe.tokenizer,
+                                     text_encoder=pipe.text_encoder)
                 prompt_embeds = compel_proc(prompt)
                 negative_prompt_embeds = compel_proc(negative_prompt)
 
                 output = pipe(
-                    video=images,
+                    video=video,
                     prompt_embeds=prompt_embeds,
                     negative_prompt_embeds=negative_prompt_embeds,
                     strength=strength,
@@ -2323,21 +2310,17 @@ def generate_image_animatediff(prompt, negative_prompt, input_video, strength, m
 
             else:
                 adapter = MotionAdapter.from_pretrained(motion_adapter_path, torch_dtype=torch.float16)
-                stable_diffusion_model = StableDiffusionPipeline.from_single_file(
+                pipe = StableDiffusionPipeline.from_single_file(
                     stable_diffusion_model_path,
                     torch_dtype=torch.float16,
                     variant="fp16",
                     device_map="auto",
                 )
 
-                pipe = AnimateDiffPipeline(
-                    unet=stable_diffusion_model.unet,
-                    text_encoder=stable_diffusion_model.text_encoder,
-                    vae=stable_diffusion_model.vae,
+                pipe = AnimateDiffPipeline.from_pipe(
+                    pipe,
                     motion_adapter=adapter,
-                    tokenizer=stable_diffusion_model.tokenizer,
-                    feature_extractor=stable_diffusion_model.feature_extractor,
-                    scheduler=stable_diffusion_model.scheduler,
+                    torch_dtype=torch.float16
                 )
 
                 if motion_lora_name:
@@ -2370,20 +2353,10 @@ def generate_image_animatediff(prompt, negative_prompt, input_video, strength, m
                 pipe.enable_model_cpu_offload()
                 pipe.enable_free_init(method="butterworth", use_fast_sampling=False)
 
-                if XFORMERS_AVAILABLE:
-                    stable_diffusion_model.enable_xformers_memory_efficient_attention(attention_op=None)
-                    stable_diffusion_model.vae.enable_xformers_memory_efficient_attention(attention_op=None)
-                    stable_diffusion_model.unet.enable_xformers_memory_efficient_attention(attention_op=None)
-
-                pipe.to(device)
-                pipe.text_encoder.to(device)
-                pipe.vae.to(device)
-                pipe.unet.to(device)
-
                 pipe.safety_checker = None
 
-                compel_proc = Compel(tokenizer=stable_diffusion_model.tokenizer,
-                                     text_encoder=stable_diffusion_model.text_encoder)
+                compel_proc = Compel(tokenizer=pipe.tokenizer,
+                                     text_encoder=pipe.text_encoder)
                 prompt_embeds = compel_proc(prompt)
                 negative_prompt_embeds = compel_proc(negative_prompt)
 
@@ -2409,7 +2382,7 @@ def generate_image_animatediff(prompt, negative_prompt, input_video, strength, m
 
             adapter = MotionAdapter.from_pretrained(sdxl_adapter_path, torch_dtype=torch.float16)
 
-            pipe = AnimateDiffSDXLPipeline.from_pretrained(
+            pipe = AnimateDiffSDXLPipeline.from_single_file(
                 stable_diffusion_model_path,
                 motion_adapter=adapter,
                 torch_dtype=torch.float16,
@@ -2419,16 +2392,6 @@ def generate_image_animatediff(prompt, negative_prompt, input_video, strength, m
             pipe.enable_vae_slicing()
             pipe.enable_vae_tiling()
             pipe.enable_free_init(method="butterworth", use_fast_sampling=False)
-
-            if XFORMERS_AVAILABLE:
-                pipe.enable_xformers_memory_efficient_attention(attention_op=None)
-                pipe.vae.enable_xformers_memory_efficient_attention(attention_op=None)
-                pipe.unet.enable_xformers_memory_efficient_attention(attention_op=None)
-
-            pipe.to(device)
-            pipe.text_encoder.to(device)
-            pipe.vae.to(device)
-            pipe.unet.to(device)
 
             pipe.safety_checker = None
 
@@ -2472,7 +2435,6 @@ def generate_image_animatediff(prompt, negative_prompt, input_video, strength, m
         try:
             del pipe
             del adapter
-            del stable_diffusion_model
         except UnboundLocalError:
             pass
         torch.cuda.empty_cache()
@@ -4386,15 +4348,37 @@ def generate_video_zeroscope2(prompt, video_to_enhance, strength, num_inference_
             enhance_pipe.enable_model_cpu_offload()
             enhance_pipe.enable_vae_slicing()
 
-            video = imageio.get_reader(video_to_enhance)
+            cap = cv2.VideoCapture(video_to_enhance)
+            frames = []
+            while True:
+                ret, frame = cap.read()
+                if not ret:
+                    break
+                frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                frame = Image.fromarray(frame).resize((width, height))
+                frames.append(frame)
+            cap.release()
 
-            for frames in video:
-                video = [Image.fromarray(frames).resize((width, height))]
-
-            video_frames = enhance_pipe(prompt, video=video, strength=strength).frames
+            video_frames = enhance_pipe(prompt, video=frames, strength=strength).frames
 
             if stop_signal:
                 return None, "Generation stopped"
+
+            processed_frames = []
+            for frame in video_frames:
+                if isinstance(frame, Image.Image):
+                    frame = np.array(frame)
+
+                if frame.ndim == 2:
+                    frame = np.stack((frame,) * 3, axis=-1)
+                elif frame.shape[-1] == 4:
+                    frame = frame[:, :, :3]
+                elif frame.shape[-1] != 3:
+                    raise ValueError(f"Unexpected number of channels: {frame.shape[-1]}")
+
+                frame = (frame * 255).astype(np.uint8)
+
+                processed_frames.append(frame)
 
             video_filename = f"zeroscope2_{datetime.now().strftime('%Y%m%d_%H%M%S')}.mp4"
             video_path = os.path.join(video_dir, video_filename)
