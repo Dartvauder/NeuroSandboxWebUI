@@ -70,6 +70,7 @@ chat_dir = None
 tts_model = None
 whisper_model = None
 audiocraft_model_path = None
+multiband_diffusion_path = None
 
 os.chdir(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -354,7 +355,7 @@ def load_multiband_diffusion_model():
         os.makedirs(multiband_diffusion_path, exist_ok=True)
         Repo.clone_from("https://huggingface.co/facebook/multiband-diffusion", multiband_diffusion_path)
         print("Multiband Diffusion model downloaded")
-    return "cuda" if torch.cuda.is_available() else "cpu"
+    return multiband_diffusion_path
 
 
 stop_signal = False
@@ -4907,8 +4908,8 @@ def generate_stableaudio(prompt, negative_prompt, num_inference_steps, guidance_
 
 def generate_audio_audiocraft(prompt, input_audio=None, model_name=None, audiocraft_settings_html=None, model_type="musicgen",
                               duration=10, top_k=250, top_p=0.0,
-                              temperature=1.0, cfg_coef=3.0, enable_multiband=False, output_format="mp3", stop_generation=None):
-    global audiocraft_model_path, stop_signal
+                              temperature=1.0, cfg_coef=3.0, min_cfg_coef=1.0, max_cfg_coef=3.0, enable_multiband=False, output_format="mp3", stop_generation=None):
+    global audiocraft_model_path, multiband_diffusion_path, stop_signal
     stop_signal = False
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -4922,6 +4923,9 @@ def generate_audio_audiocraft(prompt, input_audio=None, model_name=None, audiocr
     if not audiocraft_model_path:
         audiocraft_model_path = load_audiocraft_model(model_name)
 
+    if not multiband_diffusion_path:
+        multiband_diffusion_path = load_multiband_diffusion_model()
+
     today = datetime.now().date()
     audio_dir = os.path.join('outputs', f"AudioCraft_{today.strftime('%Y%m%d')}")
     os.makedirs(audio_dir, exist_ok=True)
@@ -4929,13 +4933,10 @@ def generate_audio_audiocraft(prompt, input_audio=None, model_name=None, audiocr
     try:
         if model_type == "musicgen":
             model = MusicGen.get_pretrained(audiocraft_model_path)
-            model.set_generation_params(duration=duration)
         elif model_type == "audiogen":
             model = AudioGen.get_pretrained(audiocraft_model_path)
-            model.set_generation_params(duration=duration)
         elif model_type == "magnet":
             model = MAGNeT.get_pretrained(audiocraft_model_path)
-            model.set_generation_params()
         else:
             return None, None, "Invalid model type!"
     except (ValueError, AssertionError):
@@ -4944,40 +4945,49 @@ def generate_audio_audiocraft(prompt, input_audio=None, model_name=None, audiocr
     mbd = None
 
     if enable_multiband:
-        mbd = MultiBandDiffusion.get_mbd_musicgen()
+        mbd = MultiBandDiffusion.get_mbd_musicgen(multiband_diffusion_path)
 
     try:
         progress_bar = tqdm(total=duration, desc="Generating audio")
-        if input_audio and model_type == "musicgen":
+        if model_type == "musicgen" and input_audio:
             audio_path = input_audio
             melody, sr = torchaudio.load(audio_path)
-            model.set_generation_params(duration=duration, top_k=top_k, top_p=top_p, temperature=temperature,
-                                        cfg_coef=cfg_coef)
-            wav, tokens = model.generate_with_chroma([prompt], melody[None].expand(1, -1, -1), sr, return_tokens=True)
-            progress_bar.update(duration)
-            if wav.ndim > 2:
-                wav = wav.squeeze()
-            if stop_signal:
-                return None, None, "Generation stopped"
-        else:
             descriptions = [prompt]
             model.set_generation_params(duration=duration, top_k=top_k, top_p=top_p, temperature=temperature,
                                         cfg_coef=cfg_coef)
-            if model_type == "musicgen":
-                wav, tokens = model.generate(descriptions, return_tokens=True)
-            elif model_type == "audiogen":
-                wav = model.generate(descriptions)
-            progress_bar.update(duration)
-            if wav.ndim > 2:
-                wav = wav.squeeze()
-            if stop_signal:
-                return None, None, "Generation stopped"
+            wav, tokens = model.generate_with_chroma(descriptions, melody[None].expand(1, -1, -1), sr, return_tokens=True)
+        elif model_type == "magnet":
+            descriptions = [prompt]
+            model.set_generation_params(top_k=top_k, top_p=top_p, temperature=temperature,
+                                        min_cfg_coef=min_cfg_coef, max_cfg_coef=max_cfg_coef)
+            wav = model.generate(descriptions)
+        elif model_type == "musicgen":
+            descriptions = [prompt]
+            model.set_generation_params(duration=duration, top_k=top_k, top_p=top_p, temperature=temperature,
+                                        cfg_coef=cfg_coef)
+            wav, tokens = model.generate(descriptions, return_tokens=True)
+        elif model_type == "audiogen":
+            descriptions = [prompt]
+            model.set_generation_params(duration=duration, top_k=top_k, top_p=top_p, temperature=temperature,
+                                        cfg_coef=cfg_coef)
+            wav = model.generate(descriptions)
+        else:
+            return None, None, f"Unsupported model type: {model_type}"
+
+        progress_bar.update(duration)
+
+        if wav.ndim > 2:
+            wav = wav.squeeze()
+
+        if stop_signal:
+            return None, None, "Generation stopped"
+
         progress_bar.close()
 
         if mbd:
             if stop_signal:
                 return None, None, "Generation stopped"
-            tokens = rearrange(tokens, "b n d -> n b d")
+            tokens = rearrange(tokens, "(s b) c t -> b (s c) t", s=2)
             wav_diffusion = mbd.tokens_to_wav(tokens)
             wav_diffusion = wav_diffusion.squeeze()
             if wav_diffusion.ndim == 1:
@@ -5001,13 +5011,14 @@ def generate_audio_audiocraft(prompt, input_audio=None, model_name=None, audiocr
         else:
             audio_write(audio_path, wav.cpu(), model.sample_rate, strategy="loudness", loudness_compressor=True)
 
-        spectrogram_path = generate_mel_spectrogram(audio_path)
-
         if output_format == "mp3":
+            spectrogram_path = generate_mel_spectrogram(audio_path + ".mp3")
             return audio_path + ".mp3", spectrogram_path, None
         elif output_format == "ogg":
+            spectrogram_path = generate_mel_spectrogram(audio_path + ".ogg")
             return audio_path + ".ogg", spectrogram_path, None
         else:
+            spectrogram_path = generate_mel_spectrogram(audio_path + ".wav")
             return audio_path + ".wav", spectrogram_path, None
 
     finally:
@@ -6587,7 +6598,9 @@ audiocraft_interface = gr.Interface(
         gr.Slider(minimum=0.0, maximum=1.0, value=0.0, step=0.1, label="Top P"),
         gr.Slider(minimum=0.0, maximum=1.9, value=1.0, step=0.1, label="Temperature"),
         gr.Slider(minimum=1.0, maximum=10.0, value=3.0, step=0.1, label="CFG"),
-        gr.Checkbox(label="Enable Multiband Diffusion", value=False),
+        gr.Slider(minimum=1.0, maximum=10.0, value=3.0, step=0.1, label="Min CFG coef (Magnet model only)"),
+        gr.Slider(minimum=1.0, maximum=10.0, value=1.0, step=0.1, label="Max CFG coef (Magnet model only)"),
+        gr.Checkbox(label="Enable Multiband Diffusion (Musicgen model only)", value=False),
         gr.Radio(choices=["wav", "mp3", "ogg"], label="Select output format (Works only without Multiband Diffusion)", value="wav", interactive=True),
         gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
