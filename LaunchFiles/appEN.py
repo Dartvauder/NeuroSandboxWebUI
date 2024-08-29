@@ -4945,7 +4945,7 @@ def generate_audio_audiocraft(prompt, input_audio=None, model_name=None, audiocr
     mbd = None
 
     if enable_multiband:
-        mbd = MultiBandDiffusion.get_mbd_musicgen(multiband_diffusion_path)
+        mbd = MultiBandDiffusion.get_mbd_musicgen()
 
     try:
         progress_bar = tqdm(total=duration, desc="Generating audio")
@@ -4987,7 +4987,7 @@ def generate_audio_audiocraft(prompt, input_audio=None, model_name=None, audiocr
         if mbd:
             if stop_signal:
                 return None, None, "Generation stopped"
-            tokens = rearrange(tokens, "(s b) c t -> b (s c) t", s=2)
+            tokens = rearrange(tokens, "b n d -> n b d")
             wav_diffusion = mbd.tokens_to_wav(tokens)
             wav_diffusion = wav_diffusion.squeeze()
             if wav_diffusion.ndim == 1:
@@ -4995,7 +4995,6 @@ def generate_audio_audiocraft(prompt, input_audio=None, model_name=None, audiocr
             max_val = wav_diffusion.abs().max()
             if max_val > 1:
                 wav_diffusion = wav_diffusion / max_val
-            wav_diffusion = wav_diffusion * 0.99
             audio_filename_diffusion = f"audio_{datetime.now().strftime('%Y%m%d_%H%M%S')}_diffusion.wav"
             audio_path_diffusion = os.path.join(audio_dir, audio_filename_diffusion)
             torchaudio.save(audio_path_diffusion, wav_diffusion.cpu().detach(), model.sample_rate)
