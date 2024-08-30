@@ -4,6 +4,7 @@ import sys
 import warnings
 from io import StringIO
 
+
 def setup_logging():
     class StderrCatcher(StringIO):
         def write(self, txt):
@@ -14,7 +15,7 @@ def setup_logging():
     root_logger = logging.getLogger()
     root_logger.setLevel(logging.DEBUG)
 
-    file_handler = logging.FileHandler('neurosandbox.log', mode='a')
+    file_handler = logging.FileHandler('neurosandboxwebui.log', mode='w')
     file_handler.setLevel(logging.DEBUG)
     file_formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     file_handler.setFormatter(file_formatter)
@@ -32,7 +33,9 @@ def setup_logging():
     warnings.filterwarnings("default")
     logging.captureWarnings(True)
 
+
 setup_logging()
+
 
 os.chdir(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
