@@ -87,14 +87,7 @@ from tqdm import tqdm
 from llama_cpp import Llama
 from llama_cpp.llama_chat_format import MoondreamChatHandler
 import requests
-import re
-from selenium import webdriver
-from selenium.webdriver.chrome.service import Service
-from selenium.common.exceptions import TimeoutException, NoSuchElementException
-from webdriver_manager.chrome import ChromeDriverManager
-from fake_useragent import UserAgent
-from googlesearch import search
-import html2text
+import urllib.parse
 from rembg import remove
 import torchaudio
 from audiocraft.models import MusicGen, AudioGen, MultiBandDiffusion, MAGNeT
@@ -141,43 +134,54 @@ def get_hf_token():
     return None
 
 
-def perform_web_search(query, num_results=5, max_length=500):
-    ua = UserAgent()
-    user_agent = ua.random
+def perform_web_search(query):
+    try:
+        query_lower = query.lower()
 
-    options = webdriver.ChromeOptions()
-    options.add_argument(f'user-agent={user_agent}')
-    options.add_argument('--headless')
-    options.add_argument('--disable-images')
-    options.add_argument('--disable-extensions')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
+        if "What is current time in" in query_lower:
+            location = query_lower.replace("current time in", "").strip()
+            url = f"http://worldtimeapi.org/api/timezone/{urllib.parse.quote(location)}"
+            response = requests.get(url)
+            data = response.json()
+            result = data.get('datetime', 'Could not retrieve time information.')
 
-    driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
-    driver.set_page_load_timeout(30)
+        elif "What is today day in" in query_lower:
+            location = query_lower.replace("today day in", "").strip()
+            url = f"http://worldtimeapi.org/api/timezone/{urllib.parse.quote(location)}"
+            response = requests.get(url)
+            data = response.json()
+            datetime_str = data.get('datetime', 'Could not retrieve date information.')
+            date_str = datetime_str.split("T")[0] if 'datetime' in data else 'Date not available'
+            result = date_str
 
-    search_results = []
-    for url in search(query, num_results=num_results):
-        try:
-            driver.get(url)
-            page_source = driver.page_source
-            h = html2text.HTML2Text()
-            h.ignore_links = True
-            h.ignore_images = True
-            h.ignore_emphasis = True
-            page_text = h.handle(page_source)
-            page_text = re.sub(r'\s+', ' ', page_text).strip()
-            search_results.append(page_text)
-        except (TimeoutException, NoSuchElementException):
-            continue
+        elif "What is today weather in" in query_lower:
+            location = query_lower.replace("today weather in", "").strip()
+            url = f"https://wttr.in/{urllib.parse.quote(location)}?format=%C+%t+%w"
+            response = requests.get(url)
+            result = response.text.strip()
 
-    driver.quit()
+        else:
+            url = f"https://api.duckduckgo.com/?q={urllib.parse.quote(query)}&format=json&no_html=1&skip_disambig=1"
+            response = requests.get(url)
+            data = response.json()
 
-    search_text = " ".join(search_results)
-    if len(search_text) > max_length:
-        search_text = search_text[:max_length]
+            if data.get('AbstractText'):
+                result = data['AbstractText']
+            elif data.get('Answer'):
+                result = data['Answer']
+            elif data.get('RelatedTopics'):
+                result = data['RelatedTopics']
+            else:
+                result = "No relevant information found."
 
-    return search_text
+        print(f"Web search results for '{query}': {result}")
+
+        return result
+
+    except Exception as e:
+        error_message = f"An error occurred: {str(e)}"
+        print(error_message)
+        return error_message
 
 
 def remove_bg(src_img_path, out_img_path):
@@ -443,7 +447,9 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, input_image
 
     if enable_web_search:
         search_results = perform_web_search(prompt)
-        system_prompt += f"\n\nWeb search results:\n{search_results}"
+        web_context = f"Web search results: {search_results}\n\n"
+    else:
+        web_context = ""
 
     if enable_multimodal and llm_model_name == "moondream2":
         if llm_model_type == "llama":
@@ -589,7 +595,7 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, input_image
 
                 messages = [
                     {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": context + prompt}
+                    {"role": "user", "content": web_context + context + prompt}
                 ]
 
                 if llm_model_type == "transformers":
@@ -598,7 +604,7 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, input_image
                     tokenizer.pad_token = tokenizer.eos_token
                     tokenizer.padding_side = "left"
 
-                    full_prompt = f"{system_prompt}\n\n{context}Human: {prompt}\nAssistant:"
+                    full_prompt = f"{system_prompt}\n\n{web_context}{context}Human: {prompt}\nAssistant:"
                     inputs = tokenizer(full_prompt, return_tensors="pt", padding=True, truncation=True).to(device)
 
                     text = ""
@@ -639,7 +645,7 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, input_image
                     if not chat_history or chat_history[-1][1] is not None:
                         chat_history.append([prompt, ""])
 
-                    full_prompt = f"{system_prompt}\n\n{context}Human: {prompt}\nAssistant:"
+                    full_prompt = f"{system_prompt}\n\n{web_context}{context}Human: {prompt}\nAssistant:"
 
                     for token in llm_model(
                             full_prompt,
