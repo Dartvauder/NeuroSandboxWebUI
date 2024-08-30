@@ -57,6 +57,7 @@ from scipy.io import wavfile
 import matplotlib.pyplot as plt
 import librosa
 import librosa.display
+import base64
 import gc
 import cv2
 import subprocess
@@ -455,12 +456,14 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, input_image
                 print("Moondream2 model downloaded")
 
             chat_handler = MoondreamChatHandler.from_pretrained(
-                moondream2_path,
+                repo_id="vikhyatk/moondream2",
+                local_dir=moondream2_path,
                 filename="*mmproj*",
             )
 
             llm = Llama.from_pretrained(
-                moondream2_path,
+                repo_id="vikhyatk/moondream2",
+                local_dir=moondream2_path,
                 filename="*text-model*",
                 chat_handler=chat_handler,
                 n_ctx=2048,
@@ -468,6 +471,13 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, input_image
             try:
                 if input_image:
                     image_path = input_image
+
+                    def image_to_base64_data_uri(image_path):
+                        with open(image_path, "rb") as img_file:
+                            base64_data = base64.b64encode(img_file.read()).decode('utf-8')
+                            return f"data:image/png;base64,{base64_data}"
+
+                    data_uri = image_to_base64_data_uri(image_path)
                 else:
                     yield chat_history, None, None, "Please upload an image for multimodal input."
                     return
@@ -486,19 +496,18 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, input_image
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": [
                         {"type": "text", "text": f"{context}Human: {prompt}"},
-                        {"type": "image_url", "image_url": {"url": f"file://{image_path}"}}
+                        {"type": "image_url", "image_url": {"url": data_uri}}
                     ]}
                 ]
 
-                for chunk in llm.create_chat_completion(messages=messages):
+                for token in llm.create_chat_completion(messages=messages):
                     if stop_signal:
                         break
-                    text = chunk["choices"][0]["delta"].get("content", "")
-                    chat_history[-1][1] += text
+                    chat_history[-1][1] += token
                     yield chat_history, None, chat_dir, None
 
             except Exception as e:
-                return str(e), None, None, None
+                yield chat_history, None, None, str(e)
 
             finally:
                 del llm
@@ -534,7 +543,7 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, input_image
                     yield chat_history, None, chat_dir, None
 
             except Exception as e:
-                return str(e), None, None, None
+                yield str(e), None, None, None
 
             finally:
                 del model
@@ -722,7 +731,7 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, input_image
                             sf.write(audio_path, wav, 22050)
 
         except Exception as e:
-            return str(e), None, None, None
+            yield str(e), None, None, None
 
         finally:
             if tokenizer is not None:
