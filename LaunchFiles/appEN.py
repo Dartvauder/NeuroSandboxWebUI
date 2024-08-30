@@ -11,6 +11,7 @@ import matplotlib.pyplot as plt
 import librosa
 import librosa.display
 import os
+import gc
 import cv2
 import subprocess
 import json
@@ -199,6 +200,8 @@ def load_model(model_name, model_type, n_ctx=None):
                 return tokenizer, model, None
             except (OSError, RuntimeError):
                 return None, None, "The selected model is not compatible with the 'transformers' model type"
+            except Exception as e:
+                return None, None, str(e)
         elif model_type == "llama":
             try:
                 device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -208,6 +211,8 @@ def load_model(model_name, model_type, n_ctx=None):
                 return tokenizer, model, None
             except (ValueError, RuntimeError):
                 return None, None, "The selected model is not compatible with the 'llama' model type"
+            except Exception as e:
+                return None, None, str(e)
     return None, None, None
 
 
@@ -239,6 +244,7 @@ def load_lora_model(base_model_name, lora_model_name, model_type):
         if 'merged_model' in locals():
             del merged_model
         torch.cuda.empty_cache()
+        gc.collect()
 
 
 def load_moondream2_model(model_id, revision):
@@ -246,22 +252,31 @@ def load_moondream2_model(model_id, revision):
     if stop_signal:
         return "Generation stopped"
     moondream2_model_path = os.path.join("inputs", "text", "llm_models", model_id)
-    if not os.path.exists(moondream2_model_path):
-        print(f"Downloading MoonDream2 model...")
-        os.makedirs(moondream2_model_path, exist_ok=True)
-        device = "cuda" if torch.cuda.is_available() else "cpu"
-        model = AutoModelForCausalLM.from_pretrained(
-            model_id, trust_remote_code=True, revision=revision
-        ).to(device)
-        tokenizer = AutoTokenizer.from_pretrained(model_id, revision=revision)
-        model.save_pretrained(moondream2_model_path)
-        tokenizer.save_pretrained(moondream2_model_path)
-        print("MoonDream2 model downloaded")
-    else:
-        device = "cuda" if torch.cuda.is_available() else "cpu"
-        model = AutoModelForCausalLM.from_pretrained(moondream2_model_path, trust_remote_code=True).to(device)
-        tokenizer = AutoTokenizer.from_pretrained(moondream2_model_path)
-    return model, tokenizer
+    try:
+        if not os.path.exists(moondream2_model_path):
+            print(f"Downloading MoonDream2 model...")
+            os.makedirs(moondream2_model_path, exist_ok=True)
+            device = "cuda" if torch.cuda.is_available() else "cpu"
+            model = AutoModelForCausalLM.from_pretrained(
+                model_id, trust_remote_code=True, revision=revision
+            ).to(device)
+            tokenizer = AutoTokenizer.from_pretrained(model_id, revision=revision)
+            model.save_pretrained(moondream2_model_path)
+            tokenizer.save_pretrained(moondream2_model_path)
+            print("MoonDream2 model downloaded")
+        else:
+            device = "cuda" if torch.cuda.is_available() else "cpu"
+            model = AutoModelForCausalLM.from_pretrained(moondream2_model_path, trust_remote_code=True).to(device)
+            tokenizer = AutoTokenizer.from_pretrained(moondream2_model_path)
+        return model, tokenizer
+
+    except Exception as e:
+        return None, None, str(e)
+    finally:
+        del tokenizer
+        del model
+        torch.cuda.empty_cache()
+        gc.collect()
 
 
 def transcribe_audio(audio_file_path):
@@ -406,37 +421,46 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, input_image
                 chat_handler=chat_handler,
                 n_ctx=2048,
             )
+            try:
+                if input_image:
+                    image_path = input_image
+                else:
+                    yield chat_history, None, None, "Please upload an image for multimodal input."
+                    return
 
-            if input_image:
-                image_path = input_image
-            else:
-                yield chat_history, None, None, "Please upload an image for multimodal input."
-                return
+                context = ""
+                for human_text, ai_text in chat_history[-5:]:
+                    if human_text:
+                        context += f"Human: {human_text}\n"
+                    if ai_text:
+                        context += f"AI: {ai_text}\n"
 
-            context = ""
-            for human_text, ai_text in chat_history[-5:]:
-                if human_text:
-                    context += f"Human: {human_text}\n"
-                if ai_text:
-                    context += f"AI: {ai_text}\n"
+                if not chat_history or chat_history[-1][1] is not None:
+                    chat_history.append([prompt, ""])
 
-            if not chat_history or chat_history[-1][1] is not None:
-                chat_history.append([prompt, ""])
+                messages = [
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": [
+                        {"type": "text", "text": f"{context}Human: {prompt}"},
+                        {"type": "image_url", "image_url": {"url": f"file://{image_path}"}}
+                    ]}
+                ]
 
-            messages = [
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": [
-                    {"type": "text", "text": f"{context}Human: {prompt}"},
-                    {"type": "image_url", "image_url": {"url": f"file://{image_path}"}}
-                ]}
-            ]
+                for chunk in llm.create_chat_completion(messages=messages):
+                    if stop_signal:
+                        break
+                    text = chunk["choices"][0]["delta"].get("content", "")
+                    chat_history[-1][1] += text
+                    yield chat_history, None, chat_dir, None
 
-            for chunk in llm.create_chat_completion(messages=messages):
-                if stop_signal:
-                    break
-                text = chunk["choices"][0]["delta"].get("content", "")
-                chat_history[-1][1] += text
-                yield chat_history, None, chat_dir, None
+            except Exception as e:
+                return str(e), None, None, None
+
+            finally:
+                del llm
+                del chat_handler
+                torch.cuda.empty_cache()
+                gc.collect()
 
         else:
             model_id = "vikhyatk/moondream2"
@@ -465,10 +489,14 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, input_image
                     chat_history[-1][1] += token
                     yield chat_history, None, chat_dir, None
 
+            except Exception as e:
+                return str(e), None, None, None
+
             finally:
                 del model
                 del tokenizer
                 torch.cuda.empty_cache()
+                gc.collect()
 
     else:
         tokenizer, llm_model, error_message = load_model(llm_model_name, llm_model_type)
@@ -648,6 +676,10 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, input_image
                             sf.write(audio_path, wav, 22050, format='ogg')
                         else:
                             sf.write(audio_path, wav, 22050)
+
+        except Exception as e:
+            return str(e), None, None, None
+
         finally:
             if tokenizer is not None:
                 del tokenizer
@@ -658,6 +690,7 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, input_image
             if whisper_model is not None:
                 del whisper_model
             torch.cuda.empty_cache()
+            gc.collect()
 
         chat_history[-1][1] = text
         yield chat_history, audio_path, chat_dir, None
@@ -683,9 +716,13 @@ def generate_tts_stt(text, audio, tts_settings_html, speaker_wav, language, tts_
         try:
             wav = tts_model.tts(text=text, speaker_wav=f"inputs/audio/voices/{speaker_wav}", language=language,
                                 temperature=tts_temperature, top_p=tts_top_p, top_k=tts_top_k, speed=tts_speed)
+        except Exception as e:
+            return None, str(e)
+
         finally:
             del tts_model
             torch.cuda.empty_cache()
+            gc.collect()
 
         today = datetime.now().date()
         audio_dir = os.path.join('outputs', f"TTS_{today.strftime('%Y%m%d')}")
@@ -708,9 +745,14 @@ def generate_tts_stt(text, audio, tts_settings_html, speaker_wav, language, tts_
 
         try:
             stt_output = transcribe_audio(audio)
+
+        except Exception as e:
+            return None, str(e)
+
         finally:
             del whisper_model
             torch.cuda.empty_cache()
+            gc.collect()
 
         if stt_output:
             today = datetime.now().date()
@@ -796,6 +838,7 @@ def generate_bark_audio(text, voice_preset, max_length, fine_temperature, coarse
         del model
         del processor
         torch.cuda.empty_cache()
+        gc.collect()
 
 
 def translate_text(text, source_lang, target_lang, enable_translate_history, translate_history_format, file=None):
@@ -840,6 +883,13 @@ def translate_text(text, source_lang, target_lang, enable_translate_history, tra
         error_message = "LibreTranslate is not running. Please start the LibreTranslate server."
         return error_message
 
+    except Exception as e:
+        return str(e)
+
+    finally:
+        torch.cuda.empty_cache()
+        gc.collect()
+
 
 def generate_wav2lip(image_path, audio_path, fps, pads, face_det_batch_size, wav2lip_batch_size, resize_factor, crop):
     global stop_signal
@@ -880,6 +930,10 @@ def generate_wav2lip(image_path, audio_path, fps, pads, face_det_batch_size, wav
 
     except Exception as e:
         return None, str(e)
+
+    finally:
+        torch.cuda.empty_cache()
+        gc.collect()
 
 
 def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name, vae_model_name, lora_model_names, lora_scales, textual_inversion_model_names, stable_diffusion_settings_html,
@@ -1098,9 +1152,13 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
 
         return image_paths, f"Images generated successfully. Seed used: {seed}"
 
+    except Exception as e:
+        return None, str(e)
+
     finally:
         del stable_diffusion_model
         torch.cuda.empty_cache()
+        gc.collect()
 
 
 def generate_image_img2img(prompt, negative_prompt, init_image,
@@ -1218,6 +1276,7 @@ def generate_image_img2img(prompt, negative_prompt, init_image,
     finally:
         del stable_diffusion_model
         torch.cuda.empty_cache()
+        gc.collect()
 
 
 def generate_image_depth2img(prompt, negative_prompt, init_image, stable_diffusion_settings_html, strength, clip_skip, num_images_per_prompt,
@@ -1289,9 +1348,13 @@ def generate_image_depth2img(prompt, negative_prompt, init_image, stable_diffusi
 
         return image_paths, f"Images generated successfully. Seed used: {seed}"
 
+    except Exception as e:
+        return None, str(e)
+
     finally:
         del stable_diffusion_model
         torch.cuda.empty_cache()
+        gc.collect()
 
 
 def generate_image_pix2pix(prompt, negative_prompt, init_image, num_inference_steps, guidance_scale,
@@ -1359,9 +1422,13 @@ def generate_image_pix2pix(prompt, negative_prompt, init_image, num_inference_st
 
         return image_paths, f"Images generated successfully. Seed used: {seed}"
 
+    except Exception as e:
+        return None, str(e)
+
     finally:
         del pipe
         torch.cuda.empty_cache()
+        gc.collect()
 
 
 def generate_image_controlnet(prompt, negative_prompt, init_image, sd_version, stable_diffusion_sampler, stable_diffusion_model_name, controlnet_model_name,
@@ -1589,6 +1656,7 @@ def generate_image_controlnet(prompt, negative_prompt, init_image, sd_version, s
         except UnboundLocalError:
             pass
         torch.cuda.empty_cache()
+        gc.collect()
 
 
 def generate_image_upscale_latent(prompt, image_path, upscale_factor, num_inference_steps, guidance_scale, seed, output_format="png", stop_generation=None):
@@ -1601,103 +1669,113 @@ def generate_image_upscale_latent(prompt, image_path, upscale_factor, num_infere
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
-    if upscale_factor == "x2":
-        model_id = "stabilityai/sd-x2-latent-upscaler"
-        model_path = os.path.join("inputs", "image", "sd_models", "upscale", "x2-upscaler")
-        if not os.path.exists(model_path):
-            print(f"Downloading Upscale model: {model_id}")
-            os.makedirs(model_path, exist_ok=True)
-            Repo.clone_from(f"https://huggingface.co/{model_id}", model_path)
-            print(f"Upscale model {model_id} downloaded")
+    try:
+        if upscale_factor == "x2":
+            model_id = "stabilityai/sd-x2-latent-upscaler"
+            model_path = os.path.join("inputs", "image", "sd_models", "upscale", "x2-upscaler")
+            if not os.path.exists(model_path):
+                print(f"Downloading Upscale model: {model_id}")
+                os.makedirs(model_path, exist_ok=True)
+                Repo.clone_from(f"https://huggingface.co/{model_id}", model_path)
+                print(f"Upscale model {model_id} downloaded")
 
-        upscaler = StableDiffusionLatentUpscalePipeline.from_pretrained(
-            model_path,
-            torch_dtype=torch.float16
-        )
-        if XFORMERS_AVAILABLE:
-            upscaler.enable_xformers_memory_efficient_attention(attention_op=None)
-            upscaler.vae.enable_xformers_memory_efficient_attention(attention_op=None)
-            upscaler.unet.enable_xformers_memory_efficient_attention(attention_op=None)
+            upscaler = StableDiffusionLatentUpscalePipeline.from_pretrained(
+                model_path,
+                torch_dtype=torch.float16
+            )
+            if XFORMERS_AVAILABLE:
+                upscaler.enable_xformers_memory_efficient_attention(attention_op=None)
+                upscaler.vae.enable_xformers_memory_efficient_attention(attention_op=None)
+                upscaler.unet.enable_xformers_memory_efficient_attention(attention_op=None)
 
-        upscaler.to(device)
-        upscaler.text_encoder.to(device)
-        upscaler.vae.to(device)
-        upscaler.unet.to(device)
+            upscaler.to(device)
+            upscaler.text_encoder.to(device)
+            upscaler.vae.to(device)
+            upscaler.unet.to(device)
 
-        upscaler.safety_checker = None
+            upscaler.safety_checker = None
 
-        if seed == "" or seed is None:
-            seed = random.randint(0, 2 ** 32 - 1)
+            if seed == "" or seed is None:
+                seed = random.randint(0, 2 ** 32 - 1)
+            else:
+                seed = int(seed)
+            generator = torch.Generator(device).manual_seed(seed)
+
+            init_image = Image.open(image_path).convert("RGB")
+            init_image = init_image.resize((512, 512))
+
+            low_res_latents = upscaler(prompt=prompt, image=init_image, output_type="latent",
+                                       generator=generator).images
+
+            upscaled_image = upscaler(
+                prompt=prompt,
+                image=low_res_latents,
+                num_inference_steps=num_inference_steps,
+                guidance_scale=guidance_scale,
+                generator=generator,
+            ).images[0]
+
         else:
-            seed = int(seed)
-        generator = torch.Generator(device).manual_seed(seed)
+            model_id = "stabilityai/stable-diffusion-x4-upscaler"
+            model_path = os.path.join("inputs", "image", "sd_models", "upscale", "x4-upscaler")
+            if not os.path.exists(model_path):
+                print(f"Downloading Upscale model: {model_id}")
+                os.makedirs(model_path, exist_ok=True)
+                Repo.clone_from(f"https://huggingface.co/{model_id}", model_path)
+                print(f"Upscale model {model_id} downloaded")
 
-        init_image = Image.open(image_path).convert("RGB")
-        init_image = init_image.resize((512, 512))
+            upscaler = StableDiffusionUpscalePipeline.from_pretrained(
+                model_path,
+                torch_dtype=torch.float16
+            )
+            if XFORMERS_AVAILABLE:
+                upscaler.enable_xformers_memory_efficient_attention(attention_op=None)
+                upscaler.vae.enable_xformers_memory_efficient_attention(attention_op=None)
+                upscaler.unet.enable_xformers_memory_efficient_attention(attention_op=None)
 
-        low_res_latents = upscaler(prompt=prompt, image=init_image, output_type="latent", generator=generator).images
+            upscaler.to(device)
+            upscaler.text_encoder.to(device)
+            upscaler.vae.to(device)
+            upscaler.unet.to(device)
 
-        upscaled_image = upscaler(
-            prompt=prompt,
-            image=low_res_latents,
-            num_inference_steps=num_inference_steps,
-            guidance_scale=guidance_scale,
-            generator=generator,
-        ).images[0]
+            upscaler.safety_checker = None
 
-    else:
-        model_id = "stabilityai/stable-diffusion-x4-upscaler"
-        model_path = os.path.join("inputs", "image", "sd_models", "upscale", "x4-upscaler")
-        if not os.path.exists(model_path):
-            print(f"Downloading Upscale model: {model_id}")
-            os.makedirs(model_path, exist_ok=True)
-            Repo.clone_from(f"https://huggingface.co/{model_id}", model_path)
-            print(f"Upscale model {model_id} downloaded")
+            if seed == "" or seed is None:
+                seed = random.randint(0, 2 ** 32 - 1)
+            else:
+                seed = int(seed)
+            generator = torch.Generator(device).manual_seed(seed)
 
-        upscaler = StableDiffusionUpscalePipeline.from_pretrained(
-            model_path,
-            torch_dtype=torch.float16
-        )
-        if XFORMERS_AVAILABLE:
-            upscaler.enable_xformers_memory_efficient_attention(attention_op=None)
-            upscaler.vae.enable_xformers_memory_efficient_attention(attention_op=None)
-            upscaler.unet.enable_xformers_memory_efficient_attention(attention_op=None)
+            low_res_img = Image.open(image_path).convert("RGB")
+            low_res_img = low_res_img.resize((128, 128))
 
-        upscaler.to(device)
-        upscaler.text_encoder.to(device)
-        upscaler.vae.to(device)
-        upscaler.unet.to(device)
+            upscaled_image = upscaler(
+                prompt=prompt,
+                image=low_res_img,
+                num_inference_steps=num_inference_steps,
+                guidance_scale=guidance_scale,
+                generator=generator,
+            ).images[0]
 
-        upscaler.safety_checker = None
+        if stop_signal:
+            return None, "Generation stopped"
 
-        if seed == "" or seed is None:
-            seed = random.randint(0, 2 ** 32 - 1)
-        else:
-            seed = int(seed)
-        generator = torch.Generator(device).manual_seed(seed)
+        today = datetime.now().date()
+        image_dir = os.path.join('outputs', f"StableDiffusion_{today.strftime('%Y%m%d')}")
+        os.makedirs(image_dir, exist_ok=True)
+        image_filename = f"upscaled_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
+        image_path = os.path.join(image_dir, image_filename)
+        upscaled_image.save(image_path, format=output_format.upper())
 
-        low_res_img = Image.open(image_path).convert("RGB")
-        low_res_img = low_res_img.resize((128, 128))
+        return image_path, None
 
-        upscaled_image = upscaler(
-            prompt=prompt,
-            image=low_res_img,
-            num_inference_steps=num_inference_steps,
-            guidance_scale=guidance_scale,
-            generator=generator,
-        ).images[0]
+    except Exception as e:
+        return None, str(e)
 
-    if stop_signal:
-        return None, "Generation stopped"
-
-    today = datetime.now().date()
-    image_dir = os.path.join('outputs', f"StableDiffusion_{today.strftime('%Y%m%d')}")
-    os.makedirs(image_dir, exist_ok=True)
-    image_filename = f"upscaled_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
-    image_path = os.path.join(image_dir, image_filename)
-    upscaled_image.save(image_path, format=output_format.upper())
-
-    return image_path, None
+    finally:
+        del upscaler
+        torch.cuda.empty_cache()
+        gc.collect()
 
 
 def generate_image_upscale_realesrgan(image_path, model_name, outscale, face_enhance, tile, tile_pad, pre_pad, output_format="png", stop_generation=None):
@@ -1741,11 +1819,12 @@ def generate_image_upscale_realesrgan(image_path, model_name, outscale, face_enh
         else:
             return None, "Output file not found"
 
-    except subprocess.CalledProcessError as e:
-        return None, f"Error occurred: {str(e)}"
-
     except Exception as e:
         return None, str(e)
+
+    finally:
+        torch.cuda.empty_cache()
+        gc.collect()
 
 
 def generate_image_sdxl_refiner(prompt, init_image, output_format="png", stop_generation=None):
@@ -1792,6 +1871,7 @@ def generate_image_sdxl_refiner(prompt, init_image, output_format="png", stop_ge
     finally:
         del pipe
         torch.cuda.empty_cache()
+        gc.collect()
 
 
 def generate_image_inpaint(prompt, negative_prompt, init_image, mask_image, blur_factor, stable_diffusion_model_name, vae_model_name,
@@ -1926,9 +2006,13 @@ def generate_image_inpaint(prompt, negative_prompt, init_image, mask_image, blur
 
         return image_paths, f"Images generated successfully. Seed used: {seed}"
 
+    except Exception as e:
+        return None, str(e)
+
     finally:
         del stable_diffusion_model
         torch.cuda.empty_cache()
+        gc.collect()
 
 
 def generate_image_outpaint(prompt, negative_prompt, init_image, stable_diffusion_model_name, stable_diffusion_settings_html,
@@ -2089,6 +2173,7 @@ def generate_image_outpaint(prompt, negative_prompt, init_image, stable_diffusio
     finally:
         del pipe
         torch.cuda.empty_cache()
+        gc.collect()
 
 
 def generate_image_gligen(prompt, negative_prompt, gligen_phrases, gligen_boxes, stable_diffusion_model_name, stable_diffusion_settings_html,
@@ -2230,10 +2315,14 @@ def generate_image_gligen(prompt, negative_prompt, gligen_phrases, gligen_boxes,
 
         return image_paths, f"Images generated successfully. Seed used: {seed}"
 
+    except Exception as e:
+        return None, str(e)
+
     finally:
         del stable_diffusion_model
         del pipe
         torch.cuda.empty_cache()
+        gc.collect()
 
 
 def generate_image_animatediff(prompt, negative_prompt, input_video, strength, model_type, stable_diffusion_model_name, motion_lora_name, num_frames, num_inference_steps,
@@ -2450,6 +2539,9 @@ def generate_image_animatediff(prompt, negative_prompt, input_video, strength, m
 
         return gif_path, f"GIF generated successfully. Seed used: {seed}"
 
+    except Exception as e:
+        return None, str(e)
+
     finally:
         try:
             del pipe
@@ -2458,6 +2550,7 @@ def generate_image_animatediff(prompt, negative_prompt, input_video, strength, m
         except UnboundLocalError:
             pass
         torch.cuda.empty_cache()
+        gc.collect()
 
 
 def generate_video(init_image, output_format, video_settings_html, motion_bucket_id, noise_aug_strength, fps, num_frames, decode_chunk_size,
@@ -2512,12 +2605,16 @@ def generate_video(init_image, output_format, video_settings_html, motion_bucket
 
             return video_path, None, f"MP4 generated successfully. Seed used: {seed}"
 
+        except Exception as e:
+            return None, None, str(e)
+
         finally:
             try:
                 del pipe
             except UnboundLocalError:
                 pass
             torch.cuda.empty_cache()
+            gc.collect()
 
     elif output_format == "gif":
         video_model_name = "ali-vilab/i2vgen-xl"
@@ -2560,12 +2657,16 @@ def generate_video(init_image, output_format, video_settings_html, motion_bucket
 
             return None, video_path, f"GIF generated successfully. Seed used: {seed}"
 
+        except Exception as e:
+            return None, None, str(e)
+
         finally:
             try:
                 del pipeline
             except UnboundLocalError:
                 pass
             torch.cuda.empty_cache()
+            gc.collect()
 
 
 def generate_image_ldm3d(prompt, negative_prompt, width, height, num_inference_steps, guidance_scale, num_images_per_prompt, seed, output_format="png", stop_generation=None):
@@ -2640,6 +2741,7 @@ def generate_image_ldm3d(prompt, negative_prompt, width, height, num_inference_s
     finally:
         del pipe
         torch.cuda.empty_cache()
+        gc.collect()
 
 
 def generate_image_sd3_txt2img(prompt, negative_prompt, num_inference_steps, guidance_scale, width, height, max_sequence_length, clip_skip, num_images_per_prompt, seed, output_format="png", stop_generation=None):
@@ -2701,9 +2803,13 @@ def generate_image_sd3_txt2img(prompt, negative_prompt, num_inference_steps, gui
 
         return image_paths, f"Images generated successfully. Seed used: {seed}"
 
+    except Exception as e:
+        return None, str(e)
+
     finally:
         del pipe
         torch.cuda.empty_cache()
+        gc.collect()
 
 
 def generate_image_sd3_img2img(prompt, negative_prompt, init_image, strength, num_inference_steps, guidance_scale, width, height, max_sequence_length, clip_skip, num_images_per_prompt, seed, output_format="png", stop_generation=None):
@@ -2767,9 +2873,13 @@ def generate_image_sd3_img2img(prompt, negative_prompt, init_image, strength, nu
 
         return image_paths, f"Images generated successfully. Seed used: {seed}"
 
+    except Exception as e:
+        return None, str(e)
+
     finally:
         del pipe
         torch.cuda.empty_cache()
+        gc.collect()
 
 
 def generate_image_sd3_controlnet(prompt, negative_prompt, init_image, controlnet_model, num_inference_steps, guidance_scale, controlnet_conditioning_scale, width, height, max_sequence_length, clip_skip, num_images_per_prompt, seed, output_format="png", stop_generation=None):
@@ -2856,9 +2966,14 @@ def generate_image_sd3_controlnet(prompt, negative_prompt, init_image, controlne
 
         return image_paths, control_image_paths, f"Images generated successfully. Seed used: {seed}"
 
+    except Exception as e:
+        return None, None, str(e)
+
     finally:
         del pipe
+        del controlnet
         torch.cuda.empty_cache()
+        gc.collect()
 
 
 def generate_image_sd3_inpaint(prompt, negative_prompt, init_image, mask_image, num_inference_steps, guidance_scale, width, height, max_sequence_length, clip_skip, num_images_per_prompt, seed, output_format="png", stop_generation=None):
@@ -2925,9 +3040,13 @@ def generate_image_sd3_inpaint(prompt, negative_prompt, init_image, mask_image, 
 
         return image_paths, f"Images generated successfully. Seed used: {seed}"
 
+    except Exception as e:
+        return None, str(e)
+
     finally:
         del pipe
         torch.cuda.empty_cache()
+        gc.collect()
 
 
 def generate_image_cascade(prompt, negative_prompt, stable_cascade_settings_html, width, height, prior_steps, prior_guidance_scale,
@@ -3008,10 +3127,14 @@ def generate_image_cascade(prompt, negative_prompt, stable_cascade_settings_html
 
         return image_paths, f"Images generated successfully. Seed used: {seed}"
 
+    except Exception as e:
+        return None, str(e)
+
     finally:
         del prior
         del decoder
         torch.cuda.empty_cache()
+        gc.collect()
 
 
 def generate_image_extras(input_image, source_image, remove_background, enable_faceswap, enable_facerestore, image_output_format, stop_generation):
@@ -3065,6 +3188,10 @@ def generate_image_extras(input_image, source_image, remove_background, enable_f
 
     except Exception as e:
         return None, str(e)
+
+    finally:
+        torch.cuda.empty_cache()
+        gc.collect()
 
 
 def generate_image_kandinsky_txt2img(prompt, negative_prompt, version, num_inference_steps, guidance_scale, height, width, seed, output_format="png",
@@ -3190,6 +3317,7 @@ def generate_image_kandinsky_txt2img(prompt, negative_prompt, version, num_infer
         except:
             pass
         torch.cuda.empty_cache()
+        gc.collect()
 
 
 def generate_image_kandinsky_img2img(prompt, negative_prompt, init_image, version, num_inference_steps, guidance_scale, strength, height, width, seed, output_format="png", stop_generation=None):
@@ -3317,6 +3445,7 @@ def generate_image_kandinsky_img2img(prompt, negative_prompt, init_image, versio
         except:
             pass
         torch.cuda.empty_cache()
+        gc.collect()
 
 
 def generate_image_kandinsky_inpaint(prompt, negative_prompt, init_image, mask_image, version, num_inference_steps, guidance_scale, strength, height, width, output_format="png", stop_generation=None):
@@ -3392,6 +3521,7 @@ def generate_image_kandinsky_inpaint(prompt, negative_prompt, init_image, mask_i
     finally:
         del pipe
         torch.cuda.empty_cache()
+        gc.collect()
 
 
 def generate_image_flux(prompt, model_name, guidance_scale, height, width, num_inference_steps, max_sequence_length, seed, output_format="png", stop_generation=None):
@@ -3465,6 +3595,7 @@ def generate_image_flux(prompt, model_name, guidance_scale, height, width, num_i
     finally:
         del pipe
         torch.cuda.empty_cache()
+        gc.collect()
 
 
 def generate_image_hunyuandit(prompt, negative_prompt, num_inference_steps, guidance_scale, height, width, seed, output_format="png", stop_generation=None):
@@ -3523,6 +3654,7 @@ def generate_image_hunyuandit(prompt, negative_prompt, num_inference_steps, guid
     finally:
         del pipe
         torch.cuda.empty_cache()
+        gc.collect()
 
 
 def generate_image_lumina(prompt, negative_prompt, num_inference_steps, guidance_scale, height, width, max_sequence_length, seed, output_format="png", stop_generation=None):
@@ -3583,6 +3715,7 @@ def generate_image_lumina(prompt, negative_prompt, num_inference_steps, guidance
     finally:
         del pipe
         torch.cuda.empty_cache()
+        gc.collect()
 
 
 def generate_image_kolors(prompt, negative_prompt, guidance_scale, num_inference_steps, max_sequence_length, seed, output_format="png", stop_generation=None):
@@ -3639,6 +3772,7 @@ def generate_image_kolors(prompt, negative_prompt, guidance_scale, num_inference
     finally:
         del pipe
         torch.cuda.empty_cache()
+        gc.collect()
 
 
 def generate_image_auraflow(prompt, negative_prompt, num_inference_steps, guidance_scale, height, width, max_sequence_length, enable_aurasr, seed, output_format="png", stop_generation=None):
@@ -3708,7 +3842,10 @@ def generate_image_auraflow(prompt, negative_prompt, num_inference_steps, guidan
 
     finally:
         del pipe
+        if enable_aurasr:
+            del aura_sr
         torch.cuda.empty_cache()
+        gc.collect()
 
 
 def generate_image_wurstchen(prompt, negative_prompt, width, height, prior_steps, prior_guidance_scale, decoder_steps, decoder_guidance_scale, seed, output_format="png", stop_generation=None):
@@ -3793,6 +3930,7 @@ def generate_image_wurstchen(prompt, negative_prompt, width, height, prior_steps
         del prior_pipeline
         del decoder_pipeline
         torch.cuda.empty_cache()
+        gc.collect()
 
 
 def generate_image_deepfloyd_txt2img(prompt, negative_prompt, num_inference_steps, guidance_scale, width, height, seed, output_format="png", stop_generation=None):
@@ -3929,6 +4067,7 @@ def generate_image_deepfloyd_txt2img(prompt, negative_prompt, num_inference_step
         except:
             pass
         torch.cuda.empty_cache()
+        gc.collect()
 
 
 def generate_image_deepfloyd_img2img(prompt, negative_prompt, init_image, num_inference_steps, guidance_scale, width, height, seed, output_format="png", stop_generation=None):
@@ -4073,6 +4212,7 @@ def generate_image_deepfloyd_img2img(prompt, negative_prompt, init_image, num_in
         except:
             pass
         torch.cuda.empty_cache()
+        gc.collect()
 
 
 def generate_image_deepfloyd_inpaint(prompt, negative_prompt, init_image, mask_image, num_inference_steps, guidance_scale, output_format="png", stop_generation=None):
@@ -4212,6 +4352,7 @@ def generate_image_deepfloyd_inpaint(prompt, negative_prompt, init_image, mask_i
         except:
             pass
         torch.cuda.empty_cache()
+        gc.collect()
 
 
 def generate_image_pixart(prompt, negative_prompt, version, num_inference_steps, guidance_scale, height, width,
@@ -4302,6 +4443,7 @@ def generate_image_pixart(prompt, negative_prompt, version, num_inference_steps,
     finally:
         del pipe
         torch.cuda.empty_cache()
+        gc.collect()
 
 
 def generate_image_playgroundv2(prompt, negative_prompt, height, width, num_inference_steps, guidance_scale, seed, output_format="png", stop_generation=None):
@@ -4362,6 +4504,7 @@ def generate_image_playgroundv2(prompt, negative_prompt, height, width, num_infe
     finally:
         del pipe
         torch.cuda.empty_cache()
+        gc.collect()
 
 
 def generate_video_modelscope(prompt, negative_prompt, num_inference_steps, guidance_scale, height, width, num_frames,
@@ -4428,6 +4571,7 @@ def generate_video_modelscope(prompt, negative_prompt, num_inference_steps, guid
     finally:
         del pipe
         torch.cuda.empty_cache()
+        gc.collect()
 
 
 def generate_video_zeroscope2(prompt, video_to_enhance, strength, num_inference_steps, width, height, num_frames,
@@ -4509,12 +4653,16 @@ def generate_video_zeroscope2(prompt, video_to_enhance, strength, num_inference_
 
             return video_path, f"Video generated successfully. Seed used: {seed}"
 
+        except Exception as e:
+            return None, str(e)
+
         finally:
             try:
                 del enhance_pipe
             except UnboundLocalError:
                 pass
             torch.cuda.empty_cache()
+            gc.collect()
 
     else:
         try:
@@ -4535,12 +4683,16 @@ def generate_video_zeroscope2(prompt, video_to_enhance, strength, num_inference_
 
             return video_path, f"Video generated successfully. Seed used: {seed}"
 
+        except Exception as e:
+            return None, str(e)
+
         finally:
             try:
                 del base_pipe
             except UnboundLocalError:
                 pass
             torch.cuda.empty_cache()
+            gc.collect()
 
 
 def generate_video_cogvideox(prompt, negative_prompt, cogvideox_version, num_inference_steps, guidance_scale, height, width, num_frames, fps, seed, stop_generation):
@@ -4612,6 +4764,7 @@ def generate_video_cogvideox(prompt, negative_prompt, cogvideox_version, num_inf
     finally:
         del pipe
         torch.cuda.empty_cache()
+        gc.collect()
 
 
 def generate_video_latte(prompt, negative_prompt, num_inference_steps, guidance_scale, height, width, video_length, seed, stop_generation):
@@ -4668,6 +4821,7 @@ def generate_video_latte(prompt, negative_prompt, num_inference_steps, guidance_
     finally:
         del pipe
         torch.cuda.empty_cache()
+        gc.collect()
 
 
 def generate_3d_triposr(image, mc_resolution, foreground_ratio=0.85, output_format="obj", stop_generation=None):
@@ -4725,9 +4879,13 @@ def generate_3d_triposr(image, mc_resolution, foreground_ratio=0.85, output_form
 
         return output_path, None
 
+    except Exception as e:
+        return None, str(e)
+
     finally:
         del model
         torch.cuda.empty_cache()
+        gc.collect()
 
 
 def generate_3d_stablefast3d(image, texture_resolution, foreground_ratio, remesh_option, output_format="obj",
@@ -4767,6 +4925,8 @@ def generate_3d_stablefast3d(image, texture_resolution, foreground_ratio, remesh
     finally:
         if "HUGGING_FACE_HUB_TOKEN" in os.environ:
             del os.environ["HUGGING_FACE_HUB_TOKEN"]
+        torch.cuda.empty_cache()
+        gc.collect()
 
 
 def generate_3d_shap_e(prompt, init_image, num_inference_steps, guidance_scale, frame_size, seed, stop_generation):
@@ -4840,9 +5000,13 @@ def generate_3d_shap_e(prompt, init_image, num_inference_steps, guidance_scale, 
 
         return glb_path, f"3D generated successfully. Seed used: {seed}"
 
+    except Exception as e:
+        return None, str(e)
+
     finally:
         del pipe
         torch.cuda.empty_cache()
+        gc.collect()
 
 
 def generate_sv34d(input_file, version, elevation_deg=None, stop_generation=None):
@@ -4919,6 +5083,10 @@ def generate_sv34d(input_file, version, elevation_deg=None, stop_generation=None
     except Exception as e:
         return None, str(e)
 
+    finally:
+        torch.cuda.empty_cache()
+        gc.collect()
+
 
 def generate_3d_zero123plus(input_image, num_inference_steps, output_format="png", stop_generation=None):
     global stop_signal
@@ -4966,6 +5134,7 @@ def generate_3d_zero123plus(input_image, num_inference_steps, output_format="png
     finally:
         del pipeline
         torch.cuda.empty_cache()
+        gc.collect()
 
 
 def generate_stableaudio(prompt, negative_prompt, num_inference_steps, guidance_scale, audio_length, audio_start, num_waveforms, seed, output_format,
@@ -5042,6 +5211,7 @@ def generate_stableaudio(prompt, negative_prompt, num_inference_steps, guidance_
     finally:
         del pipe
         torch.cuda.empty_cache()
+        gc.collect()
 
 
 def generate_audio_audiocraft(prompt, input_audio=None, model_name=None, audiocraft_settings_html=None, model_type="musicgen",
@@ -5156,11 +5326,15 @@ def generate_audio_audiocraft(prompt, input_audio=None, model_name=None, audiocr
             spectrogram_path = generate_mel_spectrogram(audio_path + ".wav")
             return audio_path + ".wav", spectrogram_path, None
 
+    except Exception as e:
+        return None, None, str(e)
+
     finally:
         del model
         if mbd:
             del mbd
         torch.cuda.empty_cache()
+        gc.collect()
 
 
 def generate_audio_audioldm2(prompt, negative_prompt, model_name, num_inference_steps, audio_length_in_s,
@@ -5220,9 +5394,13 @@ def generate_audio_audioldm2(prompt, negative_prompt, model_name, num_inference_
 
         return audio_path, spectrogram_path, f"Audio generated successfully. Seed used: {seed}"
 
+    except Exception as e:
+        return None, None, str(e)
+
     finally:
         del pipe
         torch.cuda.empty_cache()
+        gc.collect()
 
 
 def demucs_separate(audio_file, output_format="wav"):
@@ -5275,6 +5453,10 @@ def demucs_separate(audio_file, output_format="wav"):
 
     except Exception as e:
         return None, None, str(e)
+
+    finally:
+        torch.cuda.empty_cache()
+        gc.collect()
 
 
 def get_output_files():
