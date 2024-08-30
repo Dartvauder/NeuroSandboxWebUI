@@ -523,7 +523,7 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, input_image
 
         else:
             model_id = "vikhyatk/moondream2"
-            revision = "2024-07-23"
+            revision = "2024-08-26"
             model, tokenizer = load_moondream2_model(model_id, revision)
 
             try:
