@@ -34,19 +34,13 @@ timeout /t 3 /nobreak >nul
 cls
 
 echo Checking for installation errors...
-findstr /V /C:"ERROR: ERROR" %ERROR_LOG% > %ERROR_LOG%.tmp
-move /Y %ERROR_LOG%.tmp %ERROR_LOG% > nul
-
-if %ERRORLEVEL% neq 0 (
+findstr /C:"error" %ERROR_LOG% >nul
+if %ERRORLEVEL% equ 0 (
     echo Some packages failed to install. Please check %ERROR_LOG% for details.
-    echo You can try to install these packages manually by running:
-    echo call "%CURRENT_DIR%venv.bat"
-    echo and then use pip to install the missing packages.
 ) else (
-    echo All packages installed successfully.
-    del %ERROR_LOG%
+    echo Installation completed successfully.
 )
-timeout /t 3 /nobreak >nul
+timeout /t 5 /nobreak >nul
 cls
 
 echo Application installation process completed. Run start.bat to launch the application.

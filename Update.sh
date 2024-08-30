@@ -31,19 +31,12 @@ sleep 3
 clear
 
 echo "Checking for update errors..."
-grep -v "ERROR: ERROR" "$ERROR_LOG" > "$ERROR_LOG.tmp"
-mv "$ERROR_LOG.tmp" "$ERROR_LOG"
-
-if [ -s "$ERROR_LOG" ]; then
-    echo "Some packages failed to update. Please check $ERROR_LOG for details."
-    echo "You can try to update these packages manually by running:"
-    echo "source \"$CURRENT_DIR/Venv.sh\""
-    echo "and then use pip to install the missing packages."
+if grep -iq "error" "$ERROR_LOG"; then
+    echo "Some packages failed to install. Please check $ERROR_LOG for details."
 else
-    echo "All packages updated successfully."
-    rm "$ERROR_LOG"
+    echo "All packages installed successfully."
 fi
-sleep 3
+sleep 5
 clear
 
 echo "Application update process completed. Run start.sh to launch the application."

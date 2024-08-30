@@ -34,19 +34,12 @@ sleep 3
 clear
 
 echo "Checking for installation errors..."
-grep -v "ERROR: ERROR" "$ERROR_LOG" > "$ERROR_LOG.tmp"
-mv "$ERROR_LOG.tmp" "$ERROR_LOG"
-
-if [ -s "$ERROR_LOG" ]; then
+if grep -iq "error" "$ERROR_LOG"; then
     echo "Some packages failed to install. Please check $ERROR_LOG for details."
-    echo "You can try to install these packages manually by running:"
-    echo "source \"$CURRENT_DIR/Venv.sh\""
-    echo "and then use pip to install the missing packages."
 else
     echo "All packages installed successfully."
-    rm "$ERROR_LOG"
 fi
-sleep 3
+sleep 5
 clear
 
 echo "Application installation process completed. Run start.sh to launch the application."
