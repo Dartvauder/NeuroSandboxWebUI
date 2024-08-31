@@ -5018,9 +5018,7 @@ def generate_sv34d(input_file, version, elevation_deg=None):
 
         for file in os.listdir(output_dir):
             if file.startswith(output_filename):
-                return os.path.join(output_dir, file), None
-
-        return None, "Output file not found"
+                return output_path
 
     except subprocess.CalledProcessError as e:
         return None, f"Error occurred: {str(e)}"
