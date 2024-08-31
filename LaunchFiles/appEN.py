@@ -5074,7 +5074,7 @@ def generate_3d_zero123plus(input_image, num_inference_steps, output_format="png
         return None, str(e)
 
     finally:
-        del pipeline
+        del pipe
         flush()
 
 
