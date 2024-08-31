@@ -140,7 +140,7 @@ To work with the virtual environment through the terminal, run `./Venv.sh`
 3) Set up the model according to the parameters you need
 4) Click the `Submit` button to receive the lip-sync
 
-### StableDiffusion - has seventeen sub-tabs:
+### StableDiffusion - has eighteen sub-tabs:
 
 #### txt2img:
 
