@@ -32,6 +32,13 @@ python3 "$CURRENT_DIR/RequirementsFiles/post_install.py"
 sleep 3
 clear
 
+echo "Downloading stable-diffusion-v1-5 model..."
+mkdir -p "$CURRENT_DIR/cache"
+pip install huggingface_hub
+python3 -c "from huggingface_hub import snapshot_download; snapshot_download('benjamin-paine/stable-diffusion-v1-5', local_dir='$CURRENT_DIR/cache/stable-diffusion-v1-5')"
+sleep 3
+clear
+
 echo "Checking for installation errors..."
 if grep -iq "error" "$ERROR_LOG"; then
     echo "Some packages failed to install. Please check $ERROR_LOG for details."

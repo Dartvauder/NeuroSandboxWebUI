@@ -32,6 +32,13 @@ python "%CURRENT_DIR%RequirementsFiles\post_install.py"
 timeout /t 3 /nobreak >nul
 cls
 
+echo Downloading stable-diffusion-v1-5 model...
+if not exist "%CURRENT_DIR%cache" mkdir "%CURRENT_DIR%cache"
+pip install huggingface_hub
+python -c "from huggingface_hub import snapshot_download; snapshot_download('benjamin-paine/stable-diffusion-v1-5', local_dir='%CURRENT_DIR%cache\stable-diffusion-v1-5')"
+timeout /t 3 /nobreak >nul
+cls
+
 echo Checking for installation errors...
 findstr /C:"error" %ERROR_LOG% >nul
 if %ERRORLEVEL% equ 0 (
