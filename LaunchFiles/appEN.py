@@ -32,7 +32,7 @@ from TTS.api import TTS
 import whisper
 from datetime import datetime
 from huggingface_hub import snapshot_download
-from diffusers import StableDiffusionPipeline, StableDiffusion3Pipeline, StableDiffusionXLPipeline, StableDiffusionImg2ImgPipeline, StableDiffusionXLImg2ImgPipeline, StableDiffusion3Img2ImgPipeline, SD3ControlNetModel, StableDiffusion3ControlNetPipeline, StableDiffusion3InpaintPipeline, StableDiffusionXLInpaintPipeline, StableDiffusionDepth2ImgPipeline, ControlNetModel, StableDiffusionXLControlNetPipeline, StableDiffusionControlNetPipeline, AutoencoderKL, StableDiffusionLatentUpscalePipeline, StableDiffusionUpscalePipeline, StableDiffusionInpaintPipeline, StableDiffusionGLIGENPipeline, AnimateDiffPipeline, AnimateDiffSDXLPipeline, AnimateDiffVideoToVideoPipeline, MotionAdapter, StableVideoDiffusionPipeline, I2VGenXLPipeline, StableCascadePriorPipeline, StableCascadeDecoderPipeline, DiffusionPipeline, ShapEPipeline, ShapEImg2ImgPipeline, StableAudioPipeline, AudioLDM2Pipeline, StableDiffusionInstructPix2PixPipeline, StableDiffusionLDM3DPipeline, FluxPipeline, KandinskyPipeline, KandinskyPriorPipeline, KandinskyV22Pipeline, KandinskyV22PriorPipeline, AutoPipelineForText2Image, KandinskyImg2ImgPipeline, AutoPipelineForImage2Image, AutoPipelineForInpainting, HunyuanDiTPipeline, LuminaText2ImgPipeline, IFPipeline, IFSuperResolutionPipeline, IFImg2ImgPipeline, IFInpaintingPipeline, IFImg2ImgSuperResolutionPipeline, IFInpaintingSuperResolutionPipeline, PixArtAlphaPipeline, PixArtSigmaPipeline, CogVideoXPipeline, LattePipeline, KolorsPipeline, AuraFlowPipeline, WuerstchenDecoderPipeline, WuerstchenPriorPipeline, StableDiffusionSAGPipeline
+from diffusers import StableDiffusionPipeline, StableDiffusion3Pipeline, StableDiffusionXLPipeline, StableDiffusionImg2ImgPipeline, StableDiffusionXLImg2ImgPipeline, StableDiffusion3Img2ImgPipeline, SD3ControlNetModel, StableDiffusion3ControlNetPipeline, StableDiffusion3InpaintPipeline, StableDiffusionXLInpaintPipeline, StableDiffusionDepth2ImgPipeline, ControlNetModel, StableDiffusionXLControlNetPipeline, StableDiffusionControlNetPipeline, AutoencoderKL, StableDiffusionLatentUpscalePipeline, StableDiffusionUpscalePipeline, StableDiffusionInpaintPipeline, StableDiffusionGLIGENPipeline, AnimateDiffPipeline, AnimateDiffSDXLPipeline, AnimateDiffVideoToVideoPipeline, MotionAdapter, StableVideoDiffusionPipeline, I2VGenXLPipeline, StableCascadePriorPipeline, StableCascadeDecoderPipeline, DiffusionPipeline, ShapEPipeline, ShapEImg2ImgPipeline, StableAudioPipeline, AudioLDM2Pipeline, StableDiffusionInstructPix2PixPipeline, StableDiffusionLDM3DPipeline, FluxPipeline, KandinskyPipeline, KandinskyPriorPipeline, KandinskyV22Pipeline, KandinskyV22PriorPipeline, AutoPipelineForText2Image, KandinskyImg2ImgPipeline, AutoPipelineForImage2Image, AutoPipelineForInpainting, HunyuanDiTPipeline, LuminaText2ImgPipeline, IFPipeline, IFSuperResolutionPipeline, IFImg2ImgPipeline, IFInpaintingPipeline, IFImg2ImgSuperResolutionPipeline, IFInpaintingSuperResolutionPipeline, PixArtAlphaPipeline, PixArtSigmaPipeline, CogVideoXPipeline, LattePipeline, KolorsPipeline, AuraFlowPipeline, WuerstchenDecoderPipeline, WuerstchenPriorPipeline, StableDiffusionSAGPipeline, DDIMScheduler
 from diffusers.utils import load_image, export_to_video, export_to_gif, export_to_ply, pt_to_pil
 from diffusers.pipelines.wuerstchen import DEFAULT_STAGE_C_TIMESTEPS
 from aura_sr import AuraSR
@@ -3178,7 +3178,7 @@ def generate_image_cascade(prompt, negative_prompt, stable_cascade_settings_html
         flush()
 
 
-def generate_image_ip_adapter_faceid(prompt, negative_prompt, face_image, s_scale, stable_diffusion_model_type, stable_diffusion_model_name, num_inference_steps, guidance_scale, width, height, seed, output_format="png", stop_generation=None):
+def generate_image_ip_adapter_faceid(prompt, negative_prompt, face_image, s_scale, stable_diffusion_model_type, stable_diffusion_model_name, num_inference_steps, guidance_scale, width, height, output_format="png", stop_generation=None):
     global stop_signal
     stop_signal = False
 
@@ -3227,9 +3227,19 @@ def generate_image_ip_adapter_faceid(prompt, negative_prompt, face_image, s_scal
         faceid_embeds = torch.from_numpy(faces[0].normed_embedding).unsqueeze(0)
         face_image = face_align.norm_crop(image, landmark=faces[0].kps, image_size=224)
 
+        noise_scheduler = DDIMScheduler(
+            num_train_timesteps=1000,
+            beta_start=0.00085,
+            beta_end=0.012,
+            beta_schedule="scaled_linear",
+            clip_sample=False,
+            set_alpha_to_one=False,
+            steps_offset=1,
+        )
+
         if stable_diffusion_model_type == "SD":
             pipe = StableDiffusionPipeline.from_single_file(
-                stable_diffusion_model_path, use_safetensors=True, device_map="auto",
+                stable_diffusion_model_path, scheduler=noise_scheduler, use_safetensors=True, device_map="auto",
                 torch_dtype=torch.float16, variant="fp16")
         elif stable_diffusion_model_type == "SDXL":
             pipe = StableDiffusionXLPipeline.from_single_file(
@@ -3239,12 +3249,6 @@ def generate_image_ip_adapter_faceid(prompt, negative_prompt, face_image, s_scal
             return None, "Invalid StableDiffusion model type!"
 
         ip_model = IPAdapterFaceIDPlus(pipe, image_encoder_path, ip_ckpt, device)
-
-        if seed == "" or seed is None:
-            seed = random.randint(0, 2 ** 32 - 1)
-        else:
-            seed = int(seed)
-        generator = torch.Generator(device).manual_seed(seed)
 
         images = ip_model.generate(
             prompt=prompt,
@@ -3258,7 +3262,6 @@ def generate_image_ip_adapter_faceid(prompt, negative_prompt, face_image, s_scal
             height=height,
             num_inference_steps=num_inference_steps,
             guidance_scale=guidance_scale,
-            generator=generator,
         )
 
         if stop_signal:
@@ -3275,7 +3278,7 @@ def generate_image_ip_adapter_faceid(prompt, negative_prompt, face_image, s_scal
             image.save(image_path, format=output_format.upper())
             image_paths.append(image_path)
 
-        return image_paths, f"Images generated successfully. Seed used: {seed}"
+        return image_paths, None
 
     except Exception as e:
         return None, str(e)
@@ -6376,7 +6379,6 @@ ip_adapter_faceid_interface = gr.Interface(
         gr.Slider(minimum=1.0, maximum=30.0, value=6, step=0.1, label="Guidance Scale"),
         gr.Slider(minimum=256, maximum=2048, value=512, step=64, label="Width"),
         gr.Slider(minimum=256, maximum=2048, value=512, step=64, label="Height"),
-        gr.Textbox(label="Seed (optional)", value=""),
         gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
         gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
