@@ -57,6 +57,9 @@ import psutil
 import GPUtil
 import WinTmp
 from pynvml import nvmlInit, nvmlDeviceGetHandleByIndex, nvmlDeviceGetTemperature, NVML_TEMPERATURE_GPU
+from insightface.app import FaceAnalysis
+from insightface.utils import face_align
+from ip_adapter.ip_adapter_faceid import IPAdapterFaceIDPlus
 
 XFORMERS_AVAILABLE = False
 torch.cuda.is_available()
@@ -3175,6 +3178,114 @@ def generate_image_cascade(prompt, negative_prompt, stable_cascade_settings_html
         flush()
 
 
+def generate_image_ip_adapter_faceid(prompt, negative_prompt, face_image, s_scale, stable_diffusion_model_type, stable_diffusion_model_name, num_inference_steps, guidance_scale, width, height, seed, output_format="png", stop_generation=None):
+    global stop_signal
+    stop_signal = False
+
+    if not face_image:
+        return None, "Please upload a face image!"
+
+    if not stable_diffusion_model_name:
+        return None, "Please select a StableDiffusion model!"
+
+    stable_diffusion_model_path = os.path.join("inputs", "image", "sd_models", f"{stable_diffusion_model_name}.safetensors")
+
+    if not os.path.exists(stable_diffusion_model_path):
+        return None, f"StableDiffusion model not found: {stable_diffusion_model_path}"
+
+    image_encoder_path = os.path.join("inputs", "image", "sd_models", "image_encoder")
+    if not os.path.exists(image_encoder_path):
+        print("Downloading image encoder...")
+        os.makedirs(image_encoder_path, exist_ok=True)
+        Repo.clone_from("https://huggingface.co/laion/CLIP-ViT-H-14-laion2B-s32B-b79K", image_encoder_path)
+        print("Image encoder downloaded")
+
+    ip_ckpt_path = os.path.join("inputs", "image", "sd_models", "ip_adapter_faceid")
+    if not os.path.exists(ip_ckpt_path):
+        print("Downloading IP-Adapter FaceID checkpoint...")
+        os.makedirs(ip_ckpt_path, exist_ok=True)
+        Repo.clone_from("https://huggingface.co/h94/IP-Adapter-FaceID", ip_ckpt_path)
+        print("IP-Adapter FaceID checkpoint downloaded")
+
+    if stable_diffusion_model_type == "SD":
+        ip_ckpt = os.path.join(ip_ckpt_path, "ip-adapter-faceid-plusv2_sd15.bin")
+    else:
+        ip_ckpt = os.path.join(ip_ckpt_path, "ip-adapter-faceid-plusv2_sdxl.bin")
+
+    try:
+        device = "cuda" if torch.cuda.is_available() else "cpu"
+
+        app = FaceAnalysis(name="buffalo_l", providers=['CUDAExecutionProvider', 'CPUExecutionProvider'])
+        app.prepare(ctx_id=0, det_size=(640, 640))
+
+        image = cv2.imread(face_image)
+        faces = app.get(image)
+
+        if not faces:
+            return None, "No face detected in the image."
+
+        faceid_embeds = torch.from_numpy(faces[0].normed_embedding).unsqueeze(0)
+        face_image = face_align.norm_crop(image, landmark=faces[0].kps, image_size=224)
+
+        if stable_diffusion_model_type == "SD":
+            pipe = StableDiffusionPipeline.from_single_file(
+                stable_diffusion_model_path, use_safetensors=True, device_map="auto",
+                torch_dtype=torch.float16, variant="fp16")
+        elif stable_diffusion_model_type == "SDXL":
+            pipe = StableDiffusionXLPipeline.from_single_file(
+                stable_diffusion_model_path, use_safetensors=True, device_map="auto", attention_slice=1,
+                torch_dtype=torch.float16, variant="fp16")
+        else:
+            return None, "Invalid StableDiffusion model type!"
+
+        ip_model = IPAdapterFaceIDPlus(pipe, image_encoder_path, ip_ckpt, device)
+
+        if seed == "" or seed is None:
+            seed = random.randint(0, 2 ** 32 - 1)
+        else:
+            seed = int(seed)
+        generator = torch.Generator(device).manual_seed(seed)
+
+        images = ip_model.generate(
+            prompt=prompt,
+            negative_prompt=negative_prompt,
+            face_image=face_image,
+            faceid_embeds=faceid_embeds,
+            shortcut=True,
+            s_scale=s_scale,
+            num_samples=1,
+            width=width,
+            height=height,
+            num_inference_steps=num_inference_steps,
+            guidance_scale=guidance_scale,
+            generator=generator,
+        )
+
+        if stop_signal:
+            return None, "Generation stopped"
+
+        today = datetime.now().date()
+        image_dir = os.path.join('outputs', f"IPAdapterFaceID_{today.strftime('%Y%m%d')}")
+        os.makedirs(image_dir, exist_ok=True)
+
+        image_paths = []
+        for i, image in enumerate(images):
+            image_filename = f"ip_adapter_faceid_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{i}.{output_format}"
+            image_path = os.path.join(image_dir, image_filename)
+            image.save(image_path, format=output_format.upper())
+            image_paths.append(image_path)
+
+        return image_paths, f"Images generated successfully. Seed used: {seed}"
+
+    except Exception as e:
+        return None, str(e)
+
+    finally:
+        del pipe
+        del ip_model
+        flush()
+
+
 def generate_image_extras(input_image, source_image, remove_background, enable_faceswap, enable_facerestore, image_output_format):
     if not input_image:
         return None, "Please upload an image file!"
@@ -6252,6 +6363,34 @@ cascade_interface = gr.Interface(
     allow_flagging="never",
 )
 
+ip_adapter_faceid_interface = gr.Interface(
+    fn=generate_image_ip_adapter_faceid,
+    inputs=[
+        gr.Textbox(label="Enter your prompt"),
+        gr.Textbox(label="Enter your negative prompt", value=""),
+        gr.Image(label="Face image", type="filepath"),
+        gr.Slider(minimum=0.1, maximum=2, value=1, step=0.1, label="Scale"),
+        gr.Radio(choices=["SD", "SDXL"], label="Select model type", value="SD"),
+        gr.Dropdown(choices=stable_diffusion_models_list, label="Select StableDiffusion model", value=None),
+        gr.Slider(minimum=1, maximum=100, value=30, step=1, label="Steps"),
+        gr.Slider(minimum=1.0, maximum=30.0, value=6, step=0.1, label="Guidance Scale"),
+        gr.Slider(minimum=256, maximum=2048, value=512, step=64, label="Width"),
+        gr.Slider(minimum=256, maximum=2048, value=512, step=64, label="Height"),
+        gr.Textbox(label="Seed (optional)", value=""),
+        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
+        gr.Button(value="Stop generation", interactive=True, variant="stop"),
+    ],
+    outputs=[
+        gr.Gallery(label="Generated images", elem_id="gallery", columns=[2], rows=[2], object_fit="contain", height="auto"),
+        gr.Textbox(label="Message", type="text"),
+    ],
+    title="NeuroSandboxWebUI (ALPHA) - StableDiffusion (IP-Adapter FaceID)",
+    description="This user interface allows you to generate images using IP-Adapter FaceID. "
+                "Upload a face image, enter a prompt, select a Stable Diffusion model, and customize the generation settings. "
+                "Try it and see what happens!",
+    allow_flagging="never",
+)
+
 extras_interface = gr.Interface(
     fn=generate_image_extras,
     inputs=[
@@ -6997,8 +7136,8 @@ with gr.TabbedInterface(
                     [txt2img_interface, img2img_interface, depth2img_interface, pix2pix_interface, controlnet_interface, latent_upscale_interface, realesrgan_upscale_interface, sdxl_refiner_interface, inpaint_interface, outpaint_interface, gligen_interface, animatediff_interface, video_interface, ldm3d_interface,
                      gr.TabbedInterface([sd3_txt2img_interface, sd3_img2img_interface, sd3_controlnet_interface, sd3_inpaint_interface],
                                         tab_names=["txt2img", "img2img", "controlnet", "inpaint"]),
-                     cascade_interface, extras_interface],
-                    tab_names=["txt2img", "img2img", "depth2img", "pix2pix", "controlnet", "upscale(latent)", "upscale(Real-ESRGAN)", "refiner", "inpaint", "outpaint", "gligen", "animatediff", "video", "ldm3d", "sd3", "cascade", "extras"]
+                     cascade_interface, ip_adapter_faceid_interface, extras_interface],
+                    tab_names=["txt2img", "img2img", "depth2img", "pix2pix", "controlnet", "upscale(latent)", "upscale(Real-ESRGAN)", "refiner", "inpaint", "outpaint", "gligen", "animatediff", "video", "ldm3d", "sd3", "cascade", "ip-adapter-faceid", "extras"]
                 ),
                 kandinsky_interface, flux_interface, hunyuandit_interface, lumina_interface, kolors_interface, auraflow_interface, wurstchen_interface, deepfloyd_if_interface, pixart_interface, playgroundv2_interface
             ],
@@ -7043,6 +7182,7 @@ with gr.TabbedInterface(
     sd3_controlnet_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     sd3_inpaint_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     cascade_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
+    ip_adapter_faceid_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     kandinsky_txt2img_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     kandinsky_img2img_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     kandinsky_inpaint_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
