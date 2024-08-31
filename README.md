@@ -29,7 +29,7 @@ The goal of the project - to create the easiest possible application to use neur
 * Flexible and optimized interface (By Gradio)
 * Authentication via admin:admin (You can enter your login details in the GradioAuth.txt file)
 * You can add your own HuggingFace-Token to download a specific models (You can enter your token in the HF-Token.txt file)
-* Debug logging to logs from `Install`, `Update` and `Start` files
+* Debug logging to logs from `Install` and `Update` files
 * Support for Transformers and llama.cpp models (LLM)
 * Support for diffusers and safetensors models (StableDiffusion) - txt2img, img2img, depth2img, pix2pix, controlnet, upscale (latent), upscale (Real-ESRGAN), refiner, inpaint, outpaint, gligen, animatediff, video, ldm3d, sd3, cascade, ip-adapter-faceid and extras tabs
 * Support of additional models for image generation: Kandinsky, Flux, HunyuanDiT, Lumina-T2X, Kolors, AuraFlow, Würstchen, DeepFloydIF, PixArt and PlaygroundV2.5
