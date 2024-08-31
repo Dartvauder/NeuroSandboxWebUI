@@ -76,8 +76,6 @@ from aura_sr import AuraSR
 from controlnet_aux import OpenposeDetector, LineartDetector, HEDdetector
 from compel import Compel, ReturnedEmbeddingsType
 import trimesh
-from tsr.system import TSR
-from tsr.utils import to_gradio_3d_orientation, resize_foreground
 from git import Repo
 import numpy as np
 import scipy
@@ -4842,71 +4840,7 @@ def generate_video_latte(prompt, negative_prompt, num_inference_steps, guidance_
         flush()
 
 
-def generate_3d_triposr(image, mc_resolution, foreground_ratio=0.85, output_format="obj", stop_generation=None):
-    global stop_signal
-    stop_signal = False
-
-    model_path = os.path.join("inputs", "3D", "triposr")
-
-    if not os.path.exists(model_path):
-        print("Downloading TripoSR model...")
-        os.makedirs(model_path, exist_ok=True)
-        Repo.clone_from("https://huggingface.co/stabilityai/TripoSR", model_path)
-        print("TripoSR model downloaded")
-
-    device = "cuda" if torch.cuda.is_available() else "cpu"
-
-    model = TSR.from_pretrained(
-        model_path,
-        config_name="config.yaml",
-        weight_name="model.ckpt",
-    )
-
-    model.renderer.set_chunk_size(8192)
-    model.to(device)
-
-    try:
-        def fill_background(image):
-            image = np.array(image).astype(np.float32) / 255.0
-            image = image[:, :, :3] * image[:, :, 3:4] + (1 - image[:, :, 3:4]) * 0.5
-            image = Image.fromarray((image * 255.0).astype(np.uint8))
-            return image
-
-        image_without_background = remove(image)
-        image_without_background = resize_foreground(image_without_background, foreground_ratio)
-        image_without_background = fill_background(image_without_background)
-
-        processed_image = model.image_processor(image_without_background, model.cfg.cond_image_size)[0].to(device)
-
-        scene_codes = model(processed_image, device=device)
-        mesh = model.extract_mesh(scene_codes, resolution=mc_resolution)[0]
-        mesh = to_gradio_3d_orientation(mesh)
-
-        today = datetime.now().date()
-        output_dir = os.path.join('outputs', f"TripoSR_{today.strftime('%Y%m%d')}")
-        os.makedirs(output_dir, exist_ok=True)
-
-        if output_format == "obj":
-            output_filename = f"3d_object_{datetime.now().strftime('%Y%m%d_%H%M%S')}.obj"
-            output_path = os.path.join(output_dir, output_filename)
-            mesh.export(output_path)
-        else:
-            output_filename = f"3d_object_{datetime.now().strftime('%Y%m%d_%H%M%S')}.glb"
-            output_path = os.path.join(output_dir, output_filename)
-            mesh.export(output_path)
-
-        return output_path, None
-
-    except Exception as e:
-        return None, str(e)
-
-    finally:
-        del model
-        flush()
-
-
-def generate_3d_stablefast3d(image, texture_resolution, foreground_ratio, remesh_option, output_format="obj",
-                             stop_generation=None):
+def generate_3d_stablefast3d(image, texture_resolution, foreground_ratio, remesh_option, stop_generation=None):
     global stop_signal
     stop_signal = False
 
@@ -4922,8 +4856,7 @@ def generate_3d_stablefast3d(image, texture_resolution, foreground_ratio, remesh
         output_dir = os.path.join('outputs', f"StableFast3D_{today.strftime('%Y%m%d')}")
         os.makedirs(output_dir, exist_ok=True)
 
-        output_filename = f"3d_object_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
-        output_path = os.path.join(output_dir, output_filename)
+        output_path = os.path.join(output_dir, "0", "mesh.glb")
 
         os.environ["HUGGING_FACE_HUB_TOKEN"] = hf_token
 
@@ -6817,34 +6750,13 @@ latte_interface = gr.Interface(
     allow_flagging="never",
 )
 
-triposr_interface = gr.Interface(
-    fn=generate_3d_triposr,
-    inputs=[
-        gr.Image(label="Input image", type="pil"),
-        gr.Slider(minimum=32, maximum=320, value=256, step=32, label="Marching Cubes Resolution"),
-        gr.Slider(minimum=0.5, maximum=1.0, value=0.85, step=0.05, label="Foreground Ratio"),
-        gr.Radio(choices=["obj", "glb"], label="Select output format", value="obj", interactive=True),
-        gr.Button(value="Stop generation", interactive=True, variant="stop"),
-    ],
-    outputs=[
-        gr.Model3D(label="Generated 3D object"),
-        gr.Textbox(label="Message", type="text"),
-    ],
-    title="NeuroSandboxWebUI (ALPHA) - TripoSR",
-    description="This user interface allows you to generate 3D objects using TripoSR. "
-                "Upload an image and customize the generation settings. "
-                "Try it and see what happens!",
-    allow_flagging="never",
-)
-
 stablefast3d_interface = gr.Interface(
     fn=generate_3d_stablefast3d,
     inputs=[
         gr.Image(label="Input image", type="filepath"),
-        gr.Slider(minimum=256, maximum=4096, value=1024, step=256, label="Texture Resolution"),
+        gr.Slider(minimum=256, maximum=2048, value=1024, step=64, label="Texture Resolution"),
         gr.Slider(minimum=0.1, maximum=1.0, value=0.85, step=0.05, label="Foreground Ratio"),
         gr.Radio(choices=["none", "triangle", "quad"], label="Remesh Option", value="none"),
-        gr.Radio(choices=["obj", "glb"], label="Select output format", value="obj", interactive=True),
         gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
     outputs=[
@@ -7106,8 +7018,8 @@ with gr.TabbedInterface(
             tab_names=["Wav2Lip", "ModelScope", "ZeroScope 2", "CogVideoX", "Latte"]
         ),
         gr.TabbedInterface(
-            [triposr_interface, stablefast3d_interface, shap_e_interface, sv34d_interface, zero123plus_interface],
-            tab_names=["TripoSR", "StableFast3D", "Shap-E", "SV34D", "Zero123Plus"]
+            [stablefast3d_interface, shap_e_interface, sv34d_interface, zero123plus_interface],
+            tab_names=["StableFast3D", "Shap-E", "SV34D", "Zero123Plus"]
         ),
         gr.TabbedInterface(
             [stableaudio_interface, audiocraft_interface, audioldm2_interface, bark_interface, demucs_interface],
@@ -7158,7 +7070,6 @@ with gr.TabbedInterface(
     zeroscope2_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     cogvideox_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     latte_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
-    triposr_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     stablefast3d_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     shap_e_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     zero123plus_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
