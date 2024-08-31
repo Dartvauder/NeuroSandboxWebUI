@@ -3184,7 +3184,7 @@ def generate_image_cascade(prompt, negative_prompt, stable_cascade_settings_html
         flush()
 
 
-def generate_image_extras(input_image, source_image, remove_background, enable_faceswap, enable_facerestore, image_output_format, stop_generation):
+def generate_image_extras(input_image, source_image, remove_background, enable_faceswap, enable_facerestore, image_output_format):
     if not input_image:
         return None, "Please upload an image file!"
 
@@ -5024,10 +5024,7 @@ def generate_3d_shap_e(prompt, init_image, num_inference_steps, guidance_scale, 
         flush()
 
 
-def generate_sv34d(input_file, version, elevation_deg=None, stop_generation=None):
-    global stop_signal
-    stop_signal = False
-
+def generate_sv34d(input_file, version, elevation_deg=None):
     if not input_file:
         return None, "Please upload an input file!"
 
@@ -6341,7 +6338,6 @@ extras_interface = gr.Interface(
         gr.Checkbox(label="Enable FaceSwap", value=False),
         gr.Checkbox(label="Enable FaceRestore", value=False),
         gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
-        gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
     outputs=[
         gr.Image(label="Modified image", type="filepath"),
@@ -6891,7 +6887,6 @@ sv34d_interface = gr.Interface(
         gr.File(label="Input file (Image for 3D-U and 3D-P, MP4 video for 4D)", type="filepath"),
         gr.Radio(choices=["3D-U", "3D-P", "4D"], label="Version", value="3D-U"),
         gr.Slider(minimum=0.0, maximum=90.0, value=10.0, step=0.1, label="Elevation Degree (for 3D-P only)"),
-        gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
     outputs=[
         gr.Video(label="Generated output"),
@@ -7147,7 +7142,6 @@ with gr.TabbedInterface(
     sd3_controlnet_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     sd3_inpaint_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     cascade_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
-    extras_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     kandinsky_txt2img_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     kandinsky_img2img_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     kandinsky_inpaint_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
@@ -7169,7 +7163,6 @@ with gr.TabbedInterface(
     triposr_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     stablefast3d_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     shap_e_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
-    sv34d_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     zero123plus_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     stableaudio_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     audiocraft_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
