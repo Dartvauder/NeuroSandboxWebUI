@@ -513,7 +513,7 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, input_image
                     yield chat_history, None, chat_dir, None
 
             except Exception as e:
-                yield chat_history, None, None, str(e)
+                yield str(e), None, None, None
 
             finally:
                 del llm
