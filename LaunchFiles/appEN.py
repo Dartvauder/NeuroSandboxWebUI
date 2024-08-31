@@ -10,7 +10,7 @@ os.makedirs(cache_dir, exist_ok=True)
 os.environ["XDG_CACHE_HOME"] = cache_dir
 import gradio as gr
 import langdetect
-from transformers import AutoModelForCausalLM, AutoTokenizer, AutoProcessor, BarkModel, pipeline, T5EncoderModel, BitsAndBytesConfig, DPTForDepthEstimation, DPTFeatureExtractor
+from transformers import AutoModelForCausalLM, AutoTokenizer, AutoProcessor, BarkModel, pipeline, T5EncoderModel, BitsAndBytesConfig, DPTForDepthEstimation, DPTFeatureExtractor, CLIPVisionModelWithProjection
 from peft import PeftModel
 from libretranslatepy import LibreTranslateAPI
 import urllib.error
@@ -3175,6 +3175,106 @@ def generate_image_cascade(prompt, negative_prompt, stable_cascade_settings_html
     finally:
         del prior
         del decoder
+        flush()
+
+
+def generate_image_t2i_ip_adapter(prompt, negative_prompt, ip_adapter_image, stable_diffusion_model_type, stable_diffusion_model_name, num_inference_steps, guidance_scale, width, height, seed, output_format="png", stop_generation=None):
+    global stop_signal
+    stop_signal = False
+
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+
+    if seed == "" or seed is None:
+        seed = random.randint(0, 2 ** 32 - 1)
+    else:
+        seed = int(seed)
+    generator = torch.Generator(device).manual_seed(seed)
+
+    if not prompt or not ip_adapter_image:
+        return None, "Please enter a prompt and upload an image!"
+
+    if not stable_diffusion_model_name:
+        return None, "Please select a StableDiffusion model!"
+
+    stable_diffusion_model_path = os.path.join("inputs", "image", "sd_models", f"{stable_diffusion_model_name}.safetensors")
+
+    if not os.path.exists(stable_diffusion_model_path):
+        return None, f"StableDiffusion model not found: {stable_diffusion_model_path}"
+
+    t2i_ip_adapter_path = os.path.join("inputs", "image", "sd_models", "t2i-ip-adapter")
+    if not os.path.exists(t2i_ip_adapter_path):
+        print("Downloading T2I IP-Adapter model...")
+        os.makedirs(t2i_ip_adapter_path, exist_ok=True)
+        Repo.clone_from("https://huggingface.co/h94/IP-Adapter", t2i_ip_adapter_path)
+        print("T2I IP-Adapter model downloaded")
+
+    try:
+
+        if stable_diffusion_model_type == "SD":
+            image_encoder = CLIPVisionModelWithProjection.from_pretrained(
+                t2i_ip_adapter_path,
+                subfolder="models/image_encoder",
+                torch_dtype=torch.float16
+            ).to(device)
+
+            pipe = StableDiffusionPipeline.from_single_file(
+                stable_diffusion_model_path,
+                image_encoder=image_encoder,
+                torch_dtype=torch.float16
+            ).to(device)
+
+            pipe.load_ip_adapter(t2i_ip_adapter_path, subfolder="models",
+                                 weight_name="ip-adapter-plus_sd15.safetensors")
+        else:
+            image_encoder = CLIPVisionModelWithProjection.from_pretrained(
+                t2i_ip_adapter_path,
+                subfolder="sdxl_models/image_encoder",
+                torch_dtype=torch.float16
+            ).to(device)
+
+            pipe = StableDiffusionXLPipeline.from_single_file(
+                stable_diffusion_model_path,
+                image_encoder=image_encoder,
+                torch_dtype=torch.float16
+            ).to(device)
+
+            pipe.load_ip_adapter(t2i_ip_adapter_path, subfolder="sdxl_models",
+                                 weight_name="ip-adapter-plus_sdxl_vit-h.safetensors")
+
+        image = Image.open(ip_adapter_image).convert("RGB")
+
+        images = pipe(
+            prompt=prompt,
+            ip_adapter_image=image,
+            negative_prompt=negative_prompt,
+            num_inference_steps=num_inference_steps,
+            guidance_scale=guidance_scale,
+            width=width,
+            height=height,
+            generator=generator,
+        ).images
+
+        if stop_signal:
+            return None, "Generation stopped"
+
+        image_paths = []
+        for i, image in enumerate(images):
+            today = datetime.now().date()
+            image_dir = os.path.join('outputs', f"T2I_IP_Adapter_{today.strftime('%Y%m%d')}")
+            os.makedirs(image_dir, exist_ok=True)
+            image_filename = f"t2i_ip_adapter_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{i}.{output_format}"
+            image_path = os.path.join(image_dir, image_filename)
+            image.save(image_path, format=output_format.upper())
+            image_paths.append(image_path)
+
+        return image_paths, f"Images generated successfully. Seed used: {seed}"
+
+    except Exception as e:
+        return None, str(e)
+
+    finally:
+        del pipe
+        del image_encoder
         flush()
 
 
@@ -6366,6 +6466,33 @@ cascade_interface = gr.Interface(
     allow_flagging="never",
 )
 
+t2i_ip_adapter_interface = gr.Interface(
+    fn=generate_image_t2i_ip_adapter,
+    inputs=[
+        gr.Textbox(label="Enter your prompt"),
+        gr.Textbox(label="Enter your negative prompt", value=""),
+        gr.Image(label="IP-Adapter Image", type="filepath"),
+        gr.Radio(choices=["SD", "SDXL"], label="Select model type", value="SD"),
+        gr.Dropdown(choices=stable_diffusion_models_list, label="Select StableDiffusion model", value=None),
+        gr.Slider(minimum=1, maximum=100, value=50, step=1, label="Steps"),
+        gr.Slider(minimum=1.0, maximum=20.0, value=7.5, step=0.1, label="Guidance Scale"),
+        gr.Slider(minimum=256, maximum=2048, value=1024, step=64, label="Width"),
+        gr.Slider(minimum=256, maximum=2048, value=1024, step=64, label="Height"),
+        gr.Textbox(label="Seed (optional)", value=""),
+        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
+        gr.Button(value="Stop generation", interactive=True, variant="stop"),
+    ],
+    outputs=[
+        gr.Gallery(label="Generated images", elem_id="gallery", columns=[2], rows=[2], object_fit="contain", height="auto"),
+        gr.Textbox(label="Message", type="text"),
+    ],
+    title="NeuroSandboxWebUI (ALPHA) - StableDiffusion (T2I IP-Adapter)",
+    description="This user interface allows you to generate images using T2I IP-Adapter. "
+                "Upload an image, enter a prompt, select a Stable Diffusion model, and customize the generation settings. "
+                "Try it and see what happens!",
+    allow_flagging="never",
+)
+
 ip_adapter_faceid_interface = gr.Interface(
     fn=generate_image_ip_adapter_faceid,
     inputs=[
@@ -7138,8 +7265,8 @@ with gr.TabbedInterface(
                     [txt2img_interface, img2img_interface, depth2img_interface, pix2pix_interface, controlnet_interface, latent_upscale_interface, realesrgan_upscale_interface, sdxl_refiner_interface, inpaint_interface, outpaint_interface, gligen_interface, animatediff_interface, video_interface, ldm3d_interface,
                      gr.TabbedInterface([sd3_txt2img_interface, sd3_img2img_interface, sd3_controlnet_interface, sd3_inpaint_interface],
                                         tab_names=["txt2img", "img2img", "controlnet", "inpaint"]),
-                     cascade_interface, ip_adapter_faceid_interface, extras_interface],
-                    tab_names=["txt2img", "img2img", "depth2img", "pix2pix", "controlnet", "upscale(latent)", "upscale(Real-ESRGAN)", "refiner", "inpaint", "outpaint", "gligen", "animatediff", "video", "ldm3d", "sd3", "cascade", "ip-adapter-faceid", "extras"]
+                     cascade_interface, t2i_ip_adapter_interface, ip_adapter_faceid_interface, extras_interface],
+                    tab_names=["txt2img", "img2img", "depth2img", "pix2pix", "controlnet", "upscale(latent)", "upscale(Real-ESRGAN)", "refiner", "inpaint", "outpaint", "gligen", "animatediff", "video", "ldm3d", "sd3", "cascade", "t2i-ip-adapter", "ip-adapter-faceid", "extras"]
                 ),
                 kandinsky_interface, flux_interface, hunyuandit_interface, lumina_interface, kolors_interface, auraflow_interface, wurstchen_interface, deepfloyd_if_interface, pixart_interface, playgroundv2_interface
             ],
@@ -7184,6 +7311,7 @@ with gr.TabbedInterface(
     sd3_controlnet_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     sd3_inpaint_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     cascade_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
+    t2i_ip_adapter_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     ip_adapter_faceid_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     kandinsky_txt2img_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     kandinsky_img2img_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
