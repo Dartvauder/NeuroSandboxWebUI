@@ -76,6 +76,7 @@ multiband_diffusion_path = None
 
 
 def print_system_info():
+    print(f"Welcome to NeuroSandboxWebUI!")
     print(f"Python version: {sys.version}")
     print(f"Python executable: {sys.executable}")
     print(f"Platform: {sys.platform}")
@@ -97,7 +98,11 @@ def print_system_info():
     print(f"Xformers version: {xformers.__version__}")
 
 
-print_system_info()
+try:
+    print_system_info()
+except Exception as e:
+    print(f"Unable to access system information: {e}")
+    pass
 
 
 def flush():
