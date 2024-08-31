@@ -32,20 +32,6 @@ python "%CURRENT_DIR%RequirementsFiles\post_install.py"
 timeout /t 3 /nobreak >nul
 cls
 
-echo Downloading stable-diffusion-v1-5 models...
-if not exist "%CURRENT_DIR%cache" mkdir "%CURRENT_DIR%cache"
-pip install huggingface_hub
-
-python -c "from huggingface_hub import snapshot_download; snapshot_download('benjamin-paine/stable-diffusion-v1-5', local_dir='%CURRENT_DIR%cache\huggingface\hub\models--benjamin-paine--stable-diffusion-v1-5')"
-python -c "from huggingface_hub import snapshot_download; snapshot_download('benjamin-paine/stable-diffusion-v1-5-inpainting', local_dir='%CURRENT_DIR%cache\huggingface\hub\models--benjamin-paine--stable-diffusion-v1-5-inpainting')"
-
-echo Renaming model folders...
-ren "%CURRENT_DIR%cache\huggingface\hub\models--benjamin-paine--stable-diffusion-v1-5" "models--runwayml--stable-diffusion-v1-5"
-ren "%CURRENT_DIR%cache\huggingface\hub\models--benjamin-paine--stable-diffusion-v1-5-inpainting" "models--runwayml--stable-diffusion-v1-5-inpainting"
-
-timeout /t 3 /nobreak >nul
-cls
-
 echo Checking for installation errors...
 findstr /C:"error" %ERROR_LOG% >nul
 if %ERRORLEVEL% equ 0 (
