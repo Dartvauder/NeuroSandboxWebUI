@@ -1,50 +1,13 @@
-import logging
-import os
 import sys
+import os
 import warnings
-from io import StringIO
-
-
-def setup_logging():
-    class StderrCatcher(StringIO):
-        def write(self, txt):
-            if not txt.strip():
-                return
-            logging.getLogger("stderr").error(txt)
-
-    root_logger = logging.getLogger()
-    root_logger.setLevel(logging.DEBUG)
-
-    file_handler = logging.FileHandler('neurosandboxwebui-debug.log', mode='w')
-    file_handler.setLevel(logging.DEBUG)
-    file_formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-    file_handler.setFormatter(file_formatter)
-    root_logger.addHandler(file_handler)
-
-    console_handler = logging.StreamHandler()
-    console_handler.setLevel(logging.CRITICAL)
-    root_logger.addHandler(console_handler)
-
-    sys.stderr = StderrCatcher()
-
-    logging.getLogger('tensorflow').setLevel(logging.DEBUG)
-    logging.getLogger('torch').setLevel(logging.DEBUG)
-
-    warnings.filterwarnings("default")
-    logging.captureWarnings(True)
-
-
-setup_logging()
-
-
+import platform
 os.chdir(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
-os.environ["PYTORCH_ENABLE_MPS_FALLBACK"] = "1"
 warnings.filterwarnings("ignore")
-
-logging.getLogger().handlers[1].setLevel(logging.CRITICAL)
-
+cache_dir = os.path.join("cache")
+os.makedirs(cache_dir, exist_ok=True)
+os.environ["XDG_CACHE_HOME"] = cache_dir
 import gradio as gr
 import langdetect
 from transformers import AutoModelForCausalLM, AutoTokenizer, AutoProcessor, BarkModel, pipeline, T5EncoderModel, BitsAndBytesConfig, DPTForDepthEstimation, DPTFeatureExtractor
@@ -110,6 +73,31 @@ tts_model = None
 whisper_model = None
 audiocraft_model_path = None
 multiband_diffusion_path = None
+
+
+def print_system_info():
+    print(f"Python version: {sys.version}")
+    print(f"Python executable: {sys.executable}")
+    print(f"Platform: {sys.platform}")
+    print(f"OS: {platform.system()} {platform.release()}")
+    print(f"Machine: {platform.machine()}")
+    print(f"Processor: {platform.processor()}")
+    print(f"CPU cores: {os.cpu_count()}")
+    print(f"Memory: {psutil.virtual_memory().total / (1024 ** 3):.2f} GB")
+    print(f"Disk space: {psutil.disk_usage('/').total / (1024 ** 3):.2f} GB")
+
+    if torch.cuda.is_available():
+        print(f"CUDA available: Yes")
+        print(f"CUDA version: {torch.version.cuda}")
+        print(f"GPU: {torch.cuda.get_device_name(0)}")
+    else:
+        print("CUDA available: No")
+
+    print(f"PyTorch version: {torch.__version__}")
+    print(f"Xformers version: {xformers.__version__}")
+
+
+print_system_info()
 
 
 def flush():
