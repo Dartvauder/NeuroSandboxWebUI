@@ -44,7 +44,7 @@ The goal of the project - to create the easiest possible application to use neur
 * Support Demucs
 * Support TripoSR, StableFast3D, Shap-E, SV34D and Zero123Plus for 3D generation
 * Support Wav2Lip
-* Support Multimodal (Moondream 2), LORA (transformers) and WebSearch (with GoogleSearch) for LLM
+* Support Multimodal (Moondream 2), LORA and WebSearch (with DuckDuckGo) for LLM
 * Model settings inside the interface
 * Gallery
 * ModelDownloader (For LLM and StableDiffusion)
