@@ -432,7 +432,7 @@ chat_history = []
 
 def generate_text_and_speech(input_text, system_prompt, input_audio, input_image, llm_model_name, llm_lora_model_name, llm_settings_html, llm_model_type, max_length, max_tokens,
                              temperature, top_p, top_k, chat_history_format, enable_web_search, enable_libretranslate, target_lang, enable_multimodal, enable_tts, tts_settings_html,
-                             speaker_wav, language, tts_temperature, tts_top_p, tts_top_k, tts_speed, output_format, stop_generation):
+                             speaker_wav, language, tts_temperature, tts_top_p, tts_top_k, tts_speed, output_format):
     global chat_history, chat_dir, tts_model, whisper_model, stop_signal
     stop_signal = False
     if not input_text and not input_audio:
@@ -5670,10 +5670,9 @@ chat_interface = gr.Interface(
         gr.Slider(minimum=1, maximum=100, value=20, step=1, label="TTS Top K", interactive=True),
         gr.Slider(minimum=0.5, maximum=2.0, value=1.0, step=0.1, label="TTS Speed", interactive=True),
         gr.Radio(choices=["wav", "mp3", "ogg"], label="Select output format", value="wav", interactive=True),
-        gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
     outputs=[
-        gr.Chatbot(label="LLM text response", value=[], avatar_images=["avatars/user.png", "avatars/ai.png"]),
+        gr.Chatbot(label="LLM text response", value=[], avatar_images=["avatars/user.png", "avatars/ai.png"], show_copy_button=True),
         gr.Audio(label="LLM audio response", type="filepath"),
     ],
     title="NeuroSandboxWebUI (ALPHA) - LLM",
@@ -7121,7 +7120,6 @@ with gr.TabbedInterface(
     ],
     tab_names=["Text", "Image", "Video", "3D", "Audio", "Interface"]
 ) as app:
-    chat_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     bark_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     txt2img_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     img2img_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
