@@ -29,6 +29,7 @@ The goal of the project - to create the easiest possible application to use neur
 * Flexible and optimized interface (By Gradio)
 * Authentication via admin:admin (You can enter your login details in the GradioAuth.txt file)
 * You can add your own HuggingFace-Token to download a specific models (You can enter your token in the HF-Token.txt file)
+* Debug logging to logs from `Install`, `Update` and `Start` files
 * Support for Transformers and llama.cpp models (LLM)
 * Support for diffusers and safetensors models (StableDiffusion) - txt2img, img2img, depth2img, pix2pix, controlnet, upscale (latent), upscale (Real-ESRGAN), refiner, inpaint, outpaint, gligen, animatediff, video, ldm3d, sd3, cascade, ip-adapter-faceid and extras tabs
 * Support of additional models for image generation: Kandinsky, Flux, HunyuanDiT, Lumina-T2X, Kolors, AuraFlow, Würstchen, DeepFloydIF, PixArt and PlaygroundV2.5
@@ -36,7 +37,7 @@ The goal of the project - to create the easiest possible application to use neur
 * AudioCraft support (Models: musicgen, audiogen and magnet)
 * AudioLDM 2 support (Models: audio and music)
 * Supports TTS and Whisper models (For LLM and TTS-STT)
-* Supports Lora, Textual inversion (embedding), Vae, Img2img, Depth, Pix2Pix, Controlnet, Upscale (latent and Real-ESRGAN), Refiner, Inpaint, Outpaint, GLIGEN, AnimateDiff, Videos, LDM3D, SD3, Cascade, IP-Adapter-FaceID, Rembg, CodeFormer and Roop models (For StableDiffusion)
+* Supports Lora, Textual inversion (embedding), Vae, Img2img, Depth, Pix2Pix, Controlnet, Upscalers (latent and Real-ESRGAN), Refiner, Inpaint, Outpaint, GLIGEN, AnimateDiff, Videos, LDM3D, SD3, Cascade, IP-Adapter-FaceID, Rembg, CodeFormer and Roop models (For StableDiffusion)
 * Support Multiband Diffusion model (For AudioCraft)
 * Support LibreTranslate (Local API)
 * Support ModelScope, ZeroScope 2, CogVideoX and Latte for video generation
@@ -246,13 +247,15 @@ To work with the virtual environment through the terminal, run `./Venv.sh`
 3) Set up the model according to the parameters you need
 4) Enter your request (+ and - for prompt weighting)
 5) Click the `Submit` button to get the generated image animation
+#### Optional: you can select a motion LORA to control your generation
 
 #### video:
 
 1) Upload the initial image
-2) Enter your request (for IV2Gen-XL)
-3) Set up the model according to the parameters you need
-4) Click the `Submit` button to get the video from image
+2) Select your model
+3) Enter your request (for IV2Gen-XL)
+4) Set up the model according to the parameters you need
+5) Click the `Submit` button to get the video from image
 
 #### ldm3d:
 
@@ -294,7 +297,7 @@ To work with the virtual environment through the terminal, run `./Venv.sh`
 ### Flux:
 
 1) Enter your prompt
-2) Select a model from the drop-down list
+2) Select your model
 3) Set up the model according to the parameters you need
 4) Click `Submit` to get the generated image
 
@@ -337,7 +340,7 @@ To work with the virtual environment through the terminal, run `./Venv.sh`
 ### PixArt:
 
 1) Enter your prompt
-2) Select the model from the drop-down list
+2) Select your model
 3) Set up the model according to the parameters you need
 4) Click `Submit` to get the generated image
 
@@ -451,9 +454,10 @@ To work with the virtual environment through the terminal, run `./Venv.sh`
 
 1) All generations are saved in the *outputs* folder
 2) You can press the `Clear` button to reset your selection
-3) To stop the generation process, click the `Stop generation` button
+3) To stop the generation process, press the `Stop generation` button
 4) You can turn off the application using the `Close terminal` button
-5) You can open the *outputs* folder by clicking on the `Outputs` button
+5) You can open the *outputs* folder using the `Outputs` button
+6) You can reload your interface using the `Reload models` button
 
 ## Where can i get models and voices?
 
