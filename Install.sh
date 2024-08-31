@@ -32,10 +32,17 @@ python3 "$CURRENT_DIR/RequirementsFiles/post_install.py"
 sleep 3
 clear
 
-echo "Downloading stable-diffusion-v1-5 model..."
-mkdir -p "$CURRENT_DIR/cache"
+echo "Downloading stable-diffusion-v1-5 models..."
+mkdir -p "$CURRENT_DIR/cache/huggingface/hub"
 pip install huggingface_hub
-python3 -c "from huggingface_hub import snapshot_download; snapshot_download('benjamin-paine/stable-diffusion-v1-5', local_dir='$CURRENT_DIR/cache/huggingface/hub/stable-diffusion-v1-5')"
+
+python3 -c "from huggingface_hub import snapshot_download; snapshot_download('benjamin-paine/stable-diffusion-v1-5', local_dir='$CURRENT_DIR/cache/huggingface/hub/models--benjamin-paine--stable-diffusion-v1-5')"
+python3 -c "from huggingface_hub import snapshot_download; snapshot_download('benjamin-paine/stable-diffusion-v1-5-inpainting', local_dir='$CURRENT_DIR/cache/huggingface/hub/models--benjamin-paine--stable-diffusion-v1-5-inpainting')"
+
+echo "Renaming model folders..."
+mv "$CURRENT_DIR/cache/huggingface/hub/models--benjamin-paine--stable-diffusion-v1-5" "$CURRENT_DIR/cache/huggingface/hub/models--runwayml--stable-diffusion-v1-5"
+mv "$CURRENT_DIR/cache/huggingface/hub/models--benjamin-paine--stable-diffusion-v1-5-inpainting" "$CURRENT_DIR/cache/huggingface/hub/models--runwayml--stable-diffusion-v1-5-inpainting"
+
 sleep 3
 clear
 
