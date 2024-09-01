@@ -1006,37 +1006,41 @@ def seamless_m4tv2_process(input_type, input_text, input_audio, src_lang, tgt_la
 
         outputs = model.generate(**inputs, **generate_kwargs)
 
-        if enable_speech_generation:
+        if enable_speech_generation or enable_both_generation:
             audio_output = outputs[0].cpu().numpy().squeeze()
             audio_path = os.path.join('outputs', f"SeamlessM4T_{datetime.now().strftime('%Y%m%d')}",
                                       f"audio_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{audio_output_format}")
             os.makedirs(os.path.dirname(audio_path), exist_ok=True)
-            sf.write(audio_path, audio_output, 16000, format=audio_output_format)
+
+            if audio_output_format == "wav":
+                sf.write(audio_path, audio_output, 16000)
+            elif audio_output_format == "mp3":
+                sf.write(audio_path, audio_output, 16000, format='mp3')
+            elif audio_output_format == "ogg":
+                sf.write(audio_path, audio_output, 16000, format='ogg')
+            else:
+                print(f"Unsupported audio format: {audio_output_format}")
+                audio_path = None
         else:
             audio_path = None
 
-        if not enable_speech_generation:
+        if not enable_speech_generation or enable_both_generation:
             text_output = processor.decode(outputs[0].tolist()[0], skip_special_tokens=True)
             text_path = os.path.join('outputs', f"SeamlessM4T_{datetime.now().strftime('%Y%m%d')}",
                                      f"text_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{text_output_format}")
             os.makedirs(os.path.dirname(text_path), exist_ok=True)
-            with open(text_path, "w", encoding="utf-8") as f:
-                f.write(text_output)
+
+            if text_output_format == "txt":
+                with open(text_path, "w", encoding="utf-8") as f:
+                    f.write(text_output)
+            elif text_output_format == "json":
+                with open(text_path, "w", encoding="utf-8") as f:
+                    json.dump({"text": text_output}, f, ensure_ascii=False, indent=4)
+            else:
+                print(f"Unsupported text format: {text_output_format}")
+                text_output = None
         else:
             text_output = None
-
-        if enable_both_generation:
-            text_output = processor.decode(outputs[0].tolist()[0], skip_special_tokens=True)
-            text_path = os.path.join('outputs', f"SeamlessM4T_{datetime.now().strftime('%Y%m%d')}",
-                                     f"text_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{text_output_format}")
-            os.makedirs(os.path.dirname(text_path), exist_ok=True)
-            with open(text_path, "w", encoding="utf-8") as f:
-                f.write(text_output)
-            audio_output = outputs[0].cpu().numpy().squeeze()
-            audio_path = os.path.join('outputs', f"SeamlessM4T_{datetime.now().strftime('%Y%m%d')}",
-                                      f"audio_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{audio_output_format}")
-            os.makedirs(os.path.dirname(audio_path), exist_ok=True)
-            sf.write(audio_path, audio_output, 16000, format=audio_output_format)
 
         return text_output, audio_path, None
 
