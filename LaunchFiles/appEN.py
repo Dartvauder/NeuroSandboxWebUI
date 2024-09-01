@@ -2788,6 +2788,54 @@ def generate_image_animatediff(prompt, negative_prompt, input_video, strength, m
         flush()
 
 
+def generate_hotshotxl(prompt, negative_prompt, steps, width, height, video_length, video_duration, output_format="gif", stop_generation=None):
+    global stop_signal
+    stop_signal = False
+
+    if not prompt:
+        return None, "Please enter a prompt!"
+
+    try:
+        output_filename = f"hotshotxl_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
+        output_path = os.path.join('outputs', f"HotshotXL_{datetime.now().strftime('%Y%m%d')}", output_filename)
+        os.makedirs(os.path.dirname(output_path), exist_ok=True)
+
+        command = [
+            "python", "Hotshot-XL/inference.py",
+            f"--prompt={prompt}",
+            f"--negative_prompt={negative_prompt}",
+            f"--output={output_path}",
+            f"--steps={steps}",
+            f"--width={width}",
+            f"--height={height}",
+            f"--video_length={video_length}",
+            f"--video_duration={video_duration}"
+        ]
+
+        process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+        while True:
+            if stop_signal:
+                process.terminate()
+                return None, "Generation stopped"
+
+            return_code = process.poll()
+            if return_code is not None:
+                break
+
+        if return_code != 0:
+            error_output = process.stderr.read().decode('utf-8')
+            return None, f"Error occurred: {error_output}"
+
+        return output_path, "GIF generated successfully!"
+
+    except Exception as e:
+        return None, str(e)
+
+    finally:
+        flush()
+
+
 def generate_video(init_image, output_format, video_settings_html, motion_bucket_id, noise_aug_strength, fps, num_frames, decode_chunk_size,
                    iv2gen_xl_settings_html, prompt, negative_prompt, num_inference_steps, guidance_scale, seed, stop_generation):
     global stop_signal
@@ -6529,6 +6577,30 @@ animatediff_interface = gr.Interface(
     allow_flagging="never",
 )
 
+hotshotxl_interface = gr.Interface(
+    fn=generate_hotshotxl,
+    inputs=[
+        gr.Textbox(label="Enter your prompt"),
+        gr.Textbox(label="Enter your negative prompt", value=""),
+        gr.Slider(minimum=1, maximum=100, value=30, step=1, label="Steps"),
+        gr.Slider(minimum=256, maximum=1024, value=512, step=64, label="Width"),
+        gr.Slider(minimum=256, maximum=1024, value=512, step=64, label="Height"),
+        gr.Slider(minimum=2, maximum=80, value=8, step=1, label="Video Length (frames)"),
+        gr.Slider(minimum=100, maximum=10000, value=1000, step=1, label="Video Duration (seconds)"),
+        gr.Radio(choices=["gif"], label="Output format", value="gif", interactive=False),
+        gr.Button(value="Stop generation", interactive=True, variant="stop"),
+    ],
+    outputs=[
+        gr.Image(type="filepath", label="Generated GIF"),
+        gr.Textbox(label="Message", type="text"),
+    ],
+    title="NeuroSandboxWebUI (ALPHA) - Hotshot-XL",
+    description="This user interface allows you to generate animated GIFs using Hotshot-XL. "
+                "Enter a prompt and customize the generation settings. "
+                "Try it and see what happens!",
+    allow_flagging="never",
+)
+
 video_interface = gr.Interface(
     fn=generate_video,
     inputs=[
@@ -7526,11 +7598,11 @@ with gr.TabbedInterface(
         gr.TabbedInterface(
             [
                 gr.TabbedInterface(
-                    [txt2img_interface, img2img_interface, depth2img_interface, pix2pix_interface, controlnet_interface, latent_upscale_interface, realesrgan_upscale_interface, sdxl_refiner_interface, inpaint_interface, outpaint_interface, gligen_interface, animatediff_interface, video_interface, ldm3d_interface,
+                    [txt2img_interface, img2img_interface, depth2img_interface, pix2pix_interface, controlnet_interface, latent_upscale_interface, realesrgan_upscale_interface, sdxl_refiner_interface, inpaint_interface, outpaint_interface, gligen_interface, animatediff_interface, hotshotxl_interface, video_interface, ldm3d_interface,
                      gr.TabbedInterface([sd3_txt2img_interface, sd3_img2img_interface, sd3_controlnet_interface, sd3_inpaint_interface],
                                         tab_names=["txt2img", "img2img", "controlnet", "inpaint"]),
                      cascade_interface, t2i_ip_adapter_interface, ip_adapter_faceid_interface, extras_interface],
-                    tab_names=["txt2img", "img2img", "depth2img", "pix2pix", "controlnet", "upscale(latent)", "upscale(Real-ESRGAN)", "refiner", "inpaint", "outpaint", "gligen", "animatediff", "video", "ldm3d", "sd3", "cascade", "t2i-ip-adapter", "ip-adapter-faceid", "extras"]
+                    tab_names=["txt2img", "img2img", "depth2img", "pix2pix", "controlnet", "upscale(latent)", "upscale(Real-ESRGAN)", "refiner", "inpaint", "outpaint", "gligen", "animatediff", "hotshotxl", "video", "ldm3d", "sd3", "cascade", "t2i-ip-adapter", "ip-adapter-faceid", "extras"]
                 ),
                 kandinsky_interface, flux_interface, hunyuandit_interface, lumina_interface, kolors_interface, auraflow_interface, wurstchen_interface, deepfloyd_if_interface, pixart_interface, playgroundv2_interface
             ],
@@ -7568,6 +7640,7 @@ with gr.TabbedInterface(
     outpaint_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     gligen_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     animatediff_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
+    hotshotxl_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     video_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     ldm3d_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     sd3_txt2img_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
