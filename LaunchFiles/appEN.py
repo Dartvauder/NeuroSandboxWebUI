@@ -10,7 +10,8 @@ os.makedirs(cache_dir, exist_ok=True)
 os.environ["XDG_CACHE_HOME"] = cache_dir
 import gradio as gr
 import langdetect
-from transformers import AutoModelForCausalLM, AutoTokenizer, AutoProcessor, BarkModel, pipeline, T5EncoderModel, BitsAndBytesConfig, DPTForDepthEstimation, DPTFeatureExtractor, CLIPVisionModelWithProjection
+from transformers import AutoModelForCausalLM, AutoTokenizer, AutoProcessor, BarkModel, pipeline, T5EncoderModel, BitsAndBytesConfig, DPTForDepthEstimation, DPTFeatureExtractor, CLIPVisionModelWithProjection, SeamlessM4Tv2Model, SeamlessM4Tv2ForSpeechToSpeech, SeamlessM4Tv2ForTextToText, SeamlessM4Tv2ForSpeechToText, SeamlessM4Tv2ForTextToSpeech
+from datasets import load_dataset
 from peft import PeftModel
 from libretranslatepy import LibreTranslateAPI
 import urllib.error
@@ -111,6 +112,15 @@ except Exception as e:
 def flush():
     gc.collect()
     torch.cuda.empty_cache()
+
+
+def get_languages():
+    return {
+        "Arabic": "ara", "Chinese": "cmn", "English": "eng", "French": "fra",
+        "German": "deu", "Hindi": "hin", "Italian": "ita", "Japanese": "jpn",
+        "Korean": "kor", "Polish": "pol", "Portuguese": "por", "Russian": "rus",
+        "Spanish": "spa", "Turkish": "tur",
+    }
 
 
 def authenticate(username, password):
@@ -827,6 +837,103 @@ def generate_tts_stt(text, audio, tts_settings_html, speaker_wav, language, tts_
                     json.dump(stt_history, f, ensure_ascii=False, indent=4)
 
     return tts_output, stt_output
+
+
+def seamless_m4tv2_process(input_type, input_text, input_audio, src_lang, tgt_lang,
+                           enable_speech_generation, speaker_id, text_num_beams,
+                           enable_text_do_sample, enable_speech_do_sample,
+                           speech_temperature, text_temperature,
+                           enable_both_generation, task_type,
+                           text_output_format, audio_output_format):
+
+    MODEL_PATH = os.path.join("inputs", "text", "seamless-m4t-v2")
+
+    if not os.path.exists(MODEL_PATH):
+        print("Downloading SeamlessM4Tv2 model...")
+        os.makedirs(MODEL_PATH, exist_ok=True)
+        Repo.clone_from("https://huggingface.co/facebook/seamless-m4t-v2-large", MODEL_PATH)
+        print("SeamlessM4Tv2 model downloaded")
+
+    try:
+        processor = AutoProcessor.from_pretrained(MODEL_PATH)
+
+        if input_type == "Text":
+            inputs = processor(text=input_text, src_lang=get_languages()[src_lang], return_tensors="pt")
+        elif input_type == "Audio" and input_audio:  # Audio
+            dataset = load_dataset(f"{src_lang.lower()}_speech_corpus", split="test", streaming=True)
+            audio_sample = next(iter(dataset))["audio"]
+            inputs = processor(audios=audio_sample["array"], return_tensors="pt")
+
+        generate_kwargs = {
+            "tgt_lang": get_languages()[tgt_lang],
+            "generate_speech": enable_speech_generation,
+            "speaker_id": speaker_id,
+            "return_intermediate_token_ids": enable_both_generation
+        }
+
+        if enable_text_do_sample:
+            generate_kwargs["text_do_sample"] = True
+            generate_kwargs["text_temperature"] = text_temperature
+        if enable_speech_do_sample:
+            generate_kwargs["speech_do_sample"] = True
+            generate_kwargs["speech_temperature"] = speech_temperature
+
+        generate_kwargs["text_num_beams"] = text_num_beams
+
+        if task_type == "Speech to Speech":
+            model = SeamlessM4Tv2ForSpeechToSpeech.from_pretrained(MODEL_PATH)
+        elif task_type == "Text to Text":
+            model = SeamlessM4Tv2ForTextToText.from_pretrained(MODEL_PATH)
+        elif task_type == "Speech to Text":
+            model = SeamlessM4Tv2ForSpeechToText.from_pretrained(MODEL_PATH)
+        elif task_type == "Text to Speech":
+            model = SeamlessM4Tv2ForTextToSpeech.from_pretrained(MODEL_PATH)
+        else:
+            model = SeamlessM4Tv2Model.from_pretrained(MODEL_PATH)
+
+        outputs = model.generate(**inputs, **generate_kwargs)
+
+        if enable_speech_generation:
+            audio_output = outputs[0].cpu().numpy().squeeze()
+            audio_path = os.path.join('outputs', f"SeamlessM4T_{datetime.now().strftime('%Y%m%d')}",
+                                      f"audio_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{audio_output_format}")
+            os.makedirs(os.path.dirname(audio_path), exist_ok=True)
+            sf.write(audio_path, audio_output, 16000, format=audio_output_format)
+        else:
+            audio_path = None
+
+        if not enable_speech_generation:
+            text_output = processor.decode(outputs[0].tolist()[0], skip_special_tokens=True)
+            text_path = os.path.join('outputs', f"SeamlessM4T_{datetime.now().strftime('%Y%m%d')}",
+                                     f"text_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{text_output_format}")
+            os.makedirs(os.path.dirname(text_path), exist_ok=True)
+            with open(text_path, "w", encoding="utf-8") as f:
+                f.write(text_output)
+        else:
+            text_output = None
+
+        if enable_both_generation:
+            text_output = processor.decode(outputs[0].tolist()[0], skip_special_tokens=True)
+            text_path = os.path.join('outputs', f"SeamlessM4T_{datetime.now().strftime('%Y%m%d')}",
+                                     f"text_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{text_output_format}")
+            os.makedirs(os.path.dirname(text_path), exist_ok=True)
+            with open(text_path, "w", encoding="utf-8") as f:
+                f.write(text_output)
+            audio_output = outputs[0].cpu().numpy().squeeze()
+            audio_path = os.path.join('outputs', f"SeamlessM4T_{datetime.now().strftime('%Y%m%d')}",
+                                      f"audio_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{audio_output_format}")
+            os.makedirs(os.path.dirname(audio_path), exist_ok=True)
+            sf.write(audio_path, audio_output, 16000, format=audio_output_format)
+
+        return text_output, audio_path, None
+
+    except Exception as e:
+        return None, None, str(e)
+
+    finally:
+        del model
+        del processor
+        flush()
 
 
 def generate_bark_audio(text, voice_preset, max_length, fine_temperature, coarse_temperature, output_format, stop_generation):
@@ -3343,7 +3450,7 @@ def generate_image_ip_adapter_faceid(prompt, negative_prompt, face_image, s_scal
                 torch_dtype=torch.float16, variant="fp16")
         elif stable_diffusion_model_type == "SDXL":
             pipe = StableDiffusionXLPipeline.from_single_file(
-                stable_diffusion_model_path, use_safetensors=True, device_map="auto", attention_slice=1,
+                stable_diffusion_model_path, scheduler=noise_scheduler, use_safetensors=True, device_map="auto", attention_slice=1,
                 torch_dtype=torch.float16, variant="fp16")
         else:
             return None, "Invalid StableDiffusion model type!"
@@ -5870,6 +5977,36 @@ bark_interface = gr.Interface(
     allow_flagging="never",
 )
 
+seamless_m4tv2_interface = gr.Interface(
+    fn=seamless_m4tv2_process,
+    inputs=[
+        gr.Radio(choices=["Text", "Audio"], label="Input Type", value="Text", interactive=True),
+        gr.Textbox(label="Input Text"),
+        gr.Audio(label="Input Audio", type="filepath"),
+        gr.Dropdown(choices=get_languages(), label="Source Language", value=None, interactive=True),
+        gr.Dropdown(choices=get_languages(), label="Target Language", value=None, interactive=True),
+        gr.Checkbox(label="Enable Speech Generation", value=False),
+        gr.Number(label="Speaker ID", value=0),
+        gr.Slider(minimum=1, maximum=10, value=4, step=1, label="Text Num Beams"),
+        gr.Checkbox(label="Enable Text Sampling"),
+        gr.Checkbox(label="Enable Speech Sampling"),
+        gr.Slider(minimum=0.1, maximum=2, value=0.6, step=0.1, label="Speech Temperature"),
+        gr.Slider(minimum=0.1, maximum=2, value=0.6, step=0.1, label="Text Temperature"),
+        gr.Checkbox(label="Enable Both Generation", value=False),
+        gr.Radio(choices=["General", "Speech to Speech", "Text to Text", "Speech to Text", "Text to Speech"], label="Task Type", value="General", interactive=True),
+        gr.Radio(choices=["txt", "json"], label="Text Output Format", value="txt", interactive=True),
+        gr.Radio(choices=["wav", "mp3", "ogg"], label="Audio Output Format", value="wav", interactive=True)
+    ],
+    outputs=[
+        gr.Textbox(label="Generated Text"),
+        gr.Audio(label="Generated Audio", type="filepath"),
+        gr.Textbox(label="Message")
+    ],
+    title="SeamlessM4Tv2 Interface",
+    description="This interface allows you to use the SeamlessM4Tv2 model for various translation and speech tasks.",
+    allow_flagging="never",
+)
+
 translate_interface = gr.Interface(
     fn=translate_text,
     inputs=[
@@ -7256,8 +7393,8 @@ system_interface = gr.Interface(
 with gr.TabbedInterface(
     [
         gr.TabbedInterface(
-            [chat_interface, tts_stt_interface, translate_interface],
-            tab_names=["LLM", "TTS-STT", "LibreTranslate"]
+            [chat_interface, tts_stt_interface, seamless_m4tv2_interface, translate_interface],
+            tab_names=["LLM", "TTS-STT", "SeamlessM4Tv2", "LibreTranslate"]
         ),
         gr.TabbedInterface(
             [
