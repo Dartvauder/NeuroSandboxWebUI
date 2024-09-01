@@ -10,8 +10,8 @@ os.makedirs(cache_dir, exist_ok=True)
 os.environ["XDG_CACHE_HOME"] = cache_dir
 import gradio as gr
 import langdetect
-from transformers import AutoModelForCausalLM, AutoTokenizer, AutoProcessor, BarkModel, pipeline, T5EncoderModel, BitsAndBytesConfig, DPTForDepthEstimation, DPTFeatureExtractor, CLIPVisionModelWithProjection, SeamlessM4Tv2Model, SeamlessM4Tv2ForSpeechToSpeech, SeamlessM4Tv2ForTextToText, SeamlessM4Tv2ForSpeechToText, SeamlessM4Tv2ForTextToSpeech
-from datasets import load_dataset
+from transformers import AutoModelForCausalLM, AutoTokenizer, AutoProcessor, BarkModel, pipeline, T5EncoderModel, BitsAndBytesConfig, DPTForDepthEstimation, DPTFeatureExtractor, CLIPVisionModelWithProjection, SeamlessM4Tv2Model, SeamlessM4Tv2ForSpeechToSpeech, SeamlessM4Tv2ForTextToText, SeamlessM4Tv2ForSpeechToText, SeamlessM4Tv2ForTextToSpeech, VitsTokenizer, VitsModel, Wav2Vec2ForCTC
+from datasets import load_dataset, Audio
 from peft import PeftModel
 from libretranslatepy import LibreTranslateAPI
 import urllib.error
@@ -837,6 +837,98 @@ def generate_tts_stt(text, audio, tts_settings_html, speaker_wav, language, tts_
                     json.dump(stt_history, f, ensure_ascii=False, indent=4)
 
     return tts_output, stt_output
+
+
+def generate_mms_tts(text, language):
+    model_names = {
+        "English": "facebook/mms-tts-eng",
+        "Russian": "facebook/mms-tts-rus",
+        "Korean": "facebook/mms-tts-kor",
+        "Hindu": "facebook/mms-tts-hin",
+        "Turkish": "facebook/mms-tts-tur",
+        "French": "facebook/mms-tts-fra",
+        "Spanish": "facebook/mms-tts-spa",
+        "German": "facebook/mms-tts-deu",
+        "Arabic": "facebook/mms-tts-ara",
+        "Polish": "facebook/mms-tts-pol"
+    }
+
+    model_path = os.path.join("inputs", "text", "mms", "text2speech", language)
+
+    if not os.path.exists(model_path):
+        print(f"Downloading MMS TTS model for {language}...")
+        os.makedirs(model_path, exist_ok=True)
+        Repo.clone_from(f"https://huggingface.co/{model_names[language]}", model_path)
+        print(f"MMS TTS model for {language} downloaded")
+
+    try:
+        tokenizer = VitsTokenizer.from_pretrained(model_path)
+        model = VitsModel.from_pretrained(model_path)
+
+        inputs = tokenizer(text=text, return_tensors="pt")
+        with torch.no_grad():
+            outputs = model(**inputs)
+        waveform = outputs.waveform[0]
+
+        output_dir = os.path.join("outputs", "MMS_TTS")
+        os.makedirs(output_dir, exist_ok=True)
+        output_file = os.path.join(output_dir, f"synthesized_speech_{language}.wav")
+        scipy.io.wavfile.write(output_file, rate=model.config.sampling_rate, data=waveform.numpy())
+
+        return output_file, None
+
+    except Exception as e:
+        return None, str(e)
+
+    finally:
+        del model
+        del tokenizer
+        flush()
+
+
+def transcribe_mms_stt(audio_file, language):
+    model_path = os.path.join("inputs", "text", "mms", "speech2text")
+    dataset_path = os.path.join("inputs", "text", "mms", "dataset")
+
+    if not os.path.exists(model_path):
+        print("Downloading MMS STT model...")
+        os.makedirs(model_path, exist_ok=True)
+        Repo.clone_from("https://huggingface.co/facebook/mms-1b-all", model_path)
+        print("MMS STT model downloaded")
+
+    if not os.path.exists(dataset_path):
+        print("Downloading Common Voice dataset...")
+        os.makedirs(dataset_path, exist_ok=True)
+        load_dataset("mozilla-foundation/common_voice_13_0", language.lower(), split="test", cache_dir=dataset_path)
+        print("Common Voice dataset downloaded")
+
+    try:
+        processor = AutoProcessor.from_pretrained(model_path)
+        model = Wav2Vec2ForCTC.from_pretrained(model_path)
+
+        stream_data = load_dataset("mozilla-foundation/common_voice_13_0", language.lower(), split="test",
+                                   streaming=True,
+                                   cache_dir=dataset_path)
+        stream_data = stream_data.cast_column("audio", Audio(sampling_rate=16000))
+
+        audio, sr = librosa.load(audio_file, sr=16000)
+        inputs = processor(audio, sampling_rate=16000, return_tensors="pt")
+
+        with torch.no_grad():
+            outputs = model(**inputs).logits
+
+        ids = torch.argmax(outputs, dim=-1)[0]
+        transcription = processor.decode(ids)
+
+        return transcription, None
+
+    except Exception as e:
+        return None, str(e)
+
+    finally:
+        del model
+        del processor
+        flush()
 
 
 def seamless_m4tv2_process(input_type, input_text, input_audio, src_lang, tgt_lang,
@@ -5977,6 +6069,41 @@ bark_interface = gr.Interface(
     allow_flagging="never",
 )
 
+mms_tts_interface = gr.Interface(
+    fn=generate_mms_tts,
+    inputs=[
+        gr.Textbox(label="Enter text to synthesize"),
+        gr.Dropdown(choices=["English", "Russian", "Korean", "Hindu", "Turkish", "French", "Spanish", "German", "Arabic", "Polish"], label="Select language", value="English")
+    ],
+    outputs=[
+        gr.Audio(label="Synthesized speech", type="filepath"),
+        gr.Textbox(label="Message")
+    ],
+    title="NeuroSandboxWebUI (ALPHA) - MMS Text-to-Speech",
+    description="Generate speech from text using MMS TTS models.",
+    allow_flagging="never",
+)
+
+mms_stt_interface = gr.Interface(
+    fn=transcribe_mms_stt,
+    inputs=[
+        gr.Audio(label="Upload or record audio", type="filepath"),
+        gr.Dropdown(choices=["En", "Ru", "Ko", "Hi", "Tu", "Fr", "Sp", "De", "Ar", "Po"], label="Select language", value="En")
+    ],
+    outputs=[
+        gr.Textbox(label="Transcription"),
+        gr.Textbox(label="Message")
+    ],
+    title="NeuroSandboxWebUI (ALPHA) - MMS Speech-to-Text",
+    description="Transcribe speech to text using MMS STT model.",
+    allow_flagging="never",
+)
+
+mms_interface = gr.TabbedInterface(
+    [mms_tts_interface, mms_stt_interface],
+    tab_names=["Text-to-Speech", "Speech-to-Text"]
+)
+
 seamless_m4tv2_interface = gr.Interface(
     fn=seamless_m4tv2_process,
     inputs=[
@@ -7393,8 +7520,8 @@ system_interface = gr.Interface(
 with gr.TabbedInterface(
     [
         gr.TabbedInterface(
-            [chat_interface, tts_stt_interface, seamless_m4tv2_interface, translate_interface],
-            tab_names=["LLM", "TTS-STT", "SeamlessM4Tv2", "LibreTranslate"]
+            [chat_interface, tts_stt_interface, mms_interface, seamless_m4tv2_interface, translate_interface],
+            tab_names=["LLM", "TTS-STT", "MMS", "SeamlessM4Tv2", "LibreTranslate"]
         ),
         gr.TabbedInterface(
             [
