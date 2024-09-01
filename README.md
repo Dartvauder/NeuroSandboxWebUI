@@ -154,7 +154,7 @@ To work with the virtual environment through the terminal, run `./Venv.sh`
 3) Set up the model according to the parameters you need
 4) Click the `Submit` button to receive the lip-sync
 
-### StableDiffusion - has nineteen sub-tabs:
+### StableDiffusion - has twenty sub-tabs:
 
 #### txt2img:
 
@@ -262,6 +262,12 @@ To work with the virtual environment through the terminal, run `./Venv.sh`
 4) Enter your request (+ and - for prompt weighting)
 5) Click the `Submit` button to get the generated image animation
 #### Optional: you can select a motion LORA to control your generation
+
+### hotshot-xl
+
+1) Enter your request
+2) Set up the model according to the parameters you need
+3) Click the `Submit` button to get the generated GIF-image
 
 #### video:
 
@@ -477,7 +483,7 @@ To work with the virtual environment through the terminal, run `./Venv.sh`
 
 * LLM models can be taken from [HuggingFace](https://huggingface.co/models) or from ModelDownloader inside interface 
 * StableDiffusion, vae, inpaint, embedding and lora models can be taken from [CivitAI](https://civitai.com/models) or from ModelDownloader inside interface
-* StableAudioOpen, AudioCraft, AudioLDM 2, TTS, Whisper, MMS, SeamlessM4Tv2, Wav2Lip, SunoBark, MoonDream2, Upscalers (Latent and Real-ESRGAN), Refiner, GLIGEN, Depth, Pix2Pix, Controlnet, AnimateDiff, Videos, LDM3D, SD3, Cascade, T2I-IP-ADAPTER, IP-Adapter-FaceID, Rembg, Roop, CodeFormer, Real-ESRGAN, StableFast3D, Shap-E, SV34D, Zero123Plus, Demucs, Kandinsky, Flux, HunyuanDiT, Lumina-T2X, Kolors, AuraFlow, AuraSR, Würstchen, DeepFloydIF, PixArt, PlaygroundV2.5, ModelScope, ZeroScope 2, CogVideoX, Latte and Multiband diffusion models are downloads automatically in *inputs* folder when are they used 
+* StableAudioOpen, AudioCraft, AudioLDM 2, TTS, Whisper, MMS, SeamlessM4Tv2, Wav2Lip, SunoBark, MoonDream2, Upscalers (Latent and Real-ESRGAN), Refiner, GLIGEN, Depth, Pix2Pix, Controlnet, AnimateDiff, HotShot-XL, Videos, LDM3D, SD3, Cascade, T2I-IP-ADAPTER, IP-Adapter-FaceID, Rembg, Roop, CodeFormer, Real-ESRGAN, StableFast3D, Shap-E, SV34D, Zero123Plus, Demucs, Kandinsky, Flux, HunyuanDiT, Lumina-T2X, Kolors, AuraFlow, AuraSR, Würstchen, DeepFloydIF, PixArt, PlaygroundV2.5, ModelScope, ZeroScope 2, CogVideoX, Latte and Multiband diffusion models are downloads automatically in *inputs* folder when are they used 
 * You can take voices anywhere. Record yours or take a recording from the Internet. Or just use those that are already in the project. The main thing is that it is pre-processed!
 
 ## Wiki
@@ -571,6 +577,7 @@ First of all, I want to thank the developers of [PyCharm](https://www.jetbrains.
 * [T2I-IP-Adapter](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/apache-2.0.md)
 * [MMS](https://spdx.org/licenses/CC-BY-NC-4.0)
 * [SeamlessM4Tv2](https://spdx.org/licenses/CC-BY-NC-4.0)
+* [HotShot-XL](https://github.com/hotshotco/Hotshot-XL/blob/main/LICENSE)
 
 ## Donation
 
