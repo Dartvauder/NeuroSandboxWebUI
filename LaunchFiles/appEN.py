@@ -839,7 +839,7 @@ def generate_tts_stt(text, audio, tts_settings_html, speaker_wav, language, tts_
     return tts_output, stt_output
 
 
-def generate_mms_tts(text, language):
+def generate_mms_tts(text, language, output_format):
     model_names = {
         "English": "facebook/mms-tts-eng",
         "Russian": "facebook/mms-tts-rus",
@@ -872,8 +872,16 @@ def generate_mms_tts(text, language):
 
         output_dir = os.path.join("outputs", "MMS_TTS")
         os.makedirs(output_dir, exist_ok=True)
-        output_file = os.path.join(output_dir, f"synthesized_speech_{language}.wav")
-        scipy.io.wavfile.write(output_file, rate=model.config.sampling_rate, data=waveform.numpy())
+        output_file = os.path.join(output_dir, f"synthesized_speech_{language}.{output_format}")
+
+        if output_format == "wav":
+            scipy.io.wavfile.write(output_file, rate=model.config.sampling_rate, data=waveform.numpy())
+        elif output_format == "mp3":
+            sf.write(output_file, waveform.numpy(), model.config.sampling_rate, format='mp3')
+        elif output_format == "ogg":
+            sf.write(output_file, waveform.numpy(), model.config.sampling_rate, format='ogg')
+        else:
+            return None, f"Unsupported output format: {output_format}"
 
         return output_file, None
 
@@ -886,7 +894,7 @@ def generate_mms_tts(text, language):
         flush()
 
 
-def transcribe_mms_stt(audio_file, language):
+def transcribe_mms_stt(audio_file, language, output_format):
     model_path = os.path.join("inputs", "text", "mms", "speech2text")
     dataset_path = os.path.join("inputs", "text", "mms", "dataset")
 
@@ -920,7 +928,20 @@ def transcribe_mms_stt(audio_file, language):
         ids = torch.argmax(outputs, dim=-1)[0]
         transcription = processor.decode(ids)
 
-        return transcription, None
+        output_dir = os.path.join("outputs", "MMS_STT")
+        os.makedirs(output_dir, exist_ok=True)
+        output_file = os.path.join(output_dir, f"transcription_{language}.{output_format}")
+
+        if output_format == "txt":
+            with open(output_file, "w", encoding="utf-8") as f:
+                f.write(transcription)
+        elif output_format == "json":
+            with open(output_file, "w", encoding="utf-8") as f:
+                json.dump({"transcription": transcription}, f, ensure_ascii=False, indent=4)
+        else:
+            return None, f"Unsupported output format: {output_format}"
+
+        return output_file, None
 
     except Exception as e:
         return None, str(e)
@@ -2795,6 +2816,13 @@ def generate_hotshotxl(prompt, negative_prompt, steps, width, height, video_leng
     if not prompt:
         return None, "Please enter a prompt!"
 
+    hotshotxl_model_path = os.path.join("inputs", "image", "sd_models", "hotshot_xl")
+    if not os.path.exists(hotshotxl_model_path):
+        print("Downloading HotShot-XL...")
+        os.makedirs(hotshotxl_model_path, exist_ok=True)
+        Repo.clone_from("https://huggingface.co/hotshotco/Hotshot-XL", hotshotxl_model_path)
+        print("HotShot-XL downloaded")
+
     try:
         output_filename = f"hotshotxl_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
         output_path = os.path.join('outputs', f"HotshotXL_{datetime.now().strftime('%Y%m%d')}", output_filename)
@@ -2802,6 +2830,7 @@ def generate_hotshotxl(prompt, negative_prompt, steps, width, height, video_leng
 
         command = [
             "python", "Hotshot-XL/inference.py",
+            f"--pretrained_path={hotshotxl_model_path}",
             f"--prompt={prompt}",
             f"--negative_prompt={negative_prompt}",
             f"--output={output_path}",
@@ -6121,7 +6150,8 @@ mms_tts_interface = gr.Interface(
     fn=generate_mms_tts,
     inputs=[
         gr.Textbox(label="Enter text to synthesize"),
-        gr.Dropdown(choices=["English", "Russian", "Korean", "Hindu", "Turkish", "French", "Spanish", "German", "Arabic", "Polish"], label="Select language", value="English")
+        gr.Dropdown(choices=["English", "Russian", "Korean", "Hindu", "Turkish", "French", "Spanish", "German", "Arabic", "Polish"], label="Select language", value="English"),
+        gr.Radio(choices=["wav", "mp3", "ogg"], label="Select output format", value="wav")
     ],
     outputs=[
         gr.Audio(label="Synthesized speech", type="filepath"),
@@ -6136,7 +6166,8 @@ mms_stt_interface = gr.Interface(
     fn=transcribe_mms_stt,
     inputs=[
         gr.Audio(label="Upload or record audio", type="filepath"),
-        gr.Dropdown(choices=["En", "Ru", "Ko", "Hi", "Tu", "Fr", "Sp", "De", "Ar", "Po"], label="Select language", value="En")
+        gr.Dropdown(choices=["En", "Ru", "Ko", "Hi", "Tu", "Fr", "Sp", "De", "Ar", "Po"], label="Select language", value="En"),
+        gr.Radio(choices=["txt", "json"], label="Select output format", value="txt")
     ],
     outputs=[
         gr.Textbox(label="Transcription"),
