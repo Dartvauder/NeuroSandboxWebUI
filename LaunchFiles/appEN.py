@@ -3669,6 +3669,106 @@ def generate_image_ip_adapter_faceid(prompt, negative_prompt, face_image, s_scal
         flush()
 
 
+def generate_riffusion_text2image(prompt, negative_prompt, num_inference_steps, guidance_scale, height, width, seed, output_format="png", stop_generation=None):
+    global stop_signal
+    stop_signal = False
+
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+
+    if seed == "" or seed is None:
+        seed = random.randint(0, 2 ** 32 - 1)
+    else:
+        seed = int(seed)
+    generator = torch.Generator(device).manual_seed(seed)
+
+    riffusion_model_path = os.path.join("inputs", "image", "sd_models", "riffusion")
+
+    if not os.path.exists(riffusion_model_path):
+        print("Downloading Riffusion model...")
+        os.makedirs(riffusion_model_path, exist_ok=True)
+        Repo.clone_from("https://huggingface.co/riffusion/riffusion-model-v1", riffusion_model_path)
+        print("Riffusion model downloaded")
+
+    try:
+        pipe = StableDiffusionPipeline.from_pretrained(riffusion_model_path, torch_dtype=torch.float16)
+        pipe = pipe.to(device)
+
+        image = pipe(
+            prompt=prompt,
+            negative_prompt=negative_prompt,
+            num_inference_steps=num_inference_steps,
+            guidance_scale=guidance_scale,
+            height=height,
+            width=width,
+            generator=generator
+        ).images[0]
+
+        if stop_signal:
+            return None, "Generation stopped"
+
+        today = datetime.now().date()
+        image_dir = os.path.join('outputs', f"Riffusion_{today.strftime('%Y%m%d')}")
+        os.makedirs(image_dir, exist_ok=True)
+        image_filename = f"riffusion_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
+        image_path = os.path.join(image_dir, image_filename)
+        image.save(image_path, format=output_format.upper())
+
+        return image_path, f"Image generated successfully. Seed used: {seed}"
+
+    except Exception as e:
+        return None, str(e)
+
+    finally:
+        del pipe
+        flush()
+
+
+def generate_riffusion_image2audio(image_path, output_format="wav"):
+    if not image_path:
+        return None, "Please upload an image file!"
+
+    try:
+        today = datetime.now().date()
+        audio_dir = os.path.join('outputs', f"Riffusion_{today.strftime('%Y%m%d')}")
+        os.makedirs(audio_dir, exist_ok=True)
+        audio_filename = f"riffusion_audio_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
+        audio_path = os.path.join(audio_dir, audio_filename)
+
+        command = f"python -m riffusion.cli image-to-audio --image {image_path} --audio {audio_path}"
+        subprocess.run(command, shell=True, check=True)
+
+        return audio_path, None
+
+    except Exception as e:
+        return None, str(e)
+
+    finally:
+        flush()
+
+
+def generate_riffusion_audio2image(audio_path, output_format="png"):
+    if not audio_path:
+        return None, "Please upload an audio file!"
+
+    try:
+        today = datetime.now().date()
+        image_dir = os.path.join('outputs', f"Riffusion_{today.strftime('%Y%m%d')}")
+        os.makedirs(image_dir, exist_ok=True)
+        image_filename = f"riffusion_image_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
+        image_path = os.path.join(image_dir, image_filename)
+
+        command = f"python -m riffusion.cli audio-to-image --audio {audio_path} --image {image_path}"
+        subprocess.run(command, shell=True, check=True)
+
+        return image_path, None
+
+    except Exception as e:
+        return None, str(e)
+
+    finally:
+        flush()
+
+
 def generate_image_extras(input_image, source_image, remove_background, enable_faceswap, enable_facerestore, image_output_format):
     if not input_image:
         return None, "Please upload an image file!"
@@ -5939,8 +6039,8 @@ def download_model(model_name_llm, model_name_sd):
         model_url = ""
         if model_name_llm == "StarlingLM(Transformers7B)":
             model_url = "https://huggingface.co/Nexusflow/Starling-LM-7B-beta"
-        elif model_name_llm == "OpenChat(Llama7B.Q4)":
-            model_url = "https://huggingface.co/TheBloke/openchat-3.5-0106-GGUF/resolve/main/openchat-3.5-0106.Q4_K_M.gguf"
+        elif model_name_llm == "OpenChat3.6(Llama8B.Q4)":
+            model_url = "https://huggingface.co/bartowski/openchat-3.6-8b-20240522-GGUF/resolve/main/openchat-3.6-8b-20240522-Q4_K_M.gguf"
         model_path = os.path.join("inputs", "text", "llm_models", model_name_llm)
 
         if model_url:
@@ -6213,7 +6313,7 @@ seamless_m4tv2_interface = gr.Interface(
         gr.Audio(label="Generated Audio", type="filepath"),
         gr.Textbox(label="Message")
     ],
-    title="SeamlessM4Tv2 Interface",
+    title="NeuroSandboxWebUI (ALPHA) - SeamlessM4Tv2",
     description="This interface allows you to use the SeamlessM4Tv2 model for various translation and speech tasks.",
     allow_flagging="never",
 )
@@ -6890,6 +6990,63 @@ ip_adapter_faceid_interface = gr.Interface(
                 "Upload a face image, enter a prompt, select a Stable Diffusion model, and customize the generation settings. "
                 "Try it and see what happens!",
     allow_flagging="never",
+)
+
+riffusion_text2image_interface = gr.Interface(
+    fn=generate_riffusion_text2image,
+    inputs=[
+        gr.Textbox(label="Enter your prompt"),
+        gr.Textbox(label="Enter your negative prompt", value=""),
+        gr.Slider(minimum=1, maximum=100, value=50, step=1, label="Steps"),
+        gr.Slider(minimum=1.0, maximum=20.0, value=7.5, step=0.1, label="Guidance Scale"),
+        gr.Slider(minimum=256, maximum=1024, value=512, step=64, label="Height"),
+        gr.Slider(minimum=256, maximum=1024, value=512, step=64, label="Width"),
+        gr.Textbox(label="Seed (optional)", value=""),
+        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
+        gr.Button(value="Stop generation", interactive=True, variant="stop"),
+    ],
+    outputs=[
+        gr.Image(type="filepath", label="Generated image"),
+        gr.Textbox(label="Message", type="text"),
+    ],
+    title="NeuroSandboxWebUI (ALPHA) - Riffusion (Text-to-Image)",
+    description="Generate a spectrogram image from text using Riffusion.",
+    allow_flagging="never",
+)
+
+riffusion_image2audio_interface = gr.Interface(
+    fn=generate_riffusion_image2audio,
+    inputs=[
+        gr.Image(label="Input spectrogram image", type="filepath"),
+        gr.Radio(choices=["wav", "mp3", "ogg"], label="Select output format", value="wav", interactive=True),
+    ],
+    outputs=[
+        gr.Audio(label="Generated audio", type="filepath"),
+        gr.Textbox(label="Message", type="text"),
+    ],
+    title="NeuroSandboxWebUI (ALPHA) - Riffusion (Image-to-Audio)",
+    description="Convert a spectrogram image to audio using Riffusion.",
+    allow_flagging="never",
+)
+
+riffusion_audio2image_interface = gr.Interface(
+    fn=generate_riffusion_audio2image,
+    inputs=[
+        gr.Audio(label="Input audio", type="filepath"),
+        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
+    ],
+    outputs=[
+        gr.Image(type="filepath", label="Generated spectrogram image"),
+        gr.Textbox(label="Message", type="text"),
+    ],
+    title="NeuroSandboxWebUI (ALPHA) - Riffusion (Audio-to-Image)",
+    description="Convert audio to a spectrogram image using Riffusion.",
+    allow_flagging="never",
+)
+
+riffusion_interface = gr.TabbedInterface(
+    [riffusion_text2image_interface, riffusion_image2audio_interface, riffusion_audio2image_interface],
+    tab_names=["Text-to-Image", "Image-to-Audio", "Audio-to-Image"]
 )
 
 extras_interface = gr.Interface(
@@ -7583,7 +7740,7 @@ gallery_interface = gr.Interface(
 model_downloader_interface = gr.Interface(
     fn=download_model,
     inputs=[
-        gr.Dropdown(choices=[None, "StarlingLM(Transformers7B)", "OpenChat(Llama7B.Q4)"], label="Download LLM model", value=None),
+        gr.Dropdown(choices=[None, "StarlingLM(Transformers7B)", "OpenChat3.6(Llama8B.Q4)"], label="Download LLM model", value=None),
         gr.Dropdown(choices=[None, "Dreamshaper8(SD1.5)", "RealisticVisionV4.0(SDXL)"], label="Download StableDiffusion model", value=None),
     ],
     outputs=[
@@ -7637,8 +7794,8 @@ with gr.TabbedInterface(
                     [txt2img_interface, img2img_interface, depth2img_interface, pix2pix_interface, controlnet_interface, latent_upscale_interface, realesrgan_upscale_interface, sdxl_refiner_interface, inpaint_interface, outpaint_interface, gligen_interface, animatediff_interface, hotshotxl_interface, video_interface, ldm3d_interface,
                      gr.TabbedInterface([sd3_txt2img_interface, sd3_img2img_interface, sd3_controlnet_interface, sd3_inpaint_interface],
                                         tab_names=["txt2img", "img2img", "controlnet", "inpaint"]),
-                     cascade_interface, t2i_ip_adapter_interface, ip_adapter_faceid_interface, extras_interface],
-                    tab_names=["txt2img", "img2img", "depth2img", "pix2pix", "controlnet", "upscale(latent)", "upscale(Real-ESRGAN)", "refiner", "inpaint", "outpaint", "gligen", "animatediff", "hotshotxl", "video", "ldm3d", "sd3", "cascade", "t2i-ip-adapter", "ip-adapter-faceid", "extras"]
+                     cascade_interface, t2i_ip_adapter_interface, ip_adapter_faceid_interface, riffusion_interface, extras_interface],
+                    tab_names=["txt2img", "img2img", "depth2img", "pix2pix", "controlnet", "upscale(latent)", "upscale(Real-ESRGAN)", "refiner", "inpaint", "outpaint", "gligen", "animatediff", "hotshotxl", "video", "ldm3d", "sd3", "cascade", "t2i-ip-adapter", "ip-adapter-faceid", "riffusion", "extras"]
                 ),
                 kandinsky_interface, flux_interface, hunyuandit_interface, lumina_interface, kolors_interface, auraflow_interface, wurstchen_interface, deepfloyd_if_interface, pixart_interface, playgroundv2_interface
             ],
@@ -7686,6 +7843,7 @@ with gr.TabbedInterface(
     cascade_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     t2i_ip_adapter_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     ip_adapter_faceid_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
+    riffusion_text2image_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     kandinsky_txt2img_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     kandinsky_img2img_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     kandinsky_inpaint_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
