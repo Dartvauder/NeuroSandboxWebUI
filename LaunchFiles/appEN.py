@@ -49,6 +49,7 @@ from tqdm import tqdm
 from llama_cpp import Llama
 from llama_cpp.llama_chat_format import MoondreamChatHandler
 import requests
+import markdown
 import urllib.parse
 from rembg import remove
 import torchaudio
@@ -5981,8 +5982,12 @@ def process_rvc(input_audio, model_folder, f0method, f0up_key, index_rate, filte
 def separate_audio_uvr(audio_file, output_format, normalization_threshold, sample_rate):
 
     try:
+        today = datetime.now().date()
+        output_dir = os.path.join('outputs', f"UVR_{today.strftime('%Y%m%d')}")
+        os.makedirs(output_dir, exist_ok=True)
+
         separator = Separator(output_format=output_format, normalization_threshold=normalization_threshold,
-                              sample_rate=sample_rate)
+                              sample_rate=sample_rate, output_dir=output_dir)
         separator.load_model(model_filename='UVR-MDX-NET-Inst_HQ_3.onnx')
 
         output_files = separator.separate(audio_file)
@@ -6052,6 +6057,22 @@ def demucs_separate(audio_file, output_format="wav"):
 
     finally:
         flush()
+
+
+def get_wiki_content(url, local_file="Wiki.md"):
+    try:
+        response = requests.get(url)
+        if response.status_code == 200:
+            return response.text
+    except:
+        pass
+
+    try:
+        with open(local_file, 'r', encoding='utf-8') as file:
+            content = file.read()
+            return markdown.markdown(content)
+    except:
+        return "<p>Wiki content is not available.</p>"
 
 
 def get_output_files():
@@ -7835,6 +7856,18 @@ demucs_interface = gr.Interface(
     allow_flagging="never",
 )
 
+wiki_interface = gr.Interface(
+    fn=get_wiki_content,
+    inputs=[
+        gr.Textbox(label="Online Wiki", value="https://github.com/Dartvauder/NeuroSandboxWebUI/wiki", interactive=False),
+        gr.Textbox(label="Local Wiki", value="Wiki.md", interactive=False)
+    ],
+    outputs=gr.HTML(label="Wiki Content"),
+    title="NeuroSandboxWebUI (ALPHA) - Wiki",
+    description="This interface displays the Wiki content from the specified URL or local file.",
+    allow_flagging="never",
+)
+
 gallery_interface = gr.Interface(
     fn=lambda *args: get_output_files()[-1](*args),
     inputs=[
@@ -7922,7 +7955,7 @@ with gr.TabbedInterface(
         ),
         gr.TabbedInterface(
             [wav2lip_interface, modelscope_interface, zeroscope2_interface, cogvideox_interface, latte_interface],
-            tab_names=["Wav2Lip", "ModelScope", "ZeroScope 2", "CogVideoX", "Latte"]
+            tab_names=["Wav2Lip", "ModelScope", "ZeroScope2", "CogVideoX", "Latte"]
         ),
         gr.TabbedInterface(
             [stablefast3d_interface, shap_e_interface, sv34d_interface, zero123plus_interface],
@@ -7930,11 +7963,11 @@ with gr.TabbedInterface(
         ),
         gr.TabbedInterface(
             [stableaudio_interface, audiocraft_interface, audioldm2_interface, bark_interface, rvc_interface, uvr_interface, demucs_interface],
-            tab_names=["StableAudioOpen", "AudioCraft", "AudioLDM 2", "SunoBark", "RVC", "UVR", "Demucs"]
+            tab_names=["StableAudio", "AudioCraft", "AudioLDM2", "SunoBark", "RVC", "UVR", "Demucs"]
         ),
         gr.TabbedInterface(
-            [gallery_interface, model_downloader_interface, settings_interface, system_interface],
-            tab_names=["Gallery", "ModelDownloader", "Settings", "System"]
+            [wiki_interface, gallery_interface, model_downloader_interface, settings_interface, system_interface],
+            tab_names=["Wiki", "Gallery", "ModelDownloader", "Settings", "System"]
         )
     ],
     tab_names=["Text", "Image", "Video", "3D", "Audio", "Interface"]
