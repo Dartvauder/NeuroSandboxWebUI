@@ -582,11 +582,12 @@ First of all, I want to thank the developers of [PyCharm](https://www.jetbrains.
 
 #### These third-party repository codes are also used in my project:
 
-[Generative-Models for SV34D]()
-[CodeFormer for extras]()
-[Real-ESRGAN for upscale]()
-[HotShot-XL for StableDiffusion]()
-[Roop for extras]()
+*[Generative-Models for SV34D](https://github.com/Stability-AI/generative-models)
+*[CodeFormer for extras]()
+*[Real-ESRGAN for upscale]()
+*[HotShot-XL for StableDiffusion]()
+*[Roop for extras]()
+*[StableFast3D for 3D]()
 
 ## Donation
 
