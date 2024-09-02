@@ -579,6 +579,10 @@ First of all, I want to thank the developers of [PyCharm](https://www.jetbrains.
 * [SeamlessM4Tv2](https://spdx.org/licenses/CC-BY-NC-4.0)
 * [HotShot-XL](https://github.com/hotshotco/Hotshot-XL/blob/main/LICENSE)
 
+#### These third-party repository codes are also used in my project:
+
+
+
 ## Donation
 
 ### *If you liked my project and want to donate, here is options to donate. Thank you very much in advance!*
