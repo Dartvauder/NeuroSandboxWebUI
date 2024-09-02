@@ -896,7 +896,6 @@ def generate_mms_tts(text, language, output_format):
 
 def transcribe_mms_stt(audio_file, language, output_format):
     model_path = os.path.join("inputs", "text", "mms", "speech2text")
-    dataset_path = os.path.join("inputs", "text", "mms", "dataset")
 
     if not os.path.exists(model_path):
         print("Downloading MMS STT model...")
@@ -904,19 +903,11 @@ def transcribe_mms_stt(audio_file, language, output_format):
         Repo.clone_from("https://huggingface.co/facebook/mms-1b-all", model_path)
         print("MMS STT model downloaded")
 
-    if not os.path.exists(dataset_path):
-        print("Downloading Common Voice dataset...")
-        os.makedirs(dataset_path, exist_ok=True)
-        load_dataset("mozilla-foundation/common_voice_13_0", language.lower(), split="test", cache_dir=dataset_path)
-        print("Common Voice dataset downloaded")
-
     try:
         processor = AutoProcessor.from_pretrained(model_path)
         model = Wav2Vec2ForCTC.from_pretrained(model_path)
 
-        stream_data = load_dataset("mozilla-foundation/common_voice_13_0", language.lower(), split="test",
-                                   streaming=True,
-                                   cache_dir=dataset_path)
+        stream_data = load_dataset("mozilla-foundation/common_voice_17_0", language.lower(), split="test", streaming=True, trust_remote_code=True)
         stream_data = stream_data.cast_column("audio", Audio(sampling_rate=16000))
 
         audio, sr = librosa.load(audio_file, sr=16000)
@@ -952,7 +943,7 @@ def transcribe_mms_stt(audio_file, language, output_format):
         flush()
 
 
-def seamless_m4tv2_process(input_type, input_text, input_audio, src_lang, tgt_lang,
+def seamless_m4tv2_process(input_type, input_text, input_audio, src_lang, tgt_lang, dataset_lang,
                            enable_speech_generation, speaker_id, text_num_beams,
                            enable_text_do_sample, enable_speech_do_sample,
                            speech_temperature, text_temperature,
@@ -973,7 +964,7 @@ def seamless_m4tv2_process(input_type, input_text, input_audio, src_lang, tgt_la
         if input_type == "Text":
             inputs = processor(text=input_text, src_lang=get_languages()[src_lang], return_tensors="pt")
         elif input_type == "Audio" and input_audio:  # Audio
-            dataset = load_dataset(f"{src_lang.lower()}_speech_corpus", split="test", streaming=True)
+            dataset = load_dataset("mozilla-foundation/common_voice_17_0", dataset_lang, split="test", streaming=True, trust_remote_code=True)
             audio_sample = next(iter(dataset))["audio"]
             inputs = processor(audios=audio_sample["array"], return_tensors="pt")
 
@@ -2821,11 +2812,19 @@ def generate_hotshotxl(prompt, negative_prompt, steps, width, height, video_leng
         return None, "Please enter a prompt!"
 
     hotshotxl_model_path = os.path.join("inputs", "image", "sd_models", "hotshot_xl")
+    hotshotxl_base_model_path = os.path.join("inputs", "image", "sd_models", "hotshot_xl_base")
+
     if not os.path.exists(hotshotxl_model_path):
         print("Downloading HotShot-XL...")
         os.makedirs(hotshotxl_model_path, exist_ok=True)
         Repo.clone_from("https://huggingface.co/hotshotco/Hotshot-XL", hotshotxl_model_path)
         print("HotShot-XL downloaded")
+
+    if not os.path.exists(hotshotxl_base_model_path):
+        print("Downloading HotShot-XL base model...")
+        os.makedirs(hotshotxl_base_model_path, exist_ok=True)
+        Repo.clone_from("https://huggingface.co/hotshotco/SDXL-512", hotshotxl_base_model_path)
+        print("HotShot-XL base model downloaded")
 
     try:
         output_filename = f"hotshotxl_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
@@ -2835,6 +2834,7 @@ def generate_hotshotxl(prompt, negative_prompt, steps, width, height, video_leng
         command = [
             "python", "Hotshot-XL/inference.py",
             f"--pretrained_path={hotshotxl_model_path}",
+            f"--spatial_unet_base={hotshotxl_base_model_path}",
             f"--prompt={prompt}",
             f"--negative_prompt={negative_prompt}",
             f"--output={output_path}",
@@ -6170,7 +6170,7 @@ mms_stt_interface = gr.Interface(
     fn=transcribe_mms_stt,
     inputs=[
         gr.Audio(label="Upload or record audio", type="filepath"),
-        gr.Dropdown(choices=["En", "Ru", "Ko", "Hi", "Tu", "Fr", "Sp", "De", "Ar", "Po"], label="Select language", value="En"),
+        gr.Dropdown(choices=["en", "ru", "ko", "hi", "tr", "fr", "sp", "de", "ar", "pl"], label="Select language", value="En"),
         gr.Radio(choices=["txt", "json"], label="Select output format", value="txt")
     ],
     outputs=[
@@ -6195,6 +6195,7 @@ seamless_m4tv2_interface = gr.Interface(
         gr.Audio(label="Input Audio", type="filepath"),
         gr.Dropdown(choices=get_languages(), label="Source Language", value=None, interactive=True),
         gr.Dropdown(choices=get_languages(), label="Target Language", value=None, interactive=True),
+        gr.Dropdown(choices=["en", "ru", "ko", "hi", "tr", "fr", "sp", "de", "ar", "pl"], label="Dataset Language", value="En", interactive=True),
         gr.Checkbox(label="Enable Speech Generation", value=False),
         gr.Number(label="Speaker ID", value=0),
         gr.Slider(minimum=1, maximum=10, value=4, step=1, label="Text Num Beams"),
