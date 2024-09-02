@@ -14,13 +14,13 @@ The goal of the project - to create the easiest possible application to use neur
 
 ### Image: <img width="1120" alt="2" src="https://github.com/user-attachments/assets/5997fcb8-9dea-41ca-b3ed-b5699d844264">
 
-### Video: <img width="1120" alt="3" src="https://github.com/user-attachments/assets/8a5ad71d-8193-4415-9e74-6daa4ddf1d8a">
+### Video: <img width="1117" alt="3" src="https://github.com/user-attachments/assets/eba2b262-20fa-44bc-87aa-d30cf6e14d5f">
 
 ### 3D: <img width="1115" alt="4" src="https://github.com/user-attachments/assets/90cb1a5a-7714-444f-915d-9a619f0f8657">
 
-### Audio: <img width="1119" alt="5" src="https://github.com/user-attachments/assets/8d17265c-f831-4c8a-8b52-535372a59f1f">
+### Audio: <img width="1121" alt="5" src="https://github.com/user-attachments/assets/b734eba6-3ba4-48d7-be0f-0cd7685ba0a9">
 
-### Interface: <img width="1115" alt="6" src="https://github.com/user-attachments/assets/741f617f-8f28-4ff6-8781-2391e1251e4a">
+### Interface: <img width="1124" alt="6" src="https://github.com/user-attachments/assets/59460998-d7ec-4787-bbd3-fb29a11a85a1">
 
 ## Features:
 
@@ -131,7 +131,7 @@ To work with the virtual environment through the terminal, run `./Venv.sh`
 ### SeamlessM4Tv2:
 
 1) Type (or speak) your request
-2) Select source and target languages
+2) Select source, target and dataset languages
 3) Set up the model according to the parameters you need
 4) Click the `Submit` button to get the translate
 
