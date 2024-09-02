@@ -63,6 +63,7 @@ from insightface.app import FaceAnalysis
 from insightface.utils import face_align
 from ip_adapter.ip_adapter_faceid import IPAdapterFaceIDPlus
 from audio_separator.separator import Separator
+from pixeloe.pixelize import pixelize
 
 try:
     from rvc_python.infer import RVCInference
@@ -3779,11 +3780,11 @@ def generate_riffusion_audio2image(audio_path, output_format="png"):
         flush()
 
 
-def generate_image_extras(input_image, source_image, remove_background, enable_faceswap, enable_facerestore, image_output_format):
+def generate_image_extras(input_image, source_image, remove_background, enable_faceswap, enable_many_faces, reference_face, reference_frame, enable_facerestore, fidelity_weight, restore_upscale, enable_pixeloe, target_size, patch_size, image_output_format):
     if not input_image:
         return None, "Please upload an image file!"
 
-    if not remove_background and not enable_faceswap and not enable_facerestore:
+    if not remove_background and not enable_faceswap and not enable_facerestore and not enable_pixeloe:
         return None, "Please choose an option to modify the image"
 
     today = datetime.now().date()
@@ -3812,6 +3813,10 @@ def generate_image_extras(input_image, source_image, remove_background, enable_f
             faceswap_output_path = os.path.join(output_dir, f"faceswapped_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{image_output_format}")
 
             command = f"python {os.path.join(roop_model_path, 'run.py')} --target {input_image} --source {source_image} --output {faceswap_output_path}"
+            if enable_many_faces:
+                command += f" --many-faces",
+                command += f" --reference-face-position {reference_face}",
+                command += f" --reference-frame-number {reference_frame}"
             subprocess.run(command, shell=True, check=True)
 
             output_path = faceswap_output_path
@@ -3821,10 +3826,20 @@ def generate_image_extras(input_image, source_image, remove_background, enable_f
 
             facerestore_output_path = os.path.join(output_dir, f"facerestored_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{image_output_format}")
 
-            command = f"python {os.path.join(codeformer_path, 'inference_codeformer.py')} -w 0.7 --bg_upsampler realesrgan --face_upsample --input_path {input_image} --output_path {facerestore_output_path}"
+            command = f"python {os.path.join(codeformer_path, 'inference_codeformer.py')} -w {fidelity_weight} --upscale {restore_upscale} --bg_upsampler realesrgan --face_upsample --input_path {input_image} --output_path {facerestore_output_path}"
             subprocess.run(command, shell=True, check=True)
 
             output_path = facerestore_output_path
+
+        if enable_pixeloe:
+            img = cv2.imread(input_image)
+            img = pixelize(img, target_size=target_size, patch_size=patch_size)
+
+            pixeloe_output_path = os.path.join(output_dir,
+                                               f"pixeloe_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{image_output_format}")
+            cv2.imwrite(pixeloe_output_path, img)
+
+            output_path = pixeloe_output_path
 
         return output_path, None
 
@@ -7152,7 +7167,15 @@ extras_interface = gr.Interface(
         gr.Image(label="Source Image", type="filepath"),
         gr.Checkbox(label="Remove BackGround", value=False),
         gr.Checkbox(label="Enable FaceSwap", value=False),
+        gr.Checkbox(label="Enable many faces (For FaceSwap)", value=False),
+        gr.Number(label="Reference face position (For FaceSwap)"),
+        gr.Number(label="Reference frame number (For FaceSwap)"),
         gr.Checkbox(label="Enable FaceRestore", value=False),
+        gr.Slider(minimum=0.01, maximum=1, value=0.5, step=0.01, label="Fidelity weight (For FaceRestore)"),
+        gr.Slider(minimum=0.1, maximum=4, value=2, step=0.1, label="Upscale (For FaceRestore)"),
+        gr.Checkbox(label="Enable PixelOE", value=False),
+        gr.Slider(minimum=32, maximum=1024, value=256, step=32, label="Target Size (For PixelOE)"),
+        gr.Slider(minimum=1, maximum=48, value=8, step=1, label="Patch Size (For PixelOE)"),
         gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
     ],
     outputs=[
