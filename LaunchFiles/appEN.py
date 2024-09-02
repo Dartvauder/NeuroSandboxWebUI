@@ -62,14 +62,22 @@ from insightface.app import FaceAnalysis
 from insightface.utils import face_align
 from ip_adapter.ip_adapter_faceid import IPAdapterFaceIDPlus
 
-XFORMERS_AVAILABLE = False
-torch.cuda.is_available()
 try:
+    from rvc_python.infer import RVCInference
+except ValueError:
+    pass
+    print("Rvc_python is not installed. Proceeding without it")
+
+
+XFORMERS_AVAILABLE = False
+try:
+    torch.cuda.is_available()
     import xformers
     import xformers.ops
 
     XFORMERS_AVAILABLE = True
 except ImportError:
+    pass
     print("Xformers is not installed. Proceeding without it")
 
 chat_dir = None
@@ -5928,6 +5936,47 @@ def generate_audio_audioldm2(prompt, negative_prompt, model_name, num_inference_
         flush()
 
 
+def process_rvc(input_audio, model_folder, f0method, f0up_key, index_rate, filter_radius, resample_sr, rms_mix_rate, protect, output_format="wav"):
+    if not input_audio:
+        return None, "Please upload an audio file!"
+
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+
+    model_path = os.path.join("inputs", "audio", "rvc_models", model_folder)
+
+    try:
+        pth_files = [f for f in os.listdir(model_path) if f.endswith('.pth')]
+        if not pth_files:
+            return None, f"No .pth file found in the selected model folder: {model_folder}"
+
+        model_file = os.path.join(model_path, pth_files[0])
+
+        rvc = RVCInference(device=device)
+        rvc.load_model(model_file)
+        rvc.set_params(f0method=f0method, f0up_key=f0up_key, index_rate=index_rate, filter_radius=filter_radius, resample_sr=resample_sr, rms_mix_rate=rms_mix_rate, protect=protect)
+
+        today = datetime.now().date()
+        output_dir = os.path.join('outputs', f"RVC_{today.strftime('%Y%m%d')}")
+        os.makedirs(output_dir, exist_ok=True)
+
+        output_filename = f"rvc_output_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
+        output_path = os.path.join(output_dir, output_filename)
+
+        rvc.infer_file(input_audio, output_path)
+
+        rvc.unload_model()
+
+        return output_path, None
+
+    except Exception as e:
+        return None, str(e)
+
+    finally:
+        if 'rvc' in locals():
+            del rvc
+        flush()
+
+
 def demucs_separate(audio_file, output_format="wav"):
     global stop_signal
     if stop_signal:
@@ -6112,7 +6161,7 @@ def stop_all_processes():
 
 
 def reload_model_lists():
-    global llm_models_list, llm_lora_models_list, speaker_wavs_list, stable_diffusion_models_list, vae_models_list, lora_models_list, textual_inversion_models_list, inpaint_models_list
+    global llm_models_list, llm_lora_models_list, speaker_wavs_list, stable_diffusion_models_list, vae_models_list, lora_models_list, textual_inversion_models_list, inpaint_models_list, rvc_models_list
 
 
     llm_models_list = os.listdir('inputs/text/llm_models')
@@ -6123,6 +6172,7 @@ def reload_model_lists():
     lora_models_list = os.listdir('inputs/image/sd_models/lora')
     textual_inversion_models_list = os.listdir('inputs/image/sd_models/embedding')
     inpaint_models_list = os.listdir('inputs/image/sd_models/inpaint')
+    rvc_models_list = os.listdir('inputs/audio/rvc_models')
 
     print("Model lists have been reloaded.")
 
@@ -6157,6 +6207,9 @@ inpaint_models_list = [None] + [model.replace(".safetensors", "") for model in
                                 os.listdir("inputs/image/sd_models/inpaint")
                                 if model.endswith(".safetensors") or not model.endswith(".txt")]
 controlnet_models_list = [None, "openpose", "depth", "canny", "lineart", "scribble"]
+rvc_models_list = [model_folder for model_folder in os.listdir("inputs/audio/rvc_models")
+                   if os.path.isdir(os.path.join("inputs/audio/rvc_models", model_folder))
+                   and any(file.endswith('.pth') for file in os.listdir(os.path.join("inputs/audio/rvc_models", model_folder)))]
 
 chat_interface = gr.Interface(
     fn=generate_text_and_speech,
@@ -7699,6 +7752,31 @@ audioldm2_interface = gr.Interface(
     allow_flagging="never",
 )
 
+rvc_interface = gr.Interface(
+    fn=process_rvc,
+    inputs=[
+        gr.Audio(label="Input audio", type="filepath"),
+        gr.Dropdown(choices=rvc_models_list, label="Select RVC model", value=None),
+        gr.Radio(choices=['harvest', "crepe", "rmvpe", 'pm'], label="RVC Method", value="harvest", interactive=True),
+        gr.Number(label="Upkey", value=0),
+        gr.Slider(minimum=0, maximum=1, value=0.5, step=0.01, label="Index_rate"),
+        gr.Slider(minimum=0, maximum=12, value=3, step=1, label="Filter radius"),
+        gr.Slider(minimum=0, maximum=1, value=0, step=0.01, label="ResampleSr"),
+        gr.Slider(minimum=0, maximum=1, value=1, step=0.01, label="RMS Mixrate"),
+        gr.Slider(minimum=0, maximum=1, value=0.33, step=0.01, label="Protection"),
+        gr.Radio(choices=["wav", "mp3", "ogg"], label="Select output format", value="wav", interactive=True),
+    ],
+    outputs=[
+        gr.Audio(label="Processed audio", type="filepath"),
+        gr.Textbox(label="Message", type="text"),
+    ],
+    title="NeuroSandboxWebUI (ALPHA) - RVC",
+    description="This user interface allows you to process audio using RVC (Retrieval-based Voice Conversion). "
+                "Upload an audio file, select an RVC model, and choose the output format. "
+                "Try it and see what happens!",
+    allow_flagging="never",
+)
+
 demucs_interface = gr.Interface(
     fn=demucs_separate,
     inputs=[
@@ -7810,8 +7888,8 @@ with gr.TabbedInterface(
             tab_names=["StableFast3D", "Shap-E", "SV34D", "Zero123Plus"]
         ),
         gr.TabbedInterface(
-            [stableaudio_interface, audiocraft_interface, audioldm2_interface, bark_interface, demucs_interface],
-            tab_names=["StableAudioOpen", "AudioCraft", "AudioLDM 2", "SunoBark", "Demucs"]
+            [stableaudio_interface, audiocraft_interface, audioldm2_interface, bark_interface, rvc_interface, demucs_interface],
+            tab_names=["StableAudioOpen", "AudioCraft", "AudioLDM 2", "SunoBark", "RVC", "Demucs"]
         ),
         gr.TabbedInterface(
             [gallery_interface, model_downloader_interface, settings_interface, system_interface],
