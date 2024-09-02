@@ -322,3 +322,11 @@ stopit==1.1.2
 pyworld==0.3.4
 resampy==0.4.3
 torchcrepe==0.0.23
+audio-separator==0.19.1
+beartype==0.18.5
+contextlib2==21.6.0
+diffq==0.2.4
+ml_collections==0.1.1
+onnx2torch==1.5.15
+rotary-embedding-torch==0.6.5
+samplerate==0.1.0

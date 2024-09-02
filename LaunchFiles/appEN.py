@@ -61,6 +61,7 @@ from pynvml import nvmlInit, nvmlDeviceGetHandleByIndex, nvmlDeviceGetTemperatur
 from insightface.app import FaceAnalysis
 from insightface.utils import face_align
 from ip_adapter.ip_adapter_faceid import IPAdapterFaceIDPlus
+from audio_separator.separator import Separator
 
 try:
     from rvc_python.infer import RVCInference
@@ -5977,6 +5978,27 @@ def process_rvc(input_audio, model_folder, f0method, f0up_key, index_rate, filte
         flush()
 
 
+def separate_audio_uvr(audio_file, output_format, normalization_threshold, sample_rate):
+
+    try:
+        separator = Separator(output_format=output_format, normalization_threshold=normalization_threshold,
+                              sample_rate=sample_rate)
+        separator.load_model(model_filename='UVR-MDX-NET-Inst_HQ_3.onnx')
+
+        output_files = separator.separate(audio_file)
+
+        if len(output_files) != 2:
+            return None, None, f"Unexpected number of output files: {len(output_files)}"
+
+        return output_files[0], output_files[1], f"Separation complete! Output files: {' '.join(output_files)}"
+    except Exception as e:
+        return None, None, f"An error occurred: {str(e)}"
+
+    finally:
+        del separator
+        flush()
+
+
 def demucs_separate(audio_file, output_format="wav"):
     global stop_signal
     if stop_signal:
@@ -7777,6 +7799,25 @@ rvc_interface = gr.Interface(
     allow_flagging="never",
 )
 
+uvr_interface = gr.Interface(
+    fn=separate_audio_uvr,
+    inputs=[
+        gr.Audio(type="filepath", label="Audio file to separate"),
+        gr.Radio(choices=["wav", "mp3", "ogg"], label="Select output format", value="wav", interactive=True),
+        gr.Slider(minimum=0.1, maximum=1.0, value=0.5, step=0.1, label="Normalization Threshold"),
+        gr.Slider(minimum=16000, maximum=44100, value=44100, step=100, label="Sample Rate"),
+    ],
+    outputs=[
+        gr.Audio(label="Vocals", type="filepath"),
+        gr.Audio(label="Instrumental", type="filepath"),
+        gr.Textbox(label="Message", type="text"),
+    ],
+    title="NeuroSandboxWebUI (ALPHA) - UVR",
+    description="This user interface allows you to upload an audio file and separate it into vocals and instrumental using Ultimate Vocal Remover (UVR). "
+                "Try it and see what happens!",
+    allow_flagging="never",
+)
+
 demucs_interface = gr.Interface(
     fn=demucs_separate,
     inputs=[
@@ -7888,8 +7929,8 @@ with gr.TabbedInterface(
             tab_names=["StableFast3D", "Shap-E", "SV34D", "Zero123Plus"]
         ),
         gr.TabbedInterface(
-            [stableaudio_interface, audiocraft_interface, audioldm2_interface, bark_interface, rvc_interface, demucs_interface],
-            tab_names=["StableAudioOpen", "AudioCraft", "AudioLDM 2", "SunoBark", "RVC", "Demucs"]
+            [stableaudio_interface, audiocraft_interface, audioldm2_interface, bark_interface, rvc_interface, uvr_interface, demucs_interface],
+            tab_names=["StableAudioOpen", "AudioCraft", "AudioLDM 2", "SunoBark", "RVC", "UVR", "Demucs"]
         ),
         gr.TabbedInterface(
             [gallery_interface, model_downloader_interface, settings_interface, system_interface],
