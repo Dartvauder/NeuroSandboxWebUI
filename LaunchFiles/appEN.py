@@ -3734,7 +3734,7 @@ def generate_riffusion_image2audio(image_path, output_format="wav"):
         audio_filename = f"riffusion_audio_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
         audio_path = os.path.join(audio_dir, audio_filename)
 
-        command = f"python -m riffusion.cli image-to-audio --image {image_path} --audio {audio_path}"
+        command = f"python -m riffusion.cli image-to-audio {image_path} {audio_path}"
         subprocess.run(command, shell=True, check=True)
 
         return audio_path, None
@@ -3757,7 +3757,7 @@ def generate_riffusion_audio2image(audio_path, output_format="png"):
         image_filename = f"riffusion_image_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
         image_path = os.path.join(image_dir, image_filename)
 
-        command = f"python -m riffusion.cli audio-to-image --audio {audio_path} --image {image_path}"
+        command = f"python -m riffusion.cli audio-to-image {audio_path} {image_path}"
         subprocess.run(command, shell=True, check=True)
 
         return image_path, None
