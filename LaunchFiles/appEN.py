@@ -3780,22 +3780,21 @@ def generate_riffusion_audio2image(audio_path, output_format="png"):
         flush()
 
 
-def generate_image_extras(input_image, source_image, remove_background, enable_faceswap, enable_many_faces, reference_face, reference_frame, enable_facerestore, fidelity_weight, restore_upscale, enable_pixeloe, target_size, patch_size, image_output_format):
+def generate_image_extras(input_image, source_image, remove_background, enable_faceswap, enable_many_faces, reference_face, reference_frame, enable_facerestore, fidelity_weight, restore_upscale, enable_pixeloe, target_size, patch_size, enable_ddcolor, ddcolor_input_size, image_output_format):
     if not input_image:
         return None, "Please upload an image file!"
 
-    if not remove_background and not enable_faceswap and not enable_facerestore and not enable_pixeloe:
+    if not remove_background and not enable_faceswap and not enable_facerestore and not enable_pixeloe and not enable_ddcolor:
         return None, "Please choose an option to modify the image"
 
     today = datetime.now().date()
     output_dir = os.path.join('outputs', f"Extras_{today.strftime('%Y%m%d')}")
     os.makedirs(output_dir, exist_ok=True)
 
-    output_filename = f"background_removed_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{image_output_format}"
-    output_path = os.path.join(output_dir, output_filename)
-
     try:
         if remove_background:
+            output_filename = f"background_removed_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{image_output_format}"
+            output_path = os.path.join(output_dir, output_filename)
             remove_bg(input_image, output_path)
 
         if enable_faceswap:
@@ -3840,6 +3839,17 @@ def generate_image_extras(input_image, source_image, remove_background, enable_f
             cv2.imwrite(pixeloe_output_path, img)
 
             output_path = pixeloe_output_path
+
+        if enable_ddcolor:
+
+            ddcolor_output_path = os.path.join(output_dir,
+                                               f"ddcolor_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{image_output_format}")
+
+            command = f"python DDColor/colorization_pipeline_hf.py --model_name ddcolor_modelscope --input {input_image} --output {ddcolor_output_path} --input_size {ddcolor_input_size}"
+
+            subprocess.run(command, shell=True, check=True)
+
+            output_path = ddcolor_output_path
 
         return output_path, None
 
@@ -7176,6 +7186,8 @@ extras_interface = gr.Interface(
         gr.Checkbox(label="Enable PixelOE", value=False),
         gr.Slider(minimum=32, maximum=1024, value=256, step=32, label="Target Size (For PixelOE)"),
         gr.Slider(minimum=1, maximum=48, value=8, step=1, label="Patch Size (For PixelOE)"),
+        gr.Checkbox(label="Enable DDColor", value=False),
+        gr.Slider(minimum=256, maximum=1024, value=512, step=64, label="Input Size (For DDColor)"),
         gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
     ],
     outputs=[
