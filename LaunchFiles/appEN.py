@@ -6018,6 +6018,7 @@ def separate_audio_uvr(audio_file, output_format, normalization_threshold, sampl
             return None, None, f"Unexpected number of output files: {len(output_files)}"
 
         return output_files[0], output_files[1], f"Separation complete! Output files: {' '.join(output_files)}"
+
     except Exception as e:
         return None, None, f"An error occurred: {str(e)}"
 
