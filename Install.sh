@@ -8,7 +8,7 @@ source "$CURRENT_DIR/venv/bin/activate"
 clear
 
 echo "Upgrading pip, setuptools and wheel..."
-python3 -m pip install --upgrade pip
+python3 -m pip install --upgrade pip==24.0
 pip install wheel setuptools
 sleep 3
 clear
