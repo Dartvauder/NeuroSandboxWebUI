@@ -8,7 +8,7 @@ call "%CURRENT_DIR%venv\Scripts\activate.bat"
 cls
 
 echo Upgrading pip, setuptools and wheel...
-python -m pip install --upgrade pip
+python -m pip install --upgrade pip==24.0
 pip install wheel setuptools
 timeout /t 3 /nobreak >nul
 cls
