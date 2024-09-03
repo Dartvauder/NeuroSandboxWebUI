@@ -64,12 +64,7 @@ from insightface.utils import face_align
 from ip_adapter.ip_adapter_faceid import IPAdapterFaceIDPlus
 from audio_separator.separator import Separator
 from pixeloe.pixelize import pixelize
-
-try:
-    from rvc_python.infer import RVCInference
-except ValueError:
-    pass
-    print("Rvc_python is not installed. Proceeding without it")
+from rvc_python.infer import RVCInference
 
 
 XFORMERS_AVAILABLE = False

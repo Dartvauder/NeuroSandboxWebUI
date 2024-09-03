@@ -14,7 +14,7 @@ if not exist "%CURRENT_DIR%logs" mkdir "%CURRENT_DIR%logs"
 set ERROR_LOG="%CURRENT_DIR%logs\update_errors.log"
 type nul > %ERROR_LOG%
 
-python -m pip install --upgrade pip==24.0
+python -m pip install --upgrade pip
 pip install wheel setuptools
 pip install --no-deps -r "%CURRENT_DIR%RequirementsFiles\requirements.txt" 2>> %ERROR_LOG%
 pip install --no-deps -r "%CURRENT_DIR%RequirementsFiles\requirements-cuda.txt" 2>> %ERROR_LOG%
