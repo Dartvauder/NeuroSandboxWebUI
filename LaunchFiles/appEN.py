@@ -2,9 +2,11 @@ import sys
 import os
 import warnings
 import platform
+import logging
 os.chdir(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
 warnings.filterwarnings("ignore")
+logging.getLogger("httpx").setLevel(logging.WARNING)
 cache_dir = os.path.join("cache")
 os.makedirs(cache_dir, exist_ok=True)
 os.environ["XDG_CACHE_HOME"] = cache_dir
