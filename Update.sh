@@ -13,7 +13,7 @@ mkdir -p "$CURRENT_DIR/logs"
 ERROR_LOG="$CURRENT_DIR/logs/update_errors.log"
 touch "$ERROR_LOG"
 
-python3 -m pip install --upgrade pip==24.0
+python3 -m pip install --upgrade pip
 pip install wheel setuptools
 pip install --no-deps -r "$CURRENT_DIR/RequirementsFiles/requirements.txt" 2>> "$ERROR_LOG"
 pip install --no-deps -r "$CURRENT_DIR/RequirementsFiles/requirements-cuda.txt" 2>> "$ERROR_LOG"
