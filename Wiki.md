@@ -212,9 +212,20 @@
 2) Select the options you need
 3) Click the `Submit` button to get the modified image
 
-#### riffusion (text-to-image, image-to-Audio, audio-to-image):
+#### riffusion (text-to-image, image-to-audio, audio-to-image):
 
-1)
+- text-to-image:
+  - 1) Enter your request
+    2) Set up the model according to the parameters you need
+    3) Click the `Submit` button to get the generated image
+- image-to-audio:
+  - 1) Upload the initial image
+    2) Select the options you need
+    3) Click the `Submit` button to get the audio from image
+- audio-to-image:
+  - 1) Upload the initial audio
+    2) Select the options you need
+    3) Click the `Submit` button to get the image from audio
 
 #### extras:
 
@@ -358,7 +369,11 @@
 
 ### RVC:
 
-1)
+1) First upload your models to the folder: *inputs/audio/rvc_models*
+2) Upload the initial audio
+3) Select your model from the drop-down list
+4) Set up the model according to the parameters you need
+5) Click the `Submit` button to receive the generated voice cloning
 
 ### UVR:
 
