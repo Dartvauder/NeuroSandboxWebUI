@@ -880,7 +880,7 @@ def generate_mms_tts(text, language, output_format):
 
         output_dir = os.path.join("outputs", "MMS_TTS")
         os.makedirs(output_dir, exist_ok=True)
-        output_file = os.path.join(output_dir, f"synthesized_speech_{language}.{output_format}")
+        output_file = os.path.join(output_dir, f"synthesized_speech_{language}{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}")
 
         if output_format == "wav":
             scipy.io.wavfile.write(output_file, rate=model.config.sampling_rate, data=waveform.numpy())
@@ -930,7 +930,7 @@ def transcribe_mms_stt(audio_file, language, output_format):
 
         output_dir = os.path.join("outputs", "MMS_STT")
         os.makedirs(output_dir, exist_ok=True)
-        output_file = os.path.join(output_dir, f"transcription_{language}.{output_format}")
+        output_file = os.path.join(output_dir, f"transcription_{language}{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}")
 
         if output_format == "txt":
             with open(output_file, "w", encoding="utf-8") as f:
@@ -941,7 +941,7 @@ def transcribe_mms_stt(audio_file, language, output_format):
         else:
             return None, f"Unsupported output format: {output_format}"
 
-        return output_file, None
+        return transcription, None
 
     except Exception as e:
         return None, str(e)
@@ -1043,6 +1043,9 @@ def seamless_m4tv2_process(input_type, input_text, input_audio, src_lang, tgt_la
             text_output = None
 
         return text_output, audio_path, None
+
+    except Exception as e:
+        return None, None, str(e)
 
     finally:
         del model
