@@ -331,3 +331,7 @@ onnx2torch==1.5.15
 rotary-embedding-torch==0.6.5
 samplerate==0.1.0
 pixeloe==0.0.10
+pyarrow==17.0.0
+dill==0.3.8
+multiprocess==0.70.16
+xxhash==3.5.0
