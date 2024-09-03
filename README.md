@@ -6,7 +6,7 @@
 
 ## Description:
 
-A simple and convenient interface for using various neural network models. You can communicate with LLM and Moondream2 using text, voice and image input; use StableDiffusion, Kandinsky, Flux, HunyuanDiT, Lumina-T2X, Kolors, AuraFlow, Würstchen, DeepFloydIF, PixArt and PlaygroundV2.5, to generate images; ModelScope, ZeroScope 2, CogVideoX and Latte to generate videos; StableFast3D, Shap-E, SV34D and Zero123Plus to generate 3D objects; StableAudioOpen, AudioCraft and AudioLDM 2 to generate music and audio; CoquiTTS, MMS and SunoBark for text-to-speech; OpenAI-Whisper and MMS for speech-to-text; Wav2Lip for lip-sync; Roop to faceswap; Rembg to remove background; CodeFormer for face restore; LibreTranslate and SeamlessM4Tv2 for text translation; Demucs and UVR for audio file separation; RVC for voice conversion. You can also view files from the outputs directory in gallery, download the LLM and StableDiffusion models, change the application settings inside the interface and check system sensors
+A simple and convenient interface for using various neural network models. You can communicate with LLM and Moondream2 using text, voice and image input; use StableDiffusion, Kandinsky, Flux, HunyuanDiT, Lumina-T2X, Kolors, AuraFlow, Würstchen, DeepFloydIF, PixArt and PlaygroundV2.5, to generate images; ModelScope, ZeroScope 2, CogVideoX and Latte to generate videos; StableFast3D, Shap-E, SV34D and Zero123Plus to generate 3D objects; StableAudioOpen, AudioCraft and AudioLDM 2 to generate music and audio; CoquiTTS, MMS and SunoBark for text-to-speech; OpenAI-Whisper and MMS for speech-to-text; Wav2Lip for lip-sync; Roop to faceswap; Rembg to remove background; CodeFormer for face restore; PixelOE for image pixelization; DDColor for image colorization; LibreTranslate and SeamlessM4Tv2 for text translation; Demucs and UVR for audio file separation; RVC for voice conversion. You can also view files from the outputs directory in gallery, download the LLM and StableDiffusion models, change the application settings inside the interface and check system sensors
 
 The goal of the project - to create the easiest possible application to use neural network models
 
@@ -38,7 +38,7 @@ The goal of the project - to create the easiest possible application to use neur
 * AudioLDM 2 support (Models: audio and music)
 * Supports TTS and Whisper models (For LLM and TTS-STT)
 * Support MMS for text-to-speech and speech-to-text
-* Supports Lora, Textual inversion (embedding), Vae, Img2img, Depth, Pix2Pix, Controlnet, Upscalers (latent and Real-ESRGAN), Refiner, Inpaint, Outpaint, GLIGEN, AnimateDiff, HotShot-XL, Videos, LDM3D, SD3, Cascade, T2I-IP-ADAPTER, IP-Adapter-FaceID, Riffusion, Rembg, CodeFormer and Roop models (For StableDiffusion)
+* Supports Lora, Textual inversion (embedding), Vae, Img2img, Depth, Pix2Pix, Controlnet, Upscalers (latent and Real-ESRGAN), Refiner, Inpaint, Outpaint, GLIGEN, AnimateDiff, HotShot-XL, Videos, LDM3D, SD3, Cascade, T2I-IP-ADAPTER, IP-Adapter-FaceID, Riffusion, Rembg, CodeFormer, Roop, PixelOE and DDColor models (For StableDiffusion)
 * Support Multiband Diffusion model (For AudioCraft)
 * Support LibreTranslate (Local API) and SeamlessM4Tv2 for language translations
 * Support ModelScope, ZeroScope 2, CogVideoX and Latte for video generation
@@ -49,6 +49,7 @@ The goal of the project - to create the easiest possible application to use neur
 * Support Wav2Lip
 * Support Multimodal (Moondream 2), LORA and WebSearch (with DuckDuckGo) for LLM
 * Model settings inside the interface
+* Online and offline Wiki
 * Gallery
 * ModelDownloader (For LLM and StableDiffusion)
 * Application settings
@@ -67,7 +68,7 @@ The goal of the project - to create the easiest possible application to use neur
 ## Minimum System Requirements:
 
 * System: Windows or Linux
-* GPU: 6GB+ or CPU: 8 core 3.2GHZ
+* GPU: 6GB+ or CPU: 8 core 3.6GHZ
 * RAM: 16GB+
 * Disk space: 20GB+
 * Internet for downloading models and installing
@@ -308,7 +309,7 @@ To work with the virtual environment through the terminal, run `./Venv.sh`
 2) Select the options you need
 3) Click the `Submit` button to get the modified image
 
-#### riffusion:
+#### riffusion (text-to-image, image-to-Audio, audio-to-image):
 
 1)
 
@@ -458,12 +459,17 @@ To work with the virtual environment through the terminal, run `./Venv.sh`
 
 ### UVR:
 
-1)
+1) Upload the initial audio to separate
+2) Click the `Submit` button to get the separated audio
 
 ### Demucs:
 
 1) Upload the initial audio to separate
 2) Click the `Submit` button to get the separated audio
+
+### Wiki:
+
+* Here you can view online or offline wiki of project
 
 ### Gallery:
 
@@ -497,7 +503,7 @@ To work with the virtual environment through the terminal, run `./Venv.sh`
 * LLM models can be taken from [HuggingFace](https://huggingface.co/models) or from ModelDownloader inside interface 
 * StableDiffusion, vae, inpaint, embedding and lora models can be taken from [CivitAI](https://civitai.com/models) or from ModelDownloader inside interface
 * RVC models can be taken from [VoiceModels](https://voice-models.com)
-* StableAudioOpen, AudioCraft, AudioLDM 2, TTS, Whisper, MMS, SeamlessM4Tv2, Wav2Lip, SunoBark, MoonDream2, Upscalers (Latent and Real-ESRGAN), Refiner, GLIGEN, Depth, Pix2Pix, Controlnet, AnimateDiff, HotShot-XL, Videos, LDM3D, SD3, Cascade, T2I-IP-ADAPTER, IP-Adapter-FaceID, Riffusion, Rembg, Roop, CodeFormer, Real-ESRGAN, StableFast3D, Shap-E, SV34D, Zero123Plus, UVR, Demucs, Kandinsky, Flux, HunyuanDiT, Lumina-T2X, Kolors, AuraFlow, AuraSR, Würstchen, DeepFloydIF, PixArt, PlaygroundV2.5, ModelScope, ZeroScope 2, CogVideoX, Latte and Multiband diffusion models are downloads automatically in *inputs* folder when are they used 
+* StableAudioOpen, AudioCraft, AudioLDM 2, TTS, Whisper, MMS, SeamlessM4Tv2, Wav2Lip, SunoBark, MoonDream2, Upscalers (Latent and Real-ESRGAN), Refiner, GLIGEN, Depth, Pix2Pix, Controlnet, AnimateDiff, HotShot-XL, Videos, LDM3D, SD3, Cascade, T2I-IP-ADAPTER, IP-Adapter-FaceID, Riffusion, Rembg, Roop, CodeFormer, DDColor, PixelOE, Real-ESRGAN, StableFast3D, Shap-E, SV34D, Zero123Plus, UVR, Demucs, Kandinsky, Flux, HunyuanDiT, Lumina-T2X, Kolors, AuraFlow, AuraSR, Würstchen, DeepFloydIF, PixArt, PlaygroundV2.5, ModelScope, ZeroScope 2, CogVideoX, Latte and Multiband diffusion models are downloads automatically in *inputs* folder when are they used 
 * You can take voices anywhere. Record yours or take a recording from the Internet. Or just use those that are already in the project. The main thing is that it is pre-processed!
 
 ## Wiki
@@ -534,6 +540,7 @@ First of all, I want to thank the developers of [PyCharm](https://www.jetbrains.
 * `CLIP` - https://github.com/openai/CLIP
 * `rvc-python` - https://github.com/daswer123/rvc-python
 * `audio-separator` - https://github.com/nomadkaraoke/python-audio-separator
+* `pixeloe` - https://github.com/KohakuBlueleaf/PixelOE
 
 ## Third Party Licenses:
 
@@ -598,6 +605,8 @@ First of all, I want to thank the developers of [PyCharm](https://www.jetbrains.
 * [MozillaCommonVoice17](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/cc0-1.0.md)
 * [UVR-MDX](https://github.com/kuielab/mdx-net/blob/main/LICENSE)
 * [RVC](https://github.com/RVC-Project/Retrieval-based-Voice-Conversion-WebUI/blob/main/LICENSE)
+* [DDColor](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/apache-2.0.md)
+* [PixelOE](https://github.com/KohakuBlueleaf/PixelOE/blob/main/LICENSE)
 
 #### These third-party repository codes are also used in my project:
 
@@ -608,6 +617,7 @@ First of all, I want to thank the developers of [PyCharm](https://www.jetbrains.
 * [Roop for extras](https://github.com/s0md3v/roop)
 * [StableFast3D for 3D](https://github.com/Stability-AI/stable-fast-3d)
 * [Riffusion for StableDiffusion](https://github.com/riffusion/riffusion-hobby)
+* [DDColor for extras](https://github.com/piddnad/DDColor)
 
 ## Donation
 
