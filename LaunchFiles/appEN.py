@@ -2043,12 +2043,9 @@ def generate_image_upscale_latent(prompt, image_path, upscale_factor, num_infere
         flush()
 
 
-def generate_image_upscale_realesrgan(image_path, model_name, outscale, face_enhance, tile, tile_pad, pre_pad, output_format="png", stop_generation=None):
+def generate_image_upscale_realesrgan(input_image, input_video, model_name, outscale, face_enhance, tile, tile_pad, pre_pad, denoise_strength, output_format="png", stop_generation=None):
     global stop_signal
     stop_signal = False
-
-    if not image_path:
-        return None, "Please upload an image file!"
 
     realesrgan_path = os.path.join("inputs", "image", "Real-ESRGAN")
 
@@ -2057,10 +2054,55 @@ def generate_image_upscale_realesrgan(image_path, model_name, outscale, face_enh
     os.makedirs(output_dir, exist_ok=True)
 
     try:
-        input_filename = os.path.basename(image_path)
+        if input_image:
+            input_file = input_image
+            is_video = False
+        else:
+            input_file = input_video
+            is_video = True
+
+        input_filename = os.path.basename(input_file)
         input_name, input_ext = os.path.splitext(input_filename)
 
-        command = f"python {os.path.join(realesrgan_path, 'inference_realesrgan.py')} --model_name {model_name} --input {image_path} --output {output_dir} --outscale {outscale} --tile {tile} --tile_pad {tile_pad} --pre_pad {pre_pad}"
+        if is_video:
+            cap = cv2.VideoCapture(input_file)
+            fps = cap.get(cv2.CAP_PROP_FPS)
+            width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+            height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+
+            output_filename = f"{input_name}_out.mp4"
+            output_path = os.path.join(output_dir, output_filename)
+
+            fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+            out = cv2.VideoWriter(output_path, fourcc, fps, (width * outscale, height * outscale))
+
+            while True:
+                ret, frame = cap.read()
+                if not ret:
+                    break
+
+                frame_path = os.path.join(output_dir, "temp_frame.png")
+                cv2.imwrite(frame_path, frame)
+
+                command = f"python {os.path.join(realesrgan_path, 'inference_realesrgan.py')} -i {frame_path} -o {output_dir} -n {model_name} -s {outscale} --tile {tile} --tile_pad {tile_pad} --pre_pad {pre_pad} --denoise_strength {denoise_strength}"
+                if face_enhance:
+                    command += " --face_enhance"
+
+                subprocess.run(command, shell=True, check=True)
+
+                upscaled_frame = cv2.imread(os.path.join(output_dir, "temp_frame_out.png"))
+                out.write(upscaled_frame)
+
+                os.remove(frame_path)
+                os.remove(os.path.join(output_dir, "temp_frame_out.png"))
+
+                if stop_signal:
+                    break
+
+            cap.release()
+            out.release()
+        else:
+            command = f"python {os.path.join(realesrgan_path, 'inference_realesrgan.py')} -i {input_file} -o {output_dir} -n {model_name} -s {outscale} --tile {tile} --tile_pad {tile_pad} --pre_pad {pre_pad} --denoise_strength {denoise_strength}"
 
         if face_enhance:
             command += " --face_enhance"
@@ -2068,24 +2110,27 @@ def generate_image_upscale_realesrgan(image_path, model_name, outscale, face_enh
         subprocess.run(command, shell=True, check=True)
 
         if stop_signal:
-            return None, "Generation stopped"
+            return None, None, "Generation stopped"
 
         expected_output_filename = f"{input_name}_out{input_ext}"
         output_path = os.path.join(output_dir, expected_output_filename)
 
         if os.path.exists(output_path):
-            if output_format.lower() != input_ext[1:].lower():
+            if not is_video and output_format.lower() != input_ext[1:].lower():
                 new_output_filename = f"{input_name}_out.{output_format}"
                 new_output_path = os.path.join(output_dir, new_output_filename)
                 Image.open(output_path).save(new_output_path)
                 output_path = new_output_path
 
-            return output_path, None
+            if is_video:
+                return None, output_path, None
+            else:
+                return output_path, None, None
         else:
-            return None, "Output file not found"
+            return None, None, "Output file not found"
 
     except Exception as e:
-        return None, str(e)
+        return None, None, str(e)
 
     finally:
         flush()
@@ -6665,17 +6710,20 @@ realesrgan_upscale_interface = gr.Interface(
     fn=generate_image_upscale_realesrgan,
     inputs=[
         gr.Image(label="Image to upscale", type="filepath"),
+        gr.Video(label="Input video"),
         gr.Radio(choices=["RealESRGAN_x2plus", "RealESRNet_x4plus", "RealESRGAN_x4plus", "realesr-general-x4v3", "RealESRGAN_x4plus_anime_6B"], label="Select model", value="RealESRGAN_x4plus"),
         gr.Slider(minimum=0.1, maximum=4, value=2, step=0.1, label="Upscale factor"),
         gr.Checkbox(label="Enable Face Enhance", value=False),
         gr.Slider(minimum=0, maximum=10, value=0, step=1, label="Tile"),
-        gr.Slider(minimum=0, maximum=100, value=10, step=1, label="Tile_pad"),
-        gr.Slider(minimum=0, maximum=50, value=0, step=1, label="Pre_pad"),
+        gr.Slider(minimum=0, maximum=100, value=10, step=1, label="Tile pad"),
+        gr.Slider(minimum=0, maximum=50, value=0, step=1, label="Pre pad"),
+        gr.Slider(minimum=0.01, maximum=1, value=0.5, step=0.01, label="Denoise strength"),
         gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
         gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
     outputs=[
         gr.Image(type="filepath", label="Upscaled image"),
+        gr.Video(label="Upscaled video"),
         gr.Textbox(label="Message", type="text"),
     ],
     title="NeuroSandboxWebUI (ALPHA) - StableDiffusion (upscale-realesrgan)",
