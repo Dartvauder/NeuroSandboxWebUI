@@ -10,7 +10,8 @@ os.makedirs(cache_dir, exist_ok=True)
 os.environ["XDG_CACHE_HOME"] = cache_dir
 import gradio as gr
 import langdetect
-from transformers import AutoModelForCausalLM, AutoTokenizer, AutoProcessor, BarkModel, pipeline, T5EncoderModel, BitsAndBytesConfig, DPTForDepthEstimation, DPTFeatureExtractor, CLIPVisionModelWithProjection
+from transformers import AutoModelForCausalLM, AutoTokenizer, AutoProcessor, BarkModel, pipeline, T5EncoderModel, BitsAndBytesConfig, DPTForDepthEstimation, DPTFeatureExtractor, CLIPVisionModelWithProjection, SeamlessM4Tv2Model, SeamlessM4Tv2ForSpeechToSpeech, SeamlessM4Tv2ForTextToText, SeamlessM4Tv2ForSpeechToText, SeamlessM4Tv2ForTextToSpeech, VitsTokenizer, VitsModel, Wav2Vec2ForCTC
+from datasets import load_dataset, Audio
 from peft import PeftModel
 from libretranslatepy import LibreTranslateAPI
 import urllib.error
@@ -48,6 +49,7 @@ from tqdm import tqdm
 from llama_cpp import Llama
 from llama_cpp.llama_chat_format import MoondreamChatHandler
 import requests
+import markdown
 import urllib.parse
 from rembg import remove
 import torchaudio
@@ -60,15 +62,25 @@ from pynvml import nvmlInit, nvmlDeviceGetHandleByIndex, nvmlDeviceGetTemperatur
 from insightface.app import FaceAnalysis
 from insightface.utils import face_align
 from ip_adapter.ip_adapter_faceid import IPAdapterFaceIDPlus
+from audio_separator.separator import Separator
+from pixeloe.pixelize import pixelize
+
+try:
+    from rvc_python.infer import RVCInference
+except ValueError:
+    pass
+    print("Rvc_python is not installed. Proceeding without it")
+
 
 XFORMERS_AVAILABLE = False
-torch.cuda.is_available()
 try:
+    torch.cuda.is_available()
     import xformers
     import xformers.ops
 
     XFORMERS_AVAILABLE = True
 except ImportError:
+    pass
     print("Xformers is not installed. Proceeding without it")
 
 chat_dir = None
@@ -111,6 +123,15 @@ except Exception as e:
 def flush():
     gc.collect()
     torch.cuda.empty_cache()
+
+
+def get_languages():
+    return {
+        "Arabic": "ara", "Chinese": "cmn", "English": "eng", "French": "fra",
+        "German": "deu", "Hindi": "hin", "Italian": "ita", "Japanese": "jpn",
+        "Korean": "kor", "Polish": "pol", "Portuguese": "por", "Russian": "rus",
+        "Spanish": "spa", "Turkish": "tur",
+    }
 
 
 def authenticate(username, password):
@@ -827,6 +848,211 @@ def generate_tts_stt(text, audio, tts_settings_html, speaker_wav, language, tts_
                     json.dump(stt_history, f, ensure_ascii=False, indent=4)
 
     return tts_output, stt_output
+
+
+def generate_mms_tts(text, language, output_format):
+    model_names = {
+        "English": "facebook/mms-tts-eng",
+        "Russian": "facebook/mms-tts-rus",
+        "Korean": "facebook/mms-tts-kor",
+        "Hindu": "facebook/mms-tts-hin",
+        "Turkish": "facebook/mms-tts-tur",
+        "French": "facebook/mms-tts-fra",
+        "Spanish": "facebook/mms-tts-spa",
+        "German": "facebook/mms-tts-deu",
+        "Arabic": "facebook/mms-tts-ara",
+        "Polish": "facebook/mms-tts-pol"
+    }
+
+    model_path = os.path.join("inputs", "text", "mms", "text2speech", language)
+
+    if not os.path.exists(model_path):
+        print(f"Downloading MMS TTS model for {language}...")
+        os.makedirs(model_path, exist_ok=True)
+        Repo.clone_from(f"https://huggingface.co/{model_names[language]}", model_path)
+        print(f"MMS TTS model for {language} downloaded")
+
+    try:
+        tokenizer = VitsTokenizer.from_pretrained(model_path)
+        model = VitsModel.from_pretrained(model_path)
+
+        inputs = tokenizer(text=text, return_tensors="pt")
+        with torch.no_grad():
+            outputs = model(**inputs)
+        waveform = outputs.waveform[0]
+
+        output_dir = os.path.join("outputs", "MMS_TTS")
+        os.makedirs(output_dir, exist_ok=True)
+        output_file = os.path.join(output_dir, f"synthesized_speech_{language}.{output_format}")
+
+        if output_format == "wav":
+            scipy.io.wavfile.write(output_file, rate=model.config.sampling_rate, data=waveform.numpy())
+        elif output_format == "mp3":
+            sf.write(output_file, waveform.numpy(), model.config.sampling_rate, format='mp3')
+        elif output_format == "ogg":
+            sf.write(output_file, waveform.numpy(), model.config.sampling_rate, format='ogg')
+        else:
+            return None, f"Unsupported output format: {output_format}"
+
+        return output_file, None
+
+    except Exception as e:
+        return None, str(e)
+
+    finally:
+        del model
+        del tokenizer
+        flush()
+
+
+def transcribe_mms_stt(audio_file, language, output_format):
+    model_path = os.path.join("inputs", "text", "mms", "speech2text")
+
+    if not os.path.exists(model_path):
+        print("Downloading MMS STT model...")
+        os.makedirs(model_path, exist_ok=True)
+        Repo.clone_from("https://huggingface.co/facebook/mms-1b-all", model_path)
+        print("MMS STT model downloaded")
+
+    try:
+        processor = AutoProcessor.from_pretrained(model_path)
+        model = Wav2Vec2ForCTC.from_pretrained(model_path)
+
+        stream_data = load_dataset("mozilla-foundation/common_voice_17_0", language.lower(), split="test", streaming=True, trust_remote_code=True)
+        stream_data = stream_data.cast_column("audio", Audio(sampling_rate=16000))
+
+        audio, sr = librosa.load(audio_file, sr=16000)
+        inputs = processor(audio, sampling_rate=16000, return_tensors="pt")
+
+        with torch.no_grad():
+            outputs = model(**inputs).logits
+
+        ids = torch.argmax(outputs, dim=-1)[0]
+        transcription = processor.decode(ids)
+
+        output_dir = os.path.join("outputs", "MMS_STT")
+        os.makedirs(output_dir, exist_ok=True)
+        output_file = os.path.join(output_dir, f"transcription_{language}.{output_format}")
+
+        if output_format == "txt":
+            with open(output_file, "w", encoding="utf-8") as f:
+                f.write(transcription)
+        elif output_format == "json":
+            with open(output_file, "w", encoding="utf-8") as f:
+                json.dump({"transcription": transcription}, f, ensure_ascii=False, indent=4)
+        else:
+            return None, f"Unsupported output format: {output_format}"
+
+        return output_file, None
+
+    except Exception as e:
+        return None, str(e)
+
+    finally:
+        del model
+        del processor
+        flush()
+
+
+def seamless_m4tv2_process(input_type, input_text, input_audio, src_lang, tgt_lang, dataset_lang,
+                           enable_speech_generation, speaker_id, text_num_beams,
+                           enable_text_do_sample, enable_speech_do_sample,
+                           speech_temperature, text_temperature,
+                           enable_both_generation, task_type,
+                           text_output_format, audio_output_format):
+
+    MODEL_PATH = os.path.join("inputs", "text", "seamless-m4t-v2")
+
+    if not os.path.exists(MODEL_PATH):
+        print("Downloading SeamlessM4Tv2 model...")
+        os.makedirs(MODEL_PATH, exist_ok=True)
+        Repo.clone_from("https://huggingface.co/facebook/seamless-m4t-v2-large", MODEL_PATH)
+        print("SeamlessM4Tv2 model downloaded")
+
+    try:
+        processor = AutoProcessor.from_pretrained(MODEL_PATH)
+
+        if input_type == "Text":
+            inputs = processor(text=input_text, src_lang=get_languages()[src_lang], return_tensors="pt")
+        elif input_type == "Audio" and input_audio:  # Audio
+            dataset = load_dataset("mozilla-foundation/common_voice_17_0", dataset_lang, split="test", streaming=True, trust_remote_code=True)
+            audio_sample = next(iter(dataset))["audio"]
+            inputs = processor(audios=audio_sample["array"], return_tensors="pt")
+
+        generate_kwargs = {
+            "tgt_lang": get_languages()[tgt_lang],
+            "generate_speech": enable_speech_generation,
+            "speaker_id": speaker_id,
+            "return_intermediate_token_ids": enable_both_generation
+        }
+
+        if enable_text_do_sample:
+            generate_kwargs["text_do_sample"] = True
+            generate_kwargs["text_temperature"] = text_temperature
+        if enable_speech_do_sample:
+            generate_kwargs["speech_do_sample"] = True
+            generate_kwargs["speech_temperature"] = speech_temperature
+
+        generate_kwargs["text_num_beams"] = text_num_beams
+
+        if task_type == "Speech to Speech":
+            model = SeamlessM4Tv2ForSpeechToSpeech.from_pretrained(MODEL_PATH)
+        elif task_type == "Text to Text":
+            model = SeamlessM4Tv2ForTextToText.from_pretrained(MODEL_PATH)
+        elif task_type == "Speech to Text":
+            model = SeamlessM4Tv2ForSpeechToText.from_pretrained(MODEL_PATH)
+        elif task_type == "Text to Speech":
+            model = SeamlessM4Tv2ForTextToSpeech.from_pretrained(MODEL_PATH)
+        else:
+            model = SeamlessM4Tv2Model.from_pretrained(MODEL_PATH)
+
+        outputs = model.generate(**inputs, **generate_kwargs)
+
+        if enable_speech_generation or enable_both_generation:
+            audio_output = outputs[0].cpu().numpy().squeeze()
+            audio_path = os.path.join('outputs', f"SeamlessM4T_{datetime.now().strftime('%Y%m%d')}",
+                                      f"audio_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{audio_output_format}")
+            os.makedirs(os.path.dirname(audio_path), exist_ok=True)
+
+            if audio_output_format == "wav":
+                sf.write(audio_path, audio_output, 16000)
+            elif audio_output_format == "mp3":
+                sf.write(audio_path, audio_output, 16000, format='mp3')
+            elif audio_output_format == "ogg":
+                sf.write(audio_path, audio_output, 16000, format='ogg')
+            else:
+                print(f"Unsupported audio format: {audio_output_format}")
+                audio_path = None
+        else:
+            audio_path = None
+
+        if not enable_speech_generation or enable_both_generation:
+            text_output = processor.decode(outputs[0].tolist()[0], skip_special_tokens=True)
+            text_path = os.path.join('outputs', f"SeamlessM4T_{datetime.now().strftime('%Y%m%d')}",
+                                     f"text_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{text_output_format}")
+            os.makedirs(os.path.dirname(text_path), exist_ok=True)
+
+            if text_output_format == "txt":
+                with open(text_path, "w", encoding="utf-8") as f:
+                    f.write(text_output)
+            elif text_output_format == "json":
+                with open(text_path, "w", encoding="utf-8") as f:
+                    json.dump({"text": text_output}, f, ensure_ascii=False, indent=4)
+            else:
+                print(f"Unsupported text format: {text_output_format}")
+                text_output = None
+        else:
+            text_output = None
+
+        return text_output, audio_path, None
+
+    except Exception as e:
+        return None, None, str(e)
+
+    finally:
+        del model
+        del processor
+        flush()
 
 
 def generate_bark_audio(text, voice_preset, max_length, fine_temperature, coarse_temperature, output_format, stop_generation):
@@ -2589,6 +2815,71 @@ def generate_image_animatediff(prompt, negative_prompt, input_video, strength, m
         flush()
 
 
+def generate_hotshotxl(prompt, negative_prompt, steps, width, height, video_length, video_duration, output_format="gif", stop_generation=None):
+    global stop_signal
+    stop_signal = False
+
+    if not prompt:
+        return None, "Please enter a prompt!"
+
+    hotshotxl_model_path = os.path.join("inputs", "image", "sd_models", "hotshot_xl")
+    hotshotxl_base_model_path = os.path.join("inputs", "image", "sd_models", "hotshot_xl_base")
+
+    if not os.path.exists(hotshotxl_model_path):
+        print("Downloading HotShot-XL...")
+        os.makedirs(hotshotxl_model_path, exist_ok=True)
+        Repo.clone_from("https://huggingface.co/hotshotco/Hotshot-XL", hotshotxl_model_path)
+        print("HotShot-XL downloaded")
+
+    if not os.path.exists(hotshotxl_base_model_path):
+        print("Downloading HotShot-XL base model...")
+        os.makedirs(hotshotxl_base_model_path, exist_ok=True)
+        Repo.clone_from("https://huggingface.co/hotshotco/SDXL-512", hotshotxl_base_model_path)
+        print("HotShot-XL base model downloaded")
+
+    try:
+        output_filename = f"hotshotxl_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
+        output_path = os.path.join('outputs', f"HotshotXL_{datetime.now().strftime('%Y%m%d')}", output_filename)
+        os.makedirs(os.path.dirname(output_path), exist_ok=True)
+
+        command = [
+            "python", "Hotshot-XL/inference.py",
+            f"--pretrained_path={hotshotxl_model_path}",
+            f"--spatial_unet_base={hotshotxl_base_model_path}",
+            f"--prompt={prompt}",
+            f"--negative_prompt={negative_prompt}",
+            f"--output={output_path}",
+            f"--steps={steps}",
+            f"--width={width}",
+            f"--height={height}",
+            f"--video_length={video_length}",
+            f"--video_duration={video_duration}"
+        ]
+
+        process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+        while True:
+            if stop_signal:
+                process.terminate()
+                return None, "Generation stopped"
+
+            return_code = process.poll()
+            if return_code is not None:
+                break
+
+        if return_code != 0:
+            error_output = process.stderr.read().decode('utf-8')
+            return None, f"Error occurred: {error_output}"
+
+        return output_path, "GIF generated successfully!"
+
+    except Exception as e:
+        return None, str(e)
+
+    finally:
+        flush()
+
+
 def generate_video(init_image, output_format, video_settings_html, motion_bucket_id, noise_aug_strength, fps, num_frames, decode_chunk_size,
                    iv2gen_xl_settings_html, prompt, negative_prompt, num_inference_steps, guidance_scale, seed, stop_generation):
     global stop_signal
@@ -3343,7 +3634,7 @@ def generate_image_ip_adapter_faceid(prompt, negative_prompt, face_image, s_scal
                 torch_dtype=torch.float16, variant="fp16")
         elif stable_diffusion_model_type == "SDXL":
             pipe = StableDiffusionXLPipeline.from_single_file(
-                stable_diffusion_model_path, use_safetensors=True, device_map="auto", attention_slice=1,
+                stable_diffusion_model_path, scheduler=noise_scheduler, use_safetensors=True, device_map="auto", attention_slice=1,
                 torch_dtype=torch.float16, variant="fp16")
         else:
             return None, "Invalid StableDiffusion model type!"
@@ -3389,22 +3680,121 @@ def generate_image_ip_adapter_faceid(prompt, negative_prompt, face_image, s_scal
         flush()
 
 
-def generate_image_extras(input_image, source_image, remove_background, enable_faceswap, enable_facerestore, image_output_format):
+def generate_riffusion_text2image(prompt, negative_prompt, num_inference_steps, guidance_scale, height, width, seed, output_format="png", stop_generation=None):
+    global stop_signal
+    stop_signal = False
+
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+
+    if seed == "" or seed is None:
+        seed = random.randint(0, 2 ** 32 - 1)
+    else:
+        seed = int(seed)
+    generator = torch.Generator(device).manual_seed(seed)
+
+    riffusion_model_path = os.path.join("inputs", "image", "sd_models", "riffusion")
+
+    if not os.path.exists(riffusion_model_path):
+        print("Downloading Riffusion model...")
+        os.makedirs(riffusion_model_path, exist_ok=True)
+        Repo.clone_from("https://huggingface.co/riffusion/riffusion-model-v1", riffusion_model_path)
+        print("Riffusion model downloaded")
+
+    try:
+        pipe = StableDiffusionPipeline.from_pretrained(riffusion_model_path, torch_dtype=torch.float16)
+        pipe = pipe.to(device)
+
+        image = pipe(
+            prompt=prompt,
+            negative_prompt=negative_prompt,
+            num_inference_steps=num_inference_steps,
+            guidance_scale=guidance_scale,
+            height=height,
+            width=width,
+            generator=generator
+        ).images[0]
+
+        if stop_signal:
+            return None, "Generation stopped"
+
+        today = datetime.now().date()
+        image_dir = os.path.join('outputs', f"Riffusion_{today.strftime('%Y%m%d')}")
+        os.makedirs(image_dir, exist_ok=True)
+        image_filename = f"riffusion_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
+        image_path = os.path.join(image_dir, image_filename)
+        image.save(image_path, format=output_format.upper())
+
+        return image_path, f"Image generated successfully. Seed used: {seed}"
+
+    except Exception as e:
+        return None, str(e)
+
+    finally:
+        del pipe
+        flush()
+
+
+def generate_riffusion_image2audio(image_path, output_format="wav"):
+    if not image_path:
+        return None, "Please upload an image file!"
+
+    try:
+        today = datetime.now().date()
+        audio_dir = os.path.join('outputs', f"Riffusion_{today.strftime('%Y%m%d')}")
+        os.makedirs(audio_dir, exist_ok=True)
+        audio_filename = f"riffusion_audio_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
+        audio_path = os.path.join(audio_dir, audio_filename)
+
+        command = f"python -m riffusion.cli image-to-audio {image_path} {audio_path}"
+        subprocess.run(command, shell=True, check=True)
+
+        return audio_path, None
+
+    except Exception as e:
+        return None, str(e)
+
+    finally:
+        flush()
+
+
+def generate_riffusion_audio2image(audio_path, output_format="png"):
+    if not audio_path:
+        return None, "Please upload an audio file!"
+
+    try:
+        today = datetime.now().date()
+        image_dir = os.path.join('outputs', f"Riffusion_{today.strftime('%Y%m%d')}")
+        os.makedirs(image_dir, exist_ok=True)
+        image_filename = f"riffusion_image_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
+        image_path = os.path.join(image_dir, image_filename)
+
+        command = f"python -m riffusion.cli audio-to-image {audio_path} {image_path}"
+        subprocess.run(command, shell=True, check=True)
+
+        return image_path, None
+
+    except Exception as e:
+        return None, str(e)
+
+    finally:
+        flush()
+
+
+def generate_image_extras(input_image, source_image, remove_background, enable_faceswap, enable_many_faces, reference_face, reference_frame, enable_facerestore, fidelity_weight, restore_upscale, enable_pixeloe, target_size, patch_size, enable_ddcolor, ddcolor_input_size, image_output_format):
     if not input_image:
         return None, "Please upload an image file!"
 
-    if not remove_background and not enable_faceswap and not enable_facerestore:
+    if not remove_background and not enable_faceswap and not enable_facerestore and not enable_pixeloe and not enable_ddcolor:
         return None, "Please choose an option to modify the image"
 
     today = datetime.now().date()
     output_dir = os.path.join('outputs', f"Extras_{today.strftime('%Y%m%d')}")
     os.makedirs(output_dir, exist_ok=True)
 
-    output_filename = f"background_removed_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{image_output_format}"
-    output_path = os.path.join(output_dir, output_filename)
-
     try:
         if remove_background:
+            output_filename = f"background_removed_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{image_output_format}"
+            output_path = os.path.join(output_dir, output_filename)
             remove_bg(input_image, output_path)
 
         if enable_faceswap:
@@ -3422,6 +3812,10 @@ def generate_image_extras(input_image, source_image, remove_background, enable_f
             faceswap_output_path = os.path.join(output_dir, f"faceswapped_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{image_output_format}")
 
             command = f"python {os.path.join(roop_model_path, 'run.py')} --target {input_image} --source {source_image} --output {faceswap_output_path}"
+            if enable_many_faces:
+                command += f" --many-faces",
+                command += f" --reference-face-position {reference_face}",
+                command += f" --reference-frame-number {reference_frame}"
             subprocess.run(command, shell=True, check=True)
 
             output_path = faceswap_output_path
@@ -3431,10 +3825,31 @@ def generate_image_extras(input_image, source_image, remove_background, enable_f
 
             facerestore_output_path = os.path.join(output_dir, f"facerestored_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{image_output_format}")
 
-            command = f"python {os.path.join(codeformer_path, 'inference_codeformer.py')} -w 0.7 --bg_upsampler realesrgan --face_upsample --input_path {input_image} --output_path {facerestore_output_path}"
+            command = f"python {os.path.join(codeformer_path, 'inference_codeformer.py')} -w {fidelity_weight} --upscale {restore_upscale} --bg_upsampler realesrgan --face_upsample --input_path {input_image} --output_path {facerestore_output_path}"
             subprocess.run(command, shell=True, check=True)
 
             output_path = facerestore_output_path
+
+        if enable_pixeloe:
+            img = cv2.imread(input_image)
+            img = pixelize(img, target_size=target_size, patch_size=patch_size)
+
+            pixeloe_output_path = os.path.join(output_dir,
+                                               f"pixeloe_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{image_output_format}")
+            cv2.imwrite(pixeloe_output_path, img)
+
+            output_path = pixeloe_output_path
+
+        if enable_ddcolor:
+
+            ddcolor_output_path = os.path.join(output_dir,
+                                               f"ddcolor_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{image_output_format}")
+
+            command = f"python DDColor/colorization_pipeline_hf.py --model_name ddcolor_modelscope --input {input_image} --output {ddcolor_output_path} --input_size {ddcolor_input_size}"
+
+            subprocess.run(command, shell=True, check=True)
+
+            output_path = ddcolor_output_path
 
         return output_path, None
 
@@ -5548,6 +5963,72 @@ def generate_audio_audioldm2(prompt, negative_prompt, model_name, num_inference_
         flush()
 
 
+def process_rvc(input_audio, model_folder, f0method, f0up_key, index_rate, filter_radius, resample_sr, rms_mix_rate, protect, output_format="wav"):
+    if not input_audio:
+        return None, "Please upload an audio file!"
+
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+
+    model_path = os.path.join("inputs", "audio", "rvc_models", model_folder)
+
+    try:
+        pth_files = [f for f in os.listdir(model_path) if f.endswith('.pth')]
+        if not pth_files:
+            return None, f"No .pth file found in the selected model folder: {model_folder}"
+
+        model_file = os.path.join(model_path, pth_files[0])
+
+        rvc = RVCInference(device=device)
+        rvc.load_model(model_file)
+        rvc.set_params(f0method=f0method, f0up_key=f0up_key, index_rate=index_rate, filter_radius=filter_radius, resample_sr=resample_sr, rms_mix_rate=rms_mix_rate, protect=protect)
+
+        today = datetime.now().date()
+        output_dir = os.path.join('outputs', f"RVC_{today.strftime('%Y%m%d')}")
+        os.makedirs(output_dir, exist_ok=True)
+
+        output_filename = f"rvc_output_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
+        output_path = os.path.join(output_dir, output_filename)
+
+        rvc.infer_file(input_audio, output_path)
+
+        rvc.unload_model()
+
+        return output_path, None
+
+    except Exception as e:
+        return None, str(e)
+
+    finally:
+        if 'rvc' in locals():
+            del rvc
+        flush()
+
+
+def separate_audio_uvr(audio_file, output_format, normalization_threshold, sample_rate):
+
+    try:
+        today = datetime.now().date()
+        output_dir = os.path.join('outputs', f"UVR_{today.strftime('%Y%m%d')}")
+        os.makedirs(output_dir, exist_ok=True)
+
+        separator = Separator(output_format=output_format, normalization_threshold=normalization_threshold,
+                              sample_rate=sample_rate, output_dir=output_dir)
+        separator.load_model(model_filename='UVR-MDX-NET-Inst_HQ_3.onnx')
+
+        output_files = separator.separate(audio_file)
+
+        if len(output_files) != 2:
+            return None, None, f"Unexpected number of output files: {len(output_files)}"
+
+        return output_files[0], output_files[1], f"Separation complete! Output files: {' '.join(output_files)}"
+    except Exception as e:
+        return None, None, f"An error occurred: {str(e)}"
+
+    finally:
+        del separator
+        flush()
+
+
 def demucs_separate(audio_file, output_format="wav"):
     global stop_signal
     if stop_signal:
@@ -5601,6 +6082,22 @@ def demucs_separate(audio_file, output_format="wav"):
 
     finally:
         flush()
+
+
+def get_wiki_content(url, local_file="Wiki.md"):
+    try:
+        response = requests.get(url)
+        if response.status_code == 200:
+            return response.text
+    except:
+        pass
+
+    try:
+        with open(local_file, 'r', encoding='utf-8') as file:
+            content = file.read()
+            return markdown.markdown(content)
+    except:
+        return "<p>Wiki content is not available.</p>"
 
 
 def get_output_files():
@@ -5659,8 +6156,8 @@ def download_model(model_name_llm, model_name_sd):
         model_url = ""
         if model_name_llm == "StarlingLM(Transformers7B)":
             model_url = "https://huggingface.co/Nexusflow/Starling-LM-7B-beta"
-        elif model_name_llm == "OpenChat(Llama7B.Q4)":
-            model_url = "https://huggingface.co/TheBloke/openchat-3.5-0106-GGUF/resolve/main/openchat-3.5-0106.Q4_K_M.gguf"
+        elif model_name_llm == "OpenChat3.6(Llama8B.Q4)":
+            model_url = "https://huggingface.co/bartowski/openchat-3.6-8b-20240522-GGUF/resolve/main/openchat-3.6-8b-20240522-Q4_K_M.gguf"
         model_path = os.path.join("inputs", "text", "llm_models", model_name_llm)
 
         if model_url:
@@ -5732,7 +6229,7 @@ def stop_all_processes():
 
 
 def reload_model_lists():
-    global llm_models_list, llm_lora_models_list, speaker_wavs_list, stable_diffusion_models_list, vae_models_list, lora_models_list, textual_inversion_models_list, inpaint_models_list
+    global llm_models_list, llm_lora_models_list, speaker_wavs_list, stable_diffusion_models_list, vae_models_list, lora_models_list, textual_inversion_models_list, inpaint_models_list, rvc_models_list
 
 
     llm_models_list = os.listdir('inputs/text/llm_models')
@@ -5743,6 +6240,7 @@ def reload_model_lists():
     lora_models_list = os.listdir('inputs/image/sd_models/lora')
     textual_inversion_models_list = os.listdir('inputs/image/sd_models/embedding')
     inpaint_models_list = os.listdir('inputs/image/sd_models/inpaint')
+    rvc_models_list = os.listdir('inputs/audio/rvc_models')
 
     print("Model lists have been reloaded.")
 
@@ -5777,6 +6275,9 @@ inpaint_models_list = [None] + [model.replace(".safetensors", "") for model in
                                 os.listdir("inputs/image/sd_models/inpaint")
                                 if model.endswith(".safetensors") or not model.endswith(".txt")]
 controlnet_models_list = [None, "openpose", "depth", "canny", "lineart", "scribble"]
+rvc_models_list = [model_folder for model_folder in os.listdir("inputs/audio/rvc_models")
+                   if os.path.isdir(os.path.join("inputs/audio/rvc_models", model_folder))
+                   and any(file.endswith('.pth') for file in os.listdir(os.path.join("inputs/audio/rvc_models", model_folder)))]
 
 chat_interface = gr.Interface(
     fn=generate_text_and_speech,
@@ -5867,6 +6368,74 @@ bark_interface = gr.Interface(
     description="This user interface allows you to enter text and generate audio using SunoBark. "
                 "You can select the voice preset and customize the max length. "
                 "Try it and see what happens!",
+    allow_flagging="never",
+)
+
+mms_tts_interface = gr.Interface(
+    fn=generate_mms_tts,
+    inputs=[
+        gr.Textbox(label="Enter text to synthesize"),
+        gr.Dropdown(choices=["English", "Russian", "Korean", "Hindu", "Turkish", "French", "Spanish", "German", "Arabic", "Polish"], label="Select language", value="English"),
+        gr.Radio(choices=["wav", "mp3", "ogg"], label="Select output format", value="wav")
+    ],
+    outputs=[
+        gr.Audio(label="Synthesized speech", type="filepath"),
+        gr.Textbox(label="Message")
+    ],
+    title="NeuroSandboxWebUI (ALPHA) - MMS Text-to-Speech",
+    description="Generate speech from text using MMS TTS models.",
+    allow_flagging="never",
+)
+
+mms_stt_interface = gr.Interface(
+    fn=transcribe_mms_stt,
+    inputs=[
+        gr.Audio(label="Upload or record audio", type="filepath"),
+        gr.Dropdown(choices=["en", "ru", "ko", "hi", "tr", "fr", "sp", "de", "ar", "pl"], label="Select language", value="En"),
+        gr.Radio(choices=["txt", "json"], label="Select output format", value="txt")
+    ],
+    outputs=[
+        gr.Textbox(label="Transcription"),
+        gr.Textbox(label="Message")
+    ],
+    title="NeuroSandboxWebUI (ALPHA) - MMS Speech-to-Text",
+    description="Transcribe speech to text using MMS STT model.",
+    allow_flagging="never",
+)
+
+mms_interface = gr.TabbedInterface(
+    [mms_tts_interface, mms_stt_interface],
+    tab_names=["Text-to-Speech", "Speech-to-Text"]
+)
+
+seamless_m4tv2_interface = gr.Interface(
+    fn=seamless_m4tv2_process,
+    inputs=[
+        gr.Radio(choices=["Text", "Audio"], label="Input Type", value="Text", interactive=True),
+        gr.Textbox(label="Input Text"),
+        gr.Audio(label="Input Audio", type="filepath"),
+        gr.Dropdown(choices=get_languages(), label="Source Language", value=None, interactive=True),
+        gr.Dropdown(choices=get_languages(), label="Target Language", value=None, interactive=True),
+        gr.Dropdown(choices=["en", "ru", "ko", "hi", "tr", "fr", "sp", "de", "ar", "pl"], label="Dataset Language", value="En", interactive=True),
+        gr.Checkbox(label="Enable Speech Generation", value=False),
+        gr.Number(label="Speaker ID", value=0),
+        gr.Slider(minimum=1, maximum=10, value=4, step=1, label="Text Num Beams"),
+        gr.Checkbox(label="Enable Text Sampling"),
+        gr.Checkbox(label="Enable Speech Sampling"),
+        gr.Slider(minimum=0.1, maximum=2, value=0.6, step=0.1, label="Speech Temperature"),
+        gr.Slider(minimum=0.1, maximum=2, value=0.6, step=0.1, label="Text Temperature"),
+        gr.Checkbox(label="Enable Both Generation", value=False),
+        gr.Radio(choices=["General", "Speech to Speech", "Text to Text", "Speech to Text", "Text to Speech"], label="Task Type", value="General", interactive=True),
+        gr.Radio(choices=["txt", "json"], label="Text Output Format", value="txt", interactive=True),
+        gr.Radio(choices=["wav", "mp3", "ogg"], label="Audio Output Format", value="wav", interactive=True)
+    ],
+    outputs=[
+        gr.Textbox(label="Generated Text"),
+        gr.Audio(label="Generated Audio", type="filepath"),
+        gr.Textbox(label="Message")
+    ],
+    title="NeuroSandboxWebUI (ALPHA) - SeamlessM4Tv2",
+    description="This interface allows you to use the SeamlessM4Tv2 model for various translation and speech tasks.",
     allow_flagging="never",
 )
 
@@ -6265,6 +6834,30 @@ animatediff_interface = gr.Interface(
     allow_flagging="never",
 )
 
+hotshotxl_interface = gr.Interface(
+    fn=generate_hotshotxl,
+    inputs=[
+        gr.Textbox(label="Enter your prompt"),
+        gr.Textbox(label="Enter your negative prompt", value=""),
+        gr.Slider(minimum=1, maximum=100, value=30, step=1, label="Steps"),
+        gr.Slider(minimum=256, maximum=1024, value=512, step=64, label="Width"),
+        gr.Slider(minimum=256, maximum=1024, value=512, step=64, label="Height"),
+        gr.Slider(minimum=2, maximum=80, value=8, step=1, label="Video Length (frames)"),
+        gr.Slider(minimum=100, maximum=10000, value=1000, step=1, label="Video Duration (seconds)"),
+        gr.Radio(choices=["gif"], label="Output format", value="gif", interactive=False),
+        gr.Button(value="Stop generation", interactive=True, variant="stop"),
+    ],
+    outputs=[
+        gr.Image(type="filepath", label="Generated GIF"),
+        gr.Textbox(label="Message", type="text"),
+    ],
+    title="NeuroSandboxWebUI (ALPHA) - Hotshot-XL",
+    description="This user interface allows you to generate animated GIFs using Hotshot-XL. "
+                "Enter a prompt and customize the generation settings. "
+                "Try it and see what happens!",
+    allow_flagging="never",
+)
+
 video_interface = gr.Interface(
     fn=generate_video,
     inputs=[
@@ -6520,6 +7113,63 @@ ip_adapter_faceid_interface = gr.Interface(
     allow_flagging="never",
 )
 
+riffusion_text2image_interface = gr.Interface(
+    fn=generate_riffusion_text2image,
+    inputs=[
+        gr.Textbox(label="Enter your prompt"),
+        gr.Textbox(label="Enter your negative prompt", value=""),
+        gr.Slider(minimum=1, maximum=100, value=50, step=1, label="Steps"),
+        gr.Slider(minimum=1.0, maximum=20.0, value=7.5, step=0.1, label="Guidance Scale"),
+        gr.Slider(minimum=256, maximum=1024, value=512, step=64, label="Height"),
+        gr.Slider(minimum=256, maximum=1024, value=512, step=64, label="Width"),
+        gr.Textbox(label="Seed (optional)", value=""),
+        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
+        gr.Button(value="Stop generation", interactive=True, variant="stop"),
+    ],
+    outputs=[
+        gr.Image(type="filepath", label="Generated image"),
+        gr.Textbox(label="Message", type="text"),
+    ],
+    title="NeuroSandboxWebUI (ALPHA) - Riffusion (Text-to-Image)",
+    description="Generate a spectrogram image from text using Riffusion.",
+    allow_flagging="never",
+)
+
+riffusion_image2audio_interface = gr.Interface(
+    fn=generate_riffusion_image2audio,
+    inputs=[
+        gr.Image(label="Input spectrogram image", type="filepath"),
+        gr.Radio(choices=["wav", "mp3", "ogg"], label="Select output format", value="wav", interactive=True),
+    ],
+    outputs=[
+        gr.Audio(label="Generated audio", type="filepath"),
+        gr.Textbox(label="Message", type="text"),
+    ],
+    title="NeuroSandboxWebUI (ALPHA) - Riffusion (Image-to-Audio)",
+    description="Convert a spectrogram image to audio using Riffusion.",
+    allow_flagging="never",
+)
+
+riffusion_audio2image_interface = gr.Interface(
+    fn=generate_riffusion_audio2image,
+    inputs=[
+        gr.Audio(label="Input audio", type="filepath"),
+        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
+    ],
+    outputs=[
+        gr.Image(type="filepath", label="Generated spectrogram image"),
+        gr.Textbox(label="Message", type="text"),
+    ],
+    title="NeuroSandboxWebUI (ALPHA) - Riffusion (Audio-to-Image)",
+    description="Convert audio to a spectrogram image using Riffusion.",
+    allow_flagging="never",
+)
+
+riffusion_interface = gr.TabbedInterface(
+    [riffusion_text2image_interface, riffusion_image2audio_interface, riffusion_audio2image_interface],
+    tab_names=["Text-to-Image", "Image-to-Audio", "Audio-to-Image"]
+)
+
 extras_interface = gr.Interface(
     fn=generate_image_extras,
     inputs=[
@@ -6527,7 +7177,17 @@ extras_interface = gr.Interface(
         gr.Image(label="Source Image", type="filepath"),
         gr.Checkbox(label="Remove BackGround", value=False),
         gr.Checkbox(label="Enable FaceSwap", value=False),
+        gr.Checkbox(label="Enable many faces (For FaceSwap)", value=False),
+        gr.Number(label="Reference face position (For FaceSwap)"),
+        gr.Number(label="Reference frame number (For FaceSwap)"),
         gr.Checkbox(label="Enable FaceRestore", value=False),
+        gr.Slider(minimum=0.01, maximum=1, value=0.5, step=0.01, label="Fidelity weight (For FaceRestore)"),
+        gr.Slider(minimum=0.1, maximum=4, value=2, step=0.1, label="Upscale (For FaceRestore)"),
+        gr.Checkbox(label="Enable PixelOE", value=False),
+        gr.Slider(minimum=32, maximum=1024, value=256, step=32, label="Target Size (For PixelOE)"),
+        gr.Slider(minimum=1, maximum=48, value=8, step=1, label="Patch Size (For PixelOE)"),
+        gr.Checkbox(label="Enable DDColor", value=False),
+        gr.Slider(minimum=256, maximum=1024, value=512, step=64, label="Input Size (For DDColor)"),
         gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
     ],
     outputs=[
@@ -7170,6 +7830,50 @@ audioldm2_interface = gr.Interface(
     allow_flagging="never",
 )
 
+rvc_interface = gr.Interface(
+    fn=process_rvc,
+    inputs=[
+        gr.Audio(label="Input audio", type="filepath"),
+        gr.Dropdown(choices=rvc_models_list, label="Select RVC model", value=None),
+        gr.Radio(choices=['harvest', "crepe", "rmvpe", 'pm'], label="RVC Method", value="harvest", interactive=True),
+        gr.Number(label="Up-key", value=0),
+        gr.Slider(minimum=0, maximum=1, value=0.5, step=0.01, label="Index rate"),
+        gr.Slider(minimum=0, maximum=12, value=3, step=1, label="Filter radius"),
+        gr.Slider(minimum=0, maximum=1, value=0, step=0.01, label="Resample-Sr"),
+        gr.Slider(minimum=0, maximum=1, value=1, step=0.01, label="RMS Mixrate"),
+        gr.Slider(minimum=0, maximum=1, value=0.33, step=0.01, label="Protection"),
+        gr.Radio(choices=["wav", "mp3", "ogg"], label="Select output format", value="wav", interactive=True),
+    ],
+    outputs=[
+        gr.Audio(label="Processed audio", type="filepath"),
+        gr.Textbox(label="Message", type="text"),
+    ],
+    title="NeuroSandboxWebUI (ALPHA) - RVC",
+    description="This user interface allows you to process audio using RVC (Retrieval-based Voice Conversion). "
+                "Upload an audio file, select an RVC model, and choose the output format. "
+                "Try it and see what happens!",
+    allow_flagging="never",
+)
+
+uvr_interface = gr.Interface(
+    fn=separate_audio_uvr,
+    inputs=[
+        gr.Audio(type="filepath", label="Audio file to separate"),
+        gr.Radio(choices=["wav", "mp3", "ogg"], label="Select output format", value="wav", interactive=True),
+        gr.Slider(minimum=0.1, maximum=1.0, value=0.5, step=0.1, label="Normalization Threshold"),
+        gr.Slider(minimum=16000, maximum=44100, value=44100, step=100, label="Sample Rate"),
+    ],
+    outputs=[
+        gr.Audio(label="Vocals", type="filepath"),
+        gr.Audio(label="Instrumental", type="filepath"),
+        gr.Textbox(label="Message", type="text"),
+    ],
+    title="NeuroSandboxWebUI (ALPHA) - UVR",
+    description="This user interface allows you to upload an audio file and separate it into vocals and instrumental using Ultimate Vocal Remover (UVR). "
+                "Try it and see what happens!",
+    allow_flagging="never",
+)
+
 demucs_interface = gr.Interface(
     fn=demucs_separate,
     inputs=[
@@ -7184,6 +7888,18 @@ demucs_interface = gr.Interface(
     title="NeuroSandboxWebUI (ALPHA) - Demucs",
     description="This user interface allows you to upload an audio file and separate it into vocal and instrumental using Demucs. "
                 "Try it and see what happens!",
+    allow_flagging="never",
+)
+
+wiki_interface = gr.Interface(
+    fn=get_wiki_content,
+    inputs=[
+        gr.Textbox(label="Online Wiki", value="https://github.com/Dartvauder/NeuroSandboxWebUI/wiki", interactive=False),
+        gr.Textbox(label="Local Wiki", value="Wiki.md", interactive=False)
+    ],
+    outputs=gr.HTML(label="Wiki Content"),
+    title="NeuroSandboxWebUI (ALPHA) - Wiki",
+    description="This interface displays the Wiki content from the specified URL or local file.",
     allow_flagging="never",
 )
 
@@ -7211,7 +7927,7 @@ gallery_interface = gr.Interface(
 model_downloader_interface = gr.Interface(
     fn=download_model,
     inputs=[
-        gr.Dropdown(choices=[None, "StarlingLM(Transformers7B)", "OpenChat(Llama7B.Q4)"], label="Download LLM model", value=None),
+        gr.Dropdown(choices=[None, "StarlingLM(Transformers7B)", "OpenChat3.6(Llama8B.Q4)"], label="Download LLM model", value=None),
         gr.Dropdown(choices=[None, "Dreamshaper8(SD1.5)", "RealisticVisionV4.0(SDXL)"], label="Download StableDiffusion model", value=None),
     ],
     outputs=[
@@ -7256,17 +7972,17 @@ system_interface = gr.Interface(
 with gr.TabbedInterface(
     [
         gr.TabbedInterface(
-            [chat_interface, tts_stt_interface, translate_interface],
-            tab_names=["LLM", "TTS-STT", "LibreTranslate"]
+            [chat_interface, tts_stt_interface, mms_interface, seamless_m4tv2_interface, translate_interface],
+            tab_names=["LLM", "TTS-STT", "MMS", "SeamlessM4Tv2", "LibreTranslate"]
         ),
         gr.TabbedInterface(
             [
                 gr.TabbedInterface(
-                    [txt2img_interface, img2img_interface, depth2img_interface, pix2pix_interface, controlnet_interface, latent_upscale_interface, realesrgan_upscale_interface, sdxl_refiner_interface, inpaint_interface, outpaint_interface, gligen_interface, animatediff_interface, video_interface, ldm3d_interface,
+                    [txt2img_interface, img2img_interface, depth2img_interface, pix2pix_interface, controlnet_interface, latent_upscale_interface, realesrgan_upscale_interface, sdxl_refiner_interface, inpaint_interface, outpaint_interface, gligen_interface, animatediff_interface, hotshotxl_interface, video_interface, ldm3d_interface,
                      gr.TabbedInterface([sd3_txt2img_interface, sd3_img2img_interface, sd3_controlnet_interface, sd3_inpaint_interface],
                                         tab_names=["txt2img", "img2img", "controlnet", "inpaint"]),
-                     cascade_interface, t2i_ip_adapter_interface, ip_adapter_faceid_interface, extras_interface],
-                    tab_names=["txt2img", "img2img", "depth2img", "pix2pix", "controlnet", "upscale(latent)", "upscale(Real-ESRGAN)", "refiner", "inpaint", "outpaint", "gligen", "animatediff", "video", "ldm3d", "sd3", "cascade", "t2i-ip-adapter", "ip-adapter-faceid", "extras"]
+                     cascade_interface, t2i_ip_adapter_interface, ip_adapter_faceid_interface, riffusion_interface, extras_interface],
+                    tab_names=["txt2img", "img2img", "depth2img", "pix2pix", "controlnet", "upscale(latent)", "upscale(Real-ESRGAN)", "refiner", "inpaint", "outpaint", "gligen", "animatediff", "hotshotxl", "video", "ldm3d", "sd3", "cascade", "t2i-ip-adapter", "ip-adapter-faceid", "riffusion", "extras"]
                 ),
                 kandinsky_interface, flux_interface, hunyuandit_interface, lumina_interface, kolors_interface, auraflow_interface, wurstchen_interface, deepfloyd_if_interface, pixart_interface, playgroundv2_interface
             ],
@@ -7274,19 +7990,19 @@ with gr.TabbedInterface(
         ),
         gr.TabbedInterface(
             [wav2lip_interface, modelscope_interface, zeroscope2_interface, cogvideox_interface, latte_interface],
-            tab_names=["Wav2Lip", "ModelScope", "ZeroScope 2", "CogVideoX", "Latte"]
+            tab_names=["Wav2Lip", "ModelScope", "ZeroScope2", "CogVideoX", "Latte"]
         ),
         gr.TabbedInterface(
             [stablefast3d_interface, shap_e_interface, sv34d_interface, zero123plus_interface],
             tab_names=["StableFast3D", "Shap-E", "SV34D", "Zero123Plus"]
         ),
         gr.TabbedInterface(
-            [stableaudio_interface, audiocraft_interface, audioldm2_interface, bark_interface, demucs_interface],
-            tab_names=["StableAudioOpen", "AudioCraft", "AudioLDM 2", "SunoBark", "Demucs"]
+            [stableaudio_interface, audiocraft_interface, audioldm2_interface, bark_interface, rvc_interface, uvr_interface, demucs_interface],
+            tab_names=["StableAudio", "AudioCraft", "AudioLDM2", "SunoBark", "RVC", "UVR", "Demucs"]
         ),
         gr.TabbedInterface(
-            [gallery_interface, model_downloader_interface, settings_interface, system_interface],
-            tab_names=["Gallery", "ModelDownloader", "Settings", "System"]
+            [wiki_interface, gallery_interface, model_downloader_interface, settings_interface, system_interface],
+            tab_names=["Wiki", "Gallery", "ModelDownloader", "Settings", "System"]
         )
     ],
     tab_names=["Text", "Image", "Video", "3D", "Audio", "Interface"]
@@ -7304,6 +8020,7 @@ with gr.TabbedInterface(
     outpaint_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     gligen_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     animatediff_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
+    hotshotxl_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     video_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     ldm3d_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     sd3_txt2img_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
@@ -7313,6 +8030,7 @@ with gr.TabbedInterface(
     cascade_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     t2i_ip_adapter_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     ip_adapter_faceid_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
+    riffusion_text2image_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     kandinsky_txt2img_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     kandinsky_img2img_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
     kandinsky_inpaint_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
