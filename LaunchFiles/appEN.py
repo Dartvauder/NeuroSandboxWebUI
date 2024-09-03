@@ -908,7 +908,8 @@ def transcribe_mms_stt(audio_file, language, output_format):
     if not os.path.exists(model_path):
         print("Downloading MMS STT model...")
         os.makedirs(model_path, exist_ok=True)
-        Repo.clone_from("https://huggingface.co/facebook/mms-1b-all", model_path)
+        repo = Repo.clone_from("https://huggingface.co/facebook/mms-1b-all", model_path, no_checkout=True)
+        repo.git.checkout("HEAD", "--", ".")
         print("MMS STT model downloaded")
 
     try:
@@ -1042,9 +1043,6 @@ def seamless_m4tv2_process(input_type, input_text, input_audio, src_lang, tgt_la
             text_output = None
 
         return text_output, audio_path, None
-
-    except Exception as e:
-        return None, None, str(e)
 
     finally:
         del model
@@ -2103,9 +2101,8 @@ def generate_image_upscale_realesrgan(input_image, input_video, model_name, outs
             out.release()
         else:
             command = f"python {os.path.join(realesrgan_path, 'inference_realesrgan.py')} -i {input_file} -o {output_dir} -n {model_name} -s {outscale} --tile {tile} --tile_pad {tile_pad} --pre_pad {pre_pad} --denoise_strength {denoise_strength}"
-
-        if face_enhance:
-            command += " --face_enhance"
+            if face_enhance:
+                command += " --face_enhance"
 
         subprocess.run(command, shell=True, check=True)
 
@@ -5404,10 +5401,10 @@ def generate_video_cogvideox(prompt, negative_prompt, cogvideox_version, num_inf
     cogvideox_model_path = os.path.join("inputs", "video", "cogvideox", cogvideox_version)
 
     if not os.path.exists(cogvideox_model_path):
-        print("Downloading {cogvideox_version} model...")
+        print(f"Downloading {cogvideox_version} model...")
         os.makedirs(cogvideox_model_path, exist_ok=True)
-        Repo.clone_from("https://huggingface.co/THUDM/{cogvideox_version}", cogvideox_model_path)
-        print("{cogvideox_version} model downloaded")
+        Repo.clone_from(f"https://huggingface.co/THUDM/{cogvideox_version}", cogvideox_model_path)
+        print(f"{cogvideox_version} model downloaded")
 
     try:
         pipe = CogVideoXPipeline.from_pretrained(cogvideox_model_path, torch_dtype=torch.float16).to(device)
