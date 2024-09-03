@@ -57,13 +57,13 @@ The goal of the project - to create the easiest possible application to use neur
 
 ## Required Dependencies:
 
-* [Python](https://www.python.org/downloads/) (3.11)
+* [Python](https://www.python.org/downloads/) (3.10)
 * [Git](https://git-scm.com/downloads)
 * [CUDA](https://developer.nvidia.com/cuda-downloads) (12.4) and [cuDNN](https://developer.nvidia.com/cudnn-downloads) (9.1)
 * [FFMPEG](https://ffmpeg.org/download.html)
 - C+ compiler
-  - Windows: [VisualStudio](https://visualstudio.microsoft.com/ru/)
-  - Linux: [GCC](https://gcc.gnu.org/)
+  - Windows: [VisualStudio](https://visualstudio.microsoft.com/ru/) and [VisualStudioCode](https://code.visualstudio.com)
+  - Linux: [GCC](https://gcc.gnu.org/) and [VisualStudioCode](https://code.visualstudio.com)
 
 ## Minimum System Requirements:
 
