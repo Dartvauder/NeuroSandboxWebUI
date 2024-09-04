@@ -624,6 +624,7 @@ First of all, I want to thank the developers of [PyCharm](https://www.jetbrains.
 * [RVC](https://github.com/RVC-Project/Retrieval-based-Voice-Conversion-WebUI/blob/main/LICENSE)
 * [DDColor](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/apache-2.0.md)
 * [PixelOE](https://github.com/KohakuBlueleaf/PixelOE/blob/main/LICENSE)
+* [LivePortrait](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/mit.md)
 
 #### These third-party repository codes are also used in my project:
 
@@ -635,6 +636,7 @@ First of all, I want to thank the developers of [PyCharm](https://www.jetbrains.
 * [StableFast3D for 3D](https://github.com/Stability-AI/stable-fast-3d)
 * [Riffusion for StableDiffusion](https://github.com/riffusion/riffusion-hobby)
 * [DDColor for extras](https://github.com/piddnad/DDColor)
+* [LivePortrait for video](https://github.com/KwaiVGI/LivePortrait)
 
 ## Donation
 
