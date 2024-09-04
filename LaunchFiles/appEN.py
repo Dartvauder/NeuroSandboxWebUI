@@ -1164,7 +1164,7 @@ def translate_text(text, source_lang, target_lang, enable_translate_history, tra
         flush()
 
 
-def generate_wav2lip(image_path, audio_path, fps, pads, face_det_batch_size, wav2lip_batch_size, resize_factor, crop):
+def generate_wav2lip(image_path, audio_path, fps, pads, face_det_batch_size, wav2lip_batch_size, resize_factor, crop, enable_no_smooth):
     global stop_signal
     stop_signal = False
 
@@ -1193,6 +1193,8 @@ def generate_wav2lip(image_path, audio_path, fps, pads, face_det_batch_size, wav
         output_path = os.path.join(output_dir, output_filename)
 
         command = f"py {os.path.join(wav2lip_path, 'inference.py')} --checkpoint_path {checkpoint_path} --face {image_path} --audio {audio_path} --outfile {output_path} --fps {fps} --pads {pads} --face_det_batch_size {face_det_batch_size} --wav2lip_batch_size {wav2lip_batch_size} --resize_factor {resize_factor} --crop {crop} --box {-1}"
+        if enable_no_smooth:
+            command += " --no-smooth"
 
         subprocess.run(command, shell=True, check=True)
 
@@ -5201,6 +5203,40 @@ def generate_image_playgroundv2(prompt, negative_prompt, height, width, num_infe
         flush()
 
 
+def generate_liveportrait(source_image, driving_video, output_format="mp4"):
+    if not source_image or not driving_video:
+        return None, "Please upload both a source image and a driving video!"
+
+    liveportrait_model_path = os.path.join("LivePortrait", "pretrained_weights")
+
+    if not os.path.exists(liveportrait_model_path):
+        print("Downloading LivePortrait model...")
+        os.makedirs(liveportrait_model_path, exist_ok=True)
+        os.system(
+            f"huggingface-cli download KwaiVGI/LivePortrait --local-dir {liveportrait_model_path} --exclude '*.git*' 'README.md' 'docs'")
+        print("LivePortrait model downloaded")
+
+    try:
+        today = datetime.now().date()
+        output_dir = os.path.join('outputs', f"LivePortrait_{today.strftime('%Y%m%d')}")
+        os.makedirs(output_dir, exist_ok=True)
+
+        output_filename = f"liveportrait_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
+        output_path = os.path.join(output_dir, output_filename)
+
+        command = f"python LivePortrait/inference.py -s {source_image} -d {driving_video} -o {output_path}"
+
+        subprocess.run(command, shell=True, check=True)
+
+        return output_path, None
+
+    except Exception as e:
+        return None, str(e)
+
+    finally:
+        flush()
+
+
 def generate_video_modelscope(prompt, negative_prompt, num_inference_steps, guidance_scale, height, width, num_frames,
                               seed, output_format, stop_generation):
     global stop_signal
@@ -6513,6 +6549,7 @@ wav2lip_interface = gr.Interface(
         gr.Slider(minimum=1, maximum=512, value=128, step=1, label="Wav2Lip Batch Size"),
         gr.Slider(minimum=1, maximum=4, value=1, step=1, label="Resize Factor"),
         gr.Textbox(label="Crop", value="0 -1 0 -1"),
+        gr.Checkbox(label="Enable no smooth", value=False),
     ],
     outputs=[
         gr.Video(label="Generated lip-sync"),
@@ -7615,6 +7652,24 @@ playgroundv2_interface = gr.Interface(
     allow_flagging="never",
 )
 
+liveportrait_interface = gr.Interface(
+    fn=generate_liveportrait,
+    inputs=[
+        gr.Image(label="Source image", type="filepath"),
+        gr.Video(label="Driving video"),
+        gr.Radio(choices=["mp4", "gif"], label="Select output format", value="mp4", interactive=True),
+    ],
+    outputs=[
+        gr.Video(label="Generated video"),
+        gr.Textbox(label="Message", type="text"),
+    ],
+    title="NeuroSandboxWebUI (ALPHA) - LivePortrait",
+    description="This user interface allows you to animate a source image based on the movements in a driving video using LivePortrait. "
+                "Upload a source image and a driving video, then click Generate to create the animated video. "
+                "Try it and see what happens!",
+    allow_flagging="never",
+)
+
 modelscope_interface = gr.Interface(
     fn=generate_video_modelscope,
     inputs=[
@@ -8035,8 +8090,8 @@ with gr.TabbedInterface(
             tab_names=["StableDiffusion", "Kandinsky", "Flux", "HunyuanDiT", "Lumina-T2X", "Kolors", "AuraFlow", "Würstchen", "DeepFloydIF", "PixArt", "PlaygroundV2.5"]
         ),
         gr.TabbedInterface(
-            [wav2lip_interface, modelscope_interface, zeroscope2_interface, cogvideox_interface, latte_interface],
-            tab_names=["Wav2Lip", "ModelScope", "ZeroScope2", "CogVideoX", "Latte"]
+            [wav2lip_interface, liveportrait_interface, modelscope_interface, zeroscope2_interface, cogvideox_interface, latte_interface],
+            tab_names=["Wav2Lip", "LivePortrait", "ModelScope", "ZeroScope2", "CogVideoX", "Latte"]
         ),
         gr.TabbedInterface(
             [stablefast3d_interface, shap_e_interface, sv34d_interface, zero123plus_interface],
