@@ -5221,14 +5221,27 @@ def generate_liveportrait(source_image, driving_video, output_format="mp4"):
         output_dir = os.path.join('outputs', f"LivePortrait_{today.strftime('%Y%m%d')}")
         os.makedirs(output_dir, exist_ok=True)
 
-        output_filename = f"liveportrait_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
+        output_filename = f"liveportrait_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
         output_path = os.path.join(output_dir, output_filename)
 
         command = f"python LivePortrait/inference.py -s {source_image} -d {driving_video} -o {output_path}"
 
         subprocess.run(command, shell=True, check=True)
 
-        return output_path, None
+        result_folder = [f for f in os.listdir(output_dir) if
+                         f.startswith(output_filename) and os.path.isdir(os.path.join(output_dir, f))]
+        if not result_folder:
+            return None, "Output folder not found"
+
+        result_folder = os.path.join(output_dir, result_folder[0])
+
+        video_files = [f for f in os.listdir(result_folder) if f.endswith(f'.{output_format}') and 'concat' not in f]
+        if not video_files:
+            return None, "Output video not found"
+
+        output_video = os.path.join(result_folder, video_files[0])
+
+        return output_video, None
 
     except Exception as e:
         return None, str(e)
