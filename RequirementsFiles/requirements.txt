@@ -340,3 +340,7 @@ lxml==5.3.0
 portalocker==2.10.1
 sacrebleu==2.4.3
 tabulate==0.9.0
+docstring-parser==0.16
+shtab==1.7.1
+tyro==0.8.10
+pykalman==0.9.7
