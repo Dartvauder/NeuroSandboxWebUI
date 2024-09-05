@@ -20,7 +20,7 @@ The goal of the project - to create the easiest possible application to use neur
 
 ### Audio: <img width="1121" alt="5" src="https://github.com/user-attachments/assets/b734eba6-3ba4-48d7-be0f-0cd7685ba0a9">
 
-### Interface: <img width="1124" alt="6" src="https://github.com/user-attachments/assets/59460998-d7ec-4787-bbd3-fb29a11a85a1">
+### Interface: <img width="1127" alt="6" src="https://github.com/user-attachments/assets/e06fc13b-5f93-41c9-9b27-73bae77b2bde">
 
 ## Features:
 
@@ -32,7 +32,7 @@ The goal of the project - to create the easiest possible application to use neur
 * Debug logging to logs from `Install` and `Update` files
 * Support for Transformers and llama.cpp models (LLM)
 * Support for diffusers and safetensors models (StableDiffusion) - txt2img, img2img, depth2img, pix2pix, controlnet, upscale (latent), upscale (Real-ESRGAN), refiner, inpaint, outpaint, gligen, animatediff, hotshot-xl, video, ldm3d, sd3, cascade, t2i-ip-adapter, ip-adapter-faceid, riffusion and extras tabs
-* Support of additional models for image generation: Kandinsky, Flux, HunyuanDiT, Lumina-T2X, Kolors, AuraFlow, Würstchen, DeepFloydIF, PixArt and PlaygroundV2.5
+* Support of additional models for image generation: Kandinsky (txt2img, img2img, inpaint), Flux (with LoRA support), HunyuanDiT, Lumina-T2X, Kolors, AuraFlow, Würstchen, DeepFloydIF (txt2img, img2img, inpaint), PixArt and PlaygroundV2.5
 * StableAudioOpen support
 * AudioCraft support (Models: musicgen, audiogen and magnet)
 * AudioLDM 2 support (Models: audio and music)
@@ -333,6 +333,8 @@ To work with the virtual environment through the terminal, run `./Venv.sh`
 2) Select your model
 3) Set up the model according to the parameters you need
 4) Click `Submit` to get the generated image
+#### Optional: You can select your `lora` models to improve the generation method
+#### lora = *inputs/image/flux-lora*
 
 ### HunyuanDiT:
 
@@ -519,7 +521,6 @@ To work with the virtual environment through the terminal, run `./Venv.sh`
 2) You can press the `Clear` button to reset your selection
 3) You can turn off the application using the `Close terminal` button
 4) You can open the *outputs* folder using the `Outputs` button
-5) You can reload your interface using the `Reload models` button
 
 ## Where can i get models and voices?
 
