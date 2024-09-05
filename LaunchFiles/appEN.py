@@ -103,6 +103,7 @@ def print_system_info():
         print(f"CUDA available: Yes")
         print(f"CUDA version: {torch.version.cuda}")
         print(f"GPU: {torch.cuda.get_device_name(0)}")
+        print(f"GPU: {torch.cuda.get_device_properties(0).total_memory / (1024 ** 3):.2f} GB")
     else:
         print("CUDA available: No")
 
@@ -247,9 +248,6 @@ def generate_mel_spectrogram(audio_path):
 
 
 def load_model(model_name, model_type, n_ctx=None):
-    global stop_signal
-    if stop_signal:
-        return None, None, "Generation stopped"
     if model_name:
         model_path = f"inputs/text/llm_models/{model_name}"
         if model_type == "transformers":
@@ -283,9 +281,6 @@ def load_model(model_name, model_type, n_ctx=None):
 
 
 def load_lora_model(base_model_name, lora_model_name, model_type):
-    global stop_signal
-    if stop_signal:
-        return None, None, "Generation stopped"
 
     base_model_path = f"inputs/text/llm_models/{base_model_name}"
     lora_model_path = f"inputs/text/llm_models/lora/{lora_model_name}"
@@ -313,9 +308,6 @@ def load_lora_model(base_model_name, lora_model_name, model_type):
 
 
 def load_moondream2_model(model_id, revision):
-    global stop_signal
-    if stop_signal:
-        return "Generation stopped"
     moondream2_model_path = os.path.join("inputs", "text", "llm_models", model_id)
     try:
         if not os.path.exists(moondream2_model_path):
@@ -344,9 +336,6 @@ def load_moondream2_model(model_id, revision):
 
 
 def transcribe_audio(audio_file_path):
-    global stop_signal
-    if stop_signal:
-        return "Generation stopped"
     device = "cuda" if torch.cuda.is_available() else "cpu"
     whisper_model_path = "inputs/text/whisper-medium"
     if not os.path.exists(whisper_model_path):
@@ -362,9 +351,6 @@ def transcribe_audio(audio_file_path):
 
 
 def load_tts_model():
-    global stop_signal
-    if stop_signal:
-        return "Generation stopped"
     tts_model_path = "inputs/audio/XTTS-v2"
     if not os.path.exists(tts_model_path):
         print("Downloading TTS...")
@@ -375,9 +361,6 @@ def load_tts_model():
 
 
 def load_whisper_model():
-    global stop_signal
-    if stop_signal:
-        return "Generation stopped"
     whisper_model_path = "inputs/text/whisper-medium"
     if not os.path.exists(whisper_model_path):
         print("Downloading Whisper...")
@@ -392,9 +375,6 @@ def load_whisper_model():
 
 
 def load_audiocraft_model(model_name):
-    global stop_signal
-    if stop_signal:
-        return "Generation stopped"
     global audiocraft_model_path
     audiocraft_model_path = os.path.join("inputs", "audio", "audiocraft", model_name)
     if not os.path.exists(audiocraft_model_path):
@@ -425,9 +405,6 @@ def load_audiocraft_model(model_name):
 
 
 def load_multiband_diffusion_model():
-    global stop_signal
-    if stop_signal:
-        return "Generation stopped"
     multiband_diffusion_path = os.path.join("inputs", "audio", "audiocraft", "multiband-diffusion")
     if not os.path.exists(multiband_diffusion_path):
         print(f"Downloading Multiband Diffusion model")
@@ -437,16 +414,13 @@ def load_multiband_diffusion_model():
     return multiband_diffusion_path
 
 
-stop_signal = False
-
-chat_history = []
-
-
 def generate_text_and_speech(input_text, system_prompt, input_audio, input_image, llm_model_name, llm_lora_model_name, llm_settings_html, llm_model_type, max_length, max_tokens,
                              temperature, top_p, top_k, chat_history_format, enable_web_search, enable_libretranslate, target_lang, enable_multimodal, enable_tts, tts_settings_html,
                              speaker_wav, language, tts_temperature, tts_top_p, tts_top_k, tts_speed, output_format):
-    global chat_history, chat_dir, tts_model, whisper_model, stop_signal
-    stop_signal = False
+    global chat_history, chat_dir, tts_model, whisper_model
+
+    chat_history = []
+
     if not input_text and not input_audio:
         chat_history.append(["Please, enter your request!", None])
         yield chat_history, None, None, None
@@ -522,8 +496,6 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, input_image
                 ]
 
                 for token in llm.create_chat_completion(messages=messages):
-                    if stop_signal:
-                        break
                     chat_history[-1][1] += token
                     yield chat_history, None, chat_dir, None
 
@@ -541,8 +513,12 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, input_image
             model, tokenizer = load_moondream2_model(model_id, revision)
 
             try:
-                image = Image.open(input_image)
-                enc_image = model.encode_image(image)
+                if input_image:
+                    image = Image.open(input_image)
+                    enc_image = model.encode_image(image)
+                else:
+                    yield chat_history, None, None, "Please upload an image for multimodal input."
+                    return
 
                 context = ""
                 for human_text, ai_text in chat_history[-5:]:
@@ -557,8 +533,6 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, input_image
                     chat_history.append([prompt, ""])
 
                 for token in model.answer_question(enc_image, prompt_with_context, tokenizer):
-                    if stop_signal:
-                        break
                     chat_history[-1][1] += token
                     yield chat_history, None, chat_dir, None
 
@@ -625,8 +599,6 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, input_image
                         chat_history.append([prompt, ""])
 
                     for i in range(max_length):
-                        if stop_signal:
-                            break
 
                         with torch.no_grad():
                             output = llm_model.generate(
@@ -672,8 +644,6 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, input_image
                             repeat_penalty=1.1,
                     ):
 
-                        if stop_signal:
-                            break
                         text += token['choices'][0]['text']
 
                         chat_history[-1][1] = text
@@ -712,42 +682,20 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, input_image
                     with open(chat_history_path, "w", encoding="utf-8") as f:
                         json.dump(chat_history_json, f, ensure_ascii=False, indent=4)
                 if enable_tts and text:
-                    if stop_signal:
-                        chat_history.append([prompt, text])
-                        yield chat_history, None, chat_dir, "Generation stopped"
-                        return
-                    enable_text_splitting = False
                     repetition_penalty = 2.0
                     length_penalty = 1.0
-                    if enable_text_splitting:
-                        text_parts = text.split(".")
-                        for part in text_parts:
-                            wav = tts_model.tts(text=part.strip(), speaker_wav=f"inputs/audio/voices/{speaker_wav}",
-                                                language=language,
-                                                temperature=tts_temperature, top_p=tts_top_p, top_k=tts_top_k, speed=tts_speed,
-                                                repetition_penalty=repetition_penalty, length_penalty=length_penalty)
-                            now = datetime.now()
-                            audio_filename = f"TTS_{now.strftime('%Y%m%d_%H%M%S')}.{output_format}"
-                            audio_path = os.path.join(chat_dir, 'audio', audio_filename)
-                            if output_format == "mp3":
-                                sf.write(audio_path, wav, 22050, format='mp3')
-                            elif output_format == "ogg":
-                                sf.write(audio_path, wav, 22050, format='ogg')
-                            else:
-                                sf.write(audio_path, wav, 22050)
+                    wav = tts_model.tts(text=text, speaker_wav=f"inputs/audio/voices/{speaker_wav}", language=language,
+                                        temperature=tts_temperature, top_p=tts_top_p, top_k=tts_top_k, speed=tts_speed,
+                                        repetition_penalty=repetition_penalty, length_penalty=length_penalty)
+                    now = datetime.now()
+                    audio_filename = f"TTS_{now.strftime('%Y%m%d_%H%M%S')}.{output_format}"
+                    audio_path = os.path.join(chat_dir, 'audio', audio_filename)
+                    if output_format == "mp3":
+                        sf.write(audio_path, wav, 22050, format='mp3')
+                    elif output_format == "ogg":
+                        sf.write(audio_path, wav, 22050, format='ogg')
                     else:
-                        wav = tts_model.tts(text=text, speaker_wav=f"inputs/audio/voices/{speaker_wav}", language=language,
-                                            temperature=tts_temperature, top_p=tts_top_p, top_k=tts_top_k, speed=tts_speed,
-                                            repetition_penalty=repetition_penalty, length_penalty=length_penalty)
-                        now = datetime.now()
-                        audio_filename = f"TTS_{now.strftime('%Y%m%d_%H%M%S')}.{output_format}"
-                        audio_path = os.path.join(chat_dir, 'audio', audio_filename)
-                        if output_format == "mp3":
-                            sf.write(audio_path, wav, 22050, format='mp3')
-                        elif output_format == "ogg":
-                            sf.write(audio_path, wav, 22050, format='ogg')
-                        else:
-                            sf.write(audio_path, wav, 22050)
+                        sf.write(audio_path, wav, 22050)
 
         except Exception as e:
             yield str(e), None, None, None
@@ -869,6 +817,12 @@ def generate_mms_tts(text, language, output_format):
         Repo.clone_from(f"https://huggingface.co/{model_names[language]}", model_path)
         print(f"MMS TTS model for {language} downloaded")
 
+    if not text:
+        return None, "Please enter your request!"
+
+    if not language:
+        return None, "Please select a language!"
+
     try:
         tokenizer = VitsTokenizer.from_pretrained(model_path)
         model = VitsModel.from_pretrained(model_path)
@@ -911,6 +865,12 @@ def transcribe_mms_stt(audio_file, language, output_format):
         repo = Repo.clone_from("https://huggingface.co/facebook/mms-1b-all", model_path, no_checkout=True)
         repo.git.checkout("HEAD", "--", ".")
         print("MMS STT model downloaded")
+
+    if not audio_file:
+        return None, "Please record your request!"
+
+    if not language:
+        return None, "Please select a language!"
 
     try:
         processor = AutoProcessor.from_pretrained(model_path)
@@ -966,6 +926,18 @@ def seamless_m4tv2_process(input_type, input_text, input_audio, src_lang, tgt_la
         os.makedirs(MODEL_PATH, exist_ok=True)
         Repo.clone_from("https://huggingface.co/facebook/seamless-m4t-v2-large", MODEL_PATH)
         print("SeamlessM4Tv2 model downloaded")
+
+    if not input_text and not input_audio:
+        return None, "Please enter your request!"
+
+    if not src_lang:
+        return None, "Please select your source language!"
+
+    if not tgt_lang:
+        return None, "Please select your target language!"
+
+    if not dataset_lang:
+        return None, "Please select your dataset language!"
 
     try:
         processor = AutoProcessor.from_pretrained(MODEL_PATH)
@@ -1053,9 +1025,7 @@ def seamless_m4tv2_process(input_type, input_text, input_audio, src_lang, tgt_la
         flush()
 
 
-def generate_bark_audio(text, voice_preset, max_length, fine_temperature, coarse_temperature, output_format, stop_generation):
-    global stop_signal
-    stop_signal = False
+def generate_bark_audio(text, voice_preset, max_length, fine_temperature, coarse_temperature, output_format):
 
     if not text:
         return None, None, "Please enter text for the request!"
@@ -1082,9 +1052,6 @@ def generate_bark_audio(text, voice_preset, max_length, fine_temperature, coarse
 
         audio_array = model.generate(**inputs, max_length=max_length, do_sample=True, fine_temperature=fine_temperature, coarse_temperature=coarse_temperature)
         model.enable_cpu_offload()
-
-        if stop_signal:
-            return None, None, "Generation stopped"
 
         today = datetime.now().date()
         audio_dir = os.path.join('outputs', f"Bark_{today.strftime('%Y%m%d')}")
@@ -1116,6 +1083,16 @@ def generate_bark_audio(text, voice_preset, max_length, fine_temperature, coarse
 
 
 def translate_text(text, source_lang, target_lang, enable_translate_history, translate_history_format, file=None):
+
+    if not text:
+        return None, "Please enter your request!"
+
+    if not source_lang:
+        return None, "Please select your source language!"
+
+    if not target_lang:
+        return None, "Please select your target language!"
+
     try:
         translator = LibreTranslateAPI("http://127.0.0.1:5000")
         if file:
@@ -1165,8 +1142,6 @@ def translate_text(text, source_lang, target_lang, enable_translate_history, tra
 
 
 def generate_wav2lip(image_path, audio_path, fps, pads, face_det_batch_size, wav2lip_batch_size, resize_factor, crop, enable_no_smooth):
-    global stop_signal
-    stop_signal = False
 
     if not image_path or not audio_path:
         return None, "Please upload an image and an audio file!"
@@ -1198,9 +1173,6 @@ def generate_wav2lip(image_path, audio_path, fps, pads, face_det_batch_size, wav
 
         subprocess.run(command, shell=True, check=True)
 
-        if stop_signal:
-            return None, "Generation stopped"
-
         return output_path, None
 
     except Exception as e:
@@ -1213,9 +1185,7 @@ def generate_wav2lip(image_path, audio_path, fps, pads, face_det_batch_size, wav
 def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name, vae_model_name, lora_model_names, lora_scales, textual_inversion_model_names, stable_diffusion_settings_html,
                            stable_diffusion_model_type, stable_diffusion_sampler, stable_diffusion_steps,
                            stable_diffusion_cfg, stable_diffusion_width, stable_diffusion_height,
-                           stable_diffusion_clip_skip, num_images_per_prompt, enable_freeu, freeu_s1, freeu_s2, freeu_b1, freeu_b2, enable_sag, sag_scale, enable_pag, pag_scale, enable_tiled_vae, seed, output_format="png", stop_generation=None):
-    global stop_signal
-    stop_signal = False
+                           stable_diffusion_clip_skip, num_images_per_prompt, enable_freeu, freeu_s1, freeu_s2, freeu_b1, freeu_b2, enable_sag, sag_scale, enable_pag, pag_scale, enable_tiled_vae, seed, output_format="png"):
 
     if not stable_diffusion_model_name:
         return None, "Please, select a StableDiffusion model!"
@@ -1411,9 +1381,6 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
                                             sampler=stable_diffusion_sampler, num_images_per_prompt=num_images_per_prompt,
                                             generator=generator).images
 
-        if stop_signal:
-            return None, "Generation stopped"
-
         image_paths = []
         for i, image in enumerate(images):
             today = datetime.now().date()
@@ -1438,9 +1405,7 @@ def generate_image_img2img(prompt, negative_prompt, init_image,
                            strength, stable_diffusion_model_name, vae_model_name, stable_diffusion_settings_html,
                            stable_diffusion_model_type,
                            stable_diffusion_sampler, stable_diffusion_steps, stable_diffusion_cfg,
-                           stable_diffusion_clip_skip, num_images_per_prompt, seed, output_format="png", stop_generation=None):
-    global stop_signal
-    stop_signal = False
+                           stable_diffusion_clip_skip, num_images_per_prompt, seed, output_format="png"):
 
     if not stable_diffusion_model_name:
         return None, "Please, select a StableDiffusion model!"
@@ -1528,9 +1493,6 @@ def generate_image_img2img(prompt, negative_prompt, init_image,
                                             guidance_scale=stable_diffusion_cfg, clip_skip=stable_diffusion_clip_skip,
                                             sampler=stable_diffusion_sampler, image=init_image, strength=strength, num_images_per_prompt=num_images_per_prompt).images
 
-        if stop_signal:
-            return None, "Generation stopped"
-
         image_paths = []
         for i, image in enumerate(images):
             today = datetime.now().date()
@@ -1552,9 +1514,7 @@ def generate_image_img2img(prompt, negative_prompt, init_image,
 
 
 def generate_image_depth2img(prompt, negative_prompt, init_image, stable_diffusion_settings_html, strength, clip_skip, num_images_per_prompt,
-                             seed, output_format="png", stop_generation=None):
-    global stop_signal
-    stop_signal = False
+                             seed, output_format="png"):
 
     if not init_image:
         return None, "Please, upload an initial image!"
@@ -1572,8 +1532,8 @@ def generate_image_depth2img(prompt, negative_prompt, init_image, stable_diffusi
             stable_diffusion_model_path, use_safetensors=True,
             torch_dtype=torch.float16, variant="fp16",
         )
-    except (ValueError, KeyError):
-        return None, "Failed to load the depth2img model"
+    except Exception as e:
+        return None, str(e)
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -1605,9 +1565,6 @@ def generate_image_depth2img(prompt, negative_prompt, init_image, stable_diffusi
 
         images = stable_diffusion_model(prompt_embeds=prompt_embeds, negative_prompt_embeds=negative_prompt_embeds, image=init_image, strength=strength, num_images_per_prompt=num_images_per_prompt, clip_skip=clip_skip, generator=generator).images
 
-        if stop_signal:
-            return None, "Generation stopped"
-
         image_paths = []
         for i, image in enumerate(images):
             today = datetime.now().date()
@@ -1629,9 +1586,7 @@ def generate_image_depth2img(prompt, negative_prompt, init_image, stable_diffusi
 
 
 def generate_image_pix2pix(prompt, negative_prompt, init_image, num_inference_steps, guidance_scale,
-                           clip_skip, num_images_per_prompt, seed, output_format="png", stop_generation=None):
-    global stop_signal
-    stop_signal = False
+                           clip_skip, num_images_per_prompt, seed, output_format="png"):
 
     if not init_image:
         return None, "Please, upload an initial image!"
@@ -1678,9 +1633,6 @@ def generate_image_pix2pix(prompt, negative_prompt, init_image, num_inference_st
         images = pipe(prompt_embeds=prompt_embeds, negative_prompt_embeds=negative_prompt_embeds,
                       image=image, clip_skip=clip_skip, num_inference_steps=num_inference_steps, image_guidance_scale=guidance_scale, num_images_per_prompt=num_images_per_prompt, generator=generator).images
 
-        if stop_signal:
-            return None, "Generation stopped"
-
         image_paths = []
         for i, image in enumerate(images):
             today = datetime.now().date()
@@ -1702,10 +1654,7 @@ def generate_image_pix2pix(prompt, negative_prompt, init_image, num_inference_st
 
 
 def generate_image_controlnet(prompt, negative_prompt, init_image, sd_version, stable_diffusion_sampler, stable_diffusion_model_name, controlnet_model_name,
-                              num_inference_steps, guidance_scale, width, height, controlnet_conditioning_scale, clip_skip, num_images_per_prompt, seed, output_format="png",
-                              stop_generation=None):
-    global stop_signal
-    stop_signal = False
+                              num_inference_steps, guidance_scale, width, height, controlnet_conditioning_scale, clip_skip, num_images_per_prompt, seed, output_format="png"):
 
     if not init_image:
         return None, None, "Please, upload an initial image!"
@@ -1890,9 +1839,6 @@ def generate_image_controlnet(prompt, negative_prompt, init_image, sd_version, s
                 num_inference_steps=num_inference_steps, guidance_scale=guidance_scale, clip_skip=clip_skip,
                 width=width, height=height, sampler=stable_diffusion_sampler, num_images_per_prompt=num_images_per_prompt).images
 
-        if stop_signal:
-            return None, None, "Generation stopped"
-
         image_paths = []
         control_image_paths = []
         for i, (image, control_image) in enumerate(zip(images, [control_image] * len(images))):
@@ -1928,15 +1874,18 @@ def generate_image_controlnet(prompt, negative_prompt, init_image, sd_version, s
         flush()
 
 
-def generate_image_upscale_latent(prompt, image_path, upscale_factor, num_inference_steps, guidance_scale, seed, output_format="png", stop_generation=None):
-    global stop_signal
-    if stop_signal:
-        return None, "Generation stopped"
+def generate_image_upscale_latent(prompt, image_path, upscale_factor, num_inference_steps, guidance_scale, seed, output_format="png"):
 
     if not image_path:
         return None, "Please, upload an initial image!"
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
+
+    if seed == "" or seed is None:
+        seed = random.randint(0, 2 ** 32 - 1)
+    else:
+        seed = int(seed)
+    generator = torch.Generator(device).manual_seed(seed)
 
     try:
         if upscale_factor == "x2":
@@ -1963,12 +1912,6 @@ def generate_image_upscale_latent(prompt, image_path, upscale_factor, num_infere
             upscaler.unet.to(device)
 
             upscaler.safety_checker = None
-
-            if seed == "" or seed is None:
-                seed = random.randint(0, 2 ** 32 - 1)
-            else:
-                seed = int(seed)
-            generator = torch.Generator(device).manual_seed(seed)
 
             init_image = Image.open(image_path).convert("RGB")
             init_image = init_image.resize((512, 512))
@@ -2009,12 +1952,6 @@ def generate_image_upscale_latent(prompt, image_path, upscale_factor, num_infere
 
             upscaler.safety_checker = None
 
-            if seed == "" or seed is None:
-                seed = random.randint(0, 2 ** 32 - 1)
-            else:
-                seed = int(seed)
-            generator = torch.Generator(device).manual_seed(seed)
-
             low_res_img = Image.open(image_path).convert("RGB")
             low_res_img = low_res_img.resize((128, 128))
 
@@ -2025,9 +1962,6 @@ def generate_image_upscale_latent(prompt, image_path, upscale_factor, num_infere
                 guidance_scale=guidance_scale,
                 generator=generator,
             ).images[0]
-
-        if stop_signal:
-            return None, "Generation stopped"
 
         today = datetime.now().date()
         image_dir = os.path.join('outputs', f"StableDiffusion_{today.strftime('%Y%m%d')}")
@@ -2046,11 +1980,12 @@ def generate_image_upscale_latent(prompt, image_path, upscale_factor, num_infere
         flush()
 
 
-def generate_image_upscale_realesrgan(input_image, input_video, model_name, outscale, face_enhance, tile, tile_pad, pre_pad, denoise_strength, output_format="png", stop_generation=None):
-    global stop_signal
-    stop_signal = False
+def generate_image_upscale_realesrgan(input_image, input_video, model_name, outscale, face_enhance, tile, tile_pad, pre_pad, denoise_strength, output_format="png"):
 
     realesrgan_path = os.path.join("inputs", "image", "Real-ESRGAN")
+
+    if not input_image and not input_video:
+        return None, "Please, upload an initial image or video!"
 
     today = datetime.now().date()
     output_dir = os.path.join('outputs', f"RealESRGAN_{today.strftime('%Y%m%d')}")
@@ -2099,9 +2034,6 @@ def generate_image_upscale_realesrgan(input_image, input_video, model_name, outs
                 os.remove(frame_path)
                 os.remove(os.path.join(output_dir, "temp_frame_out.png"))
 
-                if stop_signal:
-                    break
-
             cap.release()
             out.release()
         else:
@@ -2110,9 +2042,6 @@ def generate_image_upscale_realesrgan(input_image, input_video, model_name, outs
                 command += " --face_enhance"
 
         subprocess.run(command, shell=True, check=True)
-
-        if stop_signal:
-            return None, None, "Generation stopped"
 
         expected_output_filename = f"{input_name}_out{input_ext}"
         output_path = os.path.join(output_dir, expected_output_filename)
@@ -2138,12 +2067,10 @@ def generate_image_upscale_realesrgan(input_image, input_video, model_name, outs
         flush()
 
 
-def generate_image_sdxl_refiner(prompt, init_image, output_format="png", stop_generation=None):
-    global stop_signal
-    stop_signal = False
+def generate_image_sdxl_refiner(prompt, init_image, output_format="png"):
 
-    if not prompt or not init_image:
-        return None, "Please enter a prompt and upload an initial image!"
+    if not init_image:
+        return None, "Please upload an initial image!"
 
     sdxl_refiner_path = os.path.join("inputs", "image", "sd_models", "sdxl-refiner-1.0")
 
@@ -2164,9 +2091,6 @@ def generate_image_sdxl_refiner(prompt, init_image, output_format="png", stop_ge
         init_image = Image.open(init_image).convert("RGB")
         image = pipe(prompt, image=init_image).images[0]
 
-        if stop_signal:
-            return None, "Generation stopped"
-
         today = datetime.now().date()
         image_dir = os.path.join('outputs', f"StableDiffusion_{today.strftime('%Y%m%d')}")
         os.makedirs(image_dir, exist_ok=True)
@@ -2186,9 +2110,7 @@ def generate_image_sdxl_refiner(prompt, init_image, output_format="png", stop_ge
 
 def generate_image_inpaint(prompt, negative_prompt, init_image, mask_image, blur_factor, stable_diffusion_model_name, vae_model_name,
                            stable_diffusion_settings_html, stable_diffusion_model_type, stable_diffusion_sampler,
-                           stable_diffusion_steps, stable_diffusion_cfg, width, height, clip_skip, num_images_per_prompt, seed, output_format="png", stop_generation=None):
-    global stop_signal
-    stop_signal = False
+                           stable_diffusion_steps, stable_diffusion_cfg, width, height, clip_skip, num_images_per_prompt, seed, output_format="png"):
 
     if not stable_diffusion_model_name:
         return None, "Please, select a StableDiffusion model!"
@@ -2301,9 +2223,6 @@ def generate_image_inpaint(prompt, negative_prompt, init_image, mask_image, blur
                                             num_inference_steps=stable_diffusion_steps,
                                             guidance_scale=stable_diffusion_cfg, sampler=stable_diffusion_sampler, num_images_per_prompt=num_images_per_prompt).images
 
-        if stop_signal:
-            return None, "Generation stopped"
-
         image_paths = []
         for i, image in enumerate(images):
             today = datetime.now().date()
@@ -2327,9 +2246,7 @@ def generate_image_inpaint(prompt, negative_prompt, init_image, mask_image, blur
 def generate_image_outpaint(prompt, negative_prompt, init_image, stable_diffusion_model_name, stable_diffusion_settings_html,
                             stable_diffusion_model_type, stable_diffusion_sampler,
                             stable_diffusion_steps, stable_diffusion_cfg,
-                            outpaint_direction, outpaint_expansion, clip_skip, num_images_per_prompt, seed, output_format="png", stop_generation=None):
-    global stop_signal
-    stop_signal = False
+                            outpaint_direction, outpaint_expansion, clip_skip, num_images_per_prompt, seed, output_format="png"):
 
     if not init_image:
         return None, "Please upload an initial image!"
@@ -2460,9 +2377,6 @@ def generate_image_outpaint(prompt, negative_prompt, init_image, stable_diffusio
                 generator=generator,
             ).images
 
-        if stop_signal:
-            return None, "Generation stopped"
-
         today = datetime.now().date()
         image_dir = os.path.join('outputs', f"StableDiffusion_{today.strftime('%Y%m%d')}")
         os.makedirs(image_dir, exist_ok=True)
@@ -2487,9 +2401,7 @@ def generate_image_outpaint(prompt, negative_prompt, init_image, stable_diffusio
 def generate_image_gligen(prompt, negative_prompt, gligen_phrases, gligen_boxes, stable_diffusion_model_name, stable_diffusion_settings_html,
                           stable_diffusion_model_type, stable_diffusion_sampler, stable_diffusion_steps,
                           stable_diffusion_cfg, stable_diffusion_width, stable_diffusion_height,
-                          stable_diffusion_clip_skip, num_images_per_prompt, seed, output_format="png", stop_generation=None):
-    global stop_signal
-    stop_signal = False
+                          stable_diffusion_clip_skip, num_images_per_prompt, seed, output_format="png"):
 
     if not stable_diffusion_model_name:
         return None, "Please, select a StableDiffusion model!"
@@ -2568,9 +2480,6 @@ def generate_image_gligen(prompt, negative_prompt, gligen_phrases, gligen_boxes,
                                            width=stable_diffusion_width, clip_skip=stable_diffusion_clip_skip,
                                            sampler=stable_diffusion_sampler, num_images_per_prompt=num_images_per_prompt).images
 
-        if stop_signal:
-            return None, "Generation stopped"
-
         gligen_model_path = os.path.join("inputs", "image", "sd_models", "gligen")
 
         if not os.path.exists(gligen_model_path):
@@ -2608,9 +2517,6 @@ def generate_image_gligen(prompt, negative_prompt, gligen_phrases, gligen_boxes,
             num_inference_steps=stable_diffusion_steps,
         ).images
 
-        if stop_signal:
-            return None, "Generation stopped"
-
         image_paths = []
         for i, image in enumerate(images):
             today = datetime.now().date()
@@ -2633,9 +2539,7 @@ def generate_image_gligen(prompt, negative_prompt, gligen_phrases, gligen_boxes,
 
 
 def generate_image_animatediff(prompt, negative_prompt, input_video, strength, model_type, stable_diffusion_model_name, motion_lora_name, num_frames, num_inference_steps,
-                               guidance_scale, width, height, clip_skip, seed, stop_generation):
-    global stop_signal
-    stop_signal = False
+                               guidance_scale, width, height, clip_skip, seed):
 
     if not stable_diffusion_model_name:
         return None, "Please, select a StableDiffusion model!"
@@ -2831,9 +2735,6 @@ def generate_image_animatediff(prompt, negative_prompt, input_video, strength, m
                 clip_skip=clip_skip,
             )
 
-        if stop_signal:
-            return None, "Generation stopped"
-
         frames = output.frames[0]
 
         today = datetime.now().date()
@@ -2859,12 +2760,7 @@ def generate_image_animatediff(prompt, negative_prompt, input_video, strength, m
         flush()
 
 
-def generate_hotshotxl(prompt, negative_prompt, steps, width, height, video_length, video_duration, output_format="gif", stop_generation=None):
-    global stop_signal
-    stop_signal = False
-
-    if not prompt:
-        return None, "Please enter a prompt!"
+def generate_hotshotxl(prompt, negative_prompt, steps, width, height, video_length, video_duration, output_format="gif"):
 
     hotshotxl_model_path = os.path.join("inputs", "image", "sd_models", "hotshot_xl")
     hotshotxl_base_model_path = os.path.join("inputs", "image", "sd_models", "hotshot_xl_base")
@@ -2900,20 +2796,7 @@ def generate_hotshotxl(prompt, negative_prompt, steps, width, height, video_leng
             f"--video_duration={video_duration}"
         ]
 
-        process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-
-        while True:
-            if stop_signal:
-                process.terminate()
-                return None, "Generation stopped"
-
-            return_code = process.poll()
-            if return_code is not None:
-                break
-
-        if return_code != 0:
-            error_output = process.stderr.read().decode('utf-8')
-            return None, f"Error occurred: {error_output}"
+        subprocess.run(command, shell=True, check=True)
 
         return output_path, "GIF generated successfully!"
 
@@ -2925,9 +2808,7 @@ def generate_hotshotxl(prompt, negative_prompt, steps, width, height, video_leng
 
 
 def generate_video(init_image, output_format, video_settings_html, motion_bucket_id, noise_aug_strength, fps, num_frames, decode_chunk_size,
-                   iv2gen_xl_settings_html, prompt, negative_prompt, num_inference_steps, guidance_scale, seed, stop_generation):
-    global stop_signal
-    stop_signal = False
+                   iv2gen_xl_settings_html, prompt, negative_prompt, num_inference_steps, guidance_scale, seed):
 
     if not init_image:
         return None, None, "Please upload an initial image!"
@@ -2966,9 +2847,6 @@ def generate_video(init_image, output_format, video_settings_html, motion_bucket
             generator = torch.Generator(device).manual_seed(seed)
             frames = pipe(image, decode_chunk_size=decode_chunk_size, generator=generator,
                           motion_bucket_id=motion_bucket_id, noise_aug_strength=noise_aug_strength, num_frames=num_frames).frames[0]
-
-            if stop_signal:
-                return None, None, "Generation stopped"
 
             video_filename = f"video_{datetime.now().strftime('%Y%m%d_%H%M%S')}.mp4"
             video_path = os.path.join(video_dir, video_filename)
@@ -3018,9 +2896,6 @@ def generate_video(init_image, output_format, video_settings_html, motion_bucket
                 generator=generator
             ).frames[0]
 
-            if stop_signal:
-                return None, None, "Generation stopped"
-
             video_filename = f"video_{datetime.now().strftime('%Y%m%d_%H%M%S')}.gif"
             video_path = os.path.join(video_dir, video_filename)
             export_to_gif(frames, video_path)
@@ -3032,18 +2907,13 @@ def generate_video(init_image, output_format, video_settings_html, motion_bucket
 
         finally:
             try:
-                del pipeline
+                del pipe
             except UnboundLocalError:
                 pass
             flush()
 
 
-def generate_image_ldm3d(prompt, negative_prompt, width, height, num_inference_steps, guidance_scale, num_images_per_prompt, seed, output_format="png", stop_generation=None):
-    global stop_signal
-    stop_signal = False
-
-    if not prompt:
-        return None, None, "Please enter a prompt!"
+def generate_image_ldm3d(prompt, negative_prompt, width, height, num_inference_steps, guidance_scale, num_images_per_prompt, seed, output_format="png"):
 
     ldm3d_model_path = os.path.join("inputs", "image", "sd_models", "ldm3d")
 
@@ -3079,9 +2949,6 @@ def generate_image_ldm3d(prompt, negative_prompt, width, height, num_inference_s
             generator=generator,
         )
 
-        if stop_signal:
-            return None, None, "Generation stopped"
-
         rgb_image_paths = []
         depth_image_paths = []
 
@@ -3112,9 +2979,7 @@ def generate_image_ldm3d(prompt, negative_prompt, width, height, num_inference_s
         flush()
 
 
-def generate_image_sd3_txt2img(prompt, negative_prompt, num_inference_steps, guidance_scale, width, height, max_sequence_length, clip_skip, num_images_per_prompt, seed, output_format="png", stop_generation=None):
-    global stop_signal
-    stop_signal = False
+def generate_image_sd3_txt2img(prompt, negative_prompt, num_inference_steps, guidance_scale, width, height, max_sequence_length, clip_skip, num_images_per_prompt, seed, output_format="png"):
 
     sd3_model_path = os.path.join("inputs", "image", "sd_models", "sd3")
 
@@ -3156,9 +3021,6 @@ def generate_image_sd3_txt2img(prompt, negative_prompt, num_inference_steps, gui
             generator=generator,
         ).images
 
-        if stop_signal:
-            return None, "Generation stopped"
-
         image_paths = []
         for i, image in enumerate(images):
             today = datetime.now().date()
@@ -3180,11 +3042,12 @@ def generate_image_sd3_txt2img(prompt, negative_prompt, num_inference_steps, gui
         flush()
 
 
-def generate_image_sd3_img2img(prompt, negative_prompt, init_image, strength, num_inference_steps, guidance_scale, width, height, max_sequence_length, clip_skip, num_images_per_prompt, seed, output_format="png", stop_generation=None):
-    global stop_signal
-    stop_signal = False
+def generate_image_sd3_img2img(prompt, negative_prompt, init_image, strength, num_inference_steps, guidance_scale, width, height, max_sequence_length, clip_skip, num_images_per_prompt, seed, output_format="png"):
 
     sd3_model_path = os.path.join("inputs", "image", "sd_models", "sd3")
+
+    if not init_image:
+        return None, "Please upload an initial image!"
 
     if not os.path.exists(sd3_model_path):
         print("Downloading Stable Diffusion 3 model...")
@@ -3226,9 +3089,6 @@ def generate_image_sd3_img2img(prompt, negative_prompt, init_image, strength, nu
             generator=generator,
         ).images
 
-        if stop_signal:
-            return None, "Generation stopped"
-
         image_paths = []
         for i, image in enumerate(images):
             today = datetime.now().date()
@@ -3250,12 +3110,13 @@ def generate_image_sd3_img2img(prompt, negative_prompt, init_image, strength, nu
         flush()
 
 
-def generate_image_sd3_controlnet(prompt, negative_prompt, init_image, controlnet_model, num_inference_steps, guidance_scale, controlnet_conditioning_scale, width, height, max_sequence_length, clip_skip, num_images_per_prompt, seed, output_format="png", stop_generation=None):
-    global stop_signal
-    stop_signal = False
+def generate_image_sd3_controlnet(prompt, negative_prompt, init_image, controlnet_model, num_inference_steps, guidance_scale, controlnet_conditioning_scale, width, height, max_sequence_length, clip_skip, num_images_per_prompt, seed, output_format="png"):
 
     if not init_image:
         return None, None, "Please upload an initial image!"
+
+    if not controlnet_model:
+        return None, None, "Please select a controlnet model!"
 
     sd3_model_path = os.path.join("inputs", "image", "sd_models", "sd3")
     controlnet_path = os.path.join("inputs", "image", "sd_models", "sd3", "controlnet", f"sd3_{controlnet_model}")
@@ -3321,9 +3182,6 @@ def generate_image_sd3_controlnet(prompt, negative_prompt, init_image, controlne
             generator=generator,
         ).images
 
-        if stop_signal:
-            return None, None, "Generation stopped"
-
         image_paths = []
         control_image_paths = []
         for i, (image, control_image) in enumerate(zip(images, [control_image] * len(images))):
@@ -3353,11 +3211,12 @@ def generate_image_sd3_controlnet(prompt, negative_prompt, init_image, controlne
         flush()
 
 
-def generate_image_sd3_inpaint(prompt, negative_prompt, init_image, mask_image, num_inference_steps, guidance_scale, width, height, max_sequence_length, clip_skip, num_images_per_prompt, seed, output_format="png", stop_generation=None):
-    global stop_signal
-    stop_signal = False
+def generate_image_sd3_inpaint(prompt, negative_prompt, init_image, mask_image, num_inference_steps, guidance_scale, width, height, max_sequence_length, clip_skip, num_images_per_prompt, seed, output_format="png"):
 
     sd3_model_path = os.path.join("inputs", "image", "sd_models", "sd3")
+
+    if not init_image or not mask_image:
+        return None, "Please, upload an initial image and a mask image!"
 
     if not os.path.exists(sd3_model_path):
         print("Downloading Stable Diffusion 3 model...")
@@ -3402,9 +3261,6 @@ def generate_image_sd3_inpaint(prompt, negative_prompt, init_image, mask_image, 
             generator=generator,
         ).images
 
-        if stop_signal:
-            return None, "Generation stopped"
-
         image_paths = []
         for i, image in enumerate(images):
             today = datetime.now().date()
@@ -3427,13 +3283,7 @@ def generate_image_sd3_inpaint(prompt, negative_prompt, init_image, mask_image, 
 
 
 def generate_image_cascade(prompt, negative_prompt, stable_cascade_settings_html, width, height, prior_steps, prior_guidance_scale,
-                           decoder_steps, decoder_guidance_scale, num_images_per_prompt, seed, output_format="png",
-                           stop_generation=None):
-    global stop_signal
-    stop_signal = False
-
-    if not prompt:
-        return None, "Please enter a prompt!"
+                           decoder_steps, decoder_guidance_scale, num_images_per_prompt, seed, output_format="png"):
 
     stable_cascade_model_path = os.path.join("inputs", "image", "sd_models", "cascade")
 
@@ -3475,9 +3325,6 @@ def generate_image_cascade(prompt, negative_prompt, stable_cascade_settings_html
             generator=generator,
         )
 
-        if stop_signal:
-            return None, "Generation stopped"
-
         decoder.enable_model_cpu_offload()
 
         decoder_output = decoder(
@@ -3488,9 +3335,6 @@ def generate_image_cascade(prompt, negative_prompt, stable_cascade_settings_html
             output_type="pil",
             num_inference_steps=decoder_steps
         ).images
-
-        if stop_signal:
-            return None, "Generation stopped"
 
         image_paths = []
         for i, image in enumerate(decoder_output):
@@ -3513,9 +3357,7 @@ def generate_image_cascade(prompt, negative_prompt, stable_cascade_settings_html
         flush()
 
 
-def generate_image_t2i_ip_adapter(prompt, negative_prompt, ip_adapter_image, stable_diffusion_model_type, stable_diffusion_model_name, num_inference_steps, guidance_scale, width, height, seed, output_format="png", stop_generation=None):
-    global stop_signal
-    stop_signal = False
+def generate_image_t2i_ip_adapter(prompt, negative_prompt, ip_adapter_image, stable_diffusion_model_type, stable_diffusion_model_name, num_inference_steps, guidance_scale, width, height, seed, output_format="png"):
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -3525,8 +3367,8 @@ def generate_image_t2i_ip_adapter(prompt, negative_prompt, ip_adapter_image, sta
         seed = int(seed)
     generator = torch.Generator(device).manual_seed(seed)
 
-    if not prompt or not ip_adapter_image:
-        return None, "Please enter a prompt and upload an image!"
+    if not ip_adapter_image:
+        return None, "Please upload an image!"
 
     if not stable_diffusion_model_name:
         return None, "Please select a StableDiffusion model!"
@@ -3589,9 +3431,6 @@ def generate_image_t2i_ip_adapter(prompt, negative_prompt, ip_adapter_image, sta
             generator=generator,
         ).images
 
-        if stop_signal:
-            return None, "Generation stopped"
-
         image_paths = []
         for i, image in enumerate(images):
             today = datetime.now().date()
@@ -3613,9 +3452,7 @@ def generate_image_t2i_ip_adapter(prompt, negative_prompt, ip_adapter_image, sta
         flush()
 
 
-def generate_image_ip_adapter_faceid(prompt, negative_prompt, face_image, s_scale, stable_diffusion_model_type, stable_diffusion_model_name, num_inference_steps, guidance_scale, width, height, output_format="png", stop_generation=None):
-    global stop_signal
-    stop_signal = False
+def generate_image_ip_adapter_faceid(prompt, negative_prompt, face_image, s_scale, stable_diffusion_model_type, stable_diffusion_model_name, num_inference_steps, guidance_scale, width, height, output_format="png"):
 
     if not face_image:
         return None, "Please upload a face image!"
@@ -3699,9 +3536,6 @@ def generate_image_ip_adapter_faceid(prompt, negative_prompt, face_image, s_scal
             guidance_scale=guidance_scale,
         )
 
-        if stop_signal:
-            return None, "Generation stopped"
-
         today = datetime.now().date()
         image_dir = os.path.join('outputs', f"IPAdapterFaceID_{today.strftime('%Y%m%d')}")
         os.makedirs(image_dir, exist_ok=True)
@@ -3724,9 +3558,7 @@ def generate_image_ip_adapter_faceid(prompt, negative_prompt, face_image, s_scal
         flush()
 
 
-def generate_riffusion_text2image(prompt, negative_prompt, num_inference_steps, guidance_scale, height, width, seed, output_format="png", stop_generation=None):
-    global stop_signal
-    stop_signal = False
+def generate_riffusion_text2image(prompt, negative_prompt, num_inference_steps, guidance_scale, height, width, seed, output_format="png"):
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -3757,9 +3589,6 @@ def generate_riffusion_text2image(prompt, negative_prompt, num_inference_steps, 
             width=width,
             generator=generator
         ).images[0]
-
-        if stop_signal:
-            return None, "Generation stopped"
 
         today = datetime.now().date()
         image_dir = os.path.join('outputs', f"Riffusion_{today.strftime('%Y%m%d')}")
@@ -3904,10 +3733,7 @@ def generate_image_extras(input_image, source_image, remove_background, enable_f
         flush()
 
 
-def generate_image_kandinsky_txt2img(prompt, negative_prompt, version, num_inference_steps, guidance_scale, height, width, seed, output_format="png",
-                             stop_generation=None):
-    global stop_signal
-    stop_signal = False
+def generate_image_kandinsky_txt2img(prompt, negative_prompt, version, num_inference_steps, guidance_scale, height, width, seed, output_format="png"):
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -4005,9 +3831,6 @@ def generate_image_kandinsky_txt2img(prompt, negative_prompt, version, num_infer
                 generator=generator,
             ).images[0]
 
-        if stop_signal:
-            return None, "Generation stopped"
-
         today = datetime.now().date()
         image_dir = os.path.join('outputs', f"Kandinsky_{today.strftime('%Y%m%d')}")
         os.makedirs(image_dir, exist_ok=True)
@@ -4029,9 +3852,7 @@ def generate_image_kandinsky_txt2img(prompt, negative_prompt, version, num_infer
         flush()
 
 
-def generate_image_kandinsky_img2img(prompt, negative_prompt, init_image, version, num_inference_steps, guidance_scale, strength, height, width, seed, output_format="png", stop_generation=None):
-    global stop_signal
-    stop_signal = False
+def generate_image_kandinsky_img2img(prompt, negative_prompt, init_image, version, num_inference_steps, guidance_scale, strength, height, width, seed, output_format="png"):
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -4041,8 +3862,8 @@ def generate_image_kandinsky_img2img(prompt, negative_prompt, init_image, versio
         seed = int(seed)
     generator = torch.Generator(device).manual_seed(seed)
 
-    if not prompt or not init_image:
-        return None, "Please enter a prompt and upload an initial image!"
+    if not init_image:
+        return None, "Please upload an initial image!"
 
     kandinsky_model_path = os.path.join("inputs", "image", "kandinsky")
 
@@ -4132,9 +3953,6 @@ def generate_image_kandinsky_img2img(prompt, negative_prompt, init_image, versio
                 generator=generator,
             ).images[0]
 
-        if stop_signal:
-            return None, "Generation stopped"
-
         today = datetime.now().date()
         image_dir = os.path.join('outputs', f"Kandinsky_{today.strftime('%Y%m%d')}")
         os.makedirs(image_dir, exist_ok=True)
@@ -4156,14 +3974,12 @@ def generate_image_kandinsky_img2img(prompt, negative_prompt, init_image, versio
         flush()
 
 
-def generate_image_kandinsky_inpaint(prompt, negative_prompt, init_image, mask_image, version, num_inference_steps, guidance_scale, strength, height, width, output_format="png", stop_generation=None):
-    global stop_signal
-    stop_signal = False
+def generate_image_kandinsky_inpaint(prompt, negative_prompt, init_image, mask_image, version, num_inference_steps, guidance_scale, strength, height, width, output_format="png"):
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
-    if not prompt or not init_image or not mask_image:
-        return None, "Please enter a prompt, upload an initial image, and provide a mask image!"
+    if not init_image or not mask_image:
+        return None, "Please upload an initial image and provide a mask image!"
 
     kandinsky_model_path = os.path.join("inputs", "image", "kandinsky")
 
@@ -4211,9 +4027,6 @@ def generate_image_kandinsky_inpaint(prompt, negative_prompt, init_image, mask_i
             strength=strength,
         ).images[0]
 
-        if stop_signal:
-            return None, "Generation stopped"
-
         today = datetime.now().date()
         image_dir = os.path.join('outputs', f"Kandinsky_{today.strftime('%Y%m%d')}")
         os.makedirs(image_dir, exist_ok=True)
@@ -4231,9 +4044,7 @@ def generate_image_kandinsky_inpaint(prompt, negative_prompt, init_image, mask_i
         flush()
 
 
-def generate_image_flux(prompt, model_name, guidance_scale, height, width, num_inference_steps, max_sequence_length, seed, output_format="png", stop_generation=None):
-    global stop_signal
-    stop_signal = False
+def generate_image_flux(prompt, model_name, guidance_scale, height, width, num_inference_steps, max_sequence_length, seed, output_format="png"):
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -4273,9 +4084,6 @@ def generate_image_flux(prompt, model_name, guidance_scale, height, width, num_i
             generator=generator
         ).images[0]
 
-        if stop_signal:
-            return None, "Generation stopped"
-
         today = datetime.now().date()
         image_dir = os.path.join('outputs', f"Flux_{today.strftime('%Y%m%d')}")
         os.makedirs(image_dir, exist_ok=True)
@@ -4293,9 +4101,7 @@ def generate_image_flux(prompt, model_name, guidance_scale, height, width, num_i
         flush()
 
 
-def generate_image_hunyuandit(prompt, negative_prompt, num_inference_steps, guidance_scale, height, width, seed, output_format="png", stop_generation=None):
-    global stop_signal
-    stop_signal = False
+def generate_image_hunyuandit(prompt, negative_prompt, num_inference_steps, guidance_scale, height, width, seed, output_format="png"):
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -4304,9 +4110,6 @@ def generate_image_hunyuandit(prompt, negative_prompt, num_inference_steps, guid
     else:
         seed = int(seed)
     generator = torch.Generator(device).manual_seed(seed)
-
-    if not prompt:
-        return None, "Please enter a prompt!"
 
     hunyuandit_model_path = os.path.join("inputs", "image", "hunyuandit")
 
@@ -4331,9 +4134,6 @@ def generate_image_hunyuandit(prompt, negative_prompt, num_inference_steps, guid
             generator=generator
         ).images[0]
 
-        if stop_signal:
-            return None, "Generation stopped"
-
         today = datetime.now().date()
         image_dir = os.path.join('outputs', f"HunyuanDiT_{today.strftime('%Y%m%d')}")
         os.makedirs(image_dir, exist_ok=True)
@@ -4351,9 +4151,7 @@ def generate_image_hunyuandit(prompt, negative_prompt, num_inference_steps, guid
         flush()
 
 
-def generate_image_lumina(prompt, negative_prompt, num_inference_steps, guidance_scale, height, width, max_sequence_length, seed, output_format="png", stop_generation=None):
-    global stop_signal
-    stop_signal = False
+def generate_image_lumina(prompt, negative_prompt, num_inference_steps, guidance_scale, height, width, max_sequence_length, seed, output_format="png"):
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -4362,9 +4160,6 @@ def generate_image_lumina(prompt, negative_prompt, num_inference_steps, guidance
     else:
         seed = int(seed)
     generator = torch.Generator(device).manual_seed(seed)
-
-    if not prompt:
-        return None, "Please enter a prompt!"
 
     lumina_model_path = os.path.join("inputs", "image", "lumina")
 
@@ -4391,9 +4186,6 @@ def generate_image_lumina(prompt, negative_prompt, num_inference_steps, guidance
             generator=generator
         ).images[0]
 
-        if stop_signal:
-            return None, "Generation stopped"
-
         today = datetime.now().date()
         image_dir = os.path.join('outputs', f"Lumina_{today.strftime('%Y%m%d')}")
         os.makedirs(image_dir, exist_ok=True)
@@ -4411,9 +4203,7 @@ def generate_image_lumina(prompt, negative_prompt, num_inference_steps, guidance
         flush()
 
 
-def generate_image_kolors(prompt, negative_prompt, guidance_scale, num_inference_steps, max_sequence_length, seed, output_format="png", stop_generation=None):
-    global stop_signal
-    stop_signal = False
+def generate_image_kolors(prompt, negative_prompt, guidance_scale, num_inference_steps, max_sequence_length, seed, output_format="png"):
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -4422,9 +4212,6 @@ def generate_image_kolors(prompt, negative_prompt, guidance_scale, num_inference
     else:
         seed = int(seed)
     generator = torch.Generator(device).manual_seed(seed)
-
-    if not prompt:
-        return None, "Please enter a prompt!"
 
     kolors_model_path = os.path.join("inputs", "image", "kolors")
 
@@ -4448,9 +4235,6 @@ def generate_image_kolors(prompt, negative_prompt, guidance_scale, num_inference
             generator=generator
         ).images[0]
 
-        if stop_signal:
-            return None, "Generation stopped"
-
         today = datetime.now().date()
         image_dir = os.path.join('outputs', f"Kolors_{today.strftime('%Y%m%d')}")
         os.makedirs(image_dir, exist_ok=True)
@@ -4468,9 +4252,7 @@ def generate_image_kolors(prompt, negative_prompt, guidance_scale, num_inference
         flush()
 
 
-def generate_image_auraflow(prompt, negative_prompt, num_inference_steps, guidance_scale, height, width, max_sequence_length, enable_aurasr, seed, output_format="png", stop_generation=None):
-    global stop_signal
-    stop_signal = False
+def generate_image_auraflow(prompt, negative_prompt, num_inference_steps, guidance_scale, height, width, max_sequence_length, enable_aurasr, seed, output_format="png"):
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -4479,9 +4261,6 @@ def generate_image_auraflow(prompt, negative_prompt, num_inference_steps, guidan
     else:
         seed = int(seed)
     generator = torch.Generator(device).manual_seed(seed)
-
-    if not prompt:
-        return None, "Please enter a prompt!"
 
     auraflow_model_path = os.path.join("inputs", "image", "auraflow")
     aurasr_model_path = os.path.join("inputs", "image", "auraflow", "aurasr")
@@ -4513,9 +4292,6 @@ def generate_image_auraflow(prompt, negative_prompt, num_inference_steps, guidan
             generator=generator
         ).images[0]
 
-        if stop_signal:
-            return None, "Generation stopped"
-
         if enable_aurasr:
             aura_sr = AuraSR.from_pretrained(aurasr_model_path)
             image = image.resize((256, 256))
@@ -4540,9 +4316,7 @@ def generate_image_auraflow(prompt, negative_prompt, num_inference_steps, guidan
         flush()
 
 
-def generate_image_wurstchen(prompt, negative_prompt, width, height, prior_steps, prior_guidance_scale, decoder_steps, decoder_guidance_scale, seed, output_format="png", stop_generation=None):
-    global stop_signal
-    stop_signal = False
+def generate_image_wurstchen(prompt, negative_prompt, width, height, prior_steps, prior_guidance_scale, decoder_steps, decoder_guidance_scale, seed, output_format="png"):
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -4551,9 +4325,6 @@ def generate_image_wurstchen(prompt, negative_prompt, width, height, prior_steps
     else:
         seed = int(seed)
     generator = torch.Generator(device).manual_seed(seed)
-
-    if not prompt:
-        return None, "Please enter a prompt!"
 
     wurstchen_model_path = os.path.join("inputs", "image", "wurstchen")
 
@@ -4591,9 +4362,6 @@ def generate_image_wurstchen(prompt, negative_prompt, width, height, prior_steps
             generator=generator
         )
 
-        if stop_signal:
-            return None, "Generation stopped"
-
         decoder_output = decoder_pipeline(
             image_embeddings=prior_output.image_embeddings,
             prompt=prompt,
@@ -4602,9 +4370,6 @@ def generate_image_wurstchen(prompt, negative_prompt, width, height, prior_steps
             num_inference_steps=decoder_steps,
             output_type="pil",
         ).images[0]
-
-        if stop_signal:
-            return None, "Generation stopped"
 
         today = datetime.now().date()
         image_dir = os.path.join('outputs', f"Wurstchen_{today.strftime('%Y%m%d')}")
@@ -4624,9 +4389,7 @@ def generate_image_wurstchen(prompt, negative_prompt, width, height, prior_steps
         flush()
 
 
-def generate_image_deepfloyd_txt2img(prompt, negative_prompt, num_inference_steps, guidance_scale, width, height, seed, output_format="png", stop_generation=None):
-    global stop_signal
-    stop_signal = False
+def generate_image_deepfloyd_txt2img(prompt, negative_prompt, num_inference_steps, guidance_scale, width, height, seed, output_format="png"):
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -4635,9 +4398,6 @@ def generate_image_deepfloyd_txt2img(prompt, negative_prompt, num_inference_step
     else:
         seed = int(seed)
     generator = torch.Generator(device).manual_seed(seed)
-
-    if not prompt:
-        return None, None, None, "Please enter a prompt!"
 
     deepfloydI_model_path = os.path.join("inputs", "image", "deepfloydI")
     deepfloydII_model_path = os.path.join("inputs", "image", "deepfloydII")
@@ -4685,9 +4445,6 @@ def generate_image_deepfloyd_txt2img(prompt, negative_prompt, num_inference_step
             generator=generator
         ).images
 
-        if stop_signal:
-            return None, None, None, "Generation stopped"
-
         # Stage II
         pipe_ii = IFSuperResolutionPipeline.from_pretrained(
             deepfloydII_model_path, text_encoder=None, variant="fp16", torch_dtype=torch.float16
@@ -4704,9 +4461,6 @@ def generate_image_deepfloyd_txt2img(prompt, negative_prompt, num_inference_step
             guidance_scale=guidance_scale,
             output_type="pt"
         ).images
-
-        if stop_signal:
-            return None, None, None, "Generation stopped"
 
         # Stage III
         safety_modules = {
@@ -4727,9 +4481,6 @@ def generate_image_deepfloyd_txt2img(prompt, negative_prompt, num_inference_step
             num_inference_steps=num_inference_steps,
             guidance_scale=guidance_scale,
         ).images[0]
-
-        if stop_signal:
-            return None, None, None, "Generation stopped"
 
         today = datetime.now().date()
         image_dir = os.path.join('outputs', f"DeepFloydIF_{today.strftime('%Y%m%d')}")
@@ -4763,9 +4514,7 @@ def generate_image_deepfloyd_txt2img(prompt, negative_prompt, num_inference_step
         flush()
 
 
-def generate_image_deepfloyd_img2img(prompt, negative_prompt, init_image, num_inference_steps, guidance_scale, width, height, seed, output_format="png", stop_generation=None):
-    global stop_signal
-    stop_signal = False
+def generate_image_deepfloyd_img2img(prompt, negative_prompt, init_image, num_inference_steps, guidance_scale, width, height, seed, output_format="png"):
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -4775,8 +4524,8 @@ def generate_image_deepfloyd_img2img(prompt, negative_prompt, init_image, num_in
         seed = int(seed)
     generator = torch.Generator(device).manual_seed(seed)
 
-    if not prompt or not init_image:
-        return None, None, None, "Please enter a prompt and upload an initial image!"
+    if not init_image:
+        return None, None, None, "Please upload an initial image!"
 
     deepfloydI_model_path = os.path.join("inputs", "image", "deepfloydI")
     deepfloydII_model_path = os.path.join("inputs", "image", "deepfloydII")
@@ -4849,9 +4598,6 @@ def generate_image_deepfloyd_img2img(prompt, negative_prompt, init_image, num_in
             generator=generator
         ).images
 
-        if stop_signal:
-            return None, None, None, "Generation stopped"
-
         # Stage II
         stage_2_output = stage_2(
             image=stage_1_output,
@@ -4863,9 +4609,6 @@ def generate_image_deepfloyd_img2img(prompt, negative_prompt, init_image, num_in
             output_type="pt",
         ).images
 
-        if stop_signal:
-            return None, None, None, "Generation stopped"
-
         # Stage III
         stage_3_output = stage_3(
             prompt=prompt,
@@ -4874,9 +4617,6 @@ def generate_image_deepfloyd_img2img(prompt, negative_prompt, init_image, num_in
             num_inference_steps=num_inference_steps,
             guidance_scale=guidance_scale,
         ).images[0]
-
-        if stop_signal:
-            return None, None, None, "Generation stopped"
 
         today = datetime.now().date()
         image_dir = os.path.join('outputs', f"DeepFloydIF_{today.strftime('%Y%m%d')}")
@@ -4910,14 +4650,12 @@ def generate_image_deepfloyd_img2img(prompt, negative_prompt, init_image, num_in
         flush()
 
 
-def generate_image_deepfloyd_inpaint(prompt, negative_prompt, init_image, mask_image, num_inference_steps, guidance_scale, output_format="png", stop_generation=None):
-    global stop_signal
-    stop_signal = False
+def generate_image_deepfloyd_inpaint(prompt, negative_prompt, init_image, mask_image, num_inference_steps, guidance_scale, output_format="png"):
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
-    if not prompt or not init_image or not mask_image:
-        return None, None, None, "Please enter a prompt, upload an initial image, and provide a mask image!"
+    if not init_image or not mask_image:
+        return None, None, None, "Please upload an initial image and provide a mask image!"
 
     deepfloydI_model_path = os.path.join("inputs", "image", "deepfloydI")
     deepfloydII_model_path = os.path.join("inputs", "image", "deepfloydII")
@@ -4990,9 +4728,6 @@ def generate_image_deepfloyd_inpaint(prompt, negative_prompt, init_image, mask_i
             text_encoder=text_encoder
         ).images
 
-        if stop_signal:
-            return None, None, None, "Generation stopped"
-
         # Stage II
         stage_2_output = stage_2(
             image=stage_1_output,
@@ -5005,9 +4740,6 @@ def generate_image_deepfloyd_inpaint(prompt, negative_prompt, init_image, mask_i
             output_type="pt",
         ).images
 
-        if stop_signal:
-            return None, None, None, "Generation stopped"
-
         # Stage III
         stage_3_output = stage_3(
             prompt=prompt,
@@ -5016,9 +4748,6 @@ def generate_image_deepfloyd_inpaint(prompt, negative_prompt, init_image, mask_i
             num_inference_steps=num_inference_steps,
             guidance_scale=guidance_scale,
         ).images[0]
-
-        if stop_signal:
-            return None, None, None, "Generation stopped"
 
         today = datetime.now().date()
         image_dir = os.path.join('outputs', f"DeepFloydIF_{today.strftime('%Y%m%d')}")
@@ -5053,9 +4782,7 @@ def generate_image_deepfloyd_inpaint(prompt, negative_prompt, init_image, mask_i
 
 
 def generate_image_pixart(prompt, negative_prompt, version, num_inference_steps, guidance_scale, height, width,
-                          max_sequence_length, seed, output_format="png", stop_generation=None):
-    global stop_signal
-    stop_signal = False
+                          max_sequence_length, seed, output_format="png"):
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -5064,9 +4791,6 @@ def generate_image_pixart(prompt, negative_prompt, version, num_inference_steps,
     else:
         seed = int(seed)
     generator = torch.Generator(device).manual_seed(seed)
-
-    if not prompt:
-        return None, "Please enter a prompt!"
 
     pixart_model_path = os.path.join("inputs", "image", "pixart")
 
@@ -5122,9 +4846,6 @@ def generate_image_pixart(prompt, negative_prompt, version, num_inference_steps,
             generator=generator
         ).images[0]
 
-        if stop_signal:
-            return None, "Generation stopped"
-
         today = datetime.now().date()
         image_dir = os.path.join('outputs', f"PixArt_{today.strftime('%Y%m%d')}")
         os.makedirs(image_dir, exist_ok=True)
@@ -5143,9 +4864,7 @@ def generate_image_pixart(prompt, negative_prompt, version, num_inference_steps,
         flush()
 
 
-def generate_image_playgroundv2(prompt, negative_prompt, height, width, num_inference_steps, guidance_scale, seed, output_format="png", stop_generation=None):
-    global stop_signal
-    stop_signal = False
+def generate_image_playgroundv2(prompt, negative_prompt, height, width, num_inference_steps, guidance_scale, seed, output_format="png"):
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -5170,9 +4889,6 @@ def generate_image_playgroundv2(prompt, negative_prompt, height, width, num_infe
             variant="fp16"
         ).to(device)
 
-        if stop_signal:
-            return None, "Generation stopped"
-
         image = pipe(
             prompt=prompt,
             negative_prompt=negative_prompt,
@@ -5182,9 +4898,6 @@ def generate_image_playgroundv2(prompt, negative_prompt, height, width, num_infe
             guidance_scale=guidance_scale,
             generator=generator
         ).images[0]
-
-        if stop_signal:
-            return None, "Generation stopped"
 
         today = datetime.now().date()
         image_dir = os.path.join('outputs', f"PlaygroundV2_{today.strftime('%Y%m%d')}")
@@ -5251,9 +4964,7 @@ def generate_liveportrait(source_image, driving_video, output_format="mp4"):
 
 
 def generate_video_modelscope(prompt, negative_prompt, num_inference_steps, guidance_scale, height, width, num_frames,
-                              seed, output_format, stop_generation):
-    global stop_signal
-    stop_signal = False
+                              seed, output_format):
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -5262,9 +4973,6 @@ def generate_video_modelscope(prompt, negative_prompt, num_inference_steps, guid
     else:
         seed = int(seed)
     generator = torch.Generator(device).manual_seed(seed)
-
-    if not prompt:
-        return None, "Please enter a prompt!"
 
     modelscope_model_path = os.path.join("inputs", "video", "modelscope")
 
@@ -5291,9 +4999,6 @@ def generate_video_modelscope(prompt, negative_prompt, num_inference_steps, guid
             generator=generator
         ).frames[0]
 
-        if stop_signal:
-            return None, "Generation stopped"
-
         today = datetime.now().date()
         video_dir = os.path.join('outputs', f"ModelScope_{today.strftime('%Y%m%d')}")
         os.makedirs(video_dir, exist_ok=True)
@@ -5317,9 +5022,7 @@ def generate_video_modelscope(prompt, negative_prompt, num_inference_steps, guid
 
 
 def generate_video_zeroscope2(prompt, video_to_enhance, strength, num_inference_steps, width, height, num_frames,
-                              enable_video_enhance, seed, stop_generation):
-    global stop_signal
-    stop_signal = False
+                              enable_video_enhance, seed):
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -5370,9 +5073,6 @@ def generate_video_zeroscope2(prompt, video_to_enhance, strength, num_inference_
 
             video_frames = enhance_pipe(prompt, video=frames, strength=strength, generator=generator).frames
 
-            if stop_signal:
-                return None, "Generation stopped"
-
             processed_frames = []
             for frame in video_frames:
                 if isinstance(frame, Image.Image):
@@ -5415,9 +5115,6 @@ def generate_video_zeroscope2(prompt, video_to_enhance, strength, num_inference_
 
             video_frames = base_pipe(prompt, num_inference_steps=num_inference_steps, width=width, height=height, num_frames=num_frames, generator=generator).frames[0]
 
-            if stop_signal:
-                return None, "Generation stopped"
-
             video_filename = f"zeroscope2_{datetime.now().strftime('%Y%m%d_%H%M%S')}.mp4"
             video_path = os.path.join(video_dir, video_filename)
             export_to_video(video_frames, video_path)
@@ -5435,9 +5132,7 @@ def generate_video_zeroscope2(prompt, video_to_enhance, strength, num_inference_
             flush()
 
 
-def generate_video_cogvideox(prompt, negative_prompt, cogvideox_version, num_inference_steps, guidance_scale, height, width, num_frames, fps, seed, stop_generation):
-    global stop_signal
-    stop_signal = False
+def generate_video_cogvideox(prompt, negative_prompt, cogvideox_version, num_inference_steps, guidance_scale, height, width, num_frames, fps, seed):
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -5446,9 +5141,6 @@ def generate_video_cogvideox(prompt, negative_prompt, cogvideox_version, num_inf
     else:
         seed = int(seed)
     generator = torch.Generator(device).manual_seed(seed)
-
-    if not cogvideox_version:
-        return None, "Please select a CogVideoX version!"
 
     cogvideox_model_path = os.path.join("inputs", "video", "cogvideox", cogvideox_version)
 
@@ -5476,9 +5168,6 @@ def generate_video_cogvideox(prompt, negative_prompt, cogvideox_version, num_inf
             generator=generator
         ).frames[0]
 
-        if stop_signal:
-            return None, "Generation stopped"
-
         today = datetime.now().date()
         video_dir = os.path.join('outputs', f"CogVideoX_{today.strftime('%Y%m%d')}")
         os.makedirs(video_dir, exist_ok=True)
@@ -5497,9 +5186,7 @@ def generate_video_cogvideox(prompt, negative_prompt, cogvideox_version, num_inf
         flush()
 
 
-def generate_video_latte(prompt, negative_prompt, num_inference_steps, guidance_scale, height, width, video_length, seed, stop_generation):
-    global stop_signal
-    stop_signal = False
+def generate_video_latte(prompt, negative_prompt, num_inference_steps, guidance_scale, height, width, video_length, seed):
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -5532,9 +5219,6 @@ def generate_video_latte(prompt, negative_prompt, num_inference_steps, guidance_
             generator=generator
         ).frames[0]
 
-        if stop_signal:
-            return None, "Generation stopped"
-
         today = datetime.now().date()
         gif_dir = os.path.join('outputs', f"Latte_{today.strftime('%Y%m%d')}")
         os.makedirs(gif_dir, exist_ok=True)
@@ -5553,9 +5237,7 @@ def generate_video_latte(prompt, negative_prompt, num_inference_steps, guidance_
         flush()
 
 
-def generate_3d_stablefast3d(image, texture_resolution, foreground_ratio, remesh_option, stop_generation=None):
-    global stop_signal
-    stop_signal = False
+def generate_3d_stablefast3d(image, texture_resolution, foreground_ratio, remesh_option):
 
     if not image:
         return None, "Please upload an image!"
@@ -5577,9 +5259,6 @@ def generate_3d_stablefast3d(image, texture_resolution, foreground_ratio, remesh
 
         subprocess.run(command, shell=True, check=True)
 
-        if stop_signal:
-            return None, "Generation stopped"
-
         return output_path, None
 
     except Exception as e:
@@ -5591,9 +5270,7 @@ def generate_3d_stablefast3d(image, texture_resolution, foreground_ratio, remesh
         flush()
 
 
-def generate_3d_shap_e(prompt, init_image, num_inference_steps, guidance_scale, frame_size, seed, stop_generation):
-    global stop_signal
-    stop_signal = False
+def generate_3d_shap_e(prompt, init_image, num_inference_steps, guidance_scale, frame_size, seed):
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -5640,9 +5317,6 @@ def generate_3d_shap_e(prompt, init_image, num_inference_steps, guidance_scale, 
             output_type="mesh",
             generator=generator,
         ).images
-
-    if stop_signal:
-        return None, "Generation stopped"
 
     today = datetime.now().date()
     output_dir = os.path.join('outputs', f"Shap-E_{today.strftime('%Y%m%d')}")
@@ -5726,9 +5400,6 @@ def generate_sv34d(input_file, version, elevation_deg=None):
     try:
         subprocess.run(command, shell=True, check=True)
 
-        if stop_signal:
-            return None, "Generation stopped"
-
         for file in os.listdir(output_dir):
             if file.startswith(output_filename):
                 return output_path
@@ -5743,9 +5414,7 @@ def generate_sv34d(input_file, version, elevation_deg=None):
         flush()
 
 
-def generate_3d_zero123plus(input_image, num_inference_steps, output_format="png", stop_generation=None):
-    global stop_signal
-    stop_signal = False
+def generate_3d_zero123plus(input_image, num_inference_steps, output_format="png"):
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -5771,9 +5440,6 @@ def generate_3d_zero123plus(input_image, num_inference_steps, output_format="png
         cond = Image.open(input_image)
         result = pipe(cond, num_inference_steps=num_inference_steps).images[0]
 
-        if stop_signal:
-            return None, "Generation stopped"
-
         today = datetime.now().date()
         output_dir = os.path.join('outputs', f"Zero123Plus_{today.strftime('%Y%m%d')}")
         os.makedirs(output_dir, exist_ok=True)
@@ -5791,10 +5457,7 @@ def generate_3d_zero123plus(input_image, num_inference_steps, output_format="png
         flush()
 
 
-def generate_stableaudio(prompt, negative_prompt, num_inference_steps, guidance_scale, audio_length, audio_start, num_waveforms, seed, output_format,
-                         stop_generation):
-    global stop_signal
-    stop_signal = False
+def generate_stableaudio(prompt, negative_prompt, num_inference_steps, guidance_scale, audio_length, audio_start, num_waveforms, seed, output_format):
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -5837,9 +5500,6 @@ def generate_stableaudio(prompt, negative_prompt, num_inference_steps, guidance_
             generator=generator
         ).audios
 
-        if stop_signal:
-            return None, None, "Generation stopped"
-
         output = audio[0].T.float().cpu().numpy()
 
         today = datetime.now().date()
@@ -5869,9 +5529,8 @@ def generate_stableaudio(prompt, negative_prompt, num_inference_steps, guidance_
 
 def generate_audio_audiocraft(prompt, input_audio=None, model_name=None, audiocraft_settings_html=None, model_type="musicgen",
                               duration=10, top_k=250, top_p=0.0,
-                              temperature=1.0, cfg_coef=3.0, min_cfg_coef=1.0, max_cfg_coef=3.0, enable_multiband=False, output_format="mp3", stop_generation=None):
-    global audiocraft_model_path, multiband_diffusion_path, stop_signal
-    stop_signal = False
+                              temperature=1.0, cfg_coef=3.0, min_cfg_coef=1.0, max_cfg_coef=3.0, enable_multiband=False, output_format="mp3"):
+    global audiocraft_model_path, multiband_diffusion_path
 
     if not model_name:
         return None, None, "Please, select an AudioCraft model!"
@@ -5938,14 +5597,9 @@ def generate_audio_audiocraft(prompt, input_audio=None, model_name=None, audiocr
         if wav.ndim > 2:
             wav = wav.squeeze()
 
-        if stop_signal:
-            return None, None, "Generation stopped"
-
         progress_bar.close()
 
         if mbd:
-            if stop_signal:
-                return None, None, "Generation stopped"
             tokens = rearrange(tokens, "b n d -> n b d")
             wav_diffusion = mbd.tokens_to_wav(tokens)
             wav_diffusion = wav_diffusion.squeeze()
@@ -5990,9 +5644,7 @@ def generate_audio_audiocraft(prompt, input_audio=None, model_name=None, audiocr
 
 
 def generate_audio_audioldm2(prompt, negative_prompt, model_name, num_inference_steps, audio_length_in_s,
-                             num_waveforms_per_prompt, seed, output_format, stop_generation):
-    global stop_signal
-    stop_signal = False
+                             num_waveforms_per_prompt, seed, output_format):
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -6025,9 +5677,6 @@ def generate_audio_audioldm2(prompt, negative_prompt, model_name, num_inference_
             num_waveforms_per_prompt=num_waveforms_per_prompt,
             generator=generator
         ).audios
-
-        if stop_signal:
-            return None, None, "Generation stopped"
 
         today = datetime.now().date()
         audio_dir = os.path.join('outputs', f"AudioLDM2_{today.strftime('%Y%m%d')}")
@@ -6090,12 +5739,14 @@ def process_rvc(input_audio, model_folder, f0method, f0up_key, index_rate, filte
         return None, str(e)
 
     finally:
-        if 'rvc' in locals():
-            del rvc
+        del rvc
         flush()
 
 
 def separate_audio_uvr(audio_file, output_format, normalization_threshold, sample_rate):
+
+    if not audio_file:
+        return None, "Please upload an audio file!"
 
     try:
         today = datetime.now().date()
@@ -6122,9 +5773,6 @@ def separate_audio_uvr(audio_file, output_format, normalization_threshold, sampl
 
 
 def demucs_separate(audio_file, output_format="wav"):
-    global stop_signal
-    if stop_signal:
-        return None, None, "Generation stopped"
 
     if not audio_file:
         return None, None, "Please upload an audio file!"
@@ -6140,9 +5788,6 @@ def demucs_separate(audio_file, output_format="wav"):
     try:
         command = f"demucs --two-stems=vocals {audio_file} -o {separate_dir}"
         subprocess.run(command, shell=True, check=True)
-
-        if stop_signal:
-            return None, None, "Generation stopped"
 
         temp_vocal_file = os.path.join(separate_dir, "htdemucs", os.path.splitext(os.path.basename(audio_file))[0], "vocals.wav")
         temp_instrumental_file = os.path.join(separate_dir, "htdemucs", os.path.splitext(os.path.basename(audio_file))[0], "no_vocals.wav")
@@ -6285,8 +5930,6 @@ def settings_interface(share_value):
     share_mode = share_value == "True"
     message = f"Settings updated successfully!"
 
-    stop_all_processes()
-
     app.launch(share=share_mode, server_name="localhost")
 
     return message
@@ -6313,11 +5956,6 @@ def get_system_info():
     ram_free = f"{ram.available // (1024 ** 3)} GB"
 
     return gpu_total_memory, gpu_used_memory, gpu_free_memory, gpu_temp, cpu_temp, ram_total, ram_used, ram_free
-
-
-def stop_all_processes():
-    global stop_signal
-    stop_signal = True
 
 
 def reload_model_lists():
@@ -8121,54 +7759,6 @@ with gr.TabbedInterface(
     ],
     tab_names=["Text", "Image", "Video", "3D", "Audio", "Interface"]
 ) as app:
-    bark_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
-    txt2img_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
-    img2img_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
-    depth2img_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
-    pix2pix_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
-    controlnet_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
-    latent_upscale_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
-    realesrgan_upscale_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
-    sdxl_refiner_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
-    inpaint_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
-    outpaint_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
-    gligen_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
-    animatediff_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
-    hotshotxl_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
-    video_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
-    ldm3d_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
-    sd3_txt2img_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
-    sd3_img2img_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
-    sd3_controlnet_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
-    sd3_inpaint_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
-    cascade_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
-    t2i_ip_adapter_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
-    ip_adapter_faceid_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
-    riffusion_text2image_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
-    kandinsky_txt2img_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
-    kandinsky_img2img_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
-    kandinsky_inpaint_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
-    flux_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
-    hunyuandit_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
-    lumina_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
-    kolors_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
-    auraflow_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
-    wurstchen_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
-    deepfloyd_if_txt2img_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
-    deepfloyd_if_img2img_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
-    deepfloyd_if_inpaint_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
-    pixart_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
-    playgroundv2_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
-    modelscope_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
-    zeroscope2_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
-    cogvideox_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
-    latte_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
-    stablefast3d_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
-    shap_e_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
-    zero123plus_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
-    stableaudio_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
-    audiocraft_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
-    audioldm2_interface.input_components[-1].click(stop_all_processes, [], [], queue=False)
 
     reload_button = gr.Button("Reload models")
     reload_button.click(reload_model_lists, [], [], queue=False)
