@@ -6198,7 +6198,6 @@ txt2img_interface = gr.Interface(
         gr.Checkbox(label="Enable Tiled VAE", value=False),
         gr.Textbox(label="Seed (optional)", value=""),
         gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
-        gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
     outputs=[
         gr.Gallery(label="Generated images", elem_id="gallery", columns=[2], rows=[2], object_fit="contain", height="auto"),
@@ -6230,7 +6229,6 @@ img2img_interface = gr.Interface(
         gr.Slider(minimum=1, maximum=4, value=1, step=1, label="Number of images to generate"),
         gr.Textbox(label="Seed (optional)", value=""),
         gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
-        gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
     outputs=[
         gr.Gallery(label="Generated images", elem_id="gallery", columns=[2], rows=[2], object_fit="contain", height="auto"),
@@ -6255,7 +6253,6 @@ depth2img_interface = gr.Interface(
         gr.Slider(minimum=1, maximum=4, value=1, step=1, label="Number of images to generate"),
         gr.Textbox(label="Seed (optional)", value=""),
         gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
-        gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
     outputs=[
         gr.Gallery(label="Generated images", elem_id="gallery", columns=[2], rows=[2], object_fit="contain", height="auto"),
@@ -6279,7 +6276,6 @@ pix2pix_interface = gr.Interface(
         gr.Slider(minimum=1, maximum=4, value=1, step=1, label="Number of images to generate"),
         gr.Textbox(label="Seed (optional)", value=""),
         gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
-        gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
     outputs=[
         gr.Gallery(label="Generated images", elem_id="gallery", columns=[2], rows=[2], object_fit="contain", height="auto"),
@@ -6312,7 +6308,6 @@ controlnet_interface = gr.Interface(
         gr.Slider(minimum=1, maximum=4, value=1, step=1, label="Number of images to generate"),
         gr.Textbox(label="Seed (optional)", value=""),
         gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
-        gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
     outputs=[
         gr.Gallery(label="Generated images", elem_id="gallery", columns=[2], rows=[2], object_fit="contain", height="auto"),
@@ -6336,7 +6331,6 @@ latent_upscale_interface = gr.Interface(
         gr.Slider(minimum=0.0, maximum=30.0, value=4, step=0.1, label="CFG"),
         gr.Textbox(label="Seed (optional)", value=""),
         gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
-        gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
     outputs=[
         gr.Image(type="filepath", label="Upscaled image"),
@@ -6360,7 +6354,6 @@ realesrgan_upscale_interface = gr.Interface(
         gr.Slider(minimum=0, maximum=50, value=0, step=1, label="Pre pad"),
         gr.Slider(minimum=0.01, maximum=1, value=0.5, step=0.01, label="Denoise strength"),
         gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
-        gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
     outputs=[
         gr.Image(type="filepath", label="Upscaled image"),
@@ -6378,7 +6371,6 @@ sdxl_refiner_interface = gr.Interface(
         gr.Textbox(label="Enter your prompt"),
         gr.Image(label="Initial image", type="filepath"),
         gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
-        gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
     outputs=[
         gr.Image(type="filepath", label="Refined image"),
@@ -6412,7 +6404,6 @@ inpaint_interface = gr.Interface(
         gr.Slider(minimum=1, maximum=4, value=1, step=1, label="Number of images to generate"),
         gr.Textbox(label="Seed (optional)", value=""),
         gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
-        gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
     outputs=[
         gr.Gallery(label="Generated images", elem_id="gallery", columns=[2], rows=[2], object_fit="contain", height="auto"),
@@ -6444,7 +6435,6 @@ outpaint_interface = gr.Interface(
         gr.Slider(minimum=1, maximum=4, value=1, step=1, label="Number of images to generate"),
         gr.Textbox(label="Seed (optional)", value=""),
         gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
-        gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
     outputs=[
         gr.Gallery(label="Generated images", elem_id="gallery", columns=[2], rows=[2], object_fit="contain", height="auto"),
@@ -6478,7 +6468,6 @@ gligen_interface = gr.Interface(
         gr.Slider(minimum=1, maximum=4, value=1, step=1, label="Number of images to generate"),
         gr.Textbox(label="Seed (optional)", value=""),
         gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
-        gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
     outputs=[
         gr.Gallery(label="Generated images", elem_id="gallery", columns=[2], rows=[2], object_fit="contain", height="auto"),
@@ -6508,7 +6497,6 @@ animatediff_interface = gr.Interface(
         gr.Slider(minimum=256, maximum=2048, value=512, step=64, label="Height"),
         gr.Slider(minimum=1, maximum=4, value=1, step=1, label="Clip skip"),
         gr.Textbox(label="Seed (optional)", value=""),
-        gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
     outputs=[
         gr.Image(label="Generated GIF", type="filepath"),
@@ -6532,7 +6520,6 @@ hotshotxl_interface = gr.Interface(
         gr.Slider(minimum=2, maximum=80, value=8, step=1, label="Video Length (frames)"),
         gr.Slider(minimum=100, maximum=10000, value=1000, step=1, label="Video Duration (seconds)"),
         gr.Radio(choices=["gif"], label="Output format", value="gif", interactive=False),
-        gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
     outputs=[
         gr.Image(type="filepath", label="Generated GIF"),
@@ -6562,7 +6549,6 @@ video_interface = gr.Interface(
         gr.Slider(minimum=1, maximum=100, value=50, step=1, label="Steps"),
         gr.Slider(minimum=1.0, maximum=30.0, value=9.0, step=0.1, label="CFG"),
         gr.Textbox(label="Seed (optional)", value=""),
-        gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
     outputs=[
         gr.Video(label="Generated video"),
@@ -6588,7 +6574,6 @@ ldm3d_interface = gr.Interface(
         gr.Slider(minimum=1, maximum=4, value=1, step=1, label="Number of images to generate"),
         gr.Textbox(label="Seed (optional)", value=""),
         gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
-        gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
     outputs=[
         gr.Gallery(label="Generated RGBs", elem_id="gallery", columns=[2], rows=[2], object_fit="contain", height="auto"),
@@ -6616,7 +6601,6 @@ sd3_txt2img_interface = gr.Interface(
         gr.Slider(minimum=1, maximum=4, value=1, step=1, label="Number of images to generate"),
         gr.Textbox(label="Seed (optional)", value=""),
         gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
-        gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
     outputs=[
         gr.Gallery(label="Generated images", elem_id="gallery", columns=[2], rows=[2], object_fit="contain", height="auto"),
@@ -6645,7 +6629,6 @@ sd3_img2img_interface = gr.Interface(
         gr.Slider(minimum=1, maximum=4, value=1, step=1, label="Number of images to generate"),
         gr.Textbox(label="Seed (optional)", value=""),
         gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
-        gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
     outputs=[
         gr.Gallery(label="Generated images", elem_id="gallery", columns=[2], rows=[2], object_fit="contain", height="auto"),
@@ -6675,7 +6658,6 @@ sd3_controlnet_interface = gr.Interface(
         gr.Slider(minimum=1, maximum=4, value=1, step=1, label="Number of images to generate"),
         gr.Textbox(label="Seed (optional)", value=""),
         gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
-        gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
     outputs=[
         gr.Gallery(label="Generated images", elem_id="gallery", columns=[2], rows=[2], object_fit="contain", height="auto"),
@@ -6705,7 +6687,6 @@ sd3_inpaint_interface = gr.Interface(
         gr.Slider(minimum=1, maximum=4, value=1, step=1, label="Number of images to generate"),
         gr.Textbox(label="Seed (optional)", value=""),
         gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
-        gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
     outputs=[
         gr.Gallery(label="Generated images", elem_id="gallery", columns=[2], rows=[2], object_fit="contain", height="auto"),
@@ -6733,7 +6714,6 @@ cascade_interface = gr.Interface(
         gr.Slider(minimum=1, maximum=4, value=1, step=1, label="Number of images to generate"),
         gr.Textbox(label="Seed (optional)", value=""),
         gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
-        gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
     outputs=[
         gr.Gallery(label="Generated images", elem_id="gallery", columns=[2], rows=[2], object_fit="contain", height="auto"),
@@ -6760,7 +6740,6 @@ t2i_ip_adapter_interface = gr.Interface(
         gr.Slider(minimum=256, maximum=2048, value=1024, step=64, label="Height"),
         gr.Textbox(label="Seed (optional)", value=""),
         gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
-        gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
     outputs=[
         gr.Gallery(label="Generated images", elem_id="gallery", columns=[2], rows=[2], object_fit="contain", height="auto"),
@@ -6787,7 +6766,6 @@ ip_adapter_faceid_interface = gr.Interface(
         gr.Slider(minimum=256, maximum=2048, value=512, step=64, label="Width"),
         gr.Slider(minimum=256, maximum=2048, value=512, step=64, label="Height"),
         gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
-        gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
     outputs=[
         gr.Gallery(label="Generated images", elem_id="gallery", columns=[2], rows=[2], object_fit="contain", height="auto"),
@@ -6811,7 +6789,6 @@ riffusion_text2image_interface = gr.Interface(
         gr.Slider(minimum=256, maximum=1024, value=512, step=64, label="Width"),
         gr.Textbox(label="Seed (optional)", value=""),
         gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
-        gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
     outputs=[
         gr.Image(type="filepath", label="Generated image"),
@@ -6898,7 +6875,6 @@ kandinsky_txt2img_interface = gr.Interface(
         gr.Slider(minimum=256, maximum=2048, value=768, step=64, label="Width"),
         gr.Textbox(label="Seed (optional)", value=""),
         gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
-        gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
     outputs=[
         gr.Image(type="filepath", label="Generated image"),
@@ -6925,7 +6901,6 @@ kandinsky_img2img_interface = gr.Interface(
         gr.Slider(minimum=256, maximum=2048, value=768, step=64, label="Width"),
         gr.Textbox(label="Seed (optional)", value=""),
         gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
-        gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
     outputs=[
         gr.Image(type="filepath", label="Generated image"),
@@ -6952,7 +6927,6 @@ kandinsky_inpaint_interface = gr.Interface(
         gr.Slider(minimum=256, maximum=2048, value=768, step=64, label="Height"),
         gr.Slider(minimum=256, maximum=2048, value=768, step=64, label="Width"),
         gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
-        gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
     outputs=[
         gr.Image(type="filepath", label="Generated image"),
@@ -6982,7 +6956,6 @@ flux_interface = gr.Interface(
         gr.Slider(minimum=1, maximum=1024, value=256, step=1, label="Max Sequence Length"),
         gr.Textbox(label="Seed (optional)", value=""),
         gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
-        gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
     outputs=[
         gr.Image(type="filepath", label="Generated image"),
@@ -7006,7 +6979,6 @@ hunyuandit_interface = gr.Interface(
         gr.Slider(minimum=256, maximum=2048, value=768, step=64, label="Width"),
         gr.Textbox(label="Seed (optional)", value=""),
         gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
-        gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
     outputs=[
         gr.Image(type="filepath", label="Generated image"),
@@ -7031,7 +7003,6 @@ lumina_interface = gr.Interface(
         gr.Slider(minimum=1, maximum=1024, value=256, step=1, label="Max Sequence Length"),
         gr.Textbox(label="Seed (optional)", value=""),
         gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
-        gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
     outputs=[
         gr.Image(type="filepath", label="Generated image"),
@@ -7054,7 +7025,6 @@ kolors_interface = gr.Interface(
         gr.Slider(minimum=1, maximum=1024, value=256, step=1, label="Max Sequence Length"),
         gr.Textbox(label="Seed (optional)", value=""),
         gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
-        gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
     outputs=[
         gr.Image(type="filepath", label="Generated image"),
@@ -7080,7 +7050,6 @@ auraflow_interface = gr.Interface(
         gr.Checkbox(label="Enable AuraSR", value=False),
         gr.Textbox(label="Seed (optional)", value=""),
         gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
-        gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
     outputs=[
         gr.Image(type="filepath", label="Generated image"),
@@ -7107,7 +7076,6 @@ wurstchen_interface = gr.Interface(
         gr.Slider(minimum=0.0, maximum=30.0, value=0.0, step=0.1, label="Decoder Guidance Scale"),
         gr.Textbox(label="Seed (optional)", value=""),
         gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
-        gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
     outputs=[
         gr.Image(type="filepath", label="Generated image"),
@@ -7131,7 +7099,6 @@ deepfloyd_if_txt2img_interface = gr.Interface(
         gr.Slider(minimum=256, maximum=2048, value=512, step=64, label="Height"),
         gr.Textbox(label="Seed (optional)", value=""),
         gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
-        gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
     outputs=[
         gr.Image(type="filepath", label="Generated image (Stage I)"),
@@ -7159,7 +7126,6 @@ deepfloyd_if_img2img_interface = gr.Interface(
         gr.Slider(minimum=256, maximum=2048, value=512, step=64, label="Height"),
         gr.Textbox(label="Seed (optional)", value=""),
         gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
-        gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
     outputs=[
         gr.Image(type="filepath", label="Generated image (Stage I)"),
@@ -7185,7 +7151,6 @@ deepfloyd_if_inpaint_interface = gr.Interface(
         gr.Slider(minimum=1, maximum=100, value=50, step=1, label="Steps"),
         gr.Slider(minimum=0.1, maximum=30.0, value=6, step=0.1, label="Guidance Scale"),
         gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
-        gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
     outputs=[
         gr.Image(type="filepath", label="Generated image (Stage I)"),
@@ -7219,7 +7184,6 @@ pixart_interface = gr.Interface(
         gr.Slider(minimum=1, maximum=1024, value=256, step=1, label="Max Sequence Length"),
         gr.Textbox(label="Seed (optional)", value=""),
         gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
-        gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
     outputs=[
         gr.Image(type="filepath", label="Generated image"),
@@ -7243,7 +7207,6 @@ playgroundv2_interface = gr.Interface(
         gr.Slider(minimum=0.1, maximum=30.0, value=3.0, step=0.1, label="Guidance Scale"),
         gr.Textbox(label="Seed (optional)", value=""),
         gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
-        gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
     outputs=[
         gr.Image(type="filepath", label="Generated image"),
@@ -7310,7 +7273,6 @@ modelscope_interface = gr.Interface(
         gr.Slider(minimum=16, maximum=128, value=64, step=1, label="Number of Frames"),
         gr.Textbox(label="Seed (optional)", value=""),
         gr.Radio(choices=["mp4", "gif"], label="Select output format", value="mp4", interactive=True),
-        gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
     outputs=[
         gr.Video(label="Generated video"),
@@ -7335,7 +7297,6 @@ zeroscope2_interface = gr.Interface(
         gr.Slider(minimum=1, maximum=100, value=36, step=1, label="Frames"),
         gr.Checkbox(label="Enable Video Enhancement", value=False),
         gr.Textbox(label="Seed (optional)", value=""),
-        gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
     outputs=[
         gr.Video(label="Generated video"),
@@ -7361,7 +7322,6 @@ cogvideox_interface = gr.Interface(
         gr.Slider(minimum=1, maximum=100, value=30, step=1, label="Number of Frames"),
         gr.Slider(minimum=1, maximum=60, value=10, step=1, label="FPS"),
         gr.Textbox(label="Seed (optional)", value=""),
-        gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
     outputs=[
         gr.Video(label="Generated video"),
@@ -7385,7 +7345,6 @@ latte_interface = gr.Interface(
         gr.Slider(minimum=256, maximum=1024, value=512, step=64, label="Width"),
         gr.Slider(minimum=1, maximum=100, value=16, step=1, label="Video Length"),
         gr.Textbox(label="Seed (optional)", value=""),
-        gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
     outputs=[
         gr.Image(type="filepath", label="Generated GIF"),
@@ -7405,7 +7364,6 @@ stablefast3d_interface = gr.Interface(
         gr.Slider(minimum=256, maximum=2048, value=1024, step=64, label="Texture Resolution"),
         gr.Slider(minimum=0.1, maximum=1.0, value=0.85, step=0.05, label="Foreground Ratio"),
         gr.Radio(choices=["none", "triangle", "quad"], label="Remesh Option", value="none"),
-        gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
     outputs=[
         gr.Model3D(label="Generated 3D object"),
@@ -7427,7 +7385,6 @@ shap_e_interface = gr.Interface(
         gr.Slider(minimum=1.0, maximum=30.0, value=10.0, step=0.1, label="CFG"),
         gr.Slider(minimum=64, maximum=512, value=256, step=64, label="Frame size"),
         gr.Textbox(label="Seed (optional)", value=""),
-        gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
     outputs=[
         gr.Model3D(label="Generated 3D object"),
@@ -7464,7 +7421,6 @@ zero123plus_interface = gr.Interface(
         gr.Image(label="Input image", type="filepath"),
         gr.Slider(minimum=1, maximum=100, value=75, step=1, label="Inference steps"),
         gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
-        gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
     outputs=[
         gr.Image(type="filepath", label="Generated image"),
@@ -7489,7 +7445,6 @@ stableaudio_interface = gr.Interface(
         gr.Slider(minimum=1, maximum=10, value=3, step=1, label="Number of Waveforms"),
         gr.Textbox(label="Seed (optional)", value=""),
         gr.Radio(choices=["wav", "mp3", "ogg"], label="Select output format", value="wav", interactive=True),
-        gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
     outputs=[
         gr.Audio(label="Generated audio", type="filepath"),
@@ -7520,7 +7475,6 @@ audiocraft_interface = gr.Interface(
         gr.Slider(minimum=1.0, maximum=10.0, value=1.0, step=0.1, label="Max CFG coef (Magnet model only)"),
         gr.Checkbox(label="Enable Multiband Diffusion (Musicgen model only)", value=False),
         gr.Radio(choices=["wav", "mp3", "ogg"], label="Select output format (Works only without Multiband Diffusion)", value="wav", interactive=True),
-        gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
     outputs=[
         gr.Audio(label="Generated audio", type="filepath"),
@@ -7545,7 +7499,6 @@ audioldm2_interface = gr.Interface(
         gr.Slider(minimum=1, maximum=10, value=3, step=1, label="Waveforms number"),
         gr.Textbox(label="Seed (optional)", value=""),
         gr.Radio(choices=["wav", "mp3", "ogg"], label="Select output format", value="wav", interactive=True),
-        gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
     outputs=[
         gr.Audio(label="Generated audio", type="filepath"),
@@ -7568,7 +7521,6 @@ bark_interface = gr.Interface(
         gr.Slider(minimum=0.1, maximum=2.0, value=0.4, step=0.1, label="Fine temperature"),
         gr.Slider(minimum=0.1, maximum=2.0, value=0.8, step=0.1, label="Coarse temperature"),
         gr.Radio(choices=["wav", "mp3", "ogg"], label="Select output format", value="wav", interactive=True),
-        gr.Button(value="Stop generation", interactive=True, variant="stop"),
     ],
     outputs=[
         gr.Audio(label="Generated audio", type="filepath"),
