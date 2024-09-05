@@ -2881,7 +2881,7 @@ def generate_image_ldm3d(prompt, negative_prompt, width, height, num_inference_s
         flush()
 
 
-def generate_image_sd3_txt2img(prompt, negative_prompt, num_inference_steps, guidance_scale, width, height, max_sequence_length, clip_skip, num_images_per_prompt, seed, output_format="png"):
+def generate_image_sd3_txt2img(prompt, negative_prompt, lora_model_names, lora_scales, num_inference_steps, guidance_scale, width, height, max_sequence_length, clip_skip, num_images_per_prompt, seed, output_format="png"):
 
     sd3_model_path = os.path.join("inputs", "image", "sd_models", "sd3")
 
@@ -2909,6 +2909,34 @@ def generate_image_sd3_txt2img(prompt, negative_prompt, num_inference_steps, gui
         else:
             seed = int(seed)
         generator = torch.Generator(device).manual_seed(seed)
+
+        if isinstance(lora_scales, str):
+            lora_scales = [float(scale.strip()) for scale in lora_scales.split(',') if scale.strip()]
+        elif isinstance(lora_scales, (int, float)):
+            lora_scales = [float(lora_scales)]
+
+        lora_loaded = False
+        if lora_model_names and lora_scales:
+            if len(lora_model_names) != len(lora_scales):
+                print(
+                    f"Warning: Number of LoRA models ({len(lora_model_names)}) does not match number of scales ({len(lora_scales)}). Using available scales.")
+
+            for i, lora_model_name in enumerate(lora_model_names):
+                if i < len(lora_scales):
+                    lora_scale = lora_scales[i]
+                else:
+                    lora_scale = 1.0
+
+                lora_model_path = os.path.join("inputs", "image", "sd_models", "lora", lora_model_name)
+                if os.path.exists(lora_model_path):
+                    adapter_name = os.path.splitext(os.path.basename(lora_model_name))[0]
+                    try:
+                        pipe.load_lora_weights(lora_model_path, adapter_name=adapter_name)
+                        pipe.fuse_lora(lora_scale=lora_scale)
+                        lora_loaded = True
+                        print(f"Loaded LoRA {lora_model_name} with scale {lora_scale}")
+                    except Exception as e:
+                        print(f"Error loading LoRA {lora_model_name}: {str(e)}")
 
         images = pipe(
             prompt=prompt,
@@ -3946,7 +3974,7 @@ def generate_image_kandinsky_inpaint(prompt, negative_prompt, init_image, mask_i
         flush()
 
 
-def generate_image_flux(prompt, model_name, guidance_scale, height, width, num_inference_steps, max_sequence_length, seed, output_format="png"):
+def generate_image_flux(prompt, model_name, lora_model_names, lora_scales, guidance_scale, height, width, num_inference_steps, max_sequence_length, seed, output_format="png"):
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -3975,6 +4003,34 @@ def generate_image_flux(prompt, model_name, guidance_scale, height, width, num_i
         pipe.vae.enable_slicing()
         pipe.vae.enable_tiling()
         pipe.to(torch.float16 if device == "cuda" else torch.float32)
+
+        if isinstance(lora_scales, str):
+            lora_scales = [float(scale.strip()) for scale in lora_scales.split(',') if scale.strip()]
+        elif isinstance(lora_scales, (int, float)):
+            lora_scales = [float(lora_scales)]
+
+        lora_loaded = False
+        if lora_model_names and lora_scales:
+            if len(lora_model_names) != len(lora_scales):
+                print(
+                    f"Warning: Number of LoRA models ({len(lora_model_names)}) does not match number of scales ({len(lora_scales)}). Using available scales.")
+
+            for i, lora_model_name in enumerate(lora_model_names):
+                if i < len(lora_scales):
+                    lora_scale = lora_scales[i]
+                else:
+                    lora_scale = 1.0
+
+                lora_model_path = os.path.join("inputs", "image", "flux-lora", lora_model_name)
+                if os.path.exists(lora_model_path):
+                    adapter_name = os.path.splitext(os.path.basename(lora_model_name))[0]
+                    try:
+                        pipe.load_lora_weights(lora_model_path, adapter_name=adapter_name)
+                        pipe.fuse_lora(lora_scale=lora_scale)
+                        lora_loaded = True
+                        print(f"Loaded LoRA {lora_model_name} with scale {lora_scale}")
+                    except Exception as e:
+                        print(f"Error loading LoRA {lora_model_name}: {str(e)}")
 
         out = pipe(
             prompt=prompt,
@@ -5958,23 +6014,6 @@ def get_system_info():
     return gpu_total_memory, gpu_used_memory, gpu_free_memory, gpu_temp, cpu_temp, ram_total, ram_used, ram_free
 
 
-def reload_model_lists():
-    global llm_models_list, llm_lora_models_list, speaker_wavs_list, stable_diffusion_models_list, vae_models_list, lora_models_list, textual_inversion_models_list, inpaint_models_list, rvc_models_list
-
-
-    llm_models_list = os.listdir('inputs/text/llm_models')
-    llm_lora_models_list = os.listdir('inputs/text/llm_models/lora')
-    speaker_wavs_list = os.listdir('inputs/audio/voices')
-    stable_diffusion_models_list = os.listdir('inputs/image/sd_models')
-    vae_models_list = os.listdir('inputs/image/sd_models/vae')
-    lora_models_list = os.listdir('inputs/image/sd_models/lora')
-    textual_inversion_models_list = os.listdir('inputs/image/sd_models/embedding')
-    inpaint_models_list = os.listdir('inputs/image/sd_models/inpaint')
-    rvc_models_list = os.listdir('inputs/audio/rvc_models')
-
-    print("Model lists have been reloaded.")
-
-
 def close_terminal():
     os._exit(1)
 
@@ -5999,6 +6038,8 @@ audiocraft_models_list = [None] + ["musicgen-stereo-medium", "audiogen-medium", 
 vae_models_list = [None] + [model.replace(".safetensors", "") for model in os.listdir("inputs/image/sd_models/vae") if
                             model.endswith(".safetensors") or not model.endswith(".txt")]
 lora_models_list = [None] + [model for model in os.listdir("inputs/image/sd_models/lora") if
+                             model.endswith(".safetensors")]
+flux_lora_models_list = [None] + [model for model in os.listdir("inputs/image/flux-lora") if
                              model.endswith(".safetensors")]
 textual_inversion_models_list = [None] + [model for model in os.listdir("inputs/image/sd_models/embedding") if model.endswith(".pt")]
 inpaint_models_list = [None] + [model.replace(".safetensors", "") for model in
@@ -6592,6 +6633,8 @@ sd3_txt2img_interface = gr.Interface(
     inputs=[
         gr.Textbox(label="Enter your prompt"),
         gr.Textbox(label="Enter your negative prompt", value=""),
+        gr.Dropdown(choices=lora_models_list, label="Select LORA models (optional)", value=None, multiselect=True),
+        gr.Textbox(label="LoRA Scales"),
         gr.Slider(minimum=1, maximum=100, value=40, step=1, label="Steps"),
         gr.Slider(minimum=1.0, maximum=30.0, value=8.0, step=0.1, label="CFG"),
         gr.Slider(minimum=256, maximum=2048, value=1024, step=64, label="Width"),
@@ -6949,6 +6992,8 @@ flux_interface = gr.Interface(
     inputs=[
         gr.Textbox(label="Enter your prompt"),
         gr.Dropdown(choices=["FLUX.1-schnell", "FLUX.1-dev"], label="Select Flux model", value="FLUX.1-schnell"),
+        gr.Dropdown(choices=flux_lora_models_list, label="Select LORA models (optional)", value=None, multiselect=True),
+        gr.Textbox(label="LoRA Scales"),
         gr.Slider(minimum=0.0, maximum=10.0, value=0.0, step=0.1, label="Guidance Scale"),
         gr.Slider(minimum=256, maximum=2048, value=768, step=64, label="Height"),
         gr.Slider(minimum=256, maximum=2048, value=1024, step=64, label="Width"),
@@ -7711,9 +7756,6 @@ with gr.TabbedInterface(
     ],
     tab_names=["Text", "Image", "Video", "3D", "Audio", "Interface"]
 ) as app:
-
-    reload_button = gr.Button("Reload models")
-    reload_button.click(reload_model_lists, [], [], queue=False)
 
     close_button = gr.Button("Close terminal")
     close_button.click(close_terminal, [], [], queue=False)
