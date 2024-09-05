@@ -16,7 +16,7 @@ The goal of the project - to create the easiest possible application to use neur
 
 ### Video: <img width="1117" alt="3" src="https://github.com/user-attachments/assets/cc7a43d1-3d91-45ab-be6d-e4884c56eaa6">
 
-### 3D: <img width="1115" alt="4" src="https://github.com/user-attachments/assets/90cb1a5a-7714-444f-915d-9a619f0f8657">
+### 3D: <img width="1120" alt="4" src="https://github.com/user-attachments/assets/4db630ca-181f-46cd-bde9-f6845fc1c652">
 
 ### Audio: <img width="1121" alt="5" src="https://github.com/user-attachments/assets/b734eba6-3ba4-48d7-be0f-0cd7685ba0a9">
 
@@ -102,7 +102,7 @@ To work with the virtual environment through the terminal, run `./Venv.sh`
 
 ## How to use:
 
-#### Interface has thirty eight sub-tabs (some with their own sub-tabs) in six main tabs (Text, Image, Video, 3D, Audio and Interface): LLM, TTS-STT, MMS, SeamlessM4Tv2, SunoBark, LibreTranslate, Wav2Lip, LivePortrait, StableDiffusion, Kandinsky, Flux, HunyuanDiT, Lumina-T2X, Kolors, AuraFlow, Würstchen, DeepFloydIF, PixArt, PlaygroundV2.5, ModelScope, ZeroScope 2, CogVideoX, Latte, StableFast3D, Shap-E, SV34D, Zero123Plus, StableAudio, AudioCraft, AudioLDM 2, RVC, UVR, Demucs, Wiki, Gallery, ModelDownloader, Settings and System. Select the one you need and follow the instructions below 
+#### Interface has thirty eight sub-tabs (some with their own sub-tabs) in six main tabs (Text, Image, Video, 3D, Audio and Interface): LLM, TTS-STT, MMS, SeamlessM4Tv2, LibreTranslate, StableDiffusion, Kandinsky, Flux, HunyuanDiT, Lumina-T2X, Kolors, AuraFlow, Würstchen, DeepFloydIF, PixArt, PlaygroundV2.5, Wav2Lip, LivePortrait, ModelScope, ZeroScope 2, CogVideoX, Latte, StableFast3D, Shap-E, SV34D, Zero123Plus, StableAudio, AudioCraft, AudioLDM 2, SunoBark, RVC, UVR, Demucs, Wiki, Gallery, ModelDownloader, Settings and System. Select the one you need and follow the instructions below 
 
 ### LLM:
 
@@ -139,31 +139,12 @@ To work with the virtual environment through the terminal, run `./Venv.sh`
 3) Set up the model according to the parameters you need
 4) Click the `Submit` button to get the translate
 
-### SunoBark:
-
-1) Type your request
-2) Set up the model according to the parameters you need
-3) Click the `Submit` button to receive the generated audio response
-
 ### LibreTranslate:
 
 * First you need to install and run [LibreTranslate](https://github.com/LibreTranslate/LibreTranslate)
 1) Select source and target languages
 2) Click the `Submit` button to get the translate
 #### Optional: you can save the translation history by turning on the corresponding button
-
-### Wav2Lip:
-
-1) Upload the initial image of face
-2) Upload the initial audio of voice
-3) Set up the model according to the parameters you need
-4) Click the `Submit` button to receive the lip-sync
-
-### LivePortrait:
-
-1) Upload the initial image of face
-2) Upload the initial video of face moving
-3) Click the `Submit` button to receive the animated image of face
 
 ### StableDiffusion - has twenty one sub-tabs:
 
@@ -402,6 +383,19 @@ To work with the virtual environment through the terminal, run `./Venv.sh`
 2) Set up the model according to the parameters you need
 3) Click `Submit` to get the generated image
 
+### Wav2Lip:
+
+1) Upload the initial image of face
+2) Upload the initial audio of voice
+3) Set up the model according to the parameters you need
+4) Click the `Submit` button to receive the lip-sync
+
+### LivePortrait:
+
+1) Upload the initial image of face
+2) Upload the initial video of face moving
+3) Click the `Submit` button to receive the animated image of face
+
 ### ModelScope:
 
 1) Enter your prompt
@@ -473,6 +467,12 @@ To work with the virtual environment through the terminal, run `./Venv.sh`
 3) Enter your request
 4) Click the `Submit` button to get the generated audio
 
+### SunoBark:
+
+1) Type your request
+2) Set up the model according to the parameters you need
+3) Click the `Submit` button to receive the generated audio response
+
 ### RVC:
 
 1) First upload your models to the folder: *inputs/audio/rvc_models*
@@ -517,10 +517,9 @@ To work with the virtual environment through the terminal, run `./Venv.sh`
 
 1) All generations are saved in the *outputs* folder
 2) You can press the `Clear` button to reset your selection
-3) To stop the generation process, press the `Stop generation` button
-4) You can turn off the application using the `Close terminal` button
-5) You can open the *outputs* folder using the `Outputs` button
-6) You can reload your interface using the `Reload models` button
+3) You can turn off the application using the `Close terminal` button
+4) You can open the *outputs* folder using the `Outputs` button
+5) You can reload your interface using the `Reload models` button
 
 ## Where can i get models and voices?
 
