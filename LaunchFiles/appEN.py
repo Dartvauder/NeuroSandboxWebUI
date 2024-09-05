@@ -1025,63 +1025,6 @@ def seamless_m4tv2_process(input_type, input_text, input_audio, src_lang, tgt_la
         flush()
 
 
-def generate_bark_audio(text, voice_preset, max_length, fine_temperature, coarse_temperature, output_format):
-
-    if not text:
-        return None, None, "Please enter text for the request!"
-
-    bark_model_path = os.path.join("inputs", "audio", "bark")
-
-    if not os.path.exists(bark_model_path):
-        print("Downloading Bark model...")
-        os.makedirs(bark_model_path, exist_ok=True)
-        Repo.clone_from("https://huggingface.co/suno/bark", bark_model_path)
-        print("Bark model downloaded")
-
-    try:
-        device = "cuda" if torch.cuda.is_available() else "cpu"
-        torch.set_default_tensor_type(torch.cuda.FloatTensor if device == "cuda" else torch.FloatTensor)
-
-        processor = AutoProcessor.from_pretrained(bark_model_path)
-        model = BarkModel.from_pretrained(bark_model_path, torch_dtype=torch.float32)
-
-        if voice_preset:
-            inputs = processor(text, voice_preset=voice_preset, return_tensors="pt")
-        else:
-            inputs = processor(text, return_tensors="pt")
-
-        audio_array = model.generate(**inputs, max_length=max_length, do_sample=True, fine_temperature=fine_temperature, coarse_temperature=coarse_temperature)
-        model.enable_cpu_offload()
-
-        today = datetime.now().date()
-        audio_dir = os.path.join('outputs', f"Bark_{today.strftime('%Y%m%d')}")
-        os.makedirs(audio_dir, exist_ok=True)
-
-        audio_array = audio_array.cpu().numpy().squeeze()
-
-        audio_filename = f"bark_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
-        audio_path = os.path.join(audio_dir, audio_filename)
-
-        if output_format == "mp3":
-            sf.write(audio_path, audio_array, 24000)
-        elif output_format == "ogg":
-            sf.write(audio_path, audio_array, 24000)
-        else:
-            sf.write(audio_path, audio_array, 24000)
-
-        spectrogram_path = generate_mel_spectrogram(audio_path)
-
-        return audio_path, spectrogram_path, None
-
-    except Exception as e:
-        return None, None, str(e)
-
-    finally:
-        del model
-        del processor
-        flush()
-
-
 def translate_text(text, source_lang, target_lang, enable_translate_history, translate_history_format, file=None):
 
     if not text:
@@ -1136,47 +1079,6 @@ def translate_text(text, source_lang, target_lang, enable_translate_history, tra
 
     except Exception as e:
         return str(e)
-
-    finally:
-        flush()
-
-
-def generate_wav2lip(image_path, audio_path, fps, pads, face_det_batch_size, wav2lip_batch_size, resize_factor, crop, enable_no_smooth):
-
-    if not image_path or not audio_path:
-        return None, "Please upload an image and an audio file!"
-
-    try:
-        wav2lip_path = os.path.join("inputs", "image", "Wav2Lip")
-
-        checkpoint_path = os.path.join(wav2lip_path, "checkpoints", "wav2lip_gan.pth")
-
-        if not os.path.exists(checkpoint_path):
-            print("Downloading Wav2Lip GAN model...")
-            os.makedirs(os.path.dirname(checkpoint_path), exist_ok=True)
-            url = "https://huggingface.co/camenduru/Wav2Lip/resolve/main/checkpoints/wav2lip_gan.pth"
-            response = requests.get(url, allow_redirects=True)
-            with open(checkpoint_path, "wb") as file:
-                file.write(response.content)
-            print("Wav2Lip GAN model downloaded")
-
-        today = datetime.now().date()
-        output_dir = os.path.join("outputs", f"FaceAnimation_{today.strftime('%Y%m%d')}")
-        os.makedirs(output_dir, exist_ok=True)
-
-        output_filename = f"face_animation_{datetime.now().strftime('%Y%m%d_%H%M%S')}.mp4"
-        output_path = os.path.join(output_dir, output_filename)
-
-        command = f"py {os.path.join(wav2lip_path, 'inference.py')} --checkpoint_path {checkpoint_path} --face {image_path} --audio {audio_path} --outfile {output_path} --fps {fps} --pads {pads} --face_det_batch_size {face_det_batch_size} --wav2lip_batch_size {wav2lip_batch_size} --resize_factor {resize_factor} --crop {crop} --box {-1}"
-        if enable_no_smooth:
-            command += " --no-smooth"
-
-        subprocess.run(command, shell=True, check=True)
-
-        return output_path, None
-
-    except Exception as e:
-        return None, str(e)
 
     finally:
         flush()
@@ -4916,6 +4818,47 @@ def generate_image_playgroundv2(prompt, negative_prompt, height, width, num_infe
         flush()
 
 
+def generate_wav2lip(image_path, audio_path, fps, pads, face_det_batch_size, wav2lip_batch_size, resize_factor, crop, enable_no_smooth):
+
+    if not image_path or not audio_path:
+        return None, "Please upload an image and an audio file!"
+
+    try:
+        wav2lip_path = os.path.join("inputs", "image", "Wav2Lip")
+
+        checkpoint_path = os.path.join(wav2lip_path, "checkpoints", "wav2lip_gan.pth")
+
+        if not os.path.exists(checkpoint_path):
+            print("Downloading Wav2Lip GAN model...")
+            os.makedirs(os.path.dirname(checkpoint_path), exist_ok=True)
+            url = "https://huggingface.co/camenduru/Wav2Lip/resolve/main/checkpoints/wav2lip_gan.pth"
+            response = requests.get(url, allow_redirects=True)
+            with open(checkpoint_path, "wb") as file:
+                file.write(response.content)
+            print("Wav2Lip GAN model downloaded")
+
+        today = datetime.now().date()
+        output_dir = os.path.join("outputs", f"FaceAnimation_{today.strftime('%Y%m%d')}")
+        os.makedirs(output_dir, exist_ok=True)
+
+        output_filename = f"face_animation_{datetime.now().strftime('%Y%m%d_%H%M%S')}.mp4"
+        output_path = os.path.join(output_dir, output_filename)
+
+        command = f"py {os.path.join(wav2lip_path, 'inference.py')} --checkpoint_path {checkpoint_path} --face {image_path} --audio {audio_path} --outfile {output_path} --fps {fps} --pads {pads} --face_det_batch_size {face_det_batch_size} --wav2lip_batch_size {wav2lip_batch_size} --resize_factor {resize_factor} --crop {crop} --box {-1}"
+        if enable_no_smooth:
+            command += " --no-smooth"
+
+        subprocess.run(command, shell=True, check=True)
+
+        return output_path, None
+
+    except Exception as e:
+        return None, str(e)
+
+    finally:
+        flush()
+
+
 def generate_liveportrait(source_image, driving_video, output_format="mp4"):
     if not source_image or not driving_video:
         return None, "Please upload both a source image and a driving video!"
@@ -5703,6 +5646,63 @@ def generate_audio_audioldm2(prompt, negative_prompt, model_name, num_inference_
         flush()
 
 
+def generate_bark_audio(text, voice_preset, max_length, fine_temperature, coarse_temperature, output_format):
+
+    if not text:
+        return None, None, "Please enter text for the request!"
+
+    bark_model_path = os.path.join("inputs", "audio", "bark")
+
+    if not os.path.exists(bark_model_path):
+        print("Downloading Bark model...")
+        os.makedirs(bark_model_path, exist_ok=True)
+        Repo.clone_from("https://huggingface.co/suno/bark", bark_model_path)
+        print("Bark model downloaded")
+
+    try:
+        device = "cuda" if torch.cuda.is_available() else "cpu"
+        torch.set_default_tensor_type(torch.cuda.FloatTensor if device == "cuda" else torch.FloatTensor)
+
+        processor = AutoProcessor.from_pretrained(bark_model_path)
+        model = BarkModel.from_pretrained(bark_model_path, torch_dtype=torch.float32)
+
+        if voice_preset:
+            inputs = processor(text, voice_preset=voice_preset, return_tensors="pt")
+        else:
+            inputs = processor(text, return_tensors="pt")
+
+        audio_array = model.generate(**inputs, max_length=max_length, do_sample=True, fine_temperature=fine_temperature, coarse_temperature=coarse_temperature)
+        model.enable_cpu_offload()
+
+        today = datetime.now().date()
+        audio_dir = os.path.join('outputs', f"Bark_{today.strftime('%Y%m%d')}")
+        os.makedirs(audio_dir, exist_ok=True)
+
+        audio_array = audio_array.cpu().numpy().squeeze()
+
+        audio_filename = f"bark_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
+        audio_path = os.path.join(audio_dir, audio_filename)
+
+        if output_format == "mp3":
+            sf.write(audio_path, audio_array, 24000)
+        elif output_format == "ogg":
+            sf.write(audio_path, audio_array, 24000)
+        else:
+            sf.write(audio_path, audio_array, 24000)
+
+        spectrogram_path = generate_mel_spectrogram(audio_path)
+
+        return audio_path, spectrogram_path, None
+
+    except Exception as e:
+        return None, None, str(e)
+
+    finally:
+        del model
+        del processor
+        flush()
+
+
 def process_rvc(input_audio, model_folder, f0method, f0up_key, index_rate, filter_radius, resample_sr, rms_mix_rate, protect, output_format="wav"):
     if not input_audio:
         return None, "Please upload an audio file!"
@@ -6078,29 +6078,6 @@ tts_stt_interface = gr.Interface(
     allow_flagging="never",
 )
 
-bark_interface = gr.Interface(
-    fn=generate_bark_audio,
-    inputs=[
-        gr.Textbox(label="Enter text for the request"),
-        gr.Dropdown(choices=[None, "v2/en_speaker_1", "v2/ru_speaker_1", "v2/de_speaker_1", "v2/fr_speaker_1", "v2/es_speaker_1", "v2/hi_speaker_1", "v2/it_speaker_1", "v2/ja_speaker_1", "v2/ko_speaker_1", "v2/pt_speaker_1", "v2/zh_speaker_1", "v2/tr_speaker_1", "v2/pl_speaker_1"], label="Select voice preset", value=None),
-        gr.Slider(minimum=100, maximum=1000, value=200, step=1, label="Max length"),
-        gr.Slider(minimum=0.1, maximum=2.0, value=0.4, step=0.1, label="Fine temperature"),
-        gr.Slider(minimum=0.1, maximum=2.0, value=0.8, step=0.1, label="Coarse temperature"),
-        gr.Radio(choices=["wav", "mp3", "ogg"], label="Select output format", value="wav", interactive=True),
-        gr.Button(value="Stop generation", interactive=True, variant="stop"),
-    ],
-    outputs=[
-        gr.Audio(label="Generated audio", type="filepath"),
-        gr.Image(label="Mel-Spectrogram", type="filepath"),
-        gr.Textbox(label="Message", type="text"),
-    ],
-    title="NeuroSandboxWebUI (ALPHA) - SunoBark",
-    description="This user interface allows you to enter text and generate audio using SunoBark. "
-                "You can select the voice preset and customize the max length. "
-                "Try it and see what happens!",
-    allow_flagging="never",
-)
-
 mms_tts_interface = gr.Interface(
     fn=generate_mms_tts,
     inputs=[
@@ -6185,30 +6162,6 @@ translate_interface = gr.Interface(
     title="NeuroSandboxWebUI (ALPHA) - LibreTranslate",
     description="This user interface allows you to enter text and translate it using LibreTranslate. "
                 "Select the source and target languages and click Submit to get the translation. "
-                "Try it and see what happens!",
-    allow_flagging="never",
-)
-
-wav2lip_interface = gr.Interface(
-    fn=generate_wav2lip,
-    inputs=[
-        gr.Image(label="Input image", type="filepath"),
-        gr.Audio(label="Input audio", type="filepath"),
-        gr.Slider(minimum=1, maximum=60, value=30, step=1, label="FPS"),
-        gr.Textbox(label="Pads", value="0 10 0 0"),
-        gr.Slider(minimum=1, maximum=64, value=16, step=1, label="Face Detection Batch Size"),
-        gr.Slider(minimum=1, maximum=512, value=128, step=1, label="Wav2Lip Batch Size"),
-        gr.Slider(minimum=1, maximum=4, value=1, step=1, label="Resize Factor"),
-        gr.Textbox(label="Crop", value="0 -1 0 -1"),
-        gr.Checkbox(label="Enable no smooth", value=False),
-    ],
-    outputs=[
-        gr.Video(label="Generated lip-sync"),
-        gr.Textbox(label="Message", type="text"),
-    ],
-    title="NeuroSandboxWebUI (ALPHA) - Wav2Lip",
-    description="This user interface allows you to generate talking head videos by combining an image and an audio file using Wav2Lip. "
-                "Upload an image and an audio file, and click Generate to create the talking head video. "
                 "Try it and see what happens!",
     allow_flagging="never",
 )
@@ -7303,6 +7256,30 @@ playgroundv2_interface = gr.Interface(
     allow_flagging="never",
 )
 
+wav2lip_interface = gr.Interface(
+    fn=generate_wav2lip,
+    inputs=[
+        gr.Image(label="Input image", type="filepath"),
+        gr.Audio(label="Input audio", type="filepath"),
+        gr.Slider(minimum=1, maximum=60, value=30, step=1, label="FPS"),
+        gr.Textbox(label="Pads", value="0 10 0 0"),
+        gr.Slider(minimum=1, maximum=64, value=16, step=1, label="Face Detection Batch Size"),
+        gr.Slider(minimum=1, maximum=512, value=128, step=1, label="Wav2Lip Batch Size"),
+        gr.Slider(minimum=1, maximum=4, value=1, step=1, label="Resize Factor"),
+        gr.Textbox(label="Crop", value="0 -1 0 -1"),
+        gr.Checkbox(label="Enable no smooth", value=False),
+    ],
+    outputs=[
+        gr.Video(label="Generated lip-sync"),
+        gr.Textbox(label="Message", type="text"),
+    ],
+    title="NeuroSandboxWebUI (ALPHA) - Wav2Lip",
+    description="This user interface allows you to generate talking head videos by combining an image and an audio file using Wav2Lip. "
+                "Upload an image and an audio file, and click Generate to create the talking head video. "
+                "Try it and see what happens!",
+    allow_flagging="never",
+)
+
 liveportrait_interface = gr.Interface(
     fn=generate_liveportrait,
     inputs=[
@@ -7578,6 +7555,29 @@ audioldm2_interface = gr.Interface(
     title="NeuroSandboxWebUI (ALPHA) - AudioLDM 2",
     description="This user interface allows you to enter any text and generate audio using AudioLDM 2. "
                 "You can select the model and customize the generation settings from the sliders. "
+                "Try it and see what happens!",
+    allow_flagging="never",
+)
+
+bark_interface = gr.Interface(
+    fn=generate_bark_audio,
+    inputs=[
+        gr.Textbox(label="Enter text for the request"),
+        gr.Dropdown(choices=[None, "v2/en_speaker_1", "v2/ru_speaker_1", "v2/de_speaker_1", "v2/fr_speaker_1", "v2/es_speaker_1", "v2/hi_speaker_1", "v2/it_speaker_1", "v2/ja_speaker_1", "v2/ko_speaker_1", "v2/pt_speaker_1", "v2/zh_speaker_1", "v2/tr_speaker_1", "v2/pl_speaker_1"], label="Select voice preset", value=None),
+        gr.Slider(minimum=100, maximum=1000, value=200, step=1, label="Max length"),
+        gr.Slider(minimum=0.1, maximum=2.0, value=0.4, step=0.1, label="Fine temperature"),
+        gr.Slider(minimum=0.1, maximum=2.0, value=0.8, step=0.1, label="Coarse temperature"),
+        gr.Radio(choices=["wav", "mp3", "ogg"], label="Select output format", value="wav", interactive=True),
+        gr.Button(value="Stop generation", interactive=True, variant="stop"),
+    ],
+    outputs=[
+        gr.Audio(label="Generated audio", type="filepath"),
+        gr.Image(label="Mel-Spectrogram", type="filepath"),
+        gr.Textbox(label="Message", type="text"),
+    ],
+    title="NeuroSandboxWebUI (ALPHA) - SunoBark",
+    description="This user interface allows you to enter text and generate audio using SunoBark. "
+                "You can select the voice preset and customize the max length. "
                 "Try it and see what happens!",
     allow_flagging="never",
 )
