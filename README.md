@@ -33,9 +33,9 @@ The goal of the project - to create the easiest possible application to use neur
 * Support for Transformers and llama.cpp models (LLM)
 * Support for diffusers and safetensors models (StableDiffusion) - txt2img, img2img, depth2img, pix2pix, controlnet, upscale (latent), upscale (Real-ESRGAN), refiner, inpaint, outpaint, gligen, animatediff, hotshot-xl, video, ldm3d, sd3, cascade, t2i-ip-adapter, ip-adapter-faceid, riffusion and extras tabs
 * Support of additional models for image generation: Kandinsky (txt2img, img2img, inpaint), Flux (with LoRA support), HunyuanDiT, Lumina-T2X, Kolors (txt2img, img2img), AuraFlow (with LoRA support), Würstchen, DeepFloydIF (txt2img, img2img, inpaint), PixArt and PlaygroundV2.5
-* StableAudioOpen support
-* AudioCraft support (Models: musicgen, audiogen and magnet)
-* AudioLDM 2 support (Models: audio and music)
+* Support StableAudio
+* Support AudioCraft (Models: musicgen, audiogen and magnet)
+* Support AudioLDM 2 (Models: audio and music)
 * Supports TTS and Whisper models (For LLM and TTS-STT)
 * Support MMS for text-to-speech and speech-to-text
 * Supports Lora, Textual inversion (embedding), Vae, Img2img, Depth, Pix2Pix, Controlnet, Upscalers (latent and Real-ESRGAN), Refiner, Inpaint, Outpaint, GLIGEN, AnimateDiff, HotShot-XL, Videos, LDM3D, SD3, Cascade, T2I-IP-ADAPTER, IP-Adapter-FaceID, Riffusion, Rembg, CodeFormer, Roop, PixelOE and DDColor models (For StableDiffusion)
@@ -529,7 +529,7 @@ To work with the virtual environment through the terminal, run `./Venv.sh`
 * LLM models can be taken from [HuggingFace](https://huggingface.co/models) or from ModelDownloader inside interface 
 * StableDiffusion, vae, inpaint, embedding and lora models can be taken from [CivitAI](https://civitai.com/models) or from ModelDownloader inside interface
 * RVC models can be taken from [VoiceModels](https://voice-models.com)
-* StableAudioOpen, AudioCraft, AudioLDM 2, TTS, Whisper, MMS, SeamlessM4Tv2, Wav2Lip, LivePortrait, SunoBark, MoonDream2, Upscalers (Latent and Real-ESRGAN), Refiner, GLIGEN, Depth, Pix2Pix, Controlnet, AnimateDiff, HotShot-XL, Videos, LDM3D, SD3, Cascade, T2I-IP-ADAPTER, IP-Adapter-FaceID, Riffusion, Rembg, Roop, CodeFormer, DDColor, PixelOE, Real-ESRGAN, StableFast3D, Shap-E, SV34D, Zero123Plus, UVR, Demucs, Kandinsky, Flux, HunyuanDiT, Lumina-T2X, Kolors, AuraFlow, AuraSR, Würstchen, DeepFloydIF, PixArt, PlaygroundV2.5, ModelScope, ZeroScope 2, CogVideoX, Latte and Multiband diffusion models are downloads automatically in *inputs* folder when are they used 
+* StableAudio, AudioCraft, AudioLDM 2, TTS, Whisper, MMS, SeamlessM4Tv2, Wav2Lip, LivePortrait, SunoBark, MoonDream2, Upscalers (Latent and Real-ESRGAN), Refiner, GLIGEN, Depth, Pix2Pix, Controlnet, AnimateDiff, HotShot-XL, Videos, LDM3D, SD3, Cascade, T2I-IP-ADAPTER, IP-Adapter-FaceID, Riffusion, Rembg, Roop, CodeFormer, DDColor, PixelOE, Real-ESRGAN, StableFast3D, Shap-E, SV34D, Zero123Plus, UVR, Demucs, Kandinsky, Flux, HunyuanDiT, Lumina-T2X, Kolors, AuraFlow, AuraSR, Würstchen, DeepFloydIF, PixArt, PlaygroundV2.5, ModelScope, ZeroScope 2, CogVideoX, Latte and Multiband diffusion models are downloads automatically in *inputs* folder when are they used 
 * You can take voices anywhere. Record yours or take a recording from the Internet. Or just use those that are already in the project. The main thing is that it is pre-processed!
 
 ## Wiki
