@@ -8040,10 +8040,10 @@ settings_interface = gr.Interface(
     fn=settings_interface,
     inputs=[
         gr.Radio(choices=["True", "False"], label="Share Mode", value="False"),
-        gr.Textbox(label="Hugging Face Token", placeholder="hf_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"),
-        gr.Textbox(label="Gradio Auth", placeholder="admin:admin"),
-        gr.Textbox(label="Server Name", placeholder="localhost"),
-        gr.Number(label="Server Port", placeholder=7860),
+        gr.Textbox(label="Hugging Face Token", value="hf_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"),
+        gr.Textbox(label="Gradio Auth", value="admin:admin"),
+        gr.Textbox(label="Server Name", value="localhost"),
+        gr.Number(label="Server Port", value=7860),
     ],
     outputs=[
         gr.Textbox(label="Message", type="text")
