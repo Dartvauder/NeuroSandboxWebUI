@@ -154,6 +154,7 @@ def load_settings():
             "share_mode": False,
             "server_name": "localhost",
             "server_port": 7860,
+            "auto_launch": False,
             "auth": {"username": "admin", "password": "admin"},
             "hf_token": "",
             "theme": "Default",
@@ -6258,7 +6259,7 @@ def download_model(model_name_llm, model_name_sd):
             return "Invalid StableDiffusion model name"
 
 
-def settings_interface(share_value, hf_token, gradio_auth, server_name, server_port, theme,
+def settings_interface(share_value, hf_token, gradio_auth, server_name, server_port, auto_launch, theme,
                        enable_custom_theme, primary_hue, secondary_hue, neutral_hue):
     settings = load_settings()
 
@@ -6266,6 +6267,7 @@ def settings_interface(share_value, hf_token, gradio_auth, server_name, server_p
     settings['hf_token'] = hf_token
     settings['server_name'] = server_name
     settings['server_port'] = int(server_port) if server_port else 7860
+    settings['auto_launch'] = auto_launch == "True"
     settings['theme'] = theme
     settings['custom_theme']['enabled'] = enable_custom_theme
     settings['custom_theme']['primary_hue'] = primary_hue
@@ -6280,7 +6282,7 @@ def settings_interface(share_value, hf_token, gradio_auth, server_name, server_p
 
     message = "Settings updated successfully!"
     message += f" Server will run on {settings['server_name']}:{settings['server_port']}"
-    message += f"\nTheme set to {'Custom' if enable_custom_theme else theme}. Please restart the application for theme changes to take effect."
+    message += f"\nTheme set to {'Custom' if enable_custom_theme else theme}. Please restart the application for changes to take effect."
 
     return message
 
@@ -8072,11 +8074,12 @@ settings_interface = gr.Interface(
     fn=settings_interface,
     inputs=[
         gr.Radio(choices=["True", "False"], label="Share Mode", value="False"),
-        gr.Textbox(label="Hugging Face Token", value="hf_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"),
-        gr.Textbox(label="Gradio Auth", value="admin:admin"),
-        gr.Textbox(label="Server Name", value="localhost"),
-        gr.Number(label="Server Port", value=7860),
-        gr.Dropdown(choices=["Base", "Default", "Glass", "Monochrome", "Soft"], label="Theme", value=settings['theme']),
+        gr.Textbox(label="Hugging Face Token", value=settings['hf_token']),
+        gr.Textbox(label="Gradio Auth", value=settings['auth']),
+        gr.Textbox(label="Server Name", value=settings['server_name']),
+        gr.Number(label="Server Port", value=settings['server_port']),
+        gr.Radio(choices=["True", "False"], label="Enable AutoLaunch", value="False"),
+        gr.Radio(choices=["Base", "Default", "Glass", "Monochrome", "Soft"], label="Theme", value=settings['theme']),
         gr.Checkbox(label="Enable Custom Theme", value=settings['custom_theme']['enabled']),
         gr.Textbox(label="Primary Hue", value=settings['custom_theme']['primary_hue']),
         gr.Textbox(label="Secondary Hue", value=settings['custom_theme']['secondary_hue']),
@@ -8178,5 +8181,7 @@ with gr.TabbedInterface(
         share=settings['share_mode'],
         server_name=settings['server_name'],
         server_port=settings['server_port'],
-        auth=authenticate if settings['auth'] else None
+        inbrowser=settings['auto_launch'],
+        auth=authenticate if settings['auth'] else None,
+        favicon_path="project-image.png"
     )
