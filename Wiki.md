@@ -46,7 +46,7 @@
 2) Click the `Submit` button to get the translate
 #### Optional: you can save the translation history by turning on the corresponding button
 
-### StableDiffusion - has twenty one sub-tabs:
+### StableDiffusion - has twenty two sub-tabs:
 
 #### txt2img:
 
@@ -215,6 +215,14 @@
   - 1) Upload the initial audio
     2) Select the options you need
     3) Click the `Submit` button to get the image from audio
+   
+### faceswap:
+
+1) Upload the source image of face
+2) Upload the target image or video of face
+3) Select the options you need
+4) Click the `Submit` button to get the face swapped image
+#### Optional: you can enable a FaceRestore to upscale and restore your face image/video
 
 #### extras:
 
