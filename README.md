@@ -12,7 +12,7 @@ The goal of the project - to create the easiest possible application to use neur
 
 ### Text: <img width="1118" alt="1" src="https://github.com/user-attachments/assets/e22b37bb-0d93-4308-8f6a-1b28745cc602">
 
-### Image: <img width="1120" alt="2" src="https://github.com/user-attachments/assets/5997fcb8-9dea-41ca-b3ed-b5699d844264">
+### Image: <img width="1116" alt="2" src="https://github.com/user-attachments/assets/a9b459b3-79c9-4d73-b1ba-1e8c752ad607">
 
 ### Video: <img width="1117" alt="3" src="https://github.com/user-attachments/assets/cc7a43d1-3d91-45ab-be6d-e4884c56eaa6">
 
@@ -29,7 +29,7 @@ The goal of the project - to create the easiest possible application to use neur
 * Flexible and optimized interface (By Gradio)
 * Debug logging to logs from `Install` and `Update` files
 * Support for Transformers and llama.cpp models (LLM)
-* Support for diffusers and safetensors models (StableDiffusion) - txt2img, img2img, depth2img, pix2pix, controlnet, upscale (latent), upscale (Real-ESRGAN), refiner, inpaint, outpaint, gligen, animatediff, hotshot-xl, video, ldm3d, sd3, cascade, t2i-ip-adapter, ip-adapter-faceid, riffusion and extras tabs
+* Support for diffusers and safetensors models (StableDiffusion) - txt2img, img2img, depth2img, pix2pix, controlnet, upscale (latent), upscale (Real-ESRGAN), refiner, inpaint, outpaint, gligen, animatediff, hotshot-xl, video, ldm3d, sd3, cascade, t2i-ip-adapter, ip-adapter-faceid, riffusion, faceswap and extras tabs
 * Support of additional models for image generation: Kandinsky (txt2img, img2img, inpaint), Flux (with LoRA support), HunyuanDiT (txt2img, controlnet), Lumina-T2X, Kolors (txt2img with LoRA support, img2img, ip-adapter-plus), AuraFlow (with LoRA and AuraSR support), Würstchen, DeepFloydIF (txt2img, img2img, inpaint), PixArt and PlaygroundV2.5
 * Support StableAudio
 * Support AudioCraft (Models: musicgen, audiogen and magnet)
@@ -144,7 +144,7 @@ To work with the virtual environment through the terminal, run `./Venv.sh`
 2) Click the `Submit` button to get the translate
 #### Optional: you can save the translation history by turning on the corresponding button
 
-### StableDiffusion - has twenty one sub-tabs:
+### StableDiffusion - has twenty two sub-tabs:
 
 #### txt2img:
 
@@ -313,6 +313,14 @@ To work with the virtual environment through the terminal, run `./Venv.sh`
   - 1) Upload the initial audio
     2) Select the options you need
     3) Click the `Submit` button to get the image from audio
+   
+### faceswap:
+
+1) Upload the source image of face
+2) Upload the target image or video of face
+3) Select the options you need
+4) Click the `Submit` button to get the face swapped image
+#### Optional: you can enable a FaceRestore to upscale and restore your face image/video
 
 #### extras:
 
