@@ -1,4 +1,0 @@
-1. Create and log into your account at https://huggingface.co/
-2. Go to your profile settings
-3. In the "Access Tokens" section, create a new token
-4. Copy it and paste it into this text document, clearing this instruction

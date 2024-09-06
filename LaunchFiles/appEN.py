@@ -80,9 +80,6 @@ except ImportError:
     pass
     print("Xformers is not installed. Proceeding without it")
 
-share_mode = False
-app_server_name = "localhost"
-app_server_port = 7860
 chat_dir = None
 tts_model = None
 whisper_model = None
@@ -135,24 +132,36 @@ def get_languages():
     }
 
 
+def load_settings():
+    if not os.path.exists('Settings.json'):
+        default_settings = {
+            "share_mode": False,
+            "server_name": "localhost",
+            "server_port": 7860,
+            "auth": {"username": "admin", "password": "admin"},
+            "hf_token": ""
+        }
+        with open('Settings.json', 'w') as f:
+            json.dump(default_settings, f, indent=4)
+
+    with open('Settings.json', 'r') as f:
+        return json.load(f)
+
+
+def save_settings(settings):
+    with open('Settings.json', 'w') as f:
+        json.dump(settings, f, indent=4)
+
+
 def authenticate(username, password):
-    try:
-        with open("GradioAuth.txt", "r") as file:
-            stored_credentials = file.read().strip().split(":")
-            if len(stored_credentials) == 2:
-                stored_username, stored_password = stored_credentials
-                return username == stored_username and password == stored_password
-    except FileNotFoundError:
-        pass
-    return False
+    settings = load_settings()
+    auth = settings.get('auth', {})
+    return username == auth.get('username') and password == auth.get('password')
 
 
 def get_hf_token():
-    token_file = "HF-Token.txt"
-    if os.path.exists(token_file):
-        with open(token_file, "r") as f:
-            return f.read().strip()
-    return None
+    settings = load_settings()
+    return settings.get('hf_token', '')
 
 
 def perform_web_search(query):
@@ -6227,23 +6236,21 @@ def download_model(model_name_llm, model_name_sd):
 
 
 def settings_interface(share_value, hf_token, gradio_auth, server_name, server_port):
-    global share_mode, app_server_name, app_server_port
-    share_mode = share_value == "True"
-    app_server_name = server_name if server_name else "localhost"
-    app_server_port = int(server_port) if server_port else 7860
-    message = "Settings updated successfully!"
+    settings = load_settings()
 
-    if hf_token:
-        with open("HF-Token.txt", "w") as f:
-            f.write(hf_token)
-        message += " HF-Token updated."
+    settings['share_mode'] = share_value == "True"
+    settings['hf_token'] = hf_token
+    settings['server_name'] = server_name
+    settings['server_port'] = int(server_port) if server_port else 7860
 
     if gradio_auth:
-        with open("GradioAuth.txt", "w") as f:
-            f.write(gradio_auth)
-        message += " GradioAuth updated."
+        username, password = gradio_auth.split(':')
+        settings['auth'] = {"username": username, "password": password}
 
-    message += f" Server will run on {app_server_name}:{app_server_port}"
+    save_settings(settings)
+
+    message = "Settings updated successfully!"
+    message += f" Server will run on {settings['server_name']}:{settings['server_port']}"
 
     return message
 
@@ -8033,8 +8040,8 @@ settings_interface = gr.Interface(
     fn=settings_interface,
     inputs=[
         gr.Radio(choices=["True", "False"], label="Share Mode", value="False"),
-        gr.Textbox(label="Hugging Face Token", placeholder="hf_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"),
-        gr.Textbox(label="Gradio Auth", placeholder="admin:admin"),
+        gr.Textbox(label="Hugging Face Token", value="hf_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"),
+        gr.Textbox(label="Gradio Auth", value="admin:admin"),
         gr.Textbox(label="Server Name", value="localhost"),
         gr.Number(label="Server Port", value=7860),
     ],
@@ -8120,4 +8127,11 @@ with gr.TabbedInterface(
         '</div>'
     )
 
-    app.launch(share=share_mode, server_name=app_server_name, server_port=app_server_port, auth=authenticate)
+    settings = load_settings()
+
+    app.launch(
+        share=settings['share_mode'],
+        server_name=settings['server_name'],
+        server_port=settings['server_port'],
+        auth=authenticate if settings['auth'] else None
+    )
