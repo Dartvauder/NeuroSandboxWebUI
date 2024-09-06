@@ -80,6 +80,9 @@ except ImportError:
     pass
     print("Xformers is not installed. Proceeding without it")
 
+share_mode = False
+app_server_name = "localhost"
+app_server_port = 7860
 chat_dir = None
 tts_model = None
 whisper_model = None
@@ -5615,7 +5618,7 @@ def generate_sv34d(input_file, version, elevation_deg=None):
             return None, f"Error downloading model: {str(e)}"
 
     today = datetime.now().date()
-    output_dir = os.path.join('outputs', '3D', f"SV34D_{today.strftime('%Y%m%d')}")
+    output_dir = os.path.join('outputs', f"SV34D_{today.strftime('%Y%m%d')}")
     os.makedirs(output_dir, exist_ok=True)
 
     output_filename = f"sv34d_{version}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
@@ -6223,17 +6226,26 @@ def download_model(model_name_llm, model_name_sd):
             return "Invalid StableDiffusion model name"
 
 
-def settings_interface(share_value):
-    global share_mode
+def settings_interface(share_value, hf_token, gradio_auth, server_name, server_port):
+    global share_mode, app_server_name, app_server_port
     share_mode = share_value == "True"
-    message = f"Settings updated successfully!"
+    app_server_name = server_name if server_name else "localhost"
+    app_server_port = int(server_port) if server_port else 7860
+    message = "Settings updated successfully!"
 
-    app.launch(share=share_mode, server_name="localhost")
+    if hf_token:
+        with open("HF-Token.txt", "w") as f:
+            f.write(hf_token)
+        message += " HF-Token updated."
+
+    if gradio_auth:
+        with open("GradioAuth.txt", "w") as f:
+            f.write(gradio_auth)
+        message += " GradioAuth updated."
+
+    message += f" Server will run on {app_server_name}:{app_server_port}"
 
     return message
-
-
-share_mode = False
 
 
 def get_system_info():
@@ -8020,13 +8032,17 @@ model_downloader_interface = gr.Interface(
 settings_interface = gr.Interface(
     fn=settings_interface,
     inputs=[
-        gr.Radio(choices=["True", "False"], label="Share Mode", value="False")
+        gr.Radio(choices=["True", "False"], label="Share Mode", value="False"),
+        gr.Textbox(label="Hugging Face Token", placeholder="hf_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"),
+        gr.Textbox(label="Gradio Auth", placeholder="admin:admin"),
+        gr.Textbox(label="Server Name", value="localhost"),
+        gr.Number(label="Server Port", value=7860),
     ],
     outputs=[
         gr.Textbox(label="Message", type="text")
     ],
     title="NeuroSandboxWebUI (ALPHA) - Settings",
-    description="This user interface allows you to change settings of application",
+    description="This user interface allows you to change settings of the application",
     allow_flagging="never",
 )
 
@@ -8104,4 +8120,4 @@ with gr.TabbedInterface(
         '</div>'
     )
 
-    app.launch(share=share_mode, server_name="localhost", auth=authenticate)
+    app.launch(share=share_mode, server_name=app_server_name, server_port=app_server_port, auth=authenticate)
