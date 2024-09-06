@@ -27,8 +27,8 @@ The goal of the project - to create the easiest possible application to use neur
 * Easy installation via install.bat (Windows) or install.sh (Linux)
 * You can use the application via your mobile device in localhost (Via IPv4) or anywhere online (Via Share)
 * Flexible and optimized interface (By Gradio)
-* Authentication via admin:admin (You can enter your login details in the GradioAuth.txt file)
-* You can add your own HuggingFace-Token to download a specific models (You can enter your token in the HF-Token.txt file)
+* Authentication via admin:admin (You can enter your login details in the GradioAuth.txt file or in settings)
+* You can add your own HuggingFace-Token to download a specific models (You can enter your token in the HF-Token.txt file or in settings)
 * Debug logging to logs from `Install` and `Update` files
 * Support for Transformers and llama.cpp models (LLM)
 * Support for diffusers and safetensors models (StableDiffusion) - txt2img, img2img, depth2img, pix2pix, controlnet, upscale (latent), upscale (Real-ESRGAN), refiner, inpaint, outpaint, gligen, animatediff, hotshot-xl, video, ldm3d, sd3, cascade, t2i-ip-adapter, ip-adapter-faceid, riffusion and extras tabs
@@ -515,11 +515,11 @@ To work with the virtual environment through the terminal, run `./Venv.sh`
 
 ### Settings: 
 
-* Here you can change the application settings. For now you can only change `Share` mode to `True` or `False`
+* Here you can change the application settings
 
 ### System: 
 
-* Here you can see the indicators of your computer's sensors by clicking on the `Submit` button
+* Here you can see the indicators of your computer's sensors
 
 ### Additional Information:
 
