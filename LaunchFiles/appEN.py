@@ -6282,7 +6282,7 @@ def settings_interface(share_value, hf_token, gradio_auth, server_name, server_p
 
     message = "Settings updated successfully!"
     message += f" Server will run on {settings['server_name']}:{settings['server_port']}"
-    message += f"\nTheme set to {'Custom' if enable_custom_theme else theme}. Please restart the application for theme changes to take effect."
+    message += f"\nTheme set to {'Custom' if enable_custom_theme else theme}. Please restart the application for changes to take effect."
 
     return message
 
@@ -8073,13 +8073,13 @@ model_downloader_interface = gr.Interface(
 settings_interface = gr.Interface(
     fn=settings_interface,
     inputs=[
-        gr.Radio(choices=["True", "False"], label="Share Mode", value=settings['share_mode']),
+        gr.Radio(choices=["True", "False"], label="Share Mode", value="False"),
         gr.Textbox(label="Hugging Face Token", value=settings['hf_token']),
         gr.Textbox(label="Gradio Auth", value=settings['auth']),
         gr.Textbox(label="Server Name", value=settings['server_name']),
         gr.Number(label="Server Port", value=settings['server_port']),
-        gr.Radio(choices=["True", "False"], label="Enable AutoLaunch", value=settings['auto_launch']),
-        gr.Dropdown(choices=["Base", "Default", "Glass", "Monochrome", "Soft"], label="Theme", value=settings['theme']),
+        gr.Radio(choices=["True", "False"], label="Enable AutoLaunch", value="False"),
+        gr.Radio(choices=["Base", "Default", "Glass", "Monochrome", "Soft"], label="Theme", value=settings['theme']),
         gr.Checkbox(label="Enable Custom Theme", value=settings['custom_theme']['enabled']),
         gr.Textbox(label="Primary Hue", value=settings['custom_theme']['primary_hue']),
         gr.Textbox(label="Secondary Hue", value=settings['custom_theme']['secondary_hue']),
