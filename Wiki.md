@@ -2,7 +2,7 @@
 
 ## How to use:
 
-#### Interface has thirty six sub-tabs (some with their own sub-tabs) in six main tabs (Text, Image, Video, 3D, Audio and Interface): LLM, TTS-STT, MMS, SeamlessM4Tv2, SunoBark, LibreTranslate, Wav2Lip, StableDiffusion, Kandinsky, Flux, HunyuanDiT, Lumina-T2X, Kolors, AuraFlow, Würstchen, DeepFloydIF, PixArt, PlaygroundV2.5, ModelScope, ZeroScope 2, CogVideoX, Latte, StableFast3D, Shap-E, SV34D, Zero123Plus, StableAudio, AudioCraft, AudioLDM 2, RVC, UVR, Demucs, Gallery, ModelDownloader, Settings and System. Select the one you need and follow the instructions below 
+#### Interface has thirty eight sub-tabs (some with their own sub-tabs) in six main tabs (Text, Image, Video, 3D, Audio and Interface): LLM, TTS-STT, MMS, SeamlessM4Tv2, LibreTranslate, StableDiffusion, Kandinsky, Flux, HunyuanDiT, Lumina-T2X, Kolors, AuraFlow, Würstchen, DeepFloydIF, PixArt, PlaygroundV2.5, Wav2Lip, LivePortrait, ModelScope, ZeroScope 2, CogVideoX, Latte, StableFast3D, Shap-E, SV34D, Zero123Plus, StableAudio, AudioCraft, AudioLDM 2, SunoBark, RVC, UVR, Demucs, Wiki, Gallery, ModelDownloader, Settings and System. Select the one you need and follow the instructions below 
 
 ### LLM:
 
@@ -39,25 +39,12 @@
 3) Set up the model according to the parameters you need
 4) Click the `Submit` button to get the translate
 
-### SunoBark:
-
-1) Type your request
-2) Set up the model according to the parameters you need
-3) Click the `Submit` button to receive the generated audio response
-
 ### LibreTranslate:
 
 * First you need to install and run [LibreTranslate](https://github.com/LibreTranslate/LibreTranslate)
 1) Select source and target languages
 2) Click the `Submit` button to get the translate
 #### Optional: you can save the translation history by turning on the corresponding button
-
-### Wav2Lip:
-
-1) Upload the initial image of face
-2) Upload the initial audio of voice
-3) Set up the model according to the parameters you need
-4) Click the `Submit` button to receive the lip-sync
 
 ### StableDiffusion - has twenty one sub-tabs:
 
@@ -112,14 +99,16 @@
 #### upscale (latent):
 
 1) Upload the initial image
-2) Set up the model according to the parameters you need
-3) Click the `Submit` button to get the upscaled image
+2) Select your model
+3) Set up the model according to the parameters you need
+4) Click the `Submit` button to get the upscaled image
 
 #### upscale (Real-ESRGAN):
 
 1) Upload the initial image
-2) Set up the model according to the parameters you need
-3) Click the `Submit` button to get the upscaled image
+2) Select your model
+3) Set up the model according to the parameters you need
+4) Click the `Submit` button to get the upscaled image
 
 #### refiner (SDXL):
 
@@ -246,8 +235,10 @@
 2) Select your model
 3) Set up the model according to the parameters you need
 4) Click `Submit` to get the generated image
+#### Optional: You can select your `lora` models to improve the generation method
+#### lora = *inputs/image/flux-lora*
 
-### HunyuanDiT:
+### HunyuanDiT (txt2img, controlnet):
 
 1) Enter your prompt
 2) Set up the model according to the parameters you need
@@ -259,17 +250,21 @@
 2) Set up the model according to the parameters you need
 3) Click `Submit` to get the generated image
 
-### Kolors:
+### Kolors (txt2img, img2img, ip-adapter-plus):
 
 1) Enter your prompt
 2) Set up the model according to the parameters you need
 3) Click `Submit` to get the generated image
+#### Optional: You can select your `lora` models to improve the generation method
+#### lora = *inputs/image/kolors-lora*
 
 ### AuraFlow:
 
 1) Enter your prompt
 2) Set up the model according to the parameters you need
 3) Click `Submit` to get the generated image
+#### Optional: You can select your `lora` models and enable `AuraSR` to improve the generation method
+#### lora = *inputs/image/auraflow-lora*
 
 ### Würstchen:
 
@@ -295,6 +290,19 @@
 1) Enter your prompt
 2) Set up the model according to the parameters you need
 3) Click `Submit` to get the generated image
+
+### Wav2Lip:
+
+1) Upload the initial image of face
+2) Upload the initial audio of voice
+3) Set up the model according to the parameters you need
+4) Click the `Submit` button to receive the lip-sync
+
+### LivePortrait:
+
+1) Upload the initial image of face
+2) Upload the initial video of face moving
+3) Click the `Submit` button to receive the animated image of face
 
 ### ModelScope:
 
@@ -367,6 +375,12 @@
 3) Enter your request
 4) Click the `Submit` button to get the generated audio
 
+### SunoBark:
+
+1) Type your request
+2) Set up the model according to the parameters you need
+3) Click the `Submit` button to receive the generated audio response
+
 ### RVC:
 
 1) First upload your models to the folder: *inputs/audio/rvc_models*
@@ -401,25 +415,23 @@
 
 ### Settings: 
 
-* Here you can change the application settings. For now you can only change `Share` mode to `True` or `False`
+* Here you can change the application settings
 
 ### System: 
 
-* Here you can see the indicators of your computer's sensors by clicking on the `Submit` button
+* Here you can see the indicators of your computer's sensors
 
 ### Additional Information:
 
 1) All generations are saved in the *outputs* folder
 2) You can press the `Clear` button to reset your selection
-3) To stop the generation process, press the `Stop generation` button
-4) You can turn off the application using the `Close terminal` button
-5) You can open the *outputs* folder using the `Outputs` button
-6) You can reload your interface using the `Reload models` button
+3) You can turn off the application using the `Close terminal` button
+4) You can open the *outputs* folder using the `Outputs` button
 
 ## Where can i get models and voices?
 
 * LLM models can be taken from [HuggingFace](https://huggingface.co/models) or from ModelDownloader inside interface 
 * StableDiffusion, vae, inpaint, embedding and lora models can be taken from [CivitAI](https://civitai.com/models) or from ModelDownloader inside interface
 * RVC models can be taken from [VoiceModels](https://voice-models.com)
-* StableAudioOpen, AudioCraft, AudioLDM 2, TTS, Whisper, MMS, SeamlessM4Tv2, Wav2Lip, SunoBark, MoonDream2, Upscalers (Latent and Real-ESRGAN), Refiner, GLIGEN, Depth, Pix2Pix, Controlnet, AnimateDiff, HotShot-XL, Videos, LDM3D, SD3, Cascade, T2I-IP-ADAPTER, IP-Adapter-FaceID, Riffusion, Rembg, Roop, CodeFormer, DDColor, PixelOE, Real-ESRGAN, StableFast3D, Shap-E, SV34D, Zero123Plus, UVR, Demucs, Kandinsky, Flux, HunyuanDiT, Lumina-T2X, Kolors, AuraFlow, AuraSR, Würstchen, DeepFloydIF, PixArt, PlaygroundV2.5, ModelScope, ZeroScope 2, CogVideoX, Latte and Multiband diffusion models are downloads automatically in *inputs* folder when are they used 
+* StableAudio, AudioCraft, AudioLDM 2, TTS, Whisper, MMS, SeamlessM4Tv2, Wav2Lip, LivePortrait, SunoBark, MoonDream2, Upscalers (Latent and Real-ESRGAN), Refiner, GLIGEN, Depth, Pix2Pix, Controlnet, AnimateDiff, HotShot-XL, Videos, LDM3D, SD3, Cascade, T2I-IP-ADAPTER, IP-Adapter-FaceID, Riffusion, Rembg, Roop, CodeFormer, DDColor, PixelOE, Real-ESRGAN, StableFast3D, Shap-E, SV34D, Zero123Plus, UVR, Demucs, Kandinsky, Flux, HunyuanDiT, Lumina-T2X, Kolors, AuraFlow, AuraSR, Würstchen, DeepFloydIF, PixArt, PlaygroundV2.5, ModelScope, ZeroScope 2, CogVideoX, Latte and Multiband diffusion models are downloads automatically in *inputs* folder when are they used 
 * You can take voices anywhere. Record yours or take a recording from the Internet. Or just use those that are already in the project. The main thing is that it is pre-processed!
