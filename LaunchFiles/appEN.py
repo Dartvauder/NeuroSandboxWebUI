@@ -4210,7 +4210,7 @@ def generate_image_kolors(prompt, negative_prompt, guidance_scale, num_inference
         flush()
 
 
-def generate_image_auraflow(prompt, negative_prompt, num_inference_steps, guidance_scale, height, width, max_sequence_length, enable_aurasr, seed, output_format="png"):
+def generate_image_auraflow(prompt, negative_prompt, lora_model_names, lora_scales, num_inference_steps, guidance_scale, height, width, max_sequence_length, enable_aurasr, seed, output_format="png"):
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -4238,6 +4238,34 @@ def generate_image_auraflow(prompt, negative_prompt, num_inference_steps, guidan
     try:
         pipe = AuraFlowPipeline.from_pretrained(auraflow_model_path, torch_dtype=torch.float16)
         pipe = pipe.to(device)
+
+        if isinstance(lora_scales, str):
+            lora_scales = [float(scale.strip()) for scale in lora_scales.split(',') if scale.strip()]
+        elif isinstance(lora_scales, (int, float)):
+            lora_scales = [float(lora_scales)]
+
+        lora_loaded = False
+        if lora_model_names and lora_scales:
+            if len(lora_model_names) != len(lora_scales):
+                print(
+                    f"Warning: Number of LoRA models ({len(lora_model_names)}) does not match number of scales ({len(lora_scales)}). Using available scales.")
+
+            for i, lora_model_name in enumerate(lora_model_names):
+                if i < len(lora_scales):
+                    lora_scale = lora_scales[i]
+                else:
+                    lora_scale = 1.0
+
+                lora_model_path = os.path.join("inputs", "image", "auraflow-lora", lora_model_name)
+                if os.path.exists(lora_model_path):
+                    adapter_name = os.path.splitext(os.path.basename(lora_model_name))[0]
+                    try:
+                        pipe.load_lora_weights(lora_model_path, adapter_name=adapter_name)
+                        pipe.fuse_lora(lora_scale=lora_scale)
+                        lora_loaded = True
+                        print(f"Loaded LoRA {lora_model_name} with scale {lora_scale}")
+                    except Exception as e:
+                        print(f"Error loading LoRA {lora_model_name}: {str(e)}")
 
         image = pipe(
             prompt=prompt,
@@ -6041,6 +6069,8 @@ lora_models_list = [None] + [model for model in os.listdir("inputs/image/sd_mode
                              model.endswith(".safetensors")]
 flux_lora_models_list = [None] + [model for model in os.listdir("inputs/image/flux-lora") if
                              model.endswith(".safetensors")]
+auraflow_lora_models_list = [None] + [model for model in os.listdir("inputs/image/auraflow-lora") if
+                             model.endswith(".safetensors")]
 textual_inversion_models_list = [None] + [model for model in os.listdir("inputs/image/sd_models/embedding") if model.endswith(".pt")]
 inpaint_models_list = [None] + [model.replace(".safetensors", "") for model in
                                 os.listdir("inputs/image/sd_models/inpaint")
@@ -7087,6 +7117,8 @@ auraflow_interface = gr.Interface(
     inputs=[
         gr.Textbox(label="Enter your prompt"),
         gr.Textbox(label="Enter your negative prompt", value=""),
+        gr.Dropdown(choices=auraflow_lora_models_list, label="Select LORA models (optional)", value=None, multiselect=True),
+        gr.Textbox(label="LoRA Scales"),
         gr.Slider(minimum=1, maximum=100, value=25, step=1, label="Steps"),
         gr.Slider(minimum=1.0, maximum=20.0, value=7.5, step=0.1, label="Guidance Scale"),
         gr.Slider(minimum=256, maximum=2048, value=512, step=64, label="Height"),
