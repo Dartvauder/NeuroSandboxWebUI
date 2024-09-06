@@ -6,5 +6,12 @@
         "username": "admin",
         "password": "admin"
     },
-    "hf_token": "hf_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+    "hf_token": "hf_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+    "theme": "Default",
+    "custom_theme": {
+        "enabled": false,
+        "primary_hue": "red",
+        "secondary_hue": "orange",
+        "neutral_hue": "black"
+    }
 }
