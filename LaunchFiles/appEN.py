@@ -35,7 +35,7 @@ from TTS.api import TTS
 import whisper
 from datetime import datetime
 from huggingface_hub import snapshot_download
-from diffusers import StableDiffusionPipeline, StableDiffusion3Pipeline, StableDiffusionXLPipeline, StableDiffusionImg2ImgPipeline, StableDiffusionXLImg2ImgPipeline, StableDiffusion3Img2ImgPipeline, SD3ControlNetModel, StableDiffusion3ControlNetPipeline, StableDiffusion3InpaintPipeline, StableDiffusionXLInpaintPipeline, StableDiffusionDepth2ImgPipeline, ControlNetModel, StableDiffusionXLControlNetPipeline, StableDiffusionControlNetPipeline, AutoencoderKL, StableDiffusionLatentUpscalePipeline, StableDiffusionUpscalePipeline, StableDiffusionInpaintPipeline, StableDiffusionGLIGENPipeline, AnimateDiffPipeline, AnimateDiffSDXLPipeline, AnimateDiffVideoToVideoPipeline, MotionAdapter, StableVideoDiffusionPipeline, I2VGenXLPipeline, StableCascadePriorPipeline, StableCascadeDecoderPipeline, DiffusionPipeline, ShapEPipeline, ShapEImg2ImgPipeline, StableAudioPipeline, AudioLDM2Pipeline, StableDiffusionInstructPix2PixPipeline, StableDiffusionLDM3DPipeline, FluxPipeline, KandinskyPipeline, KandinskyPriorPipeline, KandinskyV22Pipeline, KandinskyV22PriorPipeline, AutoPipelineForText2Image, KandinskyImg2ImgPipeline, AutoPipelineForImage2Image, AutoPipelineForInpainting, HunyuanDiTPipeline, LuminaText2ImgPipeline, IFPipeline, IFSuperResolutionPipeline, IFImg2ImgPipeline, IFInpaintingPipeline, IFImg2ImgSuperResolutionPipeline, IFInpaintingSuperResolutionPipeline, PixArtAlphaPipeline, PixArtSigmaPipeline, CogVideoXPipeline, LattePipeline, KolorsPipeline, AuraFlowPipeline, WuerstchenDecoderPipeline, WuerstchenPriorPipeline, StableDiffusionSAGPipeline, DDIMScheduler
+from diffusers import StableDiffusionPipeline, StableDiffusion3Pipeline, StableDiffusionXLPipeline, StableDiffusionImg2ImgPipeline, StableDiffusionXLImg2ImgPipeline, StableDiffusion3Img2ImgPipeline, SD3ControlNetModel, StableDiffusion3ControlNetPipeline, StableDiffusion3InpaintPipeline, StableDiffusionXLInpaintPipeline, StableDiffusionDepth2ImgPipeline, ControlNetModel, StableDiffusionXLControlNetPipeline, StableDiffusionControlNetPipeline, AutoencoderKL, StableDiffusionLatentUpscalePipeline, StableDiffusionUpscalePipeline, StableDiffusionInpaintPipeline, StableDiffusionGLIGENPipeline, AnimateDiffPipeline, AnimateDiffSDXLPipeline, AnimateDiffVideoToVideoPipeline, MotionAdapter, StableVideoDiffusionPipeline, I2VGenXLPipeline, StableCascadePriorPipeline, StableCascadeDecoderPipeline, DiffusionPipeline, ShapEPipeline, ShapEImg2ImgPipeline, StableAudioPipeline, AudioLDM2Pipeline, StableDiffusionInstructPix2PixPipeline, StableDiffusionLDM3DPipeline, FluxPipeline, KandinskyPipeline, KandinskyPriorPipeline, KandinskyV22Pipeline, KandinskyV22PriorPipeline, AutoPipelineForText2Image, KandinskyImg2ImgPipeline, AutoPipelineForImage2Image, AutoPipelineForInpainting, HunyuanDiTPipeline, HunyuanDiTControlNetPipeline, HunyuanDiT2DControlNetModel, LuminaText2ImgPipeline, IFPipeline, IFSuperResolutionPipeline, IFImg2ImgPipeline, IFInpaintingPipeline, IFImg2ImgSuperResolutionPipeline, IFInpaintingSuperResolutionPipeline, PixArtAlphaPipeline, PixArtSigmaPipeline, CogVideoXPipeline, LattePipeline, KolorsPipeline, AuraFlowPipeline, WuerstchenDecoderPipeline, WuerstchenPriorPipeline, StableDiffusionSAGPipeline, DDIMScheduler, DPMSolverMultistepScheduler
 from diffusers.utils import load_image, export_to_video, export_to_gif, export_to_ply, pt_to_pil
 from diffusers.pipelines.wuerstchen import DEFAULT_STAGE_C_TIMESTEPS
 from aura_sr import AuraSR
@@ -80,6 +80,9 @@ except ImportError:
     pass
     print("Xformers is not installed. Proceeding without it")
 
+share_mode = False
+app_server_name = "localhost"
+app_server_port = 7860
 chat_dir = None
 tts_model = None
 whisper_model = None
@@ -4059,7 +4062,7 @@ def generate_image_flux(prompt, model_name, lora_model_names, lora_scales, guida
         flush()
 
 
-def generate_image_hunyuandit(prompt, negative_prompt, num_inference_steps, guidance_scale, height, width, seed, output_format="png"):
+def generate_image_hunyuandit_txt2img(prompt, negative_prompt, num_inference_steps, guidance_scale, height, width, seed, output_format="png"):
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -4074,7 +4077,7 @@ def generate_image_hunyuandit(prompt, negative_prompt, num_inference_steps, guid
     if not os.path.exists(hunyuandit_model_path):
         print("Downloading HunyuanDiT model...")
         os.makedirs(hunyuandit_model_path, exist_ok=True)
-        Repo.clone_from("https://huggingface.co/Tencent-Hunyuan/HunyuanDiT-Diffusers", hunyuandit_model_path)
+        Repo.clone_from("https://huggingface.co/Tencent-Hunyuan/HunyuanDiT-v1.2-Diffusers", hunyuandit_model_path)
         print("HunyuanDiT model downloaded")
 
     try:
@@ -4106,6 +4109,68 @@ def generate_image_hunyuandit(prompt, negative_prompt, num_inference_steps, guid
 
     finally:
         del pipe
+        flush()
+
+
+def generate_image_hunyuandit_controlnet(prompt, negative_prompt, init_image, controlnet_model, num_inference_steps, guidance_scale, height, width, seed, output_format="png"):
+
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+
+    if seed == "" or seed is None:
+        seed = random.randint(0, 2 ** 32 - 1)
+    else:
+        seed = int(seed)
+    generator = torch.Generator(device).manual_seed(seed)
+
+    hunyuandit_model_path = os.path.join("inputs", "image", "hunyuandit")
+    controlnet_model_path = os.path.join("inputs", "image", "hunyuandit", "controlnet", controlnet_model)
+
+    if not os.path.exists(hunyuandit_model_path):
+        print("Downloading HunyuanDiT model...")
+        os.makedirs(hunyuandit_model_path, exist_ok=True)
+        Repo.clone_from("https://huggingface.co/Tencent-Hunyuan/HunyuanDiT-v1.2-Diffusers", hunyuandit_model_path)
+        print("HunyuanDiT model downloaded")
+
+    if not os.path.exists(controlnet_model_path):
+        print(f"Downloading HunyuanDiT ControlNet {controlnet_model} model...")
+        os.makedirs(controlnet_model_path, exist_ok=True)
+        Repo.clone_from(f"https://huggingface.co/Tencent-Hunyuan/HunyuanDiT-v1.2-ControlNet-Diffusers-{controlnet_model}", controlnet_model_path)
+        print(f"HunyuanDiT ControlNet {controlnet_model} model downloaded")
+
+    try:
+        controlnet = HunyuanDiT2DControlNetModel.from_pretrained(controlnet_model_path, torch_dtype=torch.float16)
+        pipe = HunyuanDiTControlNetPipeline.from_pretrained(hunyuandit_model_path, controlnet=controlnet, torch_dtype=torch.float16)
+        pipe.to(device)
+
+        init_image = Image.open(init_image).convert("RGB")
+        init_image = init_image.resize((width, height))
+
+        image = pipe(
+            prompt=prompt,
+            negative_prompt=negative_prompt,
+            height=height,
+            width=width,
+            guidance_scale=guidance_scale,
+            control_image=init_image,
+            num_inference_steps=num_inference_steps,
+            generator=generator
+        ).images[0]
+
+        today = datetime.now().date()
+        image_dir = os.path.join('outputs', f"HunyuanDiT_{today.strftime('%Y%m%d')}")
+        os.makedirs(image_dir, exist_ok=True)
+        image_filename = f"hunyuandit_controlnet_{controlnet_model}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
+        image_path = os.path.join(image_dir, image_filename)
+        image.save(image_path, format=output_format.upper())
+
+        return image_path, f"Image generated successfully. Seed used: {seed}"
+
+    except Exception as e:
+        return None, str(e)
+
+    finally:
+        del pipe
+        del controlnet
         flush()
 
 
@@ -4161,7 +4226,7 @@ def generate_image_lumina(prompt, negative_prompt, num_inference_steps, guidance
         flush()
 
 
-def generate_image_kolors(prompt, negative_prompt, guidance_scale, num_inference_steps, max_sequence_length, seed, output_format="png"):
+def generate_image_kolors_txt2img(prompt, negative_prompt, lora_model_names, lora_scales, guidance_scale, num_inference_steps, max_sequence_length, seed, output_format="png"):
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -4183,6 +4248,34 @@ def generate_image_kolors(prompt, negative_prompt, guidance_scale, num_inference
         pipe = KolorsPipeline.from_pretrained(kolors_model_path, torch_dtype=torch.float16, variant="fp16")
         pipe.to(device)
         pipe.enable_model_cpu_offload()
+
+        if isinstance(lora_scales, str):
+            lora_scales = [float(scale.strip()) for scale in lora_scales.split(',') if scale.strip()]
+        elif isinstance(lora_scales, (int, float)):
+            lora_scales = [float(lora_scales)]
+
+        lora_loaded = False
+        if lora_model_names and lora_scales:
+            if len(lora_model_names) != len(lora_scales):
+                print(
+                    f"Warning: Number of LoRA models ({len(lora_model_names)}) does not match number of scales ({len(lora_scales)}). Using available scales.")
+
+            for i, lora_model_name in enumerate(lora_model_names):
+                if i < len(lora_scales):
+                    lora_scale = lora_scales[i]
+                else:
+                    lora_scale = 1.0
+
+                lora_model_path = os.path.join("inputs", "image", "sd_models", "lora", lora_model_name)
+                if os.path.exists(lora_model_path):
+                    adapter_name = os.path.splitext(os.path.basename(lora_model_name))[0]
+                    try:
+                        pipe.load_lora_weights(lora_model_path, adapter_name=adapter_name)
+                        pipe.fuse_lora(lora_scale=lora_scale)
+                        lora_loaded = True
+                        print(f"Loaded LoRA {lora_model_name} with scale {lora_scale}")
+                    except Exception as e:
+                        print(f"Error loading LoRA {lora_model_name}: {str(e)}")
 
         image = pipe(
             prompt=prompt,
@@ -4210,7 +4303,131 @@ def generate_image_kolors(prompt, negative_prompt, guidance_scale, num_inference
         flush()
 
 
-def generate_image_auraflow(prompt, negative_prompt, num_inference_steps, guidance_scale, height, width, max_sequence_length, enable_aurasr, seed, output_format="png"):
+def generate_image_kolors_img2img(prompt, negative_prompt, init_image, guidance_scale, num_inference_steps, max_sequence_length, seed, output_format="png"):
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+
+    if seed == "" or seed is None:
+        seed = random.randint(0, 2 ** 32 - 1)
+    else:
+        seed = int(seed)
+    generator = torch.Generator(device).manual_seed(seed)
+
+    kolors_model_path = os.path.join("inputs", "image", "kolors")
+
+    if not os.path.exists(kolors_model_path):
+        print("Downloading Kolors model...")
+        os.makedirs(kolors_model_path, exist_ok=True)
+        Repo.clone_from("https://huggingface.co/Kwai-Kolors/Kolors-diffusers", kolors_model_path)
+        print("Kolors model downloaded")
+
+    try:
+        pipe = KolorsPipeline.from_pretrained(kolors_model_path, torch_dtype=torch.float16, variant="fp16")
+        pipe.to(device)
+        pipe.enable_model_cpu_offload()
+
+        init_image = Image.open(init_image).convert("RGB")
+        init_image = pipe.image_processor.preprocess(init_image)
+
+        image = pipe(
+            prompt=prompt,
+            negative_prompt=negative_prompt,
+            image=init_image,
+            guidance_scale=guidance_scale,
+            num_inference_steps=num_inference_steps,
+            max_sequence_length=max_sequence_length,
+            generator=generator
+        ).images[0]
+
+        today = datetime.now().date()
+        image_dir = os.path.join('outputs', f"Kolors_{today.strftime('%Y%m%d')}")
+        os.makedirs(image_dir, exist_ok=True)
+        image_filename = f"kolors_img2img_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
+        image_path = os.path.join(image_dir, image_filename)
+        image.save(image_path, format=output_format.upper())
+
+        return image_path, f"Image generated successfully. Seed used: {seed}"
+
+    except Exception as e:
+        return None, str(e)
+
+    finally:
+        del pipe
+        flush()
+
+
+def generate_image_kolors_ip_adapter_plus(prompt, negative_prompt, ip_adapter_image, guidance_scale, num_inference_steps, seed, output_format="png"):
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+
+    if seed == "" or seed is None:
+        seed = random.randint(0, 2 ** 32 - 1)
+    else:
+        seed = int(seed)
+    generator = torch.Generator(device).manual_seed(seed)
+
+    kolors_model_path = os.path.join("inputs", "image", "kolors")
+    ip_adapter_path = os.path.join("inputs", "image", "kolors", "ip_adapter_plus")
+
+    if not os.path.exists(kolors_model_path):
+        print("Downloading Kolors model...")
+        os.makedirs(kolors_model_path, exist_ok=True)
+        Repo.clone_from("https://huggingface.co/Kwai-Kolors/Kolors-diffusers", kolors_model_path)
+        print("Kolors model downloaded")
+
+    if not os.path.exists(ip_adapter_path):
+        print("Downloading Kolors IP-Adapter-Plus...")
+        os.makedirs(ip_adapter_path, exist_ok=True)
+        Repo.clone_from("https://huggingface.co/Kwai-Kolors/Kolors-IP-Adapter-Plus", ip_adapter_path)
+        print("Kolors IP-Adapter-Plus downloaded")
+
+    try:
+        image_encoder = CLIPVisionModelWithProjection.from_pretrained(
+            ip_adapter_path,
+            subfolder="image_encoder",
+            low_cpu_mem_usage=True,
+            torch_dtype=torch.float16,
+        )
+        pipe = KolorsPipeline.from_pretrained(
+            kolors_model_path, image_encoder=image_encoder, torch_dtype=torch.float16, variant="fp16"
+        )
+        pipe.scheduler = DPMSolverMultistepScheduler.from_config(pipe.scheduler.config, use_karras_sigmas=True)
+        pipe.load_ip_adapter(
+            ip_adapter_path,
+            subfolder="",
+            weight_name="ip_adapter_plus_general.safetensors",
+            image_encoder_folder=None,
+        )
+        pipe.enable_model_cpu_offload()
+
+        ipa_image = Image.open(ip_adapter_image).convert("RGB")
+
+        image = pipe(
+            prompt=prompt,
+            negative_prompt=negative_prompt,
+            guidance_scale=guidance_scale,
+            num_inference_steps=num_inference_steps,
+            ip_adapter_image=ipa_image,
+            generator=generator
+        ).images[0]
+
+        today = datetime.now().date()
+        image_dir = os.path.join('outputs', f"Kolors_{today.strftime('%Y%m%d')}")
+        os.makedirs(image_dir, exist_ok=True)
+        image_filename = f"kolors_ip_adapter_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
+        image_path = os.path.join(image_dir, image_filename)
+        image.save(image_path, format=output_format.upper())
+
+        return image_path, f"Image generated successfully. Seed used: {seed}"
+
+    except Exception as e:
+        return None, str(e)
+
+    finally:
+        del pipe
+        del image_encoder
+        flush()
+
+
+def generate_image_auraflow(prompt, negative_prompt, lora_model_names, lora_scales, num_inference_steps, guidance_scale, height, width, max_sequence_length, enable_aurasr, seed, output_format="png"):
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -4238,6 +4455,34 @@ def generate_image_auraflow(prompt, negative_prompt, num_inference_steps, guidan
     try:
         pipe = AuraFlowPipeline.from_pretrained(auraflow_model_path, torch_dtype=torch.float16)
         pipe = pipe.to(device)
+
+        if isinstance(lora_scales, str):
+            lora_scales = [float(scale.strip()) for scale in lora_scales.split(',') if scale.strip()]
+        elif isinstance(lora_scales, (int, float)):
+            lora_scales = [float(lora_scales)]
+
+        lora_loaded = False
+        if lora_model_names and lora_scales:
+            if len(lora_model_names) != len(lora_scales):
+                print(
+                    f"Warning: Number of LoRA models ({len(lora_model_names)}) does not match number of scales ({len(lora_scales)}). Using available scales.")
+
+            for i, lora_model_name in enumerate(lora_model_names):
+                if i < len(lora_scales):
+                    lora_scale = lora_scales[i]
+                else:
+                    lora_scale = 1.0
+
+                lora_model_path = os.path.join("inputs", "image", "auraflow-lora", lora_model_name)
+                if os.path.exists(lora_model_path):
+                    adapter_name = os.path.splitext(os.path.basename(lora_model_name))[0]
+                    try:
+                        pipe.load_lora_weights(lora_model_path, adapter_name=adapter_name)
+                        pipe.fuse_lora(lora_scale=lora_scale)
+                        lora_loaded = True
+                        print(f"Loaded LoRA {lora_model_name} with scale {lora_scale}")
+                    except Exception as e:
+                        print(f"Error loading LoRA {lora_model_name}: {str(e)}")
 
         image = pipe(
             prompt=prompt,
@@ -5373,7 +5618,7 @@ def generate_sv34d(input_file, version, elevation_deg=None):
             return None, f"Error downloading model: {str(e)}"
 
     today = datetime.now().date()
-    output_dir = os.path.join('outputs', '3D', f"SV34D_{today.strftime('%Y%m%d')}")
+    output_dir = os.path.join('outputs', f"SV34D_{today.strftime('%Y%m%d')}")
     os.makedirs(output_dir, exist_ok=True)
 
     output_filename = f"sv34d_{version}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
@@ -5981,17 +6226,26 @@ def download_model(model_name_llm, model_name_sd):
             return "Invalid StableDiffusion model name"
 
 
-def settings_interface(share_value):
-    global share_mode
+def settings_interface(share_value, hf_token, gradio_auth, server_name, server_port):
+    global share_mode, app_server_name, app_server_port
     share_mode = share_value == "True"
-    message = f"Settings updated successfully!"
+    app_server_name = server_name if server_name else "localhost"
+    app_server_port = int(server_port) if server_port else 7860
+    message = "Settings updated successfully!"
 
-    app.launch(share=share_mode, server_name="localhost")
+    if hf_token:
+        with open("HF-Token.txt", "w") as f:
+            f.write(hf_token)
+        message += " HF-Token updated."
+
+    if gradio_auth:
+        with open("GradioAuth.txt", "w") as f:
+            f.write(gradio_auth)
+        message += " GradioAuth updated."
+
+    message += f" Server will run on {app_server_name}:{app_server_port}"
 
     return message
-
-
-share_mode = False
 
 
 def get_system_info():
@@ -6040,6 +6294,10 @@ vae_models_list = [None] + [model.replace(".safetensors", "") for model in os.li
 lora_models_list = [None] + [model for model in os.listdir("inputs/image/sd_models/lora") if
                              model.endswith(".safetensors")]
 flux_lora_models_list = [None] + [model for model in os.listdir("inputs/image/flux-lora") if
+                             model.endswith(".safetensors")]
+auraflow_lora_models_list = [None] + [model for model in os.listdir("inputs/image/auraflow-lora") if
+                             model.endswith(".safetensors")]
+kolors_lora_models_list = [None] + [model for model in os.listdir("inputs/image/kolors-lora") if
                              model.endswith(".safetensors")]
 textual_inversion_models_list = [None] + [model for model in os.listdir("inputs/image/sd_models/embedding") if model.endswith(".pt")]
 inpaint_models_list = [None] + [model.replace(".safetensors", "") for model in
@@ -7013,8 +7271,8 @@ flux_interface = gr.Interface(
     allow_flagging="never",
 )
 
-hunyuandit_interface = gr.Interface(
-    fn=generate_image_hunyuandit,
+hunyuandit_txt2img_interface = gr.Interface(
+    fn=generate_image_hunyuandit_txt2img,
     inputs=[
         gr.Textbox(label="Enter your prompt"),
         gr.Textbox(label="Enter your negative prompt", value=""),
@@ -7029,11 +7287,41 @@ hunyuandit_interface = gr.Interface(
         gr.Image(type="filepath", label="Generated image"),
         gr.Textbox(label="Message", type="text"),
     ],
-    title="NeuroSandboxWebUI (ALPHA) - HunyuanDiT",
+    title="NeuroSandboxWebUI (ALPHA) - HunyuanDiT (txt2img)",
     description="This user interface allows you to generate images using HunyuanDiT model. "
                 "Enter a prompt (in English or Chinese) and customize the generation settings. "
                 "Try it and see what happens!",
     allow_flagging="never",
+)
+
+hunyuandit_controlnet_interface = gr.Interface(
+    fn=generate_image_hunyuandit_controlnet,
+    inputs=[
+        gr.Textbox(label="Enter your prompt"),
+        gr.Textbox(label="Enter your negative prompt", value=""),
+        gr.Image(label="Input image", type="filepath"),
+        gr.Dropdown(choices=["Depth", "Canny", "Pose"], label="Select ControlNet model", value="Depth"),
+        gr.Slider(minimum=1, maximum=100, value=50, step=1, label="Steps"),
+        gr.Slider(minimum=1.0, maximum=20.0, value=6.0, step=0.1, label="Guidance Scale"),
+        gr.Slider(minimum=256, maximum=2048, value=1024, step=64, label="Height"),
+        gr.Slider(minimum=256, maximum=2048, value=1024, step=64, label="Width"),
+        gr.Textbox(label="Seed (optional)", value=""),
+        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
+    ],
+    outputs=[
+        gr.Image(type="filepath", label="Generated image"),
+        gr.Textbox(label="Message", type="text"),
+    ],
+    title="NeuroSandboxWebUI (ALPHA) - HunyuanDiT (ControlNet)",
+    description="This user interface allows you to generate images using HunyuanDiT ControlNet models. "
+                "Enter a prompt, upload an input image, select a ControlNet model, and customize the generation settings. "
+                "Try it and see what happens!",
+    allow_flagging="never",
+)
+
+hunyuandit_interface = gr.TabbedInterface(
+    [hunyuandit_txt2img_interface, hunyuandit_controlnet_interface],
+    tab_names=["txt2img", "controlnet"]
 )
 
 lumina_interface = gr.Interface(
@@ -7060,11 +7348,13 @@ lumina_interface = gr.Interface(
     allow_flagging="never",
 )
 
-kolors_interface = gr.Interface(
-    fn=generate_image_kolors,
+kolors_txt2img_interface = gr.Interface(
+    fn=generate_image_kolors_txt2img,
     inputs=[
         gr.Textbox(label="Enter your prompt"),
         gr.Textbox(label="Enter your negative prompt", value=""),
+        gr.Dropdown(choices=kolors_lora_models_list, label="Select LORA models (optional)", value=None, multiselect=True),
+        gr.Textbox(label="LoRA Scales"),
         gr.Slider(minimum=1.0, maximum=20.0, value=6.5, step=0.1, label="Guidance Scale"),
         gr.Slider(minimum=1, maximum=100, value=25, step=1, label="Steps"),
         gr.Slider(minimum=1, maximum=1024, value=256, step=1, label="Max Sequence Length"),
@@ -7075,11 +7365,61 @@ kolors_interface = gr.Interface(
         gr.Image(type="filepath", label="Generated image"),
         gr.Textbox(label="Message", type="text"),
     ],
-    title="NeuroSandboxWebUI (ALPHA) - Kolors",
+    title="NeuroSandboxWebUI (ALPHA) - Kolors (txt2img)",
     description="This user interface allows you to generate images using the Kolors model. "
                 "Enter a prompt and customize the generation settings. "
                 "Try it and see what happens!",
     allow_flagging="never",
+)
+
+kolors_img2img_interface = gr.Interface(
+    fn=generate_image_kolors_img2img,
+    inputs=[
+        gr.Textbox(label="Enter your prompt"),
+        gr.Textbox(label="Enter your negative prompt", value=""),
+        gr.Image(label="Initial image", type="filepath"),
+        gr.Slider(minimum=1.0, maximum=20.0, value=6.5, step=0.1, label="Guidance Scale"),
+        gr.Slider(minimum=1, maximum=100, value=25, step=1, label="Steps"),
+        gr.Slider(minimum=1, maximum=1024, value=256, step=1, label="Max Sequence Length"),
+        gr.Textbox(label="Seed (optional)", value=""),
+        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
+    ],
+    outputs=[
+        gr.Image(type="filepath", label="Generated image"),
+        gr.Textbox(label="Message", type="text"),
+    ],
+    title="NeuroSandboxWebUI (ALPHA) - Kolors (img2img)",
+    description="This user interface allows you to generate images using the Kolors model. "
+                "Enter a prompt and customize the generation settings. "
+                "Try it and see what happens!",
+    allow_flagging="never",
+)
+
+kolors_ip_adapter_interface = gr.Interface(
+    fn=generate_image_kolors_ip_adapter_plus,
+    inputs=[
+        gr.Textbox(label="Enter your prompt"),
+        gr.Textbox(label="Enter your negative prompt", value=""),
+        gr.Image(label="IP-Adapter Image", type="filepath"),
+        gr.Slider(minimum=1.0, maximum=20.0, value=6.5, step=0.1, label="Guidance Scale"),
+        gr.Slider(minimum=1, maximum=100, value=25, step=1, label="Steps"),
+        gr.Textbox(label="Seed (optional)", value=""),
+        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
+    ],
+    outputs=[
+        gr.Image(type="filepath", label="Generated image"),
+        gr.Textbox(label="Message", type="text"),
+    ],
+    title="NeuroSandboxWebUI (ALPHA) - Kolors (ip-adapter-plus)",
+    description="This user interface allows you to generate images using the Kolors model. "
+                "Enter a prompt and customize the generation settings. "
+                "Try it and see what happens!",
+    allow_flagging="never",
+)
+
+kolors_interface = gr.TabbedInterface(
+    [kolors_txt2img_interface, kolors_img2img_interface, kolors_ip_adapter_interface],
+    tab_names=["txt2img", "img2img", "ip-adapter-plus"]
 )
 
 auraflow_interface = gr.Interface(
@@ -7087,6 +7427,8 @@ auraflow_interface = gr.Interface(
     inputs=[
         gr.Textbox(label="Enter your prompt"),
         gr.Textbox(label="Enter your negative prompt", value=""),
+        gr.Dropdown(choices=auraflow_lora_models_list, label="Select LORA models (optional)", value=None, multiselect=True),
+        gr.Textbox(label="LoRA Scales"),
         gr.Slider(minimum=1, maximum=100, value=25, step=1, label="Steps"),
         gr.Slider(minimum=1.0, maximum=20.0, value=7.5, step=0.1, label="Guidance Scale"),
         gr.Slider(minimum=256, maximum=2048, value=512, step=64, label="Height"),
@@ -7690,13 +8032,17 @@ model_downloader_interface = gr.Interface(
 settings_interface = gr.Interface(
     fn=settings_interface,
     inputs=[
-        gr.Radio(choices=["True", "False"], label="Share Mode", value="False")
+        gr.Radio(choices=["True", "False"], label="Share Mode", value="False"),
+        gr.Textbox(label="Hugging Face Token", placeholder="hf_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"),
+        gr.Textbox(label="Gradio Auth", placeholder="admin:admin"),
+        gr.Textbox(label="Server Name", value="localhost"),
+        gr.Number(label="Server Port", value=7860),
     ],
     outputs=[
         gr.Textbox(label="Message", type="text")
     ],
     title="NeuroSandboxWebUI (ALPHA) - Settings",
-    description="This user interface allows you to change settings of application",
+    description="This user interface allows you to change settings of the application",
     allow_flagging="never",
 )
 
@@ -7774,4 +8120,4 @@ with gr.TabbedInterface(
         '</div>'
     )
 
-    app.launch(share=share_mode, server_name="localhost", auth=authenticate)
+    app.launch(share=share_mode, server_name=app_server_name, server_port=app_server_port, auth=authenticate)

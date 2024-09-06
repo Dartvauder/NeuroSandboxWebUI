@@ -27,15 +27,15 @@ The goal of the project - to create the easiest possible application to use neur
 * Easy installation via install.bat (Windows) or install.sh (Linux)
 * You can use the application via your mobile device in localhost (Via IPv4) or anywhere online (Via Share)
 * Flexible and optimized interface (By Gradio)
-* Authentication via admin:admin (You can enter your login details in the GradioAuth.txt file)
-* You can add your own HuggingFace-Token to download a specific models (You can enter your token in the HF-Token.txt file)
+* Authentication via admin:admin (You can enter your login details in the GradioAuth.txt file or in settings)
+* You can add your own HuggingFace-Token to download a specific models (You can enter your token in the HF-Token.txt file or in settings)
 * Debug logging to logs from `Install` and `Update` files
 * Support for Transformers and llama.cpp models (LLM)
 * Support for diffusers and safetensors models (StableDiffusion) - txt2img, img2img, depth2img, pix2pix, controlnet, upscale (latent), upscale (Real-ESRGAN), refiner, inpaint, outpaint, gligen, animatediff, hotshot-xl, video, ldm3d, sd3, cascade, t2i-ip-adapter, ip-adapter-faceid, riffusion and extras tabs
-* Support of additional models for image generation: Kandinsky (txt2img, img2img, inpaint), Flux (with LoRA support), HunyuanDiT, Lumina-T2X, Kolors, AuraFlow, Würstchen, DeepFloydIF (txt2img, img2img, inpaint), PixArt and PlaygroundV2.5
-* StableAudioOpen support
-* AudioCraft support (Models: musicgen, audiogen and magnet)
-* AudioLDM 2 support (Models: audio and music)
+* Support of additional models for image generation: Kandinsky (txt2img, img2img, inpaint), Flux (with LoRA support), HunyuanDiT (txt2img, controlnet), Lumina-T2X, Kolors (txt2img with LoRA support, img2img, ip-adapter-plus), AuraFlow (with LoRA and AuraSR support), Würstchen, DeepFloydIF (txt2img, img2img, inpaint), PixArt and PlaygroundV2.5
+* Support StableAudio
+* Support AudioCraft (Models: musicgen, audiogen and magnet)
+* Support AudioLDM 2 (Models: audio and music)
 * Supports TTS and Whisper models (For LLM and TTS-STT)
 * Support MMS for text-to-speech and speech-to-text
 * Supports Lora, Textual inversion (embedding), Vae, Img2img, Depth, Pix2Pix, Controlnet, Upscalers (latent and Real-ESRGAN), Refiner, Inpaint, Outpaint, GLIGEN, AnimateDiff, HotShot-XL, Videos, LDM3D, SD3, Cascade, T2I-IP-ADAPTER, IP-Adapter-FaceID, Riffusion, Rembg, CodeFormer, Roop, PixelOE and DDColor models (For StableDiffusion)
@@ -199,14 +199,16 @@ To work with the virtual environment through the terminal, run `./Venv.sh`
 #### upscale (latent):
 
 1) Upload the initial image
-2) Set up the model according to the parameters you need
-3) Click the `Submit` button to get the upscaled image
+2) Select your model
+3) Set up the model according to the parameters you need
+4) Click the `Submit` button to get the upscaled image
 
 #### upscale (Real-ESRGAN):
 
 1) Upload the initial image
-2) Set up the model according to the parameters you need
-3) Click the `Submit` button to get the upscaled image
+2) Select your model
+3) Set up the model according to the parameters you need
+4) Click the `Submit` button to get the upscaled image
 
 #### refiner (SDXL):
 
@@ -336,7 +338,7 @@ To work with the virtual environment through the terminal, run `./Venv.sh`
 #### Optional: You can select your `lora` models to improve the generation method
 #### lora = *inputs/image/flux-lora*
 
-### HunyuanDiT:
+### HunyuanDiT (txt2img, controlnet):
 
 1) Enter your prompt
 2) Set up the model according to the parameters you need
@@ -348,17 +350,21 @@ To work with the virtual environment through the terminal, run `./Venv.sh`
 2) Set up the model according to the parameters you need
 3) Click `Submit` to get the generated image
 
-### Kolors:
+### Kolors (txt2img, img2img, ip-adapter-plus):
 
 1) Enter your prompt
 2) Set up the model according to the parameters you need
 3) Click `Submit` to get the generated image
+#### Optional: You can select your `lora` models to improve the generation method
+#### lora = *inputs/image/kolors-lora*
 
 ### AuraFlow:
 
 1) Enter your prompt
 2) Set up the model according to the parameters you need
 3) Click `Submit` to get the generated image
+#### Optional: You can select your `lora` models and enable `AuraSR` to improve the generation method
+#### lora = *inputs/image/auraflow-lora*
 
 ### Würstchen:
 
@@ -509,11 +515,11 @@ To work with the virtual environment through the terminal, run `./Venv.sh`
 
 ### Settings: 
 
-* Here you can change the application settings. For now you can only change `Share` mode to `True` or `False`
+* Here you can change the application settings
 
 ### System: 
 
-* Here you can see the indicators of your computer's sensors by clicking on the `Submit` button
+* Here you can see the indicators of your computer's sensors
 
 ### Additional Information:
 
@@ -527,7 +533,7 @@ To work with the virtual environment through the terminal, run `./Venv.sh`
 * LLM models can be taken from [HuggingFace](https://huggingface.co/models) or from ModelDownloader inside interface 
 * StableDiffusion, vae, inpaint, embedding and lora models can be taken from [CivitAI](https://civitai.com/models) or from ModelDownloader inside interface
 * RVC models can be taken from [VoiceModels](https://voice-models.com)
-* StableAudioOpen, AudioCraft, AudioLDM 2, TTS, Whisper, MMS, SeamlessM4Tv2, Wav2Lip, LivePortrait, SunoBark, MoonDream2, Upscalers (Latent and Real-ESRGAN), Refiner, GLIGEN, Depth, Pix2Pix, Controlnet, AnimateDiff, HotShot-XL, Videos, LDM3D, SD3, Cascade, T2I-IP-ADAPTER, IP-Adapter-FaceID, Riffusion, Rembg, Roop, CodeFormer, DDColor, PixelOE, Real-ESRGAN, StableFast3D, Shap-E, SV34D, Zero123Plus, UVR, Demucs, Kandinsky, Flux, HunyuanDiT, Lumina-T2X, Kolors, AuraFlow, AuraSR, Würstchen, DeepFloydIF, PixArt, PlaygroundV2.5, ModelScope, ZeroScope 2, CogVideoX, Latte and Multiband diffusion models are downloads automatically in *inputs* folder when are they used 
+* StableAudio, AudioCraft, AudioLDM 2, TTS, Whisper, MMS, SeamlessM4Tv2, Wav2Lip, LivePortrait, SunoBark, MoonDream2, Upscalers (Latent and Real-ESRGAN), Refiner, GLIGEN, Depth, Pix2Pix, Controlnet, AnimateDiff, HotShot-XL, Videos, LDM3D, SD3, Cascade, T2I-IP-ADAPTER, IP-Adapter-FaceID, Riffusion, Rembg, Roop, CodeFormer, DDColor, PixelOE, Real-ESRGAN, StableFast3D, Shap-E, SV34D, Zero123Plus, UVR, Demucs, Kandinsky, Flux, HunyuanDiT, Lumina-T2X, Kolors, AuraFlow, AuraSR, Würstchen, DeepFloydIF, PixArt, PlaygroundV2.5, ModelScope, ZeroScope 2, CogVideoX, Latte and Multiband diffusion models are downloads automatically in *inputs* folder when are they used 
 * You can take voices anywhere. Record yours or take a recording from the Internet. Or just use those that are already in the project. The main thing is that it is pre-processed!
 
 ## Wiki
