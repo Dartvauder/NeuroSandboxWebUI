@@ -1,0 +1,10 @@
+{
+    "share_mode": false,
+    "server_name": "localhost",
+    "server_port": 7860,
+    "auth": {
+        "username": "admin",
+        "password": "admin"
+    },
+    "hf_token": ""
+}
