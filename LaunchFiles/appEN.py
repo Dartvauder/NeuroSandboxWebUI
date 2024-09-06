@@ -162,7 +162,7 @@ def load_settings():
                 "enabled": False,
                 "primary_hue": "red",
                 "secondary_hue": "orange",
-                "neutral_hue": "black"
+                "neutral_hue": "pink"
             }
         }
         with open('Settings.json', 'w') as f:
