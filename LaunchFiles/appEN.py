@@ -132,6 +132,22 @@ def get_languages():
     }
 
 
+def update_theme(theme_name):
+    themes = {
+        "Base": gr.themes.Base(),
+        "Default": gr.themes.Default(),
+        "Glass": gr.themes.Glass(),
+        "Monochrome": gr.themes.Monochrome(),
+        "Soft": gr.themes.Soft()
+    }
+
+    settings = load_settings()
+    settings['theme'] = theme_name
+    save_settings(settings)
+
+    return f"Theme updated to {theme_name}. Please restart the application for changes to take effect."
+
+
 def load_settings():
     if not os.path.exists('Settings.json'):
         default_settings = {
@@ -139,7 +155,8 @@ def load_settings():
             "server_name": "localhost",
             "server_port": 7860,
             "auth": {"username": "admin", "password": "admin"},
-            "hf_token": ""
+            "hf_token": "",
+            "theme": "Default"
         }
         with open('Settings.json', 'w') as f:
             json.dump(default_settings, f, indent=4)
@@ -6235,13 +6252,14 @@ def download_model(model_name_llm, model_name_sd):
             return "Invalid StableDiffusion model name"
 
 
-def settings_interface(share_value, hf_token, gradio_auth, server_name, server_port):
+def settings_interface(share_value, hf_token, gradio_auth, server_name, server_port, theme):
     settings = load_settings()
 
     settings['share_mode'] = share_value == "True"
     settings['hf_token'] = hf_token
     settings['server_name'] = server_name
     settings['server_port'] = int(server_port) if server_port else 7860
+    settings['theme'] = theme
 
     if gradio_auth:
         username, password = gradio_auth.split(':')
@@ -6251,6 +6269,7 @@ def settings_interface(share_value, hf_token, gradio_auth, server_name, server_p
 
     message = "Settings updated successfully!"
     message += f" Server will run on {settings['server_name']}:{settings['server_port']}"
+    message += f"\nTheme set to {theme}. Please restart the application for theme changes to take effect."
 
     return message
 
@@ -8044,6 +8063,7 @@ settings_interface = gr.Interface(
         gr.Textbox(label="Gradio Auth", value="admin:admin"),
         gr.Textbox(label="Server Name", value="localhost"),
         gr.Number(label="Server Port", value=7860),
+        gr.Dropdown(choices=["Base", "Default", "Glass", "Monochrome", "Soft"], label="Theme", value="Default"),
     ],
     outputs=[
         gr.Textbox(label="Message", type="text")
@@ -8070,6 +8090,8 @@ system_interface = gr.Interface(
     description="This interface displays system information",
     allow_flagging="never",
 )
+
+settings = load_settings()
 
 with gr.TabbedInterface(
     [
@@ -8107,7 +8129,8 @@ with gr.TabbedInterface(
             tab_names=["Wiki", "Gallery", "ModelDownloader", "Settings", "System"]
         )
     ],
-    tab_names=["Text", "Image", "Video", "3D", "Audio", "Interface"]
+    tab_names=["Text", "Image", "Video", "3D", "Audio", "Interface"],
+    theme=getattr(gr.themes, settings['theme'])()
 ) as app:
 
     close_button = gr.Button("Close terminal")
@@ -8126,8 +8149,6 @@ with gr.TabbedInterface(
         '</a>'
         '</div>'
     )
-
-    settings = load_settings()
 
     app.launch(
         share=settings['share_mode'],

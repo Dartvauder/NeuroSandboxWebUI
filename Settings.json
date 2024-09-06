@@ -6,5 +6,6 @@
         "username": "admin",
         "password": "admin"
     },
-    "hf_token": "hf_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+    "hf_token": "hf_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+    "theme": "Default"
 }
