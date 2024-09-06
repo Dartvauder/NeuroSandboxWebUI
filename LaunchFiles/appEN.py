@@ -156,7 +156,13 @@ def load_settings():
             "server_port": 7860,
             "auth": {"username": "admin", "password": "admin"},
             "hf_token": "",
-            "theme": "Default"
+            "theme": "Default",
+            "custom_theme": {
+                "enabled": False,
+                "primary_hue": "red",
+                "secondary_hue": "orange",
+                "neutral_hue": "black"
+            }
         }
         with open('Settings.json', 'w') as f:
             json.dump(default_settings, f, indent=4)
@@ -6252,7 +6258,8 @@ def download_model(model_name_llm, model_name_sd):
             return "Invalid StableDiffusion model name"
 
 
-def settings_interface(share_value, hf_token, gradio_auth, server_name, server_port, theme):
+def settings_interface(share_value, hf_token, gradio_auth, server_name, server_port, theme,
+                       enable_custom_theme, primary_hue, secondary_hue, neutral_hue):
     settings = load_settings()
 
     settings['share_mode'] = share_value == "True"
@@ -6260,6 +6267,10 @@ def settings_interface(share_value, hf_token, gradio_auth, server_name, server_p
     settings['server_name'] = server_name
     settings['server_port'] = int(server_port) if server_port else 7860
     settings['theme'] = theme
+    settings['custom_theme']['enabled'] = enable_custom_theme
+    settings['custom_theme']['primary_hue'] = primary_hue
+    settings['custom_theme']['secondary_hue'] = secondary_hue
+    settings['custom_theme']['neutral_hue'] = neutral_hue
 
     if gradio_auth:
         username, password = gradio_auth.split(':')
@@ -6269,7 +6280,7 @@ def settings_interface(share_value, hf_token, gradio_auth, server_name, server_p
 
     message = "Settings updated successfully!"
     message += f" Server will run on {settings['server_name']}:{settings['server_port']}"
-    message += f"\nTheme set to {theme}. Please restart the application for theme changes to take effect."
+    message += f"\nTheme set to {'Custom' if enable_custom_theme else theme}. Please restart the application for theme changes to take effect."
 
     return message
 
@@ -6333,6 +6344,8 @@ controlnet_models_list = [None, "openpose", "depth", "canny", "lineart", "scribb
 rvc_models_list = [model_folder for model_folder in os.listdir("inputs/audio/rvc_models")
                    if os.path.isdir(os.path.join("inputs/audio/rvc_models", model_folder))
                    and any(file.endswith('.pth') for file in os.listdir(os.path.join("inputs/audio/rvc_models", model_folder)))]
+
+settings = load_settings()
 
 chat_interface = gr.Interface(
     fn=generate_text_and_speech,
@@ -8063,7 +8076,11 @@ settings_interface = gr.Interface(
         gr.Textbox(label="Gradio Auth", value="admin:admin"),
         gr.Textbox(label="Server Name", value="localhost"),
         gr.Number(label="Server Port", value=7860),
-        gr.Dropdown(choices=["Base", "Default", "Glass", "Monochrome", "Soft"], label="Theme", value="Default"),
+        gr.Dropdown(choices=["Base", "Default", "Glass", "Monochrome", "Soft"], label="Theme", value=settings['theme']),
+        gr.Checkbox(label="Enable Custom Theme", value=settings['custom_theme']['enabled']),
+        gr.Textbox(label="Primary Hue", value=settings['custom_theme']['primary_hue']),
+        gr.Textbox(label="Secondary Hue", value=settings['custom_theme']['secondary_hue']),
+        gr.Textbox(label="Neutral Hue", value=settings['custom_theme']['neutral_hue']),
     ],
     outputs=[
         gr.Textbox(label="Message", type="text")
@@ -8091,7 +8108,14 @@ system_interface = gr.Interface(
     allow_flagging="never",
 )
 
-settings = load_settings()
+if settings['custom_theme']['enabled']:
+    theme = getattr(gr.themes, settings['theme'])(
+        primary_hue=settings['custom_theme']['primary_hue'],
+        secondary_hue=settings['custom_theme']['secondary_hue'],
+        neutral_hue=settings['custom_theme']['neutral_hue']
+    )
+else:
+    theme = getattr(gr.themes, settings['theme'])()
 
 with gr.TabbedInterface(
     [
@@ -8130,7 +8154,7 @@ with gr.TabbedInterface(
         )
     ],
     tab_names=["Text", "Image", "Video", "3D", "Audio", "Interface"],
-    theme=getattr(gr.themes, settings['theme'])()
+    theme=theme
 ) as app:
 
     close_button = gr.Button("Close terminal")
