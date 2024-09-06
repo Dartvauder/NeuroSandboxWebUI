@@ -35,7 +35,7 @@ from TTS.api import TTS
 import whisper
 from datetime import datetime
 from huggingface_hub import snapshot_download
-from diffusers import StableDiffusionPipeline, StableDiffusion3Pipeline, StableDiffusionXLPipeline, StableDiffusionImg2ImgPipeline, StableDiffusionXLImg2ImgPipeline, StableDiffusion3Img2ImgPipeline, SD3ControlNetModel, StableDiffusion3ControlNetPipeline, StableDiffusion3InpaintPipeline, StableDiffusionXLInpaintPipeline, StableDiffusionDepth2ImgPipeline, ControlNetModel, StableDiffusionXLControlNetPipeline, StableDiffusionControlNetPipeline, AutoencoderKL, StableDiffusionLatentUpscalePipeline, StableDiffusionUpscalePipeline, StableDiffusionInpaintPipeline, StableDiffusionGLIGENPipeline, AnimateDiffPipeline, AnimateDiffSDXLPipeline, AnimateDiffVideoToVideoPipeline, MotionAdapter, StableVideoDiffusionPipeline, I2VGenXLPipeline, StableCascadePriorPipeline, StableCascadeDecoderPipeline, DiffusionPipeline, ShapEPipeline, ShapEImg2ImgPipeline, StableAudioPipeline, AudioLDM2Pipeline, StableDiffusionInstructPix2PixPipeline, StableDiffusionLDM3DPipeline, FluxPipeline, KandinskyPipeline, KandinskyPriorPipeline, KandinskyV22Pipeline, KandinskyV22PriorPipeline, AutoPipelineForText2Image, KandinskyImg2ImgPipeline, AutoPipelineForImage2Image, AutoPipelineForInpainting, HunyuanDiTPipeline, LuminaText2ImgPipeline, IFPipeline, IFSuperResolutionPipeline, IFImg2ImgPipeline, IFInpaintingPipeline, IFImg2ImgSuperResolutionPipeline, IFInpaintingSuperResolutionPipeline, PixArtAlphaPipeline, PixArtSigmaPipeline, CogVideoXPipeline, LattePipeline, KolorsPipeline, AuraFlowPipeline, WuerstchenDecoderPipeline, WuerstchenPriorPipeline, StableDiffusionSAGPipeline, DDIMScheduler, DPMSolverMultistepScheduler
+from diffusers import StableDiffusionPipeline, StableDiffusion3Pipeline, StableDiffusionXLPipeline, StableDiffusionImg2ImgPipeline, StableDiffusionXLImg2ImgPipeline, StableDiffusion3Img2ImgPipeline, SD3ControlNetModel, StableDiffusion3ControlNetPipeline, StableDiffusion3InpaintPipeline, StableDiffusionXLInpaintPipeline, StableDiffusionDepth2ImgPipeline, ControlNetModel, StableDiffusionXLControlNetPipeline, StableDiffusionControlNetPipeline, AutoencoderKL, StableDiffusionLatentUpscalePipeline, StableDiffusionUpscalePipeline, StableDiffusionInpaintPipeline, StableDiffusionGLIGENPipeline, AnimateDiffPipeline, AnimateDiffSDXLPipeline, AnimateDiffVideoToVideoPipeline, MotionAdapter, StableVideoDiffusionPipeline, I2VGenXLPipeline, StableCascadePriorPipeline, StableCascadeDecoderPipeline, DiffusionPipeline, ShapEPipeline, ShapEImg2ImgPipeline, StableAudioPipeline, AudioLDM2Pipeline, StableDiffusionInstructPix2PixPipeline, StableDiffusionLDM3DPipeline, FluxPipeline, KandinskyPipeline, KandinskyPriorPipeline, KandinskyV22Pipeline, KandinskyV22PriorPipeline, AutoPipelineForText2Image, KandinskyImg2ImgPipeline, AutoPipelineForImage2Image, AutoPipelineForInpainting, HunyuanDiTPipeline, HunyuanDiTControlNetPipeline, HunyuanDiT2DControlNetModel, LuminaText2ImgPipeline, IFPipeline, IFSuperResolutionPipeline, IFImg2ImgPipeline, IFInpaintingPipeline, IFImg2ImgSuperResolutionPipeline, IFInpaintingSuperResolutionPipeline, PixArtAlphaPipeline, PixArtSigmaPipeline, CogVideoXPipeline, LattePipeline, KolorsPipeline, AuraFlowPipeline, WuerstchenDecoderPipeline, WuerstchenPriorPipeline, StableDiffusionSAGPipeline, DDIMScheduler, DPMSolverMultistepScheduler
 from diffusers.utils import load_image, export_to_video, export_to_gif, export_to_ply, pt_to_pil
 from diffusers.pipelines.wuerstchen import DEFAULT_STAGE_C_TIMESTEPS
 from aura_sr import AuraSR
@@ -4059,7 +4059,7 @@ def generate_image_flux(prompt, model_name, lora_model_names, lora_scales, guida
         flush()
 
 
-def generate_image_hunyuandit(prompt, negative_prompt, num_inference_steps, guidance_scale, height, width, seed, output_format="png"):
+def generate_image_hunyuandit_txt2img(prompt, negative_prompt, num_inference_steps, guidance_scale, height, width, seed, output_format="png"):
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -4074,7 +4074,7 @@ def generate_image_hunyuandit(prompt, negative_prompt, num_inference_steps, guid
     if not os.path.exists(hunyuandit_model_path):
         print("Downloading HunyuanDiT model...")
         os.makedirs(hunyuandit_model_path, exist_ok=True)
-        Repo.clone_from("https://huggingface.co/Tencent-Hunyuan/HunyuanDiT-Diffusers", hunyuandit_model_path)
+        Repo.clone_from("https://huggingface.co/Tencent-Hunyuan/HunyuanDiT-v1.2-Diffusers", hunyuandit_model_path)
         print("HunyuanDiT model downloaded")
 
     try:
@@ -4106,6 +4106,68 @@ def generate_image_hunyuandit(prompt, negative_prompt, num_inference_steps, guid
 
     finally:
         del pipe
+        flush()
+
+
+def generate_image_hunyuandit_controlnet(prompt, negative_prompt, init_image, controlnet_model, num_inference_steps, guidance_scale, height, width, seed, output_format="png"):
+
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+
+    if seed == "" or seed is None:
+        seed = random.randint(0, 2 ** 32 - 1)
+    else:
+        seed = int(seed)
+    generator = torch.Generator(device).manual_seed(seed)
+
+    hunyuandit_model_path = os.path.join("inputs", "image", "hunyuandit")
+    controlnet_model_path = os.path.join("inputs", "image", "hunyuandit", "controlnet", controlnet_model)
+
+    if not os.path.exists(hunyuandit_model_path):
+        print("Downloading HunyuanDiT model...")
+        os.makedirs(hunyuandit_model_path, exist_ok=True)
+        Repo.clone_from("https://huggingface.co/Tencent-Hunyuan/HunyuanDiT-v1.2-Diffusers", hunyuandit_model_path)
+        print("HunyuanDiT model downloaded")
+
+    if not os.path.exists(controlnet_model_path):
+        print(f"Downloading HunyuanDiT ControlNet {controlnet_model} model...")
+        os.makedirs(controlnet_model_path, exist_ok=True)
+        Repo.clone_from(f"https://huggingface.co/Tencent-Hunyuan/HunyuanDiT-v1.2-ControlNet-Diffusers-{controlnet_model}", controlnet_model_path)
+        print(f"HunyuanDiT ControlNet {controlnet_model} model downloaded")
+
+    try:
+        controlnet = HunyuanDiT2DControlNetModel.from_pretrained(controlnet_model_path, torch_dtype=torch.float16)
+        pipe = HunyuanDiTControlNetPipeline.from_pretrained(hunyuandit_model_path, controlnet=controlnet, torch_dtype=torch.float16)
+        pipe.to(device)
+
+        init_image = Image.open(init_image).convert("RGB")
+        init_image = init_image.resize((width, height))
+
+        image = pipe(
+            prompt=prompt,
+            negative_prompt=negative_prompt,
+            height=height,
+            width=width,
+            guidance_scale=guidance_scale,
+            control_image=init_image,
+            num_inference_steps=num_inference_steps,
+            generator=generator
+        ).images[0]
+
+        today = datetime.now().date()
+        image_dir = os.path.join('outputs', f"HunyuanDiT_{today.strftime('%Y%m%d')}")
+        os.makedirs(image_dir, exist_ok=True)
+        image_filename = f"hunyuandit_controlnet_{controlnet_model}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
+        image_path = os.path.join(image_dir, image_filename)
+        image.save(image_path, format=output_format.upper())
+
+        return image_path, f"Image generated successfully. Seed used: {seed}"
+
+    except Exception as e:
+        return None, str(e)
+
+    finally:
+        del pipe
+        del controlnet
         flush()
 
 
@@ -7197,8 +7259,8 @@ flux_interface = gr.Interface(
     allow_flagging="never",
 )
 
-hunyuandit_interface = gr.Interface(
-    fn=generate_image_hunyuandit,
+hunyuandit_txt2img_interface = gr.Interface(
+    fn=generate_image_hunyuandit_txt2img,
     inputs=[
         gr.Textbox(label="Enter your prompt"),
         gr.Textbox(label="Enter your negative prompt", value=""),
@@ -7213,11 +7275,41 @@ hunyuandit_interface = gr.Interface(
         gr.Image(type="filepath", label="Generated image"),
         gr.Textbox(label="Message", type="text"),
     ],
-    title="NeuroSandboxWebUI (ALPHA) - HunyuanDiT",
+    title="NeuroSandboxWebUI (ALPHA) - HunyuanDiT (txt2img)",
     description="This user interface allows you to generate images using HunyuanDiT model. "
                 "Enter a prompt (in English or Chinese) and customize the generation settings. "
                 "Try it and see what happens!",
     allow_flagging="never",
+)
+
+hunyuandit_controlnet_interface = gr.Interface(
+    fn=generate_image_hunyuandit_controlnet,
+    inputs=[
+        gr.Textbox(label="Enter your prompt"),
+        gr.Textbox(label="Enter your negative prompt", value=""),
+        gr.Image(label="Input image", type="filepath"),
+        gr.Dropdown(choices=["Depth", "Canny", "Pose"], label="Select ControlNet model", value="Depth"),
+        gr.Slider(minimum=1, maximum=100, value=50, step=1, label="Steps"),
+        gr.Slider(minimum=1.0, maximum=20.0, value=6.0, step=0.1, label="Guidance Scale"),
+        gr.Slider(minimum=256, maximum=2048, value=1024, step=64, label="Height"),
+        gr.Slider(minimum=256, maximum=2048, value=1024, step=64, label="Width"),
+        gr.Textbox(label="Seed (optional)", value=""),
+        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
+    ],
+    outputs=[
+        gr.Image(type="filepath", label="Generated image"),
+        gr.Textbox(label="Message", type="text"),
+    ],
+    title="NeuroSandboxWebUI (ALPHA) - HunyuanDiT (ControlNet)",
+    description="This user interface allows you to generate images using HunyuanDiT ControlNet models. "
+                "Enter a prompt, upload an input image, select a ControlNet model, and customize the generation settings. "
+                "Try it and see what happens!",
+    allow_flagging="never",
+)
+
+hunyuandit_interface = gr.TabbedInterface(
+    [hunyuandit_txt2img_interface, hunyuandit_controlnet_interface],
+    tab_names=["txt2img", "controlnet"]
 )
 
 lumina_interface = gr.Interface(
