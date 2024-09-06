@@ -6,9 +6,18 @@ set CURRENT_DIR=%~dp0
 call "%CURRENT_DIR%venv\Scripts\activate.bat"
 
 :read_token
+echo Attempting to read Settings.json...
+if not exist Settings.json (
+    echo Settings.json file not found!
+    pause
+    goto menu
+)
+
 for /f "tokens=2 delims=:, " %%a in ('type Settings.json ^| findstr "hf_token"') do set HF_TOKEN=%%~a
+echo HF_TOKEN value: "%HF_TOKEN%"
 if "%HF_TOKEN%"=="" (
     echo HF token is empty or not found in Settings.json. Please add your Hugging Face token to this file.
+    type Settings.json
     pause
     goto menu
 )
