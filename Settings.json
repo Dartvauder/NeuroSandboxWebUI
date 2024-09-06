@@ -2,6 +2,7 @@
     "share_mode": false,
     "server_name": "localhost",
     "server_port": 7860,
+    "auto_launch": false,
     "auth": {
         "username": "admin",
         "password": "admin"
