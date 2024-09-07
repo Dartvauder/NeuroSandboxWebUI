@@ -6098,6 +6098,9 @@ def generate_image_extras(input_image, remove_background, enable_facerestore, fi
     if not input_image:
         return None, "Please upload an image!"
 
+    if not remove_background and not enable_facerestore and not enable_pixeloe and not enable_ddcolor and not enable_downscale and not enable_format_changer:
+        return None, "Please choose an option to modify the image"
+
     try:
         output_path = input_image
         output_format = os.path.splitext(input_image)[1][1:]
@@ -6140,10 +6143,16 @@ def generate_image_extras(input_image, remove_background, enable_facerestore, fi
     except Exception as e:
         return None, str(e)
 
+    finally:
+        flush()
+
 
 def generate_video_extras(input_video, enable_downscale, downscale_factor, enable_format_changer, new_format):
     if not input_video:
         return None, "Please upload a video!"
+
+    if not enable_downscale and not enable_format_changer:
+        return None, "Please choose an option to modify the video"
 
     try:
         output_path = input_video
@@ -6161,10 +6170,16 @@ def generate_video_extras(input_video, enable_downscale, downscale_factor, enabl
     except Exception as e:
         return None, str(e)
 
+    finally:
+        flush()
+
 
 def generate_audio_extras(input_audio, enable_format_changer, new_format):
     if not input_audio:
         return None, "Please upload an audio file!"
+
+    if not enable_format_changer:
+        return None, "Please choose an option to modify the audio"
 
     try:
         output_path = input_audio
@@ -6178,6 +6193,9 @@ def generate_audio_extras(input_audio, enable_format_changer, new_format):
 
     except Exception as e:
         return None, str(e)
+
+    finally:
+        flush()
 
 
 def generate_upscale_realesrgan(input_image, input_video, model_name, outscale, face_enhance, tile, tile_pad, pre_pad, denoise_strength, output_format="png"):
