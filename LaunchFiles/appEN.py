@@ -2750,7 +2750,7 @@ def generate_hotshotxl(prompt, negative_prompt, steps, width, height, video_leng
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
 
         command = [
-            "python", "Hotshot-XL/inference.py",
+            "python", "ThirdPartyRepository/Hotshot-XL/inference.py",
             f"--pretrained_path={hotshotxl_model_path}",
             f"--spatial_unet_base={hotshotxl_base_model_path}",
             f"--prompt={prompt}",
@@ -3613,7 +3613,7 @@ def generate_riffusion_image2audio(image_path, output_format="wav"):
         audio_filename = f"riffusion_audio_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
         audio_path = os.path.join(audio_dir, audio_filename)
 
-        command = f"python -m riffusion.cli image-to-audio {image_path} {audio_path}"
+        command = f"python -m ThirdPartyRepository/riffusion.cli image-to-audio {image_path} {audio_path}"
         subprocess.run(command, shell=True, check=True)
 
         return audio_path, None
@@ -3636,7 +3636,7 @@ def generate_riffusion_audio2image(audio_path, output_format="png"):
         image_filename = f"riffusion_image_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
         image_path = os.path.join(image_dir, image_filename)
 
-        command = f"python -m riffusion.cli audio-to-image {audio_path} {image_path}"
+        command = f"python -m ThirdPartyRepository/riffusion.cli audio-to-image {audio_path} {image_path}"
         subprocess.run(command, shell=True, check=True)
 
         return image_path, None
@@ -5151,7 +5151,7 @@ def generate_liveportrait(source_image, driving_video, output_format="mp4"):
         output_filename = f"liveportrait_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
         output_path = os.path.join(output_dir, output_filename)
 
-        command = f"python LivePortrait/inference.py -s {source_image} -d {driving_video} -o {output_path}"
+        command = f"python ThirdPartyRepository/LivePortrait/inference.py -s {source_image} -d {driving_video} -o {output_path}"
 
         subprocess.run(command, shell=True, check=True)
 
@@ -5469,7 +5469,7 @@ def generate_3d_stablefast3d(image, texture_resolution, foreground_ratio, remesh
 
         os.environ["HUGGING_FACE_HUB_TOKEN"] = hf_token
 
-        command = f"python StableFast3D/run.py \"{image}\" --output-dir {output_dir} --texture-resolution {texture_resolution} --foreground-ratio {foreground_ratio} --remesh_option {remesh_option}"
+        command = f"python ThirdPartyRepository/StableFast3D/run.py \"{image}\" --output-dir {output_dir} --texture-resolution {texture_resolution} --foreground-ratio {foreground_ratio} --remesh_option {remesh_option}"
 
         subprocess.run(command, shell=True, check=True)
 
@@ -5568,7 +5568,7 @@ def generate_sv34d(input_file, version, elevation_deg=None):
         "4D": "https://huggingface.co/stabilityai/sv4d/resolve/main/sv4d.safetensors"
     }
 
-    checkpoints_dir = "checkpoints"
+    checkpoints_dir = "ThirdPartyRepository/checkpoints"
     os.makedirs(checkpoints_dir, exist_ok=True)
     model_path = os.path.join(checkpoints_dir, f"sv{version.lower()}.safetensors")
 
@@ -5599,15 +5599,15 @@ def generate_sv34d(input_file, version, elevation_deg=None):
             return None, "Please upload an image file for 3D-U or 3D-P version!"
 
         if version == "3D-U":
-            command = f"python generative-models/scripts/sampling/simple_video_sample.py --input_path {input_file} --version sv3d_u --output_folder {output_dir}"
+            command = f"python ThirdPartyRepository/generative-models/scripts/sampling/simple_video_sample.py --input_path {input_file} --version sv3d_u --output_folder {output_dir}"
         else:
             if elevation_deg is None:
                 return None, "Please provide elevation degree for 3D-P version!"
-            command = f"python generative-models/scripts/sampling/simple_video_sample.py --input_path {input_file} --version sv3d_p --elevations_deg {elevation_deg} --output_folder {output_dir}"
+            command = f"python ThirdPartyRepository/generative-models/scripts/sampling/simple_video_sample.py --input_path {input_file} --version sv3d_p --elevations_deg {elevation_deg} --output_folder {output_dir}"
     elif version == "4D":
         if not input_file.lower().endswith('.mp4'):
             return None, "Please upload an MP4 video file for 4D version!"
-        command = f"python generative-models/scripts/sampling/simple_video_sample_4d.py --input_path {input_file} --output_folder {output_dir}"
+        command = f"python ThirdPartyRepository/generative-models/scripts/sampling/simple_video_sample_4d.py --input_path {input_file} --output_folder {output_dir}"
     else:
         return None, "Invalid version selected!"
 
@@ -6126,7 +6126,7 @@ def generate_image_extras(input_image, remove_background, enable_facerestore, fi
 
         if enable_ddcolor:
             ddcolor_output_path = os.path.join(os.path.dirname(output_path), f"ddcolor_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}")
-            command = f"python DDColor/colorization_pipeline_hf.py --model_name ddcolor_modelscope --input {output_path} --output {ddcolor_output_path} --input_size {ddcolor_input_size}"
+            command = f"python ThirdPartyRepository/DDColor/colorization_pipeline_hf.py --model_name ddcolor_modelscope --input {output_path} --output {ddcolor_output_path} --input_size {ddcolor_input_size}"
             subprocess.run(command, shell=True, check=True)
             output_path = ddcolor_output_path
 
@@ -6478,7 +6478,12 @@ def settings_interface(share_value, hf_token, gradio_auth, server_name, server_p
 
     message = "Settings updated successfully!"
     message += f" Server will run on {settings['server_name']}:{settings['server_port']}"
-    message += f"\nTheme set to {'Custom' if enable_custom_theme else theme}. Please restart the application for changes to take effect."
+    message += f"\nTheme set to {settings['custom_theme'] if enable_custom_theme else theme}"
+    message += f"\nShare mode is {settings['share_mode']}"
+    message += f"\nAutoLaunch is {settings['auto_launch']}"
+    message += f"\nNew Gradio Auth is {settings['auth']}"
+    message += f"\nNew HF-Token is {settings['hf_token']}"
+    message += f"\nPlease restart the application for changes to take effect!"
 
     return message
 
@@ -6500,7 +6505,18 @@ def get_system_info():
     ram_used = f"{ram.used // (1024 ** 3)} GB"
     ram_free = f"{ram.available // (1024 ** 3)} GB"
 
-    return gpu_total_memory, gpu_used_memory, gpu_free_memory, gpu_temp, cpu_temp, ram_total, ram_used, ram_free
+    disk = psutil.disk_usage('/')
+    disk_total = f"{disk.total // (1024 ** 3)} GB"
+    disk_free = f"{disk.free // (1024 ** 3)} GB"
+
+    app_folder = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+    app_size = sum(os.path.getsize(os.path.join(dirpath, filename))
+                   for dirpath, dirnames, filenames in os.walk(app_folder)
+                   for filename in filenames)
+    app_size = f"{app_size // (1024 ** 3):.2f} GB"
+
+    return (gpu_total_memory, gpu_used_memory, gpu_free_memory, gpu_temp, cpu_temp,
+            ram_total, ram_used, ram_free, disk_total, disk_free, app_size)
 
 
 def close_terminal():
@@ -6580,7 +6596,7 @@ chat_interface = gr.Interface(
         gr.Chatbot(label="LLM text response", value=[], avatar_images=["avatars/user.png", "avatars/ai.png"], show_copy_button=True),
         gr.Audio(label="LLM audio response", type="filepath"),
     ],
-    title="NeuroSandboxWebUI (ALPHA) - LLM",
+    title="NeuroSandboxWebUI - LLM",
     description="This user interface allows you to enter any text or audio and receive generated response. You can select the LLM model, "
                 "avatar, voice and language for tts from the drop-down lists. You can also customize the model settings from the sliders. "
                 "Try it and see what happens!",
@@ -6606,7 +6622,7 @@ tts_stt_interface = gr.Interface(
         gr.Audio(label="TTS Audio", type="filepath"),
         gr.Textbox(label="STT Text"),
     ],
-    title="NeuroSandboxWebUI (ALPHA) - TTS-STT",
+    title="NeuroSandboxWebUI - TTS-STT",
     description="This user interface allows you to enter text for Text-to-Speech(CoquiTTS) and record audio for Speech-to-Text(OpenAIWhisper). "
                 "For TTS, you can select the voice and language, and customize the generation settings from the sliders. "
                 "For STT, simply record your audio and the spoken text will be displayed. "
@@ -6625,7 +6641,7 @@ mms_tts_interface = gr.Interface(
         gr.Audio(label="Synthesized speech", type="filepath"),
         gr.Textbox(label="Message")
     ],
-    title="NeuroSandboxWebUI (ALPHA) - MMS Text-to-Speech",
+    title="NeuroSandboxWebUI - MMS Text-to-Speech",
     description="Generate speech from text using MMS TTS models.",
     allow_flagging="never",
 )
@@ -6641,7 +6657,7 @@ mms_stt_interface = gr.Interface(
         gr.Textbox(label="Transcription"),
         gr.Textbox(label="Message")
     ],
-    title="NeuroSandboxWebUI (ALPHA) - MMS Speech-to-Text",
+    title="NeuroSandboxWebUI - MMS Speech-to-Text",
     description="Transcribe speech to text using MMS STT model.",
     allow_flagging="never",
 )
@@ -6677,7 +6693,7 @@ seamless_m4tv2_interface = gr.Interface(
         gr.Audio(label="Generated Audio", type="filepath"),
         gr.Textbox(label="Message")
     ],
-    title="NeuroSandboxWebUI (ALPHA) - SeamlessM4Tv2",
+    title="NeuroSandboxWebUI - SeamlessM4Tv2",
     description="This interface allows you to use the SeamlessM4Tv2 model for various translation and speech tasks.",
     allow_flagging="never",
 )
@@ -6695,7 +6711,7 @@ translate_interface = gr.Interface(
     outputs=[
         gr.Textbox(label="Translated text"),
     ],
-    title="NeuroSandboxWebUI (ALPHA) - LibreTranslate",
+    title="NeuroSandboxWebUI - LibreTranslate",
     description="This user interface allows you to enter text and translate it using LibreTranslate. "
                 "Select the source and target languages and click Submit to get the translation. "
                 "Try it and see what happens!",
@@ -6739,7 +6755,7 @@ txt2img_interface = gr.Interface(
         gr.Gallery(label="Generated images", elem_id="gallery", columns=[2], rows=[2], object_fit="contain", height="auto"),
         gr.Textbox(label="Message", type="text"),
     ],
-    title="NeuroSandboxWebUI (ALPHA) - StableDiffusion (txt2img)",
+    title="NeuroSandboxWebUI - StableDiffusion (txt2img)",
     description="This user interface allows you to enter any text and generate images using StableDiffusion. "
                 "You can select the model and customize the generation settings from the sliders. "
                 "Try it and see what happens!",
@@ -6770,7 +6786,7 @@ img2img_interface = gr.Interface(
         gr.Gallery(label="Generated images", elem_id="gallery", columns=[2], rows=[2], object_fit="contain", height="auto"),
         gr.Textbox(label="Message", type="text"),
     ],
-    title="NeuroSandboxWebUI (ALPHA) - StableDiffusion (img2img)",
+    title="NeuroSandboxWebUI - StableDiffusion (img2img)",
     description="This user interface allows you to enter any text and image to generate new images using StableDiffusion. "
                 "You can select the model and customize the generation settings from the sliders. "
                 "Try it and see what happens!",
@@ -6794,7 +6810,7 @@ depth2img_interface = gr.Interface(
         gr.Gallery(label="Generated images", elem_id="gallery", columns=[2], rows=[2], object_fit="contain", height="auto"),
         gr.Textbox(label="Message", type="text"),
     ],
-    title="NeuroSandboxWebUI (ALPHA) - StableDiffusion (depth2img)",
+    title="NeuroSandboxWebUI - StableDiffusion (depth2img)",
     description="This user interface allows you to enter a prompt, an initial image to generate depth-aware images using StableDiffusion. "
                 "Try it and see what happens!",
     allow_flagging="never",
@@ -6817,7 +6833,7 @@ pix2pix_interface = gr.Interface(
         gr.Gallery(label="Generated images", elem_id="gallery", columns=[2], rows=[2], object_fit="contain", height="auto"),
         gr.Textbox(label="Message", type="text"),
     ],
-    title="NeuroSandboxWebUI (ALPHA) - StableDiffusion (pix2pix)",
+    title="NeuroSandboxWebUI - StableDiffusion (pix2pix)",
     description="This user interface allows you to enter a prompt and an initial image to generate new images using Pix2Pix. "
                 "You can customize the generation settings from the sliders. "
                 "Try it and see what happens!",
@@ -6850,7 +6866,7 @@ controlnet_interface = gr.Interface(
         gr.Gallery(label="ControlNet control images", elem_id="gallery", columns=[2], rows=[2], object_fit="contain", height="auto"),
         gr.Textbox(label="Message", type="text"),
     ],
-    title="NeuroSandboxWebUI (ALPHA) - StableDiffusion (controlnet)",
+    title="NeuroSandboxWebUI - StableDiffusion (controlnet)",
     description="This user interface allows you to generate images using ControlNet models. "
                 "Upload an initial image, enter a prompt, select a Stable Diffusion model, and customize the generation settings. "
                 "Try it and see what happens!",
@@ -6872,7 +6888,7 @@ latent_upscale_interface = gr.Interface(
         gr.Image(type="filepath", label="Upscaled image"),
         gr.Textbox(label="Message", type="text"),
     ],
-    title="NeuroSandboxWebUI (ALPHA) - StableDiffusion (upscale-latent)",
+    title="NeuroSandboxWebUI - StableDiffusion (upscale-latent)",
     description="This user interface allows you to upload an image and latent-upscale it using x2 or x4 upscale factor",
     allow_flagging="never",
 )
@@ -6888,7 +6904,7 @@ sdxl_refiner_interface = gr.Interface(
         gr.Image(type="filepath", label="Refined image"),
         gr.Textbox(label="Message", type="text"),
     ],
-    title="NeuroSandboxWebUI (ALPHA) - SDXL Refiner",
+    title="NeuroSandboxWebUI - SDXL Refiner",
     description="This interface allows you to refine images using the SDXL Refiner model. "
                 "Enter a prompt, upload an initial image, and see the refined result.",
     allow_flagging="never",
@@ -6921,7 +6937,7 @@ inpaint_interface = gr.Interface(
         gr.Gallery(label="Generated images", elem_id="gallery", columns=[2], rows=[2], object_fit="contain", height="auto"),
         gr.Textbox(label="Message", type="text"),
     ],
-    title="NeuroSandboxWebUI (ALPHA) - StableDiffusion (inpaint)",
+    title="NeuroSandboxWebUI - StableDiffusion (inpaint)",
     description="This user interface allows you to enter a prompt, an initial image, and a mask image to inpaint using StableDiffusion. "
                 "You can select the model and customize the generation settings from the sliders. "
                 "Try it and see what happens!",
@@ -6952,7 +6968,7 @@ outpaint_interface = gr.Interface(
         gr.Gallery(label="Generated images", elem_id="gallery", columns=[2], rows=[2], object_fit="contain", height="auto"),
         gr.Textbox(label="Message", type="text"),
     ],
-    title="NeuroSandboxWebUI (ALPHA) - StableDiffusion (outpaint)",
+    title="NeuroSandboxWebUI - StableDiffusion (outpaint)",
     description="This user interface allows you to expand an existing image using outpainting with StableDiffusion. "
                 "Upload an image, enter a prompt, select a model type and direction to expand, and customize the generation settings. "
                 "The image will be expanded according to the chosen percentage. "
@@ -6985,7 +7001,7 @@ gligen_interface = gr.Interface(
         gr.Gallery(label="Generated images", elem_id="gallery", columns=[2], rows=[2], object_fit="contain", height="auto"),
         gr.Textbox(label="Message", type="text"),
     ],
-    title="NeuroSandboxWebUI (ALPHA) - StableDiffusion (gligen)",
+    title="NeuroSandboxWebUI - StableDiffusion (gligen)",
     description="This user interface allows you to generate images using Stable Diffusion and insert objects using GLIGEN. "
                 "Select the Stable Diffusion model, customize the generation settings, enter a prompt, GLIGEN phrases, and bounding boxes. "
                 "Try it and see what happens!",
@@ -7014,7 +7030,7 @@ animatediff_interface = gr.Interface(
         gr.Image(label="Generated GIF", type="filepath"),
         gr.Textbox(label="Message", type="text"),
     ],
-    title="NeuroSandboxWebUI (ALPHA) - StableDiffusion (animatediff)",
+    title="NeuroSandboxWebUI - StableDiffusion (animatediff)",
     description="This user interface allows you to enter a prompt and generate animated GIFs using AnimateDiff. "
                 "You can select the model and customize the generation settings from the sliders. "
                 "Try it and see what happens!",
@@ -7037,7 +7053,7 @@ hotshotxl_interface = gr.Interface(
         gr.Image(type="filepath", label="Generated GIF"),
         gr.Textbox(label="Message", type="text"),
     ],
-    title="NeuroSandboxWebUI (ALPHA) - Hotshot-XL",
+    title="NeuroSandboxWebUI - Hotshot-XL",
     description="This user interface allows you to generate animated GIFs using Hotshot-XL. "
                 "Enter a prompt and customize the generation settings. "
                 "Try it and see what happens!",
@@ -7067,7 +7083,7 @@ video_interface = gr.Interface(
         gr.Image(label="Generated GIF", type="filepath"),
         gr.Textbox(label="Message", type="text"),
     ],
-    title="NeuroSandboxWebUI (ALPHA) - StableDiffusion (video)",
+    title="NeuroSandboxWebUI - StableDiffusion (video)",
     description="This user interface allows you to enter an initial image and generate a video using StableVideoDiffusion(mp4) and I2VGen-xl(gif). "
                 "You can customize the generation settings from the sliders. "
                 "Try it and see what happens!",
@@ -7092,7 +7108,7 @@ ldm3d_interface = gr.Interface(
         gr.Gallery(label="Generated Depth images", elem_id="gallery", columns=[2], rows=[2], object_fit="contain", height="auto"),
         gr.Textbox(label="Message", type="text"),
     ],
-    title="NeuroSandboxWebUI (ALPHA) - StableDiffusion (LDM3D)",
+    title="NeuroSandboxWebUI - StableDiffusion (LDM3D)",
     description="This user interface allows you to enter a prompt and generate RGB and Depth images using LDM3D. "
                 "You can customize the generation settings from the sliders. "
                 "Try it and see what happens!",
@@ -7120,7 +7136,7 @@ sd3_txt2img_interface = gr.Interface(
         gr.Gallery(label="Generated images", elem_id="gallery", columns=[2], rows=[2], object_fit="contain", height="auto"),
         gr.Textbox(label="Message", type="text"),
     ],
-    title="NeuroSandboxWebUI (ALPHA) - StableDiffusion 3 (txt2img)",
+    title="NeuroSandboxWebUI - StableDiffusion 3 (txt2img)",
     description="This user interface allows you to enter any text and generate images using Stable Diffusion 3. "
                 "You can customize the generation settings from the sliders. "
                 "Try it and see what happens!",
@@ -7148,7 +7164,7 @@ sd3_img2img_interface = gr.Interface(
         gr.Gallery(label="Generated images", elem_id="gallery", columns=[2], rows=[2], object_fit="contain", height="auto"),
         gr.Textbox(label="Message", type="text"),
     ],
-    title="NeuroSandboxWebUI (ALPHA) - StableDiffusion 3 (img2img)",
+    title="NeuroSandboxWebUI - StableDiffusion 3 (img2img)",
     description="This user interface allows you to enter any text and initial image to generate new images using Stable Diffusion 3. "
                 "You can customize the generation settings from the sliders. "
                 "Try it and see what happens!",
@@ -7178,7 +7194,7 @@ sd3_controlnet_interface = gr.Interface(
         gr.Gallery(label="ControlNet control images", elem_id="gallery", columns=[2], rows=[2], object_fit="contain", height="auto"),
         gr.Textbox(label="Message", type="text"),
     ],
-    title="NeuroSandboxWebUI (ALPHA) - StableDiffusion 3 (ControlNet)",
+    title="NeuroSandboxWebUI - StableDiffusion 3 (ControlNet)",
     description="This user interface allows you to use ControlNet models with Stable Diffusion 3. "
                 "You can customize the generation settings from the sliders. "
                 "Try it and see what happens!",
@@ -7206,7 +7222,7 @@ sd3_inpaint_interface = gr.Interface(
         gr.Gallery(label="Generated images", elem_id="gallery", columns=[2], rows=[2], object_fit="contain", height="auto"),
         gr.Textbox(label="Message", type="text"),
     ],
-    title="NeuroSandboxWebUI (ALPHA) - StableDiffusion 3 (Inpaint)",
+    title="NeuroSandboxWebUI - StableDiffusion 3 (Inpaint)",
     description="This user interface allows you to perform inpainting using Stable Diffusion 3. "
                 "You can customize the generation settings from the sliders. "
                 "Try it and see what happens!",
@@ -7233,7 +7249,7 @@ cascade_interface = gr.Interface(
         gr.Gallery(label="Generated images", elem_id="gallery", columns=[2], rows=[2], object_fit="contain", height="auto"),
         gr.Textbox(label="Message", type="text"),
     ],
-    title="NeuroSandboxWebUI (ALPHA) - StableDiffusion (cascade)",
+    title="NeuroSandboxWebUI - StableDiffusion (cascade)",
     description="This user interface allows you to enter a prompt and generate images using Stable Cascade. "
                 "You can customize the generation settings from the sliders. "
                 "Try it and see what happens!",
@@ -7259,7 +7275,7 @@ t2i_ip_adapter_interface = gr.Interface(
         gr.Gallery(label="Generated images", elem_id="gallery", columns=[2], rows=[2], object_fit="contain", height="auto"),
         gr.Textbox(label="Message", type="text"),
     ],
-    title="NeuroSandboxWebUI (ALPHA) - StableDiffusion (T2I IP-Adapter)",
+    title="NeuroSandboxWebUI - StableDiffusion (T2I IP-Adapter)",
     description="This user interface allows you to generate images using T2I IP-Adapter. "
                 "Upload an image, enter a prompt, select a Stable Diffusion model, and customize the generation settings. "
                 "Try it and see what happens!",
@@ -7285,7 +7301,7 @@ ip_adapter_faceid_interface = gr.Interface(
         gr.Gallery(label="Generated images", elem_id="gallery", columns=[2], rows=[2], object_fit="contain", height="auto"),
         gr.Textbox(label="Message", type="text"),
     ],
-    title="NeuroSandboxWebUI (ALPHA) - StableDiffusion (IP-Adapter FaceID)",
+    title="NeuroSandboxWebUI - StableDiffusion (IP-Adapter FaceID)",
     description="This user interface allows you to generate images using IP-Adapter FaceID. "
                 "Upload a face image, enter a prompt, select a Stable Diffusion model, and customize the generation settings. "
                 "Try it and see what happens!",
@@ -7308,7 +7324,7 @@ riffusion_text2image_interface = gr.Interface(
         gr.Image(type="filepath", label="Generated image"),
         gr.Textbox(label="Message", type="text"),
     ],
-    title="NeuroSandboxWebUI (ALPHA) - Riffusion (Text-to-Image)",
+    title="NeuroSandboxWebUI - Riffusion (Text-to-Image)",
     description="Generate a spectrogram image from text using Riffusion.",
     allow_flagging="never",
 )
@@ -7323,7 +7339,7 @@ riffusion_image2audio_interface = gr.Interface(
         gr.Audio(label="Generated audio", type="filepath"),
         gr.Textbox(label="Message", type="text"),
     ],
-    title="NeuroSandboxWebUI (ALPHA) - Riffusion (Image-to-Audio)",
+    title="NeuroSandboxWebUI - Riffusion (Image-to-Audio)",
     description="Convert a spectrogram image to audio using Riffusion.",
     allow_flagging="never",
 )
@@ -7338,7 +7354,7 @@ riffusion_audio2image_interface = gr.Interface(
         gr.Image(type="filepath", label="Generated spectrogram image"),
         gr.Textbox(label="Message", type="text"),
     ],
-    title="NeuroSandboxWebUI (ALPHA) - Riffusion (Audio-to-Image)",
+    title="NeuroSandboxWebUI - Riffusion (Audio-to-Image)",
     description="Convert audio to a spectrogram image using Riffusion.",
     allow_flagging="never",
 )
@@ -7365,7 +7381,7 @@ kandinsky_txt2img_interface = gr.Interface(
         gr.Image(type="filepath", label="Generated image"),
         gr.Textbox(label="Message", type="text"),
     ],
-    title="NeuroSandboxWebUI (ALPHA) - Kandinsky (txt2img)",
+    title="NeuroSandboxWebUI - Kandinsky (txt2img)",
     description="This user interface allows you to generate images using Kandinsky models. "
                 "You can select between versions 2.1, 2.2, and 3, and customize the generation settings. "
                 "Try it and see what happens!",
@@ -7391,7 +7407,7 @@ kandinsky_img2img_interface = gr.Interface(
         gr.Image(type="filepath", label="Generated image"),
         gr.Textbox(label="Message", type="text"),
     ],
-    title="NeuroSandboxWebUI (ALPHA) - Kandinsky (img2img)",
+    title="NeuroSandboxWebUI - Kandinsky (img2img)",
     description="This user interface allows you to generate images using Kandinsky models. "
                 "You can select between versions 2.1, 2.2, and 3, and customize the generation settings. "
                 "Try it and see what happens!",
@@ -7417,7 +7433,7 @@ kandinsky_inpaint_interface = gr.Interface(
         gr.Image(type="filepath", label="Generated image"),
         gr.Textbox(label="Message", type="text"),
     ],
-    title="NeuroSandboxWebUI (ALPHA) - Kandinsky (inpaint)",
+    title="NeuroSandboxWebUI - Kandinsky (inpaint)",
     description="This user interface allows you to perform inpainting using Kandinsky models. "
                 "You can select between versions 2.1 and 2.2, and customize the generation settings. "
                 "Try it and see what happens!",
@@ -7448,7 +7464,7 @@ flux_interface = gr.Interface(
         gr.Image(type="filepath", label="Generated image"),
         gr.Textbox(label="Message", type="text"),
     ],
-    title="NeuroSandboxWebUI (ALPHA) - Flux",
+    title="NeuroSandboxWebUI - Flux",
     description="This user interface allows you to generate images using Flux models. "
                 "You can select between Schnell and Dev models, and customize the generation settings. "
                 "Try it and see what happens!",
@@ -7471,7 +7487,7 @@ hunyuandit_txt2img_interface = gr.Interface(
         gr.Image(type="filepath", label="Generated image"),
         gr.Textbox(label="Message", type="text"),
     ],
-    title="NeuroSandboxWebUI (ALPHA) - HunyuanDiT (txt2img)",
+    title="NeuroSandboxWebUI - HunyuanDiT (txt2img)",
     description="This user interface allows you to generate images using HunyuanDiT model. "
                 "Enter a prompt (in English or Chinese) and customize the generation settings. "
                 "Try it and see what happens!",
@@ -7496,7 +7512,7 @@ hunyuandit_controlnet_interface = gr.Interface(
         gr.Image(type="filepath", label="Generated image"),
         gr.Textbox(label="Message", type="text"),
     ],
-    title="NeuroSandboxWebUI (ALPHA) - HunyuanDiT (ControlNet)",
+    title="NeuroSandboxWebUI - HunyuanDiT (ControlNet)",
     description="This user interface allows you to generate images using HunyuanDiT ControlNet models. "
                 "Enter a prompt, upload an input image, select a ControlNet model, and customize the generation settings. "
                 "Try it and see what happens!",
@@ -7525,7 +7541,7 @@ lumina_interface = gr.Interface(
         gr.Image(type="filepath", label="Generated image"),
         gr.Textbox(label="Message", type="text"),
     ],
-    title="NeuroSandboxWebUI (ALPHA) - Lumina-T2X",
+    title="NeuroSandboxWebUI - Lumina-T2X",
     description="This user interface allows you to generate images using the Lumina-T2X model. "
                 "Enter a prompt and customize the generation settings. "
                 "Try it and see what happens!",
@@ -7549,7 +7565,7 @@ kolors_txt2img_interface = gr.Interface(
         gr.Image(type="filepath", label="Generated image"),
         gr.Textbox(label="Message", type="text"),
     ],
-    title="NeuroSandboxWebUI (ALPHA) - Kolors (txt2img)",
+    title="NeuroSandboxWebUI - Kolors (txt2img)",
     description="This user interface allows you to generate images using the Kolors model. "
                 "Enter a prompt and customize the generation settings. "
                 "Try it and see what happens!",
@@ -7572,7 +7588,7 @@ kolors_img2img_interface = gr.Interface(
         gr.Image(type="filepath", label="Generated image"),
         gr.Textbox(label="Message", type="text"),
     ],
-    title="NeuroSandboxWebUI (ALPHA) - Kolors (img2img)",
+    title="NeuroSandboxWebUI - Kolors (img2img)",
     description="This user interface allows you to generate images using the Kolors model. "
                 "Enter a prompt and customize the generation settings. "
                 "Try it and see what happens!",
@@ -7594,7 +7610,7 @@ kolors_ip_adapter_interface = gr.Interface(
         gr.Image(type="filepath", label="Generated image"),
         gr.Textbox(label="Message", type="text"),
     ],
-    title="NeuroSandboxWebUI (ALPHA) - Kolors (ip-adapter-plus)",
+    title="NeuroSandboxWebUI - Kolors (ip-adapter-plus)",
     description="This user interface allows you to generate images using the Kolors model. "
                 "Enter a prompt and customize the generation settings. "
                 "Try it and see what happens!",
@@ -7626,7 +7642,7 @@ auraflow_interface = gr.Interface(
         gr.Image(type="filepath", label="Generated image"),
         gr.Textbox(label="Message", type="text"),
     ],
-    title="NeuroSandboxWebUI (ALPHA) - AuraFlow",
+    title="NeuroSandboxWebUI - AuraFlow",
     description="This user interface allows you to generate images using the AuraFlow model. "
                 "Enter a prompt and customize the generation settings. "
                 "You can also enable AuraSR for 4x upscaling of the generated image. "
@@ -7652,7 +7668,7 @@ wurstchen_interface = gr.Interface(
         gr.Image(type="filepath", label="Generated image"),
         gr.Textbox(label="Message", type="text"),
     ],
-    title="NeuroSandboxWebUI (ALPHA) - Würstchen",
+    title="NeuroSandboxWebUI - Würstchen",
     description="This user interface allows you to generate images using the Würstchen model. "
                 "Enter a prompt and customize the generation settings. "
                 "Try it and see what happens!",
@@ -7677,7 +7693,7 @@ deepfloyd_if_txt2img_interface = gr.Interface(
         gr.Image(type="filepath", label="Generated image (Stage III)"),
         gr.Textbox(label="Message", type="text"),
     ],
-    title="NeuroSandboxWebUI (ALPHA) - DeepFloyd IF (txt2img)",
+    title="NeuroSandboxWebUI - DeepFloyd IF (txt2img)",
     description="This user interface allows you to generate images using the DeepFloyd IF model. "
                 "Enter a prompt and customize the generation settings. "
                 "The process includes three stages of generation, each producing an image of increasing quality. "
@@ -7704,7 +7720,7 @@ deepfloyd_if_img2img_interface = gr.Interface(
         gr.Image(type="filepath", label="Generated image (Stage III)"),
         gr.Textbox(label="Message", type="text"),
     ],
-    title="NeuroSandboxWebUI (ALPHA) - DeepFloyd IF (img2img)",
+    title="NeuroSandboxWebUI - DeepFloyd IF (img2img)",
     description="This interface allows you to generate images using DeepFloyd IF's image-to-image pipeline. "
                 "Enter a prompt, upload an initial image, and customize the generation settings. "
                 "The process includes three stages of generation, each producing an image of increasing quality. "
@@ -7729,7 +7745,7 @@ deepfloyd_if_inpaint_interface = gr.Interface(
         gr.Image(type="filepath", label="Generated image (Stage III)"),
         gr.Textbox(label="Message", type="text"),
     ],
-    title="NeuroSandboxWebUI (ALPHA) - DeepFloyd IF (inpaint)",
+    title="NeuroSandboxWebUI - DeepFloyd IF (inpaint)",
     description="This interface allows you to perform inpainting using DeepFloyd IF. "
                 "Enter a prompt, upload an initial image and a mask image, and customize the generation settings. "
                 "The process includes three stages of generation, each producing an image of increasing quality. "
@@ -7760,7 +7776,7 @@ pixart_interface = gr.Interface(
         gr.Image(type="filepath", label="Generated image"),
         gr.Textbox(label="Message", type="text"),
     ],
-    title="NeuroSandboxWebUI (ALPHA) - PixArt",
+    title="NeuroSandboxWebUI - PixArt",
     description="This user interface allows you to generate images using PixArt models. "
                 "You can select between Alpha and Sigma versions, and customize the generation settings. "
                 "Try it and see what happens!",
@@ -7783,7 +7799,7 @@ playgroundv2_interface = gr.Interface(
         gr.Image(type="filepath", label="Generated image"),
         gr.Textbox(label="Message", type="text"),
     ],
-    title="NeuroSandboxWebUI (ALPHA) - PlaygroundV2.5",
+    title="NeuroSandboxWebUI - PlaygroundV2.5",
     description="This user interface allows you to generate images using PlaygroundV2.5. "
                 "Enter a prompt and customize the generation settings. "
                 "Try it and see what happens!",
@@ -7807,7 +7823,7 @@ wav2lip_interface = gr.Interface(
         gr.Video(label="Generated lip-sync"),
         gr.Textbox(label="Message", type="text"),
     ],
-    title="NeuroSandboxWebUI (ALPHA) - Wav2Lip",
+    title="NeuroSandboxWebUI - Wav2Lip",
     description="This user interface allows you to generate talking head videos by combining an image and an audio file using Wav2Lip. "
                 "Upload an image and an audio file, and click Generate to create the talking head video. "
                 "Try it and see what happens!",
@@ -7825,7 +7841,7 @@ liveportrait_interface = gr.Interface(
         gr.Video(label="Generated video"),
         gr.Textbox(label="Message", type="text"),
     ],
-    title="NeuroSandboxWebUI (ALPHA) - LivePortrait",
+    title="NeuroSandboxWebUI - LivePortrait",
     description="This user interface allows you to animate a source image based on the movements in a driving video using LivePortrait. "
                 "Upload a source image and a driving video, then click Generate to create the animated video. "
                 "Try it and see what happens!",
@@ -7849,7 +7865,7 @@ modelscope_interface = gr.Interface(
         gr.Video(label="Generated video"),
         gr.Textbox(label="Message", type="text"),
     ],
-    title="NeuroSandboxWebUI (ALPHA) - ModelScope",
+    title="NeuroSandboxWebUI - ModelScope",
     description="This user interface allows you to generate videos using ModelScope. "
                 "Enter a prompt and customize the generation settings. "
                 "Try it and see what happens!",
@@ -7873,7 +7889,7 @@ zeroscope2_interface = gr.Interface(
         gr.Video(label="Generated video"),
         gr.Textbox(label="Message", type="text"),
     ],
-    title="NeuroSandboxWebUI (ALPHA) - ZeroScope 2",
+    title="NeuroSandboxWebUI - ZeroScope 2",
     description="This user interface allows you to generate and enhance videos using ZeroScope 2 models. "
                 "You can enter a text prompt, upload an optional video for enhancement, and customize the generation settings. "
                 "Try it and see what happens!",
@@ -7898,7 +7914,7 @@ cogvideox_interface = gr.Interface(
         gr.Video(label="Generated video"),
         gr.Textbox(label="Message", type="text"),
     ],
-    title="NeuroSandboxWebUI (ALPHA) - CogVideoX",
+    title="NeuroSandboxWebUI - CogVideoX",
     description="This user interface allows you to generate videos using CogVideoX. "
                 "Enter a prompt and customize the generation settings. "
                 "Try it and see what happens!",
@@ -7921,7 +7937,7 @@ latte_interface = gr.Interface(
         gr.Image(type="filepath", label="Generated GIF"),
         gr.Textbox(label="Message", type="text"),
     ],
-    title="NeuroSandboxWebUI (ALPHA) - Latte",
+    title="NeuroSandboxWebUI - Latte",
     description="This user interface allows you to generate GIFs using Latte. "
                 "Enter a prompt and customize the generation settings. "
                 "Try it and see what happens!",
@@ -7940,7 +7956,7 @@ stablefast3d_interface = gr.Interface(
         gr.Model3D(label="Generated 3D object"),
         gr.Textbox(label="Message", type="text"),
     ],
-    title="NeuroSandboxWebUI (ALPHA) - StableFast3D",
+    title="NeuroSandboxWebUI - StableFast3D",
     description="This user interface allows you to generate 3D objects from images using StableFast3D. "
                 "Upload an image and customize the generation settings. "
                 "Try it and see what happens!",
@@ -7961,7 +7977,7 @@ shap_e_interface = gr.Interface(
         gr.Model3D(label="Generated 3D object"),
         gr.Textbox(label="Message", type="text"),
     ],
-    title="NeuroSandboxWebUI (ALPHA) - Shap-E",
+    title="NeuroSandboxWebUI - Shap-E",
     description="This user interface allows you to generate 3D objects using Shap-E. "
                 "You can enter a text prompt or upload an initial image, and customize the generation settings. "
                 "Try it and see what happens!",
@@ -7979,7 +7995,7 @@ sv34d_interface = gr.Interface(
         gr.Video(label="Generated output"),
         gr.Textbox(label="Message", type="text"),
     ],
-    title="NeuroSandboxWebUI (ALPHA) - SV34D",
+    title="NeuroSandboxWebUI - SV34D",
     description="This interface allows you to generate 3D and 4D content using SV34D models. "
                 "Upload an image (PNG, JPG, JPEG) for 3D-U and 3D-P versions, or an MP4 video for 4D version. "
                 "Select the version and customize settings as needed.",
@@ -7997,7 +8013,7 @@ zero123plus_interface = gr.Interface(
         gr.Image(type="filepath", label="Generated image"),
         gr.Textbox(label="Message", type="text"),
     ],
-    title="NeuroSandboxWebUI (ALPHA) - Zero123Plus",
+    title="NeuroSandboxWebUI - Zero123Plus",
     description="This user interface allows you to generate 3D-like images using Zero123Plus. "
                 "Upload an input image and customize the number of inference steps. "
                 "Try it and see what happens!",
@@ -8022,7 +8038,7 @@ stableaudio_interface = gr.Interface(
         gr.Image(label="Mel-Spectrogram", type="filepath"),
         gr.Textbox(label="Message", type="text"),
     ],
-    title="NeuroSandboxWebUI (ALPHA) - StableAudio",
+    title="NeuroSandboxWebUI - StableAudio",
     description="This user interface allows you to enter any text and generate audio using StableAudio. "
                 "You can customize the generation settings from the sliders. "
                 "Try it and see what happens!",
@@ -8052,7 +8068,7 @@ audiocraft_interface = gr.Interface(
         gr.Image(label="Mel-Spectrogram", type="filepath"),
         gr.Textbox(label="Message", type="text"),
     ],
-    title="NeuroSandboxWebUI (ALPHA) - AudioCraft",
+    title="NeuroSandboxWebUI - AudioCraft",
     description="This user interface allows you to enter any text and generate audio using AudioCraft. "
                 "You can select the model and customize the generation settings from the sliders. "
                 "Try it and see what happens!",
@@ -8076,7 +8092,7 @@ audioldm2_interface = gr.Interface(
         gr.Image(label="Mel-Spectrogram", type="filepath"),
         gr.Textbox(label="Message", type="text"),
     ],
-    title="NeuroSandboxWebUI (ALPHA) - AudioLDM 2",
+    title="NeuroSandboxWebUI - AudioLDM 2",
     description="This user interface allows you to enter any text and generate audio using AudioLDM 2. "
                 "You can select the model and customize the generation settings from the sliders. "
                 "Try it and see what happens!",
@@ -8098,7 +8114,7 @@ bark_interface = gr.Interface(
         gr.Image(label="Mel-Spectrogram", type="filepath"),
         gr.Textbox(label="Message", type="text"),
     ],
-    title="NeuroSandboxWebUI (ALPHA) - SunoBark",
+    title="NeuroSandboxWebUI - SunoBark",
     description="This user interface allows you to enter text and generate audio using SunoBark. "
                 "You can select the voice preset and customize the max length. "
                 "Try it and see what happens!",
@@ -8123,7 +8139,7 @@ rvc_interface = gr.Interface(
         gr.Audio(label="Processed audio", type="filepath"),
         gr.Textbox(label="Message", type="text"),
     ],
-    title="NeuroSandboxWebUI (ALPHA) - RVC",
+    title="NeuroSandboxWebUI - RVC",
     description="This user interface allows you to process audio using RVC (Retrieval-based Voice Conversion). "
                 "Upload an audio file, select an RVC model, and choose the output format. "
                 "Try it and see what happens!",
@@ -8143,7 +8159,7 @@ uvr_interface = gr.Interface(
         gr.Audio(label="Instrumental", type="filepath"),
         gr.Textbox(label="Message", type="text"),
     ],
-    title="NeuroSandboxWebUI (ALPHA) - UVR",
+    title="NeuroSandboxWebUI - UVR",
     description="This user interface allows you to upload an audio file and separate it into vocals and instrumental using Ultimate Vocal Remover (UVR). "
                 "Try it and see what happens!",
     allow_flagging="never",
@@ -8160,7 +8176,7 @@ demucs_interface = gr.Interface(
         gr.Audio(label="Instrumental", type="filepath"),
         gr.Textbox(label="Message", type="text"),
     ],
-    title="NeuroSandboxWebUI (ALPHA) - Demucs",
+    title="NeuroSandboxWebUI - Demucs",
     description="This user interface allows you to upload an audio file and separate it into vocal and instrumental using Demucs. "
                 "Try it and see what happens!",
     allow_flagging="never",
@@ -8188,7 +8204,7 @@ image_extras_interface = gr.Interface(
         gr.Image(label="Modified image", type="filepath"),
         gr.Textbox(label="Message", type="text"),
     ],
-    title="NeuroSandboxWebUI (ALPHA) - Extras (Image)",
+    title="NeuroSandboxWebUI - Extras (Image)",
     description="This interface allows you to modify images",
     allow_flagging="never",
 )
@@ -8206,7 +8222,7 @@ video_extras_interface = gr.Interface(
         gr.Video(label="Modified video"),
         gr.Textbox(label="Message", type="text"),
     ],
-    title="NeuroSandboxWebUI (ALPHA) - Extras (Video)",
+    title="NeuroSandboxWebUI - Extras (Video)",
     description="This interface allows you to modify videos",
     allow_flagging="never",
 )
@@ -8222,7 +8238,7 @@ audio_extras_interface = gr.Interface(
         gr.Audio(label="Modified audio", type="filepath"),
         gr.Textbox(label="Message", type="text"),
     ],
-    title="NeuroSandboxWebUI (ALPHA) - Extras (Audio)",
+    title="NeuroSandboxWebUI - Extras (Audio)",
     description="This interface allows you to modify audio files",
     allow_flagging="never",
 )
@@ -8246,7 +8262,7 @@ realesrgan_upscale_interface = gr.Interface(
         gr.Video(label="Upscaled video"),
         gr.Textbox(label="Message", type="text"),
     ],
-    title="NeuroSandboxWebUI (ALPHA) - Upscale (Real-ESRGAN)",
+    title="NeuroSandboxWebUI - Upscale (Real-ESRGAN)",
     description="This user interface allows you to upload an image and upscale it using Real-ESRGAN models",
     allow_flagging="never",
 )
@@ -8269,7 +8285,7 @@ faceswap_interface = gr.Interface(
         gr.Video(label="Processed video"),
         gr.Textbox(label="Message", type="text"),
     ],
-    title="NeuroSandboxWebUI (ALPHA) - FaceSwap (Roop)",
+    title="NeuroSandboxWebUI - FaceSwap (Roop)",
     description="This user interface allows you to perform face swapping on images or videos and optional face restoration.",
     allow_flagging="never",
 )
@@ -8286,7 +8302,7 @@ wiki_interface = gr.Interface(
         gr.Textbox(label="Local Wiki", value="Wiki.md", interactive=False)
     ],
     outputs=gr.HTML(label="Wiki Content"),
-    title="NeuroSandboxWebUI (ALPHA) - Wiki",
+    title="NeuroSandboxWebUI - Wiki",
     description="This interface displays the Wiki content from the specified URL or local file.",
     allow_flagging="never",
 )
@@ -8307,7 +8323,7 @@ gallery_interface = gr.Interface(
         gr.Audio(label="Audio", type="filepath"),
         gr.Model3D(label="3D Model"),
     ],
-    title="NeuroSandboxWebUI (ALPHA) - Gallery",
+    title="NeuroSandboxWebUI - Gallery",
     description="This interface allows you to view files from the outputs directory",
     allow_flagging="never",
 )
@@ -8321,7 +8337,7 @@ model_downloader_interface = gr.Interface(
     outputs=[
         gr.Textbox(label="Message", type="text"),
     ],
-    title="NeuroSandboxWebUI (ALPHA) - ModelDownloader",
+    title="NeuroSandboxWebUI - ModelDownloader",
     description="This user interface allows you to download LLM and StableDiffusion models",
     allow_flagging="never",
 )
@@ -8344,7 +8360,7 @@ settings_interface = gr.Interface(
     outputs=[
         gr.Textbox(label="Message", type="text")
     ],
-    title="NeuroSandboxWebUI (ALPHA) - Settings",
+    title="NeuroSandboxWebUI - Settings",
     description="This user interface allows you to change settings of the application",
     allow_flagging="never",
 )
@@ -8361,8 +8377,11 @@ system_interface = gr.Interface(
         gr.Textbox(label="RAM Total"),
         gr.Textbox(label="RAM Used"),
         gr.Textbox(label="RAM Free"),
+        gr.Textbox(label="Disk Total Space"),
+        gr.Textbox(label="Disk Free Space"),
+        gr.Textbox(label="Application Folder Size"),
     ],
-    title="NeuroSandboxWebUI (ALPHA) - System",
+    title="NeuroSandboxWebUI - System",
     description="This interface displays system information",
     allow_flagging="never",
 )

@@ -1,4 +1,4 @@
-# Welcome to wiki my dear friends! (DEMO)
+# Welcome to wiki!
 
 ## How to use:
 
