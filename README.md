@@ -10,17 +10,19 @@ A simple and convenient interface for using various neural network models. You c
 
 The goal of the project - to create the easiest possible application to use neural network models
 
-### Text: <img width="1118" alt="1" src="https://github.com/user-attachments/assets/e22b37bb-0d93-4308-8f6a-1b28745cc602">
+### Text: 
 
-### Image: <img width="1117" alt="2" src="https://github.com/user-attachments/assets/f175ac26-134a-4e4e-b53b-d3681892d661">
+### Image: 
 
-### Video: <img width="1117" alt="3" src="https://github.com/user-attachments/assets/cc7a43d1-3d91-45ab-be6d-e4884c56eaa6">
+### Video: 
 
-### 3D: <img width="1120" alt="4" src="https://github.com/user-attachments/assets/4db630ca-181f-46cd-bde9-f6845fc1c652">
+### 3D: 
 
-### Audio: <img width="1121" alt="5" src="https://github.com/user-attachments/assets/b734eba6-3ba4-48d7-be0f-0cd7685ba0a9">
+### Audio: 
 
-### Interface: <img width="1127" alt="6" src="https://github.com/user-attachments/assets/e06fc13b-5f93-41c9-9b27-73bae77b2bde">
+### Extras: 
+
+### Interface: 
 
 ## Features:
 
@@ -102,7 +104,7 @@ To work with the virtual environment through the terminal, run `./Venv.sh`
 
 ## How to use:
 
-#### Interface has fourty sub-tabs (some with their own sub-tabs) in six main tabs (Text, Image, Video, 3D, Audio and Interface): LLM, TTS-STT, MMS, SeamlessM4Tv2, LibreTranslate, StableDiffusion, Kandinsky, Flux, HunyuanDiT, Lumina-T2X, Kolors, AuraFlow, Würstchen, DeepFloydIF, PixArt, PlaygroundV2.5, FaceSwap, Extras, Wav2Lip, LivePortrait, ModelScope, ZeroScope 2, CogVideoX, Latte, StableFast3D, Shap-E, SV34D, Zero123Plus, StableAudio, AudioCraft, AudioLDM 2, SunoBark, RVC, UVR, Demucs, Wiki, Gallery, ModelDownloader, Settings and System. Select the one you need and follow the instructions below 
+#### Interface has thirty eight sub-tabs (some with their own sub-tabs) in seven main tabs (Text, Image, Video, 3D, Audio and Interface): LLM, TTS-STT, MMS, SeamlessM4Tv2, LibreTranslate, StableDiffusion, Kandinsky, Flux, HunyuanDiT, Lumina-T2X, Kolors, AuraFlow, Würstchen, DeepFloydIF, PixArt, PlaygroundV2.5, Wav2Lip, LivePortrait, ModelScope, ZeroScope 2, CogVideoX, Latte, StableFast3D, Shap-E, SV34D, Zero123Plus, StableAudio, AudioCraft, AudioLDM 2, SunoBark, RVC, UVR, Demucs, Wiki, Gallery, ModelDownloader, Settings and System. Select the one you need and follow the instructions below 
 
 ### LLM:
 
@@ -197,13 +199,6 @@ To work with the virtual environment through the terminal, run `./Venv.sh`
 6) Click the `Submit` button to get the generated image
 
 #### upscale (latent):
-
-1) Upload the initial image
-2) Select your model
-3) Set up the model according to the parameters you need
-4) Click the `Submit` button to get the upscaled image
-
-#### upscale (Real-ESRGAN):
 
 1) Upload the initial image
 2) Select your model
@@ -393,12 +388,6 @@ To work with the virtual environment through the terminal, run `./Venv.sh`
 4) Click the `Submit` button to get the face swapped image
 #### Optional: you can enable a FaceRestore to upscale and restore your face image/video
 
-### Extras:
-
-1) Upload the initial image
-2) Select the options you need
-3) Click the `Submit` button to get the modified image
-
 ### Wav2Lip:
 
 1) Upload the initial image of face
@@ -506,6 +495,27 @@ To work with the virtual environment through the terminal, run `./Venv.sh`
 
 1) Upload the initial audio to separate
 2) Click the `Submit` button to get the separated audio
+
+### Extras (Image, Video, Audio):
+
+1) Upload the initial file
+2) Select the options you need
+3) Click the `Submit` button to get the modified file
+
+### Upscale (Real-ESRGAN):
+
+1) Upload the initial image
+2) Select your model
+3) Set up the model according to the parameters you need
+4) Click the `Submit` button to get the upscaled image
+
+### FaceSwap:
+
+1) Upload the source image of face
+2) Upload the target image or video of face
+3) Select the options you need
+4) Click the `Submit` button to get the face swapped image
+#### Optional: you can enable a FaceRestore to upscale and restore your face image/video
 
 ### Wiki:
 
