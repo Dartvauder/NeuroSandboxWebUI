@@ -10,19 +10,19 @@ A simple and convenient interface for using various neural network models. You c
 
 The goal of the project - to create the easiest possible application to use neural network models
 
-### Text: <img width="1119" alt="1" src="https://github.com/user-attachments/assets/1ee411c0-8779-4f7a-a1d9-2a68f2ba6d11">
+### Text: 
 
-### Image: <img width="1117" alt="2" src="https://github.com/user-attachments/assets/b935a5f0-82c5-408b-990f-ea2de7409bc0">
+### Image: 
 
-### Video: <img width="1115" alt="3" src="https://github.com/user-attachments/assets/a6c30e7f-aa81-4f28-b50c-e5e23b73b017">
+### Video: 
 
-### 3D: <img width="1118" alt="4" src="https://github.com/user-attachments/assets/b1e96da7-c31b-4234-b741-7640a13db413">
+### 3D: 
 
-### Audio: <img width="1118" alt="5" src="https://github.com/user-attachments/assets/9889865d-7baa-4c69-84dd-ade8f05ff9ae">
+### Audio: 
 
-### Extras: <img width="1117" alt="6" src="https://github.com/user-attachments/assets/aabaa530-fca3-4237-959b-0d9b52570d6c">
+### Extras: 
 
-### Interface: <img width="1123" alt="7" src="https://github.com/user-attachments/assets/ed16815d-1476-4797-9c77-44dc60b0cb50">
+### Interface: 
 
 ## Features:
 
