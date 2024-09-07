@@ -6505,7 +6505,18 @@ def get_system_info():
     ram_used = f"{ram.used // (1024 ** 3)} GB"
     ram_free = f"{ram.available // (1024 ** 3)} GB"
 
-    return gpu_total_memory, gpu_used_memory, gpu_free_memory, gpu_temp, cpu_temp, ram_total, ram_used, ram_free
+    disk = psutil.disk_usage('/')
+    disk_total = f"{disk.total // (1024 ** 3)} GB"
+    disk_free = f"{disk.free // (1024 ** 3)} GB"
+
+    app_folder = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+    app_size = sum(os.path.getsize(os.path.join(dirpath, filename))
+                   for dirpath, dirnames, filenames in os.walk(app_folder)
+                   for filename in filenames)
+    app_size = f"{app_size // (1024 ** 3):.2f} GB"
+
+    return (gpu_total_memory, gpu_used_memory, gpu_free_memory, gpu_temp, cpu_temp,
+            ram_total, ram_used, ram_free, disk_total, disk_free, app_size)
 
 
 def close_terminal():
@@ -8366,6 +8377,9 @@ system_interface = gr.Interface(
         gr.Textbox(label="RAM Total"),
         gr.Textbox(label="RAM Used"),
         gr.Textbox(label="RAM Free"),
+        gr.Textbox(label="Disk Total Space"),
+        gr.Textbox(label="Disk Free Space"),
+        gr.Textbox(label="Application Folder Size"),
     ],
     title="NeuroSandboxWebUI - System",
     description="This interface displays system information",
