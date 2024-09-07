@@ -290,7 +290,7 @@ def downscale_image(image_path, scale_factor):
         new_height = int(original_height * scale_factor)
         resized_img = img.resize((new_width, new_height), Image.LANCZOS)
 
-        output_format = os.path.splitext(image_path)[1][1:]  # Get the extension without the dot
+        output_format = os.path.splitext(image_path)[1][1:]
         today = datetime.now().date()
         output_dir = os.path.join('outputs', f"Extras_{today.strftime('%Y%m%d')}")
         os.makedirs(output_dir, exist_ok=True)
@@ -315,7 +315,7 @@ def downscale_video(video_path, scale_factor):
     output_dir = os.path.join('outputs', f"Extras_{today.strftime('%Y%m%d')}")
     os.makedirs(output_dir, exist_ok=True)
 
-    output_format = os.path.splitext(video_path)[1][1:]  # Get the extension without the dot
+    output_format = os.path.splitext(video_path)[1][1:]
     output_filename = f"downscaled_video_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
     output_path = os.path.join(output_dir, output_filename)
 
@@ -1033,7 +1033,7 @@ def seamless_m4tv2_process(input_type, input_text, input_audio, src_lang, tgt_la
 
         if input_type == "Text":
             inputs = processor(text=input_text, src_lang=get_languages()[src_lang], return_tensors="pt")
-        elif input_type == "Audio" and input_audio:  # Audio
+        elif input_type == "Audio" and input_audio:
             dataset = load_dataset("mozilla-foundation/common_voice_17_0", dataset_lang, split="test", streaming=True, trust_remote_code=True)
             audio_sample = next(iter(dataset))["audio"]
             inputs = processor(audios=audio_sample["array"], return_tensors="pt")
@@ -1754,7 +1754,7 @@ def generate_image_controlnet(prompt, negative_prompt, init_image, sd_version, s
                          num_inference_steps=num_inference_steps, guidance_scale=guidance_scale, width=width,
                          height=height, clip_skip=clip_skip, generator=generator, image=control_image, sampler=stable_diffusion_sampler, num_images_per_prompt=num_images_per_prompt).images
 
-        else:  # SDXL
+        else:
             controlnet = ControlNetModel.from_pretrained(
                 controlnet_model_path,
                 torch_dtype=torch.float16,
@@ -2296,7 +2296,7 @@ def generate_image_outpaint(prompt, negative_prompt, init_image, stable_diffusio
         if outpaint_direction in ['left', 'right']:
             new_width = int(init_width * (1 + outpaint_expansion / 100))
             new_height = init_height
-        else:  # 'up' or 'down'
+        else:
             new_width = init_width
             new_height = int(init_height * (1 + outpaint_expansion / 100))
 
@@ -2308,7 +2308,7 @@ def generate_image_outpaint(prompt, negative_prompt, init_image, stable_diffusio
             paste_position = (0, 0)
         elif outpaint_direction == 'up':
             paste_position = (0, new_height - init_height)
-        else:  # 'down'
+        else:
             paste_position = (0, 0)
 
         new_image.paste(init_image, paste_position)
@@ -2321,7 +2321,7 @@ def generate_image_outpaint(prompt, negative_prompt, init_image, stable_diffusio
             mask_draw.rectangle([init_width, 0, new_width, new_height], fill=255)
         elif outpaint_direction == 'up':
             mask_draw.rectangle([0, 0, new_width, new_height - init_height], fill=255)
-        else:  # 'down'
+        else:
             mask_draw.rectangle([0, init_height, new_width, new_height], fill=255)
 
         if stable_diffusion_model_type == "SDXL":
@@ -3941,7 +3941,7 @@ def generate_image_kandinsky_inpaint(prompt, negative_prompt, init_image, mask_i
                 torch_dtype=torch.float16,
                 variant="fp16"
             )
-        else:  # version 2.2
+        else:
             pipe = AutoPipelineForInpainting.from_pretrained(
                 os.path.join(kandinsky_model_path, "2-2-decoder-inpaint"),
                 torch_dtype=torch.float16
@@ -4631,7 +4631,7 @@ def generate_image_deepfloyd_txt2img(prompt, negative_prompt, num_inference_step
         print("Deepfloyd models downloaded")
 
     try:
-        # Stage I
+
         pipe_i = IFPipeline.from_pretrained(deepfloydI_model_path, variant="fp16", torch_dtype=torch.float16)
         text_encoder = T5EncoderModel.from_pretrained(
             deepfloydI_model_path, subfolder="text_encoder", device_map="auto", load_in_8bit=True, variant="8bit"
@@ -4654,7 +4654,6 @@ def generate_image_deepfloyd_txt2img(prompt, negative_prompt, num_inference_step
             generator=generator
         ).images
 
-        # Stage II
         pipe_ii = IFSuperResolutionPipeline.from_pretrained(
             deepfloydII_model_path, text_encoder=None, variant="fp16", torch_dtype=torch.float16
         )
@@ -4671,7 +4670,6 @@ def generate_image_deepfloyd_txt2img(prompt, negative_prompt, num_inference_step
             output_type="pt"
         ).images
 
-        # Stage III
         safety_modules = {
             "feature_extractor": pipe_i.feature_extractor,
             "safety_checker": pipe_i.safety_checker,
@@ -4760,7 +4758,7 @@ def generate_image_deepfloyd_img2img(prompt, negative_prompt, init_image, num_in
         print("Deepfloyd models downloaded")
 
     try:
-        # Stage I
+
         stage_1 = IFImg2ImgPipeline.from_pretrained(deepfloydI_model_path, variant="fp16", torch_dtype=torch.float16)
         text_encoder = T5EncoderModel.from_pretrained(
             deepfloydI_model_path, subfolder="text_encoder", device_map="auto", load_in_8bit=True, variant="8bit"
@@ -4771,7 +4769,6 @@ def generate_image_deepfloyd_img2img(prompt, negative_prompt, init_image, num_in
         stage_1.text_encoder = torch.compile(stage_1.text_encoder, mode="reduce-overhead", fullgraph=True)
         stage_1.unet = torch.compile(stage_1.unet, mode="reduce-overhead", fullgraph=True)
 
-        # Stage II
         stage_2 = IFImg2ImgSuperResolutionPipeline.from_pretrained(
             deepfloydII_model_path, text_encoder=None, variant="fp16", torch_dtype=torch.float16
         )
@@ -4779,7 +4776,6 @@ def generate_image_deepfloyd_img2img(prompt, negative_prompt, init_image, num_in
         stage_2.enable_model_cpu_offload()
         stage_2.enable_sequential_cpu_offload()
 
-        # Stage III
         safety_modules = {
             "feature_extractor": stage_1.feature_extractor,
             "safety_checker": stage_1.safety_checker,
@@ -4795,7 +4791,6 @@ def generate_image_deepfloyd_img2img(prompt, negative_prompt, init_image, num_in
         original_image = Image.open(init_image).convert("RGB")
         original_image = original_image.resize((width, height))
 
-        # Stage I
         stage_1_output = stage_1(
             image=original_image,
             prompt=prompt,
@@ -4807,7 +4802,6 @@ def generate_image_deepfloyd_img2img(prompt, negative_prompt, init_image, num_in
             generator=generator
         ).images
 
-        # Stage II
         stage_2_output = stage_2(
             image=stage_1_output,
             original_image=original_image,
@@ -4818,7 +4812,6 @@ def generate_image_deepfloyd_img2img(prompt, negative_prompt, init_image, num_in
             output_type="pt",
         ).images
 
-        # Stage III
         stage_3_output = stage_3(
             prompt=prompt,
             image=stage_2_output,
@@ -4890,7 +4883,7 @@ def generate_image_deepfloyd_inpaint(prompt, negative_prompt, init_image, mask_i
         print("Deepfloyd models downloaded")
 
     try:
-        # Stage I
+        
         stage_1 = IFInpaintingPipeline.from_pretrained(deepfloydI_model_path, variant="fp16", torch_dtype=torch.float16)
         text_encoder = T5EncoderModel.from_pretrained(
             deepfloydI_model_path, subfolder="text_encoder", device_map="auto", load_in_8bit=True, variant="8bit"
@@ -4901,7 +4894,6 @@ def generate_image_deepfloyd_inpaint(prompt, negative_prompt, init_image, mask_i
         stage_1.text_encoder = torch.compile(stage_1.text_encoder, mode="reduce-overhead", fullgraph=True)
         stage_1.unet = torch.compile(stage_1.unet, mode="reduce-overhead", fullgraph=True)
 
-        # Stage II
         stage_2 = IFInpaintingSuperResolutionPipeline.from_pretrained(
             deepfloydII_model_path, text_encoder=None, variant="fp16", torch_dtype=torch.float16
         )
@@ -4909,7 +4901,6 @@ def generate_image_deepfloyd_inpaint(prompt, negative_prompt, init_image, mask_i
         stage_2.enable_model_cpu_offload()
         stage_2.enable_sequential_cpu_offload()
 
-        # Stage III
         safety_modules = {
             "feature_extractor": stage_1.feature_extractor,
             "safety_checker": stage_1.safety_checker,
@@ -4925,7 +4916,6 @@ def generate_image_deepfloyd_inpaint(prompt, negative_prompt, init_image, mask_i
         original_image = Image.open(init_image).convert("RGB")
         mask_image = Image.open(mask_image).convert("RGB")
 
-        # Stage I
         stage_1_output = stage_1(
             image=original_image,
             mask_image=mask_image,
@@ -4937,7 +4927,6 @@ def generate_image_deepfloyd_inpaint(prompt, negative_prompt, init_image, mask_i
             text_encoder=text_encoder
         ).images
 
-        # Stage II
         stage_2_output = stage_2(
             image=stage_1_output,
             original_image=original_image,
@@ -4949,7 +4938,6 @@ def generate_image_deepfloyd_inpaint(prompt, negative_prompt, init_image, mask_i
             output_type="pt",
         ).images
 
-        # Stage III
         stage_3_output = stage_3(
             prompt=prompt,
             image=stage_2_output,
@@ -5195,15 +5183,15 @@ def generate_image_extras(input_image, input_video, remove_background, enable_fa
                           enable_pixeloe, target_size, patch_size, enable_ddcolor, ddcolor_input_size,
                           enable_downscale, downscale_factor):
     if not input_image and not input_video:
-        return None, None, "Please upload an image or video file!"
+        return None, None, "Please upload an image or video!"
 
     is_video = input_video is not None
 
     if is_video and (remove_background or enable_facerestore or enable_pixeloe or enable_ddcolor):
-        return None, None, "For video files, only Downscale operation is available."
+        return None, None, "For video, only Downscale operation is available."
 
     if not remove_background and not enable_facerestore and not enable_pixeloe and not enable_ddcolor and not enable_downscale:
-        return None, None, "Please choose an option to modify the file"
+        return None, None, "Please choose an option to modify the image/video"
 
     try:
         output_path = None
@@ -5212,7 +5200,7 @@ def generate_image_extras(input_image, input_video, remove_background, enable_fa
             if enable_downscale:
                 output_path = downscale_video(input_video, downscale_factor)
         else:
-            output_format = os.path.splitext(input_image)[1][1:]  # Get the extension without the dot
+            output_format = os.path.splitext(input_image)[1][1:]
             if remove_background:
                 output_filename = f"background_removed_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
                 output_path = os.path.join(os.path.dirname(input_image), output_filename)
@@ -5764,7 +5752,7 @@ def generate_sv34d(input_file, version, elevation_deg=None):
 
         if version == "3D-U":
             command = f"python generative-models/scripts/sampling/simple_video_sample.py --input_path {input_file} --version sv3d_u --output_folder {output_dir}"
-        else:  # 3D-P
+        else:
             if elevation_deg is None:
                 return None, "Please provide elevation degree for 3D-P version!"
             command = f"python generative-models/scripts/sampling/simple_video_sample.py --input_path {input_file} --version sv3d_p --elevations_deg {elevation_deg} --output_folder {output_dir}"
