@@ -2,7 +2,7 @@
 
 ## How to use:
 
-#### Interface has fourty sub-tabs (some with their own sub-tabs) in six main tabs (Text, Image, Video, 3D, Audio and Interface): LLM, TTS-STT, MMS, SeamlessM4Tv2, LibreTranslate, StableDiffusion, Kandinsky, Flux, HunyuanDiT, Lumina-T2X, Kolors, AuraFlow, Würstchen, DeepFloydIF, PixArt, PlaygroundV2.5, FaceSwap, Extras, Wav2Lip, LivePortrait, ModelScope, ZeroScope 2, CogVideoX, Latte, StableFast3D, Shap-E, SV34D, Zero123Plus, StableAudio, AudioCraft, AudioLDM 2, SunoBark, RVC, UVR, Demucs, Wiki, Gallery, ModelDownloader, Settings and System. Select the one you need and follow the instructions below 
+#### Interface has fourty sub-tabs (some with their own sub-tabs) in seven main tabs (Text, Image, Video, 3D, Audio, Extras and Interface): LLM, TTS-STT, MMS, SeamlessM4Tv2, LibreTranslate, StableDiffusion, Kandinsky, Flux, HunyuanDiT, Lumina-T2X, Kolors, AuraFlow, Würstchen, DeepFloydIF, PixArt, PlaygroundV2.5, Wav2Lip, LivePortrait, ModelScope, ZeroScope 2, CogVideoX, Latte, StableFast3D, Shap-E, SV34D, Zero123Plus, StableAudio, AudioCraft, AudioLDM 2, SunoBark, RVC, UVR, Demucs, FaceSwap, Upscale (Real-ESRGAN), Wiki, Gallery, ModelDownloader, Settings and System. Select the one you need and follow the instructions below 
 
 ### LLM:
 
@@ -17,6 +17,8 @@
 #### LORA = *inputs/text/llm_models/lora*
 #### The voice must be pre-processed (22050 kHz, mono, WAV)
 #### Avatars of LLM, you change in *avatars* folder
+
+# Text:
 
 ### TTS-STT:
 
@@ -45,6 +47,8 @@
 1) Select source and target languages
 2) Click the `Submit` button to get the translate
 #### Optional: you can save the translation history by turning on the corresponding button
+
+# Image:
 
 ### StableDiffusion - has twenty sub-tabs:
 
@@ -97,13 +101,6 @@
 6) Click the `Submit` button to get the generated image
 
 #### upscale (latent):
-
-1) Upload the initial image
-2) Select your model
-3) Set up the model according to the parameters you need
-4) Click the `Submit` button to get the upscaled image
-
-#### upscale (Real-ESRGAN):
 
 1) Upload the initial image
 2) Select your model
@@ -285,19 +282,7 @@
 2) Set up the model according to the parameters you need
 3) Click `Submit` to get the generated image
 
-### FaceSwap:
-
-1) Upload the source image of face
-2) Upload the target image or video of face
-3) Select the options you need
-4) Click the `Submit` button to get the face swapped image
-#### Optional: you can enable a FaceRestore to upscale and restore your face image/video
-
-### Extras:
-
-1) Upload the initial image
-2) Select the options you need
-3) Click the `Submit` button to get the modified image
+# Video:
 
 ### Wav2Lip:
 
@@ -336,6 +321,8 @@
 2) Set up the model according to the parameters you need
 3) Click `Submit` to get the generated video
 
+# 3D:
+
 ### StableFast3D:
 
 1) Upload the initial image
@@ -359,6 +346,8 @@
 1) Upload the initial image
 2) Set up the model according to the parameters you need
 3) Click the `Submit` button to get the generated 3D rotation of image
+
+# Audio:
 
 ### StableAudio:
 
@@ -406,6 +395,29 @@
 
 1) Upload the initial audio to separate
 2) Click the `Submit` button to get the separated audio
+
+# Extras (Image, Video, Audio):
+
+1) Upload the initial file
+2) Select the options you need
+3) Click the `Submit` button to get the modified file
+
+### Upscale (Real-ESRGAN):
+
+1) Upload the initial image
+2) Select your model
+3) Set up the model according to the parameters you need
+4) Click the `Submit` button to get the upscaled image
+
+### FaceSwap:
+
+1) Upload the source image of face
+2) Upload the target image or video of face
+3) Select the options you need
+4) Click the `Submit` button to get the face swapped image
+#### Optional: you can enable a FaceRestore to upscale and restore your face image/video
+
+# Interface:
 
 ### Wiki:
 
