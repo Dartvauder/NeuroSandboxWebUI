@@ -336,6 +336,69 @@ def downscale_video(video_path, scale_factor):
     return output_path
 
 
+def change_image_format(input_image, new_format, enable_format_changer):
+    if not input_image or not enable_format_changer:
+        return None, "Please upload an image and enable format changer!"
+
+    try:
+        input_format = os.path.splitext(input_image)[1][1:]
+        if input_format == new_format:
+            return input_image, "Input and output formats are the same. No change needed."
+
+        output_filename = f"format_changed_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{new_format}"
+        output_path = os.path.join(os.path.dirname(input_image), output_filename)
+
+        img = Image.open(input_image)
+        img.save(output_path, format=new_format.upper())
+
+        return output_path, f"Image format changed from {input_format} to {new_format}"
+
+    except Exception as e:
+        return None, str(e)
+
+
+def change_video_format(input_video, new_format, enable_format_changer):
+    if not input_video or not enable_format_changer:
+        return None, "Please upload a video and enable format changer!"
+
+    try:
+        input_format = os.path.splitext(input_video)[1][1:]
+        if input_format == new_format:
+            return input_video, "Input and output formats are the same. No change needed."
+
+        output_filename = f"format_changed_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{new_format}"
+        output_path = os.path.join(os.path.dirname(input_video), output_filename)
+
+        command = f"ffmpeg -i {input_video} -c copy {output_path}"
+        subprocess.run(command, shell=True, check=True)
+
+        return output_path, f"Video format changed from {input_format} to {new_format}"
+
+    except Exception as e:
+        return None, str(e)
+
+
+def change_audio_format(input_audio, new_format, enable_format_changer):
+    if not input_audio or not enable_format_changer:
+        return None, "Please upload an audio file and enable format changer!"
+
+    try:
+        input_format = os.path.splitext(input_audio)[1][1:]
+        if input_format == new_format:
+            return input_audio, "Input and output formats are the same. No change needed."
+
+        output_filename = f"format_changed_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{new_format}"
+        output_path = os.path.join(os.path.dirname(input_audio), output_filename)
+
+        command = f"ffmpeg -i {input_audio} {output_path}"
+        subprocess.run(command, shell=True, check=True)
+
+        return output_path, f"Audio format changed from {input_format} to {new_format}"
+
+    except Exception as e:
+        return None, str(e)
+
+
 def load_model(model_name, model_type, n_ctx=None):
     if model_name:
         model_path = f"inputs/text/llm_models/{model_name}"
@@ -5179,68 +5242,6 @@ def generate_image_faceswap(source_image, target_image, target_video, enable_man
         flush()
 
 
-def generate_image_extras(input_image, input_video, remove_background, enable_facerestore, fidelity_weight, restore_upscale,
-                          enable_pixeloe, target_size, patch_size, enable_ddcolor, ddcolor_input_size,
-                          enable_downscale, downscale_factor):
-    if not input_image and not input_video:
-        return None, None, "Please upload an image or video!"
-
-    is_video = input_video is not None
-
-    if is_video and (remove_background or enable_facerestore or enable_pixeloe or enable_ddcolor):
-        return None, None, "For video, only Downscale operation is available."
-
-    if not remove_background and not enable_facerestore and not enable_pixeloe and not enable_ddcolor and not enable_downscale:
-        return None, None, "Please choose an option to modify the image/video"
-
-    try:
-        output_path = None
-
-        if is_video:
-            if enable_downscale:
-                output_path = downscale_video(input_video, downscale_factor)
-        else:
-            output_format = os.path.splitext(input_image)[1][1:]
-            if remove_background:
-                output_filename = f"background_removed_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
-                output_path = os.path.join(os.path.dirname(input_image), output_filename)
-                remove_bg(input_image, output_path)
-
-            if enable_facerestore:
-                codeformer_path = os.path.join("inputs", "image", "CodeFormer")
-                facerestore_output_path = os.path.join(os.path.dirname(input_image), f"facerestored_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}")
-                command = f"python {os.path.join(codeformer_path, 'inference_codeformer.py')} -w {fidelity_weight} --upscale {restore_upscale} --bg_upsampler realesrgan --face_upsample --input_path {input_image} --output_path {facerestore_output_path}"
-                subprocess.run(command, shell=True, check=True)
-                output_path = facerestore_output_path
-
-            if enable_pixeloe:
-                img = cv2.imread(input_image)
-                img = pixelize(img, target_size=target_size, patch_size=patch_size)
-                pixeloe_output_path = os.path.join(os.path.dirname(input_image), f"pixeloe_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}")
-                cv2.imwrite(pixeloe_output_path, img)
-                output_path = pixeloe_output_path
-
-            if enable_ddcolor:
-                ddcolor_output_path = os.path.join(os.path.dirname(input_image), f"ddcolor_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}")
-                command = f"python DDColor/colorization_pipeline_hf.py --model_name ddcolor_modelscope --input {input_image} --output {ddcolor_output_path} --input_size {ddcolor_input_size}"
-                subprocess.run(command, shell=True, check=True)
-                output_path = ddcolor_output_path
-
-            if enable_downscale:
-                output_path = downscale_image(input_image, downscale_factor, output_format)
-
-        if is_video:
-            return None, output_path, None
-        else:
-            return output_path, None, None
-
-    except Exception as e:
-        return None, None, str(e)
-
-    finally:
-        flush()
-
-
 def generate_wav2lip(image_path, audio_path, fps, pads, face_det_batch_size, wav2lip_batch_size, resize_factor, crop, enable_no_smooth):
 
     if not image_path or not audio_path:
@@ -6242,6 +6243,94 @@ def demucs_separate(audio_file, output_format="wav"):
 
     finally:
         flush()
+
+
+def generate_image_extras(input_image, remove_background, enable_facerestore, fidelity_weight, restore_upscale,
+                          enable_pixeloe, target_size, patch_size, enable_ddcolor, ddcolor_input_size,
+                          enable_downscale, downscale_factor, enable_format_changer, new_format):
+    if not input_image:
+        return None, "Please upload an image!"
+
+    try:
+        output_path = input_image
+        output_format = os.path.splitext(input_image)[1][1:]
+
+        if remove_background:
+            output_filename = f"background_removed_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
+            output_path = os.path.join(os.path.dirname(input_image), output_filename)
+            remove_bg(input_image, output_path)
+
+        if enable_facerestore:
+            codeformer_path = os.path.join("inputs", "image", "CodeFormer")
+            facerestore_output_path = os.path.join(os.path.dirname(output_path), f"facerestored_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}")
+            command = f"python {os.path.join(codeformer_path, 'inference_codeformer.py')} -w {fidelity_weight} --upscale {restore_upscale} --bg_upsampler realesrgan --face_upsample --input_path {output_path} --output_path {facerestore_output_path}"
+            subprocess.run(command, shell=True, check=True)
+            output_path = facerestore_output_path
+
+        if enable_pixeloe:
+            img = cv2.imread(output_path)
+            img = pixelize(img, target_size=target_size, patch_size=patch_size)
+            pixeloe_output_path = os.path.join(os.path.dirname(output_path), f"pixeloe_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}")
+            cv2.imwrite(pixeloe_output_path, img)
+            output_path = pixeloe_output_path
+
+        if enable_ddcolor:
+            ddcolor_output_path = os.path.join(os.path.dirname(output_path), f"ddcolor_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}")
+            command = f"python DDColor/colorization_pipeline_hf.py --model_name ddcolor_modelscope --input {output_path} --output {ddcolor_output_path} --input_size {ddcolor_input_size}"
+            subprocess.run(command, shell=True, check=True)
+            output_path = ddcolor_output_path
+
+        if enable_downscale:
+            output_path = downscale_image(output_path, downscale_factor)
+
+        if enable_format_changer:
+            output_path, message = change_image_format(output_path, new_format, enable_format_changer)
+            if message.startswith("Error"):
+                return None, message
+
+        return output_path, "Image processing completed successfully."
+
+    except Exception as e:
+        return None, str(e)
+
+
+def generate_video_extras(input_video, enable_downscale, downscale_factor, enable_format_changer, new_format):
+    if not input_video:
+        return None, "Please upload a video!"
+
+    try:
+        output_path = input_video
+
+        if enable_downscale:
+            output_path = downscale_video(output_path, downscale_factor)
+
+        if enable_format_changer:
+            output_path, message = change_video_format(output_path, new_format, enable_format_changer)
+            if message.startswith("Error"):
+                return None, message
+
+        return output_path, "Video processing completed successfully."
+
+    except Exception as e:
+        return None, str(e)
+
+
+def generate_audio_extras(input_audio, enable_format_changer, new_format):
+    if not input_audio:
+        return None, "Please upload an audio file!"
+
+    try:
+        output_path = input_audio
+
+        if enable_format_changer:
+            output_path, message = change_audio_format(output_path, new_format, enable_format_changer)
+            if message.startswith("Error"):
+                return None, message
+
+        return output_path, "Audio processing completed successfully."
+
+    except Exception as e:
+        return None, str(e)
 
 
 def get_wiki_content(url, local_file="Wiki.md"):
@@ -7730,11 +7819,10 @@ faceswap_interface = gr.Interface(
     allow_flagging="never",
 )
 
-extras_interface = gr.Interface(
+image_extras_interface = gr.Interface(
     fn=generate_image_extras,
     inputs=[
         gr.Image(label="Image to modify", type="filepath"),
-        gr.Video(label="Video to modify"),
         gr.Checkbox(label="Remove BackGround", value=False),
         gr.Checkbox(label="Enable FaceRestore", value=False),
         gr.Slider(minimum=0.01, maximum=1, value=0.5, step=0.01, label="Fidelity weight (For FaceRestore)"),
@@ -7745,16 +7833,56 @@ extras_interface = gr.Interface(
         gr.Checkbox(label="Enable DDColor", value=False),
         gr.Slider(minimum=256, maximum=1024, value=512, step=64, label="Input Size (For DDColor)"),
         gr.Checkbox(label="Enable DownScale", value=False),
-        gr.Slider(minimum=0.1, maximum=1.0, value=0.5, step=0.1, label="DownScale Factor")
+        gr.Slider(minimum=0.1, maximum=1.0, value=0.5, step=0.1, label="DownScale Factor"),
+        gr.Checkbox(label="Enable Format Changer", value=False),
+        gr.Radio(choices=["png", "jpeg"], label="New Image Format", value="png"),
     ],
     outputs=[
         gr.Image(label="Modified image", type="filepath"),
+        gr.Textbox(label="Message", type="text"),
+    ],
+    title="NeuroSandboxWebUI (ALPHA) - Extras (Image)",
+    description="This interface allows you to modify images",
+    allow_flagging="never",
+)
+
+video_extras_interface = gr.Interface(
+    fn=generate_video_extras,
+    inputs=[
+        gr.Video(label="Video to modify"),
+        gr.Checkbox(label="Enable DownScale", value=False),
+        gr.Slider(minimum=0.1, maximum=1.0, value=0.5, step=0.1, label="DownScale Factor"),
+        gr.Checkbox(label="Enable Format Changer", value=False),
+        gr.Radio(choices=["mp4", "mkv"], label="New Video Format", value="mp4"),
+    ],
+    outputs=[
         gr.Video(label="Modified video"),
         gr.Textbox(label="Message", type="text"),
     ],
-    title="NeuroSandboxWebUI (ALPHA) - Extras",
-    description="This user interface allows you to modify the image",
+    title="NeuroSandboxWebUI (ALPHA) - Extras (Video)",
+    description="This interface allows you to modify videos",
     allow_flagging="never",
+)
+
+audio_extras_interface = gr.Interface(
+    fn=generate_audio_extras,
+    inputs=[
+        gr.Audio(label="Audio to modify", type="filepath"),
+        gr.Checkbox(label="Enable Format Changer", value=False),
+        gr.Radio(choices=["wav", "mp3", "ogg"], label="New Audio Format", value="wav"),
+    ],
+    outputs=[
+        gr.Audio(label="Modified audio", type="filepath"),
+        gr.Textbox(label="Message", type="text"),
+    ],
+    title="NeuroSandboxWebUI (ALPHA) - Extras (Audio)",
+    description="This interface allows you to modify audio files",
+    allow_flagging="never",
+)
+
+extras_interface = gr.TabbedInterface(
+    [image_extras_interface, video_extras_interface, audio_extras_interface],
+    tab_names=["Image", "Video", "Audio"]
 )
 
 wav2lip_interface = gr.Interface(
@@ -8245,9 +8373,9 @@ with gr.TabbedInterface(
                      cascade_interface, t2i_ip_adapter_interface, ip_adapter_faceid_interface, riffusion_interface],
                     tab_names=["txt2img", "img2img", "depth2img", "pix2pix", "controlnet", "upscale(latent)", "upscale(Real-ESRGAN)", "refiner", "inpaint", "outpaint", "gligen", "animatediff", "hotshotxl", "video", "ldm3d", "sd3", "cascade", "t2i-ip-adapter", "ip-adapter-faceid", "riffusion"]
                 ),
-                kandinsky_interface, flux_interface, hunyuandit_interface, lumina_interface, kolors_interface, auraflow_interface, wurstchen_interface, deepfloyd_if_interface, pixart_interface, playgroundv2_interface, faceswap_interface, extras_interface
+                kandinsky_interface, flux_interface, hunyuandit_interface, lumina_interface, kolors_interface, auraflow_interface, wurstchen_interface, deepfloyd_if_interface, pixart_interface, playgroundv2_interface, faceswap_interface
             ],
-            tab_names=["StableDiffusion", "Kandinsky", "Flux", "HunyuanDiT", "Lumina-T2X", "Kolors", "AuraFlow", "Würstchen", "DeepFloydIF", "PixArt", "PlaygroundV2.5", "FaceSwap", "Extras"]
+            tab_names=["StableDiffusion", "Kandinsky", "Flux", "HunyuanDiT", "Lumina-T2X", "Kolors", "AuraFlow", "Würstchen", "DeepFloydIF", "PixArt", "PlaygroundV2.5", "FaceSwap"]
         ),
         gr.TabbedInterface(
             [wav2lip_interface, liveportrait_interface, modelscope_interface, zeroscope2_interface, cogvideox_interface, latte_interface],
@@ -8261,12 +8389,13 @@ with gr.TabbedInterface(
             [stableaudio_interface, audiocraft_interface, audioldm2_interface, bark_interface, rvc_interface, uvr_interface, demucs_interface],
             tab_names=["StableAudio", "AudioCraft", "AudioLDM2", "SunoBark", "RVC", "UVR", "Demucs"]
         ),
+        extras_interface,
         gr.TabbedInterface(
             [wiki_interface, gallery_interface, model_downloader_interface, settings_interface, system_interface],
             tab_names=["Wiki", "Gallery", "ModelDownloader", "Settings", "System"]
         )
     ],
-    tab_names=["Text", "Image", "Video", "3D", "Audio", "Interface"],
+    tab_names=["Text", "Image", "Video", "3D", "Audio", "Extras", "Interface"],
     theme=theme
 ) as app:
 
