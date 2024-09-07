@@ -31,6 +31,8 @@ The goal of the project - to create the easiest possible application to use neur
 * Support for Transformers and llama.cpp models (LLM)
 * Support for diffusers and safetensors models (StableDiffusion) - txt2img, img2img, depth2img, pix2pix, controlnet, upscale (latent), upscale (Real-ESRGAN), refiner, inpaint, outpaint, gligen, animatediff, hotshot-xl, video, ldm3d, sd3, cascade, t2i-ip-adapter, ip-adapter-faceid and riffusion tabs
 * Support of additional models for image generation: Kandinsky (txt2img, img2img, inpaint), Flux (with LoRA support), HunyuanDiT (txt2img, controlnet), Lumina-T2X, Kolors (txt2img with LoRA support, img2img, ip-adapter-plus), AuraFlow (with LoRA and AuraSR support), Würstchen, DeepFloydIF (txt2img, img2img, inpaint), PixArt and PlaygroundV2.5
+* Support FaceSwap (Roop) with restore (CodeFormer)
+* Support Extras with Rembg, CodeFormer, PixelOE and DDColor models
 * Support StableAudio
 * Support AudioCraft (Models: musicgen, audiogen and magnet)
 * Support AudioLDM 2 (Models: audio and music)
