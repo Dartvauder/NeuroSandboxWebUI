@@ -10,17 +10,19 @@ A simple and convenient interface for using various neural network models. You c
 
 The goal of the project - to create the easiest possible application to use neural network models
 
-### Text: <img width="1118" alt="1" src="https://github.com/user-attachments/assets/e22b37bb-0d93-4308-8f6a-1b28745cc602">
+### Text: <img width="1119" alt="1" src="https://github.com/user-attachments/assets/1ee411c0-8779-4f7a-a1d9-2a68f2ba6d11">
 
-### Image: <img width="1117" alt="2" src="https://github.com/user-attachments/assets/f175ac26-134a-4e4e-b53b-d3681892d661">
+### Image: <img width="1117" alt="2" src="https://github.com/user-attachments/assets/b935a5f0-82c5-408b-990f-ea2de7409bc0">
 
-### Video: <img width="1117" alt="3" src="https://github.com/user-attachments/assets/cc7a43d1-3d91-45ab-be6d-e4884c56eaa6">
+### Video: <img width="1115" alt="3" src="https://github.com/user-attachments/assets/a6c30e7f-aa81-4f28-b50c-e5e23b73b017">
 
-### 3D: <img width="1120" alt="4" src="https://github.com/user-attachments/assets/4db630ca-181f-46cd-bde9-f6845fc1c652">
+### 3D: <img width="1118" alt="4" src="https://github.com/user-attachments/assets/b1e96da7-c31b-4234-b741-7640a13db413">
 
-### Audio: <img width="1121" alt="5" src="https://github.com/user-attachments/assets/b734eba6-3ba4-48d7-be0f-0cd7685ba0a9">
+### Audio: <img width="1118" alt="5" src="https://github.com/user-attachments/assets/9889865d-7baa-4c69-84dd-ade8f05ff9ae">
 
-### Interface: <img width="1127" alt="6" src="https://github.com/user-attachments/assets/e06fc13b-5f93-41c9-9b27-73bae77b2bde">
+### Extras: <img width="1117" alt="6" src="https://github.com/user-attachments/assets/aabaa530-fca3-4237-959b-0d9b52570d6c">
+
+### Interface: <img width="1123" alt="7" src="https://github.com/user-attachments/assets/ed16815d-1476-4797-9c77-44dc60b0cb50">
 
 ## Features:
 
@@ -29,16 +31,15 @@ The goal of the project - to create the easiest possible application to use neur
 * Flexible and optimized interface (By Gradio)
 * Debug logging to logs from `Install` and `Update` files
 * Support for Transformers and llama.cpp models (LLM)
-* Support for diffusers and safetensors models (StableDiffusion) - txt2img, img2img, depth2img, pix2pix, controlnet, upscale (latent), upscale (Real-ESRGAN), refiner, inpaint, outpaint, gligen, animatediff, hotshot-xl, video, ldm3d, sd3, cascade, t2i-ip-adapter, ip-adapter-faceid and riffusion tabs
+* Support for diffusers and safetensors models (StableDiffusion) - txt2img, img2img, depth2img, pix2pix, controlnet, upscale (latent), refiner, inpaint, outpaint, gligen, animatediff, hotshot-xl, video, ldm3d, sd3, cascade, t2i-ip-adapter, ip-adapter-faceid and riffusion tabs
 * Support of additional models for image generation: Kandinsky (txt2img, img2img, inpaint), Flux (with LoRA support), HunyuanDiT (txt2img, controlnet), Lumina-T2X, Kolors (txt2img with LoRA support, img2img, ip-adapter-plus), AuraFlow (with LoRA and AuraSR support), Würstchen, DeepFloydIF (txt2img, img2img, inpaint), PixArt and PlaygroundV2.5
-* Support FaceSwap (Roop) with restore (CodeFormer)
-* Support Extras with Rembg, CodeFormer, PixelOE and DDColor models
+* Support Extras with Rembg, CodeFormer, PixelOE, DDColor, DownScale, Format changer, FaceSwap (Roop) and Upscale (Real-ESRGAN) models for image, video and audio
 * Support StableAudio
 * Support AudioCraft (Models: musicgen, audiogen and magnet)
 * Support AudioLDM 2 (Models: audio and music)
 * Supports TTS and Whisper models (For LLM and TTS-STT)
 * Support MMS for text-to-speech and speech-to-text
-* Supports Lora, Textual inversion (embedding), Vae, Img2img, Depth, Pix2Pix, Controlnet, Upscalers (latent and Real-ESRGAN), Refiner, Inpaint, Outpaint, GLIGEN, AnimateDiff, HotShot-XL, Videos, LDM3D, SD3, Cascade, T2I-IP-ADAPTER, IP-Adapter-FaceID and Riffusion models (For StableDiffusion)
+* Supports Lora, Textual inversion (embedding), Vae, Img2img, Depth, Pix2Pix, Controlnet, Upscaler (latent), Refiner, Inpaint, Outpaint, GLIGEN, AnimateDiff, HotShot-XL, Videos, LDM3D, SD3, Cascade, T2I-IP-ADAPTER, IP-Adapter-FaceID and Riffusion models (For StableDiffusion)
 * Support Multiband Diffusion model (For AudioCraft)
 * Support LibreTranslate (Local API) and SeamlessM4Tv2 for language translations
 * Support ModelScope, ZeroScope 2, CogVideoX and Latte for video generation
@@ -102,7 +103,7 @@ To work with the virtual environment through the terminal, run `./Venv.sh`
 
 ## How to use:
 
-#### Interface has fourty sub-tabs (some with their own sub-tabs) in six main tabs (Text, Image, Video, 3D, Audio and Interface): LLM, TTS-STT, MMS, SeamlessM4Tv2, LibreTranslate, StableDiffusion, Kandinsky, Flux, HunyuanDiT, Lumina-T2X, Kolors, AuraFlow, Würstchen, DeepFloydIF, PixArt, PlaygroundV2.5, FaceSwap, Extras, Wav2Lip, LivePortrait, ModelScope, ZeroScope 2, CogVideoX, Latte, StableFast3D, Shap-E, SV34D, Zero123Plus, StableAudio, AudioCraft, AudioLDM 2, SunoBark, RVC, UVR, Demucs, Wiki, Gallery, ModelDownloader, Settings and System. Select the one you need and follow the instructions below 
+#### Interface has fourty sub-tabs (some with their own sub-tabs) in seven main tabs (Text, Image, Video, 3D, Audio, Extras and Interface): LLM, TTS-STT, MMS, SeamlessM4Tv2, LibreTranslate, StableDiffusion, Kandinsky, Flux, HunyuanDiT, Lumina-T2X, Kolors, AuraFlow, Würstchen, DeepFloydIF, PixArt, PlaygroundV2.5, Wav2Lip, LivePortrait, ModelScope, ZeroScope 2, CogVideoX, Latte, StableFast3D, Shap-E, SV34D, Zero123Plus, StableAudio, AudioCraft, AudioLDM 2, SunoBark, RVC, UVR, Demucs, FaceSwap, Upscale (Real-ESRGAN), Wiki, Gallery, ModelDownloader, Settings and System. Select the one you need and follow the instructions below 
 
 ### LLM:
 
@@ -117,6 +118,8 @@ To work with the virtual environment through the terminal, run `./Venv.sh`
 #### LORA = *inputs/text/llm_models/lora*
 #### The voice must be pre-processed (22050 kHz, mono, WAV)
 #### Avatars of LLM, you change in *avatars* folder
+
+# Text:
 
 ### TTS-STT:
 
@@ -145,6 +148,8 @@ To work with the virtual environment through the terminal, run `./Venv.sh`
 1) Select source and target languages
 2) Click the `Submit` button to get the translate
 #### Optional: you can save the translation history by turning on the corresponding button
+
+# Image:
 
 ### StableDiffusion - has twenty sub-tabs:
 
@@ -197,13 +202,6 @@ To work with the virtual environment through the terminal, run `./Venv.sh`
 6) Click the `Submit` button to get the generated image
 
 #### upscale (latent):
-
-1) Upload the initial image
-2) Select your model
-3) Set up the model according to the parameters you need
-4) Click the `Submit` button to get the upscaled image
-
-#### upscale (Real-ESRGAN):
 
 1) Upload the initial image
 2) Select your model
@@ -385,19 +383,7 @@ To work with the virtual environment through the terminal, run `./Venv.sh`
 2) Set up the model according to the parameters you need
 3) Click `Submit` to get the generated image
 
-### FaceSwap:
-
-1) Upload the source image of face
-2) Upload the target image or video of face
-3) Select the options you need
-4) Click the `Submit` button to get the face swapped image
-#### Optional: you can enable a FaceRestore to upscale and restore your face image/video
-
-### Extras:
-
-1) Upload the initial image
-2) Select the options you need
-3) Click the `Submit` button to get the modified image
+# Video:
 
 ### Wav2Lip:
 
@@ -436,6 +422,8 @@ To work with the virtual environment through the terminal, run `./Venv.sh`
 2) Set up the model according to the parameters you need
 3) Click `Submit` to get the generated video
 
+# 3D:
+
 ### StableFast3D:
 
 1) Upload the initial image
@@ -459,6 +447,8 @@ To work with the virtual environment through the terminal, run `./Venv.sh`
 1) Upload the initial image
 2) Set up the model according to the parameters you need
 3) Click the `Submit` button to get the generated 3D rotation of image
+
+# Audio:
 
 ### StableAudio:
 
@@ -506,6 +496,29 @@ To work with the virtual environment through the terminal, run `./Venv.sh`
 
 1) Upload the initial audio to separate
 2) Click the `Submit` button to get the separated audio
+
+# Extras (Image, Video, Audio):
+
+1) Upload the initial file
+2) Select the options you need
+3) Click the `Submit` button to get the modified file
+
+### Upscale (Real-ESRGAN):
+
+1) Upload the initial image
+2) Select your model
+3) Set up the model according to the parameters you need
+4) Click the `Submit` button to get the upscaled image
+
+### FaceSwap:
+
+1) Upload the source image of face
+2) Upload the target image or video of face
+3) Select the options you need
+4) Click the `Submit` button to get the face swapped image
+#### Optional: you can enable a FaceRestore to upscale and restore your face image/video
+
+# Interface:
 
 ### Wiki:
 

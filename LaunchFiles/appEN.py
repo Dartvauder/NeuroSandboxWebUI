@@ -283,6 +283,122 @@ def generate_mel_spectrogram(audio_path):
     return spectrogram_path
 
 
+def downscale_image(image_path, scale_factor):
+    with Image.open(image_path) as img:
+        original_width, original_height = img.size
+        new_width = int(original_width * scale_factor)
+        new_height = int(original_height * scale_factor)
+        resized_img = img.resize((new_width, new_height), Image.LANCZOS)
+
+        output_format = os.path.splitext(image_path)[1][1:]
+        today = datetime.now().date()
+        output_dir = os.path.join('outputs', f"Extras_{today.strftime('%Y%m%d')}")
+        os.makedirs(output_dir, exist_ok=True)
+
+        output_filename = f"downscaled_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
+        output_path = os.path.join(output_dir, output_filename)
+        resized_img.save(output_path)
+
+    return output_path
+
+
+def downscale_video(video_path, scale_factor):
+    cap = cv2.VideoCapture(video_path)
+    width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+    height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+    fps = cap.get(cv2.CAP_PROP_FPS)
+
+    new_width = int(width * scale_factor)
+    new_height = int(height * scale_factor)
+
+    today = datetime.now().date()
+    output_dir = os.path.join('outputs', f"Extras_{today.strftime('%Y%m%d')}")
+    os.makedirs(output_dir, exist_ok=True)
+
+    output_format = os.path.splitext(video_path)[1][1:]
+    output_filename = f"downscaled_video_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
+    output_path = os.path.join(output_dir, output_filename)
+
+    fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+    out = cv2.VideoWriter(output_path, fourcc, fps, (new_width, new_height))
+
+    while True:
+        ret, frame = cap.read()
+        if not ret:
+            break
+
+        resized_frame = cv2.resize(frame, (new_width, new_height), interpolation=cv2.INTER_LANCZOS4)
+        out.write(resized_frame)
+
+    cap.release()
+    out.release()
+
+    return output_path
+
+
+def change_image_format(input_image, new_format, enable_format_changer):
+    if not input_image or not enable_format_changer:
+        return None, "Please upload an image and enable format changer!"
+
+    try:
+        input_format = os.path.splitext(input_image)[1][1:]
+        if input_format == new_format:
+            return input_image, "Input and output formats are the same. No change needed."
+
+        output_filename = f"format_changed_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{new_format}"
+        output_path = os.path.join(os.path.dirname(input_image), output_filename)
+
+        img = Image.open(input_image)
+        img.save(output_path, format=new_format.upper())
+
+        return output_path, f"Image format changed from {input_format} to {new_format}"
+
+    except Exception as e:
+        return None, str(e)
+
+
+def change_video_format(input_video, new_format, enable_format_changer):
+    if not input_video or not enable_format_changer:
+        return None, "Please upload a video and enable format changer!"
+
+    try:
+        input_format = os.path.splitext(input_video)[1][1:]
+        if input_format == new_format:
+            return input_video, "Input and output formats are the same. No change needed."
+
+        output_filename = f"format_changed_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{new_format}"
+        output_path = os.path.join(os.path.dirname(input_video), output_filename)
+
+        command = f"ffmpeg -i {input_video} -c copy {output_path}"
+        subprocess.run(command, shell=True, check=True)
+
+        return output_path, f"Video format changed from {input_format} to {new_format}"
+
+    except Exception as e:
+        return None, str(e)
+
+
+def change_audio_format(input_audio, new_format, enable_format_changer):
+    if not input_audio or not enable_format_changer:
+        return None, "Please upload an audio file and enable format changer!"
+
+    try:
+        input_format = os.path.splitext(input_audio)[1][1:]
+        if input_format == new_format:
+            return input_audio, "Input and output formats are the same. No change needed."
+
+        output_filename = f"format_changed_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{new_format}"
+        output_path = os.path.join(os.path.dirname(input_audio), output_filename)
+
+        command = f"ffmpeg -i {input_audio} {output_path}"
+        subprocess.run(command, shell=True, check=True)
+
+        return output_path, f"Audio format changed from {input_format} to {new_format}"
+
+    except Exception as e:
+        return None, str(e)
+
+
 def load_model(model_name, model_type, n_ctx=None):
     if model_name:
         model_path = f"inputs/text/llm_models/{model_name}"
@@ -980,7 +1096,7 @@ def seamless_m4tv2_process(input_type, input_text, input_audio, src_lang, tgt_la
 
         if input_type == "Text":
             inputs = processor(text=input_text, src_lang=get_languages()[src_lang], return_tensors="pt")
-        elif input_type == "Audio" and input_audio:  # Audio
+        elif input_type == "Audio" and input_audio:
             dataset = load_dataset("mozilla-foundation/common_voice_17_0", dataset_lang, split="test", streaming=True, trust_remote_code=True)
             audio_sample = next(iter(dataset))["audio"]
             inputs = processor(audios=audio_sample["array"], return_tensors="pt")
@@ -1701,7 +1817,7 @@ def generate_image_controlnet(prompt, negative_prompt, init_image, sd_version, s
                          num_inference_steps=num_inference_steps, guidance_scale=guidance_scale, width=width,
                          height=height, clip_skip=clip_skip, generator=generator, image=control_image, sampler=stable_diffusion_sampler, num_images_per_prompt=num_images_per_prompt).images
 
-        else:  # SDXL
+        else:
             controlnet = ControlNetModel.from_pretrained(
                 controlnet_model_path,
                 torch_dtype=torch.float16,
@@ -1915,93 +2031,6 @@ def generate_image_upscale_latent(prompt, image_path, upscale_factor, num_infere
 
     finally:
         del upscaler
-        flush()
-
-
-def generate_image_upscale_realesrgan(input_image, input_video, model_name, outscale, face_enhance, tile, tile_pad, pre_pad, denoise_strength, output_format="png"):
-
-    realesrgan_path = os.path.join("inputs", "image", "Real-ESRGAN")
-
-    if not input_image and not input_video:
-        return None, "Please, upload an initial image or video!"
-
-    today = datetime.now().date()
-    output_dir = os.path.join('outputs', f"RealESRGAN_{today.strftime('%Y%m%d')}")
-    os.makedirs(output_dir, exist_ok=True)
-
-    try:
-        if input_image:
-            input_file = input_image
-            is_video = False
-        else:
-            input_file = input_video
-            is_video = True
-
-        input_filename = os.path.basename(input_file)
-        input_name, input_ext = os.path.splitext(input_filename)
-
-        if is_video:
-            cap = cv2.VideoCapture(input_file)
-            fps = cap.get(cv2.CAP_PROP_FPS)
-            width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-            height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-
-            output_filename = f"{input_name}_out.mp4"
-            output_path = os.path.join(output_dir, output_filename)
-
-            fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-            out = cv2.VideoWriter(output_path, fourcc, fps, (width * outscale, height * outscale))
-
-            while True:
-                ret, frame = cap.read()
-                if not ret:
-                    break
-
-                frame_path = os.path.join(output_dir, "temp_frame.png")
-                cv2.imwrite(frame_path, frame)
-
-                command = f"python {os.path.join(realesrgan_path, 'inference_realesrgan.py')} -i {frame_path} -o {output_dir} -n {model_name} -s {outscale} --tile {tile} --tile_pad {tile_pad} --pre_pad {pre_pad} --denoise_strength {denoise_strength}"
-                if face_enhance:
-                    command += " --face_enhance"
-
-                subprocess.run(command, shell=True, check=True)
-
-                upscaled_frame = cv2.imread(os.path.join(output_dir, "temp_frame_out.png"))
-                out.write(upscaled_frame)
-
-                os.remove(frame_path)
-                os.remove(os.path.join(output_dir, "temp_frame_out.png"))
-
-            cap.release()
-            out.release()
-        else:
-            command = f"python {os.path.join(realesrgan_path, 'inference_realesrgan.py')} -i {input_file} -o {output_dir} -n {model_name} -s {outscale} --tile {tile} --tile_pad {tile_pad} --pre_pad {pre_pad} --denoise_strength {denoise_strength}"
-            if face_enhance:
-                command += " --face_enhance"
-
-        subprocess.run(command, shell=True, check=True)
-
-        expected_output_filename = f"{input_name}_out{input_ext}"
-        output_path = os.path.join(output_dir, expected_output_filename)
-
-        if os.path.exists(output_path):
-            if not is_video and output_format.lower() != input_ext[1:].lower():
-                new_output_filename = f"{input_name}_out.{output_format}"
-                new_output_path = os.path.join(output_dir, new_output_filename)
-                Image.open(output_path).save(new_output_path)
-                output_path = new_output_path
-
-            if is_video:
-                return None, output_path, None
-            else:
-                return output_path, None, None
-        else:
-            return None, None, "Output file not found"
-
-    except Exception as e:
-        return None, None, str(e)
-
-    finally:
         flush()
 
 
@@ -2243,7 +2272,7 @@ def generate_image_outpaint(prompt, negative_prompt, init_image, stable_diffusio
         if outpaint_direction in ['left', 'right']:
             new_width = int(init_width * (1 + outpaint_expansion / 100))
             new_height = init_height
-        else:  # 'up' or 'down'
+        else:
             new_width = init_width
             new_height = int(init_height * (1 + outpaint_expansion / 100))
 
@@ -2255,7 +2284,7 @@ def generate_image_outpaint(prompt, negative_prompt, init_image, stable_diffusio
             paste_position = (0, 0)
         elif outpaint_direction == 'up':
             paste_position = (0, new_height - init_height)
-        else:  # 'down'
+        else:
             paste_position = (0, 0)
 
         new_image.paste(init_image, paste_position)
@@ -2268,7 +2297,7 @@ def generate_image_outpaint(prompt, negative_prompt, init_image, stable_diffusio
             mask_draw.rectangle([init_width, 0, new_width, new_height], fill=255)
         elif outpaint_direction == 'up':
             mask_draw.rectangle([0, 0, new_width, new_height - init_height], fill=255)
-        else:  # 'down'
+        else:
             mask_draw.rectangle([0, init_height, new_width, new_height], fill=255)
 
         if stable_diffusion_model_type == "SDXL":
@@ -3888,7 +3917,7 @@ def generate_image_kandinsky_inpaint(prompt, negative_prompt, init_image, mask_i
                 torch_dtype=torch.float16,
                 variant="fp16"
             )
-        else:  # version 2.2
+        else:
             pipe = AutoPipelineForInpainting.from_pretrained(
                 os.path.join(kandinsky_model_path, "2-2-decoder-inpaint"),
                 torch_dtype=torch.float16
@@ -4578,7 +4607,7 @@ def generate_image_deepfloyd_txt2img(prompt, negative_prompt, num_inference_step
         print("Deepfloyd models downloaded")
 
     try:
-        # Stage I
+
         pipe_i = IFPipeline.from_pretrained(deepfloydI_model_path, variant="fp16", torch_dtype=torch.float16)
         text_encoder = T5EncoderModel.from_pretrained(
             deepfloydI_model_path, subfolder="text_encoder", device_map="auto", load_in_8bit=True, variant="8bit"
@@ -4601,7 +4630,6 @@ def generate_image_deepfloyd_txt2img(prompt, negative_prompt, num_inference_step
             generator=generator
         ).images
 
-        # Stage II
         pipe_ii = IFSuperResolutionPipeline.from_pretrained(
             deepfloydII_model_path, text_encoder=None, variant="fp16", torch_dtype=torch.float16
         )
@@ -4618,7 +4646,6 @@ def generate_image_deepfloyd_txt2img(prompt, negative_prompt, num_inference_step
             output_type="pt"
         ).images
 
-        # Stage III
         safety_modules = {
             "feature_extractor": pipe_i.feature_extractor,
             "safety_checker": pipe_i.safety_checker,
@@ -4707,7 +4734,7 @@ def generate_image_deepfloyd_img2img(prompt, negative_prompt, init_image, num_in
         print("Deepfloyd models downloaded")
 
     try:
-        # Stage I
+
         stage_1 = IFImg2ImgPipeline.from_pretrained(deepfloydI_model_path, variant="fp16", torch_dtype=torch.float16)
         text_encoder = T5EncoderModel.from_pretrained(
             deepfloydI_model_path, subfolder="text_encoder", device_map="auto", load_in_8bit=True, variant="8bit"
@@ -4718,7 +4745,6 @@ def generate_image_deepfloyd_img2img(prompt, negative_prompt, init_image, num_in
         stage_1.text_encoder = torch.compile(stage_1.text_encoder, mode="reduce-overhead", fullgraph=True)
         stage_1.unet = torch.compile(stage_1.unet, mode="reduce-overhead", fullgraph=True)
 
-        # Stage II
         stage_2 = IFImg2ImgSuperResolutionPipeline.from_pretrained(
             deepfloydII_model_path, text_encoder=None, variant="fp16", torch_dtype=torch.float16
         )
@@ -4726,7 +4752,6 @@ def generate_image_deepfloyd_img2img(prompt, negative_prompt, init_image, num_in
         stage_2.enable_model_cpu_offload()
         stage_2.enable_sequential_cpu_offload()
 
-        # Stage III
         safety_modules = {
             "feature_extractor": stage_1.feature_extractor,
             "safety_checker": stage_1.safety_checker,
@@ -4742,7 +4767,6 @@ def generate_image_deepfloyd_img2img(prompt, negative_prompt, init_image, num_in
         original_image = Image.open(init_image).convert("RGB")
         original_image = original_image.resize((width, height))
 
-        # Stage I
         stage_1_output = stage_1(
             image=original_image,
             prompt=prompt,
@@ -4754,7 +4778,6 @@ def generate_image_deepfloyd_img2img(prompt, negative_prompt, init_image, num_in
             generator=generator
         ).images
 
-        # Stage II
         stage_2_output = stage_2(
             image=stage_1_output,
             original_image=original_image,
@@ -4765,7 +4788,6 @@ def generate_image_deepfloyd_img2img(prompt, negative_prompt, init_image, num_in
             output_type="pt",
         ).images
 
-        # Stage III
         stage_3_output = stage_3(
             prompt=prompt,
             image=stage_2_output,
@@ -4837,7 +4859,7 @@ def generate_image_deepfloyd_inpaint(prompt, negative_prompt, init_image, mask_i
         print("Deepfloyd models downloaded")
 
     try:
-        # Stage I
+        
         stage_1 = IFInpaintingPipeline.from_pretrained(deepfloydI_model_path, variant="fp16", torch_dtype=torch.float16)
         text_encoder = T5EncoderModel.from_pretrained(
             deepfloydI_model_path, subfolder="text_encoder", device_map="auto", load_in_8bit=True, variant="8bit"
@@ -4848,7 +4870,6 @@ def generate_image_deepfloyd_inpaint(prompt, negative_prompt, init_image, mask_i
         stage_1.text_encoder = torch.compile(stage_1.text_encoder, mode="reduce-overhead", fullgraph=True)
         stage_1.unet = torch.compile(stage_1.unet, mode="reduce-overhead", fullgraph=True)
 
-        # Stage II
         stage_2 = IFInpaintingSuperResolutionPipeline.from_pretrained(
             deepfloydII_model_path, text_encoder=None, variant="fp16", torch_dtype=torch.float16
         )
@@ -4856,7 +4877,6 @@ def generate_image_deepfloyd_inpaint(prompt, negative_prompt, init_image, mask_i
         stage_2.enable_model_cpu_offload()
         stage_2.enable_sequential_cpu_offload()
 
-        # Stage III
         safety_modules = {
             "feature_extractor": stage_1.feature_extractor,
             "safety_checker": stage_1.safety_checker,
@@ -4872,7 +4892,6 @@ def generate_image_deepfloyd_inpaint(prompt, negative_prompt, init_image, mask_i
         original_image = Image.open(init_image).convert("RGB")
         mask_image = Image.open(mask_image).convert("RGB")
 
-        # Stage I
         stage_1_output = stage_1(
             image=original_image,
             mask_image=mask_image,
@@ -4884,7 +4903,6 @@ def generate_image_deepfloyd_inpaint(prompt, negative_prompt, init_image, mask_i
             text_encoder=text_encoder
         ).images
 
-        # Stage II
         stage_2_output = stage_2(
             image=stage_1_output,
             original_image=original_image,
@@ -4896,7 +4914,6 @@ def generate_image_deepfloyd_inpaint(prompt, negative_prompt, init_image, mask_i
             output_type="pt",
         ).images
 
-        # Stage III
         stage_3_output = stage_3(
             prompt=prompt,
             image=stage_2_output,
@@ -5069,129 +5086,6 @@ def generate_image_playgroundv2(prompt, negative_prompt, height, width, num_infe
 
     finally:
         del pipe
-        flush()
-
-
-def generate_image_faceswap(source_image, target_image, target_video, enable_many_faces, reference_face,
-                            reference_frame, enable_facerestore, fidelity_weight, restore_upscale):
-    if not source_image or (not target_image and not target_video):
-        return None, None, "Please upload source image and either target image or target video!"
-
-    try:
-        roop_path = os.path.join("inputs", "image", "roop")
-
-        today = datetime.now().date()
-        output_dir = os.path.join('outputs', f"FaceSwap_{today.strftime('%Y%m%d')}")
-        os.makedirs(output_dir, exist_ok=True)
-
-        is_video = bool(target_video)
-
-        if is_video:
-            faceswap_output_filename = f"faceswapped_{datetime.now().strftime('%Y%m%d_%H%M%S')}.mp4"
-        else:
-            faceswap_output_filename = f"faceswapped_{datetime.now().strftime('%Y%m%d_%H%M%S')}.png"
-
-        faceswap_output_path = os.path.join(output_dir, faceswap_output_filename)
-
-        command = f"python {os.path.join(roop_path, 'run.py')} --source {source_image} --output {faceswap_output_path}"
-
-        if is_video:
-            command += f" --target {target_video}"
-        else:
-            command += f" --target {target_image}"
-
-        if enable_many_faces:
-            command += f" --many-faces"
-            command += f" --reference-face-position {reference_face}"
-            command += f" --reference-frame-number {reference_frame}"
-
-        subprocess.run(command, shell=True, check=True)
-
-        if enable_facerestore:
-            codeformer_path = os.path.join("inputs", "image", "CodeFormer")
-
-            if is_video:
-                facerestore_output_filename = f"facerestored_{datetime.now().strftime('%Y%m%d_%H%M%S')}.mp4"
-            else:
-                facerestore_output_filename = f"facerestored_{datetime.now().strftime('%Y%m%d_%H%M%S')}.png"
-
-            facerestore_output_path = os.path.join(output_dir, facerestore_output_filename)
-
-            facerestore_input = faceswap_output_path
-
-            command = f"python {os.path.join(codeformer_path, 'inference_codeformer.py')} -w {fidelity_weight} --upscale {restore_upscale} --bg_upsampler realesrgan --face_upsample --input_path {facerestore_input} --output_path {facerestore_output_path}"
-            subprocess.run(command, shell=True, check=True)
-
-            output_path = facerestore_output_path
-        else:
-            output_path = faceswap_output_path
-
-        if is_video:
-            return None, output_path, None
-        else:
-            return output_path, None, None
-
-    except Exception as e:
-        return None, None, str(e)
-
-    finally:
-        flush()
-
-
-def generate_image_extras(input_image, remove_background, enable_facerestore, fidelity_weight, restore_upscale, enable_pixeloe, target_size, patch_size, enable_ddcolor, ddcolor_input_size, image_output_format):
-    if not input_image:
-        return None, "Please upload an image file!"
-
-    if not remove_background and not enable_facerestore and not enable_pixeloe and not enable_ddcolor:
-        return None, "Please choose an option to modify the image"
-
-    today = datetime.now().date()
-    output_dir = os.path.join('outputs', f"Extras_{today.strftime('%Y%m%d')}")
-    os.makedirs(output_dir, exist_ok=True)
-
-    try:
-        if remove_background:
-            output_filename = f"background_removed_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{image_output_format}"
-            output_path = os.path.join(output_dir, output_filename)
-            remove_bg(input_image, output_path)
-
-        if enable_facerestore:
-            codeformer_path = os.path.join("inputs", "image", "CodeFormer")
-
-            facerestore_output_path = os.path.join(output_dir, f"facerestored_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{image_output_format}")
-
-            command = f"python {os.path.join(codeformer_path, 'inference_codeformer.py')} -w {fidelity_weight} --upscale {restore_upscale} --bg_upsampler realesrgan --face_upsample --input_path {input_image} --output_path {facerestore_output_path}"
-            subprocess.run(command, shell=True, check=True)
-
-            output_path = facerestore_output_path
-
-        if enable_pixeloe:
-            img = cv2.imread(input_image)
-            img = pixelize(img, target_size=target_size, patch_size=patch_size)
-
-            pixeloe_output_path = os.path.join(output_dir,
-                                               f"pixeloe_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{image_output_format}")
-            cv2.imwrite(pixeloe_output_path, img)
-
-            output_path = pixeloe_output_path
-
-        if enable_ddcolor:
-
-            ddcolor_output_path = os.path.join(output_dir,
-                                               f"ddcolor_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{image_output_format}")
-
-            command = f"python DDColor/colorization_pipeline_hf.py --model_name ddcolor_modelscope --input {input_image} --output {ddcolor_output_path} --input_size {ddcolor_input_size}"
-
-            subprocess.run(command, shell=True, check=True)
-
-            output_path = ddcolor_output_path
-
-        return output_path, None
-
-    except Exception as e:
-        return None, str(e)
-
-    finally:
         flush()
 
 
@@ -5706,7 +5600,7 @@ def generate_sv34d(input_file, version, elevation_deg=None):
 
         if version == "3D-U":
             command = f"python generative-models/scripts/sampling/simple_video_sample.py --input_path {input_file} --version sv3d_u --output_folder {output_dir}"
-        else:  # 3D-P
+        else:
             if elevation_deg is None:
                 return None, "Please provide elevation degree for 3D-P version!"
             command = f"python generative-models/scripts/sampling/simple_video_sample.py --input_path {input_file} --version sv3d_p --elevations_deg {elevation_deg} --output_folder {output_dir}"
@@ -6190,6 +6084,247 @@ def demucs_separate(audio_file, output_format="wav"):
             instrumental_output = instrumental_file
 
         return vocal_output, instrumental_output, None
+
+    except Exception as e:
+        return None, None, str(e)
+
+    finally:
+        flush()
+
+
+def generate_image_extras(input_image, remove_background, enable_facerestore, fidelity_weight, restore_upscale,
+                          enable_pixeloe, target_size, patch_size, enable_ddcolor, ddcolor_input_size,
+                          enable_downscale, downscale_factor, enable_format_changer, new_format):
+    if not input_image:
+        return None, "Please upload an image!"
+
+    try:
+        output_path = input_image
+        output_format = os.path.splitext(input_image)[1][1:]
+
+        if remove_background:
+            output_filename = f"background_removed_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
+            output_path = os.path.join(os.path.dirname(input_image), output_filename)
+            remove_bg(input_image, output_path)
+
+        if enable_facerestore:
+            codeformer_path = os.path.join("inputs", "image", "CodeFormer")
+            facerestore_output_path = os.path.join(os.path.dirname(output_path), f"facerestored_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}")
+            command = f"python {os.path.join(codeformer_path, 'inference_codeformer.py')} -w {fidelity_weight} --upscale {restore_upscale} --bg_upsampler realesrgan --face_upsample --input_path {output_path} --output_path {facerestore_output_path}"
+            subprocess.run(command, shell=True, check=True)
+            output_path = facerestore_output_path
+
+        if enable_pixeloe:
+            img = cv2.imread(output_path)
+            img = pixelize(img, target_size=target_size, patch_size=patch_size)
+            pixeloe_output_path = os.path.join(os.path.dirname(output_path), f"pixeloe_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}")
+            cv2.imwrite(pixeloe_output_path, img)
+            output_path = pixeloe_output_path
+
+        if enable_ddcolor:
+            ddcolor_output_path = os.path.join(os.path.dirname(output_path), f"ddcolor_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}")
+            command = f"python DDColor/colorization_pipeline_hf.py --model_name ddcolor_modelscope --input {output_path} --output {ddcolor_output_path} --input_size {ddcolor_input_size}"
+            subprocess.run(command, shell=True, check=True)
+            output_path = ddcolor_output_path
+
+        if enable_downscale:
+            output_path = downscale_image(output_path, downscale_factor)
+
+        if enable_format_changer:
+            output_path, message = change_image_format(output_path, new_format, enable_format_changer)
+            if message.startswith("Error"):
+                return None, message
+
+        return output_path, "Image processing completed successfully."
+
+    except Exception as e:
+        return None, str(e)
+
+
+def generate_video_extras(input_video, enable_downscale, downscale_factor, enable_format_changer, new_format):
+    if not input_video:
+        return None, "Please upload a video!"
+
+    try:
+        output_path = input_video
+
+        if enable_downscale:
+            output_path = downscale_video(output_path, downscale_factor)
+
+        if enable_format_changer:
+            output_path, message = change_video_format(output_path, new_format, enable_format_changer)
+            if message.startswith("Error"):
+                return None, message
+
+        return output_path, "Video processing completed successfully."
+
+    except Exception as e:
+        return None, str(e)
+
+
+def generate_audio_extras(input_audio, enable_format_changer, new_format):
+    if not input_audio:
+        return None, "Please upload an audio file!"
+
+    try:
+        output_path = input_audio
+
+        if enable_format_changer:
+            output_path, message = change_audio_format(output_path, new_format, enable_format_changer)
+            if message.startswith("Error"):
+                return None, message
+
+        return output_path, "Audio processing completed successfully."
+
+    except Exception as e:
+        return None, str(e)
+
+
+def generate_upscale_realesrgan(input_image, input_video, model_name, outscale, face_enhance, tile, tile_pad, pre_pad, denoise_strength, output_format="png"):
+
+    realesrgan_path = os.path.join("inputs", "image", "Real-ESRGAN")
+
+    if not input_image and not input_video:
+        return None, "Please, upload an initial image or video!"
+
+    today = datetime.now().date()
+    output_dir = os.path.join('outputs', f"RealESRGAN_{today.strftime('%Y%m%d')}")
+    os.makedirs(output_dir, exist_ok=True)
+
+    try:
+        if input_image:
+            input_file = input_image
+            is_video = False
+        else:
+            input_file = input_video
+            is_video = True
+
+        input_filename = os.path.basename(input_file)
+        input_name, input_ext = os.path.splitext(input_filename)
+
+        if is_video:
+            cap = cv2.VideoCapture(input_file)
+            fps = cap.get(cv2.CAP_PROP_FPS)
+            width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+            height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+
+            output_filename = f"{input_name}_out.mp4"
+            output_path = os.path.join(output_dir, output_filename)
+
+            fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+            out = cv2.VideoWriter(output_path, fourcc, fps, (width * outscale, height * outscale))
+
+            while True:
+                ret, frame = cap.read()
+                if not ret:
+                    break
+
+                frame_path = os.path.join(output_dir, "temp_frame.png")
+                cv2.imwrite(frame_path, frame)
+
+                command = f"python {os.path.join(realesrgan_path, 'inference_realesrgan.py')} -i {frame_path} -o {output_dir} -n {model_name} -s {outscale} --tile {tile} --tile_pad {tile_pad} --pre_pad {pre_pad} --denoise_strength {denoise_strength}"
+                if face_enhance:
+                    command += " --face_enhance"
+
+                subprocess.run(command, shell=True, check=True)
+
+                upscaled_frame = cv2.imread(os.path.join(output_dir, "temp_frame_out.png"))
+                out.write(upscaled_frame)
+
+                os.remove(frame_path)
+                os.remove(os.path.join(output_dir, "temp_frame_out.png"))
+
+            cap.release()
+            out.release()
+        else:
+            command = f"python {os.path.join(realesrgan_path, 'inference_realesrgan.py')} -i {input_file} -o {output_dir} -n {model_name} -s {outscale} --tile {tile} --tile_pad {tile_pad} --pre_pad {pre_pad} --denoise_strength {denoise_strength}"
+            if face_enhance:
+                command += " --face_enhance"
+
+        subprocess.run(command, shell=True, check=True)
+
+        expected_output_filename = f"{input_name}_out{input_ext}"
+        output_path = os.path.join(output_dir, expected_output_filename)
+
+        if os.path.exists(output_path):
+            if not is_video and output_format.lower() != input_ext[1:].lower():
+                new_output_filename = f"{input_name}_out.{output_format}"
+                new_output_path = os.path.join(output_dir, new_output_filename)
+                Image.open(output_path).save(new_output_path)
+                output_path = new_output_path
+
+            if is_video:
+                return None, output_path, None
+            else:
+                return output_path, None, None
+        else:
+            return None, None, "Output file not found"
+
+    except Exception as e:
+        return None, None, str(e)
+
+    finally:
+        flush()
+
+
+def generate_faceswap(source_image, target_image, target_video, enable_many_faces, reference_face,
+                            reference_frame, enable_facerestore, fidelity_weight, restore_upscale):
+    if not source_image or (not target_image and not target_video):
+        return None, None, "Please upload source image and either target image or target video!"
+
+    try:
+        roop_path = os.path.join("inputs", "image", "roop")
+
+        today = datetime.now().date()
+        output_dir = os.path.join('outputs', f"FaceSwap_{today.strftime('%Y%m%d')}")
+        os.makedirs(output_dir, exist_ok=True)
+
+        is_video = bool(target_video)
+
+        if is_video:
+            faceswap_output_filename = f"faceswapped_{datetime.now().strftime('%Y%m%d_%H%M%S')}.mp4"
+        else:
+            faceswap_output_filename = f"faceswapped_{datetime.now().strftime('%Y%m%d_%H%M%S')}.png"
+
+        faceswap_output_path = os.path.join(output_dir, faceswap_output_filename)
+
+        command = f"python {os.path.join(roop_path, 'run.py')} --source {source_image} --output {faceswap_output_path}"
+
+        if is_video:
+            command += f" --target {target_video}"
+        else:
+            command += f" --target {target_image}"
+
+        if enable_many_faces:
+            command += f" --many-faces"
+            command += f" --reference-face-position {reference_face}"
+            command += f" --reference-frame-number {reference_frame}"
+
+        subprocess.run(command, shell=True, check=True)
+
+        if enable_facerestore:
+            codeformer_path = os.path.join("inputs", "image", "CodeFormer")
+
+            if is_video:
+                facerestore_output_filename = f"facerestored_{datetime.now().strftime('%Y%m%d_%H%M%S')}.mp4"
+            else:
+                facerestore_output_filename = f"facerestored_{datetime.now().strftime('%Y%m%d_%H%M%S')}.png"
+
+            facerestore_output_path = os.path.join(output_dir, facerestore_output_filename)
+
+            facerestore_input = faceswap_output_path
+
+            command = f"python {os.path.join(codeformer_path, 'inference_codeformer.py')} -w {fidelity_weight} --upscale {restore_upscale} --bg_upsampler realesrgan --face_upsample --input_path {facerestore_input} --output_path {facerestore_output_path}"
+            subprocess.run(command, shell=True, check=True)
+
+            output_path = facerestore_output_path
+        else:
+            output_path = faceswap_output_path
+
+        if is_video:
+            return None, output_path, None
+        else:
+            return output_path, None, None
 
     except Exception as e:
         return None, None, str(e)
@@ -6721,30 +6856,6 @@ latent_upscale_interface = gr.Interface(
     ],
     title="NeuroSandboxWebUI (ALPHA) - StableDiffusion (upscale-latent)",
     description="This user interface allows you to upload an image and latent-upscale it using x2 or x4 upscale factor",
-    allow_flagging="never",
-)
-
-realesrgan_upscale_interface = gr.Interface(
-    fn=generate_image_upscale_realesrgan,
-    inputs=[
-        gr.Image(label="Image to upscale", type="filepath"),
-        gr.Video(label="Input video"),
-        gr.Radio(choices=["RealESRGAN_x2plus", "RealESRNet_x4plus", "RealESRGAN_x4plus", "realesr-general-x4v3", "RealESRGAN_x4plus_anime_6B"], label="Select model", value="RealESRGAN_x4plus"),
-        gr.Slider(minimum=0.1, maximum=4, value=2, step=0.1, label="Upscale factor"),
-        gr.Checkbox(label="Enable Face Enhance", value=False),
-        gr.Slider(minimum=0, maximum=10, value=0, step=1, label="Tile"),
-        gr.Slider(minimum=0, maximum=100, value=10, step=1, label="Tile pad"),
-        gr.Slider(minimum=0, maximum=50, value=0, step=1, label="Pre pad"),
-        gr.Slider(minimum=0.01, maximum=1, value=0.5, step=0.01, label="Denoise strength"),
-        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
-    ],
-    outputs=[
-        gr.Image(type="filepath", label="Upscaled image"),
-        gr.Video(label="Upscaled video"),
-        gr.Textbox(label="Message", type="text"),
-    ],
-    title="NeuroSandboxWebUI (ALPHA) - StableDiffusion (upscale-realesrgan)",
-    description="This user interface allows you to upload an image and upscale it using Real-ESRGAN models",
     allow_flagging="never",
 )
 
@@ -7661,53 +7772,6 @@ playgroundv2_interface = gr.Interface(
     allow_flagging="never",
 )
 
-faceswap_interface = gr.Interface(
-    fn=generate_image_faceswap,
-    inputs=[
-        gr.Image(label="Source Image", type="filepath"),
-        gr.Image(label="Target Image", type="filepath"),
-        gr.Video(label="Target Video"),
-        gr.Checkbox(label="Enable many faces", value=False),
-        gr.Number(label="Reference face position"),
-        gr.Number(label="Reference frame number"),
-        gr.Checkbox(label="Enable FaceRestore", value=False),
-        gr.Slider(minimum=0.01, maximum=1, value=0.5, step=0.01, label="Fidelity weight"),
-        gr.Slider(minimum=0.1, maximum=4, value=2, step=0.1, label="Upscale"),
-    ],
-    outputs=[
-        gr.Image(label="Processed image", type="filepath"),
-        gr.Video(label="Processed video"),
-        gr.Textbox(label="Message", type="text"),
-    ],
-    title="NeuroSandboxWebUI (ALPHA) - FaceSwap",
-    description="This user interface allows you to perform face swapping on images or videos and optional face restoration.",
-    allow_flagging="never",
-)
-
-extras_interface = gr.Interface(
-    fn=generate_image_extras,
-    inputs=[
-        gr.Image(label="Image to modify", type="filepath"),
-        gr.Checkbox(label="Remove BackGround", value=False),
-        gr.Checkbox(label="Enable FaceRestore", value=False),
-        gr.Slider(minimum=0.01, maximum=1, value=0.5, step=0.01, label="Fidelity weight (For FaceRestore)"),
-        gr.Slider(minimum=0.1, maximum=4, value=2, step=0.1, label="Upscale (For FaceRestore)"),
-        gr.Checkbox(label="Enable PixelOE", value=False),
-        gr.Slider(minimum=32, maximum=1024, value=256, step=32, label="Target Size (For PixelOE)"),
-        gr.Slider(minimum=1, maximum=48, value=8, step=1, label="Patch Size (For PixelOE)"),
-        gr.Checkbox(label="Enable DDColor", value=False),
-        gr.Slider(minimum=256, maximum=1024, value=512, step=64, label="Input Size (For DDColor)"),
-        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
-    ],
-    outputs=[
-        gr.Image(label="Modified image", type="filepath"),
-        gr.Textbox(label="Message", type="text"),
-    ],
-    title="NeuroSandboxWebUI (ALPHA) - Extras",
-    description="This user interface allows you to modify the image",
-    allow_flagging="never",
-)
-
 wav2lip_interface = gr.Interface(
     fn=generate_wav2lip,
     inputs=[
@@ -8084,6 +8148,119 @@ demucs_interface = gr.Interface(
     allow_flagging="never",
 )
 
+image_extras_interface = gr.Interface(
+    fn=generate_image_extras,
+    inputs=[
+        gr.Image(label="Image to modify", type="filepath"),
+        gr.Checkbox(label="Remove BackGround", value=False),
+        gr.Checkbox(label="Enable FaceRestore", value=False),
+        gr.Slider(minimum=0.01, maximum=1, value=0.5, step=0.01, label="Fidelity weight (For FaceRestore)"),
+        gr.Slider(minimum=0.1, maximum=4, value=2, step=0.1, label="Upscale (For FaceRestore)"),
+        gr.Checkbox(label="Enable PixelOE", value=False),
+        gr.Slider(minimum=32, maximum=1024, value=256, step=32, label="Target Size (For PixelOE)"),
+        gr.Slider(minimum=1, maximum=48, value=8, step=1, label="Patch Size (For PixelOE)"),
+        gr.Checkbox(label="Enable DDColor", value=False),
+        gr.Slider(minimum=256, maximum=1024, value=512, step=64, label="Input Size (For DDColor)"),
+        gr.Checkbox(label="Enable DownScale", value=False),
+        gr.Slider(minimum=0.1, maximum=1.0, value=0.5, step=0.1, label="DownScale Factor"),
+        gr.Checkbox(label="Enable Format Changer", value=False),
+        gr.Radio(choices=["png", "jpeg"], label="New Image Format", value="png"),
+    ],
+    outputs=[
+        gr.Image(label="Modified image", type="filepath"),
+        gr.Textbox(label="Message", type="text"),
+    ],
+    title="NeuroSandboxWebUI (ALPHA) - Extras (Image)",
+    description="This interface allows you to modify images",
+    allow_flagging="never",
+)
+
+video_extras_interface = gr.Interface(
+    fn=generate_video_extras,
+    inputs=[
+        gr.Video(label="Video to modify"),
+        gr.Checkbox(label="Enable DownScale", value=False),
+        gr.Slider(minimum=0.1, maximum=1.0, value=0.5, step=0.1, label="DownScale Factor"),
+        gr.Checkbox(label="Enable Format Changer", value=False),
+        gr.Radio(choices=["mp4", "mkv"], label="New Video Format", value="mp4"),
+    ],
+    outputs=[
+        gr.Video(label="Modified video"),
+        gr.Textbox(label="Message", type="text"),
+    ],
+    title="NeuroSandboxWebUI (ALPHA) - Extras (Video)",
+    description="This interface allows you to modify videos",
+    allow_flagging="never",
+)
+
+audio_extras_interface = gr.Interface(
+    fn=generate_audio_extras,
+    inputs=[
+        gr.Audio(label="Audio to modify", type="filepath"),
+        gr.Checkbox(label="Enable Format Changer", value=False),
+        gr.Radio(choices=["wav", "mp3", "ogg"], label="New Audio Format", value="wav"),
+    ],
+    outputs=[
+        gr.Audio(label="Modified audio", type="filepath"),
+        gr.Textbox(label="Message", type="text"),
+    ],
+    title="NeuroSandboxWebUI (ALPHA) - Extras (Audio)",
+    description="This interface allows you to modify audio files",
+    allow_flagging="never",
+)
+
+realesrgan_upscale_interface = gr.Interface(
+    fn=generate_upscale_realesrgan,
+    inputs=[
+        gr.Image(label="Image to upscale", type="filepath"),
+        gr.Video(label="Input video"),
+        gr.Radio(choices=["RealESRGAN_x2plus", "RealESRNet_x4plus", "RealESRGAN_x4plus", "realesr-general-x4v3", "RealESRGAN_x4plus_anime_6B"], label="Select model", value="RealESRGAN_x4plus"),
+        gr.Slider(minimum=0.1, maximum=4, value=2, step=0.1, label="Upscale factor"),
+        gr.Checkbox(label="Enable Face Enhance", value=False),
+        gr.Slider(minimum=0, maximum=10, value=0, step=1, label="Tile"),
+        gr.Slider(minimum=0, maximum=100, value=10, step=1, label="Tile pad"),
+        gr.Slider(minimum=0, maximum=50, value=0, step=1, label="Pre pad"),
+        gr.Slider(minimum=0.01, maximum=1, value=0.5, step=0.01, label="Denoise strength"),
+        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
+    ],
+    outputs=[
+        gr.Image(type="filepath", label="Upscaled image"),
+        gr.Video(label="Upscaled video"),
+        gr.Textbox(label="Message", type="text"),
+    ],
+    title="NeuroSandboxWebUI (ALPHA) - Upscale (Real-ESRGAN)",
+    description="This user interface allows you to upload an image and upscale it using Real-ESRGAN models",
+    allow_flagging="never",
+)
+
+faceswap_interface = gr.Interface(
+    fn=generate_faceswap,
+    inputs=[
+        gr.Image(label="Source Image", type="filepath"),
+        gr.Image(label="Target Image", type="filepath"),
+        gr.Video(label="Target Video"),
+        gr.Checkbox(label="Enable many faces", value=False),
+        gr.Number(label="Reference face position"),
+        gr.Number(label="Reference frame number"),
+        gr.Checkbox(label="Enable FaceRestore", value=False),
+        gr.Slider(minimum=0.01, maximum=1, value=0.5, step=0.01, label="Fidelity weight"),
+        gr.Slider(minimum=0.1, maximum=4, value=2, step=0.1, label="Upscale"),
+    ],
+    outputs=[
+        gr.Image(label="Processed image", type="filepath"),
+        gr.Video(label="Processed video"),
+        gr.Textbox(label="Message", type="text"),
+    ],
+    title="NeuroSandboxWebUI (ALPHA) - FaceSwap (Roop)",
+    description="This user interface allows you to perform face swapping on images or videos and optional face restoration.",
+    allow_flagging="never",
+)
+
+extras_interface = gr.TabbedInterface(
+    [image_extras_interface, video_extras_interface, audio_extras_interface, realesrgan_upscale_interface, faceswap_interface],
+    tab_names=["Image", "Video", "Audio", "Upscale (Real-ESRGAN)", "FaceSwap"]
+)
+
 wiki_interface = gr.Interface(
     fn=get_wiki_content,
     inputs=[
@@ -8190,15 +8367,15 @@ with gr.TabbedInterface(
         gr.TabbedInterface(
             [
                 gr.TabbedInterface(
-                    [txt2img_interface, img2img_interface, depth2img_interface, pix2pix_interface, controlnet_interface, latent_upscale_interface, realesrgan_upscale_interface, sdxl_refiner_interface, inpaint_interface, outpaint_interface, gligen_interface, animatediff_interface, hotshotxl_interface, video_interface, ldm3d_interface,
+                    [txt2img_interface, img2img_interface, depth2img_interface, pix2pix_interface, controlnet_interface, latent_upscale_interface, sdxl_refiner_interface, inpaint_interface, outpaint_interface, gligen_interface, animatediff_interface, hotshotxl_interface, video_interface, ldm3d_interface,
                      gr.TabbedInterface([sd3_txt2img_interface, sd3_img2img_interface, sd3_controlnet_interface, sd3_inpaint_interface],
                                         tab_names=["txt2img", "img2img", "controlnet", "inpaint"]),
                      cascade_interface, t2i_ip_adapter_interface, ip_adapter_faceid_interface, riffusion_interface],
-                    tab_names=["txt2img", "img2img", "depth2img", "pix2pix", "controlnet", "upscale(latent)", "upscale(Real-ESRGAN)", "refiner", "inpaint", "outpaint", "gligen", "animatediff", "hotshotxl", "video", "ldm3d", "sd3", "cascade", "t2i-ip-adapter", "ip-adapter-faceid", "riffusion"]
+                    tab_names=["txt2img", "img2img", "depth2img", "pix2pix", "controlnet", "upscale(latent)", "refiner", "inpaint", "outpaint", "gligen", "animatediff", "hotshotxl", "video", "ldm3d", "sd3", "cascade", "t2i-ip-adapter", "ip-adapter-faceid", "riffusion"]
                 ),
-                kandinsky_interface, flux_interface, hunyuandit_interface, lumina_interface, kolors_interface, auraflow_interface, wurstchen_interface, deepfloyd_if_interface, pixart_interface, playgroundv2_interface, faceswap_interface, extras_interface
+                kandinsky_interface, flux_interface, hunyuandit_interface, lumina_interface, kolors_interface, auraflow_interface, wurstchen_interface, deepfloyd_if_interface, pixart_interface, playgroundv2_interface
             ],
-            tab_names=["StableDiffusion", "Kandinsky", "Flux", "HunyuanDiT", "Lumina-T2X", "Kolors", "AuraFlow", "Würstchen", "DeepFloydIF", "PixArt", "PlaygroundV2.5", "FaceSwap", "Extras"]
+            tab_names=["StableDiffusion", "Kandinsky", "Flux", "HunyuanDiT", "Lumina-T2X", "Kolors", "AuraFlow", "Würstchen", "DeepFloydIF", "PixArt", "PlaygroundV2.5"]
         ),
         gr.TabbedInterface(
             [wav2lip_interface, liveportrait_interface, modelscope_interface, zeroscope2_interface, cogvideox_interface, latte_interface],
@@ -8212,12 +8389,13 @@ with gr.TabbedInterface(
             [stableaudio_interface, audiocraft_interface, audioldm2_interface, bark_interface, rvc_interface, uvr_interface, demucs_interface],
             tab_names=["StableAudio", "AudioCraft", "AudioLDM2", "SunoBark", "RVC", "UVR", "Demucs"]
         ),
+        extras_interface,
         gr.TabbedInterface(
             [wiki_interface, gallery_interface, model_downloader_interface, settings_interface, system_interface],
             tab_names=["Wiki", "Gallery", "ModelDownloader", "Settings", "System"]
         )
     ],
-    tab_names=["Text", "Image", "Video", "3D", "Audio", "Interface"],
+    tab_names=["Text", "Image", "Video", "3D", "Audio", "Extras", "Interface"],
     theme=theme
 ) as app:
 
