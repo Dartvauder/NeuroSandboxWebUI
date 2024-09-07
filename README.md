@@ -10,19 +10,19 @@ A simple and convenient interface for using various neural network models. You c
 
 The goal of the project - to create the easiest possible application to use neural network models
 
-### Text: 
+### Text: <img width="1119" alt="1" src="https://github.com/user-attachments/assets/1ee411c0-8779-4f7a-a1d9-2a68f2ba6d11">
 
-### Image: 
+### Image: <img width="1117" alt="2" src="https://github.com/user-attachments/assets/b935a5f0-82c5-408b-990f-ea2de7409bc0">
 
-### Video: 
+### Video: <img width="1115" alt="3" src="https://github.com/user-attachments/assets/a6c30e7f-aa81-4f28-b50c-e5e23b73b017">
 
-### 3D: 
+### 3D: <img width="1118" alt="4" src="https://github.com/user-attachments/assets/b1e96da7-c31b-4234-b741-7640a13db413">
 
-### Audio: 
+### Audio: <img width="1118" alt="5" src="https://github.com/user-attachments/assets/9889865d-7baa-4c69-84dd-ade8f05ff9ae">
 
-### Extras: 
+### Extras: <img width="1117" alt="6" src="https://github.com/user-attachments/assets/aabaa530-fca3-4237-959b-0d9b52570d6c">
 
-### Interface: 
+### Interface: <img width="1123" alt="7" src="https://github.com/user-attachments/assets/ed16815d-1476-4797-9c77-44dc60b0cb50">
 
 ## Features:
 
@@ -31,16 +31,15 @@ The goal of the project - to create the easiest possible application to use neur
 * Flexible and optimized interface (By Gradio)
 * Debug logging to logs from `Install` and `Update` files
 * Support for Transformers and llama.cpp models (LLM)
-* Support for diffusers and safetensors models (StableDiffusion) - txt2img, img2img, depth2img, pix2pix, controlnet, upscale (latent), upscale (Real-ESRGAN), refiner, inpaint, outpaint, gligen, animatediff, hotshot-xl, video, ldm3d, sd3, cascade, t2i-ip-adapter, ip-adapter-faceid and riffusion tabs
+* Support for diffusers and safetensors models (StableDiffusion) - txt2img, img2img, depth2img, pix2pix, controlnet, upscale (latent), refiner, inpaint, outpaint, gligen, animatediff, hotshot-xl, video, ldm3d, sd3, cascade, t2i-ip-adapter, ip-adapter-faceid and riffusion tabs
 * Support of additional models for image generation: Kandinsky (txt2img, img2img, inpaint), Flux (with LoRA support), HunyuanDiT (txt2img, controlnet), Lumina-T2X, Kolors (txt2img with LoRA support, img2img, ip-adapter-plus), AuraFlow (with LoRA and AuraSR support), Würstchen, DeepFloydIF (txt2img, img2img, inpaint), PixArt and PlaygroundV2.5
-* Support FaceSwap (Roop) with restore (CodeFormer)
-* Support Extras with Rembg, CodeFormer, PixelOE, DDColor, DownScale and Format changer models for image, video and audio
+* Support Extras with Rembg, CodeFormer, PixelOE, DDColor, DownScale, Format changer, FaceSwap (Roop) and Upscale (Real-ESRGAN) models for image, video and audio
 * Support StableAudio
 * Support AudioCraft (Models: musicgen, audiogen and magnet)
 * Support AudioLDM 2 (Models: audio and music)
 * Supports TTS and Whisper models (For LLM and TTS-STT)
 * Support MMS for text-to-speech and speech-to-text
-* Supports Lora, Textual inversion (embedding), Vae, Img2img, Depth, Pix2Pix, Controlnet, Upscalers (latent and Real-ESRGAN), Refiner, Inpaint, Outpaint, GLIGEN, AnimateDiff, HotShot-XL, Videos, LDM3D, SD3, Cascade, T2I-IP-ADAPTER, IP-Adapter-FaceID and Riffusion models (For StableDiffusion)
+* Supports Lora, Textual inversion (embedding), Vae, Img2img, Depth, Pix2Pix, Controlnet, Upscaler (latent), Refiner, Inpaint, Outpaint, GLIGEN, AnimateDiff, HotShot-XL, Videos, LDM3D, SD3, Cascade, T2I-IP-ADAPTER, IP-Adapter-FaceID and Riffusion models (For StableDiffusion)
 * Support Multiband Diffusion model (For AudioCraft)
 * Support LibreTranslate (Local API) and SeamlessM4Tv2 for language translations
 * Support ModelScope, ZeroScope 2, CogVideoX and Latte for video generation
@@ -120,6 +119,8 @@ To work with the virtual environment through the terminal, run `./Venv.sh`
 #### The voice must be pre-processed (22050 kHz, mono, WAV)
 #### Avatars of LLM, you change in *avatars* folder
 
+# Text:
+
 ### TTS-STT:
 
 1) Type text for text to speech
@@ -147,6 +148,8 @@ To work with the virtual environment through the terminal, run `./Venv.sh`
 1) Select source and target languages
 2) Click the `Submit` button to get the translate
 #### Optional: you can save the translation history by turning on the corresponding button
+
+# Image:
 
 ### StableDiffusion - has twenty sub-tabs:
 
@@ -380,13 +383,7 @@ To work with the virtual environment through the terminal, run `./Venv.sh`
 2) Set up the model according to the parameters you need
 3) Click `Submit` to get the generated image
 
-### FaceSwap:
-
-1) Upload the source image of face
-2) Upload the target image or video of face
-3) Select the options you need
-4) Click the `Submit` button to get the face swapped image
-#### Optional: you can enable a FaceRestore to upscale and restore your face image/video
+# Video:
 
 ### Wav2Lip:
 
@@ -425,6 +422,8 @@ To work with the virtual environment through the terminal, run `./Venv.sh`
 2) Set up the model according to the parameters you need
 3) Click `Submit` to get the generated video
 
+# 3D:
+
 ### StableFast3D:
 
 1) Upload the initial image
@@ -448,6 +447,8 @@ To work with the virtual environment through the terminal, run `./Venv.sh`
 1) Upload the initial image
 2) Set up the model according to the parameters you need
 3) Click the `Submit` button to get the generated 3D rotation of image
+
+# Audio:
 
 ### StableAudio:
 
@@ -496,7 +497,7 @@ To work with the virtual environment through the terminal, run `./Venv.sh`
 1) Upload the initial audio to separate
 2) Click the `Submit` button to get the separated audio
 
-### Extras (Image, Video, Audio):
+# Extras (Image, Video, Audio):
 
 1) Upload the initial file
 2) Select the options you need
@@ -516,6 +517,8 @@ To work with the virtual environment through the terminal, run `./Venv.sh`
 3) Select the options you need
 4) Click the `Submit` button to get the face swapped image
 #### Optional: you can enable a FaceRestore to upscale and restore your face image/video
+
+# Interface:
 
 ### Wiki:
 
