@@ -283,6 +283,59 @@ def generate_mel_spectrogram(audio_path):
     return spectrogram_path
 
 
+def downscale_image(image_path, scale_factor):
+    with Image.open(image_path) as img:
+        original_width, original_height = img.size
+        new_width = int(original_width * scale_factor)
+        new_height = int(original_height * scale_factor)
+        resized_img = img.resize((new_width, new_height), Image.LANCZOS)
+
+        output_format = os.path.splitext(image_path)[1][1:]  # Get the extension without the dot
+        today = datetime.now().date()
+        output_dir = os.path.join('outputs', f"Extras_{today.strftime('%Y%m%d')}")
+        os.makedirs(output_dir, exist_ok=True)
+
+        output_filename = f"downscaled_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
+        output_path = os.path.join(output_dir, output_filename)
+        resized_img.save(output_path)
+
+    return output_path
+
+
+def downscale_video(video_path, scale_factor):
+    cap = cv2.VideoCapture(video_path)
+    width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+    height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+    fps = cap.get(cv2.CAP_PROP_FPS)
+
+    new_width = int(width * scale_factor)
+    new_height = int(height * scale_factor)
+
+    today = datetime.now().date()
+    output_dir = os.path.join('outputs', f"Extras_{today.strftime('%Y%m%d')}")
+    os.makedirs(output_dir, exist_ok=True)
+
+    output_format = os.path.splitext(video_path)[1][1:]  # Get the extension without the dot
+    output_filename = f"downscaled_video_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
+    output_path = os.path.join(output_dir, output_filename)
+
+    fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+    out = cv2.VideoWriter(output_path, fourcc, fps, (new_width, new_height))
+
+    while True:
+        ret, frame = cap.read()
+        if not ret:
+            break
+
+        resized_frame = cv2.resize(frame, (new_width, new_height), interpolation=cv2.INTER_LANCZOS4)
+        out.write(resized_frame)
+
+    cap.release()
+    out.release()
+
+    return output_path
+
+
 def load_model(model_name, model_type, n_ctx=None):
     if model_name:
         model_path = f"inputs/text/llm_models/{model_name}"
@@ -5138,58 +5191,63 @@ def generate_image_faceswap(source_image, target_image, target_video, enable_man
         flush()
 
 
-def generate_image_extras(input_image, remove_background, enable_facerestore, fidelity_weight, restore_upscale, enable_pixeloe, target_size, patch_size, enable_ddcolor, ddcolor_input_size, image_output_format):
-    if not input_image:
-        return None, "Please upload an image file!"
+def generate_image_extras(input_image, input_video, remove_background, enable_facerestore, fidelity_weight, restore_upscale,
+                          enable_pixeloe, target_size, patch_size, enable_ddcolor, ddcolor_input_size,
+                          enable_downscale, downscale_factor):
+    if not input_image and not input_video:
+        return None, None, "Please upload an image or video file!"
 
-    if not remove_background and not enable_facerestore and not enable_pixeloe and not enable_ddcolor:
-        return None, "Please choose an option to modify the image"
+    is_video = input_video is not None
 
-    today = datetime.now().date()
-    output_dir = os.path.join('outputs', f"Extras_{today.strftime('%Y%m%d')}")
-    os.makedirs(output_dir, exist_ok=True)
+    if is_video and (remove_background or enable_facerestore or enable_pixeloe or enable_ddcolor):
+        return None, None, "For video files, only Downscale operation is available."
+
+    if not remove_background and not enable_facerestore and not enable_pixeloe and not enable_ddcolor and not enable_downscale:
+        return None, None, "Please choose an option to modify the file"
 
     try:
-        if remove_background:
-            output_filename = f"background_removed_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{image_output_format}"
-            output_path = os.path.join(output_dir, output_filename)
-            remove_bg(input_image, output_path)
+        output_path = None
 
-        if enable_facerestore:
-            codeformer_path = os.path.join("inputs", "image", "CodeFormer")
+        if is_video:
+            if enable_downscale:
+                output_path = downscale_video(input_video, downscale_factor)
+        else:
+            output_format = os.path.splitext(input_image)[1][1:]  # Get the extension without the dot
+            if remove_background:
+                output_filename = f"background_removed_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
+                output_path = os.path.join(os.path.dirname(input_image), output_filename)
+                remove_bg(input_image, output_path)
 
-            facerestore_output_path = os.path.join(output_dir, f"facerestored_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{image_output_format}")
+            if enable_facerestore:
+                codeformer_path = os.path.join("inputs", "image", "CodeFormer")
+                facerestore_output_path = os.path.join(os.path.dirname(input_image), f"facerestored_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}")
+                command = f"python {os.path.join(codeformer_path, 'inference_codeformer.py')} -w {fidelity_weight} --upscale {restore_upscale} --bg_upsampler realesrgan --face_upsample --input_path {input_image} --output_path {facerestore_output_path}"
+                subprocess.run(command, shell=True, check=True)
+                output_path = facerestore_output_path
 
-            command = f"python {os.path.join(codeformer_path, 'inference_codeformer.py')} -w {fidelity_weight} --upscale {restore_upscale} --bg_upsampler realesrgan --face_upsample --input_path {input_image} --output_path {facerestore_output_path}"
-            subprocess.run(command, shell=True, check=True)
+            if enable_pixeloe:
+                img = cv2.imread(input_image)
+                img = pixelize(img, target_size=target_size, patch_size=patch_size)
+                pixeloe_output_path = os.path.join(os.path.dirname(input_image), f"pixeloe_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}")
+                cv2.imwrite(pixeloe_output_path, img)
+                output_path = pixeloe_output_path
 
-            output_path = facerestore_output_path
+            if enable_ddcolor:
+                ddcolor_output_path = os.path.join(os.path.dirname(input_image), f"ddcolor_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}")
+                command = f"python DDColor/colorization_pipeline_hf.py --model_name ddcolor_modelscope --input {input_image} --output {ddcolor_output_path} --input_size {ddcolor_input_size}"
+                subprocess.run(command, shell=True, check=True)
+                output_path = ddcolor_output_path
 
-        if enable_pixeloe:
-            img = cv2.imread(input_image)
-            img = pixelize(img, target_size=target_size, patch_size=patch_size)
+            if enable_downscale:
+                output_path = downscale_image(input_image, downscale_factor, output_format)
 
-            pixeloe_output_path = os.path.join(output_dir,
-                                               f"pixeloe_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{image_output_format}")
-            cv2.imwrite(pixeloe_output_path, img)
-
-            output_path = pixeloe_output_path
-
-        if enable_ddcolor:
-
-            ddcolor_output_path = os.path.join(output_dir,
-                                               f"ddcolor_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{image_output_format}")
-
-            command = f"python DDColor/colorization_pipeline_hf.py --model_name ddcolor_modelscope --input {input_image} --output {ddcolor_output_path} --input_size {ddcolor_input_size}"
-
-            subprocess.run(command, shell=True, check=True)
-
-            output_path = ddcolor_output_path
-
-        return output_path, None
+        if is_video:
+            return None, output_path, None
+        else:
+            return output_path, None, None
 
     except Exception as e:
-        return None, str(e)
+        return None, None, str(e)
 
     finally:
         flush()
@@ -7688,6 +7746,7 @@ extras_interface = gr.Interface(
     fn=generate_image_extras,
     inputs=[
         gr.Image(label="Image to modify", type="filepath"),
+        gr.Video(label="Video to modify"),
         gr.Checkbox(label="Remove BackGround", value=False),
         gr.Checkbox(label="Enable FaceRestore", value=False),
         gr.Slider(minimum=0.01, maximum=1, value=0.5, step=0.01, label="Fidelity weight (For FaceRestore)"),
@@ -7697,10 +7756,12 @@ extras_interface = gr.Interface(
         gr.Slider(minimum=1, maximum=48, value=8, step=1, label="Patch Size (For PixelOE)"),
         gr.Checkbox(label="Enable DDColor", value=False),
         gr.Slider(minimum=256, maximum=1024, value=512, step=64, label="Input Size (For DDColor)"),
-        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
+        gr.Checkbox(label="Enable DownScale", value=False),
+        gr.Slider(minimum=0.1, maximum=1.0, value=0.5, step=0.1, label="DownScale Factor")
     ],
     outputs=[
         gr.Image(label="Modified image", type="filepath"),
+        gr.Video(label="Modified video"),
         gr.Textbox(label="Message", type="text"),
     ],
     title="NeuroSandboxWebUI (ALPHA) - Extras",
