@@ -5202,7 +5202,7 @@ def generate_liveportrait(source_image, driving_video, output_format="mp4"):
     if not source_image or not driving_video:
         return None, "Please upload both a source image and a driving video!"
 
-    liveportrait_model_path = os.path.join("LivePortrait", "pretrained_weights")
+    liveportrait_model_path = os.path.join("ThirdPartyRepository", "LivePortrait", "pretrained_weights")
 
     if not os.path.exists(liveportrait_model_path):
         print("Downloading LivePortrait model...")
