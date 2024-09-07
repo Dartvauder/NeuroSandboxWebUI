@@ -257,7 +257,7 @@ To work with the virtual environment through the terminal, run `./Venv.sh`
 5) Click the `Submit` button to get the generated image animation
 #### Optional: you can select a motion LORA to control your generation
 
-### hotshot-xl
+#### hotshot-xl
 
 1) Enter your request
 2) Set up the model according to the parameters you need
