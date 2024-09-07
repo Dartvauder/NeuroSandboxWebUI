@@ -67,7 +67,8 @@ from ip_adapter.ip_adapter_faceid import IPAdapterFaceIDPlus
 from audio_separator.separator import Separator
 from pixeloe.pixelize import pixelize
 from rvc_python.infer import RVCInference
-
+from DeepCache import DeepCacheSDHelper
+import tomesd
 
 XFORMERS_AVAILABLE = False
 try:
@@ -1239,7 +1240,7 @@ def translate_text(text, source_lang, target_lang, enable_translate_history, tra
 def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name, vae_model_name, lora_model_names, lora_scales, textual_inversion_model_names, stable_diffusion_settings_html,
                            stable_diffusion_model_type, stable_diffusion_sampler, stable_diffusion_steps,
                            stable_diffusion_cfg, stable_diffusion_width, stable_diffusion_height,
-                           stable_diffusion_clip_skip, num_images_per_prompt, enable_freeu, freeu_s1, freeu_s2, freeu_b1, freeu_b2, enable_sag, sag_scale, enable_pag, pag_scale, enable_tiled_vae, seed, output_format="png"):
+                           stable_diffusion_clip_skip, num_images_per_prompt, enable_freeu, freeu_s1, freeu_s2, freeu_b1, freeu_b2, enable_sag, sag_scale, enable_pag, pag_scale, enable_token_merging, ratio, enable_deepcache, cache_interval, cache_branch_id, seed, output_format="png"):
 
     if not stable_diffusion_model_name:
         return None, "Please, select a StableDiffusion model!"
@@ -1293,11 +1294,12 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
 
     stable_diffusion_model.safety_checker = None
 
+    stable_diffusion_model.enable_vae_slicing()
+    stable_diffusion_model.enable_vae_tiling()
+    stable_diffusion_model.enable_model_cpu_offload()
+
     if enable_freeu:
         stable_diffusion_model.enable_freeu(s1=freeu_s1, s2=freeu_s2, b1=freeu_b1, b2=freeu_b2)
-
-    if enable_tiled_vae:
-        stable_diffusion_model.enable_vae_tiling()
 
     if vae_model_name is not None:
         vae_model_path = os.path.join("inputs", "image", "sd_models", "vae", f"{vae_model_name}.safetensors")
@@ -1379,6 +1381,14 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
 
         processed_prompt = process_prompt_with_ti(prompt, textual_inversion_model_names)
         processed_negative_prompt = process_prompt_with_ti(negative_prompt, textual_inversion_model_names)
+
+        if enable_token_merging:
+            tomesd.apply_patch(stable_diffusion_model, ratio=ratio)
+
+        if enable_deepcache:
+            helper = DeepCacheSDHelper(pipe=stable_diffusion_model)
+            helper.set_params(cache_interval=cache_interval, cache_branch_id=cache_branch_id)
+            helper.enable()
 
         if stable_diffusion_model_type == "SDXL":
             compel = Compel(
@@ -1503,6 +1513,10 @@ def generate_image_img2img(prompt, negative_prompt, init_image,
     stable_diffusion_model.vae.to(device)
     stable_diffusion_model.unet.to(device)
 
+    stable_diffusion_model.enable_vae_slicing()
+    stable_diffusion_model.enable_vae_tiling()
+    stable_diffusion_model.enable_model_cpu_offload()
+
     stable_diffusion_model.safety_checker = None
 
     if vae_model_name is not None:
@@ -1601,6 +1615,10 @@ def generate_image_depth2img(prompt, negative_prompt, init_image, stable_diffusi
     stable_diffusion_model.vae.to(device)
     stable_diffusion_model.unet.to(device)
 
+    stable_diffusion_model.enable_vae_slicing()
+    stable_diffusion_model.enable_vae_tiling()
+    stable_diffusion_model.enable_model_cpu_offload()
+
     stable_diffusion_model.safety_checker = None
 
     try:
@@ -1670,6 +1688,10 @@ def generate_image_pix2pix(prompt, negative_prompt, init_image, num_inference_st
         pipe.text_encoder.to(device)
         pipe.vae.to(device)
         pipe.unet.to(device)
+
+        pipe.enable_vae_slicing()
+        pipe.enable_vae_tiling()
+        pipe.enable_model_cpu_offload()
 
         pipe.safety_checker = None
 
@@ -1765,7 +1787,6 @@ def generate_image_controlnet(prompt, negative_prompt, init_image, sd_version, s
                 device_map="auto",
                 use_safetensors=True,
             )
-            pipe.enable_model_cpu_offload()
 
             if XFORMERS_AVAILABLE:
                 pipe.enable_xformers_memory_efficient_attention(attention_op=None)
@@ -1776,6 +1797,10 @@ def generate_image_controlnet(prompt, negative_prompt, init_image, sd_version, s
             pipe.text_encoder.to(device)
             pipe.vae.to(device)
             pipe.unet.to(device)
+
+            pipe.enable_vae_slicing()
+            pipe.enable_vae_tiling()
+            pipe.enable_model_cpu_offload()
 
             pipe.safety_checker = None
 
@@ -1829,7 +1854,6 @@ def generate_image_controlnet(prompt, negative_prompt, init_image, sd_version, s
                 torch_dtype=torch.float16,
                 use_safetensors=True,
             )
-            pipe.enable_model_cpu_offload()
 
             if XFORMERS_AVAILABLE:
                 pipe.enable_xformers_memory_efficient_attention(attention_op=None)
@@ -1840,6 +1864,10 @@ def generate_image_controlnet(prompt, negative_prompt, init_image, sd_version, s
             pipe.text_encoder.to(device)
             pipe.vae.to(device)
             pipe.unet.to(device)
+
+            pipe.enable_vae_slicing()
+            pipe.enable_vae_tiling()
+            pipe.enable_model_cpu_offload()
 
             pipe.safety_checker = None
 
@@ -1965,6 +1993,10 @@ def generate_image_upscale_latent(prompt, image_path, upscale_factor, num_infere
             upscaler.vae.to(device)
             upscaler.unet.to(device)
 
+            upscaler.enable_vae_slicing()
+            upscaler.enable_vae_tiling()
+            upscaler.enable_model_cpu_offload()
+
             upscaler.safety_checker = None
 
             init_image = Image.open(image_path).convert("RGB")
@@ -2055,6 +2087,10 @@ def generate_image_sdxl_refiner(prompt, init_image, output_format="png"):
         )
         pipe = pipe.to(device)
 
+        pipe.enable_vae_slicing()
+        pipe.enable_vae_tiling()
+        pipe.enable_model_cpu_offload()
+
         init_image = Image.open(init_image).convert("RGB")
         image = pipe(prompt, image=init_image).images[0]
 
@@ -2123,6 +2159,10 @@ def generate_image_inpaint(prompt, negative_prompt, init_image, mask_image, blur
     stable_diffusion_model.text_encoder.to(device)
     stable_diffusion_model.vae.to(device)
     stable_diffusion_model.unet.to(device)
+
+    stable_diffusion_model.enable_vae_slicing()
+    stable_diffusion_model.enable_vae_tiling()
+    stable_diffusion_model.enable_model_cpu_offload()
 
     stable_diffusion_model.safety_checker = None
 
@@ -2257,6 +2297,10 @@ def generate_image_outpaint(prompt, negative_prompt, init_image, stable_diffusio
         pipe.text_encoder.to(device)
         pipe.vae.to(device)
         pipe.unet.to(device)
+
+        pipe.enable_vae_slicing()
+        pipe.enable_vae_tiling()
+        pipe.enable_model_cpu_offload()
 
         pipe.safety_checker = None
 
@@ -2412,6 +2456,10 @@ def generate_image_gligen(prompt, negative_prompt, gligen_phrases, gligen_boxes,
     stable_diffusion_model.vae.to(device)
     stable_diffusion_model.unet.to(device)
 
+    stable_diffusion_model.enable_vae_slicing()
+    stable_diffusion_model.enable_vae_tiling()
+    stable_diffusion_model.enable_model_cpu_offload()
+
     stable_diffusion_model.safety_checker = None
 
     try:
@@ -2553,6 +2601,10 @@ def generate_image_animatediff(prompt, negative_prompt, input_video, strength, m
                     variant="fp16",
                 ).to(device)
 
+                stable_diffusion_model.enable_vae_slicing()
+                stable_diffusion_model.enable_vae_tiling()
+                stable_diffusion_model.enable_model_cpu_offload()
+
                 pipe = AnimateDiffVideoToVideoPipeline(
                     unet=stable_diffusion_model.unet,
                     text_encoder=stable_diffusion_model.text_encoder,
@@ -2588,6 +2640,10 @@ def generate_image_animatediff(prompt, negative_prompt, input_video, strength, m
                     torch_dtype=torch.float16,
                     variant="fp16",
                 ).to(device)
+
+                stable_diffusion_model.enable_vae_slicing()
+                stable_diffusion_model.enable_vae_tiling()
+                stable_diffusion_model.enable_model_cpu_offload()
 
                 pipe = AnimateDiffPipeline(
                     unet=stable_diffusion_model.unet,
@@ -2662,6 +2718,10 @@ def generate_image_animatediff(prompt, negative_prompt, input_video, strength, m
                 torch_dtype=torch.float16,
                 variant="fp16",
             ).to(device)
+
+            stable_diffusion_model.enable_vae_slicing()
+            stable_diffusion_model.enable_vae_tiling()
+            stable_diffusion_model.enable_model_cpu_offload()
 
             pipe = AnimateDiffSDXLPipeline(
                 unet=stable_diffusion_model.unet,
@@ -2967,6 +3027,8 @@ def generate_image_sd3_txt2img(prompt, negative_prompt, lora_model_names, lora_s
         )
         pipe = StableDiffusion3Pipeline.from_pretrained(sd3_model_path, device_map="balanced", text_encoder_3=text_encoder, torch_dtype=torch.float16)
 
+        pipe.enable_model_cpu_offload()
+
         device = "cuda" if torch.cuda.is_available() else "cpu"
 
         if seed == "" or seed is None:
@@ -3060,6 +3122,8 @@ def generate_image_sd3_img2img(prompt, negative_prompt, init_image, strength, nu
         )
         pipe = StableDiffusion3Img2ImgPipeline.from_pretrained(sd3_model_path, device_map="balanced", text_encoder_3=text_encoder, torch_dtype=torch.float16)
 
+        pipe.enable_model_cpu_offload()
+
         init_image = Image.open(init_image).convert("RGB")
         init_image = init_image.resize((width, height))
 
@@ -3147,6 +3211,8 @@ def generate_image_sd3_controlnet(prompt, negative_prompt, init_image, controlne
             device_map="balanced",
         )
 
+        pipe.enable_model_cpu_offload()
+
         init_image = Image.open(init_image).convert("RGB")
         init_image = init_image.resize((width, height))
 
@@ -3228,6 +3294,8 @@ def generate_image_sd3_inpaint(prompt, negative_prompt, init_image, mask_image, 
             quantization_config=quantization_config,
         )
         pipe = StableDiffusion3InpaintPipeline.from_pretrained(sd3_model_path, device_map="balanced", text_encoder_3=text_encoder, torch_dtype=torch.float16)
+
+        pipe.enable_model_cpu_offload()
 
         init_image = Image.open(init_image).convert("RGB")
         init_image = init_image.resize((width, height))
@@ -3987,7 +4055,6 @@ def generate_image_flux(prompt, model_name, lora_model_names, lora_scales, guida
         pipe.enable_sequential_cpu_offload()
         pipe.vae.enable_slicing()
         pipe.vae.enable_tiling()
-        pipe.to(torch.float16 if device == "cuda" else torch.float32)
 
         if isinstance(lora_scales, str):
             lora_scales = [float(scale.strip()) for scale in lora_scales.split(',') if scale.strip()]
@@ -6747,7 +6814,11 @@ txt2img_interface = gr.Interface(
         gr.Slider(minimum=0.0, maximum=1.0, value=0.75, step=0.01, label="SAG Scale"),
         gr.Checkbox(label="Enable PAG", value=False),
         gr.Slider(minimum=0.0, maximum=1.0, value=0.3, step=0.01, label="PAG Scale"),
-        gr.Checkbox(label="Enable Tiled VAE", value=False),
+        gr.Checkbox(label="Enable Token Merging", value=False),
+        gr.Slider(minimum=0.01, maximum=1.0, value=0.5, step=0.01, label="Token Merging Ratio"),
+        gr.Checkbox(label="Enable DeepCache", value=False),
+        gr.Slider(minimum=1, maximum=5, value=3, step=1, label="DeepCache Interval"),
+        gr.Slider(minimum=0, maximum=1, value=0, step=1, label="DeepCache BranchID"),
         gr.Textbox(label="Seed (optional)", value=""),
         gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
     ],

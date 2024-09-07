@@ -344,3 +344,5 @@ docstring-parser==0.16
 shtab==1.7.1
 tyro==0.8.10
 pykalman==0.9.7
+tomesd==0.1.3
+DeepCache==0.1.1
