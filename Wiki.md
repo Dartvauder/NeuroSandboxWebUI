@@ -2,7 +2,7 @@
 
 ## How to use:
 
-#### Interface has thirty eight sub-tabs (some with their own sub-tabs) in six main tabs (Text, Image, Video, 3D, Audio and Interface): LLM, TTS-STT, MMS, SeamlessM4Tv2, LibreTranslate, StableDiffusion, Kandinsky, Flux, HunyuanDiT, Lumina-T2X, Kolors, AuraFlow, Würstchen, DeepFloydIF, PixArt, PlaygroundV2.5, Wav2Lip, LivePortrait, ModelScope, ZeroScope 2, CogVideoX, Latte, StableFast3D, Shap-E, SV34D, Zero123Plus, StableAudio, AudioCraft, AudioLDM 2, SunoBark, RVC, UVR, Demucs, Wiki, Gallery, ModelDownloader, Settings and System. Select the one you need and follow the instructions below 
+#### Interface has fourty sub-tabs (some with their own sub-tabs) in six main tabs (Text, Image, Video, 3D, Audio and Interface): LLM, TTS-STT, MMS, SeamlessM4Tv2, LibreTranslate, StableDiffusion, Kandinsky, Flux, HunyuanDiT, Lumina-T2X, Kolors, AuraFlow, Würstchen, DeepFloydIF, PixArt, PlaygroundV2.5, FaceSwap, Extras, Wav2Lip, LivePortrait, ModelScope, ZeroScope 2, CogVideoX, Latte, StableFast3D, Shap-E, SV34D, Zero123Plus, StableAudio, AudioCraft, AudioLDM 2, SunoBark, RVC, UVR, Demucs, Wiki, Gallery, ModelDownloader, Settings and System. Select the one you need and follow the instructions below 
 
 ### LLM:
 
@@ -46,7 +46,7 @@
 2) Click the `Submit` button to get the translate
 #### Optional: you can save the translation history by turning on the corresponding button
 
-### StableDiffusion - has twenty two sub-tabs:
+### StableDiffusion - has twenty sub-tabs:
 
 #### txt2img:
 
@@ -157,7 +157,7 @@
 5) Click the `Submit` button to get the generated image animation
 #### Optional: you can select a motion LORA to control your generation
 
-### hotshot-xl
+#### hotshot-xl
 
 1) Enter your request
 2) Set up the model according to the parameters you need
@@ -216,20 +216,6 @@
     2) Select the options you need
     3) Click the `Submit` button to get the image from audio
    
-### faceswap:
-
-1) Upload the source image of face
-2) Upload the target image or video of face
-3) Select the options you need
-4) Click the `Submit` button to get the face swapped image
-#### Optional: you can enable a FaceRestore to upscale and restore your face image/video
-
-#### extras:
-
-1) Upload the initial image
-2) Select the options you need
-3) Click the `Submit` button to get the modified image
-
 ### Kandinsky (txt2img, img2img, inpaint):
 
 1) Enter your prompt
@@ -298,6 +284,20 @@
 1) Enter your prompt
 2) Set up the model according to the parameters you need
 3) Click `Submit` to get the generated image
+
+### FaceSwap:
+
+1) Upload the source image of face
+2) Upload the target image or video of face
+3) Select the options you need
+4) Click the `Submit` button to get the face swapped image
+#### Optional: you can enable a FaceRestore to upscale and restore your face image/video
+
+### Extras:
+
+1) Upload the initial image
+2) Select the options you need
+3) Click the `Submit` button to get the modified image
 
 ### Wav2Lip:
 
