@@ -443,10 +443,8 @@
 
 ### Additional Information:
 
-1) All generations are saved in the *outputs* folder
-2) You can press the `Clear` button to reset your selection
-3) You can turn off the application using the `Close terminal` button
-4) You can open the *outputs* folder using the `Outputs` button
+1) All generations are saved in the *outputs* folder. You can open the *outputs* folder using the `Outputs` button
+2) You can turn off the application using the `Close terminal` button
 
 ## Where can i get models and voices?
 
