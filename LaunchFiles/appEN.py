@@ -163,8 +163,13 @@ def load_settings():
             "custom_theme": {
                 "enabled": False,
                 "primary_hue": "red",
-                "secondary_hue": "orange",
-                "neutral_hue": "pink"
+                "secondary_hue": "pink",
+                "neutral_hue": "stone",
+                "spacing_size": "spacing_md",
+                "radius_size": "radius_md",
+                "text_size": "text_md",
+                "font": "Arial",
+                "font_mono": "Courier New"
             }
         }
         with open('Settings.json', 'w') as f:
@@ -6524,7 +6529,8 @@ def download_model(model_name_llm, model_name_sd):
 
 
 def settings_interface(share_value, hf_token, gradio_auth, server_name, server_port, auto_launch, theme,
-                       enable_custom_theme, primary_hue, secondary_hue, neutral_hue):
+                       enable_custom_theme, primary_hue, secondary_hue, neutral_hue,
+                       spacing_size, radius_size, text_size, font, font_mono):
     settings = load_settings()
 
     settings['share_mode'] = share_value == "True"
@@ -6537,6 +6543,11 @@ def settings_interface(share_value, hf_token, gradio_auth, server_name, server_p
     settings['custom_theme']['primary_hue'] = primary_hue
     settings['custom_theme']['secondary_hue'] = secondary_hue
     settings['custom_theme']['neutral_hue'] = neutral_hue
+    settings['custom_theme']['spacing_size'] = spacing_size
+    settings['custom_theme']['radius_size'] = radius_size
+    settings['custom_theme']['text_size'] = text_size
+    settings['custom_theme']['font'] = font
+    settings['custom_theme']['font_mono'] = font_mono
 
     if gradio_auth:
         username, password = gradio_auth.split(':')
@@ -8428,6 +8439,11 @@ settings_interface = gr.Interface(
         gr.Textbox(label="Primary Hue", value=settings['custom_theme']['primary_hue']),
         gr.Textbox(label="Secondary Hue", value=settings['custom_theme']['secondary_hue']),
         gr.Textbox(label="Neutral Hue", value=settings['custom_theme']['neutral_hue']),
+        gr.Radio(choices=["spacing_sm", "spacing_md", "spacing_lg"], label="Spacing Size", value=settings['custom_theme'].get('spacing_size', 'spacing_md')),
+        gr.Radio(choices=["radius_none", "radius_sm", "radius_md", "radius_lg"], label="Radius Size", value=settings['custom_theme'].get('radius_size', 'radius_md')),
+        gr.Radio(choices=["text_sm", "text_md", "text_lg"], label="Text Size", value=settings['custom_theme'].get('text_size', 'text_md')),
+        gr.Textbox(label="Font", value=settings['custom_theme'].get('font', 'Arial')),
+        gr.Textbox(label="Monospaced Font", value=settings['custom_theme'].get('font_mono', 'Courier New')),
     ],
     outputs=[
         gr.Textbox(label="Message", type="text")
@@ -8462,7 +8478,12 @@ if settings['custom_theme']['enabled']:
     theme = getattr(gr.themes, settings['theme'])(
         primary_hue=settings['custom_theme']['primary_hue'],
         secondary_hue=settings['custom_theme']['secondary_hue'],
-        neutral_hue=settings['custom_theme']['neutral_hue']
+        neutral_hue=settings['custom_theme']['neutral_hue'],
+        spacing_size=getattr(gr.themes.sizes, settings['custom_theme']['spacing_size']),
+        radius_size=getattr(gr.themes.sizes, settings['custom_theme']['radius_size']),
+        text_size=getattr(gr.themes.sizes, settings['custom_theme']['text_size']),
+        font=settings['custom_theme']['font'],
+        font_mono=settings['custom_theme']['font_mono']
     )
 else:
     theme = getattr(gr.themes, settings['theme'])()

@@ -12,7 +12,12 @@
     "custom_theme": {
         "enabled": false,
         "primary_hue": "red",
-        "secondary_hue": "orange",
-        "neutral_hue": "pink"
+        "secondary_hue": "pink",
+        "neutral_hue": "stone",
+        "spacing_size": "spacing_md",
+        "radius_size": "radius_md",
+        "text_size": "text_md",
+        "font": "Arial",
+        "font_mono": "Courier New"
     }
 }
