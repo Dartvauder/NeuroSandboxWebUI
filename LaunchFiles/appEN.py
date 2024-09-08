@@ -134,22 +134,6 @@ def get_languages():
     }
 
 
-def update_theme(theme_name):
-    themes = {
-        "Base": gr.themes.Base(),
-        "Default": gr.themes.Default(),
-        "Glass": gr.themes.Glass(),
-        "Monochrome": gr.themes.Monochrome(),
-        "Soft": gr.themes.Soft()
-    }
-
-    settings = load_settings()
-    settings['theme'] = theme_name
-    save_settings(settings)
-
-    return f"Theme updated to {theme_name}. Please restart the application for changes to take effect."
-
-
 def load_settings():
     if not os.path.exists('Settings.json'):
         default_settings = {
