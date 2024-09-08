@@ -134,22 +134,6 @@ def get_languages():
     }
 
 
-def update_theme(theme_name):
-    themes = {
-        "Base": gr.themes.Base(),
-        "Default": gr.themes.Default(),
-        "Glass": gr.themes.Glass(),
-        "Monochrome": gr.themes.Monochrome(),
-        "Soft": gr.themes.Soft()
-    }
-
-    settings = load_settings()
-    settings['theme'] = theme_name
-    save_settings(settings)
-
-    return f"Theme updated to {theme_name}. Please restart the application for changes to take effect."
-
-
 def load_settings():
     if not os.path.exists('Settings.json'):
         default_settings = {
@@ -163,8 +147,13 @@ def load_settings():
             "custom_theme": {
                 "enabled": False,
                 "primary_hue": "red",
-                "secondary_hue": "orange",
-                "neutral_hue": "pink"
+                "secondary_hue": "pink",
+                "neutral_hue": "stone",
+                "spacing_size": "spacing_md",
+                "radius_size": "radius_md",
+                "text_size": "text_md",
+                "font": "Arial",
+                "font_mono": "Courier New"
             }
         }
         with open('Settings.json', 'w') as f:
@@ -6524,7 +6513,8 @@ def download_model(model_name_llm, model_name_sd):
 
 
 def settings_interface(share_value, hf_token, gradio_auth, server_name, server_port, auto_launch, theme,
-                       enable_custom_theme, primary_hue, secondary_hue, neutral_hue):
+                       enable_custom_theme, primary_hue, secondary_hue, neutral_hue,
+                       spacing_size, radius_size, text_size, font, font_mono):
     settings = load_settings()
 
     settings['share_mode'] = share_value == "True"
@@ -6537,6 +6527,11 @@ def settings_interface(share_value, hf_token, gradio_auth, server_name, server_p
     settings['custom_theme']['primary_hue'] = primary_hue
     settings['custom_theme']['secondary_hue'] = secondary_hue
     settings['custom_theme']['neutral_hue'] = neutral_hue
+    settings['custom_theme']['spacing_size'] = spacing_size
+    settings['custom_theme']['radius_size'] = radius_size
+    settings['custom_theme']['text_size'] = text_size
+    settings['custom_theme']['font'] = font
+    settings['custom_theme']['font_mono'] = font_mono
 
     if gradio_auth:
         username, password = gradio_auth.split(':')
@@ -6669,6 +6664,8 @@ chat_interface = gr.Interface(
                 "avatar, voice and language for tts from the drop-down lists. You can also customize the model settings from the sliders. "
                 "Try it and see what happens!",
     allow_flagging="never",
+    clear_btn=None,
+    stop_btn="Stop"
 )
 
 tts_stt_interface = gr.Interface(
@@ -6696,6 +6693,8 @@ tts_stt_interface = gr.Interface(
                 "For STT, simply record your audio and the spoken text will be displayed. "
                 "Try it and see what happens!",
     allow_flagging="never",
+    clear_btn=None,
+    stop_btn="Stop"
 )
 
 mms_tts_interface = gr.Interface(
@@ -6712,6 +6711,8 @@ mms_tts_interface = gr.Interface(
     title="NeuroSandboxWebUI - MMS Text-to-Speech",
     description="Generate speech from text using MMS TTS models.",
     allow_flagging="never",
+    clear_btn=None,
+    stop_btn="Stop"
 )
 
 mms_stt_interface = gr.Interface(
@@ -6728,6 +6729,8 @@ mms_stt_interface = gr.Interface(
     title="NeuroSandboxWebUI - MMS Speech-to-Text",
     description="Transcribe speech to text using MMS STT model.",
     allow_flagging="never",
+    clear_btn=None,
+    stop_btn="Stop"
 )
 
 mms_interface = gr.TabbedInterface(
@@ -6764,6 +6767,8 @@ seamless_m4tv2_interface = gr.Interface(
     title="NeuroSandboxWebUI - SeamlessM4Tv2",
     description="This interface allows you to use the SeamlessM4Tv2 model for various translation and speech tasks.",
     allow_flagging="never",
+    clear_btn=None,
+    stop_btn="Stop"
 )
 
 translate_interface = gr.Interface(
@@ -6784,6 +6789,8 @@ translate_interface = gr.Interface(
                 "Select the source and target languages and click Submit to get the translation. "
                 "Try it and see what happens!",
     allow_flagging="never",
+    clear_btn=None,
+    stop_btn="Stop"
 )
 
 txt2img_interface = gr.Interface(
@@ -6832,6 +6839,8 @@ txt2img_interface = gr.Interface(
                 "You can select the model and customize the generation settings from the sliders. "
                 "Try it and see what happens!",
     allow_flagging="never",
+    clear_btn=None,
+    stop_btn="Stop"
 )
 
 img2img_interface = gr.Interface(
@@ -6863,6 +6872,8 @@ img2img_interface = gr.Interface(
                 "You can select the model and customize the generation settings from the sliders. "
                 "Try it and see what happens!",
     allow_flagging="never",
+    clear_btn=None,
+    stop_btn="Stop"
 )
 
 depth2img_interface = gr.Interface(
@@ -6886,6 +6897,8 @@ depth2img_interface = gr.Interface(
     description="This user interface allows you to enter a prompt, an initial image to generate depth-aware images using StableDiffusion. "
                 "Try it and see what happens!",
     allow_flagging="never",
+    clear_btn=None,
+    stop_btn="Stop"
 )
 
 pix2pix_interface = gr.Interface(
@@ -6910,6 +6923,8 @@ pix2pix_interface = gr.Interface(
                 "You can customize the generation settings from the sliders. "
                 "Try it and see what happens!",
     allow_flagging="never",
+    clear_btn=None,
+    stop_btn="Stop"
 )
 
 controlnet_interface = gr.Interface(
@@ -6943,6 +6958,8 @@ controlnet_interface = gr.Interface(
                 "Upload an initial image, enter a prompt, select a Stable Diffusion model, and customize the generation settings. "
                 "Try it and see what happens!",
     allow_flagging="never",
+    clear_btn=None,
+    stop_btn="Stop"
 )
 
 latent_upscale_interface = gr.Interface(
@@ -6963,6 +6980,8 @@ latent_upscale_interface = gr.Interface(
     title="NeuroSandboxWebUI - StableDiffusion (upscale-latent)",
     description="This user interface allows you to upload an image and latent-upscale it using x2 or x4 upscale factor",
     allow_flagging="never",
+    clear_btn=None,
+    stop_btn="Stop"
 )
 
 sdxl_refiner_interface = gr.Interface(
@@ -6980,6 +6999,8 @@ sdxl_refiner_interface = gr.Interface(
     description="This interface allows you to refine images using the SDXL Refiner model. "
                 "Enter a prompt, upload an initial image, and see the refined result.",
     allow_flagging="never",
+    clear_btn=None,
+    stop_btn="Stop"
 )
 
 inpaint_interface = gr.Interface(
@@ -7014,6 +7035,8 @@ inpaint_interface = gr.Interface(
                 "You can select the model and customize the generation settings from the sliders. "
                 "Try it and see what happens!",
     allow_flagging="never",
+    clear_btn=None,
+    stop_btn="Stop"
 )
 
 outpaint_interface = gr.Interface(
@@ -7046,6 +7069,8 @@ outpaint_interface = gr.Interface(
                 "The image will be expanded according to the chosen percentage. "
                 "Try it and see what happens!",
     allow_flagging="never",
+    clear_btn=None,
+    stop_btn="Stop"
 )
 
 gligen_interface = gr.Interface(
@@ -7078,6 +7103,8 @@ gligen_interface = gr.Interface(
                 "Select the Stable Diffusion model, customize the generation settings, enter a prompt, GLIGEN phrases, and bounding boxes. "
                 "Try it and see what happens!",
     allow_flagging="never",
+    clear_btn=None,
+    stop_btn="Stop"
 )
 
 animatediff_interface = gr.Interface(
@@ -7107,6 +7134,8 @@ animatediff_interface = gr.Interface(
                 "You can select the model and customize the generation settings from the sliders. "
                 "Try it and see what happens!",
     allow_flagging="never",
+    clear_btn=None,
+    stop_btn="Stop"
 )
 
 hotshotxl_interface = gr.Interface(
@@ -7130,6 +7159,8 @@ hotshotxl_interface = gr.Interface(
                 "Enter a prompt and customize the generation settings. "
                 "Try it and see what happens!",
     allow_flagging="never",
+    clear_btn=None,
+    stop_btn="Stop"
 )
 
 video_interface = gr.Interface(
@@ -7160,6 +7191,8 @@ video_interface = gr.Interface(
                 "You can customize the generation settings from the sliders. "
                 "Try it and see what happens!",
     allow_flagging="never",
+    clear_btn=None,
+    stop_btn="Stop"
 )
 
 ldm3d_interface = gr.Interface(
@@ -7185,6 +7218,8 @@ ldm3d_interface = gr.Interface(
                 "You can customize the generation settings from the sliders. "
                 "Try it and see what happens!",
     allow_flagging="never",
+    clear_btn=None,
+    stop_btn="Stop"
 )
 
 sd3_txt2img_interface = gr.Interface(
@@ -7213,6 +7248,8 @@ sd3_txt2img_interface = gr.Interface(
                 "You can customize the generation settings from the sliders. "
                 "Try it and see what happens!",
     allow_flagging="never",
+    clear_btn=None,
+    stop_btn="Stop"
 )
 
 sd3_img2img_interface = gr.Interface(
@@ -7241,6 +7278,8 @@ sd3_img2img_interface = gr.Interface(
                 "You can customize the generation settings from the sliders. "
                 "Try it and see what happens!",
     allow_flagging="never",
+    clear_btn=None,
+    stop_btn="Stop"
 )
 
 sd3_controlnet_interface = gr.Interface(
@@ -7271,6 +7310,8 @@ sd3_controlnet_interface = gr.Interface(
                 "You can customize the generation settings from the sliders. "
                 "Try it and see what happens!",
     allow_flagging="never",
+    clear_btn=None,
+    stop_btn="Stop"
 )
 
 sd3_inpaint_interface = gr.Interface(
@@ -7299,6 +7340,8 @@ sd3_inpaint_interface = gr.Interface(
                 "You can customize the generation settings from the sliders. "
                 "Try it and see what happens!",
     allow_flagging="never",
+    clear_btn=None,
+    stop_btn="Stop"
 )
 
 cascade_interface = gr.Interface(
@@ -7326,6 +7369,8 @@ cascade_interface = gr.Interface(
                 "You can customize the generation settings from the sliders. "
                 "Try it and see what happens!",
     allow_flagging="never",
+    clear_btn=None,
+    stop_btn="Stop"
 )
 
 t2i_ip_adapter_interface = gr.Interface(
@@ -7352,6 +7397,8 @@ t2i_ip_adapter_interface = gr.Interface(
                 "Upload an image, enter a prompt, select a Stable Diffusion model, and customize the generation settings. "
                 "Try it and see what happens!",
     allow_flagging="never",
+    clear_btn=None,
+    stop_btn="Stop"
 )
 
 ip_adapter_faceid_interface = gr.Interface(
@@ -7378,6 +7425,8 @@ ip_adapter_faceid_interface = gr.Interface(
                 "Upload a face image, enter a prompt, select a Stable Diffusion model, and customize the generation settings. "
                 "Try it and see what happens!",
     allow_flagging="never",
+    clear_btn=None,
+    stop_btn="Stop"
 )
 
 riffusion_text2image_interface = gr.Interface(
@@ -7399,6 +7448,8 @@ riffusion_text2image_interface = gr.Interface(
     title="NeuroSandboxWebUI - Riffusion (Text-to-Image)",
     description="Generate a spectrogram image from text using Riffusion.",
     allow_flagging="never",
+    clear_btn=None,
+    stop_btn="Stop"
 )
 
 riffusion_image2audio_interface = gr.Interface(
@@ -7414,6 +7465,8 @@ riffusion_image2audio_interface = gr.Interface(
     title="NeuroSandboxWebUI - Riffusion (Image-to-Audio)",
     description="Convert a spectrogram image to audio using Riffusion.",
     allow_flagging="never",
+    clear_btn=None,
+    stop_btn="Stop"
 )
 
 riffusion_audio2image_interface = gr.Interface(
@@ -7429,6 +7482,8 @@ riffusion_audio2image_interface = gr.Interface(
     title="NeuroSandboxWebUI - Riffusion (Audio-to-Image)",
     description="Convert audio to a spectrogram image using Riffusion.",
     allow_flagging="never",
+    clear_btn=None,
+    stop_btn="Stop"
 )
 
 riffusion_interface = gr.TabbedInterface(
@@ -7458,6 +7513,8 @@ kandinsky_txt2img_interface = gr.Interface(
                 "You can select between versions 2.1, 2.2, and 3, and customize the generation settings. "
                 "Try it and see what happens!",
     allow_flagging="never",
+    clear_btn=None,
+    stop_btn="Stop"
 )
 
 kandinsky_img2img_interface = gr.Interface(
@@ -7484,6 +7541,8 @@ kandinsky_img2img_interface = gr.Interface(
                 "You can select between versions 2.1, 2.2, and 3, and customize the generation settings. "
                 "Try it and see what happens!",
     allow_flagging="never",
+    clear_btn=None,
+    stop_btn="Stop"
 )
 
 kandinsky_inpaint_interface = gr.Interface(
@@ -7510,6 +7569,8 @@ kandinsky_inpaint_interface = gr.Interface(
                 "You can select between versions 2.1 and 2.2, and customize the generation settings. "
                 "Try it and see what happens!",
     allow_flagging="never",
+    clear_btn=None,
+    stop_btn="Stop"
 )
 
 kandinsky_interface = gr.TabbedInterface(
@@ -7541,6 +7602,8 @@ flux_interface = gr.Interface(
                 "You can select between Schnell and Dev models, and customize the generation settings. "
                 "Try it and see what happens!",
     allow_flagging="never",
+    clear_btn=None,
+    stop_btn="Stop"
 )
 
 hunyuandit_txt2img_interface = gr.Interface(
@@ -7564,6 +7627,8 @@ hunyuandit_txt2img_interface = gr.Interface(
                 "Enter a prompt (in English or Chinese) and customize the generation settings. "
                 "Try it and see what happens!",
     allow_flagging="never",
+    clear_btn=None,
+    stop_btn="Stop"
 )
 
 hunyuandit_controlnet_interface = gr.Interface(
@@ -7589,6 +7654,8 @@ hunyuandit_controlnet_interface = gr.Interface(
                 "Enter a prompt, upload an input image, select a ControlNet model, and customize the generation settings. "
                 "Try it and see what happens!",
     allow_flagging="never",
+    clear_btn=None,
+    stop_btn="Stop"
 )
 
 hunyuandit_interface = gr.TabbedInterface(
@@ -7618,6 +7685,8 @@ lumina_interface = gr.Interface(
                 "Enter a prompt and customize the generation settings. "
                 "Try it and see what happens!",
     allow_flagging="never",
+    clear_btn=None,
+    stop_btn="Stop"
 )
 
 kolors_txt2img_interface = gr.Interface(
@@ -7642,6 +7711,8 @@ kolors_txt2img_interface = gr.Interface(
                 "Enter a prompt and customize the generation settings. "
                 "Try it and see what happens!",
     allow_flagging="never",
+    clear_btn=None,
+    stop_btn="Stop"
 )
 
 kolors_img2img_interface = gr.Interface(
@@ -7665,6 +7736,8 @@ kolors_img2img_interface = gr.Interface(
                 "Enter a prompt and customize the generation settings. "
                 "Try it and see what happens!",
     allow_flagging="never",
+    clear_btn=None,
+    stop_btn="Stop"
 )
 
 kolors_ip_adapter_interface = gr.Interface(
@@ -7687,6 +7760,8 @@ kolors_ip_adapter_interface = gr.Interface(
                 "Enter a prompt and customize the generation settings. "
                 "Try it and see what happens!",
     allow_flagging="never",
+    clear_btn=None,
+    stop_btn="Stop"
 )
 
 kolors_interface = gr.TabbedInterface(
@@ -7720,6 +7795,8 @@ auraflow_interface = gr.Interface(
                 "You can also enable AuraSR for 4x upscaling of the generated image. "
                 "Try it and see what happens!",
     allow_flagging="never",
+    clear_btn=None,
+    stop_btn="Stop"
 )
 
 wurstchen_interface = gr.Interface(
@@ -7745,6 +7822,8 @@ wurstchen_interface = gr.Interface(
                 "Enter a prompt and customize the generation settings. "
                 "Try it and see what happens!",
     allow_flagging="never",
+    clear_btn=None,
+    stop_btn="Stop"
 )
 
 deepfloyd_if_txt2img_interface = gr.Interface(
@@ -7771,6 +7850,8 @@ deepfloyd_if_txt2img_interface = gr.Interface(
                 "The process includes three stages of generation, each producing an image of increasing quality. "
                 "Try it and see what happens!",
     allow_flagging="never",
+    clear_btn=None,
+    stop_btn="Stop"
 )
 
 deepfloyd_if_img2img_interface = gr.Interface(
@@ -7798,6 +7879,8 @@ deepfloyd_if_img2img_interface = gr.Interface(
                 "The process includes three stages of generation, each producing an image of increasing quality. "
                 "Try it and see what happens!",
     allow_flagging="never",
+    clear_btn=None,
+    stop_btn="Stop"
 )
 
 deepfloyd_if_inpaint_interface = gr.Interface(
@@ -7823,6 +7906,8 @@ deepfloyd_if_inpaint_interface = gr.Interface(
                 "The process includes three stages of generation, each producing an image of increasing quality. "
                 "Try it and see what happens!",
     allow_flagging="never",
+    clear_btn=None,
+    stop_btn="Stop"
 )
 
 deepfloyd_if_interface = gr.TabbedInterface(
@@ -7853,6 +7938,8 @@ pixart_interface = gr.Interface(
                 "You can select between Alpha and Sigma versions, and customize the generation settings. "
                 "Try it and see what happens!",
     allow_flagging="never",
+    clear_btn=None,
+    stop_btn="Stop"
 )
 
 playgroundv2_interface = gr.Interface(
@@ -7876,6 +7963,8 @@ playgroundv2_interface = gr.Interface(
                 "Enter a prompt and customize the generation settings. "
                 "Try it and see what happens!",
     allow_flagging="never",
+    clear_btn=None,
+    stop_btn="Stop"
 )
 
 wav2lip_interface = gr.Interface(
@@ -7900,6 +7989,8 @@ wav2lip_interface = gr.Interface(
                 "Upload an image and an audio file, and click Generate to create the talking head video. "
                 "Try it and see what happens!",
     allow_flagging="never",
+    clear_btn=None,
+    stop_btn="Stop"
 )
 
 liveportrait_interface = gr.Interface(
@@ -7918,6 +8009,8 @@ liveportrait_interface = gr.Interface(
                 "Upload a source image and a driving video, then click Generate to create the animated video. "
                 "Try it and see what happens!",
     allow_flagging="never",
+    clear_btn=None,
+    stop_btn="Stop"
 )
 
 modelscope_interface = gr.Interface(
@@ -7942,6 +8035,8 @@ modelscope_interface = gr.Interface(
                 "Enter a prompt and customize the generation settings. "
                 "Try it and see what happens!",
     allow_flagging="never",
+    clear_btn=None,
+    stop_btn="Stop"
 )
 
 zeroscope2_interface = gr.Interface(
@@ -7966,6 +8061,8 @@ zeroscope2_interface = gr.Interface(
                 "You can enter a text prompt, upload an optional video for enhancement, and customize the generation settings. "
                 "Try it and see what happens!",
     allow_flagging="never",
+    clear_btn=None,
+    stop_btn="Stop"
 )
 
 cogvideox_interface = gr.Interface(
@@ -7991,6 +8088,8 @@ cogvideox_interface = gr.Interface(
                 "Enter a prompt and customize the generation settings. "
                 "Try it and see what happens!",
     allow_flagging="never",
+    clear_btn=None,
+    stop_btn="Stop"
 )
 
 latte_interface = gr.Interface(
@@ -8014,6 +8113,8 @@ latte_interface = gr.Interface(
                 "Enter a prompt and customize the generation settings. "
                 "Try it and see what happens!",
     allow_flagging="never",
+    clear_btn=None,
+    stop_btn="Stop"
 )
 
 stablefast3d_interface = gr.Interface(
@@ -8033,6 +8134,8 @@ stablefast3d_interface = gr.Interface(
                 "Upload an image and customize the generation settings. "
                 "Try it and see what happens!",
     allow_flagging="never",
+    clear_btn=None,
+    stop_btn="Stop"
 )
 
 shap_e_interface = gr.Interface(
@@ -8054,6 +8157,8 @@ shap_e_interface = gr.Interface(
                 "You can enter a text prompt or upload an initial image, and customize the generation settings. "
                 "Try it and see what happens!",
     allow_flagging="never",
+    clear_btn=None,
+    stop_btn="Stop"
 )
 
 sv34d_interface = gr.Interface(
@@ -8072,6 +8177,8 @@ sv34d_interface = gr.Interface(
                 "Upload an image (PNG, JPG, JPEG) for 3D-U and 3D-P versions, or an MP4 video for 4D version. "
                 "Select the version and customize settings as needed.",
     allow_flagging="never",
+    clear_btn=None,
+    stop_btn="Stop"
 )
 
 zero123plus_interface = gr.Interface(
@@ -8090,6 +8197,8 @@ zero123plus_interface = gr.Interface(
                 "Upload an input image and customize the number of inference steps. "
                 "Try it and see what happens!",
     allow_flagging="never",
+    clear_btn=None,
+    stop_btn="Stop"
 )
 
 stableaudio_interface = gr.Interface(
@@ -8115,6 +8224,8 @@ stableaudio_interface = gr.Interface(
                 "You can customize the generation settings from the sliders. "
                 "Try it and see what happens!",
     allow_flagging="never",
+    clear_btn=None,
+    stop_btn="Stop"
 )
 
 audiocraft_interface = gr.Interface(
@@ -8145,6 +8256,8 @@ audiocraft_interface = gr.Interface(
                 "You can select the model and customize the generation settings from the sliders. "
                 "Try it and see what happens!",
     allow_flagging="never",
+    clear_btn=None,
+    stop_btn="Stop"
 )
 
 audioldm2_interface = gr.Interface(
@@ -8169,6 +8282,8 @@ audioldm2_interface = gr.Interface(
                 "You can select the model and customize the generation settings from the sliders. "
                 "Try it and see what happens!",
     allow_flagging="never",
+    clear_btn=None,
+    stop_btn="Stop"
 )
 
 bark_interface = gr.Interface(
@@ -8191,6 +8306,8 @@ bark_interface = gr.Interface(
                 "You can select the voice preset and customize the max length. "
                 "Try it and see what happens!",
     allow_flagging="never",
+    clear_btn=None,
+    stop_btn="Stop"
 )
 
 rvc_interface = gr.Interface(
@@ -8216,6 +8333,8 @@ rvc_interface = gr.Interface(
                 "Upload an audio file, select an RVC model, and choose the output format. "
                 "Try it and see what happens!",
     allow_flagging="never",
+    clear_btn=None,
+    stop_btn="Stop"
 )
 
 uvr_interface = gr.Interface(
@@ -8235,6 +8354,8 @@ uvr_interface = gr.Interface(
     description="This user interface allows you to upload an audio file and separate it into vocals and instrumental using Ultimate Vocal Remover (UVR). "
                 "Try it and see what happens!",
     allow_flagging="never",
+    clear_btn=None,
+    stop_btn="Stop"
 )
 
 demucs_interface = gr.Interface(
@@ -8252,6 +8373,8 @@ demucs_interface = gr.Interface(
     description="This user interface allows you to upload an audio file and separate it into vocal and instrumental using Demucs. "
                 "Try it and see what happens!",
     allow_flagging="never",
+    clear_btn=None,
+    stop_btn="Stop"
 )
 
 image_extras_interface = gr.Interface(
@@ -8279,6 +8402,8 @@ image_extras_interface = gr.Interface(
     title="NeuroSandboxWebUI - Extras (Image)",
     description="This interface allows you to modify images",
     allow_flagging="never",
+    clear_btn=None,
+    stop_btn="Stop"
 )
 
 video_extras_interface = gr.Interface(
@@ -8297,6 +8422,8 @@ video_extras_interface = gr.Interface(
     title="NeuroSandboxWebUI - Extras (Video)",
     description="This interface allows you to modify videos",
     allow_flagging="never",
+    clear_btn=None,
+    stop_btn="Stop"
 )
 
 audio_extras_interface = gr.Interface(
@@ -8313,6 +8440,8 @@ audio_extras_interface = gr.Interface(
     title="NeuroSandboxWebUI - Extras (Audio)",
     description="This interface allows you to modify audio files",
     allow_flagging="never",
+    clear_btn=None,
+    stop_btn="Stop"
 )
 
 realesrgan_upscale_interface = gr.Interface(
@@ -8337,6 +8466,8 @@ realesrgan_upscale_interface = gr.Interface(
     title="NeuroSandboxWebUI - Upscale (Real-ESRGAN)",
     description="This user interface allows you to upload an image and upscale it using Real-ESRGAN models",
     allow_flagging="never",
+    clear_btn=None,
+    stop_btn="Stop"
 )
 
 faceswap_interface = gr.Interface(
@@ -8360,6 +8491,8 @@ faceswap_interface = gr.Interface(
     title="NeuroSandboxWebUI - FaceSwap (Roop)",
     description="This user interface allows you to perform face swapping on images or videos and optional face restoration.",
     allow_flagging="never",
+    clear_btn=None,
+    stop_btn="Stop"
 )
 
 extras_interface = gr.TabbedInterface(
@@ -8377,6 +8510,8 @@ wiki_interface = gr.Interface(
     title="NeuroSandboxWebUI - Wiki",
     description="This interface displays the Wiki content from the specified URL or local file.",
     allow_flagging="never",
+    clear_btn=None,
+    stop_btn="Stop"
 )
 
 gallery_interface = gr.Interface(
@@ -8398,6 +8533,8 @@ gallery_interface = gr.Interface(
     title="NeuroSandboxWebUI - Gallery",
     description="This interface allows you to view files from the outputs directory",
     allow_flagging="never",
+    clear_btn=None,
+    stop_btn="Stop"
 )
 
 model_downloader_interface = gr.Interface(
@@ -8412,6 +8549,8 @@ model_downloader_interface = gr.Interface(
     title="NeuroSandboxWebUI - ModelDownloader",
     description="This user interface allows you to download LLM and StableDiffusion models",
     allow_flagging="never",
+    clear_btn=None,
+    stop_btn="Stop"
 )
 
 settings_interface = gr.Interface(
@@ -8428,6 +8567,11 @@ settings_interface = gr.Interface(
         gr.Textbox(label="Primary Hue", value=settings['custom_theme']['primary_hue']),
         gr.Textbox(label="Secondary Hue", value=settings['custom_theme']['secondary_hue']),
         gr.Textbox(label="Neutral Hue", value=settings['custom_theme']['neutral_hue']),
+        gr.Radio(choices=["spacing_sm", "spacing_md", "spacing_lg"], label="Spacing Size", value=settings['custom_theme'].get('spacing_size', 'spacing_md')),
+        gr.Radio(choices=["radius_none", "radius_sm", "radius_md", "radius_lg"], label="Radius Size", value=settings['custom_theme'].get('radius_size', 'radius_md')),
+        gr.Radio(choices=["text_sm", "text_md", "text_lg"], label="Text Size", value=settings['custom_theme'].get('text_size', 'text_md')),
+        gr.Textbox(label="Font", value=settings['custom_theme'].get('font', 'Arial')),
+        gr.Textbox(label="Monospaced Font", value=settings['custom_theme'].get('font_mono', 'Courier New')),
     ],
     outputs=[
         gr.Textbox(label="Message", type="text")
@@ -8435,6 +8579,8 @@ settings_interface = gr.Interface(
     title="NeuroSandboxWebUI - Settings",
     description="This user interface allows you to change settings of the application",
     allow_flagging="never",
+    clear_btn=None,
+    stop_btn="Stop"
 )
 
 system_interface = gr.Interface(
@@ -8456,13 +8602,20 @@ system_interface = gr.Interface(
     title="NeuroSandboxWebUI - System",
     description="This interface displays system information",
     allow_flagging="never",
+    clear_btn=None,
+    stop_btn="Stop"
 )
 
 if settings['custom_theme']['enabled']:
     theme = getattr(gr.themes, settings['theme'])(
         primary_hue=settings['custom_theme']['primary_hue'],
         secondary_hue=settings['custom_theme']['secondary_hue'],
-        neutral_hue=settings['custom_theme']['neutral_hue']
+        neutral_hue=settings['custom_theme']['neutral_hue'],
+        spacing_size=getattr(gr.themes.sizes, settings['custom_theme']['spacing_size']),
+        radius_size=getattr(gr.themes.sizes, settings['custom_theme']['radius_size']),
+        text_size=getattr(gr.themes.sizes, settings['custom_theme']['text_size']),
+        font=settings['custom_theme']['font'],
+        font_mono=settings['custom_theme']['font_mono']
     )
 else:
     theme = getattr(gr.themes, settings['theme'])()
