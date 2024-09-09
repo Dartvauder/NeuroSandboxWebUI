@@ -91,7 +91,7 @@ multiband_diffusion_path = None
 
 
 def print_system_info():
-    print(f"Welcome to NeuroSandboxWebUI!")
+    print(f"NeuroSandboxWebUI")
     print(f"Python version: {sys.version}")
     print(f"Python executable: {sys.executable}")
     print(f"Platform: {sys.platform}")
@@ -143,6 +143,9 @@ def load_settings():
             "monitoring_mode": False,
             "auto_launch": False,
             "show_api": False,
+            "api_open": False,
+            "queue_max_size": 10,
+            "status_update_rate": "auto",
             "auth": {"username": "admin", "password": "admin"},
             "server_name": "localhost",
             "server_port": 7860,
@@ -6537,7 +6540,7 @@ def download_model(model_name_llm, model_name_sd):
             return "Invalid StableDiffusion model name"
 
 
-def settings_interface(share_value, debug_value, monitoring_value, auto_launch, api_status, gradio_auth, server_name, server_port, hf_token, theme,
+def settings_interface(share_value, debug_value, monitoring_value, auto_launch, api_status, open_api, queue_max_size, status_update_rate, gradio_auth, server_name, server_port, hf_token, theme,
                        enable_custom_theme, primary_hue, secondary_hue, neutral_hue,
                        spacing_size, radius_size, text_size, font, font_mono):
     settings = load_settings()
@@ -6547,6 +6550,9 @@ def settings_interface(share_value, debug_value, monitoring_value, auto_launch, 
     settings['monitoring_mode'] = monitoring_value == "True"
     settings['auto_launch'] = auto_launch == "True"
     settings['show_api'] = api_status == "True"
+    settings['api_open'] = open_api == "True"
+    settings['queue_max_size'] = int(queue_max_size) if queue_max_size else 10
+    settings['status_update_rate'] = status_update_rate
     if gradio_auth:
         username, password = gradio_auth.split(':')
         settings['auth'] = {"username": username, "password": password}
@@ -8669,6 +8675,9 @@ settings_interface = gr.Interface(
         gr.Radio(choices=["True", "False"], label="Monitoring Mode", value="False"),
         gr.Radio(choices=["True", "False"], label="Enable AutoLaunch", value="False"),
         gr.Radio(choices=["True", "False"], label="Show API", value="False"),
+        gr.Radio(choices=["True", "False"], label="Open API", value="False"),
+        gr.Number(label="Queue max size", value=settings['queue_max_size']),
+        gr.Textbox(label="Queue status update rate", value=settings['status_update_rate']),
         gr.Textbox(label="Gradio Auth", value=settings['auth']),
         gr.Textbox(label="Server Name", value=settings['server_name']),
         gr.Number(label="Server Port", value=settings['server_port']),
@@ -8791,6 +8800,7 @@ with gr.TabbedInterface(
         '</div>'
     )
 
+    app.queue(api_open=settings['api_open'], max_size=settings['queue_max_size'], status_update_rate=settings['status_update_rate'])
     app.launch(
         share=settings['share_mode'],
         debug=settings['debug_mode'],
@@ -8801,4 +8811,5 @@ with gr.TabbedInterface(
         server_name=settings['server_name'],
         server_port=settings['server_port'],
         favicon_path="project-image.png",
+        auth_message="Welcome to NeuroSandboxWebUI!"
     )
