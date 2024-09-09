@@ -6577,6 +6577,10 @@ def settings_interface(share_value, debug_value, monitoring_value, auto_launch, 
     message += f"\nDebug mode is {settings['debug_mode']}"
     message += f"\nMonitoring mode is {settings['monitoring_mode']}"
     message += f"\nAutoLaunch mode is {settings['auto_launch']}"
+    message += f"\nShow API mode is {settings['show_api']}"
+    message += f"\nOpen API mode is {settings['api_open']}"
+    message += f"\nQueue max size is {settings['queue_max_size']}"
+    message += f"\nStatus update rate is {settings['status_update_rate']}"
     message += f"\nNew Gradio Auth is {settings['auth']}"
     message += f" Server will run on {settings['server_name']}:{settings['server_port']}"
     message += f"\nNew HF-Token is {settings['hf_token']}"
@@ -8626,7 +8630,7 @@ wiki_interface = gr.Interface(
     allow_flagging="never",
     clear_btn=None,
     stop_btn="Stop",
-    submit_btn="Generate"
+    submit_btn="Learn"
 )
 
 gallery_interface = gr.Interface(
@@ -8650,7 +8654,7 @@ gallery_interface = gr.Interface(
     allow_flagging="never",
     clear_btn=None,
     stop_btn="Stop",
-    submit_btn="Generate"
+    submit_btn="View"
 )
 
 model_downloader_interface = gr.Interface(
@@ -8667,7 +8671,7 @@ model_downloader_interface = gr.Interface(
     allow_flagging="never",
     clear_btn=None,
     stop_btn="Stop",
-    submit_btn="Generate"
+    submit_btn="Download"
 )
 
 settings_interface = gr.Interface(
@@ -8707,7 +8711,7 @@ settings_interface = gr.Interface(
     allow_flagging="never",
     clear_btn=None,
     stop_btn="Stop",
-    submit_btn="Generate"
+    submit_btn="Update"
 )
 
 system_interface = gr.Interface(
@@ -8731,7 +8735,7 @@ system_interface = gr.Interface(
     allow_flagging="never",
     clear_btn=None,
     stop_btn="Stop",
-    submit_btn="Generate"
+    submit_btn="Check"
 )
 
 if settings['custom_theme']['enabled']:
