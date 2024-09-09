@@ -1,12 +1,14 @@
 {
     "share_mode": false,
-    "server_name": "localhost",
-    "server_port": 7860,
+    "debug_mode": false,
+    "monitoring_mode": false,
     "auto_launch": false,
     "auth": {
         "username": "admin",
         "password": "admin"
     },
+    "server_name": "localhost",
+    "server_port": 7860,
     "hf_token": "hf_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
     "theme": "Default",
     "custom_theme": {
