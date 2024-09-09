@@ -51,6 +51,7 @@ from PIL import Image, ImageDraw
 from tqdm import tqdm
 from llama_cpp import Llama
 from llama_cpp.llama_chat_format import MoondreamChatHandler
+from stable_diffusion_cpp import StableDiffusion
 import requests
 import markdown
 import urllib.parse
@@ -90,7 +91,7 @@ multiband_diffusion_path = None
 
 
 def print_system_info():
-    print(f"Welcome to NeuroSandboxWebUI!")
+    print(f"NeuroSandboxWebUI")
     print(f"Python version: {sys.version}")
     print(f"Python executable: {sys.executable}")
     print(f"Platform: {sys.platform}")
@@ -138,10 +139,16 @@ def load_settings():
     if not os.path.exists('Settings.json'):
         default_settings = {
             "share_mode": False,
+            "debug_mode": False,
+            "monitoring_mode": False,
+            "auto_launch": False,
+            "show_api": False,
+            "api_open": False,
+            "queue_max_size": 10,
+            "status_update_rate": "auto",
+            "auth": {"username": "admin", "password": "admin"},
             "server_name": "localhost",
             "server_port": 7860,
-            "auto_launch": False,
-            "auth": {"username": "admin", "password": "admin"},
             "hf_token": "",
             "theme": "Default",
             "custom_theme": {
@@ -557,9 +564,9 @@ def load_multiband_diffusion_model():
     return multiband_diffusion_path
 
 
-def generate_text_and_speech(input_text, system_prompt, input_audio, input_image, llm_model_name, llm_lora_model_name, llm_settings_html, llm_model_type, max_length, max_tokens,
-                             temperature, top_p, top_k, chat_history_format, enable_web_search, enable_libretranslate, target_lang, enable_multimodal, enable_tts, tts_settings_html,
-                             speaker_wav, language, tts_temperature, tts_top_p, tts_top_k, tts_speed, output_format):
+def generate_text_and_speech(input_text, system_prompt, input_audio, input_image, llm_model_name, llm_lora_model_name, enable_web_search, enable_libretranslate, target_lang, enable_multimodal, enable_tts,
+                             llm_settings_html, llm_model_type, max_length, max_tokens,
+                             temperature, top_p, top_k, chat_history_format, tts_settings_html, speaker_wav, language, tts_temperature, tts_top_p, tts_top_k, tts_speed, output_format):
     global chat_history, chat_dir, tts_model, whisper_model
 
     chat_history = []
@@ -1230,7 +1237,7 @@ def translate_text(text, source_lang, target_lang, enable_translate_history, tra
 def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name, vae_model_name, lora_model_names, lora_scales, textual_inversion_model_names, stable_diffusion_settings_html,
                            stable_diffusion_model_type, stable_diffusion_sampler, stable_diffusion_steps,
                            stable_diffusion_cfg, stable_diffusion_width, stable_diffusion_height,
-                           stable_diffusion_clip_skip, num_images_per_prompt, enable_freeu, freeu_s1, freeu_s2, freeu_b1, freeu_b2, enable_sag, sag_scale, enable_pag, pag_scale, enable_token_merging, ratio, enable_deepcache, cache_interval, cache_branch_id, seed, output_format="png"):
+                           stable_diffusion_clip_skip, num_images_per_prompt, seed, enable_freeu, freeu_s1, freeu_s2, freeu_b1, freeu_b2, enable_sag, sag_scale, enable_pag, pag_scale, enable_token_merging, ratio, enable_deepcache, cache_interval, cache_branch_id, output_format="png"):
 
     if not stable_diffusion_model_name:
         return None, "Please, select a StableDiffusion model!"
@@ -4017,7 +4024,7 @@ def generate_image_kandinsky_inpaint(prompt, negative_prompt, init_image, mask_i
         flush()
 
 
-def generate_image_flux(prompt, model_name, lora_model_names, lora_scales, guidance_scale, height, width, num_inference_steps, max_sequence_length, seed, output_format="png"):
+def generate_image_flux(prompt, model_name, quantize_model_name, enable_quantize, lora_model_names, lora_scales, guidance_scale, height, width, num_inference_steps, max_sequence_length, seed, output_format="png"):
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -4039,57 +4046,75 @@ def generate_image_flux(prompt, model_name, lora_model_names, lora_scales, guida
         print(f"Flux {model_name} model downloaded")
 
     try:
-        pipe = FluxPipeline.from_pretrained(flux_model_path, torch_dtype=torch.bfloat16)
-        pipe.to(device)
-        pipe.enable_model_cpu_offload()
-        pipe.enable_sequential_cpu_offload()
-        pipe.vae.enable_slicing()
-        pipe.vae.enable_tiling()
+        if enable_quantize:
+            quantize_flux_model_path = os.path.join("inputs", "image", "quantize-flux", f"{quantize_model_name}.gguf")
+            lora_model_path = os.path.join("inputs", "image", "flux-lora", f"{lora_model_names}.safetensors")
 
-        if isinstance(lora_scales, str):
-            lora_scales = [float(scale.strip()) for scale in lora_scales.split(',') if scale.strip()]
-        elif isinstance(lora_scales, (int, float)):
-            lora_scales = [float(lora_scales)]
+            stable_diffusion = StableDiffusion(
+                model_path=quantize_flux_model_path,
+                lora_model_dir=lora_model_path,
+                wtype="default")
 
-        lora_loaded = False
-        if lora_model_names and lora_scales:
-            if len(lora_model_names) != len(lora_scales):
-                print(
-                    f"Warning: Number of LoRA models ({len(lora_model_names)}) does not match number of scales ({len(lora_scales)}). Using available scales.")
+            output = stable_diffusion.txt_to_img(
+                prompt=prompt,
+                guidance=guidance_scale,
+                height=height,
+                width=width,
+                sample_steps=num_inference_steps,
+                seed=seed)
+        else:
+            pipe = FluxPipeline.from_pretrained(flux_model_path, torch_dtype=torch.bfloat16)
+            pipe.to(device)
+            pipe.enable_model_cpu_offload()
+            pipe.enable_sequential_cpu_offload()
+            pipe.vae.enable_slicing()
+            pipe.vae.enable_tiling()
+            pipe.to(torch.float16)
 
-            for i, lora_model_name in enumerate(lora_model_names):
-                if i < len(lora_scales):
-                    lora_scale = lora_scales[i]
-                else:
-                    lora_scale = 1.0
+            if isinstance(lora_scales, str):
+                lora_scales = [float(scale.strip()) for scale in lora_scales.split(',') if scale.strip()]
+            elif isinstance(lora_scales, (int, float)):
+                lora_scales = [float(lora_scales)]
 
-                lora_model_path = os.path.join("inputs", "image", "flux-lora", lora_model_name)
-                if os.path.exists(lora_model_path):
-                    adapter_name = os.path.splitext(os.path.basename(lora_model_name))[0]
-                    try:
-                        pipe.load_lora_weights(lora_model_path, adapter_name=adapter_name)
-                        pipe.fuse_lora(lora_scale=lora_scale)
-                        lora_loaded = True
-                        print(f"Loaded LoRA {lora_model_name} with scale {lora_scale}")
-                    except Exception as e:
-                        print(f"Error loading LoRA {lora_model_name}: {str(e)}")
+            lora_loaded = False
+            if lora_model_names and lora_scales:
+                if len(lora_model_names) != len(lora_scales):
+                    print(
+                        f"Warning: Number of LoRA models ({len(lora_model_names)}) does not match number of scales ({len(lora_scales)}). Using available scales.")
 
-        out = pipe(
-            prompt=prompt,
-            guidance_scale=guidance_scale,
-            height=height,
-            width=width,
-            num_inference_steps=num_inference_steps,
-            max_sequence_length=max_sequence_length,
-            generator=generator
-        ).images[0]
+                for i, lora_model_name in enumerate(lora_model_names):
+                    if i < len(lora_scales):
+                        lora_scale = lora_scales[i]
+                    else:
+                        lora_scale = 1.0
+
+                    lora_model_path = os.path.join("inputs", "image", "flux-lora", lora_model_name)
+                    if os.path.exists(lora_model_path):
+                        adapter_name = os.path.splitext(os.path.basename(lora_model_name))[0]
+                        try:
+                            pipe.load_lora_weights(lora_model_path, adapter_name=adapter_name)
+                            pipe.fuse_lora(lora_scale=lora_scale)
+                            lora_loaded = True
+                            print(f"Loaded LoRA {lora_model_name} with scale {lora_scale}")
+                        except Exception as e:
+                            print(f"Error loading LoRA {lora_model_name}: {str(e)}")
+
+            output = pipe(
+                prompt=prompt,
+                guidance_scale=guidance_scale,
+                height=height,
+                width=width,
+                num_inference_steps=num_inference_steps,
+                max_sequence_length=max_sequence_length,
+                generator=generator
+            ).images[0]
 
         today = datetime.now().date()
         image_dir = os.path.join('outputs', f"Flux_{today.strftime('%Y%m%d')}")
         os.makedirs(image_dir, exist_ok=True)
         image_filename = f"flux_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
         image_path = os.path.join(image_dir, image_filename)
-        out.save(image_path, format=output_format.upper())
+        output.save(image_path, format=output_format.upper())
 
         return image_path, f"Image generated successfully. Seed used: {seed}"
 
@@ -4097,7 +4122,10 @@ def generate_image_flux(prompt, model_name, lora_model_names, lora_scales, guida
         return None, str(e)
 
     finally:
-        del pipe
+        if enable_quantize:
+            del stable_diffusion
+        else:
+            del pipe
         flush()
 
 
@@ -4305,7 +4333,7 @@ def generate_image_kolors_txt2img(prompt, negative_prompt, lora_model_names, lor
                 else:
                     lora_scale = 1.0
 
-                lora_model_path = os.path.join("inputs", "image", "sd_models", "lora", lora_model_name)
+                lora_model_path = os.path.join("inputs", "image", "kolors-lora", lora_model_name)
                 if os.path.exists(lora_model_path):
                     adapter_name = os.path.splitext(os.path.basename(lora_model_name))[0]
                     try:
@@ -6512,16 +6540,25 @@ def download_model(model_name_llm, model_name_sd):
             return "Invalid StableDiffusion model name"
 
 
-def settings_interface(share_value, hf_token, gradio_auth, server_name, server_port, auto_launch, theme,
+def settings_interface(share_value, debug_value, monitoring_value, auto_launch, api_status, open_api, queue_max_size, status_update_rate, gradio_auth, server_name, server_port, hf_token, theme,
                        enable_custom_theme, primary_hue, secondary_hue, neutral_hue,
                        spacing_size, radius_size, text_size, font, font_mono):
     settings = load_settings()
 
     settings['share_mode'] = share_value == "True"
-    settings['hf_token'] = hf_token
+    settings['debug_mode'] = debug_value == "True"
+    settings['monitoring_mode'] = monitoring_value == "True"
+    settings['auto_launch'] = auto_launch == "True"
+    settings['show_api'] = api_status == "True"
+    settings['api_open'] = open_api == "True"
+    settings['queue_max_size'] = int(queue_max_size) if queue_max_size else 10
+    settings['status_update_rate'] = status_update_rate
+    if gradio_auth:
+        username, password = gradio_auth.split(':')
+        settings['auth'] = {"username": username, "password": password}
     settings['server_name'] = server_name
     settings['server_port'] = int(server_port) if server_port else 7860
-    settings['auto_launch'] = auto_launch == "True"
+    settings['hf_token'] = hf_token
     settings['theme'] = theme
     settings['custom_theme']['enabled'] = enable_custom_theme
     settings['custom_theme']['primary_hue'] = primary_hue
@@ -6533,19 +6570,17 @@ def settings_interface(share_value, hf_token, gradio_auth, server_name, server_p
     settings['custom_theme']['font'] = font
     settings['custom_theme']['font_mono'] = font_mono
 
-    if gradio_auth:
-        username, password = gradio_auth.split(':')
-        settings['auth'] = {"username": username, "password": password}
-
     save_settings(settings)
 
     message = "Settings updated successfully!"
-    message += f" Server will run on {settings['server_name']}:{settings['server_port']}"
-    message += f"\nTheme set to {settings['custom_theme'] if enable_custom_theme else theme}"
     message += f"\nShare mode is {settings['share_mode']}"
-    message += f"\nAutoLaunch is {settings['auto_launch']}"
+    message += f"\nDebug mode is {settings['debug_mode']}"
+    message += f"\nMonitoring mode is {settings['monitoring_mode']}"
+    message += f"\nAutoLaunch mode is {settings['auto_launch']}"
     message += f"\nNew Gradio Auth is {settings['auth']}"
+    message += f" Server will run on {settings['server_name']}:{settings['server_port']}"
     message += f"\nNew HF-Token is {settings['hf_token']}"
+    message += f"\nTheme set to {theme and settings['custom_theme'] if enable_custom_theme else theme}"
     message += f"\nPlease restart the application for changes to take effect!"
 
     return message
@@ -6607,6 +6642,8 @@ vae_models_list = [None] + [model.replace(".safetensors", "") for model in os.li
                             model.endswith(".safetensors") or not model.endswith(".txt")]
 lora_models_list = [None] + [model for model in os.listdir("inputs/image/sd_models/lora") if
                              model.endswith(".safetensors") or model.endswith(".pt")]
+quantized_flux_models_list = [None] + [model.replace(".gguf", "") for model in os.listdir("inputs/image/quantize-flux") if
+                            model.endswith(".gguf") or not model.endswith(".txt")]
 flux_lora_models_list = [None] + [model for model in os.listdir("inputs/image/flux-lora") if
                              model.endswith(".safetensors")]
 auraflow_lora_models_list = [None] + [model for model in os.listdir("inputs/image/auraflow-lora") if
@@ -6633,6 +6670,13 @@ chat_interface = gr.Interface(
         gr.Image(label="Upload your image (optional)", type="filepath"),
         gr.Dropdown(choices=llm_models_list, label="Select LLM model", value=None),
         gr.Dropdown(choices=llm_lora_models_list, label="Select LoRA model (optional)", value=None),
+        gr.Checkbox(label="Enable WebSearch", value=False),
+        gr.Checkbox(label="Enable LibreTranslate", value=False),
+        gr.Dropdown(choices=["en", "es", "fr", "de", "it", "pt", "pl", "tr", "ru", "nl", "cs", "ar", "zh", "ja", "hi"], label="Select target language", value="ru", interactive=True),
+        gr.Checkbox(label="Enable Multimodal", value=False),
+        gr.Checkbox(label="Enable TTS", value=False)
+    ],
+    additional_inputs=[
         gr.HTML("<h3>LLM Settings</h3>"),
         gr.Radio(choices=["transformers", "llama"], label="Select model type", value="transformers"),
         gr.Slider(minimum=256, maximum=4096, value=512, step=1, label="Max length (for transformers type models)"),
@@ -6641,11 +6685,6 @@ chat_interface = gr.Interface(
         gr.Slider(minimum=0.01, maximum=1.0, value=0.9, step=0.01, label="Top P"),
         gr.Slider(minimum=1, maximum=100, value=20, step=1, label="Top K"),
         gr.Radio(choices=["txt", "json"], label="Select chat history format", value="txt", interactive=True),
-        gr.Checkbox(label="Enable WebSearch", value=False),
-        gr.Checkbox(label="Enable LibreTranslate", value=False),
-        gr.Dropdown(choices=["en", "es", "fr", "de", "it", "pt", "pl", "tr", "ru", "nl", "cs", "ar", "zh", "ja", "hi"], label="Select target language", value="ru", interactive=True),
-        gr.Checkbox(label="Enable Multimodal", value=False),
-        gr.Checkbox(label="Enable TTS", value=False),
         gr.HTML("<h3>TTS Settings</h3>"),
         gr.Dropdown(choices=speaker_wavs_list, label="Select voice", interactive=True),
         gr.Dropdown(choices=["en", "es", "fr", "de", "it", "pt", "pl", "tr", "ru", "nl", "cs", "ar", "zh-cn", "ja", "hu", "ko", "hi"], label="Select language", interactive=True),
@@ -6653,11 +6692,12 @@ chat_interface = gr.Interface(
         gr.Slider(minimum=0.01, maximum=1.0, value=0.9, step=0.01, label="TTS Top P", interactive=True),
         gr.Slider(minimum=1, maximum=100, value=20, step=1, label="TTS Top K", interactive=True),
         gr.Slider(minimum=0.5, maximum=2.0, value=1.0, step=0.1, label="TTS Speed", interactive=True),
-        gr.Radio(choices=["wav", "mp3", "ogg"], label="Select output format", value="wav", interactive=True),
+        gr.Radio(choices=["wav", "mp3", "ogg"], label="Select output format", value="wav", interactive=True)
     ],
+    additional_inputs_accordion=gr.Accordion(label="LLM and TTS Settings", open=False),
     outputs=[
         gr.Chatbot(label="LLM text response", value=[], avatar_images=["avatars/user.png", "avatars/ai.png"], show_copy_button=True),
-        gr.Audio(label="LLM audio response", type="filepath"),
+        gr.Audio(label="LLM audio response", type="filepath")
     ],
     title="NeuroSandboxWebUI - LLM",
     description="This user interface allows you to enter any text or audio and receive generated response. You can select the LLM model, "
@@ -6665,7 +6705,8 @@ chat_interface = gr.Interface(
                 "Try it and see what happens!",
     allow_flagging="never",
     clear_btn=None,
-    stop_btn="Stop"
+    stop_btn="Stop",
+    submit_btn="Generate"
 )
 
 tts_stt_interface = gr.Interface(
@@ -6694,7 +6735,8 @@ tts_stt_interface = gr.Interface(
                 "Try it and see what happens!",
     allow_flagging="never",
     clear_btn=None,
-    stop_btn="Stop"
+    stop_btn="Stop",
+    submit_btn="Generate"
 )
 
 mms_tts_interface = gr.Interface(
@@ -6712,7 +6754,8 @@ mms_tts_interface = gr.Interface(
     description="Generate speech from text using MMS TTS models.",
     allow_flagging="never",
     clear_btn=None,
-    stop_btn="Stop"
+    stop_btn="Stop",
+    submit_btn="Generate"
 )
 
 mms_stt_interface = gr.Interface(
@@ -6730,7 +6773,8 @@ mms_stt_interface = gr.Interface(
     description="Transcribe speech to text using MMS STT model.",
     allow_flagging="never",
     clear_btn=None,
-    stop_btn="Stop"
+    stop_btn="Stop",
+    submit_btn="Generate"
 )
 
 mms_interface = gr.TabbedInterface(
@@ -6768,7 +6812,8 @@ seamless_m4tv2_interface = gr.Interface(
     description="This interface allows you to use the SeamlessM4Tv2 model for various translation and speech tasks.",
     allow_flagging="never",
     clear_btn=None,
-    stop_btn="Stop"
+    stop_btn="Stop",
+    submit_btn="Generate"
 )
 
 translate_interface = gr.Interface(
@@ -6790,7 +6835,8 @@ translate_interface = gr.Interface(
                 "Try it and see what happens!",
     allow_flagging="never",
     clear_btn=None,
-    stop_btn="Stop"
+    stop_btn="Stop",
+    submit_btn="Generate"
 )
 
 txt2img_interface = gr.Interface(
@@ -6813,6 +6859,9 @@ txt2img_interface = gr.Interface(
         gr.Slider(minimum=256, maximum=2048, value=512, step=64, label="Height"),
         gr.Slider(minimum=1, maximum=4, value=1, step=1, label="Clip skip"),
         gr.Slider(minimum=1, maximum=4, value=1, step=1, label="Number of images to generate"),
+        gr.Textbox(label="Seed (optional)", value="")
+    ],
+     additional_inputs=[
         gr.Checkbox(label="Enable FreeU", value=False),
         gr.Slider(minimum=0.1, maximum=4, value=0.9, step=0.1, label="FreeU-S1"),
         gr.Slider(minimum=0.1, maximum=4, value=0.2, step=0.1, label="FreeU-S2"),
@@ -6827,12 +6876,12 @@ txt2img_interface = gr.Interface(
         gr.Checkbox(label="Enable DeepCache", value=False),
         gr.Slider(minimum=1, maximum=5, value=3, step=1, label="DeepCache Interval"),
         gr.Slider(minimum=0, maximum=1, value=0, step=1, label="DeepCache BranchID"),
-        gr.Textbox(label="Seed (optional)", value=""),
-        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
+        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True)
     ],
+    additional_inputs_accordion=gr.Accordion(label="Additional StableDiffusion Settings", open=False),
     outputs=[
         gr.Gallery(label="Generated images", elem_id="gallery", columns=[2], rows=[2], object_fit="contain", height="auto"),
-        gr.Textbox(label="Message", type="text"),
+        gr.Textbox(label="Message", type="text")
     ],
     title="NeuroSandboxWebUI - StableDiffusion (txt2img)",
     description="This user interface allows you to enter any text and generate images using StableDiffusion. "
@@ -6840,7 +6889,8 @@ txt2img_interface = gr.Interface(
                 "Try it and see what happens!",
     allow_flagging="never",
     clear_btn=None,
-    stop_btn="Stop"
+    stop_btn="Stop",
+    submit_btn="Generate"
 )
 
 img2img_interface = gr.Interface(
@@ -6873,7 +6923,8 @@ img2img_interface = gr.Interface(
                 "Try it and see what happens!",
     allow_flagging="never",
     clear_btn=None,
-    stop_btn="Stop"
+    stop_btn="Stop",
+    submit_btn="Generate"
 )
 
 depth2img_interface = gr.Interface(
@@ -6898,7 +6949,8 @@ depth2img_interface = gr.Interface(
                 "Try it and see what happens!",
     allow_flagging="never",
     clear_btn=None,
-    stop_btn="Stop"
+    stop_btn="Stop",
+    submit_btn="Generate"
 )
 
 pix2pix_interface = gr.Interface(
@@ -6924,7 +6976,8 @@ pix2pix_interface = gr.Interface(
                 "Try it and see what happens!",
     allow_flagging="never",
     clear_btn=None,
-    stop_btn="Stop"
+    stop_btn="Stop",
+    submit_btn="Generate"
 )
 
 controlnet_interface = gr.Interface(
@@ -6959,7 +7012,8 @@ controlnet_interface = gr.Interface(
                 "Try it and see what happens!",
     allow_flagging="never",
     clear_btn=None,
-    stop_btn="Stop"
+    stop_btn="Stop",
+    submit_btn="Generate"
 )
 
 latent_upscale_interface = gr.Interface(
@@ -6981,7 +7035,8 @@ latent_upscale_interface = gr.Interface(
     description="This user interface allows you to upload an image and latent-upscale it using x2 or x4 upscale factor",
     allow_flagging="never",
     clear_btn=None,
-    stop_btn="Stop"
+    stop_btn="Stop",
+    submit_btn="Generate"
 )
 
 sdxl_refiner_interface = gr.Interface(
@@ -7000,7 +7055,8 @@ sdxl_refiner_interface = gr.Interface(
                 "Enter a prompt, upload an initial image, and see the refined result.",
     allow_flagging="never",
     clear_btn=None,
-    stop_btn="Stop"
+    stop_btn="Stop",
+    submit_btn="Generate"
 )
 
 inpaint_interface = gr.Interface(
@@ -7036,7 +7092,8 @@ inpaint_interface = gr.Interface(
                 "Try it and see what happens!",
     allow_flagging="never",
     clear_btn=None,
-    stop_btn="Stop"
+    stop_btn="Stop",
+    submit_btn="Generate"
 )
 
 outpaint_interface = gr.Interface(
@@ -7070,7 +7127,8 @@ outpaint_interface = gr.Interface(
                 "Try it and see what happens!",
     allow_flagging="never",
     clear_btn=None,
-    stop_btn="Stop"
+    stop_btn="Stop",
+    submit_btn="Generate"
 )
 
 gligen_interface = gr.Interface(
@@ -7104,7 +7162,8 @@ gligen_interface = gr.Interface(
                 "Try it and see what happens!",
     allow_flagging="never",
     clear_btn=None,
-    stop_btn="Stop"
+    stop_btn="Stop",
+    submit_btn="Generate"
 )
 
 animatediff_interface = gr.Interface(
@@ -7135,7 +7194,8 @@ animatediff_interface = gr.Interface(
                 "Try it and see what happens!",
     allow_flagging="never",
     clear_btn=None,
-    stop_btn="Stop"
+    stop_btn="Stop",
+    submit_btn="Generate"
 )
 
 hotshotxl_interface = gr.Interface(
@@ -7160,7 +7220,8 @@ hotshotxl_interface = gr.Interface(
                 "Try it and see what happens!",
     allow_flagging="never",
     clear_btn=None,
-    stop_btn="Stop"
+    stop_btn="Stop",
+    submit_btn="Generate"
 )
 
 video_interface = gr.Interface(
@@ -7192,7 +7253,8 @@ video_interface = gr.Interface(
                 "Try it and see what happens!",
     allow_flagging="never",
     clear_btn=None,
-    stop_btn="Stop"
+    stop_btn="Stop",
+    submit_btn="Generate"
 )
 
 ldm3d_interface = gr.Interface(
@@ -7219,7 +7281,8 @@ ldm3d_interface = gr.Interface(
                 "Try it and see what happens!",
     allow_flagging="never",
     clear_btn=None,
-    stop_btn="Stop"
+    stop_btn="Stop",
+    submit_btn="Generate"
 )
 
 sd3_txt2img_interface = gr.Interface(
@@ -7249,7 +7312,8 @@ sd3_txt2img_interface = gr.Interface(
                 "Try it and see what happens!",
     allow_flagging="never",
     clear_btn=None,
-    stop_btn="Stop"
+    stop_btn="Stop",
+    submit_btn="Generate"
 )
 
 sd3_img2img_interface = gr.Interface(
@@ -7279,7 +7343,8 @@ sd3_img2img_interface = gr.Interface(
                 "Try it and see what happens!",
     allow_flagging="never",
     clear_btn=None,
-    stop_btn="Stop"
+    stop_btn="Stop",
+    submit_btn="Generate"
 )
 
 sd3_controlnet_interface = gr.Interface(
@@ -7311,7 +7376,8 @@ sd3_controlnet_interface = gr.Interface(
                 "Try it and see what happens!",
     allow_flagging="never",
     clear_btn=None,
-    stop_btn="Stop"
+    stop_btn="Stop",
+    submit_btn="Generate"
 )
 
 sd3_inpaint_interface = gr.Interface(
@@ -7341,7 +7407,8 @@ sd3_inpaint_interface = gr.Interface(
                 "Try it and see what happens!",
     allow_flagging="never",
     clear_btn=None,
-    stop_btn="Stop"
+    stop_btn="Stop",
+    submit_btn="Generate"
 )
 
 cascade_interface = gr.Interface(
@@ -7370,7 +7437,8 @@ cascade_interface = gr.Interface(
                 "Try it and see what happens!",
     allow_flagging="never",
     clear_btn=None,
-    stop_btn="Stop"
+    stop_btn="Stop",
+    submit_btn="Generate"
 )
 
 t2i_ip_adapter_interface = gr.Interface(
@@ -7398,7 +7466,8 @@ t2i_ip_adapter_interface = gr.Interface(
                 "Try it and see what happens!",
     allow_flagging="never",
     clear_btn=None,
-    stop_btn="Stop"
+    stop_btn="Stop",
+    submit_btn="Generate"
 )
 
 ip_adapter_faceid_interface = gr.Interface(
@@ -7426,7 +7495,8 @@ ip_adapter_faceid_interface = gr.Interface(
                 "Try it and see what happens!",
     allow_flagging="never",
     clear_btn=None,
-    stop_btn="Stop"
+    stop_btn="Stop",
+    submit_btn="Generate"
 )
 
 riffusion_text2image_interface = gr.Interface(
@@ -7449,7 +7519,8 @@ riffusion_text2image_interface = gr.Interface(
     description="Generate a spectrogram image from text using Riffusion.",
     allow_flagging="never",
     clear_btn=None,
-    stop_btn="Stop"
+    stop_btn="Stop",
+    submit_btn="Generate"
 )
 
 riffusion_image2audio_interface = gr.Interface(
@@ -7466,7 +7537,8 @@ riffusion_image2audio_interface = gr.Interface(
     description="Convert a spectrogram image to audio using Riffusion.",
     allow_flagging="never",
     clear_btn=None,
-    stop_btn="Stop"
+    stop_btn="Stop",
+    submit_btn="Generate"
 )
 
 riffusion_audio2image_interface = gr.Interface(
@@ -7483,7 +7555,8 @@ riffusion_audio2image_interface = gr.Interface(
     description="Convert audio to a spectrogram image using Riffusion.",
     allow_flagging="never",
     clear_btn=None,
-    stop_btn="Stop"
+    stop_btn="Stop",
+    submit_btn="Generate"
 )
 
 riffusion_interface = gr.TabbedInterface(
@@ -7514,7 +7587,8 @@ kandinsky_txt2img_interface = gr.Interface(
                 "Try it and see what happens!",
     allow_flagging="never",
     clear_btn=None,
-    stop_btn="Stop"
+    stop_btn="Stop",
+    submit_btn="Generate"
 )
 
 kandinsky_img2img_interface = gr.Interface(
@@ -7542,7 +7616,8 @@ kandinsky_img2img_interface = gr.Interface(
                 "Try it and see what happens!",
     allow_flagging="never",
     clear_btn=None,
-    stop_btn="Stop"
+    stop_btn="Stop",
+    submit_btn="Generate"
 )
 
 kandinsky_inpaint_interface = gr.Interface(
@@ -7570,7 +7645,8 @@ kandinsky_inpaint_interface = gr.Interface(
                 "Try it and see what happens!",
     allow_flagging="never",
     clear_btn=None,
-    stop_btn="Stop"
+    stop_btn="Stop",
+    submit_btn="Generate"
 )
 
 kandinsky_interface = gr.TabbedInterface(
@@ -7583,6 +7659,8 @@ flux_interface = gr.Interface(
     inputs=[
         gr.Textbox(label="Enter your prompt"),
         gr.Dropdown(choices=["FLUX.1-schnell", "FLUX.1-dev"], label="Select Flux model", value="FLUX.1-schnell"),
+        gr.Dropdown(choices=quantized_flux_models_list, label="Select quantized Flux model (optional if enabled quantize)", value=None),
+        gr.Checkbox(label="Enable Quantize", value=False),
         gr.Dropdown(choices=flux_lora_models_list, label="Select LORA models (optional)", value=None, multiselect=True),
         gr.Textbox(label="LoRA Scales"),
         gr.Slider(minimum=0.0, maximum=10.0, value=0.0, step=0.1, label="Guidance Scale"),
@@ -7603,7 +7681,8 @@ flux_interface = gr.Interface(
                 "Try it and see what happens!",
     allow_flagging="never",
     clear_btn=None,
-    stop_btn="Stop"
+    stop_btn="Stop",
+    submit_btn="Generate"
 )
 
 hunyuandit_txt2img_interface = gr.Interface(
@@ -7628,7 +7707,8 @@ hunyuandit_txt2img_interface = gr.Interface(
                 "Try it and see what happens!",
     allow_flagging="never",
     clear_btn=None,
-    stop_btn="Stop"
+    stop_btn="Stop",
+    submit_btn="Generate"
 )
 
 hunyuandit_controlnet_interface = gr.Interface(
@@ -7655,7 +7735,8 @@ hunyuandit_controlnet_interface = gr.Interface(
                 "Try it and see what happens!",
     allow_flagging="never",
     clear_btn=None,
-    stop_btn="Stop"
+    stop_btn="Stop",
+    submit_btn="Generate"
 )
 
 hunyuandit_interface = gr.TabbedInterface(
@@ -7686,7 +7767,8 @@ lumina_interface = gr.Interface(
                 "Try it and see what happens!",
     allow_flagging="never",
     clear_btn=None,
-    stop_btn="Stop"
+    stop_btn="Stop",
+    submit_btn="Generate"
 )
 
 kolors_txt2img_interface = gr.Interface(
@@ -7712,7 +7794,8 @@ kolors_txt2img_interface = gr.Interface(
                 "Try it and see what happens!",
     allow_flagging="never",
     clear_btn=None,
-    stop_btn="Stop"
+    stop_btn="Stop",
+    submit_btn="Generate"
 )
 
 kolors_img2img_interface = gr.Interface(
@@ -7737,7 +7820,8 @@ kolors_img2img_interface = gr.Interface(
                 "Try it and see what happens!",
     allow_flagging="never",
     clear_btn=None,
-    stop_btn="Stop"
+    stop_btn="Stop",
+    submit_btn="Generate"
 )
 
 kolors_ip_adapter_interface = gr.Interface(
@@ -7761,7 +7845,8 @@ kolors_ip_adapter_interface = gr.Interface(
                 "Try it and see what happens!",
     allow_flagging="never",
     clear_btn=None,
-    stop_btn="Stop"
+    stop_btn="Stop",
+    submit_btn="Generate"
 )
 
 kolors_interface = gr.TabbedInterface(
@@ -7796,7 +7881,8 @@ auraflow_interface = gr.Interface(
                 "Try it and see what happens!",
     allow_flagging="never",
     clear_btn=None,
-    stop_btn="Stop"
+    stop_btn="Stop",
+    submit_btn="Generate"
 )
 
 wurstchen_interface = gr.Interface(
@@ -7823,7 +7909,8 @@ wurstchen_interface = gr.Interface(
                 "Try it and see what happens!",
     allow_flagging="never",
     clear_btn=None,
-    stop_btn="Stop"
+    stop_btn="Stop",
+    submit_btn="Generate"
 )
 
 deepfloyd_if_txt2img_interface = gr.Interface(
@@ -7851,7 +7938,8 @@ deepfloyd_if_txt2img_interface = gr.Interface(
                 "Try it and see what happens!",
     allow_flagging="never",
     clear_btn=None,
-    stop_btn="Stop"
+    stop_btn="Stop",
+    submit_btn="Generate"
 )
 
 deepfloyd_if_img2img_interface = gr.Interface(
@@ -7880,7 +7968,8 @@ deepfloyd_if_img2img_interface = gr.Interface(
                 "Try it and see what happens!",
     allow_flagging="never",
     clear_btn=None,
-    stop_btn="Stop"
+    stop_btn="Stop",
+    submit_btn="Generate"
 )
 
 deepfloyd_if_inpaint_interface = gr.Interface(
@@ -7907,7 +7996,8 @@ deepfloyd_if_inpaint_interface = gr.Interface(
                 "Try it and see what happens!",
     allow_flagging="never",
     clear_btn=None,
-    stop_btn="Stop"
+    stop_btn="Stop",
+    submit_btn="Generate"
 )
 
 deepfloyd_if_interface = gr.TabbedInterface(
@@ -7939,7 +8029,8 @@ pixart_interface = gr.Interface(
                 "Try it and see what happens!",
     allow_flagging="never",
     clear_btn=None,
-    stop_btn="Stop"
+    stop_btn="Stop",
+    submit_btn="Generate"
 )
 
 playgroundv2_interface = gr.Interface(
@@ -7964,7 +8055,8 @@ playgroundv2_interface = gr.Interface(
                 "Try it and see what happens!",
     allow_flagging="never",
     clear_btn=None,
-    stop_btn="Stop"
+    stop_btn="Stop",
+    submit_btn="Generate"
 )
 
 wav2lip_interface = gr.Interface(
@@ -7990,7 +8082,8 @@ wav2lip_interface = gr.Interface(
                 "Try it and see what happens!",
     allow_flagging="never",
     clear_btn=None,
-    stop_btn="Stop"
+    stop_btn="Stop",
+    submit_btn="Generate"
 )
 
 liveportrait_interface = gr.Interface(
@@ -8010,7 +8103,8 @@ liveportrait_interface = gr.Interface(
                 "Try it and see what happens!",
     allow_flagging="never",
     clear_btn=None,
-    stop_btn="Stop"
+    stop_btn="Stop",
+    submit_btn="Generate"
 )
 
 modelscope_interface = gr.Interface(
@@ -8036,7 +8130,8 @@ modelscope_interface = gr.Interface(
                 "Try it and see what happens!",
     allow_flagging="never",
     clear_btn=None,
-    stop_btn="Stop"
+    stop_btn="Stop",
+    submit_btn="Generate"
 )
 
 zeroscope2_interface = gr.Interface(
@@ -8062,7 +8157,8 @@ zeroscope2_interface = gr.Interface(
                 "Try it and see what happens!",
     allow_flagging="never",
     clear_btn=None,
-    stop_btn="Stop"
+    stop_btn="Stop",
+    submit_btn="Generate"
 )
 
 cogvideox_interface = gr.Interface(
@@ -8089,7 +8185,8 @@ cogvideox_interface = gr.Interface(
                 "Try it and see what happens!",
     allow_flagging="never",
     clear_btn=None,
-    stop_btn="Stop"
+    stop_btn="Stop",
+    submit_btn="Generate"
 )
 
 latte_interface = gr.Interface(
@@ -8114,7 +8211,8 @@ latte_interface = gr.Interface(
                 "Try it and see what happens!",
     allow_flagging="never",
     clear_btn=None,
-    stop_btn="Stop"
+    stop_btn="Stop",
+    submit_btn="Generate"
 )
 
 stablefast3d_interface = gr.Interface(
@@ -8135,7 +8233,8 @@ stablefast3d_interface = gr.Interface(
                 "Try it and see what happens!",
     allow_flagging="never",
     clear_btn=None,
-    stop_btn="Stop"
+    stop_btn="Stop",
+    submit_btn="Generate"
 )
 
 shap_e_interface = gr.Interface(
@@ -8158,7 +8257,8 @@ shap_e_interface = gr.Interface(
                 "Try it and see what happens!",
     allow_flagging="never",
     clear_btn=None,
-    stop_btn="Stop"
+    stop_btn="Stop",
+    submit_btn="Generate"
 )
 
 sv34d_interface = gr.Interface(
@@ -8178,7 +8278,8 @@ sv34d_interface = gr.Interface(
                 "Select the version and customize settings as needed.",
     allow_flagging="never",
     clear_btn=None,
-    stop_btn="Stop"
+    stop_btn="Stop",
+    submit_btn="Generate"
 )
 
 zero123plus_interface = gr.Interface(
@@ -8198,7 +8299,8 @@ zero123plus_interface = gr.Interface(
                 "Try it and see what happens!",
     allow_flagging="never",
     clear_btn=None,
-    stop_btn="Stop"
+    stop_btn="Stop",
+    submit_btn="Generate"
 )
 
 stableaudio_interface = gr.Interface(
@@ -8225,7 +8327,8 @@ stableaudio_interface = gr.Interface(
                 "Try it and see what happens!",
     allow_flagging="never",
     clear_btn=None,
-    stop_btn="Stop"
+    stop_btn="Stop",
+    submit_btn="Generate"
 )
 
 audiocraft_interface = gr.Interface(
@@ -8257,7 +8360,8 @@ audiocraft_interface = gr.Interface(
                 "Try it and see what happens!",
     allow_flagging="never",
     clear_btn=None,
-    stop_btn="Stop"
+    stop_btn="Stop",
+    submit_btn="Generate"
 )
 
 audioldm2_interface = gr.Interface(
@@ -8283,7 +8387,8 @@ audioldm2_interface = gr.Interface(
                 "Try it and see what happens!",
     allow_flagging="never",
     clear_btn=None,
-    stop_btn="Stop"
+    stop_btn="Stop",
+    submit_btn="Generate"
 )
 
 bark_interface = gr.Interface(
@@ -8307,7 +8412,8 @@ bark_interface = gr.Interface(
                 "Try it and see what happens!",
     allow_flagging="never",
     clear_btn=None,
-    stop_btn="Stop"
+    stop_btn="Stop",
+    submit_btn="Generate"
 )
 
 rvc_interface = gr.Interface(
@@ -8334,7 +8440,8 @@ rvc_interface = gr.Interface(
                 "Try it and see what happens!",
     allow_flagging="never",
     clear_btn=None,
-    stop_btn="Stop"
+    stop_btn="Stop",
+    submit_btn="Generate"
 )
 
 uvr_interface = gr.Interface(
@@ -8355,7 +8462,8 @@ uvr_interface = gr.Interface(
                 "Try it and see what happens!",
     allow_flagging="never",
     clear_btn=None,
-    stop_btn="Stop"
+    stop_btn="Stop",
+    submit_btn="Generate"
 )
 
 demucs_interface = gr.Interface(
@@ -8374,7 +8482,8 @@ demucs_interface = gr.Interface(
                 "Try it and see what happens!",
     allow_flagging="never",
     clear_btn=None,
-    stop_btn="Stop"
+    stop_btn="Stop",
+    submit_btn="Generate"
 )
 
 image_extras_interface = gr.Interface(
@@ -8403,7 +8512,8 @@ image_extras_interface = gr.Interface(
     description="This interface allows you to modify images",
     allow_flagging="never",
     clear_btn=None,
-    stop_btn="Stop"
+    stop_btn="Stop",
+    submit_btn="Generate"
 )
 
 video_extras_interface = gr.Interface(
@@ -8423,7 +8533,8 @@ video_extras_interface = gr.Interface(
     description="This interface allows you to modify videos",
     allow_flagging="never",
     clear_btn=None,
-    stop_btn="Stop"
+    stop_btn="Stop",
+    submit_btn="Generate"
 )
 
 audio_extras_interface = gr.Interface(
@@ -8441,7 +8552,8 @@ audio_extras_interface = gr.Interface(
     description="This interface allows you to modify audio files",
     allow_flagging="never",
     clear_btn=None,
-    stop_btn="Stop"
+    stop_btn="Stop",
+    submit_btn="Generate"
 )
 
 realesrgan_upscale_interface = gr.Interface(
@@ -8467,7 +8579,8 @@ realesrgan_upscale_interface = gr.Interface(
     description="This user interface allows you to upload an image and upscale it using Real-ESRGAN models",
     allow_flagging="never",
     clear_btn=None,
-    stop_btn="Stop"
+    stop_btn="Stop",
+    submit_btn="Generate"
 )
 
 faceswap_interface = gr.Interface(
@@ -8492,7 +8605,8 @@ faceswap_interface = gr.Interface(
     description="This user interface allows you to perform face swapping on images or videos and optional face restoration.",
     allow_flagging="never",
     clear_btn=None,
-    stop_btn="Stop"
+    stop_btn="Stop",
+    submit_btn="Generate"
 )
 
 extras_interface = gr.TabbedInterface(
@@ -8511,7 +8625,8 @@ wiki_interface = gr.Interface(
     description="This interface displays the Wiki content from the specified URL or local file.",
     allow_flagging="never",
     clear_btn=None,
-    stop_btn="Stop"
+    stop_btn="Stop",
+    submit_btn="Generate"
 )
 
 gallery_interface = gr.Interface(
@@ -8534,7 +8649,8 @@ gallery_interface = gr.Interface(
     description="This interface allows you to view files from the outputs directory",
     allow_flagging="never",
     clear_btn=None,
-    stop_btn="Stop"
+    stop_btn="Stop",
+    submit_btn="Generate"
 )
 
 model_downloader_interface = gr.Interface(
@@ -8550,18 +8666,27 @@ model_downloader_interface = gr.Interface(
     description="This user interface allows you to download LLM and StableDiffusion models",
     allow_flagging="never",
     clear_btn=None,
-    stop_btn="Stop"
+    stop_btn="Stop",
+    submit_btn="Generate"
 )
 
 settings_interface = gr.Interface(
     fn=settings_interface,
     inputs=[
         gr.Radio(choices=["True", "False"], label="Share Mode", value="False"),
-        gr.Textbox(label="Hugging Face Token", value=settings['hf_token']),
+        gr.Radio(choices=["True", "False"], label="Debug Mode", value="False"),
+        gr.Radio(choices=["True", "False"], label="Monitoring Mode", value="False"),
+        gr.Radio(choices=["True", "False"], label="Enable AutoLaunch", value="False"),
+        gr.Radio(choices=["True", "False"], label="Show API", value="False"),
+        gr.Radio(choices=["True", "False"], label="Open API", value="False"),
+        gr.Number(label="Queue max size", value=settings['queue_max_size']),
+        gr.Textbox(label="Queue status update rate", value=settings['status_update_rate']),
         gr.Textbox(label="Gradio Auth", value=settings['auth']),
         gr.Textbox(label="Server Name", value=settings['server_name']),
         gr.Number(label="Server Port", value=settings['server_port']),
-        gr.Radio(choices=["True", "False"], label="Enable AutoLaunch", value="False"),
+        gr.Textbox(label="Hugging Face Token", value=settings['hf_token'])
+    ],
+    additional_inputs=[
         gr.Radio(choices=["Base", "Default", "Glass", "Monochrome", "Soft"], label="Theme", value=settings['theme']),
         gr.Checkbox(label="Enable Custom Theme", value=settings['custom_theme']['enabled']),
         gr.Textbox(label="Primary Hue", value=settings['custom_theme']['primary_hue']),
@@ -8571,8 +8696,9 @@ settings_interface = gr.Interface(
         gr.Radio(choices=["radius_none", "radius_sm", "radius_md", "radius_lg"], label="Radius Size", value=settings['custom_theme'].get('radius_size', 'radius_md')),
         gr.Radio(choices=["text_sm", "text_md", "text_lg"], label="Text Size", value=settings['custom_theme'].get('text_size', 'text_md')),
         gr.Textbox(label="Font", value=settings['custom_theme'].get('font', 'Arial')),
-        gr.Textbox(label="Monospaced Font", value=settings['custom_theme'].get('font_mono', 'Courier New')),
+        gr.Textbox(label="Monospaced Font", value=settings['custom_theme'].get('font_mono', 'Courier New'))
     ],
+    additional_inputs_accordion=gr.Accordion(label="Theme builder", open=False),
     outputs=[
         gr.Textbox(label="Message", type="text")
     ],
@@ -8580,7 +8706,8 @@ settings_interface = gr.Interface(
     description="This user interface allows you to change settings of the application",
     allow_flagging="never",
     clear_btn=None,
-    stop_btn="Stop"
+    stop_btn="Stop",
+    submit_btn="Generate"
 )
 
 system_interface = gr.Interface(
@@ -8603,7 +8730,8 @@ system_interface = gr.Interface(
     description="This interface displays system information",
     allow_flagging="never",
     clear_btn=None,
-    stop_btn="Stop"
+    stop_btn="Stop",
+    submit_btn="Generate"
 )
 
 if settings['custom_theme']['enabled']:
@@ -8678,11 +8806,16 @@ with gr.TabbedInterface(
         '</div>'
     )
 
+    app.queue(api_open=settings['api_open'], max_size=settings['queue_max_size'], status_update_rate=settings['status_update_rate'])
     app.launch(
         share=settings['share_mode'],
+        debug=settings['debug_mode'],
+        enable_monitoring=settings['monitoring_mode'],
+        inbrowser=settings['auto_launch'],
+        show_api=settings['show_api'],
+        auth=authenticate if settings['auth'] else None,
         server_name=settings['server_name'],
         server_port=settings['server_port'],
-        inbrowser=settings['auto_launch'],
-        auth=authenticate if settings['auth'] else None,
-        favicon_path="project-image.png"
+        favicon_path="project-image.png",
+        auth_message="Welcome to NeuroSandboxWebUI!"
     )

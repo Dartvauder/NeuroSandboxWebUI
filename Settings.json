@@ -1,12 +1,18 @@
 {
     "share_mode": false,
-    "server_name": "localhost",
-    "server_port": 7860,
+    "debug_mode": false,
+    "monitoring_mode": false,
     "auto_launch": false,
+    "show_api": false,
+    "api_open": false,
+    "queue_max_size": 10,
+    "status_update_rate": "auto",
     "auth": {
         "username": "admin",
         "password": "admin"
     },
+    "server_name": "localhost",
+    "server_port": 7860,
     "hf_token": "hf_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
     "theme": "Default",
     "custom_theme": {
