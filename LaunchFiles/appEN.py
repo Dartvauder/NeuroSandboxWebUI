@@ -8630,7 +8630,7 @@ wiki_interface = gr.Interface(
     allow_flagging="never",
     clear_btn=None,
     stop_btn="Stop",
-    submit_btn="Generate"
+    submit_btn="Learn"
 )
 
 gallery_interface = gr.Interface(
@@ -8654,7 +8654,7 @@ gallery_interface = gr.Interface(
     allow_flagging="never",
     clear_btn=None,
     stop_btn="Stop",
-    submit_btn="Generate"
+    submit_btn="View"
 )
 
 model_downloader_interface = gr.Interface(
@@ -8671,7 +8671,7 @@ model_downloader_interface = gr.Interface(
     allow_flagging="never",
     clear_btn=None,
     stop_btn="Stop",
-    submit_btn="Generate"
+    submit_btn="Download"
 )
 
 settings_interface = gr.Interface(
@@ -8711,7 +8711,7 @@ settings_interface = gr.Interface(
     allow_flagging="never",
     clear_btn=None,
     stop_btn="Stop",
-    submit_btn="Generate"
+    submit_btn="Update"
 )
 
 system_interface = gr.Interface(
@@ -8735,7 +8735,7 @@ system_interface = gr.Interface(
     allow_flagging="never",
     clear_btn=None,
     stop_btn="Stop",
-    submit_btn="Generate"
+    submit_btn="Check"
 )
 
 if settings['custom_theme']['enabled']:
