@@ -142,6 +142,7 @@ def load_settings():
             "debug_mode": False,
             "monitoring_mode": False,
             "auto_launch": False,
+            "show_api": False,
             "auth": {"username": "admin", "password": "admin"},
             "server_name": "localhost",
             "server_port": 7860,
@@ -560,9 +561,9 @@ def load_multiband_diffusion_model():
     return multiband_diffusion_path
 
 
-def generate_text_and_speech(input_text, system_prompt, input_audio, input_image, llm_model_name, llm_lora_model_name, llm_settings_html, llm_model_type, max_length, max_tokens,
-                             temperature, top_p, top_k, chat_history_format, enable_web_search, enable_libretranslate, target_lang, enable_multimodal, enable_tts, tts_settings_html,
-                             speaker_wav, language, tts_temperature, tts_top_p, tts_top_k, tts_speed, output_format):
+def generate_text_and_speech(input_text, system_prompt, input_audio, input_image, llm_model_name, llm_lora_model_name, enable_web_search, enable_libretranslate, target_lang, enable_multimodal, enable_tts,
+                             llm_settings_html, llm_model_type, max_length, max_tokens,
+                             temperature, top_p, top_k, chat_history_format, tts_settings_html, speaker_wav, language, tts_temperature, tts_top_p, tts_top_k, tts_speed, output_format):
     global chat_history, chat_dir, tts_model, whisper_model
 
     chat_history = []
@@ -6536,7 +6537,7 @@ def download_model(model_name_llm, model_name_sd):
             return "Invalid StableDiffusion model name"
 
 
-def settings_interface(share_value, debug_value, monitoring_value, auto_launch, gradio_auth, server_name, server_port, hf_token, theme,
+def settings_interface(share_value, debug_value, monitoring_value, auto_launch, api_status, gradio_auth, server_name, server_port, hf_token, theme,
                        enable_custom_theme, primary_hue, secondary_hue, neutral_hue,
                        spacing_size, radius_size, text_size, font, font_mono):
     settings = load_settings()
@@ -6545,6 +6546,7 @@ def settings_interface(share_value, debug_value, monitoring_value, auto_launch, 
     settings['debug_mode'] = debug_value == "True"
     settings['monitoring_mode'] = monitoring_value == "True"
     settings['auto_launch'] = auto_launch == "True"
+    settings['show_api'] = api_status == "True"
     if gradio_auth:
         username, password = gradio_auth.split(':')
         settings['auth'] = {"username": username, "password": password}
@@ -6662,6 +6664,13 @@ chat_interface = gr.Interface(
         gr.Image(label="Upload your image (optional)", type="filepath"),
         gr.Dropdown(choices=llm_models_list, label="Select LLM model", value=None),
         gr.Dropdown(choices=llm_lora_models_list, label="Select LoRA model (optional)", value=None),
+        gr.Checkbox(label="Enable WebSearch", value=False),
+        gr.Checkbox(label="Enable LibreTranslate", value=False),
+        gr.Dropdown(choices=["en", "es", "fr", "de", "it", "pt", "pl", "tr", "ru", "nl", "cs", "ar", "zh", "ja", "hi"], label="Select target language", value="ru", interactive=True),
+        gr.Checkbox(label="Enable Multimodal", value=False),
+        gr.Checkbox(label="Enable TTS", value=False),
+    ],
+    additional_inputs=[
         gr.HTML("<h3>LLM Settings</h3>"),
         gr.Radio(choices=["transformers", "llama"], label="Select model type", value="transformers"),
         gr.Slider(minimum=256, maximum=4096, value=512, step=1, label="Max length (for transformers type models)"),
@@ -6670,11 +6679,6 @@ chat_interface = gr.Interface(
         gr.Slider(minimum=0.01, maximum=1.0, value=0.9, step=0.01, label="Top P"),
         gr.Slider(minimum=1, maximum=100, value=20, step=1, label="Top K"),
         gr.Radio(choices=["txt", "json"], label="Select chat history format", value="txt", interactive=True),
-        gr.Checkbox(label="Enable WebSearch", value=False),
-        gr.Checkbox(label="Enable LibreTranslate", value=False),
-        gr.Dropdown(choices=["en", "es", "fr", "de", "it", "pt", "pl", "tr", "ru", "nl", "cs", "ar", "zh", "ja", "hi"], label="Select target language", value="ru", interactive=True),
-        gr.Checkbox(label="Enable Multimodal", value=False),
-        gr.Checkbox(label="Enable TTS", value=False),
         gr.HTML("<h3>TTS Settings</h3>"),
         gr.Dropdown(choices=speaker_wavs_list, label="Select voice", interactive=True),
         gr.Dropdown(choices=["en", "es", "fr", "de", "it", "pt", "pl", "tr", "ru", "nl", "cs", "ar", "zh-cn", "ja", "hu", "ko", "hi"], label="Select language", interactive=True),
@@ -6684,6 +6688,7 @@ chat_interface = gr.Interface(
         gr.Slider(minimum=0.5, maximum=2.0, value=1.0, step=0.1, label="TTS Speed", interactive=True),
         gr.Radio(choices=["wav", "mp3", "ogg"], label="Select output format", value="wav", interactive=True),
     ],
+    additional_inputs_accordion=gr.Accordion(label="LLM and TTS Settings", open=False),
     outputs=[
         gr.Chatbot(label="LLM text response", value=[], avatar_images=["avatars/user.png", "avatars/ai.png"], show_copy_button=True),
         gr.Audio(label="LLM audio response", type="filepath"),
@@ -8663,6 +8668,7 @@ settings_interface = gr.Interface(
         gr.Radio(choices=["True", "False"], label="Debug Mode", value="False"),
         gr.Radio(choices=["True", "False"], label="Monitoring Mode", value="False"),
         gr.Radio(choices=["True", "False"], label="Enable AutoLaunch", value="False"),
+        gr.Radio(choices=["True", "False"], label="Show API", value="False"),
         gr.Textbox(label="Gradio Auth", value=settings['auth']),
         gr.Textbox(label="Server Name", value=settings['server_name']),
         gr.Number(label="Server Port", value=settings['server_port']),
@@ -8790,9 +8796,9 @@ with gr.TabbedInterface(
         debug=settings['debug_mode'],
         enable_monitoring=settings['monitoring_mode'],
         inbrowser=settings['auto_launch'],
+        show_api=settings['show_api'],
         auth=authenticate if settings['auth'] else None,
         server_name=settings['server_name'],
         server_port=settings['server_port'],
         favicon_path="project-image.png",
-        show_api=False
     )

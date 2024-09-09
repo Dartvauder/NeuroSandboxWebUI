@@ -3,6 +3,7 @@
     "debug_mode": false,
     "monitoring_mode": false,
     "auto_launch": false,
+    "show_api": false,
     "auth": {
         "username": "admin",
         "password": "admin"
