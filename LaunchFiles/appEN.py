@@ -6694,7 +6694,8 @@ chat_interface = gr.Interface(
                 "Try it and see what happens!",
     allow_flagging="never",
     clear_btn=None,
-    stop_btn="Stop"
+    stop_btn="Stop",
+    submit_btn="Generate"
 )
 
 tts_stt_interface = gr.Interface(
@@ -6723,7 +6724,8 @@ tts_stt_interface = gr.Interface(
                 "Try it and see what happens!",
     allow_flagging="never",
     clear_btn=None,
-    stop_btn="Stop"
+    stop_btn="Stop",
+    submit_btn="Generate"
 )
 
 mms_tts_interface = gr.Interface(
@@ -6741,7 +6743,8 @@ mms_tts_interface = gr.Interface(
     description="Generate speech from text using MMS TTS models.",
     allow_flagging="never",
     clear_btn=None,
-    stop_btn="Stop"
+    stop_btn="Stop",
+    submit_btn="Generate"
 )
 
 mms_stt_interface = gr.Interface(
@@ -6759,7 +6762,8 @@ mms_stt_interface = gr.Interface(
     description="Transcribe speech to text using MMS STT model.",
     allow_flagging="never",
     clear_btn=None,
-    stop_btn="Stop"
+    stop_btn="Stop",
+    submit_btn="Generate"
 )
 
 mms_interface = gr.TabbedInterface(
@@ -6797,7 +6801,8 @@ seamless_m4tv2_interface = gr.Interface(
     description="This interface allows you to use the SeamlessM4Tv2 model for various translation and speech tasks.",
     allow_flagging="never",
     clear_btn=None,
-    stop_btn="Stop"
+    stop_btn="Stop",
+    submit_btn="Generate"
 )
 
 translate_interface = gr.Interface(
@@ -6819,7 +6824,8 @@ translate_interface = gr.Interface(
                 "Try it and see what happens!",
     allow_flagging="never",
     clear_btn=None,
-    stop_btn="Stop"
+    stop_btn="Stop",
+    submit_btn="Generate"
 )
 
 txt2img_interface = gr.Interface(
@@ -6869,7 +6875,8 @@ txt2img_interface = gr.Interface(
                 "Try it and see what happens!",
     allow_flagging="never",
     clear_btn=None,
-    stop_btn="Stop"
+    stop_btn="Stop",
+    submit_btn="Generate"
 )
 
 img2img_interface = gr.Interface(
@@ -6902,7 +6909,8 @@ img2img_interface = gr.Interface(
                 "Try it and see what happens!",
     allow_flagging="never",
     clear_btn=None,
-    stop_btn="Stop"
+    stop_btn="Stop",
+    submit_btn="Generate"
 )
 
 depth2img_interface = gr.Interface(
@@ -6927,7 +6935,8 @@ depth2img_interface = gr.Interface(
                 "Try it and see what happens!",
     allow_flagging="never",
     clear_btn=None,
-    stop_btn="Stop"
+    stop_btn="Stop",
+    submit_btn="Generate"
 )
 
 pix2pix_interface = gr.Interface(
@@ -6953,7 +6962,8 @@ pix2pix_interface = gr.Interface(
                 "Try it and see what happens!",
     allow_flagging="never",
     clear_btn=None,
-    stop_btn="Stop"
+    stop_btn="Stop",
+    submit_btn="Generate"
 )
 
 controlnet_interface = gr.Interface(
@@ -6988,7 +6998,8 @@ controlnet_interface = gr.Interface(
                 "Try it and see what happens!",
     allow_flagging="never",
     clear_btn=None,
-    stop_btn="Stop"
+    stop_btn="Stop",
+    submit_btn="Generate"
 )
 
 latent_upscale_interface = gr.Interface(
@@ -7010,7 +7021,8 @@ latent_upscale_interface = gr.Interface(
     description="This user interface allows you to upload an image and latent-upscale it using x2 or x4 upscale factor",
     allow_flagging="never",
     clear_btn=None,
-    stop_btn="Stop"
+    stop_btn="Stop",
+    submit_btn="Generate"
 )
 
 sdxl_refiner_interface = gr.Interface(
@@ -7029,7 +7041,8 @@ sdxl_refiner_interface = gr.Interface(
                 "Enter a prompt, upload an initial image, and see the refined result.",
     allow_flagging="never",
     clear_btn=None,
-    stop_btn="Stop"
+    stop_btn="Stop",
+    submit_btn="Generate"
 )
 
 inpaint_interface = gr.Interface(
@@ -7065,7 +7078,8 @@ inpaint_interface = gr.Interface(
                 "Try it and see what happens!",
     allow_flagging="never",
     clear_btn=None,
-    stop_btn="Stop"
+    stop_btn="Stop",
+    submit_btn="Generate"
 )
 
 outpaint_interface = gr.Interface(
@@ -7099,7 +7113,8 @@ outpaint_interface = gr.Interface(
                 "Try it and see what happens!",
     allow_flagging="never",
     clear_btn=None,
-    stop_btn="Stop"
+    stop_btn="Stop",
+    submit_btn="Generate"
 )
 
 gligen_interface = gr.Interface(
@@ -7133,7 +7148,8 @@ gligen_interface = gr.Interface(
                 "Try it and see what happens!",
     allow_flagging="never",
     clear_btn=None,
-    stop_btn="Stop"
+    stop_btn="Stop",
+    submit_btn="Generate"
 )
 
 animatediff_interface = gr.Interface(
@@ -7164,7 +7180,8 @@ animatediff_interface = gr.Interface(
                 "Try it and see what happens!",
     allow_flagging="never",
     clear_btn=None,
-    stop_btn="Stop"
+    stop_btn="Stop",
+    submit_btn="Generate"
 )
 
 hotshotxl_interface = gr.Interface(
@@ -7189,7 +7206,8 @@ hotshotxl_interface = gr.Interface(
                 "Try it and see what happens!",
     allow_flagging="never",
     clear_btn=None,
-    stop_btn="Stop"
+    stop_btn="Stop",
+    submit_btn="Generate"
 )
 
 video_interface = gr.Interface(
@@ -7221,7 +7239,8 @@ video_interface = gr.Interface(
                 "Try it and see what happens!",
     allow_flagging="never",
     clear_btn=None,
-    stop_btn="Stop"
+    stop_btn="Stop",
+    submit_btn="Generate"
 )
 
 ldm3d_interface = gr.Interface(
@@ -7248,7 +7267,8 @@ ldm3d_interface = gr.Interface(
                 "Try it and see what happens!",
     allow_flagging="never",
     clear_btn=None,
-    stop_btn="Stop"
+    stop_btn="Stop",
+    submit_btn="Generate"
 )
 
 sd3_txt2img_interface = gr.Interface(
@@ -7278,7 +7298,8 @@ sd3_txt2img_interface = gr.Interface(
                 "Try it and see what happens!",
     allow_flagging="never",
     clear_btn=None,
-    stop_btn="Stop"
+    stop_btn="Stop",
+    submit_btn="Generate"
 )
 
 sd3_img2img_interface = gr.Interface(
@@ -7308,7 +7329,8 @@ sd3_img2img_interface = gr.Interface(
                 "Try it and see what happens!",
     allow_flagging="never",
     clear_btn=None,
-    stop_btn="Stop"
+    stop_btn="Stop",
+    submit_btn="Generate"
 )
 
 sd3_controlnet_interface = gr.Interface(
@@ -7340,7 +7362,8 @@ sd3_controlnet_interface = gr.Interface(
                 "Try it and see what happens!",
     allow_flagging="never",
     clear_btn=None,
-    stop_btn="Stop"
+    stop_btn="Stop",
+    submit_btn="Generate"
 )
 
 sd3_inpaint_interface = gr.Interface(
@@ -7370,7 +7393,8 @@ sd3_inpaint_interface = gr.Interface(
                 "Try it and see what happens!",
     allow_flagging="never",
     clear_btn=None,
-    stop_btn="Stop"
+    stop_btn="Stop",
+    submit_btn="Generate"
 )
 
 cascade_interface = gr.Interface(
@@ -7399,7 +7423,8 @@ cascade_interface = gr.Interface(
                 "Try it and see what happens!",
     allow_flagging="never",
     clear_btn=None,
-    stop_btn="Stop"
+    stop_btn="Stop",
+    submit_btn="Generate"
 )
 
 t2i_ip_adapter_interface = gr.Interface(
@@ -7427,7 +7452,8 @@ t2i_ip_adapter_interface = gr.Interface(
                 "Try it and see what happens!",
     allow_flagging="never",
     clear_btn=None,
-    stop_btn="Stop"
+    stop_btn="Stop",
+    submit_btn="Generate"
 )
 
 ip_adapter_faceid_interface = gr.Interface(
@@ -7455,7 +7481,8 @@ ip_adapter_faceid_interface = gr.Interface(
                 "Try it and see what happens!",
     allow_flagging="never",
     clear_btn=None,
-    stop_btn="Stop"
+    stop_btn="Stop",
+    submit_btn="Generate"
 )
 
 riffusion_text2image_interface = gr.Interface(
@@ -7478,7 +7505,8 @@ riffusion_text2image_interface = gr.Interface(
     description="Generate a spectrogram image from text using Riffusion.",
     allow_flagging="never",
     clear_btn=None,
-    stop_btn="Stop"
+    stop_btn="Stop",
+    submit_btn="Generate"
 )
 
 riffusion_image2audio_interface = gr.Interface(
@@ -7495,7 +7523,8 @@ riffusion_image2audio_interface = gr.Interface(
     description="Convert a spectrogram image to audio using Riffusion.",
     allow_flagging="never",
     clear_btn=None,
-    stop_btn="Stop"
+    stop_btn="Stop",
+    submit_btn="Generate"
 )
 
 riffusion_audio2image_interface = gr.Interface(
@@ -7512,7 +7541,8 @@ riffusion_audio2image_interface = gr.Interface(
     description="Convert audio to a spectrogram image using Riffusion.",
     allow_flagging="never",
     clear_btn=None,
-    stop_btn="Stop"
+    stop_btn="Stop",
+    submit_btn="Generate"
 )
 
 riffusion_interface = gr.TabbedInterface(
@@ -7543,7 +7573,8 @@ kandinsky_txt2img_interface = gr.Interface(
                 "Try it and see what happens!",
     allow_flagging="never",
     clear_btn=None,
-    stop_btn="Stop"
+    stop_btn="Stop",
+    submit_btn="Generate"
 )
 
 kandinsky_img2img_interface = gr.Interface(
@@ -7571,7 +7602,8 @@ kandinsky_img2img_interface = gr.Interface(
                 "Try it and see what happens!",
     allow_flagging="never",
     clear_btn=None,
-    stop_btn="Stop"
+    stop_btn="Stop",
+    submit_btn="Generate"
 )
 
 kandinsky_inpaint_interface = gr.Interface(
@@ -7599,7 +7631,8 @@ kandinsky_inpaint_interface = gr.Interface(
                 "Try it and see what happens!",
     allow_flagging="never",
     clear_btn=None,
-    stop_btn="Stop"
+    stop_btn="Stop",
+    submit_btn="Generate"
 )
 
 kandinsky_interface = gr.TabbedInterface(
@@ -7634,7 +7667,8 @@ flux_interface = gr.Interface(
                 "Try it and see what happens!",
     allow_flagging="never",
     clear_btn=None,
-    stop_btn="Stop"
+    stop_btn="Stop",
+    submit_btn="Generate"
 )
 
 hunyuandit_txt2img_interface = gr.Interface(
@@ -7659,7 +7693,8 @@ hunyuandit_txt2img_interface = gr.Interface(
                 "Try it and see what happens!",
     allow_flagging="never",
     clear_btn=None,
-    stop_btn="Stop"
+    stop_btn="Stop",
+    submit_btn="Generate"
 )
 
 hunyuandit_controlnet_interface = gr.Interface(
@@ -7686,7 +7721,8 @@ hunyuandit_controlnet_interface = gr.Interface(
                 "Try it and see what happens!",
     allow_flagging="never",
     clear_btn=None,
-    stop_btn="Stop"
+    stop_btn="Stop",
+    submit_btn="Generate"
 )
 
 hunyuandit_interface = gr.TabbedInterface(
@@ -7717,7 +7753,8 @@ lumina_interface = gr.Interface(
                 "Try it and see what happens!",
     allow_flagging="never",
     clear_btn=None,
-    stop_btn="Stop"
+    stop_btn="Stop",
+    submit_btn="Generate"
 )
 
 kolors_txt2img_interface = gr.Interface(
@@ -7743,7 +7780,8 @@ kolors_txt2img_interface = gr.Interface(
                 "Try it and see what happens!",
     allow_flagging="never",
     clear_btn=None,
-    stop_btn="Stop"
+    stop_btn="Stop",
+    submit_btn="Generate"
 )
 
 kolors_img2img_interface = gr.Interface(
@@ -7768,7 +7806,8 @@ kolors_img2img_interface = gr.Interface(
                 "Try it and see what happens!",
     allow_flagging="never",
     clear_btn=None,
-    stop_btn="Stop"
+    stop_btn="Stop",
+    submit_btn="Generate"
 )
 
 kolors_ip_adapter_interface = gr.Interface(
@@ -7792,7 +7831,8 @@ kolors_ip_adapter_interface = gr.Interface(
                 "Try it and see what happens!",
     allow_flagging="never",
     clear_btn=None,
-    stop_btn="Stop"
+    stop_btn="Stop",
+    submit_btn="Generate"
 )
 
 kolors_interface = gr.TabbedInterface(
@@ -7827,7 +7867,8 @@ auraflow_interface = gr.Interface(
                 "Try it and see what happens!",
     allow_flagging="never",
     clear_btn=None,
-    stop_btn="Stop"
+    stop_btn="Stop",
+    submit_btn="Generate"
 )
 
 wurstchen_interface = gr.Interface(
@@ -7854,7 +7895,8 @@ wurstchen_interface = gr.Interface(
                 "Try it and see what happens!",
     allow_flagging="never",
     clear_btn=None,
-    stop_btn="Stop"
+    stop_btn="Stop",
+    submit_btn="Generate"
 )
 
 deepfloyd_if_txt2img_interface = gr.Interface(
@@ -7882,7 +7924,8 @@ deepfloyd_if_txt2img_interface = gr.Interface(
                 "Try it and see what happens!",
     allow_flagging="never",
     clear_btn=None,
-    stop_btn="Stop"
+    stop_btn="Stop",
+    submit_btn="Generate"
 )
 
 deepfloyd_if_img2img_interface = gr.Interface(
@@ -7911,7 +7954,8 @@ deepfloyd_if_img2img_interface = gr.Interface(
                 "Try it and see what happens!",
     allow_flagging="never",
     clear_btn=None,
-    stop_btn="Stop"
+    stop_btn="Stop",
+    submit_btn="Generate"
 )
 
 deepfloyd_if_inpaint_interface = gr.Interface(
@@ -7938,7 +7982,8 @@ deepfloyd_if_inpaint_interface = gr.Interface(
                 "Try it and see what happens!",
     allow_flagging="never",
     clear_btn=None,
-    stop_btn="Stop"
+    stop_btn="Stop",
+    submit_btn="Generate"
 )
 
 deepfloyd_if_interface = gr.TabbedInterface(
@@ -7970,7 +8015,8 @@ pixart_interface = gr.Interface(
                 "Try it and see what happens!",
     allow_flagging="never",
     clear_btn=None,
-    stop_btn="Stop"
+    stop_btn="Stop",
+    submit_btn="Generate"
 )
 
 playgroundv2_interface = gr.Interface(
@@ -7995,7 +8041,8 @@ playgroundv2_interface = gr.Interface(
                 "Try it and see what happens!",
     allow_flagging="never",
     clear_btn=None,
-    stop_btn="Stop"
+    stop_btn="Stop",
+    submit_btn="Generate"
 )
 
 wav2lip_interface = gr.Interface(
@@ -8021,7 +8068,8 @@ wav2lip_interface = gr.Interface(
                 "Try it and see what happens!",
     allow_flagging="never",
     clear_btn=None,
-    stop_btn="Stop"
+    stop_btn="Stop",
+    submit_btn="Generate"
 )
 
 liveportrait_interface = gr.Interface(
@@ -8041,7 +8089,8 @@ liveportrait_interface = gr.Interface(
                 "Try it and see what happens!",
     allow_flagging="never",
     clear_btn=None,
-    stop_btn="Stop"
+    stop_btn="Stop",
+    submit_btn="Generate"
 )
 
 modelscope_interface = gr.Interface(
@@ -8067,7 +8116,8 @@ modelscope_interface = gr.Interface(
                 "Try it and see what happens!",
     allow_flagging="never",
     clear_btn=None,
-    stop_btn="Stop"
+    stop_btn="Stop",
+    submit_btn="Generate"
 )
 
 zeroscope2_interface = gr.Interface(
@@ -8093,7 +8143,8 @@ zeroscope2_interface = gr.Interface(
                 "Try it and see what happens!",
     allow_flagging="never",
     clear_btn=None,
-    stop_btn="Stop"
+    stop_btn="Stop",
+    submit_btn="Generate"
 )
 
 cogvideox_interface = gr.Interface(
@@ -8120,7 +8171,8 @@ cogvideox_interface = gr.Interface(
                 "Try it and see what happens!",
     allow_flagging="never",
     clear_btn=None,
-    stop_btn="Stop"
+    stop_btn="Stop",
+    submit_btn="Generate"
 )
 
 latte_interface = gr.Interface(
@@ -8145,7 +8197,8 @@ latte_interface = gr.Interface(
                 "Try it and see what happens!",
     allow_flagging="never",
     clear_btn=None,
-    stop_btn="Stop"
+    stop_btn="Stop",
+    submit_btn="Generate"
 )
 
 stablefast3d_interface = gr.Interface(
@@ -8166,7 +8219,8 @@ stablefast3d_interface = gr.Interface(
                 "Try it and see what happens!",
     allow_flagging="never",
     clear_btn=None,
-    stop_btn="Stop"
+    stop_btn="Stop",
+    submit_btn="Generate"
 )
 
 shap_e_interface = gr.Interface(
@@ -8189,7 +8243,8 @@ shap_e_interface = gr.Interface(
                 "Try it and see what happens!",
     allow_flagging="never",
     clear_btn=None,
-    stop_btn="Stop"
+    stop_btn="Stop",
+    submit_btn="Generate"
 )
 
 sv34d_interface = gr.Interface(
@@ -8209,7 +8264,8 @@ sv34d_interface = gr.Interface(
                 "Select the version and customize settings as needed.",
     allow_flagging="never",
     clear_btn=None,
-    stop_btn="Stop"
+    stop_btn="Stop",
+    submit_btn="Generate"
 )
 
 zero123plus_interface = gr.Interface(
@@ -8229,7 +8285,8 @@ zero123plus_interface = gr.Interface(
                 "Try it and see what happens!",
     allow_flagging="never",
     clear_btn=None,
-    stop_btn="Stop"
+    stop_btn="Stop",
+    submit_btn="Generate"
 )
 
 stableaudio_interface = gr.Interface(
@@ -8256,7 +8313,8 @@ stableaudio_interface = gr.Interface(
                 "Try it and see what happens!",
     allow_flagging="never",
     clear_btn=None,
-    stop_btn="Stop"
+    stop_btn="Stop",
+    submit_btn="Generate"
 )
 
 audiocraft_interface = gr.Interface(
@@ -8288,7 +8346,8 @@ audiocraft_interface = gr.Interface(
                 "Try it and see what happens!",
     allow_flagging="never",
     clear_btn=None,
-    stop_btn="Stop"
+    stop_btn="Stop",
+    submit_btn="Generate"
 )
 
 audioldm2_interface = gr.Interface(
@@ -8314,7 +8373,8 @@ audioldm2_interface = gr.Interface(
                 "Try it and see what happens!",
     allow_flagging="never",
     clear_btn=None,
-    stop_btn="Stop"
+    stop_btn="Stop",
+    submit_btn="Generate"
 )
 
 bark_interface = gr.Interface(
@@ -8338,7 +8398,8 @@ bark_interface = gr.Interface(
                 "Try it and see what happens!",
     allow_flagging="never",
     clear_btn=None,
-    stop_btn="Stop"
+    stop_btn="Stop",
+    submit_btn="Generate"
 )
 
 rvc_interface = gr.Interface(
@@ -8365,7 +8426,8 @@ rvc_interface = gr.Interface(
                 "Try it and see what happens!",
     allow_flagging="never",
     clear_btn=None,
-    stop_btn="Stop"
+    stop_btn="Stop",
+    submit_btn="Generate"
 )
 
 uvr_interface = gr.Interface(
@@ -8386,7 +8448,8 @@ uvr_interface = gr.Interface(
                 "Try it and see what happens!",
     allow_flagging="never",
     clear_btn=None,
-    stop_btn="Stop"
+    stop_btn="Stop",
+    submit_btn="Generate"
 )
 
 demucs_interface = gr.Interface(
@@ -8405,7 +8468,8 @@ demucs_interface = gr.Interface(
                 "Try it and see what happens!",
     allow_flagging="never",
     clear_btn=None,
-    stop_btn="Stop"
+    stop_btn="Stop",
+    submit_btn="Generate"
 )
 
 image_extras_interface = gr.Interface(
@@ -8434,7 +8498,8 @@ image_extras_interface = gr.Interface(
     description="This interface allows you to modify images",
     allow_flagging="never",
     clear_btn=None,
-    stop_btn="Stop"
+    stop_btn="Stop",
+    submit_btn="Generate"
 )
 
 video_extras_interface = gr.Interface(
@@ -8454,7 +8519,8 @@ video_extras_interface = gr.Interface(
     description="This interface allows you to modify videos",
     allow_flagging="never",
     clear_btn=None,
-    stop_btn="Stop"
+    stop_btn="Stop",
+    submit_btn="Generate"
 )
 
 audio_extras_interface = gr.Interface(
@@ -8472,7 +8538,8 @@ audio_extras_interface = gr.Interface(
     description="This interface allows you to modify audio files",
     allow_flagging="never",
     clear_btn=None,
-    stop_btn="Stop"
+    stop_btn="Stop",
+    submit_btn="Generate"
 )
 
 realesrgan_upscale_interface = gr.Interface(
@@ -8498,7 +8565,8 @@ realesrgan_upscale_interface = gr.Interface(
     description="This user interface allows you to upload an image and upscale it using Real-ESRGAN models",
     allow_flagging="never",
     clear_btn=None,
-    stop_btn="Stop"
+    stop_btn="Stop",
+    submit_btn="Generate"
 )
 
 faceswap_interface = gr.Interface(
@@ -8523,7 +8591,8 @@ faceswap_interface = gr.Interface(
     description="This user interface allows you to perform face swapping on images or videos and optional face restoration.",
     allow_flagging="never",
     clear_btn=None,
-    stop_btn="Stop"
+    stop_btn="Stop",
+    submit_btn="Generate"
 )
 
 extras_interface = gr.TabbedInterface(
@@ -8542,7 +8611,8 @@ wiki_interface = gr.Interface(
     description="This interface displays the Wiki content from the specified URL or local file.",
     allow_flagging="never",
     clear_btn=None,
-    stop_btn="Stop"
+    stop_btn="Stop",
+    submit_btn="Generate"
 )
 
 gallery_interface = gr.Interface(
@@ -8565,7 +8635,8 @@ gallery_interface = gr.Interface(
     description="This interface allows you to view files from the outputs directory",
     allow_flagging="never",
     clear_btn=None,
-    stop_btn="Stop"
+    stop_btn="Stop",
+    submit_btn="Generate"
 )
 
 model_downloader_interface = gr.Interface(
@@ -8581,7 +8652,8 @@ model_downloader_interface = gr.Interface(
     description="This user interface allows you to download LLM and StableDiffusion models",
     allow_flagging="never",
     clear_btn=None,
-    stop_btn="Stop"
+    stop_btn="Stop",
+    submit_btn="Generate"
 )
 
 settings_interface = gr.Interface(
@@ -8613,7 +8685,8 @@ settings_interface = gr.Interface(
     description="This user interface allows you to change settings of the application",
     allow_flagging="never",
     clear_btn=None,
-    stop_btn="Stop"
+    stop_btn="Stop",
+    submit_btn="Generate"
 )
 
 system_interface = gr.Interface(
@@ -8636,7 +8709,8 @@ system_interface = gr.Interface(
     description="This interface displays system information",
     allow_flagging="never",
     clear_btn=None,
-    stop_btn="Stop"
+    stop_btn="Stop",
+    submit_btn="Generate"
 )
 
 if settings['custom_theme']['enabled']:
