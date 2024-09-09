@@ -32,6 +32,7 @@ The goal of the project - to create the easiest possible application to use neur
 * Debug logging to logs from `Install` and `Update` files
 * Support for Transformers and llama.cpp models (LLM)
 * Support for diffusers and safetensors models (StableDiffusion) - txt2img, img2img, depth2img, pix2pix, controlnet, upscale (latent), refiner, inpaint, outpaint, gligen, animatediff, hotshot-xl, video, ldm3d, sd3, cascade, t2i-ip-adapter, ip-adapter-faceid and riffusion tabs
+* Support for stable-diffusion-cpp models for FLUX
 * Support of additional models for image generation: Kandinsky (txt2img, img2img, inpaint), Flux (with LoRA support), HunyuanDiT (txt2img, controlnet), Lumina-T2X, Kolors (txt2img with LoRA support, img2img, ip-adapter-plus), AuraFlow (with LoRA and AuraSR support), Würstchen, DeepFloydIF (txt2img, img2img, inpaint), PixArt and PlaygroundV2.5
 * Support Extras with Rembg, CodeFormer, PixelOE, DDColor, DownScale, Format changer, FaceSwap (Roop) and Upscale (Real-ESRGAN) models for image, video and audio
 * Support StableAudio
@@ -121,6 +122,7 @@ First of all, I want to thank the developers of [PyCharm](https://www.jetbrains.
 * `gitpython` - https://github.com/gitpython-developers/GitPython
 * `diffusers` - https://github.com/huggingface/diffusers
 * `llama.cpp-python` - https://github.com/abetlen/llama-cpp-python
+* `stable-diffusion-cpp-python` - https://github.com/william-murray1204/stable-diffusion-cpp-python
 * `audiocraft` - https://github.com/facebookresearch/audiocraft
 * `AudioLDM2` - https://github.com/haoheliu/AudioLDM2
 * `xformers` - https://github.com/facebookresearch/xformers
@@ -143,6 +145,7 @@ First of all, I want to thank the developers of [PyCharm](https://www.jetbrains.
 
 * [Transformers](https://github.com/huggingface/transformers/blob/main/LICENSE)
 * [llama.cpp](https://github.com/ggerganov/llama.cpp/blob/master/LICENSE)
+* [stable-diffusion.cpp](https://github.com/leejet/stable-diffusion.cpp/blob/master/LICENSE)
 * [CoquiTTS](https://coqui.ai/cpml)
 * [OpenAI-Whisper](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/apache-2.0.md)
 * [LibreTranslate](https://github.com/LibreTranslate/LibreTranslate/blob/main/LICENSE)
