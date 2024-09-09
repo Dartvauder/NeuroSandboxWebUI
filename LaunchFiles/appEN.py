@@ -1237,7 +1237,7 @@ def translate_text(text, source_lang, target_lang, enable_translate_history, tra
 def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name, vae_model_name, lora_model_names, lora_scales, textual_inversion_model_names, stable_diffusion_settings_html,
                            stable_diffusion_model_type, stable_diffusion_sampler, stable_diffusion_steps,
                            stable_diffusion_cfg, stable_diffusion_width, stable_diffusion_height,
-                           stable_diffusion_clip_skip, num_images_per_prompt, enable_freeu, freeu_s1, freeu_s2, freeu_b1, freeu_b2, enable_sag, sag_scale, enable_pag, pag_scale, enable_token_merging, ratio, enable_deepcache, cache_interval, cache_branch_id, seed, output_format="png"):
+                           stable_diffusion_clip_skip, num_images_per_prompt, seed, enable_freeu, freeu_s1, freeu_s2, freeu_b1, freeu_b2, enable_sag, sag_scale, enable_pag, pag_scale, enable_token_merging, ratio, enable_deepcache, cache_interval, cache_branch_id, output_format="png"):
 
     if not stable_diffusion_model_name:
         return None, "Please, select a StableDiffusion model!"
@@ -6674,7 +6674,7 @@ chat_interface = gr.Interface(
         gr.Checkbox(label="Enable LibreTranslate", value=False),
         gr.Dropdown(choices=["en", "es", "fr", "de", "it", "pt", "pl", "tr", "ru", "nl", "cs", "ar", "zh", "ja", "hi"], label="Select target language", value="ru", interactive=True),
         gr.Checkbox(label="Enable Multimodal", value=False),
-        gr.Checkbox(label="Enable TTS", value=False),
+        gr.Checkbox(label="Enable TTS", value=False)
     ],
     additional_inputs=[
         gr.HTML("<h3>LLM Settings</h3>"),
@@ -6692,12 +6692,12 @@ chat_interface = gr.Interface(
         gr.Slider(minimum=0.01, maximum=1.0, value=0.9, step=0.01, label="TTS Top P", interactive=True),
         gr.Slider(minimum=1, maximum=100, value=20, step=1, label="TTS Top K", interactive=True),
         gr.Slider(minimum=0.5, maximum=2.0, value=1.0, step=0.1, label="TTS Speed", interactive=True),
-        gr.Radio(choices=["wav", "mp3", "ogg"], label="Select output format", value="wav", interactive=True),
+        gr.Radio(choices=["wav", "mp3", "ogg"], label="Select output format", value="wav", interactive=True)
     ],
     additional_inputs_accordion=gr.Accordion(label="LLM and TTS Settings", open=False),
     outputs=[
         gr.Chatbot(label="LLM text response", value=[], avatar_images=["avatars/user.png", "avatars/ai.png"], show_copy_button=True),
-        gr.Audio(label="LLM audio response", type="filepath"),
+        gr.Audio(label="LLM audio response", type="filepath")
     ],
     title="NeuroSandboxWebUI - LLM",
     description="This user interface allows you to enter any text or audio and receive generated response. You can select the LLM model, "
@@ -6859,6 +6859,9 @@ txt2img_interface = gr.Interface(
         gr.Slider(minimum=256, maximum=2048, value=512, step=64, label="Height"),
         gr.Slider(minimum=1, maximum=4, value=1, step=1, label="Clip skip"),
         gr.Slider(minimum=1, maximum=4, value=1, step=1, label="Number of images to generate"),
+        gr.Textbox(label="Seed (optional)", value="")
+    ],
+     additional_inputs=[
         gr.Checkbox(label="Enable FreeU", value=False),
         gr.Slider(minimum=0.1, maximum=4, value=0.9, step=0.1, label="FreeU-S1"),
         gr.Slider(minimum=0.1, maximum=4, value=0.2, step=0.1, label="FreeU-S2"),
@@ -6873,12 +6876,12 @@ txt2img_interface = gr.Interface(
         gr.Checkbox(label="Enable DeepCache", value=False),
         gr.Slider(minimum=1, maximum=5, value=3, step=1, label="DeepCache Interval"),
         gr.Slider(minimum=0, maximum=1, value=0, step=1, label="DeepCache BranchID"),
-        gr.Textbox(label="Seed (optional)", value=""),
-        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
+        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True)
     ],
+    additional_inputs_accordion=gr.Accordion(label="Additional StableDiffusion Settings", open=False),
     outputs=[
         gr.Gallery(label="Generated images", elem_id="gallery", columns=[2], rows=[2], object_fit="contain", height="auto"),
-        gr.Textbox(label="Message", type="text"),
+        gr.Textbox(label="Message", type="text")
     ],
     title="NeuroSandboxWebUI - StableDiffusion (txt2img)",
     description="This user interface allows you to enter any text and generate images using StableDiffusion. "
@@ -8681,7 +8684,9 @@ settings_interface = gr.Interface(
         gr.Textbox(label="Gradio Auth", value=settings['auth']),
         gr.Textbox(label="Server Name", value=settings['server_name']),
         gr.Number(label="Server Port", value=settings['server_port']),
-        gr.Textbox(label="Hugging Face Token", value=settings['hf_token']),
+        gr.Textbox(label="Hugging Face Token", value=settings['hf_token'])
+    ],
+    additional_inputs=[
         gr.Radio(choices=["Base", "Default", "Glass", "Monochrome", "Soft"], label="Theme", value=settings['theme']),
         gr.Checkbox(label="Enable Custom Theme", value=settings['custom_theme']['enabled']),
         gr.Textbox(label="Primary Hue", value=settings['custom_theme']['primary_hue']),
@@ -8691,8 +8696,9 @@ settings_interface = gr.Interface(
         gr.Radio(choices=["radius_none", "radius_sm", "radius_md", "radius_lg"], label="Radius Size", value=settings['custom_theme'].get('radius_size', 'radius_md')),
         gr.Radio(choices=["text_sm", "text_md", "text_lg"], label="Text Size", value=settings['custom_theme'].get('text_size', 'text_md')),
         gr.Textbox(label="Font", value=settings['custom_theme'].get('font', 'Arial')),
-        gr.Textbox(label="Monospaced Font", value=settings['custom_theme'].get('font_mono', 'Courier New')),
+        gr.Textbox(label="Monospaced Font", value=settings['custom_theme'].get('font_mono', 'Courier New'))
     ],
+    additional_inputs_accordion=gr.Accordion(label="Theme builder", open=False),
     outputs=[
         gr.Textbox(label="Message", type="text")
     ],
