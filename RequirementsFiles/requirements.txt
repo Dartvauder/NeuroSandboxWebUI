@@ -346,3 +346,4 @@ tyro==0.8.10
 pykalman==0.9.7
 tomesd==0.1.3
 DeepCache==0.1.1
+stable-diffusion-cpp-python==0.1.7

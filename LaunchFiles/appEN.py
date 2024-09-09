@@ -51,6 +51,7 @@ from PIL import Image, ImageDraw
 from tqdm import tqdm
 from llama_cpp import Llama
 from llama_cpp.llama_chat_format import MoondreamChatHandler
+from stable_diffusion_cpp import StableDiffusion
 import requests
 import markdown
 import urllib.parse
@@ -4017,7 +4018,7 @@ def generate_image_kandinsky_inpaint(prompt, negative_prompt, init_image, mask_i
         flush()
 
 
-def generate_image_flux(prompt, model_name, lora_model_names, lora_scales, guidance_scale, height, width, num_inference_steps, max_sequence_length, seed, output_format="png"):
+def generate_image_flux(prompt, model_name, quantize_model_name, enable_quantize, lora_model_names, lora_scales, guidance_scale, height, width, num_inference_steps, max_sequence_length, seed, output_format="png"):
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -4039,57 +4040,75 @@ def generate_image_flux(prompt, model_name, lora_model_names, lora_scales, guida
         print(f"Flux {model_name} model downloaded")
 
     try:
-        pipe = FluxPipeline.from_pretrained(flux_model_path, torch_dtype=torch.bfloat16)
-        pipe.to(device)
-        pipe.enable_model_cpu_offload()
-        pipe.enable_sequential_cpu_offload()
-        pipe.vae.enable_slicing()
-        pipe.vae.enable_tiling()
+        if enable_quantize:
+            quantize_flux_model_path = os.path.join("inputs", "image", "quantize-flux", f"{quantize_model_name}.gguf")
+            lora_model_path = os.path.join("inputs", "image", "flux-lora", f"{lora_model_names}.safetensors")
 
-        if isinstance(lora_scales, str):
-            lora_scales = [float(scale.strip()) for scale in lora_scales.split(',') if scale.strip()]
-        elif isinstance(lora_scales, (int, float)):
-            lora_scales = [float(lora_scales)]
+            stable_diffusion = StableDiffusion(
+                model_path=quantize_flux_model_path,
+                lora_model_dir=lora_model_path,
+                wtype="default")
 
-        lora_loaded = False
-        if lora_model_names and lora_scales:
-            if len(lora_model_names) != len(lora_scales):
-                print(
-                    f"Warning: Number of LoRA models ({len(lora_model_names)}) does not match number of scales ({len(lora_scales)}). Using available scales.")
+            output = stable_diffusion.txt_to_img(
+                prompt=prompt,
+                guidance=guidance_scale,
+                height=height,
+                width=width,
+                sample_steps=num_inference_steps,
+                seed=seed)
+        else:
+            pipe = FluxPipeline.from_pretrained(flux_model_path, torch_dtype=torch.bfloat16)
+            pipe.to(device)
+            pipe.enable_model_cpu_offload()
+            pipe.enable_sequential_cpu_offload()
+            pipe.vae.enable_slicing()
+            pipe.vae.enable_tiling()
+            pipe.to(torch.float16)
 
-            for i, lora_model_name in enumerate(lora_model_names):
-                if i < len(lora_scales):
-                    lora_scale = lora_scales[i]
-                else:
-                    lora_scale = 1.0
+            if isinstance(lora_scales, str):
+                lora_scales = [float(scale.strip()) for scale in lora_scales.split(',') if scale.strip()]
+            elif isinstance(lora_scales, (int, float)):
+                lora_scales = [float(lora_scales)]
 
-                lora_model_path = os.path.join("inputs", "image", "flux-lora", lora_model_name)
-                if os.path.exists(lora_model_path):
-                    adapter_name = os.path.splitext(os.path.basename(lora_model_name))[0]
-                    try:
-                        pipe.load_lora_weights(lora_model_path, adapter_name=adapter_name)
-                        pipe.fuse_lora(lora_scale=lora_scale)
-                        lora_loaded = True
-                        print(f"Loaded LoRA {lora_model_name} with scale {lora_scale}")
-                    except Exception as e:
-                        print(f"Error loading LoRA {lora_model_name}: {str(e)}")
+            lora_loaded = False
+            if lora_model_names and lora_scales:
+                if len(lora_model_names) != len(lora_scales):
+                    print(
+                        f"Warning: Number of LoRA models ({len(lora_model_names)}) does not match number of scales ({len(lora_scales)}). Using available scales.")
 
-        out = pipe(
-            prompt=prompt,
-            guidance_scale=guidance_scale,
-            height=height,
-            width=width,
-            num_inference_steps=num_inference_steps,
-            max_sequence_length=max_sequence_length,
-            generator=generator
-        ).images[0]
+                for i, lora_model_name in enumerate(lora_model_names):
+                    if i < len(lora_scales):
+                        lora_scale = lora_scales[i]
+                    else:
+                        lora_scale = 1.0
+
+                    lora_model_path = os.path.join("inputs", "image", "flux-lora", lora_model_name)
+                    if os.path.exists(lora_model_path):
+                        adapter_name = os.path.splitext(os.path.basename(lora_model_name))[0]
+                        try:
+                            pipe.load_lora_weights(lora_model_path, adapter_name=adapter_name)
+                            pipe.fuse_lora(lora_scale=lora_scale)
+                            lora_loaded = True
+                            print(f"Loaded LoRA {lora_model_name} with scale {lora_scale}")
+                        except Exception as e:
+                            print(f"Error loading LoRA {lora_model_name}: {str(e)}")
+
+            output = pipe(
+                prompt=prompt,
+                guidance_scale=guidance_scale,
+                height=height,
+                width=width,
+                num_inference_steps=num_inference_steps,
+                max_sequence_length=max_sequence_length,
+                generator=generator
+            ).images[0]
 
         today = datetime.now().date()
         image_dir = os.path.join('outputs', f"Flux_{today.strftime('%Y%m%d')}")
         os.makedirs(image_dir, exist_ok=True)
         image_filename = f"flux_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
         image_path = os.path.join(image_dir, image_filename)
-        out.save(image_path, format=output_format.upper())
+        output.save(image_path, format=output_format.upper())
 
         return image_path, f"Image generated successfully. Seed used: {seed}"
 
@@ -4097,7 +4116,10 @@ def generate_image_flux(prompt, model_name, lora_model_names, lora_scales, guida
         return None, str(e)
 
     finally:
-        del pipe
+        if enable_quantize:
+            del stable_diffusion
+        else:
+            del pipe
         flush()
 
 
@@ -4305,7 +4327,7 @@ def generate_image_kolors_txt2img(prompt, negative_prompt, lora_model_names, lor
                 else:
                     lora_scale = 1.0
 
-                lora_model_path = os.path.join("inputs", "image", "sd_models", "lora", lora_model_name)
+                lora_model_path = os.path.join("inputs", "image", "kolors-lora", lora_model_name)
                 if os.path.exists(lora_model_path):
                     adapter_name = os.path.splitext(os.path.basename(lora_model_name))[0]
                     try:
@@ -6607,6 +6629,8 @@ vae_models_list = [None] + [model.replace(".safetensors", "") for model in os.li
                             model.endswith(".safetensors") or not model.endswith(".txt")]
 lora_models_list = [None] + [model for model in os.listdir("inputs/image/sd_models/lora") if
                              model.endswith(".safetensors") or model.endswith(".pt")]
+quantized_flux_models_list = [None] + [model.replace(".gguf", "") for model in os.listdir("inputs/image/quantize-flux") if
+                            model.endswith(".gguf") or not model.endswith(".txt")]
 flux_lora_models_list = [None] + [model for model in os.listdir("inputs/image/flux-lora") if
                              model.endswith(".safetensors")]
 auraflow_lora_models_list = [None] + [model for model in os.listdir("inputs/image/auraflow-lora") if
@@ -7583,6 +7607,8 @@ flux_interface = gr.Interface(
     inputs=[
         gr.Textbox(label="Enter your prompt"),
         gr.Dropdown(choices=["FLUX.1-schnell", "FLUX.1-dev"], label="Select Flux model", value="FLUX.1-schnell"),
+        gr.Dropdown(choices=quantized_flux_models_list, label="Select quantized Flux model (optional if enabled quantize)", value=None),
+        gr.Checkbox(label="Enable Quantize", value=False),
         gr.Dropdown(choices=flux_lora_models_list, label="Select LORA models (optional)", value=None, multiselect=True),
         gr.Textbox(label="LoRA Scales"),
         gr.Slider(minimum=0.0, maximum=10.0, value=0.0, step=0.1, label="Guidance Scale"),
