@@ -22,7 +22,7 @@ The goal of the project - to create the easiest possible application to use neur
 
 ### Extras: <img width="1119" alt="6" src="https://github.com/user-attachments/assets/6b562746-ceda-466c-822c-c3b67272bcc2">
 
-### Interface: <img width="1133" alt="7" src="https://github.com/user-attachments/assets/3100ed0f-41f5-491b-9fcb-e53c8dfd6653">
+### Interface: <img width="1124" alt="7" src="https://github.com/user-attachments/assets/673cb2b1-57ac-4b1d-92aa-61066832ecdb">
 
 ## Features:
 
