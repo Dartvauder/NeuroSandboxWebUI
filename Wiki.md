@@ -226,7 +226,7 @@
 2) Select your model
 3) Set up the model according to the parameters you need
 4) Click `Submit` to get the generated image
-#### Optional: You can select your `lora` models to improve the generation method. You can also use quantized models by clicking on the `Enable quantize` button if you have low VRAM, but you need to download the model yourself: [FLUX.1-dev](https://huggingface.co/city96/FLUX.1-dev-gguf/tree/main) and [FLUX.1-schnell](https://huggingface.co/city96/FLUX.1-schnell-gguf/tree/main)
+#### Optional: You can select your `lora` models to improve the generation method. You can also use quantized models by clicking on the `Enable quantize` button if you have low VRAM, but you need to download the model yourself: [FLUX.1-dev](https://huggingface.co/city96/FLUX.1-dev-gguf/tree/main) or [FLUX.1-schnell](https://huggingface.co/city96/FLUX.1-schnell-gguf/tree/main) and also [VAE](https://huggingface.co/black-forest-labs/FLUX.1-dev/blob/main/ae.safetensors), [CLIP](https://huggingface.co/comfyanonymous/flux_text_encoders/blob/main/clip_l.safetensors) and [T5XXL](https://huggingface.co/comfyanonymous/flux_text_encoders/blob/main/t5xxl_fp16.safetensors)
 #### lora = *inputs/image/flux-lora*
 #### Quantize models =*inputs/image/quantize-flux*
 
