@@ -4034,35 +4034,39 @@ def generate_image_flux(prompt, model_name, quantize_model_name, enable_quantize
         seed = int(seed)
     generator = torch.Generator(device).manual_seed(seed)
 
-    if not model_name:
-        return None, "Please select a Flux model!"
-
     flux_model_path = os.path.join("inputs", "image", "flux", model_name)
-
-    if not os.path.exists(flux_model_path):
-        print(f"Downloading Flux {model_name} model...")
-        os.makedirs(flux_model_path, exist_ok=True)
-        Repo.clone_from(f"https://huggingface.co/black-forest-labs/{model_name}", flux_model_path)
-        print(f"Flux {model_name} model downloaded")
 
     try:
         if enable_quantize:
             quantize_flux_model_path = os.path.join("inputs", "image", "quantize-flux", f"{quantize_model_name}.gguf")
             lora_model_path = os.path.join("inputs", "image", "flux-lora", f"{lora_model_names}.safetensors")
 
+            if not quantize_model_name:
+                return None, "Please select a quantize Flux model!"
+
             stable_diffusion = StableDiffusion(
-                model_path=quantize_flux_model_path,
+                diffusion_model_path=quantize_flux_model_path,
+                clip_l_path="inputs/image/quantize-flux/t5xxl_fp16.safetensors",
+                t5xxl_path="inputs/image/quantize-flux/clip_l.safetensors",
+                vae_path="inputs/image/quantize-flux/ae.safetensors",
                 lora_model_dir=lora_model_path,
                 wtype="default")
 
             output = stable_diffusion.txt_to_img(
                 prompt=prompt,
-                guidance=guidance_scale,
+                cfg_scale=guidance_scale,
                 height=height,
                 width=width,
                 sample_steps=num_inference_steps,
-                seed=seed)
+                seed=seed,
+                sample_method="euler")
         else:
+            if not os.path.exists(flux_model_path):
+                print(f"Downloading Flux {model_name} model...")
+                os.makedirs(flux_model_path, exist_ok=True)
+                Repo.clone_from(f"https://huggingface.co/black-forest-labs/{model_name}", flux_model_path)
+                print(f"Flux {model_name} model downloaded")
+
             pipe = FluxPipeline.from_pretrained(flux_model_path, torch_dtype=torch.bfloat16)
             pipe.to(device)
             pipe.enable_model_cpu_offload()
@@ -6647,7 +6651,7 @@ vae_models_list = [None] + [model.replace(".safetensors", "") for model in os.li
 lora_models_list = [None] + [model for model in os.listdir("inputs/image/sd_models/lora") if
                              model.endswith(".safetensors") or model.endswith(".pt")]
 quantized_flux_models_list = [None] + [model.replace(".gguf", "") for model in os.listdir("inputs/image/quantize-flux") if
-                            model.endswith(".gguf") or not model.endswith(".txt")]
+                            model.endswith(".gguf") or not model.endswith(".txt") and not model.endswith(".safetensors")]
 flux_lora_models_list = [None] + [model for model in os.listdir("inputs/image/flux-lora") if
                              model.endswith(".safetensors")]
 auraflow_lora_models_list = [None] + [model for model in os.listdir("inputs/image/auraflow-lora") if
