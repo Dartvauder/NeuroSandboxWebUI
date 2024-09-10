@@ -18,6 +18,7 @@ pip install wheel setuptools
 pip install --no-deps -r "$CURRENT_DIR/RequirementsFiles/requirements.txt" 2>> "$ERROR_LOG"
 pip install --no-deps -r "$CURRENT_DIR/RequirementsFiles/requirements-cuda.txt" 2>> "$ERROR_LOG"
 pip install --no-deps -r "$CURRENT_DIR/RequirementsFiles/requirements-llama-cpp.txt" 2>> "$ERROR_LOG"
+pip install --no-deps -r "$CURRENT_DIR/RequirementsFiles/requirements-stable-diffusion-cpp.txt" 2>> "$ERROR_LOG"
 pip install git+https://github.com/tencent-ailab/IP-Adapter.git 2>> "$ERROR_LOG"
 pip install git+https://github.com/vork/PyNanoInstantMeshes.git 2>> "$ERROR_LOG"
 pip install git+https://github.com/openai/CLIP.git 2>> "$ERROR_LOG"
