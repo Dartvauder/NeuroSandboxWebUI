@@ -6827,7 +6827,7 @@ seamless_m4tv2_interface = gr.Interface(
     allow_flagging="never",
     clear_btn=None,
     stop_btn="Stop",
-    submit_btn="Generate"
+    submit_btn="Translate"
 )
 
 translate_interface = gr.Interface(
@@ -6853,7 +6853,7 @@ translate_interface = gr.Interface(
     allow_flagging="never",
     clear_btn=None,
     stop_btn="Stop",
-    submit_btn="Generate"
+    submit_btn="Translate"
 )
 
 txt2img_interface = gr.Interface(
@@ -7066,7 +7066,7 @@ latent_upscale_interface = gr.Interface(
     allow_flagging="never",
     clear_btn=None,
     stop_btn="Stop",
-    submit_btn="Generate"
+    submit_btn="Upscale"
 )
 
 sdxl_refiner_interface = gr.Interface(
@@ -7086,7 +7086,7 @@ sdxl_refiner_interface = gr.Interface(
     allow_flagging="never",
     clear_btn=None,
     stop_btn="Stop",
-    submit_btn="Generate"
+    submit_btn="Refine"
 )
 
 inpaint_interface = gr.Interface(
@@ -7610,7 +7610,7 @@ riffusion_image2audio_interface = gr.Interface(
     allow_flagging="never",
     clear_btn=None,
     stop_btn="Stop",
-    submit_btn="Generate"
+    submit_btn="Convert"
 )
 
 riffusion_audio2image_interface = gr.Interface(
@@ -7628,7 +7628,7 @@ riffusion_audio2image_interface = gr.Interface(
     allow_flagging="never",
     clear_btn=None,
     stop_btn="Stop",
-    submit_btn="Generate"
+    submit_btn="Convert"
 )
 
 riffusion_interface = gr.TabbedInterface(
@@ -8211,7 +8211,7 @@ wav2lip_interface = gr.Interface(
     allow_flagging="never",
     clear_btn=None,
     stop_btn="Stop",
-    submit_btn="Generate"
+    submit_btn="Animate"
 )
 
 liveportrait_interface = gr.Interface(
@@ -8232,7 +8232,7 @@ liveportrait_interface = gr.Interface(
     allow_flagging="never",
     clear_btn=None,
     stop_btn="Stop",
-    submit_btn="Generate"
+    submit_btn="Animate"
 )
 
 modelscope_interface = gr.Interface(
@@ -8602,7 +8602,7 @@ rvc_interface = gr.Interface(
     allow_flagging="never",
     clear_btn=None,
     stop_btn="Stop",
-    submit_btn="Generate"
+    submit_btn="Conversion"
 )
 
 uvr_interface = gr.Interface(
@@ -8624,7 +8624,7 @@ uvr_interface = gr.Interface(
     allow_flagging="never",
     clear_btn=None,
     stop_btn="Stop",
-    submit_btn="Generate"
+    submit_btn="Separate"
 )
 
 demucs_interface = gr.Interface(
@@ -8644,7 +8644,7 @@ demucs_interface = gr.Interface(
     allow_flagging="never",
     clear_btn=None,
     stop_btn="Stop",
-    submit_btn="Generate"
+    submit_btn="Separate"
 )
 
 image_extras_interface = gr.Interface(
@@ -8674,7 +8674,7 @@ image_extras_interface = gr.Interface(
     allow_flagging="never",
     clear_btn=None,
     stop_btn="Stop",
-    submit_btn="Generate"
+    submit_btn="Modify"
 )
 
 video_extras_interface = gr.Interface(
@@ -8695,7 +8695,7 @@ video_extras_interface = gr.Interface(
     allow_flagging="never",
     clear_btn=None,
     stop_btn="Stop",
-    submit_btn="Generate"
+    submit_btn="Modify"
 )
 
 audio_extras_interface = gr.Interface(
@@ -8714,7 +8714,7 @@ audio_extras_interface = gr.Interface(
     allow_flagging="never",
     clear_btn=None,
     stop_btn="Stop",
-    submit_btn="Generate"
+    submit_btn="Modify"
 )
 
 realesrgan_upscale_interface = gr.Interface(
@@ -8744,7 +8744,7 @@ realesrgan_upscale_interface = gr.Interface(
     allow_flagging="never",
     clear_btn=None,
     stop_btn="Stop",
-    submit_btn="Generate"
+    submit_btn="Upscale"
 )
 
 faceswap_interface = gr.Interface(
@@ -8773,7 +8773,7 @@ faceswap_interface = gr.Interface(
     allow_flagging="never",
     clear_btn=None,
     stop_btn="Stop",
-    submit_btn="Generate"
+    submit_btn="Swap"
 )
 
 extras_interface = gr.TabbedInterface(
@@ -8898,7 +8898,7 @@ system_interface = gr.Interface(
     allow_flagging="never",
     clear_btn=None,
     stop_btn="Stop",
-    submit_btn="Check"
+    submit_btn="Display"
 )
 
 if settings['custom_theme']['enabled']:
