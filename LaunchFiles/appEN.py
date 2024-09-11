@@ -6676,14 +6676,15 @@ chat_interface = gr.Interface(
         gr.Audio(type="filepath", label="Record your request (optional)"),
         gr.Image(label="Upload your image (optional)", type="filepath"),
         gr.Dropdown(choices=llm_models_list, label="Select LLM model", value=None),
-        gr.Dropdown(choices=llm_lora_models_list, label="Select LoRA model (optional)", value=None),
-        gr.Checkbox(label="Enable WebSearch", value=False),
-        gr.Checkbox(label="Enable LibreTranslate", value=False),
-        gr.Dropdown(choices=["en", "es", "fr", "de", "it", "pt", "pl", "tr", "ru", "nl", "cs", "ar", "zh", "ja", "hi"], label="Select target language", value="ru", interactive=True),
-        gr.Checkbox(label="Enable Multimodal", value=False),
-        gr.Checkbox(label="Enable TTS", value=False)
+        gr.Dropdown(choices=llm_lora_models_list, label="Select LoRA model (optional)", value=None)
     ],
     additional_inputs=[
+        gr.Checkbox(label="Enable WebSearch", value=False),
+        gr.Checkbox(label="Enable LibreTranslate", value=False),
+        gr.Dropdown(choices=["en", "es", "fr", "de", "it", "pt", "pl", "tr", "ru", "nl", "cs", "ar", "zh", "ja", "hi"],
+                    label="Select target language", value="ru", interactive=True),
+        gr.Checkbox(label="Enable Multimodal", value=False),
+        gr.Checkbox(label="Enable TTS", value=False),
         gr.HTML("<h3>LLM Settings</h3>"),
         gr.Radio(choices=["transformers", "llama"], label="Select model type", value="transformers"),
         gr.Slider(minimum=256, maximum=4096, value=512, step=1, label="Max length (for transformers type models)"),
@@ -6834,12 +6835,13 @@ translate_interface = gr.Interface(
     inputs=[
         gr.Textbox(label="Enter text to translate"),
         gr.Dropdown(choices=["en", "es", "fr", "de", "it", "pt", "pl", "tr", "ru", "nl", "cs", "ar", "zh", "ja", "hi"], label="Select source language", value="en"),
-        gr.Dropdown(choices=["en", "es", "fr", "de", "it", "pt", "pl", "tr", "ru", "nl", "cs", "ar", "zh", "ja", "hi"], label="Select target language", value="ru"),
+        gr.Dropdown(choices=["en", "es", "fr", "de", "it", "pt", "pl", "tr", "ru", "nl", "cs", "ar", "zh", "ja", "hi"], label="Select target language", value="ru")
+    ],
+    additional_inputs=[
         gr.Checkbox(label="Enable translate history save", value=False),
         gr.Radio(choices=["txt", "json"], label="Select translate history format", value="txt", interactive=True),
         gr.File(label="Upload text file (optional)", file_count="single", interactive=True)
     ],
-    additional_inputs=[],
     additional_inputs_accordion=gr.Accordion(label="Additional LibreTranslate Settings", open=False),
     outputs=[
         gr.Textbox(label="Translated text")
@@ -6914,13 +6916,13 @@ img2img_interface = gr.Interface(
         gr.Textbox(label="Enter your prompt"),
         gr.Textbox(label="Enter your negative prompt", value=""),
         gr.Image(label="Initial image", type="filepath"),
-        gr.Slider(minimum=0.0, maximum=1.0, value=0.5, step=0.01, label="Strength"),
+        gr.Slider(minimum=0.0, maximum=1.0, value=0.5, step=0.01, label="Strength (Initial image)"),
+        gr.Radio(choices=["SD", "SD2", "SDXL"], label="Select model type", value="SD"),
         gr.Dropdown(choices=stable_diffusion_models_list, label="Select StableDiffusion model", value=None),
         gr.Dropdown(choices=vae_models_list, label="Select VAE model (optional)", value=None),
         gr.Textbox(label="Seed (optional)", value="")
     ],
     additional_inputs=[
-        gr.Radio(choices=["SD", "SD2", "SDXL"], label="Select model type", value="SD"),
         gr.Dropdown(choices=["euler_ancestral", "euler", "lms", "heun", "dpm", "dpm_solver", "dpm_solver++"],
                     label="Select sampler", value="euler_ancestral"),
         gr.Slider(minimum=1, maximum=100, value=30, step=1, label="Steps"),
@@ -6978,18 +6980,19 @@ pix2pix_interface = gr.Interface(
         gr.Textbox(label="Enter your prompt"),
         gr.Textbox(label="Enter your negative prompt", value=""),
         gr.Image(label="Initial image", type="filepath"),
+        gr.Textbox(label="Seed (optional)", value="")
+    ],
+    additional_inputs=[
         gr.Slider(minimum=1, maximum=100, value=30, step=1, label="Steps"),
         gr.Slider(minimum=1.0, maximum=30.0, value=8, step=0.1, label="CFG"),
         gr.Slider(minimum=1, maximum=4, value=1, step=1, label="Clip skip"),
         gr.Slider(minimum=1, maximum=4, value=1, step=1, label="Number of images to generate"),
-        gr.Textbox(label="Seed (optional)", value=""),
-        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
+        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True)
     ],
-    additional_inputs=[],
     additional_inputs_accordion=gr.Accordion(label="Pix2Pix Settings", open=False),
     outputs=[
         gr.Gallery(label="Generated images", elem_id="gallery", columns=[2], rows=[2], object_fit="contain", height="auto"),
-        gr.Textbox(label="Message", type="text"),
+        gr.Textbox(label="Message", type="text")
     ],
     title="NeuroSandboxWebUI - StableDiffusion (pix2pix)",
     description="This user interface allows you to enter a prompt and an initial image to generate new images using Pix2Pix. "
@@ -7008,10 +7011,13 @@ controlnet_interface = gr.Interface(
         gr.Textbox(label="Enter your negative prompt", value=""),
         gr.Image(label="Initial image", type="filepath"),
         gr.Radio(choices=["SD", "SDXL"], label="Select model type", value="SD"),
-        gr.Dropdown(choices=["euler_ancestral", "euler", "lms", "heun", "dpm", "dpm_solver", "dpm_solver++"],
-                    label="Select sampler", value="euler_ancestral"),
         gr.Dropdown(choices=stable_diffusion_models_list, label="Select StableDiffusion model", value=None),
         gr.Dropdown(choices=controlnet_models_list, label="Select ControlNet model", value=None),
+        gr.Textbox(label="Seed (optional)", value="")
+    ],
+    additional_inputs=[
+        gr.Dropdown(choices=["euler_ancestral", "euler", "lms", "heun", "dpm", "dpm_solver", "dpm_solver++"],
+                    label="Select sampler", value="euler_ancestral"),
         gr.Slider(minimum=1, maximum=100, value=30, step=1, label="Steps"),
         gr.Slider(minimum=1.0, maximum=30.0, value=8, step=0.1, label="CFG"),
         gr.Slider(minimum=256, maximum=2048, value=512, step=64, label="Width"),
@@ -7019,15 +7025,13 @@ controlnet_interface = gr.Interface(
         gr.Slider(minimum=0.1, maximum=1.0, value=0.5, step=0.1, label="ControlNet conditioning scale"),
         gr.Slider(minimum=1, maximum=4, value=1, step=1, label="Clip skip"),
         gr.Slider(minimum=1, maximum=4, value=1, step=1, label="Number of images to generate"),
-        gr.Textbox(label="Seed (optional)", value=""),
-        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
+        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True)
     ],
-    additional_inputs=[],
     additional_inputs_accordion=gr.Accordion(label="StableDiffusion Settings", open=False),
     outputs=[
         gr.Gallery(label="Generated images", elem_id="gallery", columns=[2], rows=[2], object_fit="contain", height="auto"),
         gr.Gallery(label="ControlNet control images", elem_id="gallery", columns=[2], rows=[2], object_fit="contain", height="auto"),
-        gr.Textbox(label="Message", type="text"),
+        gr.Textbox(label="Message", type="text")
     ],
     title="NeuroSandboxWebUI - StableDiffusion (controlnet)",
     description="This user interface allows you to generate images using ControlNet models. "
@@ -7045,16 +7049,17 @@ latent_upscale_interface = gr.Interface(
         gr.Textbox(label="Prompt (optional)", value=""),
         gr.Image(label="Image to upscale", type="filepath"),
         gr.Radio(choices=["x2", "x4"], label="Upscale size", value="x2"),
+        gr.Textbox(label="Seed (optional)", value="")
+    ],
+    additional_inputs=[
         gr.Slider(minimum=1, maximum=100, value=50, step=1, label="Steps"),
         gr.Slider(minimum=0.0, maximum=30.0, value=4, step=0.1, label="CFG"),
-        gr.Textbox(label="Seed (optional)", value=""),
-        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
+        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True)
     ],
-    additional_inputs=[],
     additional_inputs_accordion=gr.Accordion(label="Upscale-latent Settings", open=False),
     outputs=[
         gr.Image(type="filepath", label="Upscaled image"),
-        gr.Textbox(label="Message", type="text"),
+        gr.Textbox(label="Message", type="text")
     ],
     title="NeuroSandboxWebUI - StableDiffusion (upscale-latent)",
     description="This user interface allows you to upload an image and latent-upscale it using x2 or x4 upscale factor",
@@ -7069,11 +7074,11 @@ sdxl_refiner_interface = gr.Interface(
     inputs=[
         gr.Textbox(label="Enter your prompt"),
         gr.Image(label="Initial image", type="filepath"),
-        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
+        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True)
     ],
     outputs=[
         gr.Image(type="filepath", label="Refined image"),
-        gr.Textbox(label="Message", type="text"),
+        gr.Textbox(label="Message", type="text")
     ],
     title="NeuroSandboxWebUI - SDXL Refiner",
     description="This interface allows you to refine images using the SDXL Refiner model. "
@@ -7092,10 +7097,12 @@ inpaint_interface = gr.Interface(
         gr.Image(label="Initial image", type="filepath"),
         gr.ImageEditor(label="Mask image", type="filepath"),
         gr.Slider(minimum=0, maximum=100, value=0, step=1, label="Mask Blur Factor"),
+        gr.Radio(choices=["SD", "SD2", "SDXL"], label="Select model type", value="SD"),
         gr.Dropdown(choices=inpaint_models_list, label="Select Inpaint model", value=None),
         gr.Dropdown(choices=vae_models_list, label="Select VAE model (optional)", value=None),
-        gr.HTML("<h3>StableDiffusion Settings</h3>"),
-        gr.Radio(choices=["SD", "SD2", "SDXL"], label="Select model type", value="SD"),
+        gr.Textbox(label="Seed (optional)", value="")
+    ],
+    additional_inputs=[
         gr.Dropdown(choices=["euler_ancestral", "euler", "lms", "heun", "dpm", "dpm_solver", "dpm_solver++"],
                     label="Select sampler", value="euler_ancestral"),
         gr.Slider(minimum=1, maximum=100, value=30, step=1, label="Steps"),
@@ -7104,14 +7111,12 @@ inpaint_interface = gr.Interface(
         gr.Slider(minimum=256, maximum=2048, value=512, step=64, label="Height"),
         gr.Slider(minimum=1, maximum=4, value=1, step=1, label="Clip skip"),
         gr.Slider(minimum=1, maximum=4, value=1, step=1, label="Number of images to generate"),
-        gr.Textbox(label="Seed (optional)", value=""),
-        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
+        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True)
     ],
-    additional_inputs=[],
     additional_inputs_accordion=gr.Accordion(label="Inpaint Settings", open=False),
     outputs=[
         gr.Gallery(label="Generated images", elem_id="gallery", columns=[2], rows=[2], object_fit="contain", height="auto"),
-        gr.Textbox(label="Message", type="text"),
+        gr.Textbox(label="Message", type="text")
     ],
     title="NeuroSandboxWebUI - StableDiffusion (inpaint)",
     description="This user interface allows you to enter a prompt, an initial image, and a mask image to inpaint using StableDiffusion. "
@@ -7129,9 +7134,11 @@ outpaint_interface = gr.Interface(
         gr.Textbox(label="Enter your prompt"),
         gr.Textbox(label="Enter your negative prompt", value=""),
         gr.Image(label="Initial image", type="filepath"),
-        gr.Dropdown(choices=inpaint_models_list, label="Select StableDiffusion model", value=None),
-        gr.HTML("<h3>StableDiffusion Settings</h3>"),
         gr.Radio(choices=["SD", "SD2", "SDXL"], label="Select model type", value="SD"),
+        gr.Dropdown(choices=inpaint_models_list, label="Select StableDiffusion model", value=None),
+        gr.Textbox(label="Seed (optional)", value="")
+    ],
+    additional_inputs=[
         gr.Dropdown(choices=["euler_ancestral", "euler", "lms", "heun", "dpm", "dpm_solver", "dpm_solver++"],
                     label="Select sampler", value="euler_ancestral"),
         gr.Slider(minimum=1, maximum=100, value=30, step=1, label="Steps"),
@@ -7140,14 +7147,12 @@ outpaint_interface = gr.Interface(
         gr.Slider(minimum=10, maximum=200, value=50, step=1, label="Expansion percentage"),
         gr.Slider(minimum=1, maximum=4, value=1, step=1, label="Clip skip"),
         gr.Slider(minimum=1, maximum=4, value=1, step=1, label="Number of images to generate"),
-        gr.Textbox(label="Seed (optional)", value=""),
-        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
+        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True)
     ],
-    additional_inputs=[],
     additional_inputs_accordion=gr.Accordion(label="Outpaint Settings", open=False),
     outputs=[
         gr.Gallery(label="Generated images", elem_id="gallery", columns=[2], rows=[2], object_fit="contain", height="auto"),
-        gr.Textbox(label="Message", type="text"),
+        gr.Textbox(label="Message", type="text")
     ],
     title="NeuroSandboxWebUI - StableDiffusion (outpaint)",
     description="This user interface allows you to expand an existing image using outpainting with StableDiffusion. "
@@ -7167,9 +7172,11 @@ gligen_interface = gr.Interface(
         gr.Textbox(label="Enter your negative prompt", value=""),
         gr.Textbox(label="Enter GLIGEN phrases", value=""),
         gr.Textbox(label="Enter GLIGEN boxes", value=""),
-        gr.Dropdown(choices=stable_diffusion_models_list, label="Select StableDiffusion model", value=None),
-        gr.HTML("<h3>StableDiffusion Settings</h3>"),
         gr.Radio(choices=["SD", "SD2", "SDXL"], label="Select model type", value="SD"),
+        gr.Dropdown(choices=stable_diffusion_models_list, label="Select StableDiffusion model", value=None),
+        gr.Textbox(label="Seed (optional)", value="")
+    ],
+    additional_inputs=[
         gr.Dropdown(choices=["euler_ancestral", "euler", "lms", "heun", "dpm", "dpm_solver", "dpm_solver++"],
                     label="Select sampler", value="euler_ancestral"),
         gr.Slider(minimum=1, maximum=100, value=30, step=1, label="Steps"),
@@ -7178,14 +7185,12 @@ gligen_interface = gr.Interface(
         gr.Slider(minimum=256, maximum=2048, value=512, step=64, label="Height"),
         gr.Slider(minimum=1, maximum=4, value=1, step=1, label="Clip skip"),
         gr.Slider(minimum=1, maximum=4, value=1, step=1, label="Number of images to generate"),
-        gr.Textbox(label="Seed (optional)", value=""),
-        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
+        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True)
     ],
-    additional_inputs=[],
     additional_inputs_accordion=gr.Accordion(label="StableDiffusion Settings", open=False),
     outputs=[
         gr.Gallery(label="Generated images", elem_id="gallery", columns=[2], rows=[2], object_fit="contain", height="auto"),
-        gr.Textbox(label="Message", type="text"),
+        gr.Textbox(label="Message", type="text")
     ],
     title="NeuroSandboxWebUI - StableDiffusion (gligen)",
     description="This user interface allows you to generate images using Stable Diffusion and insert objects using GLIGEN. "
@@ -7203,23 +7208,25 @@ animatediff_interface = gr.Interface(
         gr.Textbox(label="Enter your prompt"),
         gr.Textbox(label="Enter your negative prompt", value=""),
         gr.Image(label="Initial GIF", type="filepath"),
-        gr.Slider(minimum=0.0, maximum=1.0, value=0.5, step=0.01, label="Strength"),
+        gr.Slider(minimum=0.0, maximum=1.0, value=0.5, step=0.01, label="Strength (Initial GIF)"),
         gr.Radio(choices=["sd", "sdxl"], label="Select model type", value="sd"),
         gr.Dropdown(choices=stable_diffusion_models_list, label="Select StableDiffusion model", value=None),
-        gr.Dropdown(choices=[None, "zoom-in", "zoom-out", "tilt-up", "tilt-down", "pan-right", "pan-left"], label="Select Motion LORA", value=None),
+        gr.Textbox(label="Seed (optional)", value="")
+    ],
+    additional_inputs=[
+        gr.Dropdown(choices=[None, "zoom-in", "zoom-out", "tilt-up", "tilt-down", "pan-right", "pan-left"],
+                    label="Select Motion LORA (Optional)", value=None),
         gr.Slider(minimum=2, maximum=25, value=16, step=1, label="Frames"),
         gr.Slider(minimum=1, maximum=100, value=30, step=1, label="Steps"),
         gr.Slider(minimum=1.0, maximum=30.0, value=8, step=0.1, label="Guidance Scale"),
         gr.Slider(minimum=256, maximum=2048, value=512, step=64, label="Width"),
         gr.Slider(minimum=256, maximum=2048, value=512, step=64, label="Height"),
-        gr.Slider(minimum=1, maximum=4, value=1, step=1, label="Clip skip"),
-        gr.Textbox(label="Seed (optional)", value=""),
+        gr.Slider(minimum=1, maximum=4, value=1, step=1, label="Clip skip")
     ],
-    additional_inputs=[],
     additional_inputs_accordion=gr.Accordion(label="AnimateDiff Settings", open=False),
     outputs=[
         gr.Image(label="Generated GIF", type="filepath"),
-        gr.Textbox(label="Message", type="text"),
+        gr.Textbox(label="Message", type="text")
     ],
     title="NeuroSandboxWebUI - StableDiffusion (animatediff)",
     description="This user interface allows you to enter a prompt and generate animated GIFs using AnimateDiff. "
@@ -7235,19 +7242,20 @@ hotshotxl_interface = gr.Interface(
     fn=generate_hotshotxl,
     inputs=[
         gr.Textbox(label="Enter your prompt"),
-        gr.Textbox(label="Enter your negative prompt", value=""),
+        gr.Textbox(label="Enter your negative prompt", value="")
+    ],
+    additional_inputs=[
         gr.Slider(minimum=1, maximum=100, value=30, step=1, label="Steps"),
         gr.Slider(minimum=256, maximum=1024, value=512, step=64, label="Width"),
         gr.Slider(minimum=256, maximum=1024, value=512, step=64, label="Height"),
         gr.Slider(minimum=2, maximum=80, value=8, step=1, label="Video Length (frames)"),
         gr.Slider(minimum=100, maximum=10000, value=1000, step=1, label="Video Duration (seconds)"),
-        gr.Radio(choices=["gif"], label="Output format", value="gif", interactive=False),
+        gr.Radio(choices=["gif"], label="Output format", value="gif", interactive=False, visible=False)
     ],
-    additional_inputs=[],
     additional_inputs_accordion=gr.Accordion(label="HotShot-XL Settings", open=False),
     outputs=[
         gr.Image(type="filepath", label="Generated GIF"),
-        gr.Textbox(label="Message", type="text"),
+        gr.Textbox(label="Message", type="text")
     ],
     title="NeuroSandboxWebUI - Hotshot-XL",
     description="This user interface allows you to generate animated GIFs using Hotshot-XL. "
@@ -7264,6 +7272,9 @@ video_interface = gr.Interface(
     inputs=[
         gr.Image(label="Initial image", type="filepath"),
         gr.Radio(choices=["mp4", "gif"], label="Select output format", value="mp4", interactive=True),
+        gr.Textbox(label="Seed (optional)", value="")
+    ],
+    additional_inputs=[
         gr.HTML("<h3>SVD Settings (mp4)</h3>"),
         gr.Slider(minimum=0, maximum=360, value=180, step=1, label="Motion Bucket ID"),
         gr.Slider(minimum=0.0, maximum=1.0, value=0.1, step=0.01, label="Noise Augmentation Strength"),
@@ -7274,15 +7285,13 @@ video_interface = gr.Interface(
         gr.Textbox(label="Prompt", value=""),
         gr.Textbox(label="Negative Prompt", value=""),
         gr.Slider(minimum=1, maximum=100, value=50, step=1, label="Steps"),
-        gr.Slider(minimum=1.0, maximum=30.0, value=9.0, step=0.1, label="CFG"),
-        gr.Textbox(label="Seed (optional)", value=""),
+        gr.Slider(minimum=1.0, maximum=30.0, value=9.0, step=0.1, label="CFG")
     ],
-    additional_inputs=[],
     additional_inputs_accordion=gr.Accordion(label="SD-Video Settings", open=False),
     outputs=[
         gr.Video(label="Generated video"),
         gr.Image(label="Generated GIF", type="filepath"),
-        gr.Textbox(label="Message", type="text"),
+        gr.Textbox(label="Message", type="text")
     ],
     title="NeuroSandboxWebUI - StableDiffusion (video)",
     description="This user interface allows you to enter an initial image and generate a video using StableVideoDiffusion(mp4) and I2VGen-xl(gif). "
@@ -7299,20 +7308,21 @@ ldm3d_interface = gr.Interface(
     inputs=[
         gr.Textbox(label="Enter your prompt"),
         gr.Textbox(label="Enter your negative prompt", value=""),
+        gr.Textbox(label="Seed (optional)", value="")
+    ],
+    additional_inputs=[
         gr.Slider(minimum=256, maximum=2048, value=512, step=64, label="Width"),
         gr.Slider(minimum=256, maximum=2048, value=512, step=64, label="Height"),
         gr.Slider(minimum=1, maximum=100, value=40, step=1, label="Steps"),
         gr.Slider(minimum=1.0, maximum=30.0, value=8, step=0.1, label="Guidance Scale"),
         gr.Slider(minimum=1, maximum=4, value=1, step=1, label="Number of images to generate"),
-        gr.Textbox(label="Seed (optional)", value=""),
-        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
+        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True)
     ],
-    additional_inputs=[],
     additional_inputs_accordion=gr.Accordion(label="LDM3D Settings", open=False),
     outputs=[
         gr.Gallery(label="Generated RGBs", elem_id="gallery", columns=[2], rows=[2], object_fit="contain", height="auto"),
         gr.Gallery(label="Generated Depth images", elem_id="gallery", columns=[2], rows=[2], object_fit="contain", height="auto"),
-        gr.Textbox(label="Message", type="text"),
+        gr.Textbox(label="Message", type="text")
     ],
     title="NeuroSandboxWebUI - StableDiffusion (LDM3D)",
     description="This user interface allows you to enter a prompt and generate RGB and Depth images using LDM3D. "
@@ -7329,6 +7339,9 @@ sd3_txt2img_interface = gr.Interface(
     inputs=[
         gr.Textbox(label="Enter your prompt"),
         gr.Textbox(label="Enter your negative prompt", value=""),
+        gr.Textbox(label="Seed (optional)", value="")
+    ],
+    additional_inputs=[
         gr.Dropdown(choices=lora_models_list, label="Select LORA models (optional)", value=None, multiselect=True),
         gr.Textbox(label="LoRA Scales"),
         gr.Slider(minimum=1, maximum=100, value=40, step=1, label="Steps"),
@@ -7338,14 +7351,12 @@ sd3_txt2img_interface = gr.Interface(
         gr.Slider(minimum=64, maximum=2048, value=256, label="Max Length"),
         gr.Slider(minimum=1, maximum=4, value=1, step=1, label="Clip skip"),
         gr.Slider(minimum=1, maximum=4, value=1, step=1, label="Number of images to generate"),
-        gr.Textbox(label="Seed (optional)", value=""),
-        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
+        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True)
     ],
-    additional_inputs=[],
     additional_inputs_accordion=gr.Accordion(label="StableDiffusion3 Settings", open=False),
     outputs=[
         gr.Gallery(label="Generated images", elem_id="gallery", columns=[2], rows=[2], object_fit="contain", height="auto"),
-        gr.Textbox(label="Message", type="text"),
+        gr.Textbox(label="Message", type="text")
     ],
     title="NeuroSandboxWebUI - StableDiffusion 3 (txt2img)",
     description="This user interface allows you to enter any text and generate images using Stable Diffusion 3. "
@@ -7363,7 +7374,10 @@ sd3_img2img_interface = gr.Interface(
         gr.Textbox(label="Enter your prompt"),
         gr.Textbox(label="Enter your negative prompt", value=""),
         gr.Image(label="Initial image", type="filepath"),
-        gr.Slider(minimum=0.0, maximum=1.0, value=0.8, step=0.01, label="Strength"),
+        gr.Slider(minimum=0.0, maximum=1.0, value=0.8, step=0.01, label="Strength (Initial image)"),
+        gr.Textbox(label="Seed (optional)", value="")
+    ],
+    additional_inputs=[
         gr.Slider(minimum=1, maximum=100, value=40, step=1, label="Steps"),
         gr.Slider(minimum=1.0, maximum=30.0, value=8.0, step=0.1, label="CFG"),
         gr.Slider(minimum=256, maximum=2048, value=1024, step=64, label="Width"),
@@ -7371,14 +7385,12 @@ sd3_img2img_interface = gr.Interface(
         gr.Slider(minimum=64, maximum=2048, value=256, label="Max Length"),
         gr.Slider(minimum=1, maximum=4, value=1, step=1, label="Clip skip"),
         gr.Slider(minimum=1, maximum=4, value=1, step=1, label="Number of images to generate"),
-        gr.Textbox(label="Seed (optional)", value=""),
-        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
+        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True)
     ],
-    additional_inputs=[],
     additional_inputs_accordion=gr.Accordion(label="StableDiffusion3 Settings", open=False),
     outputs=[
         gr.Gallery(label="Generated images", elem_id="gallery", columns=[2], rows=[2], object_fit="contain", height="auto"),
-        gr.Textbox(label="Message", type="text"),
+        gr.Textbox(label="Message", type="text")
     ],
     title="NeuroSandboxWebUI - StableDiffusion 3 (img2img)",
     description="This user interface allows you to enter any text and initial image to generate new images using Stable Diffusion 3. "
@@ -7397,6 +7409,9 @@ sd3_controlnet_interface = gr.Interface(
         gr.Textbox(label="Enter your negative prompt", value=""),
         gr.Image(label="Initial image", type="filepath"),
         gr.Dropdown(choices=["Pose", "Canny"], label="Select ControlNet model", value="Pose"),
+        gr.Textbox(label="Seed (optional)", value="")
+    ],
+    additional_inputs=[
         gr.Slider(minimum=1, maximum=100, value=40, step=1, label="Steps"),
         gr.Slider(minimum=1.0, maximum=30.0, value=8.0, step=0.1, label="CFG"),
         gr.Slider(minimum=0.1, maximum=1.0, value=0.5, step=0.1, label="ControlNet conditioning scale"),
@@ -7405,15 +7420,13 @@ sd3_controlnet_interface = gr.Interface(
         gr.Slider(minimum=64, maximum=2048, value=256, label="Max Length"),
         gr.Slider(minimum=1, maximum=4, value=1, step=1, label="Clip skip"),
         gr.Slider(minimum=1, maximum=4, value=1, step=1, label="Number of images to generate"),
-        gr.Textbox(label="Seed (optional)", value=""),
-        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
+        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True)
     ],
-    additional_inputs=[],
     additional_inputs_accordion=gr.Accordion(label="StableDiffusion3 Settings", open=False),
     outputs=[
         gr.Gallery(label="Generated images", elem_id="gallery", columns=[2], rows=[2], object_fit="contain", height="auto"),
         gr.Gallery(label="ControlNet control images", elem_id="gallery", columns=[2], rows=[2], object_fit="contain", height="auto"),
-        gr.Textbox(label="Message", type="text"),
+        gr.Textbox(label="Message", type="text")
     ],
     title="NeuroSandboxWebUI - StableDiffusion 3 (ControlNet)",
     description="This user interface allows you to use ControlNet models with Stable Diffusion 3. "
@@ -7432,6 +7445,9 @@ sd3_inpaint_interface = gr.Interface(
         gr.Textbox(label="Enter your negative prompt", value=""),
         gr.Image(label="Initial image", type="filepath"),
         gr.ImageEditor(label="Mask image", type="filepath"),
+        gr.Textbox(label="Seed (optional)", value="")
+    ],
+    additional_inputs=[
         gr.Slider(minimum=1, maximum=100, value=40, step=1, label="Steps"),
         gr.Slider(minimum=1.0, maximum=30.0, value=8.0, step=0.1, label="CFG"),
         gr.Slider(minimum=256, maximum=2048, value=1024, step=64, label="Width"),
@@ -7439,14 +7455,12 @@ sd3_inpaint_interface = gr.Interface(
         gr.Slider(minimum=64, maximum=2048, value=256, label="Max Length"),
         gr.Slider(minimum=1, maximum=4, value=1, step=1, label="Clip skip"),
         gr.Slider(minimum=1, maximum=4, value=1, step=1, label="Number of images to generate"),
-        gr.Textbox(label="Seed (optional)", value=""),
-        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
+        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True)
     ],
-    additional_inputs=[],
     additional_inputs_accordion=gr.Accordion(label="StableDiffusion3 Settings", open=False),
     outputs=[
         gr.Gallery(label="Generated images", elem_id="gallery", columns=[2], rows=[2], object_fit="contain", height="auto"),
-        gr.Textbox(label="Message", type="text"),
+        gr.Textbox(label="Message", type="text")
     ],
     title="NeuroSandboxWebUI - StableDiffusion 3 (Inpaint)",
     description="This user interface allows you to perform inpainting using Stable Diffusion 3. "
@@ -7463,7 +7477,9 @@ cascade_interface = gr.Interface(
     inputs=[
         gr.Textbox(label="Enter your prompt"),
         gr.Textbox(label="Enter your negative prompt", value=""),
-        gr.HTML("<h3>Stable Cascade Settings</h3>"),
+        gr.Textbox(label="Seed (optional)", value="")
+    ],
+    additional_inputs=[
         gr.Slider(minimum=256, maximum=4096, value=1024, step=64, label="Width"),
         gr.Slider(minimum=256, maximum=4096, value=1024, step=64, label="Height"),
         gr.Slider(minimum=1, maximum=100, value=30, step=1, label="Prior Steps"),
@@ -7471,14 +7487,12 @@ cascade_interface = gr.Interface(
         gr.Slider(minimum=1, maximum=100, value=20, step=1, label="Decoder Steps"),
         gr.Slider(minimum=0.0, maximum=30.0, value=8.0, step=0.1, label="Decoder Guidance Scale"),
         gr.Slider(minimum=1, maximum=4, value=1, step=1, label="Number of images to generate"),
-        gr.Textbox(label="Seed (optional)", value=""),
-        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
+        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True)
     ],
-    additional_inputs=[],
     additional_inputs_accordion=gr.Accordion(label="StableCascade Settings", open=False),
     outputs=[
         gr.Gallery(label="Generated images", elem_id="gallery", columns=[2], rows=[2], object_fit="contain", height="auto"),
-        gr.Textbox(label="Message", type="text"),
+        gr.Textbox(label="Message", type="text")
     ],
     title="NeuroSandboxWebUI - StableDiffusion (cascade)",
     description="This user interface allows you to enter a prompt and generate images using Stable Cascade. "
@@ -7496,20 +7510,21 @@ t2i_ip_adapter_interface = gr.Interface(
         gr.Textbox(label="Enter your prompt"),
         gr.Textbox(label="Enter your negative prompt", value=""),
         gr.Image(label="IP-Adapter Image", type="filepath"),
-        gr.Radio(choices=["SD", "SDXL"], label="Select model type", value="SD"),
         gr.Dropdown(choices=stable_diffusion_models_list, label="Select StableDiffusion model", value=None),
+        gr.Textbox(label="Seed (optional)", value="")
+    ],
+    additional_inputs=[
+        gr.Radio(choices=["SD", "SDXL"], label="Select model type", value="SD"),
         gr.Slider(minimum=1, maximum=100, value=50, step=1, label="Steps"),
         gr.Slider(minimum=1.0, maximum=20.0, value=7.5, step=0.1, label="Guidance Scale"),
         gr.Slider(minimum=256, maximum=2048, value=1024, step=64, label="Width"),
         gr.Slider(minimum=256, maximum=2048, value=1024, step=64, label="Height"),
-        gr.Textbox(label="Seed (optional)", value=""),
-        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
+        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True)
     ],
-    additional_inputs=[],
     additional_inputs_accordion=gr.Accordion(label="T2I IP-Adapter Settings", open=False),
     outputs=[
         gr.Gallery(label="Generated images", elem_id="gallery", columns=[2], rows=[2], object_fit="contain", height="auto"),
-        gr.Textbox(label="Message", type="text"),
+        gr.Textbox(label="Message", type="text")
     ],
     title="NeuroSandboxWebUI - StableDiffusion (T2I IP-Adapter)",
     description="This user interface allows you to generate images using T2I IP-Adapter. "
@@ -7527,20 +7542,21 @@ ip_adapter_faceid_interface = gr.Interface(
         gr.Textbox(label="Enter your prompt"),
         gr.Textbox(label="Enter your negative prompt", value=""),
         gr.Image(label="Face image", type="filepath"),
-        gr.Slider(minimum=0.1, maximum=2, value=1, step=0.1, label="Scale"),
+        gr.Slider(minimum=0.1, maximum=2, value=1, step=0.1, label="Scale (Face image)"),
         gr.Radio(choices=["SD", "SDXL"], label="Select model type", value="SD"),
         gr.Dropdown(choices=stable_diffusion_models_list, label="Select StableDiffusion model", value=None),
+    ],
+    additional_inputs=[
         gr.Slider(minimum=1, maximum=100, value=30, step=1, label="Steps"),
         gr.Slider(minimum=1.0, maximum=30.0, value=6, step=0.1, label="Guidance Scale"),
         gr.Slider(minimum=256, maximum=2048, value=512, step=64, label="Width"),
         gr.Slider(minimum=256, maximum=2048, value=512, step=64, label="Height"),
-        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
+        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True)
     ],
-    additional_inputs=[],
     additional_inputs_accordion=gr.Accordion(label="IP-Adapter FaceID Settings", open=False),
     outputs=[
         gr.Gallery(label="Generated images", elem_id="gallery", columns=[2], rows=[2], object_fit="contain", height="auto"),
-        gr.Textbox(label="Message", type="text"),
+        gr.Textbox(label="Message", type="text")
     ],
     title="NeuroSandboxWebUI - StableDiffusion (IP-Adapter FaceID)",
     description="This user interface allows you to generate images using IP-Adapter FaceID. "
@@ -7557,18 +7573,19 @@ riffusion_text2image_interface = gr.Interface(
     inputs=[
         gr.Textbox(label="Enter your prompt"),
         gr.Textbox(label="Enter your negative prompt", value=""),
+        gr.Textbox(label="Seed (optional)", value="")
+    ],
+    additional_inputs=[
         gr.Slider(minimum=1, maximum=100, value=50, step=1, label="Steps"),
         gr.Slider(minimum=1.0, maximum=20.0, value=7.5, step=0.1, label="Guidance Scale"),
         gr.Slider(minimum=256, maximum=1024, value=512, step=64, label="Height"),
         gr.Slider(minimum=256, maximum=1024, value=512, step=64, label="Width"),
-        gr.Textbox(label="Seed (optional)", value=""),
-        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
+        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True)
     ],
-    additional_inputs=[],
     additional_inputs_accordion=gr.Accordion(label="Riffusion Settings", open=False),
     outputs=[
         gr.Image(type="filepath", label="Generated image"),
-        gr.Textbox(label="Message", type="text"),
+        gr.Textbox(label="Message", type="text")
     ],
     title="NeuroSandboxWebUI - Riffusion (Text-to-Image)",
     description="Generate a spectrogram image from text using Riffusion.",
@@ -7582,11 +7599,11 @@ riffusion_image2audio_interface = gr.Interface(
     fn=generate_riffusion_image2audio,
     inputs=[
         gr.Image(label="Input spectrogram image", type="filepath"),
-        gr.Radio(choices=["wav", "mp3", "ogg"], label="Select output format", value="wav", interactive=True),
+        gr.Radio(choices=["wav", "mp3", "ogg"], label="Select output format", value="wav", interactive=True)
     ],
     outputs=[
         gr.Audio(label="Generated audio", type="filepath"),
-        gr.Textbox(label="Message", type="text"),
+        gr.Textbox(label="Message", type="text")
     ],
     title="NeuroSandboxWebUI - Riffusion (Image-to-Audio)",
     description="Convert a spectrogram image to audio using Riffusion.",
@@ -7600,11 +7617,11 @@ riffusion_audio2image_interface = gr.Interface(
     fn=generate_riffusion_audio2image,
     inputs=[
         gr.Audio(label="Input audio", type="filepath"),
-        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
+        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True)
     ],
     outputs=[
         gr.Image(type="filepath", label="Generated spectrogram image"),
-        gr.Textbox(label="Message", type="text"),
+        gr.Textbox(label="Message", type="text")
     ],
     title="NeuroSandboxWebUI - Riffusion (Audio-to-Image)",
     description="Convert audio to a spectrogram image using Riffusion.",
@@ -7625,18 +7642,19 @@ kandinsky_txt2img_interface = gr.Interface(
         gr.Textbox(label="Enter your prompt"),
         gr.Textbox(label="Enter your negative prompt", value=""),
         gr.Radio(choices=["2.1", "2.2", "3"], label="Kandinsky Version", value="2.2"),
+        gr.Textbox(label="Seed (optional)", value="")
+    ],
+    additional_inputs=[
         gr.Slider(minimum=1, maximum=100, value=50, step=1, label="Steps"),
         gr.Slider(minimum=0.1, maximum=20, value=4, step=0.1, label="CFG"),
         gr.Slider(minimum=256, maximum=2048, value=768, step=64, label="Height"),
         gr.Slider(minimum=256, maximum=2048, value=768, step=64, label="Width"),
-        gr.Textbox(label="Seed (optional)", value=""),
-        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
+        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True)
     ],
-    additional_inputs=[],
     additional_inputs_accordion=gr.Accordion(label="Kandinsky Settings", open=False),
     outputs=[
         gr.Image(type="filepath", label="Generated image"),
-        gr.Textbox(label="Message", type="text"),
+        gr.Textbox(label="Message", type="text")
     ],
     title="NeuroSandboxWebUI - Kandinsky (txt2img)",
     description="This user interface allows you to generate images using Kandinsky models. "
@@ -7655,19 +7673,20 @@ kandinsky_img2img_interface = gr.Interface(
         gr.Textbox(label="Enter your negative prompt", value=""),
         gr.Image(label="Initial image", type="filepath"),
         gr.Radio(choices=["2.1", "2.2", "3"], label="Kandinsky Version", value="2.2"),
+        gr.Textbox(label="Seed (optional)", value="")
+    ],
+    additional_inputs=[
         gr.Slider(minimum=1, maximum=100, value=50, step=1, label="Steps"),
         gr.Slider(minimum=0.1, maximum=20, value=4, step=0.1, label="CFG"),
-        gr.Slider(minimum=0.0, maximum=1.0, value=0.8, step=0.01, label="Strength"),
+        gr.Slider(minimum=0.0, maximum=1.0, value=0.8, step=0.01, label="Strength (Initial image)"),
         gr.Slider(minimum=256, maximum=2048, value=768, step=64, label="Height"),
         gr.Slider(minimum=256, maximum=2048, value=768, step=64, label="Width"),
-        gr.Textbox(label="Seed (optional)", value=""),
-        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
+        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True)
     ],
-    additional_inputs=[],
     additional_inputs_accordion=gr.Accordion(label="Kandinsky Settings", open=False),
     outputs=[
         gr.Image(type="filepath", label="Generated image"),
-        gr.Textbox(label="Message", type="text"),
+        gr.Textbox(label="Message", type="text")
     ],
     title="NeuroSandboxWebUI - Kandinsky (img2img)",
     description="This user interface allows you to generate images using Kandinsky models. "
@@ -7687,18 +7706,19 @@ kandinsky_inpaint_interface = gr.Interface(
         gr.Image(label="Initial image", type="filepath"),
         gr.ImageEditor(label="Mask image", type="filepath"),
         gr.Radio(choices=["2.1", "2.2"], label="Kandinsky Version", value="2.2"),
+    ],
+    additional_inputs=[
         gr.Slider(minimum=1, maximum=100, value=50, step=1, label="Steps"),
         gr.Slider(minimum=0.1, maximum=20, value=4, step=0.1, label="CFG"),
         gr.Slider(minimum=0.0, maximum=1.0, value=0.8, step=0.01, label="Strength"),
         gr.Slider(minimum=256, maximum=2048, value=768, step=64, label="Height"),
         gr.Slider(minimum=256, maximum=2048, value=768, step=64, label="Width"),
-        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
+        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True)
     ],
-    additional_inputs=[],
     additional_inputs_accordion=gr.Accordion(label="Kandinsky Settings", open=False),
     outputs=[
         gr.Image(type="filepath", label="Generated image"),
-        gr.Textbox(label="Message", type="text"),
+        gr.Textbox(label="Message", type="text")
     ],
     title="NeuroSandboxWebUI - Kandinsky (inpaint)",
     description="This user interface allows you to perform inpainting using Kandinsky models. "
@@ -7722,6 +7742,9 @@ flux_interface = gr.Interface(
         gr.Dropdown(choices=["FLUX.1-schnell", "FLUX.1-dev"], label="Select Flux model", value="FLUX.1-schnell"),
         gr.Dropdown(choices=quantized_flux_models_list, label="Select quantized Flux model (optional if enabled quantize)", value=None),
         gr.Checkbox(label="Enable Quantize", value=False),
+        gr.Textbox(label="Seed (optional)", value="")
+    ],
+    additional_inputs=[
         gr.Dropdown(choices=flux_lora_models_list, label="Select LORA models (optional)", value=None, multiselect=True),
         gr.Textbox(label="LoRA Scales"),
         gr.Slider(minimum=0.0, maximum=10.0, value=0.0, step=0.1, label="Guidance Scale"),
@@ -7729,14 +7752,12 @@ flux_interface = gr.Interface(
         gr.Slider(minimum=256, maximum=2048, value=1024, step=64, label="Width"),
         gr.Slider(minimum=1, maximum=100, value=10, step=1, label="Steps"),
         gr.Slider(minimum=1, maximum=1024, value=256, step=1, label="Max Sequence Length"),
-        gr.Textbox(label="Seed (optional)", value=""),
-        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
+        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True)
     ],
-    additional_inputs=[],
     additional_inputs_accordion=gr.Accordion(label="Flux Settings", open=False),
     outputs=[
         gr.Image(type="filepath", label="Generated image"),
-        gr.Textbox(label="Message", type="text"),
+        gr.Textbox(label="Message", type="text")
     ],
     title="NeuroSandboxWebUI - Flux",
     description="This user interface allows you to generate images using Flux models. "
@@ -7753,18 +7774,19 @@ hunyuandit_txt2img_interface = gr.Interface(
     inputs=[
         gr.Textbox(label="Enter your prompt"),
         gr.Textbox(label="Enter your negative prompt", value=""),
+        gr.Textbox(label="Seed (optional)", value="")
+    ],
+    additional_inputs=[
         gr.Slider(minimum=1, maximum=100, value=50, step=1, label="Steps"),
         gr.Slider(minimum=0.1, maximum=30.0, value=7.5, step=0.1, label="Guidance Scale"),
         gr.Slider(minimum=256, maximum=2048, value=768, step=64, label="Height"),
         gr.Slider(minimum=256, maximum=2048, value=768, step=64, label="Width"),
-        gr.Textbox(label="Seed (optional)", value=""),
-        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
+        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True)
     ],
-    additional_inputs=[],
     additional_inputs_accordion=gr.Accordion(label="HunyuanDiT Settings", open=False),
     outputs=[
         gr.Image(type="filepath", label="Generated image"),
-        gr.Textbox(label="Message", type="text"),
+        gr.Textbox(label="Message", type="text")
     ],
     title="NeuroSandboxWebUI - HunyuanDiT (txt2img)",
     description="This user interface allows you to generate images using HunyuanDiT model. "
@@ -7783,18 +7805,19 @@ hunyuandit_controlnet_interface = gr.Interface(
         gr.Textbox(label="Enter your negative prompt", value=""),
         gr.Image(label="Input image", type="filepath"),
         gr.Dropdown(choices=["Depth", "Canny", "Pose"], label="Select ControlNet model", value="Depth"),
+        gr.Textbox(label="Seed (optional)", value="")
+    ],
+    additional_inputs=[
         gr.Slider(minimum=1, maximum=100, value=50, step=1, label="Steps"),
         gr.Slider(minimum=1.0, maximum=20.0, value=6.0, step=0.1, label="Guidance Scale"),
         gr.Slider(minimum=256, maximum=2048, value=1024, step=64, label="Height"),
         gr.Slider(minimum=256, maximum=2048, value=1024, step=64, label="Width"),
-        gr.Textbox(label="Seed (optional)", value=""),
-        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
+        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True)
     ],
-    additional_inputs=[],
     additional_inputs_accordion=gr.Accordion(label="HunyuanDiT Settings", open=False),
     outputs=[
         gr.Image(type="filepath", label="Generated image"),
-        gr.Textbox(label="Message", type="text"),
+        gr.Textbox(label="Message", type="text")
     ],
     title="NeuroSandboxWebUI - HunyuanDiT (ControlNet)",
     description="This user interface allows you to generate images using HunyuanDiT ControlNet models. "
@@ -7816,19 +7839,20 @@ lumina_interface = gr.Interface(
     inputs=[
         gr.Textbox(label="Enter your prompt"),
         gr.Textbox(label="Enter your negative prompt", value=""),
+        gr.Textbox(label="Seed (optional)", value="")
+    ],
+    additional_inputs=[
         gr.Slider(minimum=1, maximum=100, value=30, step=1, label="Steps"),
         gr.Slider(minimum=0.1, maximum=30.0, value=4, step=0.1, label="Guidance Scale"),
         gr.Slider(minimum=256, maximum=2048, value=768, step=64, label="Height"),
         gr.Slider(minimum=256, maximum=2048, value=768, step=64, label="Width"),
         gr.Slider(minimum=1, maximum=1024, value=256, step=1, label="Max Sequence Length"),
-        gr.Textbox(label="Seed (optional)", value=""),
-        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
+        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True)
     ],
-    additional_inputs=[],
     additional_inputs_accordion=gr.Accordion(label="Lumina-T2X Settings", open=False),
     outputs=[
         gr.Image(type="filepath", label="Generated image"),
-        gr.Textbox(label="Message", type="text"),
+        gr.Textbox(label="Message", type="text")
     ],
     title="NeuroSandboxWebUI - Lumina-T2X",
     description="This user interface allows you to generate images using the Lumina-T2X model. "
@@ -7845,19 +7869,21 @@ kolors_txt2img_interface = gr.Interface(
     inputs=[
         gr.Textbox(label="Enter your prompt"),
         gr.Textbox(label="Enter your negative prompt", value=""),
-        gr.Dropdown(choices=kolors_lora_models_list, label="Select LORA models (optional)", value=None, multiselect=True),
+        gr.Textbox(label="Seed (optional)", value="")
+    ],
+    additional_inputs=[
+        gr.Dropdown(choices=kolors_lora_models_list, label="Select LORA models (optional)", value=None,
+                    multiselect=True),
         gr.Textbox(label="LoRA Scales"),
         gr.Slider(minimum=1.0, maximum=20.0, value=6.5, step=0.1, label="Guidance Scale"),
         gr.Slider(minimum=1, maximum=100, value=25, step=1, label="Steps"),
         gr.Slider(minimum=1, maximum=1024, value=256, step=1, label="Max Sequence Length"),
-        gr.Textbox(label="Seed (optional)", value=""),
-        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
+        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True)
     ],
-    additional_inputs=[],
     additional_inputs_accordion=gr.Accordion(label="Kolors Settings", open=False),
     outputs=[
         gr.Image(type="filepath", label="Generated image"),
-        gr.Textbox(label="Message", type="text"),
+        gr.Textbox(label="Message", type="text")
     ],
     title="NeuroSandboxWebUI - Kolors (txt2img)",
     description="This user interface allows you to generate images using the Kolors model. "
@@ -7875,17 +7901,18 @@ kolors_img2img_interface = gr.Interface(
         gr.Textbox(label="Enter your prompt"),
         gr.Textbox(label="Enter your negative prompt", value=""),
         gr.Image(label="Initial image", type="filepath"),
+        gr.Textbox(label="Seed (optional)", value="")
+    ],
+    additional_inputs=[
         gr.Slider(minimum=1.0, maximum=20.0, value=6.5, step=0.1, label="Guidance Scale"),
         gr.Slider(minimum=1, maximum=100, value=25, step=1, label="Steps"),
         gr.Slider(minimum=1, maximum=1024, value=256, step=1, label="Max Sequence Length"),
-        gr.Textbox(label="Seed (optional)", value=""),
-        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
+        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True)
     ],
-    additional_inputs=[],
     additional_inputs_accordion=gr.Accordion(label="Kolors Settings", open=False),
     outputs=[
         gr.Image(type="filepath", label="Generated image"),
-        gr.Textbox(label="Message", type="text"),
+        gr.Textbox(label="Message", type="text")
     ],
     title="NeuroSandboxWebUI - Kolors (img2img)",
     description="This user interface allows you to generate images using the Kolors model. "
@@ -7903,16 +7930,17 @@ kolors_ip_adapter_interface = gr.Interface(
         gr.Textbox(label="Enter your prompt"),
         gr.Textbox(label="Enter your negative prompt", value=""),
         gr.Image(label="IP-Adapter Image", type="filepath"),
+        gr.Textbox(label="Seed (optional)", value="")
+    ],
+    additional_inputs=[
         gr.Slider(minimum=1.0, maximum=20.0, value=6.5, step=0.1, label="Guidance Scale"),
         gr.Slider(minimum=1, maximum=100, value=25, step=1, label="Steps"),
-        gr.Textbox(label="Seed (optional)", value=""),
-        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
+        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True)
     ],
-    additional_inputs=[],
     additional_inputs_accordion=gr.Accordion(label="Kolors Settings", open=False),
     outputs=[
         gr.Image(type="filepath", label="Generated image"),
-        gr.Textbox(label="Message", type="text"),
+        gr.Textbox(label="Message", type="text")
     ],
     title="NeuroSandboxWebUI - Kolors (ip-adapter-plus)",
     description="This user interface allows you to generate images using the Kolors model. "
@@ -7934,7 +7962,11 @@ auraflow_interface = gr.Interface(
     inputs=[
         gr.Textbox(label="Enter your prompt"),
         gr.Textbox(label="Enter your negative prompt", value=""),
-        gr.Dropdown(choices=auraflow_lora_models_list, label="Select LORA models (optional)", value=None, multiselect=True),
+        gr.Textbox(label="Seed (optional)", value="")
+    ],
+    additional_inputs=[
+        gr.Dropdown(choices=auraflow_lora_models_list, label="Select LORA models (optional)", value=None,
+                    multiselect=True),
         gr.Textbox(label="LoRA Scales"),
         gr.Slider(minimum=1, maximum=100, value=25, step=1, label="Steps"),
         gr.Slider(minimum=1.0, maximum=20.0, value=7.5, step=0.1, label="Guidance Scale"),
@@ -7942,14 +7974,12 @@ auraflow_interface = gr.Interface(
         gr.Slider(minimum=256, maximum=2048, value=512, step=64, label="Width"),
         gr.Slider(minimum=1, maximum=1024, value=256, step=1, label="Max Sequence Length"),
         gr.Checkbox(label="Enable AuraSR", value=False),
-        gr.Textbox(label="Seed (optional)", value=""),
-        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
+        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True)
     ],
-    additional_inputs=[],
     additional_inputs_accordion=gr.Accordion(label="AuraFlow Settings", open=False),
     outputs=[
         gr.Image(type="filepath", label="Generated image"),
-        gr.Textbox(label="Message", type="text"),
+        gr.Textbox(label="Message", type="text")
     ],
     title="NeuroSandboxWebUI - AuraFlow",
     description="This user interface allows you to generate images using the AuraFlow model. "
@@ -7967,20 +7997,21 @@ wurstchen_interface = gr.Interface(
     inputs=[
         gr.Textbox(label="Enter your prompt"),
         gr.Textbox(label="Enter your negative prompt", value=""),
+        gr.Textbox(label="Seed (optional)", value="")
+    ],
+    additional_inputs=[
         gr.Slider(minimum=256, maximum=2048, value=1536, step=64, label="Width"),
         gr.Slider(minimum=256, maximum=2048, value=1024, step=64, label="Height"),
         gr.Slider(minimum=1, maximum=100, value=50, step=1, label="Prior Steps"),
         gr.Slider(minimum=0.1, maximum=30.0, value=4.0, step=0.1, label="Prior Guidance Scale"),
         gr.Slider(minimum=1, maximum=100, value=20, step=1, label="Decoder Steps"),
         gr.Slider(minimum=0.0, maximum=30.0, value=0.0, step=0.1, label="Decoder Guidance Scale"),
-        gr.Textbox(label="Seed (optional)", value=""),
-        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
+        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True)
     ],
-    additional_inputs=[],
     additional_inputs_accordion=gr.Accordion(label="Würstchen Settings", open=False),
     outputs=[
         gr.Image(type="filepath", label="Generated image"),
-        gr.Textbox(label="Message", type="text"),
+        gr.Textbox(label="Message", type="text")
     ],
     title="NeuroSandboxWebUI - Würstchen",
     description="This user interface allows you to generate images using the Würstchen model. "
@@ -7997,20 +8028,21 @@ deepfloyd_if_txt2img_interface = gr.Interface(
     inputs=[
         gr.Textbox(label="Enter your prompt"),
         gr.Textbox(label="Enter your negative prompt", value=""),
+        gr.Textbox(label="Seed (optional)", value="")
+    ],
+    additional_inputs=[
         gr.Slider(minimum=1, maximum=100, value=50, step=1, label="Steps"),
         gr.Slider(minimum=0.1, maximum=30.0, value=6, step=0.1, label="Guidance Scale"),
         gr.Slider(minimum=256, maximum=2048, value=512, step=64, label="Width"),
         gr.Slider(minimum=256, maximum=2048, value=512, step=64, label="Height"),
-        gr.Textbox(label="Seed (optional)", value=""),
-        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
+        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True)
     ],
-    additional_inputs=[],
     additional_inputs_accordion=gr.Accordion(label="DeepFloyd IF Settings", open=False),
     outputs=[
         gr.Image(type="filepath", label="Generated image (Stage I)"),
         gr.Image(type="filepath", label="Generated image (Stage II)"),
         gr.Image(type="filepath", label="Generated image (Stage III)"),
-        gr.Textbox(label="Message", type="text"),
+        gr.Textbox(label="Message", type="text")
     ],
     title="NeuroSandboxWebUI - DeepFloyd IF (txt2img)",
     description="This user interface allows you to generate images using the DeepFloyd IF model. "
@@ -8029,20 +8061,21 @@ deepfloyd_if_img2img_interface = gr.Interface(
         gr.Textbox(label="Enter your prompt"),
         gr.Textbox(label="Enter your negative prompt", value=""),
         gr.Image(label="Initial image", type="filepath"),
+        gr.Textbox(label="Seed (optional)", value="")
+    ],
+    additional_inputs=[
         gr.Slider(minimum=1, maximum=100, value=50, step=1, label="Steps"),
         gr.Slider(minimum=0.1, maximum=30.0, value=6, step=0.1, label="Guidance Scale"),
         gr.Slider(minimum=256, maximum=2048, value=512, step=64, label="Width"),
         gr.Slider(minimum=256, maximum=2048, value=512, step=64, label="Height"),
-        gr.Textbox(label="Seed (optional)", value=""),
-        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
+        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True)
     ],
-    additional_inputs=[],
     additional_inputs_accordion=gr.Accordion(label="DeepFloyd IF Settings", open=False),
     outputs=[
         gr.Image(type="filepath", label="Generated image (Stage I)"),
         gr.Image(type="filepath", label="Generated image (Stage II)"),
         gr.Image(type="filepath", label="Generated image (Stage III)"),
-        gr.Textbox(label="Message", type="text"),
+        gr.Textbox(label="Message", type="text")
     ],
     title="NeuroSandboxWebUI - DeepFloyd IF (img2img)",
     description="This interface allows you to generate images using DeepFloyd IF's image-to-image pipeline. "
@@ -8061,18 +8094,19 @@ deepfloyd_if_inpaint_interface = gr.Interface(
         gr.Textbox(label="Enter your prompt"),
         gr.Textbox(label="Enter your negative prompt", value=""),
         gr.Image(label="Initial image", type="filepath"),
-        gr.ImageEditor(label="Mask image", type="filepath"),
+        gr.ImageEditor(label="Mask image", type="filepath")
+    ],
+    additional_inputs=[
         gr.Slider(minimum=1, maximum=100, value=50, step=1, label="Steps"),
         gr.Slider(minimum=0.1, maximum=30.0, value=6, step=0.1, label="Guidance Scale"),
-        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
+        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True)
     ],
-    additional_inputs=[],
     additional_inputs_accordion=gr.Accordion(label="DeepFloyd IF Settings", open=False),
     outputs=[
         gr.Image(type="filepath", label="Generated image (Stage I)"),
         gr.Image(type="filepath", label="Generated image (Stage II)"),
         gr.Image(type="filepath", label="Generated image (Stage III)"),
-        gr.Textbox(label="Message", type="text"),
+        gr.Textbox(label="Message", type="text")
     ],
     title="NeuroSandboxWebUI - DeepFloyd IF (inpaint)",
     description="This interface allows you to perform inpainting using DeepFloyd IF. "
@@ -8096,19 +8130,20 @@ pixart_interface = gr.Interface(
         gr.Textbox(label="Enter your prompt"),
         gr.Textbox(label="Enter your negative prompt", value=""),
         gr.Radio(choices=["Alpha-512", "Alpha-1024", "Sigma-512", "Sigma-1024"], label="PixArt Version", value="Alpha-512"),
+        gr.Textbox(label="Seed (optional)", value="")
+    ],
+    additional_inputs=[
         gr.Slider(minimum=1, maximum=100, value=30, step=1, label="Steps"),
         gr.Slider(minimum=0.1, maximum=30.0, value=7.5, step=0.1, label="Guidance Scale"),
         gr.Slider(minimum=256, maximum=2048, value=512, step=64, label="Height"),
         gr.Slider(minimum=256, maximum=2048, value=512, step=64, label="Width"),
         gr.Slider(minimum=1, maximum=1024, value=256, step=1, label="Max Sequence Length"),
-        gr.Textbox(label="Seed (optional)", value=""),
-        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
+        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True)
     ],
-    additional_inputs=[],
     additional_inputs_accordion=gr.Accordion(label="PixArt Settings", open=False),
     outputs=[
         gr.Image(type="filepath", label="Generated image"),
-        gr.Textbox(label="Message", type="text"),
+        gr.Textbox(label="Message", type="text")
     ],
     title="NeuroSandboxWebUI - PixArt",
     description="This user interface allows you to generate images using PixArt models. "
@@ -8125,18 +8160,19 @@ playgroundv2_interface = gr.Interface(
     inputs=[
         gr.Textbox(label="Enter your prompt"),
         gr.Textbox(label="Enter your negative prompt", value=""),
+        gr.Textbox(label="Seed (optional)", value="")
+    ],
+    additional_inputs=[
         gr.Slider(minimum=256, maximum=2048, value=1024, step=64, label="Height"),
         gr.Slider(minimum=256, maximum=2048, value=1024, step=64, label="Width"),
         gr.Slider(minimum=1, maximum=100, value=50, step=1, label="Steps"),
         gr.Slider(minimum=0.1, maximum=30.0, value=3.0, step=0.1, label="Guidance Scale"),
-        gr.Textbox(label="Seed (optional)", value=""),
-        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
+        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True)
     ],
-    additional_inputs=[],
     additional_inputs_accordion=gr.Accordion(label="PlaygroundV2.5 Settings", open=False),
     outputs=[
         gr.Image(type="filepath", label="Generated image"),
-        gr.Textbox(label="Message", type="text"),
+        gr.Textbox(label="Message", type="text")
     ],
     title="NeuroSandboxWebUI - PlaygroundV2.5",
     description="This user interface allows you to generate images using PlaygroundV2.5. "
@@ -8152,20 +8188,21 @@ wav2lip_interface = gr.Interface(
     fn=generate_wav2lip,
     inputs=[
         gr.Image(label="Input image", type="filepath"),
-        gr.Audio(label="Input audio", type="filepath"),
+        gr.Audio(label="Input audio", type="filepath")
+    ],
+    additional_inputs=[
         gr.Slider(minimum=1, maximum=60, value=30, step=1, label="FPS"),
         gr.Textbox(label="Pads", value="0 10 0 0"),
         gr.Slider(minimum=1, maximum=64, value=16, step=1, label="Face Detection Batch Size"),
         gr.Slider(minimum=1, maximum=512, value=128, step=1, label="Wav2Lip Batch Size"),
         gr.Slider(minimum=1, maximum=4, value=1, step=1, label="Resize Factor"),
         gr.Textbox(label="Crop", value="0 -1 0 -1"),
-        gr.Checkbox(label="Enable no smooth", value=False),
+        gr.Checkbox(label="Enable no smooth", value=False)
     ],
-    additional_inputs=[],
     additional_inputs_accordion=gr.Accordion(label="Wav2Lip Settings", open=False),
     outputs=[
         gr.Video(label="Generated lip-sync"),
-        gr.Textbox(label="Message", type="text"),
+        gr.Textbox(label="Message", type="text")
     ],
     title="NeuroSandboxWebUI - Wav2Lip",
     description="This user interface allows you to generate talking head videos by combining an image and an audio file using Wav2Lip. "
@@ -8182,11 +8219,11 @@ liveportrait_interface = gr.Interface(
     inputs=[
         gr.Image(label="Source image", type="filepath"),
         gr.Video(label="Driving video"),
-        gr.Radio(choices=["mp4", "gif"], label="Select output format", value="mp4", interactive=True),
+        gr.Radio(choices=["mp4", "gif"], label="Select output format", value="mp4", interactive=True)
     ],
     outputs=[
         gr.Video(label="Generated video"),
-        gr.Textbox(label="Message", type="text"),
+        gr.Textbox(label="Message", type="text")
     ],
     title="NeuroSandboxWebUI - LivePortrait",
     description="This user interface allows you to animate a source image based on the movements in a driving video using LivePortrait. "
@@ -8203,19 +8240,20 @@ modelscope_interface = gr.Interface(
     inputs=[
         gr.Textbox(label="Enter your prompt"),
         gr.Textbox(label="Enter your negative prompt", value=""),
+        gr.Textbox(label="Seed (optional)", value="")
+    ],
+    additional_inputs=[
         gr.Slider(minimum=1, maximum=100, value=50, step=1, label="Steps"),
         gr.Slider(minimum=1.0, maximum=20.0, value=7.5, step=0.1, label="Guidance Scale"),
         gr.Slider(minimum=256, maximum=1024, value=320, step=64, label="Height"),
         gr.Slider(minimum=256, maximum=1024, value=576, step=64, label="Width"),
         gr.Slider(minimum=16, maximum=128, value=64, step=1, label="Number of Frames"),
-        gr.Textbox(label="Seed (optional)", value=""),
-        gr.Radio(choices=["mp4", "gif"], label="Select output format", value="mp4", interactive=True),
+        gr.Radio(choices=["mp4", "gif"], label="Select output format", value="mp4", interactive=True)
     ],
-    additional_inputs=[],
     additional_inputs_accordion=gr.Accordion(label="ModelScope Settings", open=False),
     outputs=[
         gr.Video(label="Generated video"),
-        gr.Textbox(label="Message", type="text"),
+        gr.Textbox(label="Message", type="text")
     ],
     title="NeuroSandboxWebUI - ModelScope",
     description="This user interface allows you to generate videos using ModelScope. "
@@ -8232,19 +8270,20 @@ zeroscope2_interface = gr.Interface(
     inputs=[
         gr.Textbox(label="Enter your prompt"),
         gr.Video(label="Video to enhance (optional)", interactive=True),
-        gr.Slider(minimum=0.1, maximum=1.0, value=0.5, step=0.1, label="Strength"),
+        gr.Textbox(label="Seed (optional)", value="")
+    ],
+    additional_inputs=[
+        gr.Slider(minimum=0.1, maximum=1.0, value=0.5, step=0.1, label="Strength (Video to enhance)"),
         gr.Slider(minimum=1, maximum=100, value=40, step=1, label="Steps"),
         gr.Slider(minimum=256, maximum=1280, value=576, step=64, label="Width"),
         gr.Slider(minimum=256, maximum=1280, value=320, step=64, label="Height"),
         gr.Slider(minimum=1, maximum=100, value=36, step=1, label="Frames"),
-        gr.Checkbox(label="Enable Video Enhancement", value=False),
-        gr.Textbox(label="Seed (optional)", value=""),
+        gr.Checkbox(label="Enable Video Enhancement", value=False)
     ],
-    additional_inputs=[],
     additional_inputs_accordion=gr.Accordion(label="ZeroScope 2 Settings", open=False),
     outputs=[
         gr.Video(label="Generated video"),
-        gr.Textbox(label="Message", type="text"),
+        gr.Textbox(label="Message", type="text")
     ],
     title="NeuroSandboxWebUI - ZeroScope 2",
     description="This user interface allows you to generate and enhance videos using ZeroScope 2 models. "
@@ -8262,19 +8301,20 @@ cogvideox_interface = gr.Interface(
         gr.Textbox(label="Enter your prompt"),
         gr.Textbox(label="Enter your negative prompt", value=""),
         gr.Radio(choices=["CogVideoX-2B", "CogVideoX-5B"], label="Select CogVideoX model version", value="CogVideoX-2B"),
+        gr.Textbox(label="Seed (optional)", value="")
+    ],
+    additional_inputs=[
         gr.Slider(minimum=1, maximum=100, value=50, step=1, label="Steps"),
         gr.Slider(minimum=1.0, maximum=20.0, value=6.0, step=0.1, label="Guidance Scale"),
         gr.Slider(minimum=256, maximum=1024, value=480, step=64, label="Height"),
         gr.Slider(minimum=256, maximum=1024, value=720, step=64, label="Width"),
         gr.Slider(minimum=1, maximum=100, value=30, step=1, label="Number of Frames"),
-        gr.Slider(minimum=1, maximum=60, value=10, step=1, label="FPS"),
-        gr.Textbox(label="Seed (optional)", value=""),
+        gr.Slider(minimum=1, maximum=60, value=10, step=1, label="FPS")
     ],
-    additional_inputs=[],
     additional_inputs_accordion=gr.Accordion(label="CogVideoX Settings", open=False),
     outputs=[
         gr.Video(label="Generated video"),
-        gr.Textbox(label="Message", type="text"),
+        gr.Textbox(label="Message", type="text")
     ],
     title="NeuroSandboxWebUI - CogVideoX",
     description="This user interface allows you to generate videos using CogVideoX. "
@@ -8291,18 +8331,19 @@ latte_interface = gr.Interface(
     inputs=[
         gr.Textbox(label="Enter your prompt"),
         gr.Textbox(label="Enter your negative prompt", value=""),
+        gr.Textbox(label="Seed (optional)", value="")
+    ],
+    additional_inputs=[
         gr.Slider(minimum=1, maximum=100, value=50, step=1, label="Steps"),
         gr.Slider(minimum=1.0, maximum=20.0, value=6.0, step=0.1, label="Guidance Scale"),
         gr.Slider(minimum=256, maximum=1024, value=512, step=64, label="Height"),
         gr.Slider(minimum=256, maximum=1024, value=512, step=64, label="Width"),
-        gr.Slider(minimum=1, maximum=100, value=16, step=1, label="Video Length"),
-        gr.Textbox(label="Seed (optional)", value=""),
+        gr.Slider(minimum=1, maximum=100, value=16, step=1, label="Video Length")
     ],
-    additional_inputs=[],
     additional_inputs_accordion=gr.Accordion(label="Latte Settings", open=False),
     outputs=[
         gr.Image(type="filepath", label="Generated GIF"),
-        gr.Textbox(label="Message", type="text"),
+        gr.Textbox(label="Message", type="text")
     ],
     title="NeuroSandboxWebUI - Latte",
     description="This user interface allows you to generate GIFs using Latte. "
@@ -8317,14 +8358,17 @@ latte_interface = gr.Interface(
 stablefast3d_interface = gr.Interface(
     fn=generate_3d_stablefast3d,
     inputs=[
-        gr.Image(label="Input image", type="filepath"),
+        gr.Image(label="Input image", type="filepath")
+    ],
+    additional_inputs=[
         gr.Slider(minimum=256, maximum=2048, value=1024, step=64, label="Texture Resolution"),
         gr.Slider(minimum=0.1, maximum=1.0, value=0.85, step=0.05, label="Foreground Ratio"),
-        gr.Radio(choices=["none", "triangle", "quad"], label="Remesh Option", value="none"),
+        gr.Radio(choices=["none", "triangle", "quad"], label="Remesh Option", value="none")
     ],
+    additional_inputs_accordion=gr.Accordion(label="StableFast3D Settings", open=False),
     outputs=[
         gr.Model3D(label="Generated 3D object"),
-        gr.Textbox(label="Message", type="text"),
+        gr.Textbox(label="Message", type="text")
     ],
     title="NeuroSandboxWebUI - StableFast3D",
     description="This user interface allows you to generate 3D objects from images using StableFast3D. "
@@ -8341,14 +8385,17 @@ shap_e_interface = gr.Interface(
     inputs=[
         gr.Textbox(label="Enter your prompt"),
         gr.Image(label="Initial image (optional)", type="filepath", interactive=True),
+        gr.Textbox(label="Seed (optional)", value="")
+    ],
+    additional_inputs=[
         gr.Slider(minimum=1, maximum=100, value=50, step=1, label="Steps"),
         gr.Slider(minimum=1.0, maximum=30.0, value=10.0, step=0.1, label="CFG"),
-        gr.Slider(minimum=64, maximum=512, value=256, step=64, label="Frame size"),
-        gr.Textbox(label="Seed (optional)", value=""),
+        gr.Slider(minimum=64, maximum=512, value=256, step=64, label="Frame size")
     ],
+    additional_inputs_accordion=gr.Accordion(label="Shap-E Settings", open=False),
     outputs=[
         gr.Model3D(label="Generated 3D object"),
-        gr.Textbox(label="Message", type="text"),
+        gr.Textbox(label="Message", type="text")
     ],
     title="NeuroSandboxWebUI - Shap-E",
     description="This user interface allows you to generate 3D objects using Shap-E. "
@@ -8407,20 +8454,21 @@ stableaudio_interface = gr.Interface(
     inputs=[
         gr.Textbox(label="Enter your prompt"),
         gr.Textbox(label="Enter your negative prompt"),
+        gr.Textbox(label="Seed (optional)", value="")
+    ],
+    additional_inputs=[
         gr.Slider(minimum=1, maximum=1000, value=200, step=1, label="Steps"),
         gr.Slider(minimum=0.1, maximum=12, value=4, step=0.1, label="CFG"),
         gr.Slider(minimum=1, maximum=60, value=10, step=1, label="Audio Length (seconds)"),
         gr.Slider(minimum=1, maximum=60, value=0, step=1, label="Audio Start (seconds)"),
         gr.Slider(minimum=1, maximum=10, value=3, step=1, label="Number of Waveforms"),
-        gr.Textbox(label="Seed (optional)", value=""),
-        gr.Radio(choices=["wav", "mp3", "ogg"], label="Select output format", value="wav", interactive=True),
+        gr.Radio(choices=["wav", "mp3", "ogg"], label="Select output format", value="wav", interactive=True)
     ],
-    additional_inputs=[],
     additional_inputs_accordion=gr.Accordion(label="StableAudio Settings", open=False),
     outputs=[
         gr.Audio(label="Generated audio", type="filepath"),
         gr.Image(label="Mel-Spectrogram", type="filepath"),
-        gr.Textbox(label="Message", type="text"),
+        gr.Textbox(label="Message", type="text")
     ],
     title="NeuroSandboxWebUI - StableAudio",
     description="This user interface allows you to enter any text and generate audio using StableAudio. "
@@ -8438,8 +8486,9 @@ audiocraft_interface = gr.Interface(
         gr.Textbox(label="Enter your prompt"),
         gr.Audio(type="filepath", label="Melody audio (optional)", interactive=True),
         gr.Dropdown(choices=audiocraft_models_list, label="Select AudioCraft model", value=None),
-        gr.HTML("<h3>AudioCraft Settings</h3>"),
         gr.Radio(choices=["musicgen", "audiogen", "magnet"], label="Select model type", value="musicgen"),
+    ],
+    additional_inputs=[
         gr.Slider(minimum=1, maximum=120, value=10, step=1, label="Duration (seconds)"),
         gr.Slider(minimum=1, maximum=1000, value=250, step=1, label="Top K"),
         gr.Slider(minimum=0.0, maximum=1.0, value=0.0, step=0.1, label="Top P"),
@@ -8448,14 +8497,14 @@ audiocraft_interface = gr.Interface(
         gr.Slider(minimum=1.0, maximum=10.0, value=3.0, step=0.1, label="Min CFG coef (Magnet model only)"),
         gr.Slider(minimum=1.0, maximum=10.0, value=1.0, step=0.1, label="Max CFG coef (Magnet model only)"),
         gr.Checkbox(label="Enable Multiband Diffusion (Musicgen model only)", value=False),
-        gr.Radio(choices=["wav", "mp3", "ogg"], label="Select output format (Works only without Multiband Diffusion)", value="wav", interactive=True),
+        gr.Radio(choices=["wav", "mp3", "ogg"], label="Select output format (Works only without Multiband Diffusion)",
+                 value="wav", interactive=True)
     ],
-    additional_inputs=[],
     additional_inputs_accordion=gr.Accordion(label="AudioCraft Settings", open=False),
     outputs=[
         gr.Audio(label="Generated audio", type="filepath"),
         gr.Image(label="Mel-Spectrogram", type="filepath"),
-        gr.Textbox(label="Message", type="text"),
+        gr.Textbox(label="Message", type="text")
     ],
     title="NeuroSandboxWebUI - AudioCraft",
     description="This user interface allows you to enter any text and generate audio using AudioCraft. "
@@ -8473,18 +8522,19 @@ audioldm2_interface = gr.Interface(
         gr.Textbox(label="Enter your prompt"),
         gr.Textbox(label="Enter your negative prompt", value=""),
         gr.Dropdown(choices=["cvssp/audioldm2", "cvssp/audioldm2-music"], label="Select AudioLDM 2 model", value="cvssp/audioldm2"),
+        gr.Textbox(label="Seed (optional)", value="")
+    ],
+    additional_inputs=[
         gr.Slider(minimum=1, maximum=1000, value=200, step=1, label="Steps"),
         gr.Slider(minimum=1, maximum=60, value=10, step=1, label="Length (seconds)"),
         gr.Slider(minimum=1, maximum=10, value=3, step=1, label="Waveforms number"),
-        gr.Textbox(label="Seed (optional)", value=""),
-        gr.Radio(choices=["wav", "mp3", "ogg"], label="Select output format", value="wav", interactive=True),
+        gr.Radio(choices=["wav", "mp3", "ogg"], label="Select output format", value="wav", interactive=True)
     ],
-    additional_inputs=[],
     additional_inputs_accordion=gr.Accordion(label="AudioLDM 2 Settings", open=False),
     outputs=[
         gr.Audio(label="Generated audio", type="filepath"),
         gr.Image(label="Mel-Spectrogram", type="filepath"),
-        gr.Textbox(label="Message", type="text"),
+        gr.Textbox(label="Message", type="text")
     ],
     title="NeuroSandboxWebUI - AudioLDM 2",
     description="This user interface allows you to enter any text and generate audio using AudioLDM 2. "
@@ -8500,18 +8550,19 @@ bark_interface = gr.Interface(
     fn=generate_bark_audio,
     inputs=[
         gr.Textbox(label="Enter text for the request"),
-        gr.Dropdown(choices=[None, "v2/en_speaker_1", "v2/ru_speaker_1", "v2/de_speaker_1", "v2/fr_speaker_1", "v2/es_speaker_1", "v2/hi_speaker_1", "v2/it_speaker_1", "v2/ja_speaker_1", "v2/ko_speaker_1", "v2/pt_speaker_1", "v2/zh_speaker_1", "v2/tr_speaker_1", "v2/pl_speaker_1"], label="Select voice preset", value=None),
+        gr.Dropdown(choices=[None, "v2/en_speaker_1", "v2/ru_speaker_1", "v2/de_speaker_1", "v2/fr_speaker_1", "v2/es_speaker_1", "v2/hi_speaker_1", "v2/it_speaker_1", "v2/ja_speaker_1", "v2/ko_speaker_1", "v2/pt_speaker_1", "v2/zh_speaker_1", "v2/tr_speaker_1", "v2/pl_speaker_1"], label="Select voice preset", value=None)
+    ],
+    additional_inputs=[
         gr.Slider(minimum=100, maximum=1000, value=200, step=1, label="Max length"),
         gr.Slider(minimum=0.1, maximum=2.0, value=0.4, step=0.1, label="Fine temperature"),
         gr.Slider(minimum=0.1, maximum=2.0, value=0.8, step=0.1, label="Coarse temperature"),
-        gr.Radio(choices=["wav", "mp3", "ogg"], label="Select output format", value="wav", interactive=True),
+        gr.Radio(choices=["wav", "mp3", "ogg"], label="Select output format", value="wav", interactive=True)
     ],
-    additional_inputs=[],
     additional_inputs_accordion=gr.Accordion(label="Bark Settings", open=False),
     outputs=[
         gr.Audio(label="Generated audio", type="filepath"),
         gr.Image(label="Mel-Spectrogram", type="filepath"),
-        gr.Textbox(label="Message", type="text"),
+        gr.Textbox(label="Message", type="text")
     ],
     title="NeuroSandboxWebUI - SunoBark",
     description="This user interface allows you to enter text and generate audio using SunoBark. "
@@ -8527,7 +8578,9 @@ rvc_interface = gr.Interface(
     fn=process_rvc,
     inputs=[
         gr.Audio(label="Input audio", type="filepath"),
-        gr.Dropdown(choices=rvc_models_list, label="Select RVC model", value=None),
+        gr.Dropdown(choices=rvc_models_list, label="Select RVC model", value=None)
+    ],
+    additional_inputs=[
         gr.Radio(choices=['harvest', "crepe", "rmvpe", 'pm'], label="RVC Method", value="harvest", interactive=True),
         gr.Number(label="Up-key", value=0),
         gr.Slider(minimum=0, maximum=1, value=0.5, step=0.01, label="Index rate"),
@@ -8535,13 +8588,12 @@ rvc_interface = gr.Interface(
         gr.Slider(minimum=0, maximum=1, value=0, step=0.01, label="Resample-Sr"),
         gr.Slider(minimum=0, maximum=1, value=1, step=0.01, label="RMS Mixrate"),
         gr.Slider(minimum=0, maximum=1, value=0.33, step=0.01, label="Protection"),
-        gr.Radio(choices=["wav", "mp3", "ogg"], label="Select output format", value="wav", interactive=True),
+        gr.Radio(choices=["wav", "mp3", "ogg"], label="Select output format", value="wav", interactive=True)
     ],
-    additional_inputs=[],
     additional_inputs_accordion=gr.Accordion(label="RVC Settings", open=False),
     outputs=[
         gr.Audio(label="Processed audio", type="filepath"),
-        gr.Textbox(label="Message", type="text"),
+        gr.Textbox(label="Message", type="text")
     ],
     title="NeuroSandboxWebUI - RVC",
     description="This user interface allows you to process audio using RVC (Retrieval-based Voice Conversion). "
@@ -8670,21 +8722,22 @@ realesrgan_upscale_interface = gr.Interface(
     inputs=[
         gr.Image(label="Image to upscale", type="filepath"),
         gr.Video(label="Input video"),
-        gr.Radio(choices=["RealESRGAN_x2plus", "RealESRNet_x4plus", "RealESRGAN_x4plus", "realesr-general-x4v3", "RealESRGAN_x4plus_anime_6B"], label="Select model", value="RealESRGAN_x4plus"),
+        gr.Radio(choices=["RealESRGAN_x2plus", "RealESRNet_x4plus", "RealESRGAN_x4plus", "realesr-general-x4v3", "RealESRGAN_x4plus_anime_6B"], label="Select model", value="RealESRGAN_x4plus")
+    ],
+    additional_inputs=[
         gr.Slider(minimum=0.1, maximum=4, value=2, step=0.1, label="Upscale factor"),
         gr.Checkbox(label="Enable Face Enhance", value=False),
         gr.Slider(minimum=0, maximum=10, value=0, step=1, label="Tile"),
         gr.Slider(minimum=0, maximum=100, value=10, step=1, label="Tile pad"),
         gr.Slider(minimum=0, maximum=50, value=0, step=1, label="Pre pad"),
         gr.Slider(minimum=0.01, maximum=1, value=0.5, step=0.01, label="Denoise strength"),
-        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
+        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True)
     ],
-    additional_inputs=[],
     additional_inputs_accordion=gr.Accordion(label="Face Enhance Settings", open=False),
     outputs=[
         gr.Image(type="filepath", label="Upscaled image"),
         gr.Video(label="Upscaled video"),
-        gr.Textbox(label="Message", type="text"),
+        gr.Textbox(label="Message", type="text")
     ],
     title="NeuroSandboxWebUI - Upscale (Real-ESRGAN)",
     description="This user interface allows you to upload an image and upscale it using Real-ESRGAN models",
@@ -8699,20 +8752,21 @@ faceswap_interface = gr.Interface(
     inputs=[
         gr.Image(label="Source Image", type="filepath"),
         gr.Image(label="Target Image", type="filepath"),
-        gr.Video(label="Target Video"),
+        gr.Video(label="Target Video")
+    ],
+    additional_inputs=[
         gr.Checkbox(label="Enable many faces", value=False),
         gr.Number(label="Reference face position"),
         gr.Number(label="Reference frame number"),
         gr.Checkbox(label="Enable FaceRestore", value=False),
         gr.Slider(minimum=0.01, maximum=1, value=0.5, step=0.01, label="Fidelity weight"),
-        gr.Slider(minimum=0.1, maximum=4, value=2, step=0.1, label="Upscale"),
+        gr.Slider(minimum=0.1, maximum=4, value=2, step=0.1, label="Upscale")
     ],
-    additional_inputs=[],
     additional_inputs_accordion=gr.Accordion(label="FaceSwap (Roop) Settings", open=False),
     outputs=[
         gr.Image(label="Processed image", type="filepath"),
         gr.Video(label="Processed video"),
-        gr.Textbox(label="Message", type="text"),
+        gr.Textbox(label="Message", type="text")
     ],
     title="NeuroSandboxWebUI - FaceSwap (Roop)",
     description="This user interface allows you to perform face swapping on images or videos and optional face restoration.",
