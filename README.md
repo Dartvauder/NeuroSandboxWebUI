@@ -16,9 +16,9 @@ The goal of the project - to create the easiest possible application to use neur
 
 ### Video: <img width="1115" alt="3" src="https://github.com/user-attachments/assets/032b248e-1ea8-4661-8a96-267e4a9ef01c">
 
-### 3D: <img width="1121" alt="4" src="https://github.com/user-attachments/assets/240888a6-97e5-4600-8386-0d263ea835cf">
+### 3D: <img width="1120" alt="4" src="https://github.com/user-attachments/assets/9ab4d3ec-f726-44b7-af3b-700a33e069c7">
 
-### Audio: <img width="1118" alt="5" src="https://github.com/user-attachments/assets/18323532-f7ad-4f21-ad3f-ecba5e67b968">
+### Audio: <img width="1118" alt="5" src="https://github.com/user-attachments/assets/7482134c-9754-4c13-bb77-90db17866b7c">
 
 ### Extras: <img width="1119" alt="6" src="https://github.com/user-attachments/assets/6b562746-ceda-466c-822c-c3b67272bcc2">
 
