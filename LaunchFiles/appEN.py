@@ -1463,10 +1463,9 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
 
 
 def generate_image_img2img(prompt, negative_prompt, init_image,
-                           strength, stable_diffusion_model_name, vae_model_name, stable_diffusion_settings_html,
-                           stable_diffusion_model_type,
+                           strength, stable_diffusion_model_name, vae_model_name, seed, stable_diffusion_model_type,
                            stable_diffusion_sampler, stable_diffusion_steps, stable_diffusion_cfg,
-                           stable_diffusion_clip_skip, num_images_per_prompt, seed, output_format="png"):
+                           stable_diffusion_clip_skip, num_images_per_prompt, output_format="png"):
 
     if not stable_diffusion_model_name:
         return None, "Please, select a StableDiffusion model!"
@@ -1578,8 +1577,8 @@ def generate_image_img2img(prompt, negative_prompt, init_image,
         flush()
 
 
-def generate_image_depth2img(prompt, negative_prompt, init_image, stable_diffusion_settings_html, strength, clip_skip, num_images_per_prompt,
-                             seed, output_format="png"):
+def generate_image_depth2img(prompt, negative_prompt, init_image, seed, strength, clip_skip, num_images_per_prompt,
+                             output_format="png"):
 
     if not init_image:
         return None, "Please, upload an initial image!"
@@ -4046,8 +4045,8 @@ def generate_image_flux(prompt, model_name, quantize_model_name, enable_quantize
 
             stable_diffusion = StableDiffusion(
                 diffusion_model_path=quantize_flux_model_path,
-                clip_l_path="inputs/image/quantize-flux/t5xxl_fp16.safetensors",
-                t5xxl_path="inputs/image/quantize-flux/clip_l.safetensors",
+                clip_l_path="inputs/image/quantize-flux/clip_l.safetensors",
+                t5xxl_path="inputs/image/quantize-flux/t5xxl_fp16.safetensors",
                 vae_path="inputs/image/quantize-flux/ae.safetensors",
                 lora_model_dir=lora_model_path,
                 wtype="default")
@@ -6721,7 +6720,9 @@ tts_stt_interface = gr.Interface(
     fn=generate_tts_stt,
     inputs=[
         gr.Textbox(label="Enter text for TTS"),
-        gr.Audio(label="Record audio for STT", type="filepath"),
+        gr.Audio(label="Record audio for STT", type="filepath")
+    ],
+    additional_inputs=[
         gr.HTML("<h3>TTS Settings</h3>"),
         gr.Dropdown(choices=speaker_wavs_list, label="Select voice", interactive=True),
         gr.Dropdown(choices=["en", "es", "fr", "de", "it", "pt", "pl", "tr", "ru", "nl", "cs", "ar", "zh-cn", "ja", "hu", "ko", "hi"], label="Select language", interactive=True),
@@ -6730,11 +6731,12 @@ tts_stt_interface = gr.Interface(
         gr.Slider(minimum=1, maximum=100, value=20, step=1, label="TTS Top K", interactive=True),
         gr.Slider(minimum=0.5, maximum=2.0, value=1.0, step=0.1, label="TTS Speed", interactive=True),
         gr.Radio(choices=["wav", "mp3", "ogg"], label="Select TTS output format", value="wav", interactive=True),
-        gr.Dropdown(choices=["txt", "json"], label="Select STT output format", value="txt", interactive=True),
+        gr.Dropdown(choices=["txt", "json"], label="Select STT output format", value="txt", interactive=True)
     ],
+    additional_inputs_accordion=gr.Accordion(label="TTS and STT Settings", open=False),
     outputs=[
         gr.Audio(label="TTS Audio", type="filepath"),
-        gr.Textbox(label="STT Text"),
+        gr.Textbox(label="STT Text")
     ],
     title="NeuroSandboxWebUI - TTS-STT",
     description="This user interface allows you to enter text for Text-to-Speech(CoquiTTS) and record audio for Speech-to-Text(OpenAIWhisper). "
@@ -6798,7 +6800,9 @@ seamless_m4tv2_interface = gr.Interface(
         gr.Audio(label="Input Audio", type="filepath"),
         gr.Dropdown(choices=get_languages(), label="Source Language", value=None, interactive=True),
         gr.Dropdown(choices=get_languages(), label="Target Language", value=None, interactive=True),
-        gr.Dropdown(choices=["en", "ru", "ko", "hi", "tr", "fr", "sp", "de", "ar", "pl"], label="Dataset Language", value="En", interactive=True),
+        gr.Dropdown(choices=["en", "ru", "ko", "hi", "tr", "fr", "sp", "de", "ar", "pl"], label="Dataset Language", value="En", interactive=True)
+    ],
+    additional_inputs=[
         gr.Checkbox(label="Enable Speech Generation", value=False),
         gr.Number(label="Speaker ID", value=0),
         gr.Slider(minimum=1, maximum=10, value=4, step=1, label="Text Num Beams"),
@@ -6811,6 +6815,7 @@ seamless_m4tv2_interface = gr.Interface(
         gr.Radio(choices=["txt", "json"], label="Text Output Format", value="txt", interactive=True),
         gr.Radio(choices=["wav", "mp3", "ogg"], label="Audio Output Format", value="wav", interactive=True)
     ],
+    additional_inputs_accordion=gr.Accordion(label="SeamlessM4T Settings", open=False),
     outputs=[
         gr.Textbox(label="Generated Text"),
         gr.Audio(label="Generated Audio", type="filepath"),
@@ -6832,10 +6837,12 @@ translate_interface = gr.Interface(
         gr.Dropdown(choices=["en", "es", "fr", "de", "it", "pt", "pl", "tr", "ru", "nl", "cs", "ar", "zh", "ja", "hi"], label="Select target language", value="ru"),
         gr.Checkbox(label="Enable translate history save", value=False),
         gr.Radio(choices=["txt", "json"], label="Select translate history format", value="txt", interactive=True),
-        gr.File(label="Upload text file (optional)", file_count="single", interactive=True),
+        gr.File(label="Upload text file (optional)", file_count="single", interactive=True)
     ],
+    additional_inputs=[],
+    additional_inputs_accordion=gr.Accordion(label="Additional LibreTranslate Settings", open=False),
     outputs=[
-        gr.Textbox(label="Translated text"),
+        gr.Textbox(label="Translated text")
     ],
     title="NeuroSandboxWebUI - LibreTranslate",
     description="This user interface allows you to enter text and translate it using LibreTranslate. "
@@ -6910,7 +6917,9 @@ img2img_interface = gr.Interface(
         gr.Slider(minimum=0.0, maximum=1.0, value=0.5, step=0.01, label="Strength"),
         gr.Dropdown(choices=stable_diffusion_models_list, label="Select StableDiffusion model", value=None),
         gr.Dropdown(choices=vae_models_list, label="Select VAE model (optional)", value=None),
-        gr.HTML("<h3>StableDiffusion Settings</h3>"),
+        gr.Textbox(label="Seed (optional)", value="")
+    ],
+    additional_inputs=[
         gr.Radio(choices=["SD", "SD2", "SDXL"], label="Select model type", value="SD"),
         gr.Dropdown(choices=["euler_ancestral", "euler", "lms", "heun", "dpm", "dpm_solver", "dpm_solver++"],
                     label="Select sampler", value="euler_ancestral"),
@@ -6918,12 +6927,12 @@ img2img_interface = gr.Interface(
         gr.Slider(minimum=1.0, maximum=30.0, value=8, step=0.1, label="CFG"),
         gr.Slider(minimum=1, maximum=4, value=1, step=1, label="Clip skip"),
         gr.Slider(minimum=1, maximum=4, value=1, step=1, label="Number of images to generate"),
-        gr.Textbox(label="Seed (optional)", value=""),
-        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
+        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True)
     ],
+    additional_inputs_accordion=gr.Accordion(label="StableDiffusion Settings", open=False),
     outputs=[
         gr.Gallery(label="Generated images", elem_id="gallery", columns=[2], rows=[2], object_fit="contain", height="auto"),
-        gr.Textbox(label="Message", type="text"),
+        gr.Textbox(label="Message", type="text")
     ],
     title="NeuroSandboxWebUI - StableDiffusion (img2img)",
     description="This user interface allows you to enter any text and image to generate new images using StableDiffusion. "
@@ -6941,16 +6950,18 @@ depth2img_interface = gr.Interface(
         gr.Textbox(label="Enter your prompt"),
         gr.Textbox(label="Enter your negative prompt", value=""),
         gr.Image(label="Initial image", type="filepath"),
-        gr.HTML("<h3>StableDiffusion Settings</h3>"),
+        gr.Textbox(label="Seed (optional)", value="")
+    ],
+    additional_inputs=[
         gr.Slider(minimum=0.0, maximum=1.0, value=0.7, step=0.01, label="Strength"),
         gr.Slider(minimum=1, maximum=4, value=1, step=1, label="Clip skip"),
         gr.Slider(minimum=1, maximum=4, value=1, step=1, label="Number of images to generate"),
-        gr.Textbox(label="Seed (optional)", value=""),
-        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
+        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True)
     ],
+    additional_inputs_accordion=gr.Accordion(label="StableDiffusion Settings", open=False),
     outputs=[
         gr.Gallery(label="Generated images", elem_id="gallery", columns=[2], rows=[2], object_fit="contain", height="auto"),
-        gr.Textbox(label="Message", type="text"),
+        gr.Textbox(label="Message", type="text")
     ],
     title="NeuroSandboxWebUI - StableDiffusion (depth2img)",
     description="This user interface allows you to enter a prompt, an initial image to generate depth-aware images using StableDiffusion. "
@@ -6974,6 +6985,8 @@ pix2pix_interface = gr.Interface(
         gr.Textbox(label="Seed (optional)", value=""),
         gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
     ],
+    additional_inputs=[],
+    additional_inputs_accordion=gr.Accordion(label="Pix2Pix Settings", open=False),
     outputs=[
         gr.Gallery(label="Generated images", elem_id="gallery", columns=[2], rows=[2], object_fit="contain", height="auto"),
         gr.Textbox(label="Message", type="text"),
@@ -7009,6 +7022,8 @@ controlnet_interface = gr.Interface(
         gr.Textbox(label="Seed (optional)", value=""),
         gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
     ],
+    additional_inputs=[],
+    additional_inputs_accordion=gr.Accordion(label="StableDiffusion Settings", open=False),
     outputs=[
         gr.Gallery(label="Generated images", elem_id="gallery", columns=[2], rows=[2], object_fit="contain", height="auto"),
         gr.Gallery(label="ControlNet control images", elem_id="gallery", columns=[2], rows=[2], object_fit="contain", height="auto"),
@@ -7035,6 +7050,8 @@ latent_upscale_interface = gr.Interface(
         gr.Textbox(label="Seed (optional)", value=""),
         gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
     ],
+    additional_inputs=[],
+    additional_inputs_accordion=gr.Accordion(label="Upscale-latent Settings", open=False),
     outputs=[
         gr.Image(type="filepath", label="Upscaled image"),
         gr.Textbox(label="Message", type="text"),
@@ -7090,6 +7107,8 @@ inpaint_interface = gr.Interface(
         gr.Textbox(label="Seed (optional)", value=""),
         gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
     ],
+    additional_inputs=[],
+    additional_inputs_accordion=gr.Accordion(label="Inpaint Settings", open=False),
     outputs=[
         gr.Gallery(label="Generated images", elem_id="gallery", columns=[2], rows=[2], object_fit="contain", height="auto"),
         gr.Textbox(label="Message", type="text"),
@@ -7124,6 +7143,8 @@ outpaint_interface = gr.Interface(
         gr.Textbox(label="Seed (optional)", value=""),
         gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
     ],
+    additional_inputs=[],
+    additional_inputs_accordion=gr.Accordion(label="Outpaint Settings", open=False),
     outputs=[
         gr.Gallery(label="Generated images", elem_id="gallery", columns=[2], rows=[2], object_fit="contain", height="auto"),
         gr.Textbox(label="Message", type="text"),
@@ -7160,6 +7181,8 @@ gligen_interface = gr.Interface(
         gr.Textbox(label="Seed (optional)", value=""),
         gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
     ],
+    additional_inputs=[],
+    additional_inputs_accordion=gr.Accordion(label="StableDiffusion Settings", open=False),
     outputs=[
         gr.Gallery(label="Generated images", elem_id="gallery", columns=[2], rows=[2], object_fit="contain", height="auto"),
         gr.Textbox(label="Message", type="text"),
@@ -7192,6 +7215,8 @@ animatediff_interface = gr.Interface(
         gr.Slider(minimum=1, maximum=4, value=1, step=1, label="Clip skip"),
         gr.Textbox(label="Seed (optional)", value=""),
     ],
+    additional_inputs=[],
+    additional_inputs_accordion=gr.Accordion(label="AnimateDiff Settings", open=False),
     outputs=[
         gr.Image(label="Generated GIF", type="filepath"),
         gr.Textbox(label="Message", type="text"),
@@ -7218,6 +7243,8 @@ hotshotxl_interface = gr.Interface(
         gr.Slider(minimum=100, maximum=10000, value=1000, step=1, label="Video Duration (seconds)"),
         gr.Radio(choices=["gif"], label="Output format", value="gif", interactive=False),
     ],
+    additional_inputs=[],
+    additional_inputs_accordion=gr.Accordion(label="HotShot-XL Settings", open=False),
     outputs=[
         gr.Image(type="filepath", label="Generated GIF"),
         gr.Textbox(label="Message", type="text"),
@@ -7250,6 +7277,8 @@ video_interface = gr.Interface(
         gr.Slider(minimum=1.0, maximum=30.0, value=9.0, step=0.1, label="CFG"),
         gr.Textbox(label="Seed (optional)", value=""),
     ],
+    additional_inputs=[],
+    additional_inputs_accordion=gr.Accordion(label="SD-Video Settings", open=False),
     outputs=[
         gr.Video(label="Generated video"),
         gr.Image(label="Generated GIF", type="filepath"),
@@ -7278,6 +7307,8 @@ ldm3d_interface = gr.Interface(
         gr.Textbox(label="Seed (optional)", value=""),
         gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
     ],
+    additional_inputs=[],
+    additional_inputs_accordion=gr.Accordion(label="LDM3D Settings", open=False),
     outputs=[
         gr.Gallery(label="Generated RGBs", elem_id="gallery", columns=[2], rows=[2], object_fit="contain", height="auto"),
         gr.Gallery(label="Generated Depth images", elem_id="gallery", columns=[2], rows=[2], object_fit="contain", height="auto"),
@@ -7310,6 +7341,8 @@ sd3_txt2img_interface = gr.Interface(
         gr.Textbox(label="Seed (optional)", value=""),
         gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
     ],
+    additional_inputs=[],
+    additional_inputs_accordion=gr.Accordion(label="StableDiffusion3 Settings", open=False),
     outputs=[
         gr.Gallery(label="Generated images", elem_id="gallery", columns=[2], rows=[2], object_fit="contain", height="auto"),
         gr.Textbox(label="Message", type="text"),
@@ -7341,6 +7374,8 @@ sd3_img2img_interface = gr.Interface(
         gr.Textbox(label="Seed (optional)", value=""),
         gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
     ],
+    additional_inputs=[],
+    additional_inputs_accordion=gr.Accordion(label="StableDiffusion3 Settings", open=False),
     outputs=[
         gr.Gallery(label="Generated images", elem_id="gallery", columns=[2], rows=[2], object_fit="contain", height="auto"),
         gr.Textbox(label="Message", type="text"),
@@ -7373,6 +7408,8 @@ sd3_controlnet_interface = gr.Interface(
         gr.Textbox(label="Seed (optional)", value=""),
         gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
     ],
+    additional_inputs=[],
+    additional_inputs_accordion=gr.Accordion(label="StableDiffusion3 Settings", open=False),
     outputs=[
         gr.Gallery(label="Generated images", elem_id="gallery", columns=[2], rows=[2], object_fit="contain", height="auto"),
         gr.Gallery(label="ControlNet control images", elem_id="gallery", columns=[2], rows=[2], object_fit="contain", height="auto"),
@@ -7405,6 +7442,8 @@ sd3_inpaint_interface = gr.Interface(
         gr.Textbox(label="Seed (optional)", value=""),
         gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
     ],
+    additional_inputs=[],
+    additional_inputs_accordion=gr.Accordion(label="StableDiffusion3 Settings", open=False),
     outputs=[
         gr.Gallery(label="Generated images", elem_id="gallery", columns=[2], rows=[2], object_fit="contain", height="auto"),
         gr.Textbox(label="Message", type="text"),
@@ -7435,6 +7474,8 @@ cascade_interface = gr.Interface(
         gr.Textbox(label="Seed (optional)", value=""),
         gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
     ],
+    additional_inputs=[],
+    additional_inputs_accordion=gr.Accordion(label="StableCascade Settings", open=False),
     outputs=[
         gr.Gallery(label="Generated images", elem_id="gallery", columns=[2], rows=[2], object_fit="contain", height="auto"),
         gr.Textbox(label="Message", type="text"),
@@ -7464,6 +7505,8 @@ t2i_ip_adapter_interface = gr.Interface(
         gr.Textbox(label="Seed (optional)", value=""),
         gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
     ],
+    additional_inputs=[],
+    additional_inputs_accordion=gr.Accordion(label="T2I IP-Adapter Settings", open=False),
     outputs=[
         gr.Gallery(label="Generated images", elem_id="gallery", columns=[2], rows=[2], object_fit="contain", height="auto"),
         gr.Textbox(label="Message", type="text"),
@@ -7493,6 +7536,8 @@ ip_adapter_faceid_interface = gr.Interface(
         gr.Slider(minimum=256, maximum=2048, value=512, step=64, label="Height"),
         gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
     ],
+    additional_inputs=[],
+    additional_inputs_accordion=gr.Accordion(label="IP-Adapter FaceID Settings", open=False),
     outputs=[
         gr.Gallery(label="Generated images", elem_id="gallery", columns=[2], rows=[2], object_fit="contain", height="auto"),
         gr.Textbox(label="Message", type="text"),
@@ -7519,6 +7564,8 @@ riffusion_text2image_interface = gr.Interface(
         gr.Textbox(label="Seed (optional)", value=""),
         gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
     ],
+    additional_inputs=[],
+    additional_inputs_accordion=gr.Accordion(label="Riffusion Settings", open=False),
     outputs=[
         gr.Image(type="filepath", label="Generated image"),
         gr.Textbox(label="Message", type="text"),
@@ -7585,6 +7632,8 @@ kandinsky_txt2img_interface = gr.Interface(
         gr.Textbox(label="Seed (optional)", value=""),
         gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
     ],
+    additional_inputs=[],
+    additional_inputs_accordion=gr.Accordion(label="Kandinsky Settings", open=False),
     outputs=[
         gr.Image(type="filepath", label="Generated image"),
         gr.Textbox(label="Message", type="text"),
@@ -7614,6 +7663,8 @@ kandinsky_img2img_interface = gr.Interface(
         gr.Textbox(label="Seed (optional)", value=""),
         gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
     ],
+    additional_inputs=[],
+    additional_inputs_accordion=gr.Accordion(label="Kandinsky Settings", open=False),
     outputs=[
         gr.Image(type="filepath", label="Generated image"),
         gr.Textbox(label="Message", type="text"),
@@ -7643,6 +7694,8 @@ kandinsky_inpaint_interface = gr.Interface(
         gr.Slider(minimum=256, maximum=2048, value=768, step=64, label="Width"),
         gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
     ],
+    additional_inputs=[],
+    additional_inputs_accordion=gr.Accordion(label="Kandinsky Settings", open=False),
     outputs=[
         gr.Image(type="filepath", label="Generated image"),
         gr.Textbox(label="Message", type="text"),
@@ -7679,6 +7732,8 @@ flux_interface = gr.Interface(
         gr.Textbox(label="Seed (optional)", value=""),
         gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
     ],
+    additional_inputs=[],
+    additional_inputs_accordion=gr.Accordion(label="Flux Settings", open=False),
     outputs=[
         gr.Image(type="filepath", label="Generated image"),
         gr.Textbox(label="Message", type="text"),
@@ -7705,6 +7760,8 @@ hunyuandit_txt2img_interface = gr.Interface(
         gr.Textbox(label="Seed (optional)", value=""),
         gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
     ],
+    additional_inputs=[],
+    additional_inputs_accordion=gr.Accordion(label="HunyuanDiT Settings", open=False),
     outputs=[
         gr.Image(type="filepath", label="Generated image"),
         gr.Textbox(label="Message", type="text"),
@@ -7733,6 +7790,8 @@ hunyuandit_controlnet_interface = gr.Interface(
         gr.Textbox(label="Seed (optional)", value=""),
         gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
     ],
+    additional_inputs=[],
+    additional_inputs_accordion=gr.Accordion(label="HunyuanDiT Settings", open=False),
     outputs=[
         gr.Image(type="filepath", label="Generated image"),
         gr.Textbox(label="Message", type="text"),
@@ -7765,6 +7824,8 @@ lumina_interface = gr.Interface(
         gr.Textbox(label="Seed (optional)", value=""),
         gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
     ],
+    additional_inputs=[],
+    additional_inputs_accordion=gr.Accordion(label="Lumina-T2X Settings", open=False),
     outputs=[
         gr.Image(type="filepath", label="Generated image"),
         gr.Textbox(label="Message", type="text"),
@@ -7792,6 +7853,8 @@ kolors_txt2img_interface = gr.Interface(
         gr.Textbox(label="Seed (optional)", value=""),
         gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
     ],
+    additional_inputs=[],
+    additional_inputs_accordion=gr.Accordion(label="Kolors Settings", open=False),
     outputs=[
         gr.Image(type="filepath", label="Generated image"),
         gr.Textbox(label="Message", type="text"),
@@ -7818,6 +7881,8 @@ kolors_img2img_interface = gr.Interface(
         gr.Textbox(label="Seed (optional)", value=""),
         gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
     ],
+    additional_inputs=[],
+    additional_inputs_accordion=gr.Accordion(label="Kolors Settings", open=False),
     outputs=[
         gr.Image(type="filepath", label="Generated image"),
         gr.Textbox(label="Message", type="text"),
@@ -7843,6 +7908,8 @@ kolors_ip_adapter_interface = gr.Interface(
         gr.Textbox(label="Seed (optional)", value=""),
         gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
     ],
+    additional_inputs=[],
+    additional_inputs_accordion=gr.Accordion(label="Kolors Settings", open=False),
     outputs=[
         gr.Image(type="filepath", label="Generated image"),
         gr.Textbox(label="Message", type="text"),
@@ -7878,6 +7945,8 @@ auraflow_interface = gr.Interface(
         gr.Textbox(label="Seed (optional)", value=""),
         gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
     ],
+    additional_inputs=[],
+    additional_inputs_accordion=gr.Accordion(label="AuraFlow Settings", open=False),
     outputs=[
         gr.Image(type="filepath", label="Generated image"),
         gr.Textbox(label="Message", type="text"),
@@ -7907,6 +7976,8 @@ wurstchen_interface = gr.Interface(
         gr.Textbox(label="Seed (optional)", value=""),
         gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
     ],
+    additional_inputs=[],
+    additional_inputs_accordion=gr.Accordion(label="Würstchen Settings", open=False),
     outputs=[
         gr.Image(type="filepath", label="Generated image"),
         gr.Textbox(label="Message", type="text"),
@@ -7933,6 +8004,8 @@ deepfloyd_if_txt2img_interface = gr.Interface(
         gr.Textbox(label="Seed (optional)", value=""),
         gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
     ],
+    additional_inputs=[],
+    additional_inputs_accordion=gr.Accordion(label="DeepFloyd IF Settings", open=False),
     outputs=[
         gr.Image(type="filepath", label="Generated image (Stage I)"),
         gr.Image(type="filepath", label="Generated image (Stage II)"),
@@ -7963,6 +8036,8 @@ deepfloyd_if_img2img_interface = gr.Interface(
         gr.Textbox(label="Seed (optional)", value=""),
         gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
     ],
+    additional_inputs=[],
+    additional_inputs_accordion=gr.Accordion(label="DeepFloyd IF Settings", open=False),
     outputs=[
         gr.Image(type="filepath", label="Generated image (Stage I)"),
         gr.Image(type="filepath", label="Generated image (Stage II)"),
@@ -7991,6 +8066,8 @@ deepfloyd_if_inpaint_interface = gr.Interface(
         gr.Slider(minimum=0.1, maximum=30.0, value=6, step=0.1, label="Guidance Scale"),
         gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
     ],
+    additional_inputs=[],
+    additional_inputs_accordion=gr.Accordion(label="DeepFloyd IF Settings", open=False),
     outputs=[
         gr.Image(type="filepath", label="Generated image (Stage I)"),
         gr.Image(type="filepath", label="Generated image (Stage II)"),
@@ -8027,6 +8104,8 @@ pixart_interface = gr.Interface(
         gr.Textbox(label="Seed (optional)", value=""),
         gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
     ],
+    additional_inputs=[],
+    additional_inputs_accordion=gr.Accordion(label="PixArt Settings", open=False),
     outputs=[
         gr.Image(type="filepath", label="Generated image"),
         gr.Textbox(label="Message", type="text"),
@@ -8053,6 +8132,8 @@ playgroundv2_interface = gr.Interface(
         gr.Textbox(label="Seed (optional)", value=""),
         gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
     ],
+    additional_inputs=[],
+    additional_inputs_accordion=gr.Accordion(label="PlaygroundV2.5 Settings", open=False),
     outputs=[
         gr.Image(type="filepath", label="Generated image"),
         gr.Textbox(label="Message", type="text"),
@@ -8080,6 +8161,8 @@ wav2lip_interface = gr.Interface(
         gr.Textbox(label="Crop", value="0 -1 0 -1"),
         gr.Checkbox(label="Enable no smooth", value=False),
     ],
+    additional_inputs=[],
+    additional_inputs_accordion=gr.Accordion(label="Wav2Lip Settings", open=False),
     outputs=[
         gr.Video(label="Generated lip-sync"),
         gr.Textbox(label="Message", type="text"),
@@ -8128,6 +8211,8 @@ modelscope_interface = gr.Interface(
         gr.Textbox(label="Seed (optional)", value=""),
         gr.Radio(choices=["mp4", "gif"], label="Select output format", value="mp4", interactive=True),
     ],
+    additional_inputs=[],
+    additional_inputs_accordion=gr.Accordion(label="ModelScope Settings", open=False),
     outputs=[
         gr.Video(label="Generated video"),
         gr.Textbox(label="Message", type="text"),
@@ -8155,6 +8240,8 @@ zeroscope2_interface = gr.Interface(
         gr.Checkbox(label="Enable Video Enhancement", value=False),
         gr.Textbox(label="Seed (optional)", value=""),
     ],
+    additional_inputs=[],
+    additional_inputs_accordion=gr.Accordion(label="ZeroScope 2 Settings", open=False),
     outputs=[
         gr.Video(label="Generated video"),
         gr.Textbox(label="Message", type="text"),
@@ -8183,6 +8270,8 @@ cogvideox_interface = gr.Interface(
         gr.Slider(minimum=1, maximum=60, value=10, step=1, label="FPS"),
         gr.Textbox(label="Seed (optional)", value=""),
     ],
+    additional_inputs=[],
+    additional_inputs_accordion=gr.Accordion(label="CogVideoX Settings", open=False),
     outputs=[
         gr.Video(label="Generated video"),
         gr.Textbox(label="Message", type="text"),
@@ -8209,6 +8298,8 @@ latte_interface = gr.Interface(
         gr.Slider(minimum=1, maximum=100, value=16, step=1, label="Video Length"),
         gr.Textbox(label="Seed (optional)", value=""),
     ],
+    additional_inputs=[],
+    additional_inputs_accordion=gr.Accordion(label="Latte Settings", open=False),
     outputs=[
         gr.Image(type="filepath", label="Generated GIF"),
         gr.Textbox(label="Message", type="text"),
@@ -8324,6 +8415,8 @@ stableaudio_interface = gr.Interface(
         gr.Textbox(label="Seed (optional)", value=""),
         gr.Radio(choices=["wav", "mp3", "ogg"], label="Select output format", value="wav", interactive=True),
     ],
+    additional_inputs=[],
+    additional_inputs_accordion=gr.Accordion(label="StableAudio Settings", open=False),
     outputs=[
         gr.Audio(label="Generated audio", type="filepath"),
         gr.Image(label="Mel-Spectrogram", type="filepath"),
@@ -8357,6 +8450,8 @@ audiocraft_interface = gr.Interface(
         gr.Checkbox(label="Enable Multiband Diffusion (Musicgen model only)", value=False),
         gr.Radio(choices=["wav", "mp3", "ogg"], label="Select output format (Works only without Multiband Diffusion)", value="wav", interactive=True),
     ],
+    additional_inputs=[],
+    additional_inputs_accordion=gr.Accordion(label="AudioCraft Settings", open=False),
     outputs=[
         gr.Audio(label="Generated audio", type="filepath"),
         gr.Image(label="Mel-Spectrogram", type="filepath"),
@@ -8384,6 +8479,8 @@ audioldm2_interface = gr.Interface(
         gr.Textbox(label="Seed (optional)", value=""),
         gr.Radio(choices=["wav", "mp3", "ogg"], label="Select output format", value="wav", interactive=True),
     ],
+    additional_inputs=[],
+    additional_inputs_accordion=gr.Accordion(label="AudioLDM 2 Settings", open=False),
     outputs=[
         gr.Audio(label="Generated audio", type="filepath"),
         gr.Image(label="Mel-Spectrogram", type="filepath"),
@@ -8409,6 +8506,8 @@ bark_interface = gr.Interface(
         gr.Slider(minimum=0.1, maximum=2.0, value=0.8, step=0.1, label="Coarse temperature"),
         gr.Radio(choices=["wav", "mp3", "ogg"], label="Select output format", value="wav", interactive=True),
     ],
+    additional_inputs=[],
+    additional_inputs_accordion=gr.Accordion(label="Bark Settings", open=False),
     outputs=[
         gr.Audio(label="Generated audio", type="filepath"),
         gr.Image(label="Mel-Spectrogram", type="filepath"),
@@ -8438,6 +8537,8 @@ rvc_interface = gr.Interface(
         gr.Slider(minimum=0, maximum=1, value=0.33, step=0.01, label="Protection"),
         gr.Radio(choices=["wav", "mp3", "ogg"], label="Select output format", value="wav", interactive=True),
     ],
+    additional_inputs=[],
+    additional_inputs_accordion=gr.Accordion(label="RVC Settings", open=False),
     outputs=[
         gr.Audio(label="Processed audio", type="filepath"),
         gr.Textbox(label="Message", type="text"),
@@ -8578,6 +8679,8 @@ realesrgan_upscale_interface = gr.Interface(
         gr.Slider(minimum=0.01, maximum=1, value=0.5, step=0.01, label="Denoise strength"),
         gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True),
     ],
+    additional_inputs=[],
+    additional_inputs_accordion=gr.Accordion(label="Face Enhance Settings", open=False),
     outputs=[
         gr.Image(type="filepath", label="Upscaled image"),
         gr.Video(label="Upscaled video"),
@@ -8604,6 +8707,8 @@ faceswap_interface = gr.Interface(
         gr.Slider(minimum=0.01, maximum=1, value=0.5, step=0.01, label="Fidelity weight"),
         gr.Slider(minimum=0.1, maximum=4, value=2, step=0.1, label="Upscale"),
     ],
+    additional_inputs=[],
+    additional_inputs_accordion=gr.Accordion(label="FaceSwap (Roop) Settings", open=False),
     outputs=[
         gr.Image(label="Processed image", type="filepath"),
         gr.Video(label="Processed video"),
