@@ -8719,10 +8719,10 @@ realesrgan_upscale_interface = gr.Interface(
     inputs=[
         gr.Image(label="Image to upscale", type="filepath"),
         gr.Video(label="Input video"),
-        gr.Radio(choices=["RealESRGAN_x2plus", "RealESRNet_x4plus", "RealESRGAN_x4plus", "realesr-general-x4v3", "RealESRGAN_x4plus_anime_6B"], label="Select model", value="RealESRGAN_x4plus")
+        gr.Radio(choices=["RealESRGAN_x2plus", "RealESRNet_x4plus", "RealESRGAN_x4plus", "realesr-general-x4v3", "RealESRGAN_x4plus_anime_6B"], label="Select model", value="RealESRGAN_x4plus"),
+        gr.Slider(minimum=0.1, maximum=4, value=2, step=0.1, label="Upscale factor")
     ],
     additional_inputs=[
-        gr.Slider(minimum=0.1, maximum=4, value=2, step=0.1, label="Upscale factor"),
         gr.Checkbox(label="Enable Face Enhance", value=False),
         gr.Slider(minimum=0, maximum=10, value=0, step=1, label="Tile"),
         gr.Slider(minimum=0, maximum=100, value=10, step=1, label="Tile pad"),
