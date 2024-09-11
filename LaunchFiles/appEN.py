@@ -1463,7 +1463,7 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
 
 
 def generate_image_img2img(prompt, negative_prompt, init_image,
-                           strength, stable_diffusion_model_name, vae_model_name, seed, stable_diffusion_model_type,
+                           strength, stable_diffusion_model_type, stable_diffusion_model_name, vae_model_name, seed,
                            stable_diffusion_sampler, stable_diffusion_steps, stable_diffusion_cfg,
                            stable_diffusion_clip_skip, num_images_per_prompt, output_format="png"):
 
@@ -1653,8 +1653,8 @@ def generate_image_depth2img(prompt, negative_prompt, init_image, seed, strength
         flush()
 
 
-def generate_image_pix2pix(prompt, negative_prompt, init_image, num_inference_steps, guidance_scale,
-                           clip_skip, num_images_per_prompt, seed, output_format="png"):
+def generate_image_pix2pix(prompt, negative_prompt, init_image, seed, num_inference_steps, guidance_scale,
+                           clip_skip, num_images_per_prompt, output_format="png"):
 
     if not init_image:
         return None, "Please, upload an initial image!"
@@ -1725,8 +1725,8 @@ def generate_image_pix2pix(prompt, negative_prompt, init_image, num_inference_st
         flush()
 
 
-def generate_image_controlnet(prompt, negative_prompt, init_image, sd_version, stable_diffusion_sampler, stable_diffusion_model_name, controlnet_model_name,
-                              num_inference_steps, guidance_scale, width, height, controlnet_conditioning_scale, clip_skip, num_images_per_prompt, seed, output_format="png"):
+def generate_image_controlnet(prompt, negative_prompt, init_image, sd_version, stable_diffusion_model_name, controlnet_model_name, seed,
+                              stable_diffusion_sampler, num_inference_steps, guidance_scale, width, height, controlnet_conditioning_scale, clip_skip, num_images_per_prompt, output_format="png"):
 
     if not init_image:
         return None, None, "Please, upload an initial image!"
@@ -1952,7 +1952,7 @@ def generate_image_controlnet(prompt, negative_prompt, init_image, sd_version, s
         flush()
 
 
-def generate_image_upscale_latent(prompt, image_path, upscale_factor, num_inference_steps, guidance_scale, seed, output_format="png"):
+def generate_image_upscale_latent(prompt, image_path, upscale_factor, seed, num_inference_steps, guidance_scale, output_format="png"):
 
     if not image_path:
         return None, "Please, upload an initial image!"
@@ -2107,9 +2107,8 @@ def generate_image_sdxl_refiner(prompt, init_image, output_format="png"):
         flush()
 
 
-def generate_image_inpaint(prompt, negative_prompt, init_image, mask_image, blur_factor, stable_diffusion_model_name, vae_model_name,
-                           stable_diffusion_settings_html, stable_diffusion_model_type, stable_diffusion_sampler,
-                           stable_diffusion_steps, stable_diffusion_cfg, width, height, clip_skip, num_images_per_prompt, seed, output_format="png"):
+def generate_image_inpaint(prompt, negative_prompt, init_image, mask_image, blur_factor, stable_diffusion_model_type, stable_diffusion_model_name, vae_model_name, seed, stable_diffusion_sampler,
+                           stable_diffusion_steps, stable_diffusion_cfg, width, height, clip_skip, num_images_per_prompt, output_format="png"):
 
     if not stable_diffusion_model_name:
         return None, "Please, select a StableDiffusion model!"
@@ -2246,10 +2245,8 @@ def generate_image_inpaint(prompt, negative_prompt, init_image, mask_image, blur
         flush()
 
 
-def generate_image_outpaint(prompt, negative_prompt, init_image, stable_diffusion_model_name, stable_diffusion_settings_html,
-                            stable_diffusion_model_type, stable_diffusion_sampler,
-                            stable_diffusion_steps, stable_diffusion_cfg,
-                            outpaint_direction, outpaint_expansion, clip_skip, num_images_per_prompt, seed, output_format="png"):
+def generate_image_outpaint(prompt, negative_prompt, init_image, stable_diffusion_model_type, stable_diffusion_model_name, seed, stable_diffusion_sampler,
+                            stable_diffusion_steps, stable_diffusion_cfg, outpaint_direction, outpaint_expansion, clip_skip, num_images_per_prompt, output_format="png"):
 
     if not init_image:
         return None, "Please upload an initial image!"
@@ -2405,10 +2402,10 @@ def generate_image_outpaint(prompt, negative_prompt, init_image, stable_diffusio
         flush()
 
 
-def generate_image_gligen(prompt, negative_prompt, gligen_phrases, gligen_boxes, stable_diffusion_model_name, stable_diffusion_settings_html,
-                          stable_diffusion_model_type, stable_diffusion_sampler, stable_diffusion_steps,
+def generate_image_gligen(prompt, negative_prompt, gligen_phrases, gligen_boxes, stable_diffusion_model_type, stable_diffusion_model_name, seed,
+                          stable_diffusion_sampler, stable_diffusion_steps,
                           stable_diffusion_cfg, stable_diffusion_width, stable_diffusion_height,
-                          stable_diffusion_clip_skip, num_images_per_prompt, seed, output_format="png"):
+                          stable_diffusion_clip_skip, num_images_per_prompt, output_format="png"):
 
     if not stable_diffusion_model_name:
         return None, "Please, select a StableDiffusion model!"
@@ -2549,8 +2546,8 @@ def generate_image_gligen(prompt, negative_prompt, gligen_phrases, gligen_boxes,
         flush()
 
 
-def generate_image_animatediff(prompt, negative_prompt, input_video, strength, model_type, stable_diffusion_model_name, motion_lora_name, num_frames, num_inference_steps,
-                               guidance_scale, width, height, clip_skip, seed):
+def generate_image_animatediff(prompt, negative_prompt, input_video, strength, model_type, stable_diffusion_model_name, seed, motion_lora_name, num_frames, num_inference_steps,
+                               guidance_scale, width, height, clip_skip):
 
     if not stable_diffusion_model_name:
         return None, "Please, select a StableDiffusion model!"
@@ -2830,8 +2827,8 @@ def generate_hotshotxl(prompt, negative_prompt, steps, width, height, video_leng
         flush()
 
 
-def generate_video(init_image, output_format, video_settings_html, motion_bucket_id, noise_aug_strength, fps, num_frames, decode_chunk_size,
-                   iv2gen_xl_settings_html, prompt, negative_prompt, num_inference_steps, guidance_scale, seed):
+def generate_video(init_image, output_format, seed, video_settings_html, motion_bucket_id, noise_aug_strength, fps, num_frames, decode_chunk_size,
+                   iv2gen_xl_settings_html, prompt, negative_prompt, num_inference_steps, guidance_scale):
 
     if not init_image:
         return None, None, "Please upload an initial image!"
@@ -2936,7 +2933,7 @@ def generate_video(init_image, output_format, video_settings_html, motion_bucket
             flush()
 
 
-def generate_image_ldm3d(prompt, negative_prompt, width, height, num_inference_steps, guidance_scale, num_images_per_prompt, seed, output_format="png"):
+def generate_image_ldm3d(prompt, negative_prompt, seed, width, height, num_inference_steps, guidance_scale, num_images_per_prompt, output_format="png"):
 
     ldm3d_model_path = os.path.join("inputs", "image", "sd_models", "ldm3d")
 
@@ -3002,7 +2999,7 @@ def generate_image_ldm3d(prompt, negative_prompt, width, height, num_inference_s
         flush()
 
 
-def generate_image_sd3_txt2img(prompt, negative_prompt, lora_model_names, lora_scales, num_inference_steps, guidance_scale, width, height, max_sequence_length, clip_skip, num_images_per_prompt, seed, output_format="png"):
+def generate_image_sd3_txt2img(prompt, negative_prompt, seed, lora_model_names, lora_scales, num_inference_steps, guidance_scale, width, height, max_sequence_length, clip_skip, num_images_per_prompt, output_format="png"):
 
     sd3_model_path = os.path.join("inputs", "image", "sd_models", "sd3")
 
@@ -3095,7 +3092,7 @@ def generate_image_sd3_txt2img(prompt, negative_prompt, lora_model_names, lora_s
         flush()
 
 
-def generate_image_sd3_img2img(prompt, negative_prompt, init_image, strength, num_inference_steps, guidance_scale, width, height, max_sequence_length, clip_skip, num_images_per_prompt, seed, output_format="png"):
+def generate_image_sd3_img2img(prompt, negative_prompt, init_image, strength, seed, num_inference_steps, guidance_scale, width, height, max_sequence_length, clip_skip, num_images_per_prompt, output_format="png"):
 
     sd3_model_path = os.path.join("inputs", "image", "sd_models", "sd3")
 
@@ -3165,7 +3162,7 @@ def generate_image_sd3_img2img(prompt, negative_prompt, init_image, strength, nu
         flush()
 
 
-def generate_image_sd3_controlnet(prompt, negative_prompt, init_image, controlnet_model, num_inference_steps, guidance_scale, controlnet_conditioning_scale, width, height, max_sequence_length, clip_skip, num_images_per_prompt, seed, output_format="png"):
+def generate_image_sd3_controlnet(prompt, negative_prompt, init_image, controlnet_model, seed, num_inference_steps, guidance_scale, controlnet_conditioning_scale, width, height, max_sequence_length, clip_skip, num_images_per_prompt, output_format="png"):
 
     if not init_image:
         return None, None, "Please upload an initial image!"
@@ -3268,7 +3265,7 @@ def generate_image_sd3_controlnet(prompt, negative_prompt, init_image, controlne
         flush()
 
 
-def generate_image_sd3_inpaint(prompt, negative_prompt, init_image, mask_image, num_inference_steps, guidance_scale, width, height, max_sequence_length, clip_skip, num_images_per_prompt, seed, output_format="png"):
+def generate_image_sd3_inpaint(prompt, negative_prompt, init_image, mask_image, seed, num_inference_steps, guidance_scale, width, height, max_sequence_length, clip_skip, num_images_per_prompt, output_format="png"):
 
     sd3_model_path = os.path.join("inputs", "image", "sd_models", "sd3")
 
@@ -3341,8 +3338,8 @@ def generate_image_sd3_inpaint(prompt, negative_prompt, init_image, mask_image, 
         flush()
 
 
-def generate_image_cascade(prompt, negative_prompt, stable_cascade_settings_html, width, height, prior_steps, prior_guidance_scale,
-                           decoder_steps, decoder_guidance_scale, num_images_per_prompt, seed, output_format="png"):
+def generate_image_cascade(prompt, negative_prompt, seed, width, height, prior_steps, prior_guidance_scale,
+                           decoder_steps, decoder_guidance_scale, num_images_per_prompt, output_format="png"):
 
     stable_cascade_model_path = os.path.join("inputs", "image", "sd_models", "cascade")
 
@@ -3416,7 +3413,7 @@ def generate_image_cascade(prompt, negative_prompt, stable_cascade_settings_html
         flush()
 
 
-def generate_image_t2i_ip_adapter(prompt, negative_prompt, ip_adapter_image, stable_diffusion_model_type, stable_diffusion_model_name, num_inference_steps, guidance_scale, width, height, seed, output_format="png"):
+def generate_image_t2i_ip_adapter(prompt, negative_prompt, ip_adapter_image, stable_diffusion_model_type, stable_diffusion_model_name, seed, num_inference_steps, guidance_scale, width, height, output_format="png"):
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -3617,7 +3614,7 @@ def generate_image_ip_adapter_faceid(prompt, negative_prompt, face_image, s_scal
         flush()
 
 
-def generate_riffusion_text2image(prompt, negative_prompt, num_inference_steps, guidance_scale, height, width, seed, output_format="png"):
+def generate_riffusion_text2image(prompt, negative_prompt, seed, num_inference_steps, guidance_scale, height, width, output_format="png"):
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -3712,7 +3709,7 @@ def generate_riffusion_audio2image(audio_path, output_format="png"):
         flush()
 
 
-def generate_image_kandinsky_txt2img(prompt, negative_prompt, version, num_inference_steps, guidance_scale, height, width, seed, output_format="png"):
+def generate_image_kandinsky_txt2img(prompt, negative_prompt, version, seed, num_inference_steps, guidance_scale, height, width, output_format="png"):
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -3831,7 +3828,7 @@ def generate_image_kandinsky_txt2img(prompt, negative_prompt, version, num_infer
         flush()
 
 
-def generate_image_kandinsky_img2img(prompt, negative_prompt, init_image, version, num_inference_steps, guidance_scale, strength, height, width, seed, output_format="png"):
+def generate_image_kandinsky_img2img(prompt, negative_prompt, init_image, version, seed, num_inference_steps, guidance_scale, strength, height, width, output_format="png"):
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -4023,7 +4020,7 @@ def generate_image_kandinsky_inpaint(prompt, negative_prompt, init_image, mask_i
         flush()
 
 
-def generate_image_flux(prompt, model_name, quantize_model_name, enable_quantize, lora_model_names, lora_scales, guidance_scale, height, width, num_inference_steps, max_sequence_length, seed, output_format="png"):
+def generate_image_flux(prompt, model_name, quantize_model_name, enable_quantize, seed, lora_model_names, lora_scales, guidance_scale, height, width, num_inference_steps, max_sequence_length, output_format="png"):
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -4132,7 +4129,7 @@ def generate_image_flux(prompt, model_name, quantize_model_name, enable_quantize
         flush()
 
 
-def generate_image_hunyuandit_txt2img(prompt, negative_prompt, num_inference_steps, guidance_scale, height, width, seed, output_format="png"):
+def generate_image_hunyuandit_txt2img(prompt, negative_prompt, seed, num_inference_steps, guidance_scale, height, width, output_format="png"):
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -4182,7 +4179,7 @@ def generate_image_hunyuandit_txt2img(prompt, negative_prompt, num_inference_ste
         flush()
 
 
-def generate_image_hunyuandit_controlnet(prompt, negative_prompt, init_image, controlnet_model, num_inference_steps, guidance_scale, height, width, seed, output_format="png"):
+def generate_image_hunyuandit_controlnet(prompt, negative_prompt, init_image, controlnet_model, seed, num_inference_steps, guidance_scale, height, width, output_format="png"):
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -4244,7 +4241,7 @@ def generate_image_hunyuandit_controlnet(prompt, negative_prompt, init_image, co
         flush()
 
 
-def generate_image_lumina(prompt, negative_prompt, num_inference_steps, guidance_scale, height, width, max_sequence_length, seed, output_format="png"):
+def generate_image_lumina(prompt, negative_prompt, seed, num_inference_steps, guidance_scale, height, width, max_sequence_length, output_format="png"):
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -4296,7 +4293,7 @@ def generate_image_lumina(prompt, negative_prompt, num_inference_steps, guidance
         flush()
 
 
-def generate_image_kolors_txt2img(prompt, negative_prompt, lora_model_names, lora_scales, guidance_scale, num_inference_steps, max_sequence_length, seed, output_format="png"):
+def generate_image_kolors_txt2img(prompt, negative_prompt, seed, lora_model_names, lora_scales, guidance_scale, num_inference_steps, max_sequence_length, output_format="png"):
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -4373,7 +4370,7 @@ def generate_image_kolors_txt2img(prompt, negative_prompt, lora_model_names, lor
         flush()
 
 
-def generate_image_kolors_img2img(prompt, negative_prompt, init_image, guidance_scale, num_inference_steps, max_sequence_length, seed, output_format="png"):
+def generate_image_kolors_img2img(prompt, negative_prompt, init_image, seed, guidance_scale, num_inference_steps, max_sequence_length, output_format="png"):
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
     if seed == "" or seed is None:
@@ -4425,7 +4422,7 @@ def generate_image_kolors_img2img(prompt, negative_prompt, init_image, guidance_
         flush()
 
 
-def generate_image_kolors_ip_adapter_plus(prompt, negative_prompt, ip_adapter_image, guidance_scale, num_inference_steps, seed, output_format="png"):
+def generate_image_kolors_ip_adapter_plus(prompt, negative_prompt, ip_adapter_image, seed, guidance_scale, num_inference_steps, output_format="png"):
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
     if seed == "" or seed is None:
@@ -4497,7 +4494,7 @@ def generate_image_kolors_ip_adapter_plus(prompt, negative_prompt, ip_adapter_im
         flush()
 
 
-def generate_image_auraflow(prompt, negative_prompt, lora_model_names, lora_scales, num_inference_steps, guidance_scale, height, width, max_sequence_length, enable_aurasr, seed, output_format="png"):
+def generate_image_auraflow(prompt, negative_prompt, seed, lora_model_names, lora_scales, num_inference_steps, guidance_scale, height, width, max_sequence_length, enable_aurasr, output_format="png"):
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -4589,7 +4586,7 @@ def generate_image_auraflow(prompt, negative_prompt, lora_model_names, lora_scal
         flush()
 
 
-def generate_image_wurstchen(prompt, negative_prompt, width, height, prior_steps, prior_guidance_scale, decoder_steps, decoder_guidance_scale, seed, output_format="png"):
+def generate_image_wurstchen(prompt, negative_prompt, seed, width, height, prior_steps, prior_guidance_scale, decoder_steps, decoder_guidance_scale, output_format="png"):
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -4662,7 +4659,7 @@ def generate_image_wurstchen(prompt, negative_prompt, width, height, prior_steps
         flush()
 
 
-def generate_image_deepfloyd_txt2img(prompt, negative_prompt, num_inference_steps, guidance_scale, width, height, seed, output_format="png"):
+def generate_image_deepfloyd_txt2img(prompt, negative_prompt, seed, num_inference_steps, guidance_scale, width, height, output_format="png"):
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -4785,7 +4782,7 @@ def generate_image_deepfloyd_txt2img(prompt, negative_prompt, num_inference_step
         flush()
 
 
-def generate_image_deepfloyd_img2img(prompt, negative_prompt, init_image, num_inference_steps, guidance_scale, width, height, seed, output_format="png"):
+def generate_image_deepfloyd_img2img(prompt, negative_prompt, init_image, seed, num_inference_steps, guidance_scale, width, height, output_format="png"):
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -5042,8 +5039,8 @@ def generate_image_deepfloyd_inpaint(prompt, negative_prompt, init_image, mask_i
         flush()
 
 
-def generate_image_pixart(prompt, negative_prompt, version, num_inference_steps, guidance_scale, height, width,
-                          max_sequence_length, seed, output_format="png"):
+def generate_image_pixart(prompt, negative_prompt, version, seed, num_inference_steps, guidance_scale, height, width,
+                          max_sequence_length, output_format="png"):
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -5125,7 +5122,7 @@ def generate_image_pixart(prompt, negative_prompt, version, num_inference_steps,
         flush()
 
 
-def generate_image_playgroundv2(prompt, negative_prompt, height, width, num_inference_steps, guidance_scale, seed, output_format="png"):
+def generate_image_playgroundv2(prompt, negative_prompt, seed, height, width, num_inference_steps, guidance_scale, output_format="png"):
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -5265,8 +5262,8 @@ def generate_liveportrait(source_image, driving_video, output_format="mp4"):
         flush()
 
 
-def generate_video_modelscope(prompt, negative_prompt, num_inference_steps, guidance_scale, height, width, num_frames,
-                              seed, output_format):
+def generate_video_modelscope(prompt, negative_prompt, seed, num_inference_steps, guidance_scale, height, width, num_frames,
+                              output_format):
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -5323,8 +5320,8 @@ def generate_video_modelscope(prompt, negative_prompt, num_inference_steps, guid
         flush()
 
 
-def generate_video_zeroscope2(prompt, video_to_enhance, strength, num_inference_steps, width, height, num_frames,
-                              enable_video_enhance, seed):
+def generate_video_zeroscope2(prompt, video_to_enhance, seed, strength, num_inference_steps, width, height, num_frames,
+                              enable_video_enhance):
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -5434,7 +5431,7 @@ def generate_video_zeroscope2(prompt, video_to_enhance, strength, num_inference_
             flush()
 
 
-def generate_video_cogvideox(prompt, negative_prompt, cogvideox_version, num_inference_steps, guidance_scale, height, width, num_frames, fps, seed):
+def generate_video_cogvideox(prompt, negative_prompt, seed, cogvideox_version, num_inference_steps, guidance_scale, height, width, num_frames, fps):
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -5488,7 +5485,7 @@ def generate_video_cogvideox(prompt, negative_prompt, cogvideox_version, num_inf
         flush()
 
 
-def generate_video_latte(prompt, negative_prompt, num_inference_steps, guidance_scale, height, width, video_length, seed):
+def generate_video_latte(prompt, negative_prompt, seed, num_inference_steps, guidance_scale, height, width, video_length):
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -5572,7 +5569,7 @@ def generate_3d_stablefast3d(image, texture_resolution, foreground_ratio, remesh
         flush()
 
 
-def generate_3d_shap_e(prompt, init_image, num_inference_steps, guidance_scale, frame_size, seed):
+def generate_3d_shap_e(prompt, init_image, seed, num_inference_steps, guidance_scale, frame_size):
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -5759,7 +5756,7 @@ def generate_3d_zero123plus(input_image, num_inference_steps, output_format="png
         flush()
 
 
-def generate_stableaudio(prompt, negative_prompt, num_inference_steps, guidance_scale, audio_length, audio_start, num_waveforms, seed, output_format):
+def generate_stableaudio(prompt, negative_prompt, seed, num_inference_steps, guidance_scale, audio_length, audio_start, num_waveforms, output_format):
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -5829,7 +5826,7 @@ def generate_stableaudio(prompt, negative_prompt, num_inference_steps, guidance_
         flush()
 
 
-def generate_audio_audiocraft(prompt, input_audio=None, model_name=None, audiocraft_settings_html=None, model_type="musicgen",
+def generate_audio_audiocraft(prompt, input_audio=None, model_name=None, model_type="musicgen",
                               duration=10, top_k=250, top_p=0.0,
                               temperature=1.0, cfg_coef=3.0, min_cfg_coef=1.0, max_cfg_coef=3.0, enable_multiband=False, output_format="mp3"):
     global audiocraft_model_path, multiband_diffusion_path
@@ -5945,8 +5942,8 @@ def generate_audio_audiocraft(prompt, input_audio=None, model_name=None, audiocr
         flush()
 
 
-def generate_audio_audioldm2(prompt, negative_prompt, model_name, num_inference_steps, audio_length_in_s,
-                             num_waveforms_per_prompt, seed, output_format):
+def generate_audio_audioldm2(prompt, negative_prompt, model_name, seed, num_inference_steps, audio_length_in_s,
+                             num_waveforms_per_prompt, output_format):
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -7510,11 +7507,11 @@ t2i_ip_adapter_interface = gr.Interface(
         gr.Textbox(label="Enter your prompt"),
         gr.Textbox(label="Enter your negative prompt", value=""),
         gr.Image(label="IP-Adapter Image", type="filepath"),
+        gr.Radio(choices=["SD", "SDXL"], label="Select model type", value="SD"),
         gr.Dropdown(choices=stable_diffusion_models_list, label="Select StableDiffusion model", value=None),
         gr.Textbox(label="Seed (optional)", value="")
     ],
     additional_inputs=[
-        gr.Radio(choices=["SD", "SDXL"], label="Select model type", value="SD"),
         gr.Slider(minimum=1, maximum=100, value=50, step=1, label="Steps"),
         gr.Slider(minimum=1.0, maximum=20.0, value=7.5, step=0.1, label="Guidance Scale"),
         gr.Slider(minimum=256, maximum=2048, value=1024, step=64, label="Width"),
