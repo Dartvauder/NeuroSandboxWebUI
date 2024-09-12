@@ -20,7 +20,7 @@ The goal of the project - to create the easiest possible application to use neur
 
 ### Audio: <img width="1118" alt="5" src="https://github.com/user-attachments/assets/a941dc22-f365-4108-ba0f-df56057b63b8">
 
-### Extras: <img width="1119" alt="6" src="https://github.com/user-attachments/assets/6b562746-ceda-466c-822c-c3b67272bcc2">
+### Extras: <img width="1118" alt="6" src="https://github.com/user-attachments/assets/c2f3fbb0-a07b-446f-a166-e995c7722463">
 
 ### Interface: <img width="1124" alt="7" src="https://github.com/user-attachments/assets/673cb2b1-57ac-4b1d-92aa-61066832ecdb">
 
@@ -51,6 +51,7 @@ The goal of the project - to create the easiest possible application to use neur
 * Support Wav2Lip
 * Support LivePortrait for animate an image
 * Support Multimodal (Moondream 2), LORA and WebSearch (with DuckDuckGo) for LLM
+* MetaData-Info viewer for generating image, video and audio
 * Model settings inside the interface
 * Online and offline Wiki
 * Gallery
