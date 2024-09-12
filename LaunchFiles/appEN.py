@@ -53,6 +53,10 @@ from llama_cpp import Llama
 from llama_cpp.llama_chat_format import MoondreamChatHandler
 from stable_diffusion_cpp import StableDiffusion
 import requests
+import asyncio
+import websockets
+import io
+import threading
 import markdown
 import urllib.parse
 from rembg import remove
@@ -119,6 +123,75 @@ try:
 except Exception as e:
     print(f"Unable to access system information: {e}")
     pass
+
+logging.basicConfig(level=logging.INFO)
+
+
+async def websocket_server(websocket):
+    try:
+        async for message in websocket:
+            logging.info(f"Received message: {message}")
+            if message == "stop":
+                response = "Stopped at specific step"
+            elif message == "get_models":
+                response = json.dumps({"models": ["model1", "model2"]})
+            else:
+                response = "Unknown command"
+            await websocket.send(response)
+            logging.info(f"Sent response: {response}")
+    except websockets.exceptions.ConnectionClosed as e:
+        logging.error(f"Connection closed: {e}")
+    except Exception as e:
+        logging.error(f"Error in websocket server: {e}")
+
+
+async def start_websocket_server():
+    server = await websockets.serve(websocket_server, "localhost", 8765)
+    logging.info("WebSocket server started on ws://localhost:8765")
+    try:
+        await asyncio.Future()
+    finally:
+        server.close()
+        await server.wait_closed()
+        logging.info("WebSocket server closed")
+
+
+def start_server_thread():
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    try:
+        loop.run_until_complete(start_websocket_server())
+    except Exception as e:
+        logging.error(f"Error in server thread: {e}")
+    finally:
+        loop.close()
+        logging.info("Event loop closed")
+
+
+threading.Thread(target=start_server_thread, daemon=True).start()
+
+
+async def send_stop_command():
+    try:
+        async with websockets.connect("ws://localhost:8765") as websocket:
+            await websocket.send("stop")
+            response = await websocket.recv()
+            logging.info(f"Received from server: {response}")
+    except websockets.exceptions.InvalidURI as e:
+        logging.error(f"Invalid URI: {e}")
+    except websockets.exceptions.ConnectionClosed as e:
+        logging.error(f"Connection closed: {e}")
+    except Exception as e:
+        logging.error(f"Error in WebSocket client: {e}")
+
+
+def process_in_memory_data(data: str) -> str:
+    with io.StringIO() as memory_stream:
+        memory_stream.write(data)
+        memory_stream.seek(0)
+        result = memory_stream.read()
+
+    return result
 
 
 def flush():
