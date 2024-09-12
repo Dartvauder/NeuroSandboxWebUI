@@ -53,6 +53,10 @@ from llama_cpp import Llama
 from llama_cpp.llama_chat_format import MoondreamChatHandler
 from stable_diffusion_cpp import StableDiffusion
 import requests
+import asyncio
+import websockets
+import io
+import threading
 import markdown
 import urllib.parse
 from rembg import remove
@@ -119,6 +123,52 @@ try:
 except Exception as e:
     print(f"Unable to access system information: {e}")
     pass
+
+
+async def websocket_server(websocket):
+    async for message in websocket:
+        if message == "stop":
+            response = "Stopped at specific step"
+        elif message == "get_models":
+            response = json.dumps({"models": ["model1", "model2"]})
+        else:
+            response = "Unknown command"
+        await websocket.send(response)
+
+
+async def start_websocket_server():
+    async with websockets.serve(websocket_server, "localhost", 8765):
+        await asyncio.Future()
+
+
+def start_server_thread():
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    loop.run_until_complete(start_websocket_server())
+
+
+threading.Thread(target=start_server_thread, daemon=True).start()
+
+
+async def send_stop_command():
+    async with websockets.connect("ws://localhost:8765") as websocket:
+        await websocket.send("stop")
+        response = await websocket.recv()
+        print(response)
+
+
+def process_in_memory_data(data: str) -> str:
+    memory_stream = io.StringIO()
+
+    memory_stream.write(data)
+
+    memory_stream.seek(0)
+
+    result = memory_stream.read()
+
+    memory_stream.close()
+
+    return result
 
 
 def flush():
