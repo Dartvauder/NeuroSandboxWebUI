@@ -92,6 +92,7 @@ tts_model = None
 whisper_model = None
 audiocraft_model_path = None
 multiband_diffusion_path = None
+stop_signal = None
 
 
 def print_system_info():
@@ -192,6 +193,12 @@ def process_in_memory_data(data: str) -> str:
         result = memory_stream.read()
 
     return result
+
+
+async def stop_generation():
+    global stop_signal
+    stop_signal = True
+    await send_stop_command()
 
 
 def flush():
