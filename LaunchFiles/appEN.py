@@ -42,6 +42,9 @@ import numpy as np
 import scipy
 import imageio
 from PIL import Image, ImageDraw
+from PIL.PngImagePlugin import PngInfo
+import ffmpeg
+from mutagen import File
 from tqdm import tqdm
 import requests
 import asyncio
@@ -1635,7 +1638,39 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
             os.makedirs(image_dir, exist_ok=True)
             image_filename = f"txt2img_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{i}.{output_format}"
             image_path = os.path.join(image_dir, image_filename)
-            image.save(image_path, format=output_format.upper())
+
+            metadata = {
+                "prompt": prompt,
+                "negative_prompt": negative_prompt,
+                "num_inference_steps": stable_diffusion_steps,
+                "guidance_scale": stable_diffusion_cfg,
+                "height": stable_diffusion_height,
+                "width": stable_diffusion_width,
+                "clip_skip": stable_diffusion_clip_skip,
+                "sampler": stable_diffusion_sampler,
+                "seed": seed,
+                "Stable_diffusion_model": stable_diffusion_model_name,
+                "Stable_diffusion_model_type": stable_diffusion_model_type
+            }
+
+            if vae_model_name:
+                metadata["vae"] = vae_model_name
+
+            if lora_model_names and lora_scales:
+                lora_info = []
+                for model, scale in zip(lora_model_names, lora_scales):
+                    lora_info.append({"model": model, "scale": scale})
+                metadata["lora"] = lora_info
+
+            if textual_inversion_model_names:
+                metadata["textual_inversion"] = textual_inversion_model_names
+
+            metadata_str = json.dumps(metadata)
+
+            png_info = PngInfo()
+            png_info.add_text("Image_generation_data", metadata_str)
+
+            image.save(image_path, format=output_format.upper(), pnginfo=png_info)
             image_paths.append(image_path)
 
         return image_paths, f"Images generated successfully. Seed used: {seed}"
@@ -6622,6 +6657,61 @@ def generate_faceswap(source_image, target_image, target_video, enable_many_face
         flush()
 
 
+def get_image_metadata(file_path):
+    with Image.open(file_path) as img:
+        metadata = img.info.get("Image_generation_data")
+        if metadata:
+            return json.loads(metadata)
+    return None
+
+
+def get_video_metadata(file_path):
+    probe = ffmpeg.probe(file_path)
+    metadata = next(s for s in probe['streams'] if s['codec_type'] == 'video')
+    generation_data = metadata.get('tags', {}).get('Video_generation_data')
+    if generation_data:
+        return json.loads(generation_data)
+    return None
+
+
+def get_audio_metadata(file_path):
+    audio = File(file_path)
+    if audio:
+        if isinstance(audio.tags, dict):
+            metadata = audio.tags.get("Audio_generation_data")
+        else:
+            metadata = audio.get("Audio_generation_data")
+        if metadata:
+            if isinstance(metadata, list):
+                metadata = metadata[0]
+            return json.loads(metadata)
+    return None
+
+
+def display_metadata(file):
+    if file is None:
+        return "Please upload a file."
+
+    file_extension = os.path.splitext(file.name)[1].lower()
+
+    if file_extension in ['.png', '.jpg', '.jpeg']:
+        metadata = get_image_metadata(file.name)
+        metadata_type = "Image_generation_data"
+    elif file_extension in ['.mp4', '.avi', '.mov']:
+        metadata = get_video_metadata(file.name)
+        metadata_type = "Video_generation_data"
+    elif file_extension in ['.wav', '.mp3', '.ogg']:
+        metadata = get_audio_metadata(file.name)
+        metadata_type = "Audio_generation_data"
+    else:
+        return "Unsupported file type."
+
+    if metadata:
+        return f"{metadata_type}:\n" + json.dumps(metadata, indent=2)
+    else:
+        return f"No {metadata_type} found in the file."
+
+
 def get_wiki_content(url, local_file="Wiki.md"):
     try:
         response = requests.get(url)
@@ -8959,9 +9049,25 @@ faceswap_interface = gr.Interface(
     submit_btn="Swap"
 )
 
+metadata_interface = gr.Interface(
+    fn=display_metadata,
+    inputs=[
+        gr.File(label="Upload file")
+    ],
+    outputs=[
+        gr.Textbox(label="Metadata", lines=10)
+    ],
+    title="NeuroSandboxWebUI - Metadata-Info",
+    description="This interface allows you to view generation metadata for image, video, and audio files.",
+    allow_flagging="never",
+    clear_btn=None,
+    stop_btn="Stop",
+    submit_btn="View"
+)
+
 extras_interface = gr.TabbedInterface(
-    [image_extras_interface, video_extras_interface, audio_extras_interface, realesrgan_upscale_interface, faceswap_interface],
-    tab_names=["Image", "Video", "Audio", "Upscale (Real-ESRGAN)", "FaceSwap"]
+    [image_extras_interface, video_extras_interface, audio_extras_interface, realesrgan_upscale_interface, faceswap_interface, metadata_interface],
+    tab_names=["Image", "Video", "Audio", "Upscale (Real-ESRGAN)", "FaceSwap", "Metadata-Info"]
 )
 
 wiki_interface = gr.Interface(
