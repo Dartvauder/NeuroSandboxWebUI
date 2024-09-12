@@ -6,3 +6,5 @@
 .idea/NeuroSandboxWebUI.iml
 .idea/vcs.xml
 .idea/workspace.xml
+cache/huggingface/hub/version_diffusers_cache.txt
+cache/huggingface/hub/version.txt
