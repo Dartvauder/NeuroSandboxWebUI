@@ -3,6 +3,7 @@ import os
 import warnings
 import platform
 import logging
+import importlib
 os.chdir(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
 os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
@@ -13,7 +14,6 @@ os.makedirs(cache_dir, exist_ok=True)
 os.environ["XDG_CACHE_HOME"] = cache_dir
 import gradio as gr
 import langdetect
-from transformers import AutoModelForCausalLM, AutoTokenizer, AutoProcessor, BarkModel, pipeline, T5EncoderModel, BitsAndBytesConfig, DPTForDepthEstimation, DPTFeatureExtractor, CLIPVisionModelWithProjection, SeamlessM4Tv2Model, SeamlessM4Tv2ForSpeechToSpeech, SeamlessM4Tv2ForTextToText, SeamlessM4Tv2ForSpeechToText, SeamlessM4Tv2ForTextToSpeech, VitsTokenizer, VitsModel, Wav2Vec2ForCTC
 from datasets import load_dataset, Audio
 from peft import PeftModel
 from libretranslatepy import LibreTranslateAPI
@@ -32,15 +32,9 @@ import json
 import torch
 from einops import rearrange
 import random
-from TTS.api import TTS
-import whisper
 from datetime import datetime
 from huggingface_hub import snapshot_download
-from diffusers import StableDiffusionPipeline, StableDiffusion3Pipeline, StableDiffusionXLPipeline, StableDiffusionImg2ImgPipeline, StableDiffusionXLImg2ImgPipeline, StableDiffusion3Img2ImgPipeline, SD3ControlNetModel, StableDiffusion3ControlNetPipeline, StableDiffusion3InpaintPipeline, StableDiffusionXLInpaintPipeline, StableDiffusionDepth2ImgPipeline, ControlNetModel, StableDiffusionXLControlNetPipeline, StableDiffusionControlNetPipeline, AutoencoderKL, StableDiffusionLatentUpscalePipeline, StableDiffusionUpscalePipeline, StableDiffusionInpaintPipeline, StableDiffusionGLIGENPipeline, AnimateDiffPipeline, AnimateDiffSDXLPipeline, AnimateDiffVideoToVideoPipeline, MotionAdapter, StableVideoDiffusionPipeline, I2VGenXLPipeline, StableCascadePriorPipeline, StableCascadeDecoderPipeline, DiffusionPipeline, ShapEPipeline, ShapEImg2ImgPipeline, StableAudioPipeline, AudioLDM2Pipeline, StableDiffusionInstructPix2PixPipeline, StableDiffusionLDM3DPipeline, FluxPipeline, KandinskyPipeline, KandinskyPriorPipeline, KandinskyV22Pipeline, KandinskyV22PriorPipeline, AutoPipelineForText2Image, KandinskyImg2ImgPipeline, AutoPipelineForImage2Image, AutoPipelineForInpainting, HunyuanDiTPipeline, HunyuanDiTControlNetPipeline, HunyuanDiT2DControlNetModel, LuminaText2ImgPipeline, IFPipeline, IFSuperResolutionPipeline, IFImg2ImgPipeline, IFInpaintingPipeline, IFImg2ImgSuperResolutionPipeline, IFInpaintingSuperResolutionPipeline, PixArtAlphaPipeline, PixArtSigmaPipeline, CogVideoXPipeline, LattePipeline, KolorsPipeline, AuraFlowPipeline, WuerstchenDecoderPipeline, WuerstchenPriorPipeline, StableDiffusionSAGPipeline, DDIMScheduler, DPMSolverMultistepScheduler
 from diffusers.utils import load_image, export_to_video, export_to_gif, export_to_ply, pt_to_pil
-from diffusers.pipelines.wuerstchen import DEFAULT_STAGE_C_TIMESTEPS
-from aura_sr import AuraSR
-from controlnet_aux import OpenposeDetector, LineartDetector, HEDdetector
 from compel import Compel, ReturnedEmbeddingsType
 import trimesh
 from git import Repo
@@ -49,9 +43,6 @@ import scipy
 import imageio
 from PIL import Image, ImageDraw
 from tqdm import tqdm
-from llama_cpp import Llama
-from llama_cpp.llama_chat_format import MoondreamChatHandler
-from stable_diffusion_cpp import StableDiffusion
 import requests
 import asyncio
 import websockets
@@ -59,9 +50,7 @@ import io
 import threading
 import markdown
 import urllib.parse
-from rembg import remove
 import torchaudio
-from audiocraft.models import MusicGen, AudioGen, MultiBandDiffusion, MAGNeT
 from audiocraft.data.audio import audio_write
 import psutil
 import GPUtil
@@ -69,12 +58,129 @@ import WinTmp
 from pynvml import nvmlInit, nvmlDeviceGetHandleByIndex, nvmlDeviceGetTemperature, NVML_TEMPERATURE_GPU
 from insightface.app import FaceAnalysis
 from insightface.utils import face_align
-from ip_adapter.ip_adapter_faceid import IPAdapterFaceIDPlus
-from audio_separator.separator import Separator
-from pixeloe.pixelize import pixelize
-from rvc_python.infer import RVCInference
 from DeepCache import DeepCacheSDHelper
 import tomesd
+
+
+def lazy_import(module_name, fromlist):
+    module = None
+    def wrapper():
+        nonlocal module
+        if module is None:
+            if fromlist:
+                module = importlib.import_module(module_name, fromlist)
+            else:
+                module = importlib.import_module(module_name)
+        return module
+    return wrapper
+
+# Transformers import
+AutoModelForCausalLM = lazy_import('transformers', 'AutoModelForCausalLM')
+AutoTokenizer = lazy_import('transformers', 'AutoTokenizer')
+AutoProcessor = lazy_import('transformers', 'AutoProcessor')
+BarkModel = lazy_import('transformers', 'BarkModel')
+pipeline = lazy_import('transformers', 'pipeline')
+T5EncoderModel = lazy_import('transformers', 'T5EncoderModel')
+BitsAndBytesConfig = lazy_import('transformers', 'BitsAndBytesConfig')
+DPTForDepthEstimation = lazy_import('transformers', 'DPTForDepthEstimation')
+DPTFeatureExtractor = lazy_import('transformers', 'DPTFeatureExtractor')
+CLIPVisionModelWithProjection = lazy_import('transformers', 'CLIPVisionModelWithProjection')
+SeamlessM4Tv2Model = lazy_import('transformers', 'SeamlessM4Tv2Model')
+SeamlessM4Tv2ForSpeechToSpeech = lazy_import('transformers', 'SeamlessM4Tv2ForSpeechToSpeech')
+SeamlessM4Tv2ForTextToText = lazy_import('transformers', 'SeamlessM4Tv2ForTextToText')
+SeamlessM4Tv2ForSpeechToText = lazy_import('transformers', 'SeamlessM4Tv2ForSpeechToText')
+SeamlessM4Tv2ForTextToSpeech = lazy_import('transformers', 'SeamlessM4Tv2ForTextToSpeech')
+VitsTokenizer = lazy_import('transformers', 'VitsTokenizer')
+VitsModel = lazy_import('transformers', 'VitsModel')
+Wav2Vec2ForCTC = lazy_import('transformers', 'Wav2Vec2ForCTC')
+
+# Diffusers import
+StableDiffusionPipeline = lazy_import('diffusers', 'StableDiffusionPipeline')
+StableDiffusion3Pipeline = lazy_import('diffusers', 'StableDiffusion3Pipeline')
+StableDiffusionXLPipeline = lazy_import('diffusers', 'StableDiffusionXLPipeline')
+StableDiffusionImg2ImgPipeline = lazy_import('diffusers', 'StableDiffusionImg2ImgPipeline')
+StableDiffusionXLImg2ImgPipeline = lazy_import('diffusers', 'StableDiffusionXLImg2ImgPipeline')
+StableDiffusion3Img2ImgPipeline = lazy_import('diffusers', 'StableDiffusion3Img2ImgPipeline')
+SD3ControlNetModel = lazy_import('diffusers', 'SD3ControlNetModel')
+StableDiffusion3ControlNetPipeline = lazy_import('diffusers', 'StableDiffusion3ControlNetPipeline')
+StableDiffusion3InpaintPipeline = lazy_import('diffusers', 'StableDiffusion3InpaintPipeline')
+StableDiffusionXLInpaintPipeline = lazy_import('diffusers', 'StableDiffusionXLInpaintPipeline')
+StableDiffusionDepth2ImgPipeline = lazy_import('diffusers', 'StableDiffusionDepth2ImgPipeline')
+ControlNetModel = lazy_import('diffusers', 'ControlNetModel')
+StableDiffusionXLControlNetPipeline = lazy_import('diffusers', 'StableDiffusionXLControlNetPipeline')
+StableDiffusionControlNetPipeline = lazy_import('diffusers', 'StableDiffusionControlNetPipeline')
+AutoencoderKL = lazy_import('diffusers', 'AutoencoderKL')
+StableDiffusionLatentUpscalePipeline = lazy_import('diffusers', 'StableDiffusionLatentUpscalePipeline')
+StableDiffusionUpscalePipeline = lazy_import('diffusers', 'StableDiffusionUpscalePipeline')
+StableDiffusionInpaintPipeline = lazy_import('diffusers', 'StableDiffusionInpaintPipeline')
+StableDiffusionGLIGENPipeline = lazy_import('diffusers', 'StableDiffusionGLIGENPipeline')
+AnimateDiffPipeline = lazy_import('diffusers', 'AnimateDiffPipeline')
+AnimateDiffSDXLPipeline = lazy_import('diffusers', 'AnimateDiffSDXLPipeline')
+AnimateDiffVideoToVideoPipeline = lazy_import('diffusers', 'AnimateDiffVideoToVideoPipeline')
+MotionAdapter = lazy_import('diffusers', 'MotionAdapter')
+StableVideoDiffusionPipeline = lazy_import('diffusers', 'StableVideoDiffusionPipeline')
+I2VGenXLPipeline = lazy_import('diffusers', 'I2VGenXLPipeline')
+StableCascadePriorPipeline = lazy_import('diffusers', 'StableCascadePriorPipeline')
+StableCascadeDecoderPipeline = lazy_import('diffusers', 'StableCascadeDecoderPipeline')
+DiffusionPipeline = lazy_import('diffusers', 'DiffusionPipeline')
+ShapEPipeline = lazy_import('diffusers', 'ShapEPipeline')
+ShapEImg2ImgPipeline = lazy_import('diffusers', 'ShapEImg2ImgPipeline')
+StableAudioPipeline = lazy_import('diffusers', 'StableAudioPipeline')
+AudioLDM2Pipeline = lazy_import('diffusers', 'AudioLDM2Pipeline')
+StableDiffusionInstructPix2PixPipeline = lazy_import('diffusers', 'StableDiffusionInstructPix2PixPipeline')
+StableDiffusionLDM3DPipeline = lazy_import('diffusers', 'StableDiffusionLDM3DPipeline')
+FluxPipeline = lazy_import('diffusers', 'FluxPipeline')
+KandinskyPipeline = lazy_import('diffusers', 'KandinskyPipeline')
+KandinskyPriorPipeline = lazy_import('diffusers', 'KandinskyPriorPipeline')
+KandinskyV22Pipeline = lazy_import('diffusers', 'KandinskyV22Pipeline')
+KandinskyV22PriorPipeline = lazy_import('diffusers', 'KandinskyV22PriorPipeline')
+AutoPipelineForText2Image = lazy_import('diffusers', 'AutoPipelineForText2Image')
+KandinskyImg2ImgPipeline = lazy_import('diffusers', 'KandinskyImg2ImgPipeline')
+AutoPipelineForImage2Image = lazy_import('diffusers', 'AutoPipelineForImage2Image')
+AutoPipelineForInpainting = lazy_import('diffusers', 'AutoPipelineForInpainting')
+HunyuanDiTPipeline = lazy_import('diffusers', 'HunyuanDiTPipeline')
+HunyuanDiTControlNetPipeline = lazy_import('diffusers', 'HunyuanDiTControlNetPipeline')
+HunyuanDiT2DControlNetModel = lazy_import('diffusers', 'HunyuanDiT2DControlNetModel')
+LuminaText2ImgPipeline = lazy_import('diffusers', 'LuminaText2ImgPipeline')
+IFPipeline = lazy_import('diffusers', 'IFPipeline')
+IFSuperResolutionPipeline = lazy_import('diffusers', 'IFSuperResolutionPipeline')
+IFImg2ImgPipeline = lazy_import('diffusers', 'IFImg2ImgPipeline')
+IFInpaintingPipeline = lazy_import('diffusers', 'IFInpaintingPipeline')
+IFImg2ImgSuperResolutionPipeline = lazy_import('diffusers', 'IFImg2ImgSuperResolutionPipeline')
+IFInpaintingSuperResolutionPipeline = lazy_import('diffusers', 'IFInpaintingSuperResolutionPipeline')
+PixArtAlphaPipeline = lazy_import('diffusers', 'PixArtAlphaPipeline')
+PixArtSigmaPipeline = lazy_import('diffusers', 'PixArtSigmaPipeline')
+CogVideoXPipeline = lazy_import('diffusers', 'CogVideoXPipeline')
+LattePipeline = lazy_import('diffusers', 'LattePipeline')
+KolorsPipeline = lazy_import('diffusers', 'KolorsPipeline')
+AuraFlowPipeline = lazy_import('diffusers', 'AuraFlowPipeline')
+WuerstchenDecoderPipeline = lazy_import('diffusers', 'WuerstchenDecoderPipeline')
+WuerstchenPriorPipeline = lazy_import('diffusers', 'WuerstchenPriorPipeline')
+StableDiffusionSAGPipeline = lazy_import('diffusers', 'StableDiffusionSAGPipeline')
+DDIMScheduler = lazy_import('diffusers', 'DDIMScheduler')
+DPMSolverMultistepScheduler = lazy_import('diffusers', 'DPMSolverMultistepScheduler')
+DEFAULT_STAGE_C_TIMESTEPS = lazy_import('diffusers.pipelines.wuerstchen', 'DEFAULT_STAGE_C_TIMESTEPS')
+
+# Another imports
+TTS = lazy_import('TTS.api', 'TTS')
+whisper = lazy_import('whisper', "")
+AuraSR = lazy_import('aura_sr', 'AuraSR')
+OpenposeDetector = lazy_import('controlnet_aux', 'OpenposeDetector')
+LineartDetector = lazy_import('controlnet_aux', 'LineartDetector')
+HEDdetector = lazy_import('controlnet_aux', 'HEDdetector')
+Llama = lazy_import('llama_cpp', 'Llama')
+MoondreamChatHandler = lazy_import('llama_cpp.llama_chat_format', 'MoondreamChatHandler')
+StableDiffusion = lazy_import('stable_diffusion_cpp', 'StableDiffusion')
+MusicGen = lazy_import('audiocraft.models', 'MusicGen')
+AudioGen = lazy_import('audiocraft.models', 'AudioGen')
+MultiBandDiffusion = lazy_import('audiocraft.models', 'MultiBandDiffusion')
+MAGNeT = lazy_import('audiocraft.models', 'MAGNeT')
+IPAdapterFaceIDPlus = lazy_import('ip_adapter.ip_adapter_faceid', 'IPAdapterFaceIDPlus')
+Separator = lazy_import('audio_separator.separator', 'Separator')
+pixelize = lazy_import('pixeloe.pixelize', 'pixelize')
+RVCInference = lazy_import('rvc_python.infer', 'RVCInference')
+remove = lazy_import('rembg', 'remove')
+
 
 XFORMERS_AVAILABLE = False
 try:
@@ -325,7 +431,7 @@ def remove_bg(src_img_path, out_img_path):
     with open(src_img_path, "rb") as input_file:
         input_data = input_file.read()
 
-    output_data = remove(input_data)
+    output_data = remove().remove(input_data)
 
     with open(out_img_path, "wb") as output_file:
         output_file.write(output_data)
@@ -482,9 +588,9 @@ def load_model(model_name, model_type, n_ctx=None):
         model_path = f"inputs/text/llm_models/{model_name}"
         if model_type == "transformers":
             try:
-                tokenizer = AutoTokenizer.from_pretrained(model_path)
+                tokenizer = AutoTokenizer().AutoTokenizer.from_pretrained(model_path)
                 device = "cuda" if torch.cuda.is_available() else "cpu"
-                model = AutoModelForCausalLM.from_pretrained(
+                model = AutoModelForCausalLM().AutoModelForCausalLM.from_pretrained(
                     model_path,
                     device_map=device,
                     load_in_4bit=True,
@@ -499,7 +605,7 @@ def load_model(model_name, model_type, n_ctx=None):
         elif model_type == "llama":
             try:
                 device = "cuda" if torch.cuda.is_available() else "cpu"
-                model = Llama(model_path, n_gpu_layers=-1 if device == "cuda" else 0)
+                model = Llama().Llama(model_path, n_gpu_layers=-1 if device == "cuda" else 0)
                 model.n_ctx = n_ctx
                 tokenizer = None
                 return tokenizer, model, None
@@ -518,14 +624,14 @@ def load_lora_model(base_model_name, lora_model_name, model_type):
     try:
         device = "cuda" if torch.cuda.is_available() else "cpu"
         if model_type == "llama":
-            model = Llama(base_model_path, n_gpu_layers=-1 if device == "cuda" else 0, lora_path=lora_model_path)
+            model = Llama().Llama(base_model_path, n_gpu_layers=-1 if device == "cuda" else 0, lora_path=lora_model_path)
             tokenizer = None
             return tokenizer, model, None
         else:
-            base_model = AutoModelForCausalLM.from_pretrained(base_model_path).to(device)
+            base_model = AutoModelForCausalLM().AutoModelForCausalLM.from_pretrained(base_model_path).to(device)
             model = PeftModel.from_pretrained(base_model, lora_model_path).to(device)
             merged_model = model.merge_and_unload()
-            tokenizer = AutoTokenizer.from_pretrained(base_model_path)
+            tokenizer = AutoTokenizer().AutoTokenizer.from_pretrained(base_model_path)
             return tokenizer, merged_model, None
     except Exception as e:
         return None, None, str(e)
@@ -544,17 +650,17 @@ def load_moondream2_model(model_id, revision):
             print(f"Downloading MoonDream2 model...")
             os.makedirs(moondream2_model_path, exist_ok=True)
             device = "cuda" if torch.cuda.is_available() else "cpu"
-            model = AutoModelForCausalLM.from_pretrained(
+            model = AutoModelForCausalLM().AutoModelForCausalLM.from_pretrained(
                 model_id, trust_remote_code=True, revision=revision
             ).to(device)
-            tokenizer = AutoTokenizer.from_pretrained(model_id, revision=revision)
+            tokenizer = AutoTokenizer().AutoTokenizer.from_pretrained(model_id, revision=revision)
             model.save_pretrained(moondream2_model_path)
             tokenizer.save_pretrained(moondream2_model_path)
             print("MoonDream2 model downloaded")
         else:
             device = "cuda" if torch.cuda.is_available() else "cpu"
-            model = AutoModelForCausalLM.from_pretrained(moondream2_model_path, trust_remote_code=True).to(device)
-            tokenizer = AutoTokenizer.from_pretrained(moondream2_model_path)
+            model = AutoModelForCausalLM().AutoModelForCausalLM.from_pretrained(moondream2_model_path, trust_remote_code=True).to(device)
+            tokenizer = AutoTokenizer().AutoTokenizer.from_pretrained(moondream2_model_path)
         return model, tokenizer
 
     except Exception as e:
@@ -575,7 +681,7 @@ def transcribe_audio(audio_file_path):
         r = requests.get(url, allow_redirects=True)
         open(os.path.join(whisper_model_path, "medium.pt"), "wb").write(r.content)
     model_file = os.path.join(whisper_model_path, "medium.pt")
-    model = whisper.load_model(model_file, device=device)
+    model = whisper().whisper.load_model(model_file, device=device)
     result = model.transcribe(audio_file_path)
     return result["text"]
 
@@ -587,7 +693,7 @@ def load_tts_model():
         os.makedirs(tts_model_path, exist_ok=True)
         Repo.clone_from("https://huggingface.co/coqui/XTTS-v2", tts_model_path)
         print("TTS model downloaded")
-    return TTS(model_path=tts_model_path, config_path=f"{tts_model_path}/config.json")
+    return TTS().TTS(model_path=tts_model_path, config_path=f"{tts_model_path}/config.json")
 
 
 def load_whisper_model():
@@ -601,7 +707,7 @@ def load_whisper_model():
         open(os.path.join(whisper_model_path, "medium.pt"), "wb").write(r.content)
         print("Whisper downloaded")
     model_file = os.path.join(whisper_model_path, "medium.pt")
-    return whisper.load_model(model_file)
+    return whisper().whisper.load_model(model_file)
 
 
 def load_audiocraft_model(model_name):
@@ -680,13 +786,13 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, input_image
                 Repo.clone_from("https://huggingface.co/vikhyatk/moondream2", moondream2_path)
                 print("Moondream2 model downloaded")
 
-            chat_handler = MoondreamChatHandler.from_pretrained(
+            chat_handler = MoondreamChatHandler().MoondreamChatHandler.from_pretrained(
                 repo_id="vikhyatk/moondream2",
                 local_dir=moondream2_path,
                 filename="*mmproj*",
             )
 
-            llm = Llama.from_pretrained(
+            llm = Llama().Llama.from_pretrained(
                 repo_id="vikhyatk/moondream2",
                 local_dir=moondream2_path,
                 filename="*text-model*",
@@ -1054,8 +1160,8 @@ def generate_mms_tts(text, language, output_format):
         return None, "Please select a language!"
 
     try:
-        tokenizer = VitsTokenizer.from_pretrained(model_path)
-        model = VitsModel.from_pretrained(model_path)
+        tokenizer = VitsTokenizer().VitsTokenizer.from_pretrained(model_path)
+        model = VitsModel().VitsModel.from_pretrained(model_path)
 
         inputs = tokenizer(text=text, return_tensors="pt")
         with torch.no_grad():
@@ -1103,8 +1209,8 @@ def transcribe_mms_stt(audio_file, language, output_format):
         return None, "Please select a language!"
 
     try:
-        processor = AutoProcessor.from_pretrained(model_path)
-        model = Wav2Vec2ForCTC.from_pretrained(model_path)
+        processor = AutoProcessor().AutoProcessor.from_pretrained(model_path)
+        model = Wav2Vec2ForCTC().Wav2Vec2ForCTC.from_pretrained(model_path)
 
         stream_data = load_dataset("mozilla-foundation/common_voice_17_0", language.lower(), split="test", streaming=True, trust_remote_code=True)
         stream_data = stream_data.cast_column("audio", Audio(sampling_rate=16000))
@@ -1170,7 +1276,7 @@ def seamless_m4tv2_process(input_type, input_text, input_audio, src_lang, tgt_la
         return None, "Please select your dataset language!"
 
     try:
-        processor = AutoProcessor.from_pretrained(MODEL_PATH)
+        processor = AutoProcessor().AutoProcessor.from_pretrained(MODEL_PATH)
 
         if input_type == "Text":
             inputs = processor(text=input_text, src_lang=get_languages()[src_lang], return_tensors="pt")
@@ -1196,15 +1302,15 @@ def seamless_m4tv2_process(input_type, input_text, input_audio, src_lang, tgt_la
         generate_kwargs["text_num_beams"] = text_num_beams
 
         if task_type == "Speech to Speech":
-            model = SeamlessM4Tv2ForSpeechToSpeech.from_pretrained(MODEL_PATH)
+            model = SeamlessM4Tv2ForSpeechToSpeech().SeamlessM4Tv2ForSpeechToSpeech.from_pretrained(MODEL_PATH)
         elif task_type == "Text to Text":
-            model = SeamlessM4Tv2ForTextToText.from_pretrained(MODEL_PATH)
+            model = SeamlessM4Tv2ForTextToText().SeamlessM4Tv2ForTextToText.from_pretrained(MODEL_PATH)
         elif task_type == "Speech to Text":
-            model = SeamlessM4Tv2ForSpeechToText.from_pretrained(MODEL_PATH)
+            model = SeamlessM4Tv2ForSpeechToText().SeamlessM4Tv2ForSpeechToText.from_pretrained(MODEL_PATH)
         elif task_type == "Text to Speech":
-            model = SeamlessM4Tv2ForTextToSpeech.from_pretrained(MODEL_PATH)
+            model = SeamlessM4Tv2ForTextToSpeech().SeamlessM4Tv2ForTextToSpeech.from_pretrained(MODEL_PATH)
         else:
-            model = SeamlessM4Tv2Model.from_pretrained(MODEL_PATH)
+            model = SeamlessM4Tv2Model().SeamlessM4Tv2Model.from_pretrained(MODEL_PATH)
 
         outputs = model.generate(**inputs, **generate_kwargs)
 
@@ -1330,26 +1436,26 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
 
     try:
         if enable_sag:
-            stable_diffusion_model = StableDiffusionSAGPipeline.from_single_file(
+            stable_diffusion_model = StableDiffusionSAGPipeline().StableDiffusionSAGPipeline.from_single_file(
                 stable_diffusion_model_path, use_safetensors=True, device_map="auto",
                 torch_dtype=torch.float16, variant="fp16"
             )
         elif enable_pag:
-            stable_diffusion_model = AutoPipelineForText2Image.from_single_file(
+            stable_diffusion_model = AutoPipelineForText2Image().AutoPipelineForText2Image.from_single_file(
                 stable_diffusion_model_path, use_safetensors=True, device_map="auto",
                 torch_dtype=torch.float16, variant="fp16", enable_pag=True
             )
         else:
             if stable_diffusion_model_type == "SD":
-                stable_diffusion_model = StableDiffusionPipeline.from_single_file(
+                stable_diffusion_model = StableDiffusionPipeline().StableDiffusionPipeline.from_single_file(
                     stable_diffusion_model_path, use_safetensors=True, device_map="auto",
                     torch_dtype=torch.float16, variant="fp16")
             elif stable_diffusion_model_type == "SD2":
-                stable_diffusion_model = StableDiffusionPipeline.from_single_file(
+                stable_diffusion_model = StableDiffusionPipeline().StableDiffusionPipeline.from_single_file(
                     stable_diffusion_model_path, use_safetensors=True, device_map="auto",
                     torch_dtype=torch.float16, variant="fp16")
             elif stable_diffusion_model_type == "SDXL":
-                stable_diffusion_model = StableDiffusionXLPipeline.from_single_file(
+                stable_diffusion_model = StableDiffusionXLPipeline().StableDiffusionXLPipeline.from_single_file(
                     stable_diffusion_model_path, use_safetensors=True, device_map="auto", attention_slice=1,
                     torch_dtype=torch.float16, variant="fp16")
             else:
@@ -1381,7 +1487,7 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
     if vae_model_name is not None:
         vae_model_path = os.path.join("inputs", "image", "sd_models", "vae", f"{vae_model_name}.safetensors")
         if os.path.exists(vae_model_path):
-            vae = AutoencoderKL.from_single_file(vae_model_path, device_map="auto",
+            vae = AutoencoderKL().AutoencoderKL.from_single_file(vae_model_path, device_map="auto",
                                                  torch_dtype=torch.float16,
                                                  variant="fp16")
             stable_diffusion_model.vae = vae.to(device)
@@ -1561,15 +1667,15 @@ def generate_image_img2img(prompt, negative_prompt, init_image,
 
     try:
         if stable_diffusion_model_type == "SD":
-            stable_diffusion_model = StableDiffusionImg2ImgPipeline.from_single_file(
+            stable_diffusion_model = StableDiffusionImg2ImgPipeline().StableDiffusionImg2ImgPipeline.from_single_file(
                 stable_diffusion_model_path, use_safetensors=True, device_map="auto",
                 torch_dtype=torch.float16, variant="fp16")
         elif stable_diffusion_model_type == "SD2":
-            stable_diffusion_model = StableDiffusionImg2ImgPipeline.from_single_file(
+            stable_diffusion_model = StableDiffusionImg2ImgPipeline().StableDiffusionImg2ImgPipeline.from_single_file(
                 stable_diffusion_model_path, use_safetensors=True, device_map="auto",
                 torch_dtype=torch.float16, variant="fp16")
         elif stable_diffusion_model_type == "SDXL":
-            stable_diffusion_model = StableDiffusionXLImg2ImgPipeline.from_single_file(
+            stable_diffusion_model = StableDiffusionXLImg2ImgPipeline().StableDiffusionXLImg2ImgPipeline.from_single_file(
                 stable_diffusion_model_path, use_safetensors=True, device_map="auto", attention_slice=1,
                 torch_dtype=torch.float16, variant="fp16")
         else:
@@ -1598,7 +1704,7 @@ def generate_image_img2img(prompt, negative_prompt, init_image,
     if vae_model_name is not None:
         vae_model_path = os.path.join("inputs", "image", "sd_models", "vae", f"{vae_model_name}.safetensors")
         if os.path.exists(vae_model_path):
-            vae = AutoencoderKL.from_single_file(vae_model_path, device_map=device,
+            vae = AutoencoderKL().AutoencoderKL.from_single_file(vae_model_path, device_map=device,
                                                  torch_dtype=torch.float16,
                                                  variant="fp16")
             stable_diffusion_model.vae = vae.to(device)
@@ -1672,7 +1778,7 @@ def generate_image_depth2img(prompt, negative_prompt, init_image, seed, strength
         print("Depth2img model downloaded")
 
     try:
-        stable_diffusion_model = StableDiffusionDepth2ImgPipeline.from_pretrained(
+        stable_diffusion_model = StableDiffusionDepth2ImgPipeline().StableDiffusionDepth2ImgPipeline.from_pretrained(
             stable_diffusion_model_path, use_safetensors=True,
             torch_dtype=torch.float16, variant="fp16",
         )
@@ -1749,7 +1855,7 @@ def generate_image_pix2pix(prompt, negative_prompt, init_image, seed, num_infere
 
     try:
         device = "cuda" if torch.cuda.is_available() else "cpu"
-        pipe = StableDiffusionInstructPix2PixPipeline.from_pretrained(pix2pix_model_path, torch_dtype=torch.float16,
+        pipe = StableDiffusionInstructPix2PixPipeline().StableDiffusionInstructPix2PixPipeline.from_pretrained(pix2pix_model_path, torch_dtype=torch.float16,
                                                                       safety_checker=None)
         pipe.to(device)
 
@@ -1855,8 +1961,8 @@ def generate_image_controlnet(prompt, negative_prompt, init_image, sd_version, s
         generator = torch.Generator(device).manual_seed(seed)
 
         if sd_version == "SD":
-            controlnet = ControlNetModel.from_pretrained(controlnet_model_path, torch_dtype=torch.float16)
-            pipe = StableDiffusionControlNetPipeline.from_single_file(
+            controlnet = ControlNetModel().ControlNetModel.from_pretrained(controlnet_model_path, torch_dtype=torch.float16)
+            pipe = StableDiffusionControlNetPipeline().StableDiffusionControlNetPipeline.from_single_file(
                 stable_diffusion_model_path,
                 controlnet=controlnet,
                 torch_dtype=torch.float16,
@@ -1883,10 +1989,10 @@ def generate_image_controlnet(prompt, negative_prompt, init_image, sd_version, s
             image = Image.open(init_image).convert("RGB")
 
             if controlnet_model_name == "openpose":
-                processor = OpenposeDetector.from_pretrained("lllyasviel/ControlNet")
+                processor = OpenposeDetector().OpenposeDetector.from_pretrained("lllyasviel/ControlNet")
                 control_image = processor(image, hand_and_face=True)
             elif controlnet_model_name == "depth":
-                depth_estimator = pipeline('depth-estimation')
+                depth_estimator = pipeline().pipeline('depth-estimation')
                 control_image = depth_estimator(image)['depth']
                 control_image = np.array(control_image)
                 control_image = control_image[:, :, None]
@@ -1901,10 +2007,10 @@ def generate_image_controlnet(prompt, negative_prompt, init_image, sd_version, s
                 control_image = np.concatenate([control_image, control_image, control_image], axis=2)
                 control_image = Image.fromarray(control_image)
             elif controlnet_model_name == "lineart":
-                processor = LineartDetector.from_pretrained("lllyasviel/Annotators")
+                processor = LineartDetector().LineartDetector.from_pretrained("lllyasviel/Annotators")
                 control_image = processor(image)
             elif controlnet_model_name == "scribble":
-                processor = HEDdetector.from_pretrained("lllyasviel/Annotators")
+                processor = HEDdetector().HEDdetector.from_pretrained("lllyasviel/Annotators")
                 control_image = processor(image, scribble=True)
 
             generator = torch.manual_seed(0)
@@ -1919,12 +2025,12 @@ def generate_image_controlnet(prompt, negative_prompt, init_image, sd_version, s
                          height=height, clip_skip=clip_skip, generator=generator, image=control_image, sampler=stable_diffusion_sampler, num_images_per_prompt=num_images_per_prompt).images
 
         else:
-            controlnet = ControlNetModel.from_pretrained(
+            controlnet = ControlNetModel().ControlNetModel.from_pretrained(
                 controlnet_model_path,
                 torch_dtype=torch.float16,
                 use_safetensors=True
             )
-            pipe = StableDiffusionXLControlNetPipeline.from_single_file(
+            pipe = StableDiffusionXLControlNetPipeline().StableDiffusionXLControlNetPipeline.from_single_file(
                 stable_diffusion_model_path,
                 controlnet=controlnet,
                 torch_dtype=torch.float16,
@@ -1950,8 +2056,8 @@ def generate_image_controlnet(prompt, negative_prompt, init_image, sd_version, s
             image = Image.open(init_image).convert("RGB")
 
             if controlnet_model_name == "depth":
-                depth_estimator = DPTForDepthEstimation.from_pretrained("Intel/dpt-hybrid-midas").to(device)
-                feature_extractor = DPTFeatureExtractor.from_pretrained("Intel/dpt-hybrid-midas")
+                depth_estimator = DPTForDepthEstimation().DPTForDepthEstimation.from_pretrained("Intel/dpt-hybrid-midas").to(device)
+                feature_extractor = DPTFeatureExtractor().DPTFeatureExtractor.from_pretrained("Intel/dpt-hybrid-midas")
 
                 def get_depth_map(image):
                     image = feature_extractor(images=image, return_tensors="pt").pixel_values.to(device)
@@ -2055,7 +2161,7 @@ def generate_image_upscale_latent(prompt, image_path, upscale_factor, seed, num_
                 Repo.clone_from(f"https://huggingface.co/{model_id}", model_path)
                 print(f"Upscale model {model_id} downloaded")
 
-            upscaler = StableDiffusionLatentUpscalePipeline.from_pretrained(
+            upscaler = StableDiffusionLatentUpscalePipeline().StableDiffusionLatentUpscalePipeline.from_pretrained(
                 model_path,
                 torch_dtype=torch.float16
             )
@@ -2098,7 +2204,7 @@ def generate_image_upscale_latent(prompt, image_path, upscale_factor, seed, num_
                 Repo.clone_from(f"https://huggingface.co/{model_id}", model_path)
                 print(f"Upscale model {model_id} downloaded")
 
-            upscaler = StableDiffusionUpscalePipeline.from_pretrained(
+            upscaler = StableDiffusionUpscalePipeline().StableDiffusionUpscalePipeline.from_pretrained(
                 model_path,
                 torch_dtype=torch.float16
             )
@@ -2158,7 +2264,7 @@ def generate_image_sdxl_refiner(prompt, init_image, output_format="png"):
     try:
         device = "cuda" if torch.cuda.is_available() else "cpu"
 
-        pipe = StableDiffusionXLImg2ImgPipeline.from_pretrained(
+        pipe = StableDiffusionXLImg2ImgPipeline().StableDiffusionXLImg2ImgPipeline.from_pretrained(
             sdxl_refiner_path, torch_dtype=torch.float16, variant="fp16", use_safetensors=True
         )
         pipe = pipe.to(device)
@@ -2204,17 +2310,17 @@ def generate_image_inpaint(prompt, negative_prompt, init_image, mask_image, blur
 
     try:
         if stable_diffusion_model_type == "SD":
-            stable_diffusion_model = StableDiffusionInpaintPipeline.from_single_file(
+            stable_diffusion_model = StableDiffusionInpaintPipeline().StableDiffusionInpaintPipeline.from_single_file(
                 stable_diffusion_model_path, use_safetensors=True, device_map="auto",
                 torch_dtype=torch.float16, variant="fp16"
             )
         elif stable_diffusion_model_type == "SD2":
-            stable_diffusion_model = StableDiffusionInpaintPipeline.from_single_file(
+            stable_diffusion_model = StableDiffusionInpaintPipeline().StableDiffusionInpaintPipeline.from_single_file(
                 stable_diffusion_model_path, use_safetensors=True, device_map="auto",
                 torch_dtype=torch.float16, variant="fp16"
             )
         elif stable_diffusion_model_type == "SDXL":
-            stable_diffusion_model = StableDiffusionXLInpaintPipeline.from_single_file(
+            stable_diffusion_model = StableDiffusionXLInpaintPipeline().StableDiffusionXLInpaintPipeline.from_single_file(
                 stable_diffusion_model_path, use_safetensors=True, device_map="auto", attention_slice=1,
                 torch_dtype=torch.float16, variant="fp16"
             )
@@ -2244,7 +2350,7 @@ def generate_image_inpaint(prompt, negative_prompt, init_image, mask_image, blur
     if vae_model_name is not None:
         vae_model_path = os.path.join("inputs", "image", "sd_models", "vae", f"{vae_model_name}.safetensors")
         if os.path.exists(vae_model_path):
-            vae = AutoencoderKL.from_single_file(vae_model_path, device_map="auto",
+            vae = AutoencoderKL().AutoencoderKL.from_single_file(vae_model_path, device_map="auto",
                                                  torch_dtype=torch.float16,
                                                  variant="fp16")
             stable_diffusion_model.vae = vae.to(device)
@@ -2342,17 +2448,17 @@ def generate_image_outpaint(prompt, negative_prompt, init_image, stable_diffusio
 
     try:
         if stable_diffusion_model_type == "SD":
-            pipe = StableDiffusionInpaintPipeline.from_single_file(
+            pipe = StableDiffusionInpaintPipeline().StableDiffusionInpaintPipeline.from_single_file(
                 stable_diffusion_model_path, use_safetensors=True, device_map="auto",
                 torch_dtype=torch.float16, variant="fp16"
             )
         elif stable_diffusion_model_type == "SD2":
-            pipe = StableDiffusionInpaintPipeline.from_single_file(
+            pipe = StableDiffusionInpaintPipeline().StableDiffusionInpaintPipeline.from_single_file(
                 stable_diffusion_model_path, use_safetensors=True, device_map="auto",
                 torch_dtype=torch.float16, variant="fp16"
             )
         elif stable_diffusion_model_type == "SDXL":
-            pipe = StableDiffusionXLInpaintPipeline.from_single_file(
+            pipe = StableDiffusionXLInpaintPipeline().StableDiffusionXLInpaintPipeline.from_single_file(
                 stable_diffusion_model_path, use_safetensors=True, device_map="auto", attention_slice=1,
                 torch_dtype=torch.float16, variant="fp16"
             )
@@ -2498,17 +2604,17 @@ def generate_image_gligen(prompt, negative_prompt, gligen_phrases, gligen_boxes,
 
     try:
         if stable_diffusion_model_type == "SD":
-            stable_diffusion_model = StableDiffusionPipeline.from_single_file(
+            stable_diffusion_model = StableDiffusionPipeline().StableDiffusionPipeline.from_single_file(
                 stable_diffusion_model_path, use_safetensors=True, device_map="auto",
                 torch_dtype=torch.float16, variant="fp16"
             )
         elif stable_diffusion_model_type == "SD2":
-            stable_diffusion_model = StableDiffusionPipeline.from_single_file(
+            stable_diffusion_model = StableDiffusionPipeline().StableDiffusionPipeline.from_single_file(
                 stable_diffusion_model_path, use_safetensors=True, device_map="auto",
                 torch_dtype=torch.float16, variant="fp16"
             )
         elif stable_diffusion_model_type == "SDXL":
-            stable_diffusion_model = StableDiffusionXLPipeline.from_single_file(
+            stable_diffusion_model = StableDiffusionXLPipeline().StableDiffusionXLPipeline.from_single_file(
                 stable_diffusion_model_path, use_safetensors=True, device_map="auto", attention_slice=1,
                 torch_dtype=torch.float16, variant="fp16"
             )
@@ -2578,7 +2684,7 @@ def generate_image_gligen(prompt, negative_prompt, gligen_phrases, gligen_boxes,
 
         gligen_boxes = json.loads(gligen_boxes)
 
-        pipe = StableDiffusionGLIGENPipeline.from_pretrained(
+        pipe = StableDiffusionGLIGENPipeline().StableDiffusionGLIGENPipeline.from_pretrained(
             os.path.join(gligen_model_path, "inpainting"), variant="fp16", torch_dtype=torch.float16
         )
 
@@ -2667,8 +2773,8 @@ def generate_image_animatediff(prompt, negative_prompt, input_video, strength, m
 
                 video = load_video(input_video)
 
-                adapter = MotionAdapter.from_pretrained(motion_adapter_path, torch_dtype=torch.float16)
-                stable_diffusion_model = StableDiffusionPipeline.from_single_file(
+                adapter = MotionAdapter().MotionAdapter.from_pretrained(motion_adapter_path, torch_dtype=torch.float16)
+                stable_diffusion_model = StableDiffusionPipeline().StableDiffusionPipeline.from_single_file(
                     stable_diffusion_model_path,
                     torch_dtype=torch.float16,
                     variant="fp16",
@@ -2678,7 +2784,7 @@ def generate_image_animatediff(prompt, negative_prompt, input_video, strength, m
                 stable_diffusion_model.enable_vae_tiling()
                 stable_diffusion_model.enable_model_cpu_offload()
 
-                pipe = AnimateDiffVideoToVideoPipeline(
+                pipe = AnimateDiffVideoToVideoPipeline().AnimateDiffVideoToVideoPipeline(
                     unet=stable_diffusion_model.unet,
                     text_encoder=stable_diffusion_model.text_encoder,
                     vae=stable_diffusion_model.vae,
@@ -2707,8 +2813,8 @@ def generate_image_animatediff(prompt, negative_prompt, input_video, strength, m
                 )
 
             else:
-                adapter = MotionAdapter.from_pretrained(motion_adapter_path, torch_dtype=torch.float16)
-                stable_diffusion_model = StableDiffusionPipeline.from_single_file(
+                adapter = MotionAdapter().MotionAdapter.from_pretrained(motion_adapter_path, torch_dtype=torch.float16)
+                stable_diffusion_model = StableDiffusionPipeline().StableDiffusionPipeline.from_single_file(
                     stable_diffusion_model_path,
                     torch_dtype=torch.float16,
                     variant="fp16",
@@ -2718,7 +2824,7 @@ def generate_image_animatediff(prompt, negative_prompt, input_video, strength, m
                 stable_diffusion_model.enable_vae_tiling()
                 stable_diffusion_model.enable_model_cpu_offload()
 
-                pipe = AnimateDiffPipeline(
+                pipe = AnimateDiffPipeline().AnimateDiffPipeline(
                     unet=stable_diffusion_model.unet,
                     text_encoder=stable_diffusion_model.text_encoder,
                     vae=stable_diffusion_model.vae,
@@ -2785,8 +2891,8 @@ def generate_image_animatediff(prompt, negative_prompt, input_video, strength, m
                 Repo.clone_from("https://huggingface.co/guoyww/animatediff-motion-adapter-sdxl-beta", sdxl_adapter_path)
                 print("SDXL motion adapter downloaded")
 
-            adapter = MotionAdapter.from_pretrained(sdxl_adapter_path, torch_dtype=torch.float16)
-            stable_diffusion_model = StableDiffusionXLPipeline.from_single_file(
+            adapter = MotionAdapter().MotionAdapter.from_pretrained(sdxl_adapter_path, torch_dtype=torch.float16)
+            stable_diffusion_model = StableDiffusionXLPipeline().StableDiffusionXLPipeline.from_single_file(
                 stable_diffusion_model_path,
                 torch_dtype=torch.float16,
                 variant="fp16",
@@ -2796,7 +2902,7 @@ def generate_image_animatediff(prompt, negative_prompt, input_video, strength, m
             stable_diffusion_model.enable_vae_tiling()
             stable_diffusion_model.enable_model_cpu_offload()
 
-            pipe = AnimateDiffSDXLPipeline(
+            pipe = AnimateDiffSDXLPipeline().AnimateDiffSDXLPipeline(
                 unet=stable_diffusion_model.unet,
                 text_encoder=stable_diffusion_model.text_encoder,
                 text_encoder_2=stable_diffusion_model.text_encoder_2,
@@ -2929,7 +3035,7 @@ def generate_video(init_image, output_format, seed, video_settings_html, motion_
 
         try:
             device = "cuda" if torch.cuda.is_available() else "cpu"
-            pipe = StableVideoDiffusionPipeline.from_pretrained(
+            pipe = StableVideoDiffusionPipeline().StableVideoDiffusionPipeline.from_pretrained(
                 pretrained_model_name_or_path=video_model_path,
                 torch_dtype=torch.float16,
                 variant="fp16"
@@ -2976,7 +3082,7 @@ def generate_video(init_image, output_format, seed, video_settings_html, motion_
 
         try:
             device = "cuda" if torch.cuda.is_available() else "cpu"
-            pipe = I2VGenXLPipeline.from_pretrained(video_model_path, torch_dtype=torch.float16, variant="fp16").to(device)
+            pipe = I2VGenXLPipeline().I2VGenXLPipeline.from_pretrained(video_model_path, torch_dtype=torch.float16, variant="fp16").to(device)
             pipe.enable_model_cpu_offload()
 
             image = load_image(init_image).convert("RGB")
@@ -3025,7 +3131,7 @@ def generate_image_ldm3d(prompt, negative_prompt, seed, width, height, num_infer
 
     try:
         device = "cuda" if torch.cuda.is_available() else "cpu"
-        pipe = StableDiffusionLDM3DPipeline.from_pretrained(ldm3d_model_path, torch_dtype=torch.float16).to(device)
+        pipe = StableDiffusionLDM3DPipeline().StableDiffusionLDM3DPipeline.from_pretrained(ldm3d_model_path, torch_dtype=torch.float16).to(device)
 
         if seed == "" or seed is None:
             seed = random.randint(0, 2 ** 32 - 1)
@@ -3091,14 +3197,14 @@ def generate_image_sd3_txt2img(prompt, negative_prompt, seed, lora_model_names, 
 
     try:
 
-        quantization_config = BitsAndBytesConfig(load_in_8bit=True)
+        quantization_config = BitsAndBytesConfig().BitsAndBytesConfig(load_in_8bit=True)
 
-        text_encoder = T5EncoderModel.from_pretrained(
+        text_encoder = T5EncoderModel().T5EncoderModel.from_pretrained(
             sd3_model_path,
             subfolder="text_encoder_3",
             quantization_config=quantization_config,
         )
-        pipe = StableDiffusion3Pipeline.from_pretrained(sd3_model_path, device_map="balanced", text_encoder_3=text_encoder, torch_dtype=torch.float16)
+        pipe = StableDiffusion3Pipeline().from_pretrained(sd3_model_path, device_map="balanced", text_encoder_3=text_encoder, torch_dtype=torch.float16)
 
         pipe.enable_model_cpu_offload()
 
@@ -3186,14 +3292,14 @@ def generate_image_sd3_img2img(prompt, negative_prompt, init_image, strength, se
         print("Stable Diffusion 3 model downloaded")
 
     try:
-        quantization_config = BitsAndBytesConfig(load_in_8bit=True)
+        quantization_config = BitsAndBytesConfig().BitsAndBytesConfig(load_in_8bit=True)
 
-        text_encoder = T5EncoderModel.from_pretrained(
+        text_encoder = T5EncoderModel().T5EncoderModel.from_pretrained(
             sd3_model_path,
             subfolder="text_encoder_3",
             quantization_config=quantization_config,
         )
-        pipe = StableDiffusion3Img2ImgPipeline.from_pretrained(sd3_model_path, device_map="balanced", text_encoder_3=text_encoder, torch_dtype=torch.float16)
+        pipe = StableDiffusion3Img2ImgPipeline().StableDiffusion3Img2ImgPipeline.from_pretrained(sd3_model_path, device_map="balanced", text_encoder_3=text_encoder, torch_dtype=torch.float16)
 
         pipe.enable_model_cpu_offload()
 
@@ -3267,16 +3373,16 @@ def generate_image_sd3_controlnet(prompt, negative_prompt, init_image, controlne
 
     try:
         device = "cuda" if torch.cuda.is_available() else "cpu"
-        controlnet = SD3ControlNetModel.from_pretrained(controlnet_path, torch_dtype=torch.float16)
+        controlnet = SD3ControlNetModel().SD3ControlNetModel.from_pretrained(controlnet_path, torch_dtype=torch.float16)
 
-        quantization_config = BitsAndBytesConfig(load_in_8bit=True)
+        quantization_config = BitsAndBytesConfig().BitsAndBytesConfig(load_in_8bit=True)
 
-        text_encoder = T5EncoderModel.from_pretrained(
+        text_encoder = T5EncoderModel().T5EncoderModel.from_pretrained(
             sd3_model_path,
             subfolder="text_encoder_3",
             quantization_config=quantization_config,
         )
-        pipe = StableDiffusion3ControlNetPipeline.from_pretrained(
+        pipe = StableDiffusion3ControlNetPipeline().StableDiffusion3ControlNetPipeline.from_pretrained(
             sd3_model_path,
             text_encoder_3=text_encoder,
             controlnet=controlnet,
@@ -3359,14 +3465,14 @@ def generate_image_sd3_inpaint(prompt, negative_prompt, init_image, mask_image, 
         print("Stable Diffusion 3 model downloaded")
 
     try:
-        quantization_config = BitsAndBytesConfig(load_in_8bit=True)
+        quantization_config = BitsAndBytesConfig().BitsAndBytesConfig(load_in_8bit=True)
 
-        text_encoder = T5EncoderModel.from_pretrained(
+        text_encoder = T5EncoderModel().T5EncoderModel.from_pretrained(
             sd3_model_path,
             subfolder="text_encoder_3",
             quantization_config=quantization_config,
         )
-        pipe = StableDiffusion3InpaintPipeline.from_pretrained(sd3_model_path, device_map="balanced", text_encoder_3=text_encoder, torch_dtype=torch.float16)
+        pipe = StableDiffusion3InpaintPipeline().StableDiffusion3InpaintPipeline.from_pretrained(sd3_model_path, device_map="balanced", text_encoder_3=text_encoder, torch_dtype=torch.float16)
 
         pipe.enable_model_cpu_offload()
 
@@ -3434,9 +3540,9 @@ def generate_image_cascade(prompt, negative_prompt, seed, width, height, prior_s
 
     try:
         device = "cuda" if torch.cuda.is_available() else "cpu"
-        prior = StableCascadePriorPipeline.from_pretrained(os.path.join(stable_cascade_model_path, "prior"),
+        prior = StableCascadePriorPipeline().StableCascadePriorPipeline.from_pretrained(os.path.join(stable_cascade_model_path, "prior"),
                                                            variant="bf16", torch_dtype=torch.bfloat16).to(device)
-        decoder = StableCascadeDecoderPipeline.from_pretrained(os.path.join(stable_cascade_model_path, "decoder"),
+        decoder = StableCascadeDecoderPipeline().StableCascadeDecoderPipeline.from_pretrained(os.path.join(stable_cascade_model_path, "decoder"),
                                                                variant="bf16", torch_dtype=torch.float16).to(device)
     except (ValueError, OSError):
         return None, "Failed to load the Stable Cascade models"
@@ -3524,13 +3630,13 @@ def generate_image_t2i_ip_adapter(prompt, negative_prompt, ip_adapter_image, sta
     try:
 
         if stable_diffusion_model_type == "SD":
-            image_encoder = CLIPVisionModelWithProjection.from_pretrained(
+            image_encoder = CLIPVisionModelWithProjection().CLIPVisionModelWithProjection.from_pretrained(
                 t2i_ip_adapter_path,
                 subfolder="models/image_encoder",
                 torch_dtype=torch.float16
             ).to(device)
 
-            pipe = StableDiffusionPipeline.from_single_file(
+            pipe = StableDiffusionPipeline().StableDiffusionPipeline.from_single_file(
                 stable_diffusion_model_path,
                 image_encoder=image_encoder,
                 torch_dtype=torch.float16
@@ -3539,13 +3645,13 @@ def generate_image_t2i_ip_adapter(prompt, negative_prompt, ip_adapter_image, sta
             pipe.load_ip_adapter(t2i_ip_adapter_path, subfolder="models",
                                  weight_name="ip-adapter-plus_sd15.safetensors")
         else:
-            image_encoder = CLIPVisionModelWithProjection.from_pretrained(
+            image_encoder = CLIPVisionModelWithProjection().CLIPVisionModelWithProjection.from_pretrained(
                 t2i_ip_adapter_path,
                 subfolder="sdxl_models/image_encoder",
                 torch_dtype=torch.float16
             ).to(device)
 
-            pipe = StableDiffusionXLPipeline.from_single_file(
+            pipe = StableDiffusionXLPipeline().StableDiffusionXLPipeline.from_single_file(
                 stable_diffusion_model_path,
                 image_encoder=image_encoder,
                 torch_dtype=torch.float16
@@ -3635,7 +3741,7 @@ def generate_image_ip_adapter_faceid(prompt, negative_prompt, face_image, s_scal
         faceid_embeds = torch.from_numpy(faces[0].normed_embedding).unsqueeze(0)
         face_image = face_align.norm_crop(image, landmark=faces[0].kps, image_size=224)
 
-        noise_scheduler = DDIMScheduler(
+        noise_scheduler = DDIMScheduler().DDIMScheduler(
             num_train_timesteps=1000,
             beta_start=0.00085,
             beta_end=0.012,
@@ -3646,17 +3752,17 @@ def generate_image_ip_adapter_faceid(prompt, negative_prompt, face_image, s_scal
         )
 
         if stable_diffusion_model_type == "SD":
-            pipe = StableDiffusionPipeline.from_single_file(
+            pipe = StableDiffusionPipeline().StableDiffusionPipeline.from_single_file(
                 stable_diffusion_model_path, scheduler=noise_scheduler, use_safetensors=True, device_map="auto",
                 torch_dtype=torch.float16, variant="fp16")
         elif stable_diffusion_model_type == "SDXL":
-            pipe = StableDiffusionXLPipeline.from_single_file(
+            pipe = StableDiffusionXLPipeline().StableDiffusionXLPipeline.from_single_file(
                 stable_diffusion_model_path, scheduler=noise_scheduler, use_safetensors=True, device_map="auto", attention_slice=1,
                 torch_dtype=torch.float16, variant="fp16")
         else:
             return None, "Invalid StableDiffusion model type!"
 
-        ip_model = IPAdapterFaceIDPlus(pipe, image_encoder_path, ip_ckpt, device)
+        ip_model = IPAdapterFaceIDPlus().IPAdapterFaceIDPlus(pipe, image_encoder_path, ip_ckpt, device)
 
         images = ip_model.generate(
             prompt=prompt,
@@ -3713,7 +3819,7 @@ def generate_riffusion_text2image(prompt, negative_prompt, seed, num_inference_s
         print("Riffusion model downloaded")
 
     try:
-        pipe = StableDiffusionPipeline.from_pretrained(riffusion_model_path, torch_dtype=torch.float16)
+        pipe = StableDiffusionPipeline().StableDiffusionPipeline.from_pretrained(riffusion_model_path, torch_dtype=torch.float16)
         pipe = pipe.to(device)
 
         image = pipe(
@@ -3825,14 +3931,14 @@ def generate_image_kandinsky_txt2img(prompt, negative_prompt, version, seed, num
     try:
         if version == "2.1":
 
-            pipe_prior = KandinskyPriorPipeline.from_pretrained(os.path.join(kandinsky_model_path, "2-1-prior"))
+            pipe_prior = KandinskyPriorPipeline().KandinskyPriorPipeline.from_pretrained(os.path.join(kandinsky_model_path, "2-1-prior"))
             pipe_prior.to(device)
 
             out = pipe_prior(prompt, negative_prompt=negative_prompt)
             image_emb = out.image_embeds
             negative_image_emb = out.negative_image_embeds
 
-            pipe = KandinskyPipeline.from_pretrained(os.path.join(kandinsky_model_path, "2-1"))
+            pipe = KandinskyPipeline().KandinskyPipeline.from_pretrained(os.path.join(kandinsky_model_path, "2-1"))
             pipe.to(device)
 
             image = pipe(
@@ -3849,12 +3955,12 @@ def generate_image_kandinsky_txt2img(prompt, negative_prompt, version, seed, num
 
         elif version == "2.2":
 
-            pipe_prior = KandinskyV22PriorPipeline.from_pretrained(os.path.join(kandinsky_model_path, "2-2-prior"))
+            pipe_prior = KandinskyV22PriorPipeline().KandinskyV22PriorPipeline.from_pretrained(os.path.join(kandinsky_model_path, "2-2-prior"))
             pipe_prior.to(device)
 
             image_emb, negative_image_emb = pipe_prior(prompt, negative_prompt=negative_prompt).to_tuple()
 
-            pipe = KandinskyV22Pipeline.from_pretrained(os.path.join(kandinsky_model_path, "2-2-decoder"))
+            pipe = KandinskyV22Pipeline().KandinskyV22Pipeline.from_pretrained(os.path.join(kandinsky_model_path, "2-2-decoder"))
             pipe.to(device)
 
             image = pipe(
@@ -3871,7 +3977,7 @@ def generate_image_kandinsky_txt2img(prompt, negative_prompt, version, seed, num
 
         elif version == "3":
 
-            pipe = AutoPipelineForText2Image.from_pretrained(
+            pipe = AutoPipelineForText2Image().AutoPipelineForText2Image.from_pretrained(
                 os.path.join(kandinsky_model_path, "3"), variant="fp16", torch_dtype=torch.float16
             )
             pipe.to(device)
@@ -3941,14 +4047,14 @@ def generate_image_kandinsky_img2img(prompt, negative_prompt, init_image, versio
 
     try:
         if version == "2.1":
-            pipe_prior = KandinskyPriorPipeline.from_pretrained(
+            pipe_prior = KandinskyPriorPipeline().KandinskyPriorPipeline.from_pretrained(
                 os.path.join(kandinsky_model_path, "2-1-prior"), torch_dtype=torch.float16
             )
             pipe_prior.to(device)
 
             image_emb, zero_image_emb = pipe_prior(prompt, negative_prompt=negative_prompt, return_dict=False)
 
-            pipe = KandinskyImg2ImgPipeline.from_pretrained(
+            pipe = KandinskyImg2ImgPipeline().KandinskyImg2ImgPipeline.from_pretrained(
                 os.path.join(kandinsky_model_path, "2-1"), torch_dtype=torch.float16
             )
             pipe.to(device)
@@ -3970,7 +4076,7 @@ def generate_image_kandinsky_img2img(prompt, negative_prompt, init_image, versio
             ).images[0]
 
         elif version == "2.2":
-            pipe = AutoPipelineForImage2Image.from_pretrained(
+            pipe = AutoPipelineForImage2Image().AutoPipelineForImage2Image.from_pretrained(
                 os.path.join(kandinsky_model_path, "2-2-decoder"), torch_dtype=torch.float16
             )
             pipe.to(device)
@@ -3990,7 +4096,7 @@ def generate_image_kandinsky_img2img(prompt, negative_prompt, init_image, versio
             ).images[0]
 
         elif version == "3":
-            pipe = AutoPipelineForImage2Image.from_pretrained(
+            pipe = AutoPipelineForImage2Image().AutoPipelineForImage2Image.from_pretrained(
                 os.path.join(kandinsky_model_path, "3"), variant="fp16", torch_dtype=torch.float16
             )
             pipe.to(device)
@@ -4053,13 +4159,13 @@ def generate_image_kandinsky_inpaint(prompt, negative_prompt, init_image, mask_i
     try:
 
         if version == "2.1":
-            pipe = AutoPipelineForInpainting.from_pretrained(
+            pipe = AutoPipelineForInpainting().AutoPipelineForInpainting.from_pretrained(
                 os.path.join(kandinsky_model_path, "2-1-inpainter"),
                 torch_dtype=torch.float16,
                 variant="fp16"
             )
         else:
-            pipe = AutoPipelineForInpainting.from_pretrained(
+            pipe = AutoPipelineForInpainting().AutoPipelineForInpainting.from_pretrained(
                 os.path.join(kandinsky_model_path, "2-2-decoder-inpaint"),
                 torch_dtype=torch.float16
             )
@@ -4120,7 +4226,7 @@ def generate_image_flux(prompt, model_name, quantize_model_name, enable_quantize
             if not quantize_model_name:
                 return None, "Please select a quantize Flux model!"
 
-            stable_diffusion = StableDiffusion(
+            stable_diffusion = StableDiffusion().StableDiffusion(
                 diffusion_model_path=quantize_flux_model_path,
                 clip_l_path="inputs/image/quantize-flux/clip_l.safetensors",
                 t5xxl_path="inputs/image/quantize-flux/t5xxl_fp16.safetensors",
@@ -4143,7 +4249,7 @@ def generate_image_flux(prompt, model_name, quantize_model_name, enable_quantize
                 Repo.clone_from(f"https://huggingface.co/black-forest-labs/{model_name}", flux_model_path)
                 print(f"Flux {model_name} model downloaded")
 
-            pipe = FluxPipeline.from_pretrained(flux_model_path, torch_dtype=torch.bfloat16)
+            pipe = FluxPipeline().FluxPipeline.from_pretrained(flux_model_path, torch_dtype=torch.bfloat16)
             pipe.to(device)
             pipe.enable_model_cpu_offload()
             pipe.enable_sequential_cpu_offload()
@@ -4228,7 +4334,7 @@ def generate_image_hunyuandit_txt2img(prompt, negative_prompt, seed, num_inferen
         print("HunyuanDiT model downloaded")
 
     try:
-        pipe = HunyuanDiTPipeline.from_pretrained(hunyuandit_model_path, torch_dtype=torch.float16)
+        pipe = HunyuanDiTPipeline().HunyuanDiTPipeline.from_pretrained(hunyuandit_model_path, torch_dtype=torch.float16)
         pipe.to(device)
         pipe.transformer.enable_forward_chunking(chunk_size=1, dim=1)
 
@@ -4285,8 +4391,8 @@ def generate_image_hunyuandit_controlnet(prompt, negative_prompt, init_image, co
         print(f"HunyuanDiT ControlNet {controlnet_model} model downloaded")
 
     try:
-        controlnet = HunyuanDiT2DControlNetModel.from_pretrained(controlnet_model_path, torch_dtype=torch.float16)
-        pipe = HunyuanDiTControlNetPipeline.from_pretrained(hunyuandit_model_path, controlnet=controlnet, torch_dtype=torch.float16)
+        controlnet = HunyuanDiT2DControlNetModel().HunyuanDiT2DControlNetModel.from_pretrained(controlnet_model_path, torch_dtype=torch.float16)
+        pipe = HunyuanDiTControlNetPipeline().HunyuanDiTControlNetPipeline.from_pretrained(hunyuandit_model_path, controlnet=controlnet, torch_dtype=torch.float16)
         pipe.to(device)
 
         init_image = Image.open(init_image).convert("RGB")
@@ -4340,7 +4446,7 @@ def generate_image_lumina(prompt, negative_prompt, seed, num_inference_steps, gu
         print("Lumina-T2X model downloaded")
 
     try:
-        pipe = LuminaText2ImgPipeline.from_pretrained(
+        pipe = LuminaText2ImgPipeline().LuminaText2ImgPipeline.from_pretrained(
             lumina_model_path, torch_dtype=torch.bfloat16
         ).to(device)
         pipe.enable_model_cpu_offload()
@@ -4392,7 +4498,7 @@ def generate_image_kolors_txt2img(prompt, negative_prompt, seed, lora_model_name
         print("Kolors model downloaded")
 
     try:
-        pipe = KolorsPipeline.from_pretrained(kolors_model_path, torch_dtype=torch.float16, variant="fp16")
+        pipe = KolorsPipeline().KolorsPipeline.from_pretrained(kolors_model_path, torch_dtype=torch.float16, variant="fp16")
         pipe.to(device)
         pipe.enable_model_cpu_offload()
 
@@ -4468,7 +4574,7 @@ def generate_image_kolors_img2img(prompt, negative_prompt, init_image, seed, gui
         print("Kolors model downloaded")
 
     try:
-        pipe = KolorsPipeline.from_pretrained(kolors_model_path, torch_dtype=torch.float16, variant="fp16")
+        pipe = KolorsPipeline().KolorsPipeline.from_pretrained(kolors_model_path, torch_dtype=torch.float16, variant="fp16")
         pipe.to(device)
         pipe.enable_model_cpu_offload()
 
@@ -4527,16 +4633,16 @@ def generate_image_kolors_ip_adapter_plus(prompt, negative_prompt, ip_adapter_im
         print("Kolors IP-Adapter-Plus downloaded")
 
     try:
-        image_encoder = CLIPVisionModelWithProjection.from_pretrained(
+        image_encoder = CLIPVisionModelWithProjection().CLIPVisionModelWithProjection.from_pretrained(
             ip_adapter_path,
             subfolder="image_encoder",
             low_cpu_mem_usage=True,
             torch_dtype=torch.float16,
         )
-        pipe = KolorsPipeline.from_pretrained(
+        pipe = KolorsPipeline().KolorsPipeline.from_pretrained(
             kolors_model_path, image_encoder=image_encoder, torch_dtype=torch.float16, variant="fp16"
         )
-        pipe.scheduler = DPMSolverMultistepScheduler.from_config(pipe.scheduler.config, use_karras_sigmas=True)
+        pipe.scheduler = DPMSolverMultistepScheduler().DPMSolverMultistepScheduler.from_config(pipe.scheduler.config, use_karras_sigmas=True)
         pipe.load_ip_adapter(
             ip_adapter_path,
             subfolder="",
@@ -4600,7 +4706,7 @@ def generate_image_auraflow(prompt, negative_prompt, seed, lora_model_names, lor
         print("AuraSR model downloaded")
 
     try:
-        pipe = AuraFlowPipeline.from_pretrained(auraflow_model_path, torch_dtype=torch.float16)
+        pipe = AuraFlowPipeline().AuraFlowPipeline.from_pretrained(auraflow_model_path, torch_dtype=torch.float16)
         pipe = pipe.to(device)
 
         if isinstance(lora_scales, str):
@@ -4643,7 +4749,7 @@ def generate_image_auraflow(prompt, negative_prompt, seed, lora_model_names, lor
         ).images[0]
 
         if enable_aurasr:
-            aura_sr = AuraSR.from_pretrained(aurasr_model_path)
+            aura_sr = AuraSR().AuraSR.from_pretrained(aurasr_model_path)
             image = image.resize((256, 256))
             image = aura_sr.upscale_4x_overlapped(image)
 
@@ -4688,12 +4794,12 @@ def generate_image_wurstchen(prompt, negative_prompt, seed, width, height, prior
     try:
         dtype = torch.float16 if device == "cuda" else torch.float32
 
-        prior_pipeline = WuerstchenPriorPipeline.from_pretrained(
+        prior_pipeline = WuerstchenPriorPipeline().WuerstchenPriorPipeline.from_pretrained(
             os.path.join(wurstchen_model_path, "prior"),
             torch_dtype=dtype
         ).to(device)
 
-        decoder_pipeline = WuerstchenDecoderPipeline.from_pretrained(
+        decoder_pipeline = WuerstchenDecoderPipeline().WuerstchenDecoderPipeline.from_pretrained(
             os.path.join(wurstchen_model_path, "decoder"),
             torch_dtype=dtype
         ).to(device)
@@ -4773,8 +4879,8 @@ def generate_image_deepfloyd_txt2img(prompt, negative_prompt, seed, num_inferenc
 
     try:
 
-        pipe_i = IFPipeline.from_pretrained(deepfloydI_model_path, variant="fp16", torch_dtype=torch.float16)
-        text_encoder = T5EncoderModel.from_pretrained(
+        pipe_i = IFPipeline().IFPipeline.from_pretrained(deepfloydI_model_path, variant="fp16", torch_dtype=torch.float16)
+        text_encoder = T5EncoderModel().T5EncoderModel.from_pretrained(
             deepfloydI_model_path, subfolder="text_encoder", device_map="auto", load_in_8bit=True, variant="8bit"
         )
         pipe_i.to(device)
@@ -4795,7 +4901,7 @@ def generate_image_deepfloyd_txt2img(prompt, negative_prompt, seed, num_inferenc
             generator=generator
         ).images
 
-        pipe_ii = IFSuperResolutionPipeline.from_pretrained(
+        pipe_ii = IFSuperResolutionPipeline().IFSuperResolutionPipeline.from_pretrained(
             deepfloydII_model_path, text_encoder=None, variant="fp16", torch_dtype=torch.float16
         )
         pipe_ii.to(device)
@@ -4816,7 +4922,7 @@ def generate_image_deepfloyd_txt2img(prompt, negative_prompt, seed, num_inferenc
             "safety_checker": pipe_i.safety_checker,
             "watermarker": pipe_i.watermarker,
         }
-        pipe_iii = DiffusionPipeline.from_pretrained(
+        pipe_iii = DiffusionPipeline().DiffusionPipeline.from_pretrained(
             upscale_model_path, **safety_modules, torch_dtype=torch.float16
         )
         pipe_iii.to(device)
@@ -4900,8 +5006,8 @@ def generate_image_deepfloyd_img2img(prompt, negative_prompt, init_image, seed, 
 
     try:
 
-        stage_1 = IFImg2ImgPipeline.from_pretrained(deepfloydI_model_path, variant="fp16", torch_dtype=torch.float16)
-        text_encoder = T5EncoderModel.from_pretrained(
+        stage_1 = IFImg2ImgPipeline().IFImg2ImgPipeline.from_pretrained(deepfloydI_model_path, variant="fp16", torch_dtype=torch.float16)
+        text_encoder = T5EncoderModel().T5EncoderModel.from_pretrained(
             deepfloydI_model_path, subfolder="text_encoder", device_map="auto", load_in_8bit=True, variant="8bit"
         )
         stage_1.to(device)
@@ -4910,7 +5016,7 @@ def generate_image_deepfloyd_img2img(prompt, negative_prompt, init_image, seed, 
         stage_1.text_encoder = torch.compile(stage_1.text_encoder, mode="reduce-overhead", fullgraph=True)
         stage_1.unet = torch.compile(stage_1.unet, mode="reduce-overhead", fullgraph=True)
 
-        stage_2 = IFImg2ImgSuperResolutionPipeline.from_pretrained(
+        stage_2 = IFImg2ImgSuperResolutionPipeline().IFImg2ImgSuperResolutionPipeline.from_pretrained(
             deepfloydII_model_path, text_encoder=None, variant="fp16", torch_dtype=torch.float16
         )
         stage_2.to(device)
@@ -4922,7 +5028,7 @@ def generate_image_deepfloyd_img2img(prompt, negative_prompt, init_image, seed, 
             "safety_checker": stage_1.safety_checker,
             "watermarker": stage_1.watermarker,
         }
-        stage_3 = DiffusionPipeline.from_pretrained(
+        stage_3 = DiffusionPipeline().DiffusionPipeline.from_pretrained(
             upscale_model_path, **safety_modules, torch_dtype=torch.float16
         )
         stage_3.to(device)
@@ -5025,8 +5131,8 @@ def generate_image_deepfloyd_inpaint(prompt, negative_prompt, init_image, mask_i
 
     try:
         
-        stage_1 = IFInpaintingPipeline.from_pretrained(deepfloydI_model_path, variant="fp16", torch_dtype=torch.float16)
-        text_encoder = T5EncoderModel.from_pretrained(
+        stage_1 = IFInpaintingPipeline().IFInpaintingPipeline.from_pretrained(deepfloydI_model_path, variant="fp16", torch_dtype=torch.float16)
+        text_encoder = T5EncoderModel().T5EncoderModel.from_pretrained(
             deepfloydI_model_path, subfolder="text_encoder", device_map="auto", load_in_8bit=True, variant="8bit"
         )
         stage_1.to(device)
@@ -5035,7 +5141,7 @@ def generate_image_deepfloyd_inpaint(prompt, negative_prompt, init_image, mask_i
         stage_1.text_encoder = torch.compile(stage_1.text_encoder, mode="reduce-overhead", fullgraph=True)
         stage_1.unet = torch.compile(stage_1.unet, mode="reduce-overhead", fullgraph=True)
 
-        stage_2 = IFInpaintingSuperResolutionPipeline.from_pretrained(
+        stage_2 = IFInpaintingSuperResolutionPipeline().IFInpaintingSuperResolutionPipeline.from_pretrained(
             deepfloydII_model_path, text_encoder=None, variant="fp16", torch_dtype=torch.float16
         )
         stage_2.to(device)
@@ -5047,7 +5153,7 @@ def generate_image_deepfloyd_inpaint(prompt, negative_prompt, init_image, mask_i
             "safety_checker": stage_1.safety_checker,
             "watermarker": stage_1.watermarker,
         }
-        stage_3 = DiffusionPipeline.from_pretrained(
+        stage_3 = DiffusionPipeline().DiffusionPipeline.from_pretrained(
             upscale_model_path, **safety_modules, torch_dtype=torch.float16
         )
         stage_3.to(device)
@@ -5151,24 +5257,24 @@ def generate_image_pixart(prompt, negative_prompt, version, seed, num_inference_
 
     try:
         if version.startswith("Alpha"):
-            text_encoder = T5EncoderModel.from_pretrained(
+            text_encoder = T5EncoderModel().T5EncoderModel.from_pretrained(
                 pixart_model_path,
                 subfolder="text_encoder",
                 load_in_8bit=True,
                 device_map="auto",
 
             )
-            pipe = PixArtAlphaPipeline.from_pretrained(os.path.join(pixart_model_path, version),
+            pipe = PixArtAlphaPipeline().PixArtAlphaPipeline.from_pretrained(os.path.join(pixart_model_path, version),
                                                        torch_dtype=torch.float16, text_encoder=text_encoder).to(device)
         else:
-            text_encoder = T5EncoderModel.from_pretrained(
+            text_encoder = T5EncoderModel().T5EncoderModel.from_pretrained(
                 pixart_model_path,
                 subfolder="text_encoder",
                 load_in_8bit=True,
                 device_map="auto",
 
             )
-            pipe = PixArtSigmaPipeline.from_pretrained(os.path.join(pixart_model_path, version),
+            pipe = PixArtSigmaPipeline().PixArtSigmaPipeline.from_pretrained(os.path.join(pixart_model_path, version),
                                                        torch_dtype=torch.float16, text_encoder=text_encoder).to(device)
 
         pipe.enable_model_cpu_offload()
@@ -5221,7 +5327,7 @@ def generate_image_playgroundv2(prompt, negative_prompt, seed, height, width, nu
         print("PlaygroundV2.5 model downloaded")
 
     try:
-        pipe = DiffusionPipeline.from_pretrained(
+        pipe = DiffusionPipeline().DiffusionPipeline.from_pretrained(
             playgroundv2_model_path,
             torch_dtype=torch.float16,
             variant="fp16"
@@ -5362,7 +5468,7 @@ def generate_video_modelscope(prompt, negative_prompt, seed, num_inference_steps
         print("ModelScope model downloaded")
 
     try:
-        pipe = DiffusionPipeline.from_pretrained(modelscope_model_path, torch_dtype=torch.float16, variant="fp16")
+        pipe = DiffusionPipeline().DiffusionPipeline.from_pretrained(modelscope_model_path, torch_dtype=torch.float16, variant="fp16")
         pipe = pipe.to(device)
         pipe.enable_model_cpu_offload()
         pipe.enable_vae_slicing()
@@ -5434,7 +5540,7 @@ def generate_video_zeroscope2(prompt, video_to_enhance, seed, strength, num_infe
             return None, "Please upload a video to enhance."
 
         try:
-            enhance_pipe = DiffusionPipeline.from_pretrained(enhance_model_path, torch_dtype=torch.float16)
+            enhance_pipe = DiffusionPipeline().DiffusionPipeline.from_pretrained(enhance_model_path, torch_dtype=torch.float16)
             enhance_pipe.to(device)
             enhance_pipe.enable_model_cpu_offload()
             enhance_pipe.enable_vae_slicing()
@@ -5486,7 +5592,7 @@ def generate_video_zeroscope2(prompt, video_to_enhance, seed, strength, num_infe
 
     else:
         try:
-            base_pipe = DiffusionPipeline.from_pretrained(base_model_path, torch_dtype=torch.float16)
+            base_pipe = DiffusionPipeline().DiffusionPipeline.from_pretrained(base_model_path, torch_dtype=torch.float16)
             base_pipe.to(device)
             base_pipe.enable_model_cpu_offload()
             base_pipe.enable_vae_slicing()
@@ -5530,7 +5636,7 @@ def generate_video_cogvideox(prompt, negative_prompt, seed, cogvideox_version, n
         print(f"{cogvideox_version} model downloaded")
 
     try:
-        pipe = CogVideoXPipeline.from_pretrained(cogvideox_model_path, torch_dtype=torch.float16).to(device)
+        pipe = CogVideoXPipeline().CogVideoXPipeline.from_pretrained(cogvideox_model_path, torch_dtype=torch.float16).to(device)
         pipe.enable_model_cpu_offload()
         pipe.enable_sequential_cpu_offload()
         pipe.vae.enable_slicing()
@@ -5584,7 +5690,7 @@ def generate_video_latte(prompt, negative_prompt, seed, num_inference_steps, gui
         print("Latte model downloaded")
 
     try:
-        pipe = LattePipeline.from_pretrained(latte_model_path, torch_dtype=torch.float16).to(device)
+        pipe = LattePipeline().LattePipeline.from_pretrained(latte_model_path, torch_dtype=torch.float16).to(device)
         pipe.enable_model_cpu_offload()
 
         videos = pipe(
@@ -5668,7 +5774,7 @@ def generate_3d_shap_e(prompt, init_image, seed, num_inference_steps, guidance_s
             Repo.clone_from(f"https://huggingface.co/{model_name}", model_path)
             print("Shap-E img2img model downloaded")
 
-        pipe = ShapEImg2ImgPipeline.from_pretrained(model_path, torch_dtype=torch.float16, variant="fp16").to(device)
+        pipe = ShapEImg2ImgPipeline().ShapEImg2ImgPipeline.from_pretrained(model_path, torch_dtype=torch.float16, variant="fp16").to(device)
         image = Image.open(init_image).resize((256, 256))
         images = pipe(
             image,
@@ -5687,7 +5793,7 @@ def generate_3d_shap_e(prompt, init_image, seed, num_inference_steps, guidance_s
             Repo.clone_from(f"https://huggingface.co/{model_name}", model_path)
             print("Shap-E text2img model downloaded")
 
-        pipe = ShapEPipeline.from_pretrained(model_path, torch_dtype=torch.float16, variant="fp16").to(device)
+        pipe = ShapEPipeline().ShapEPipeline.from_pretrained(model_path, torch_dtype=torch.float16, variant="fp16").to(device)
         images = pipe(
             prompt,
             guidance_scale=guidance_scale,
@@ -5809,7 +5915,7 @@ def generate_3d_zero123plus(input_image, num_inference_steps, output_format="png
         print("Zero123Plus model downloaded")
 
     try:
-        pipe = DiffusionPipeline.from_pretrained(
+        pipe = DiffusionPipeline().DiffusionPipeline.from_pretrained(
             zero123plus_model_path,
             custom_pipeline="sudo-ai/zero123plus-pipeline",
             torch_dtype=torch.float16
@@ -5864,7 +5970,7 @@ def generate_stableaudio(prompt, negative_prompt, seed, num_inference_steps, gui
         except Exception as e:
             return None, None, f"Error downloading model: {str(e)}"
 
-    pipe = StableAudioPipeline.from_pretrained(sa_model_path, torch_dtype=torch.float16)
+    pipe = StableAudioPipeline().StableAudioPipeline.from_pretrained(sa_model_path, torch_dtype=torch.float16)
     pipe = pipe.to(device)
 
     try:
@@ -5929,11 +6035,11 @@ def generate_audio_audiocraft(prompt, input_audio=None, model_name=None, model_t
 
     try:
         if model_type == "musicgen":
-            model = MusicGen.get_pretrained(audiocraft_model_path)
+            model = MusicGen().MusicGen.get_pretrained(audiocraft_model_path)
         elif model_type == "audiogen":
-            model = AudioGen.get_pretrained(audiocraft_model_path)
+            model = AudioGen().AudioGen.get_pretrained(audiocraft_model_path)
         elif model_type == "magnet":
-            model = MAGNeT.get_pretrained(audiocraft_model_path)
+            model = MAGNeT().MAGNeT.get_pretrained(audiocraft_model_path)
         else:
             return None, None, "Invalid model type!"
     except (ValueError, AssertionError):
@@ -5942,7 +6048,7 @@ def generate_audio_audiocraft(prompt, input_audio=None, model_name=None, model_t
     mbd = None
 
     if enable_multiband:
-        mbd = MultiBandDiffusion.get_mbd_musicgen()
+        mbd = MultiBandDiffusion().MultiBandDiffusion.get_mbd_musicgen()
 
     try:
         progress_bar = tqdm(total=duration, desc="Generating audio")
@@ -6044,7 +6150,7 @@ def generate_audio_audioldm2(prompt, negative_prompt, model_name, seed, num_infe
         Repo.clone_from(f"https://huggingface.co/{model_name}", model_path)
         print(f"AudioLDM 2 model {model_name} downloaded")
 
-    pipe = AudioLDM2Pipeline.from_pretrained(model_path, torch_dtype=torch.float16)
+    pipe = AudioLDM2Pipeline().AudioLDM2Pipeline.from_pretrained(model_path, torch_dtype=torch.float16)
     pipe = pipe.to(device)
 
     try:
@@ -6099,8 +6205,8 @@ def generate_bark_audio(text, voice_preset, max_length, fine_temperature, coarse
         device = "cuda" if torch.cuda.is_available() else "cpu"
         torch.set_default_tensor_type(torch.cuda.FloatTensor if device == "cuda" else torch.FloatTensor)
 
-        processor = AutoProcessor.from_pretrained(bark_model_path)
-        model = BarkModel.from_pretrained(bark_model_path, torch_dtype=torch.float32)
+        processor = AutoProcessor().AutoProcessor.from_pretrained(bark_model_path)
+        model = BarkModel().BarkModel.from_pretrained(bark_model_path, torch_dtype=torch.float32)
 
         if voice_preset:
             inputs = processor(text, voice_preset=voice_preset, return_tensors="pt")
@@ -6154,7 +6260,7 @@ def process_rvc(input_audio, model_folder, f0method, f0up_key, index_rate, filte
 
         model_file = os.path.join(model_path, pth_files[0])
 
-        rvc = RVCInference(device=device)
+        rvc = RVCInference().RVCInference(device=device)
         rvc.load_model(model_file)
         rvc.set_params(f0method=f0method, f0up_key=f0up_key, index_rate=index_rate, filter_radius=filter_radius, resample_sr=resample_sr, rms_mix_rate=rms_mix_rate, protect=protect)
 
@@ -6189,7 +6295,7 @@ def separate_audio_uvr(audio_file, output_format, normalization_threshold, sampl
         output_dir = os.path.join('outputs', f"UVR_{today.strftime('%Y%m%d')}")
         os.makedirs(output_dir, exist_ok=True)
 
-        separator = Separator(output_format=output_format, normalization_threshold=normalization_threshold,
+        separator = Separator().Separator(output_format=output_format, normalization_threshold=normalization_threshold,
                               sample_rate=sample_rate, output_dir=output_dir)
         separator.load_model(model_filename='UVR-MDX-NET-Inst_HQ_3.onnx')
 
@@ -6284,7 +6390,7 @@ def generate_image_extras(input_image, remove_background, enable_facerestore, fi
 
         if enable_pixeloe:
             img = cv2.imread(output_path)
-            img = pixelize(img, target_size=target_size, patch_size=patch_size)
+            img = pixelize().pixelize(img, target_size=target_size, patch_size=patch_size)
             pixeloe_output_path = os.path.join(os.path.dirname(output_path), f"pixeloe_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}")
             cv2.imwrite(pixeloe_output_path, img)
             output_path = pixeloe_output_path
