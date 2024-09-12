@@ -4811,7 +4811,7 @@ def generate_image_wurstchen(prompt, negative_prompt, seed, width, height, prior
             prompt=prompt,
             height=height,
             width=width,
-            timesteps=DEFAULT_STAGE_C_TIMESTEPS,
+            timesteps=DEFAULT_STAGE_C_TIMESTEPS().DEFAULT_STAGE_C_TIMESTEPS,
             negative_prompt=negative_prompt,
             guidance_scale=prior_guidance_scale,
             num_inference_steps=prior_steps,
