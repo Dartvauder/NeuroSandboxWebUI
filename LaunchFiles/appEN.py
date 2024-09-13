@@ -64,6 +64,8 @@ from insightface.utils import face_align
 from DeepCache import DeepCacheSDHelper
 import tomesd
 import openparse
+import string
+import hashlib
 
 
 def lazy_import(module_name, fromlist):
@@ -316,13 +318,30 @@ def flush():
     torch.cuda.empty_cache()
 
 
-def get_languages():
-    return {
-        "Arabic": "ara", "Chinese": "cmn", "English": "eng", "French": "fra",
-        "German": "deu", "Hindi": "hin", "Italian": "ita", "Japanese": "jpn",
-        "Korean": "kor", "Polish": "pol", "Portuguese": "por", "Russian": "rus",
-        "Spanish": "spa", "Turkish": "tur",
-    }
+def generate_key(length=16):
+    return ''.join(random.choices(string.ascii_letters + string.digits, k=length))
+
+
+def string_to_seed(s):
+    return int(hashlib.md5(s.encode()).hexdigest(), 16) % (2**32)
+
+
+def encrypt_image(image, key):
+    img_array = np.array(image)
+    seed = string_to_seed(key)
+    np.random.seed(seed)
+    noise = np.random.randint(0, 256, img_array.shape, dtype=np.uint8)
+    encrypted_img = img_array ^ noise
+    return Image.fromarray(encrypted_img), key
+
+
+def decrypt_image(encrypted_image, key):
+    encrypted_array = np.array(encrypted_image)
+    seed = string_to_seed(key)
+    np.random.seed(seed)
+    noise = np.random.randint(0, 256, encrypted_array.shape, dtype=np.uint8)
+    decrypted_img = encrypted_array ^ noise
+    return Image.fromarray(decrypted_img)
 
 
 def load_settings():
@@ -761,6 +780,15 @@ def load_multiband_diffusion_model():
         Repo.clone_from("https://huggingface.co/facebook/multiband-diffusion", multiband_diffusion_path)
         print("Multiband Diffusion model downloaded")
     return multiband_diffusion_path
+
+
+def get_languages():
+    return {
+        "Arabic": "ara", "Chinese": "cmn", "English": "eng", "French": "fra",
+        "German": "deu", "Hindi": "hin", "Italian": "ita", "Japanese": "jpn",
+        "Korean": "kor", "Polish": "pol", "Portuguese": "por", "Russian": "rus",
+        "Spanish": "spa", "Turkish": "tur",
+    }
 
 
 def generate_text_and_speech(input_text, system_prompt, input_audio, llm_model_name, llm_lora_model_name, enable_web_search, enable_libretranslate, target_lang, enable_openparse, pdf_file, enable_multimodal, input_image, enable_tts,
@@ -6469,11 +6497,12 @@ def demucs_separate(audio_file, output_format="wav"):
 
 def generate_image_extras(input_image, remove_background, enable_facerestore, fidelity_weight, restore_upscale,
                           enable_pixeloe, target_size, patch_size, enable_ddcolor, ddcolor_input_size,
-                          enable_downscale, downscale_factor, enable_format_changer, new_format):
+                          enable_downscale, downscale_factor, enable_format_changer, new_format, enable_encryption, enable_decryption, decryption_key):
+    global key
     if not input_image:
         return None, "Please upload an image!"
 
-    if not remove_background and not enable_facerestore and not enable_pixeloe and not enable_ddcolor and not enable_downscale and not enable_format_changer:
+    if not remove_background and not enable_facerestore and not enable_pixeloe and not enable_ddcolor and not enable_downscale and not enable_format_changer and not enable_encryption and not enable_decryption:
         return None, "Please choose an option to modify the image"
 
     try:
@@ -6513,7 +6542,32 @@ def generate_image_extras(input_image, remove_background, enable_facerestore, fi
             if message.startswith("Error"):
                 return None, message
 
-        return output_path, "Image processing completed successfully."
+        if enable_encryption:
+            img = Image.open(output_path)
+            key = generate_key()
+            encrypted_img, _ = encrypt_image(img, key)
+            encrypted_output_path = os.path.join(os.path.dirname(output_path),
+                                                 f"encrypted_{os.path.basename(output_path)}")
+            encrypted_img.save(encrypted_output_path)
+            output_path = encrypted_output_path
+
+        if enable_decryption:
+            if not decryption_key:
+                return None, "Please provide a decryption key!"
+            img = Image.open(output_path)
+            try:
+                decrypted_img = decrypt_image(img, decryption_key)
+                decrypted_output_path = os.path.join(os.path.dirname(output_path),
+                                                     f"decrypted_{os.path.basename(output_path)}")
+                decrypted_img.save(decrypted_output_path)
+                output_path = decrypted_output_path
+            except Exception as e:
+                return None, f"Decryption failed. Please check your key. Error: {str(e)}"
+
+        if enable_encryption:
+            return output_path, f"Image encrypted successfully. Decryption key: {key}"
+        else:
+            return output_path, "Image processing completed successfully."
 
     except Exception as e:
         return None, str(e)
@@ -9047,6 +9101,9 @@ image_extras_interface = gr.Interface(
         gr.Slider(minimum=0.1, maximum=1.0, value=0.5, step=0.1, label="DownScale Factor"),
         gr.Checkbox(label="Enable Format Changer", value=False),
         gr.Radio(choices=["png", "jpeg"], label="New Image Format", value="png"),
+        gr.Checkbox(label="Enable Encryption", value=False),
+        gr.Checkbox(label="Enable Decryption", value=False),
+        gr.Textbox(label="Decryption Key", value="")
     ],
     outputs=[
         gr.Image(label="Modified image", type="filepath"),
