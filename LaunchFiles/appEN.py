@@ -47,6 +47,7 @@ import ffmpeg
 from mutagen import File
 from tqdm import tqdm
 import requests
+import gdown
 import asyncio
 import websockets
 import io
@@ -751,6 +752,23 @@ def load_multiband_diffusion_model():
         Repo.clone_from("https://huggingface.co/facebook/multiband-diffusion", multiband_diffusion_path)
         print("Multiband Diffusion model downloaded")
     return multiband_diffusion_path
+
+
+def download_supir_models():
+    models_dir = "ThirdPartyRepository/SUPIR/options"
+    os.makedirs(models_dir, exist_ok=True)
+
+    gdrive_url = "https://drive.google.com/uc?id=1ohCIBV_RAej1zuiidHph5qXNuD4GRxO3"
+    gdrive_output = os.path.join(models_dir, "SUPIR-v0Q.ckpt")
+    if not os.path.exists(gdrive_output):
+        gdown.download(gdrive_url, gdrive_output, quiet=False)
+
+    hf_url = "https://huggingface.co/RunDiffusion/Juggernaut-XL-v9/resolve/main/Juggernaut-XL_v9_RunDiffusionPhoto_v2.safetensors"
+    hf_output = os.path.join(models_dir, "Juggernaut-XL_v9_RunDiffusionPhoto_v2.safetensors")
+    if not os.path.exists(hf_output):
+        response = requests.get(hf_url)
+        with open(hf_output, "wb") as f:
+            f.write(response.content)
 
 
 def generate_text_and_speech(input_text, system_prompt, input_audio, input_image, llm_model_name, llm_lora_model_name, enable_web_search, enable_libretranslate, target_lang, enable_multimodal, enable_tts,
@@ -2280,6 +2298,56 @@ def generate_image_upscale_latent(prompt, image_path, upscale_factor, seed, num_
 
     finally:
         del upscaler
+        flush()
+
+
+def generate_image_upscale_supir(input_image, upscale, min_size, edm_steps, s_stage1, s_churn, s_noise, s_cfg, s_stage2, a_prompt, n_prompt, color_fix_type, enable_linearly, linear_CFG, linear_s_stage2, spt_linear_CFG, spt_linear_s_stage2, output_format="png"):
+    if not input_image:
+        return None, "Please upload an image to upscale!"
+
+    try:
+        download_supir_models()
+
+        today = datetime.now().date()
+        output_dir = os.path.join('outputs', f"SUPIR_{today.strftime('%Y%m%d')}")
+        os.makedirs(output_dir, exist_ok=True)
+
+        output_filename = f"supir_upscaled_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
+        output_path = os.path.join(output_dir, output_filename)
+
+        command = [
+            "python", r"ThirdPartyRepository\SUPIR\test.py",
+            "--img_dir", input_image,
+            "--save_dir", output_dir,
+            "--upscale", str(upscale),
+            "--min_size", str(min_size),
+            "--edm_steps", str(edm_steps),
+            "--s_stage1", str(s_stage1),
+            "--s_churn", str(s_churn),
+            "--s_noise", str(s_noise),
+            "--s_cfg", str(s_cfg),
+            "--s_stage2", str(s_stage2),
+            "--a_prompt", a_prompt,
+            "--n_prompt", n_prompt,
+            "--color_fix_type", color_fix_type
+        ]
+
+        if enable_linearly:
+            command.extend([
+                "--linear_CFG", str(linear_CFG),
+                "--linear_s_stage2", str(linear_s_stage2),
+                "--spt_linear_CFG", str(spt_linear_CFG),
+                "--spt_linear_s_stage2", str(spt_linear_s_stage2)
+            ])
+
+        subprocess.run(command, check=True)
+
+        return output_path, "Image upscaled successfully using SUPIR!"
+
+    except Exception as e:
+        return None, str(e)
+
+    finally:
         flush()
 
 
@@ -6694,7 +6762,7 @@ def display_metadata(file):
 
     file_extension = os.path.splitext(file.name)[1].lower()
 
-    if file_extension in ['.png', '.jpg', '.jpeg']:
+    if file_extension in ['.png', '.gif', '.jpeg']:
         metadata = get_image_metadata(file.name)
         metadata_type = "Image_generation_data"
     elif file_extension in ['.mp4', '.avi', '.mov']:
@@ -7336,6 +7404,44 @@ latent_upscale_interface = gr.Interface(
     ],
     title="NeuroSandboxWebUI - StableDiffusion (upscale-latent)",
     description="This user interface allows you to upload an image and latent-upscale it using x2 or x4 upscale factor",
+    allow_flagging="never",
+    clear_btn=None,
+    stop_btn="Stop",
+    submit_btn="Upscale"
+)
+
+supir_upscale_interface = gr.Interface(
+    fn=generate_image_upscale_supir,
+    inputs=[
+        gr.Image(label="Image to upscale", type="filepath"),
+        gr.Slider(minimum=1, maximum=4, value=2, step=1, label="Upscale factor")
+    ],
+    additional_inputs=[
+        gr.Slider(minimum=512, maximum=2048, value=1024, step=64, label="Minimum size"),
+        gr.Slider(minimum=1, maximum=100, value=50, step=1, label="EDM steps"),
+        gr.Number(label="S Stage1", value=-1),
+        gr.Slider(minimum=0, maximum=20, value=5, step=0.1, label="S Churn"),
+        gr.Slider(minimum=0, maximum=10, value=1, step=0.1, label="S Noise"),
+        gr.Slider(minimum=1, maximum=30, value=7, step=0.1, label="S CFG"),
+        gr.Slider(minimum=0, maximum=10, value=1, step=0.1, label="S Stage2"),
+        gr.Textbox(label="Prompt", value=""),
+        gr.Textbox(label="Negative Prompt", value=""),
+        gr.Radio(choices=['None', 'AdaIn', 'Wavelet'], label="Color Fix Type", value='None'),
+        gr.Checkbox(label="Enable Linearly (with sigma)", value=False),
+        gr.Slider(minimum=0, maximum=30, value=7, step=0.1, label="Linear CFG", visible=True),
+        gr.Slider(minimum=0, maximum=10, value=1, step=0.1, label="Linear S Stage2", visible=True),
+        gr.Slider(minimum=0, maximum=10, value=1, step=0.1, label="SPT Linear CFG", visible=True),
+        gr.Slider(minimum=0, maximum=10, value=0, step=0.1, label="SPT Linear S Stage2", visible=True),
+        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True)
+    ],
+    outputs=[
+        gr.Image(type="filepath", label="Upscaled image"),
+        gr.Textbox(label="Message", type="text")
+    ],
+    title="NeuroSandboxWebUI - Upscale (SUPIR)",
+    description="This user interface allows you to upscale images using SUPIR (Super-Resolution Plugin). "
+                "Upload an image and customize the upscaling settings. "
+                "Try it and see what happens!",
     allow_flagging="never",
     clear_btn=None,
     stop_btn="Stop",
@@ -9213,11 +9319,11 @@ with gr.TabbedInterface(
         gr.TabbedInterface(
             [
                 gr.TabbedInterface(
-                    [txt2img_interface, img2img_interface, depth2img_interface, pix2pix_interface, controlnet_interface, latent_upscale_interface, sdxl_refiner_interface, inpaint_interface, outpaint_interface, gligen_interface, animatediff_interface, hotshotxl_interface, video_interface, ldm3d_interface,
+                    [txt2img_interface, img2img_interface, depth2img_interface, pix2pix_interface, controlnet_interface, latent_upscale_interface, supir_upscale_interface, sdxl_refiner_interface, inpaint_interface, outpaint_interface, gligen_interface, animatediff_interface, hotshotxl_interface, video_interface, ldm3d_interface,
                      gr.TabbedInterface([sd3_txt2img_interface, sd3_img2img_interface, sd3_controlnet_interface, sd3_inpaint_interface],
                                         tab_names=["txt2img", "img2img", "controlnet", "inpaint"]),
                      cascade_interface, t2i_ip_adapter_interface, ip_adapter_faceid_interface, riffusion_interface],
-                    tab_names=["txt2img", "img2img", "depth2img", "pix2pix", "controlnet", "upscale(latent)", "refiner", "inpaint", "outpaint", "gligen", "animatediff", "hotshotxl", "video", "ldm3d", "sd3", "cascade", "t2i-ip-adapter", "ip-adapter-faceid", "riffusion"]
+                    tab_names=["txt2img", "img2img", "depth2img", "pix2pix", "controlnet", "upscale(latent)", "upscale(SUPIR)", "refiner", "inpaint", "outpaint", "gligen", "animatediff", "hotshotxl", "video", "ldm3d", "sd3", "cascade", "t2i-ip-adapter", "ip-adapter-faceid", "riffusion"]
                 ),
                 kandinsky_interface, flux_interface, hunyuandit_interface, lumina_interface, kolors_interface, auraflow_interface, wurstchen_interface, deepfloyd_if_interface, pixart_interface, playgroundv2_interface
             ],
