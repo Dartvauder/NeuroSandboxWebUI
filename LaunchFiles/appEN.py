@@ -6642,7 +6642,7 @@ def generate_video_extras(input_video, enable_downscale, downscale_factor, enabl
         flush()
 
 
-def generate_audio_extras(input_audio, enable_format_changer, new_format, enable_audiosr, enable_downscale, downscale_factor, enable_encryption, enable_decryption, noise_level):
+def generate_audio_extras(input_audio, enable_format_changer, new_format, enable_audiosr, steps, guidance_scale, enable_downscale, downscale_factor, enable_encryption, enable_decryption, noise_level):
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
     if not input_audio:
@@ -6663,13 +6663,22 @@ def generate_audio_extras(input_audio, enable_format_changer, new_format, enable
             today = datetime.now().date()
             audio_dir = os.path.join('outputs', f"AudioSR_{today.strftime('%Y%m%d')}")
             os.makedirs(audio_dir, exist_ok=True)
-            output_filename = f"audiosr_{datetime.now().strftime('%Y%m%d_%H%M%S')}.wav"
-            audiosr_output_path = os.path.join(audio_dir, output_filename)
 
-            command = f"audiosr -i {output_path} -s {audiosr_output_path} -d {device}"
+            command = f"audiosr -i {output_path} -s {audio_dir} --ddim_steps {steps} -gs {guidance_scale} -d {device}"
             subprocess.run(command, shell=True, check=True)
 
-            output_path = audiosr_output_path
+            subfolders = [f for f in os.listdir(audio_dir) if os.path.isdir(os.path.join(audio_dir, f))]
+            if subfolders:
+                latest_subfolder = max(subfolders, key=lambda x: os.path.getctime(os.path.join(audio_dir, x)))
+                subfolder_path = os.path.join(audio_dir, latest_subfolder)
+
+                wav_files = [f for f in os.listdir(subfolder_path) if f.endswith('.wav')]
+                if wav_files:
+                    output_path = os.path.join(subfolder_path, wav_files[0])
+                else:
+                    return None, "AudioSR processed the file, but no output WAV file was found."
+            else:
+                return None, "AudioSR did not create any output folders."
 
         if enable_downscale:
             today = datetime.now().date()
@@ -9222,11 +9231,13 @@ audio_extras_interface = gr.Interface(
         gr.Checkbox(label="Enable Format Changer", value=False),
         gr.Radio(choices=["wav", "mp3", "ogg"], label="New Audio Format", value="wav"),
         gr.Checkbox(label="Enable AudioSR", value=False),
+        gr.Slider(minimum=1, maximum=100, value=50, step=1, label="Steps"),
+        gr.Slider(minimum=0.1, maximum=30.0, value=8, step=0.1, label="Guidance Scale"),
         gr.Checkbox(label="Enable Downscale", value=False),
         gr.Slider(minimum=0.1, maximum=1.0, value=0.5, step=0.1, label="Downscale Factor"),
         gr.Checkbox(label="Enable Encryption (Add Noise)", value=False),
         gr.Checkbox(label="Enable Decryption (Remove Noise)", value=False),
-        gr.Slider(minimum=0.01, maximum=0.5, value=0.1, step=0.01, label="Noise Level")
+        gr.Slider(minimum=0.01, maximum=1, value=0.1, step=0.01, label="Noise Level")
     ],
     outputs=[
         gr.Audio(label="Modified audio", type="filepath"),
