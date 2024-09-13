@@ -66,6 +66,11 @@ import tomesd
 import openparse
 import string
 import hashlib
+from mutagen.mp4 import MP4
+from mutagen.id3 import ID3, TXXX
+from mutagen.mp3 import MP3
+from mutagen.oggvorbis import OggVorbis
+from mutagen.wave import WAVE
 
 
 def lazy_import(module_name, fromlist):
@@ -342,6 +347,41 @@ def decrypt_image(encrypted_image, key):
     noise = np.random.randint(0, 256, encrypted_array.shape, dtype=np.uint8)
     decrypted_img = encrypted_array ^ noise
     return Image.fromarray(decrypted_img)
+
+
+def add_metadata_to_video(video_path, metadata):
+    video = MP4(video_path)
+    video["Video_generation_data"] = json.dumps(metadata)
+    video.save()
+
+
+def add_metadata_to_audio(audio_path, metadata):
+    audio = File(audio_path, easy=True)
+
+    if audio is None:
+        print(f"Unsupported audio format for file: {audio_path}")
+        return
+
+    metadata_str = json.dumps(metadata)
+
+    if isinstance(audio, MP3):
+        audio = ID3(audio_path)
+        audio["TXXX:Audio_generation_data"] = TXXX(encoding=3, desc="Audio_generation_data", text=metadata_str)
+    elif isinstance(audio, OggVorbis):
+        audio["Audio_generation_data"] = metadata_str
+    elif isinstance(audio, WAVE):
+        audio.tags = {"Audio_generation_data": metadata_str}
+    else:
+        audio["Audio_generation_data"] = metadata_str
+
+    audio.save()
+
+
+def add_metadata_to_gif(gif_path, metadata):
+    img = Image.open(gif_path)
+    metadata_str = json.dumps(metadata)
+    img.info["Image_generation_data"] = metadata_str
+    img.save(gif_path, save_all=True, append_images=img.copy(), duration=img.info['duration'], loop=0, comment=metadata_str)
 
 
 def load_settings():
@@ -1703,20 +1743,12 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
                 "sampler": stable_diffusion_sampler,
                 "seed": seed,
                 "Stable_diffusion_model": stable_diffusion_model_name,
-                "Stable_diffusion_model_type": stable_diffusion_model_type
+                "Stable_diffusion_model_type": stable_diffusion_model_type,
+                "vae": vae_model_name if vae_model_name else None,
+                "lora_models": lora_model_names if lora_model_names else None,
+                "lora_scales": lora_scales if lora_model_names else None,
+                "textual_inversion": textual_inversion_model_names if textual_inversion_model_names else None
             }
-
-            if vae_model_name:
-                metadata["vae"] = vae_model_name
-
-            if lora_model_names and lora_scales:
-                lora_info = []
-                for model, scale in zip(lora_model_names, lora_scales):
-                    lora_info.append({"model": model, "scale": scale})
-                metadata["lora"] = lora_info
-
-            if textual_inversion_model_names:
-                metadata["textual_inversion"] = textual_inversion_model_names
 
             metadata_str = json.dumps(metadata)
 
@@ -3090,7 +3122,24 @@ def generate_image_animatediff(prompt, negative_prompt, input_video, strength, m
 
         gif_filename = f"animatediff_{datetime.now().strftime('%Y%m%d_%H%M%S')}.gif"
         gif_path = os.path.join(output_dir, gif_filename)
+        metadata = {
+            "prompt": prompt,
+            "negative_prompt": negative_prompt,
+            "seed": seed,
+            "model_type": model_type,
+            "stable_diffusion_model": stable_diffusion_model_name,
+            "motion_lora": motion_lora_name if motion_lora_name else None,
+            "num_frames": num_frames,
+            "steps": num_inference_steps,
+            "guidance_scale": guidance_scale,
+            "width": width,
+            "height": height,
+            "clip_skip": clip_skip,
+            "sub-model": "AnimateDiff"
+        }
+
         export_to_gif(frames, gif_path)
+        add_metadata_to_gif(gif_path, metadata)
 
         return gif_path, f"GIF generated successfully. Seed used: {seed}"
 
@@ -3405,7 +3454,27 @@ def generate_image_sd3_txt2img(prompt, negative_prompt, seed, lora_model_names, 
             os.makedirs(image_dir, exist_ok=True)
             image_filename = f"sd3_txt2img_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{i}.{output_format}"
             image_path = os.path.join(image_dir, image_filename)
-            image.save(image_path, format=output_format.upper())
+            metadata = {
+                "prompt": prompt,
+                "negative_prompt": negative_prompt,
+                "model": "Stable Diffusion 3",
+                "seed": seed,
+                "lora_models": lora_model_names if lora_model_names else None,
+                "lora_scales": lora_scales if lora_model_names else None,
+                "steps": num_inference_steps,
+                "guidance_scale": guidance_scale,
+                "width": width,
+                "height": height,
+                "max_sequence_length": max_sequence_length,
+                "clip_skip": clip_skip,
+            }
+
+            metadata_str = json.dumps(metadata)
+
+            png_info = PngInfo()
+            png_info.add_text("Image_generation_data", metadata_str)
+
+            images.save(image_path, format=output_format.upper(), pnginfo=png_info)
             image_paths.append(image_path)
 
         return image_paths, f"Images generated successfully. Seed used: {seed}"
@@ -3726,7 +3795,27 @@ def generate_image_cascade(prompt, negative_prompt, seed, width, height, prior_s
             os.makedirs(image_dir, exist_ok=True)
             image_filename = f"cascade_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{i}.{output_format}"
             image_path = os.path.join(image_dir, image_filename)
-            image.save(image_path, format=output_format.upper())
+
+            metadata = {
+                "prompt": prompt,
+                "negative_prompt": negative_prompt,
+                "model": "StableCascade",
+                "width": width,
+                "height": height,
+                "prior_steps": prior_steps,
+                "prior_guidance_scale": prior_guidance_scale,
+                "decoder_steps": decoder_steps,
+                "decoder_guidance_scale": decoder_guidance_scale,
+                "seed": seed
+            }
+
+            metadata_str = json.dumps(metadata)
+
+            png_info = PngInfo()
+            png_info.add_text("Image_generation_data", metadata_str)
+
+            image.save(image_path, format=output_format.upper(), pnginfo=png_info)
+
             image_paths.append(image_path)
 
         return image_paths, f"Images generated successfully. Seed used: {seed}"
@@ -4139,7 +4228,23 @@ def generate_image_kandinsky_txt2img(prompt, negative_prompt, version, seed, num
         os.makedirs(image_dir, exist_ok=True)
         image_filename = f"kandinsky_{version}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
         image_path = os.path.join(image_dir, image_filename)
-        image.save(image_path, format=output_format.upper())
+        metadata = {
+            "prompt": prompt,
+            "negative_prompt": negative_prompt,
+            "steps": num_inference_steps,
+            "guidance_scale": guidance_scale,
+            "height": height,
+            "width": width,
+            "seed": seed,
+            "Kandinsky_version": version
+        }
+
+        metadata_str = json.dumps(metadata)
+
+        png_info = PngInfo()
+        png_info.add_text("Image_generation_data", metadata_str)
+
+        image.save(image_path, format=output_format.upper(), pnginfo=png_info)
 
         return image_path, f"Image generated successfully. Seed used: {seed}"
 
@@ -4441,7 +4546,26 @@ def generate_image_flux(prompt, model_name, quantize_model_name, enable_quantize
         os.makedirs(image_dir, exist_ok=True)
         image_filename = f"flux_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
         image_path = os.path.join(image_dir, image_filename)
-        output.save(image_path, format=output_format.upper())
+        metadata = {
+            "prompt": prompt,
+            "flux_model": model_name,
+            "quantized_model": quantize_model_name if enable_quantize else None,
+            "lora_models": lora_model_names if lora_model_names else None,
+            "lora_scales": lora_scales if lora_model_names else None,
+            "guidance_scale": guidance_scale,
+            "height": height,
+            "width": width,
+            "steps": num_inference_steps,
+            "max_sequence_length": max_sequence_length,
+            "seed": seed
+        }
+
+        metadata_str = json.dumps(metadata)
+
+        png_info = PngInfo()
+        png_info.add_text("Image_generation_data", metadata_str)
+
+        output.save(image_path, format=output_format.upper(), pnginfo=png_info)
 
         return image_path, f"Image generated successfully. Seed used: {seed}"
 
@@ -4494,7 +4618,23 @@ def generate_image_hunyuandit_txt2img(prompt, negative_prompt, seed, num_inferen
         os.makedirs(image_dir, exist_ok=True)
         image_filename = f"hunyuandit_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
         image_path = os.path.join(image_dir, image_filename)
-        image.save(image_path, format=output_format.upper())
+        metadata = {
+            "prompt": prompt,
+            "negative_prompt": negative_prompt,
+            "model": "HunyuanDiT",
+            "steps": num_inference_steps,
+            "guidance_scale": guidance_scale,
+            "height": height,
+            "width": width,
+            "seed": seed
+        }
+
+        metadata_str = json.dumps(metadata)
+
+        png_info = PngInfo()
+        png_info.add_text("Image_generation_data", metadata_str)
+
+        image.save(image_path, format=output_format.upper(), pnginfo=png_info)
 
         return image_path, f"Image generated successfully. Seed used: {seed}"
 
@@ -4608,7 +4748,24 @@ def generate_image_lumina(prompt, negative_prompt, seed, num_inference_steps, gu
         os.makedirs(image_dir, exist_ok=True)
         image_filename = f"lumina_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
         image_path = os.path.join(image_dir, image_filename)
-        image.save(image_path, format=output_format.upper())
+        metadata = {
+            "prompt": prompt,
+            "negative_prompt": negative_prompt,
+            "model": "Lumina-T2X",
+            "steps": num_inference_steps,
+            "guidance_scale": guidance_scale,
+            "height": height,
+            "width": width,
+            "max_sequence_length": max_sequence_length,
+            "seed": seed
+        }
+
+        metadata_str = json.dumps(metadata)
+
+        png_info = PngInfo()
+        png_info.add_text("Image_generation_data", metadata_str)
+
+        image.save(image_path, format=output_format.upper(), pnginfo=png_info)
 
         return image_path, f"Image generated successfully. Seed used: {seed}"
 
@@ -4685,7 +4842,24 @@ def generate_image_kolors_txt2img(prompt, negative_prompt, seed, lora_model_name
         os.makedirs(image_dir, exist_ok=True)
         image_filename = f"kolors_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
         image_path = os.path.join(image_dir, image_filename)
-        image.save(image_path, format=output_format.upper())
+        metadata = {
+            "prompt": prompt,
+            "negative_prompt": negative_prompt,
+            "model": "Kolors",
+            "lora_models": lora_model_names if lora_model_names else None,
+            "lora_scales": lora_scales if lora_model_names else None,
+            "guidance_scale": guidance_scale,
+            "steps": num_inference_steps,
+            "max_sequence_length": max_sequence_length,
+            "seed": seed
+        }
+
+        metadata_str = json.dumps(metadata)
+
+        png_info = PngInfo()
+        png_info.add_text("Image_generation_data", metadata_str)
+
+        image.save(image_path, format=output_format.upper(), pnginfo=png_info)
 
         return image_path, f"Image generated successfully. Seed used: {seed}"
 
@@ -4899,7 +5073,27 @@ def generate_image_auraflow(prompt, negative_prompt, seed, lora_model_names, lor
         os.makedirs(image_dir, exist_ok=True)
         image_filename = f"auraflow_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
         image_path = os.path.join(image_dir, image_filename)
-        image.save(image_path, format=output_format.upper())
+        metadata = {
+            "prompt": prompt,
+            "negative_prompt": negative_prompt,
+            "model": "AuraFlow",
+            "lora_models": lora_model_names if lora_model_names else None,
+            "lora_scales": lora_scales if lora_model_names else None,
+            "steps": num_inference_steps,
+            "guidance_scale": guidance_scale,
+            "height": height,
+            "width": width,
+            "max_sequence_length": max_sequence_length,
+            "enable_aurasr": enable_aurasr if enable_aurasr else None,
+            "seed": seed
+        }
+
+        metadata_str = json.dumps(metadata)
+
+        png_info = PngInfo()
+        png_info.add_text("Image_generation_data", metadata_str)
+
+        image.save(image_path, format=output_format.upper(), pnginfo=png_info)
 
         return image_path, f"Image generated successfully. Seed used: {seed}"
 
@@ -4973,7 +5167,25 @@ def generate_image_wurstchen(prompt, negative_prompt, seed, width, height, prior
         os.makedirs(image_dir, exist_ok=True)
         image_filename = f"wurstchen_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
         image_path = os.path.join(image_dir, image_filename)
-        decoder_output.save(image_path, format=output_format.upper())
+        metadata = {
+            "prompt": prompt,
+            "negative_prompt": negative_prompt,
+            "model": "Würstchen",
+            "width": width,
+            "height": height,
+            "prior_steps": prior_steps,
+            "prior_guidance_scale": prior_guidance_scale,
+            "decoder_steps": decoder_steps,
+            "decoder_guidance_scale": decoder_guidance_scale,
+            "seed": seed
+        }
+
+        metadata_str = json.dumps(metadata)
+
+        png_info = PngInfo()
+        png_info.add_text("Image_generation_data", metadata_str)
+
+        decoder_output.save(image_path, format=output_format.upper(), pnginfo=png_info)
 
         return image_path, f"Image generated successfully. Seed used: {seed}"
 
@@ -5091,7 +5303,23 @@ def generate_image_deepfloyd_txt2img(prompt, negative_prompt, seed, num_inferenc
 
         pt_to_pil(image[0])[0].save(stage_i_path)
         pt_to_pil(image[0])[0].save(stage_ii_path)
-        image.save(stage_iii_path)
+        metadata = {
+            "prompt": prompt,
+            "negative_prompt": negative_prompt,
+            "model": "DeepFloydIF",
+            "steps": num_inference_steps,
+            "guidance_scale": guidance_scale,
+            "width": width,
+            "height": height,
+            "seed": seed
+        }
+
+        metadata_str = json.dumps(metadata)
+
+        png_info = PngInfo()
+        png_info.add_text("Image_generation_data", metadata_str)
+
+        image.save(stage_iii_path, format=output_format.upper(), pnginfo=png_info)
 
         return stage_i_path, stage_ii_path, stage_iii_path, f"Image generated successfully. Seed used: {seed}"
 
@@ -5436,7 +5664,24 @@ def generate_image_pixart(prompt, negative_prompt, version, seed, num_inference_
         os.makedirs(image_dir, exist_ok=True)
         image_filename = f"pixart_{version}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
         image_path = os.path.join(image_dir, image_filename)
-        image.save(image_path, format=output_format.upper())
+        metadata = {
+            "prompt": prompt,
+            "negative_prompt": negative_prompt,
+            "pixart_version": version,
+            "steps": num_inference_steps,
+            "guidance_scale": guidance_scale,
+            "height": height,
+            "width": width,
+            "max_sequence_length": max_sequence_length,
+            "seed": seed
+        }
+
+        metadata_str = json.dumps(metadata)
+
+        png_info = PngInfo()
+        png_info.add_text("Image_generation_data", metadata_str)
+
+        image.save(image_path, format=output_format.upper(), pnginfo=png_info)
 
         return image_path, f"Image generated successfully. Seed used: {seed}"
 
@@ -5489,7 +5734,23 @@ def generate_image_playgroundv2(prompt, negative_prompt, seed, height, width, nu
         os.makedirs(image_dir, exist_ok=True)
         image_filename = f"playgroundv2_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
         image_path = os.path.join(image_dir, image_filename)
-        image.save(image_path, format=output_format.upper())
+        metadata = {
+            "prompt": prompt,
+            "negative_prompt": negative_prompt,
+            "model": "PlaygroundV2.5",
+            "height": height,
+            "width": width,
+            "steps": num_inference_steps,
+            "guidance_scale": guidance_scale,
+            "seed": seed
+        }
+
+        metadata_str = json.dumps(metadata)
+
+        png_info = PngInfo()
+        png_info.add_text("Image_generation_data", metadata_str)
+
+        image.save(image_path, format=output_format.upper(), pnginfo=png_info)
 
         return image_path, f"Image generated successfully. Seed used: {seed}"
 
@@ -5632,10 +5893,24 @@ def generate_video_modelscope(prompt, negative_prompt, seed, num_inference_steps
         video_filename = f"modelscope_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
         video_path = os.path.join(video_dir, video_filename)
 
+        metadata = {
+            "prompt": prompt,
+            "negative_prompt": negative_prompt,
+            "seed": seed,
+            "steps": num_inference_steps,
+            "guidance_scale": guidance_scale,
+            "height": height,
+            "width": width,
+            "num_frames": num_frames,
+            "model": "ModelScope"
+        }
+
         if output_format == "mp4":
             export_to_video(video_frames, video_path)
+            add_metadata_to_video(video_path, metadata)
         else:
             export_to_gif(video_frames, video_path)
+            add_metadata_to_gif(video_path, metadata)
 
         return video_path, f"Video generated successfully. Seed used: {seed}"
 
@@ -5743,7 +6018,20 @@ def generate_video_zeroscope2(prompt, video_to_enhance, seed, strength, num_infe
 
             video_filename = f"zeroscope2_{datetime.now().strftime('%Y%m%d_%H%M%S')}.mp4"
             video_path = os.path.join(video_dir, video_filename)
+            metadata = {
+                "prompt": prompt,
+                "seed": seed,
+                "strength": strength if enable_video_enhance else None,
+                "steps": num_inference_steps,
+                "width": width,
+                "height": height,
+                "num_frames": num_frames,
+                "enable_video_enhance": enable_video_enhance if enable_video_enhance else None,
+                "model": "ZeroScope 2"
+            }
+
             export_to_video(video_frames, video_path)
+            add_metadata_to_video(video_path, metadata)
 
             return video_path, f"Video generated successfully. Seed used: {seed}"
 
@@ -5800,7 +6088,21 @@ def generate_video_cogvideox(prompt, negative_prompt, seed, cogvideox_version, n
 
         video_filename = f"cogvideox_{datetime.now().strftime('%Y%m%d_%H%M%S')}.mp4"
         video_path = os.path.join(video_dir, video_filename)
+        metadata = {
+            "prompt": prompt,
+            "negative_prompt": negative_prompt,
+            "seed": seed,
+            "cogvideox_version": cogvideox_version,
+            "steps": num_inference_steps,
+            "guidance_scale": guidance_scale,
+            "height": height,
+            "width": width,
+            "num_frames": num_frames,
+            "fps": fps
+        }
+
         export_to_video(video, video_path, fps=fps)
+        add_metadata_to_video(video_path, metadata)
 
         return video_path, f"Video generated successfully. Seed used: {seed}"
 
@@ -5851,7 +6153,20 @@ def generate_video_latte(prompt, negative_prompt, seed, num_inference_steps, gui
 
         gif_filename = f"latte_{datetime.now().strftime('%Y%m%d_%H%M%S')}.gif"
         gif_path = os.path.join(gif_dir, gif_filename)
+        metadata = {
+            "prompt": prompt,
+            "negative_prompt": negative_prompt,
+            "seed": seed,
+            "steps": num_inference_steps,
+            "guidance_scale": guidance_scale,
+            "height": height,
+            "width": width,
+            "video_length": video_length,
+            "model": "Latte"
+        }
+
         export_to_gif(videos, gif_path)
+        add_metadata_to_gif(gif_path, metadata)
 
         return gif_path, f"Video generated successfully. Seed used: {seed}"
 
@@ -6134,12 +6449,26 @@ def generate_stableaudio(prompt, negative_prompt, seed, num_inference_steps, gui
         audio_filename = f"stableaudio_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
         audio_path = os.path.join(audio_dir, audio_filename)
 
+        metadata = {
+            "prompt": prompt,
+            "negative_prompt": negative_prompt,
+            "seed": seed,
+            "steps": num_inference_steps,
+            "guidance_scale": guidance_scale,
+            "audio_length": audio_length,
+            "audio_start": audio_start,
+            "num_waveforms": num_waveforms,
+            "model": "StableAudio"
+        }
+
         if output_format == "mp3":
             sf.write(audio_path, output, pipe.vae.sampling_rate, format='mp3')
         elif output_format == "ogg":
             sf.write(audio_path, output, pipe.vae.sampling_rate, format='ogg')
         else:
             sf.write(audio_path, output, pipe.vae.sampling_rate)
+
+        add_metadata_to_audio(audio_path, metadata)
 
         spectrogram_path = generate_mel_spectrogram(audio_path)
 
@@ -6240,6 +6569,21 @@ def generate_audio_audiocraft(prompt, input_audio=None, model_name=None, model_t
 
         audio_filename = f"audio_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
         audio_path = os.path.join(audio_dir, audio_filename)
+
+        metadata = {
+            "prompt": prompt,
+            "model_name": model_name,
+            "model_type": model_type,
+            "duration": duration,
+            "top_k": top_k,
+            "top_p": top_p,
+            "temperature": temperature,
+            "cfg_coef": cfg_coef,
+            "min_cfg_coef": min_cfg_coef,
+            "max_cfg_coef": max_cfg_coef,
+            "enable_multiband": enable_multiband if enable_multiband else None,
+            "model": "AudioCraft"
+        }
         if output_format == "mp3":
             audio_write(audio_path, wav.cpu(), model.sample_rate, strategy="loudness", loudness_compressor=True,
                         format='mp3')
@@ -6248,6 +6592,8 @@ def generate_audio_audiocraft(prompt, input_audio=None, model_name=None, model_t
                         format='ogg')
         else:
             audio_write(audio_path, wav.cpu(), model.sample_rate, strategy="loudness", loudness_compressor=True)
+
+        add_metadata_to_audio(audio_path, metadata)
 
         if output_format == "mp3":
             spectrogram_path = generate_mel_spectrogram(audio_path + ".mp3")
@@ -6310,12 +6656,25 @@ def generate_audio_audioldm2(prompt, negative_prompt, model_name, seed, num_infe
         audio_filename = f"audioldm2_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
         audio_path = os.path.join(audio_dir, audio_filename)
 
+        metadata = {
+            "prompt": prompt,
+            "negative_prompt": negative_prompt,
+            "model_name": model_name,
+            "seed": seed,
+            "steps": num_inference_steps,
+            "audio_length_in_s": audio_length_in_s,
+            "num_waveforms_per_prompt": num_waveforms_per_prompt,
+            "model": "AudioLDM 2"
+        }
+
         if output_format == "mp3":
             scipy.io.wavfile.write(audio_path, rate=16000, data=audio[0])
         elif output_format == "ogg":
             scipy.io.wavfile.write(audio_path, rate=16000, data=audio[0])
         else:
             scipy.io.wavfile.write(audio_path, rate=16000, data=audio[0])
+
+        add_metadata_to_audio(audio_path, metadata)
 
         spectrogram_path = generate_mel_spectrogram(audio_path)
 
@@ -6366,12 +6725,23 @@ def generate_bark_audio(text, voice_preset, max_length, fine_temperature, coarse
         audio_filename = f"bark_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
         audio_path = os.path.join(audio_dir, audio_filename)
 
+        metadata = {
+            "text": text,
+            "voice_preset": voice_preset,
+            "max_length": max_length,
+            "fine_temperature": fine_temperature,
+            "coarse_temperature": coarse_temperature,
+            "model": "SunoBark"
+        }
+
         if output_format == "mp3":
             sf.write(audio_path, audio_array, 24000)
         elif output_format == "ogg":
             sf.write(audio_path, audio_array, 24000)
         else:
             sf.write(audio_path, audio_array, 24000)
+
+        add_metadata_to_audio(audio_path, metadata)
 
         spectrogram_path = generate_mel_spectrogram(audio_path)
 
