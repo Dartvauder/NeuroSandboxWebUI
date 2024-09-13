@@ -7419,6 +7419,7 @@ supir_upscale_interface = gr.Interface(
         gr.Slider(minimum=0, maximum=10, value=0, step=0.1, label="SPT Linear S Stage2", visible=True),
         gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True)
     ],
+    additional_inputs_accordion=gr.Accordion(label="Upscale-SUPIR Settings", open=False),
     outputs=[
         gr.Image(type="filepath", label="Upscaled image"),
         gr.Textbox(label="Message", type="text")
