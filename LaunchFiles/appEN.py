@@ -5985,7 +5985,7 @@ def generate_video_zeroscope2(prompt, video_to_enhance, seed, strength, num_infe
             flush()
 
 
-def generate_video_cogvideox(prompt, negative_prompt, seed, cogvideox_version, num_inference_steps, guidance_scale, height, width, num_frames, fps):
+def generate_video_cogvideox(prompt, negative_prompt, cogvideox_version, seed, num_inference_steps, guidance_scale, height, width, num_frames, fps):
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
