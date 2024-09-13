@@ -382,3 +382,4 @@ rfc3986==1.5.0
 segments==2.2.1
 torchlibrosa==0.1.0
 uritemplate==4.1.1
+pytaglib==3.0.0
