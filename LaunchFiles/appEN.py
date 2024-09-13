@@ -754,23 +754,6 @@ def load_multiband_diffusion_model():
     return multiband_diffusion_path
 
 
-def download_supir_models():
-    models_dir = "ThirdPartyRepository/SUPIR/options"
-    os.makedirs(models_dir, exist_ok=True)
-
-    gdrive_url = "https://drive.google.com/uc?id=1ohCIBV_RAej1zuiidHph5qXNuD4GRxO3"
-    gdrive_output = os.path.join(models_dir, "SUPIR-v0Q.ckpt")
-    if not os.path.exists(gdrive_output):
-        gdown.download(gdrive_url, gdrive_output, quiet=False)
-
-    hf_url = "https://huggingface.co/RunDiffusion/Juggernaut-XL-v9/resolve/main/Juggernaut-XL_v9_RunDiffusionPhoto_v2.safetensors"
-    hf_output = os.path.join(models_dir, "Juggernaut-XL_v9_RunDiffusionPhoto_v2.safetensors")
-    if not os.path.exists(hf_output):
-        response = requests.get(hf_url)
-        with open(hf_output, "wb") as f:
-            f.write(response.content)
-
-
 def generate_text_and_speech(input_text, system_prompt, input_audio, input_image, llm_model_name, llm_lora_model_name, enable_web_search, enable_libretranslate, target_lang, enable_multimodal, enable_tts,
                              llm_settings_html, llm_model_type, max_length, max_tokens,
                              temperature, top_p, top_k, chat_history_format, tts_settings_html, speaker_wav, language, tts_temperature, tts_top_p, tts_top_k, tts_speed, output_format):
@@ -2306,8 +2289,6 @@ def generate_image_upscale_supir(input_image, upscale, min_size, edm_steps, s_st
         return None, "Please upload an image to upscale!"
 
     try:
-        download_supir_models()
-
         today = datetime.now().date()
         output_dir = os.path.join('outputs', f"SUPIR_{today.strftime('%Y%m%d')}")
         os.makedirs(output_dir, exist_ok=True)
@@ -2316,8 +2297,8 @@ def generate_image_upscale_supir(input_image, upscale, min_size, edm_steps, s_st
         output_path = os.path.join(output_dir, output_filename)
 
         command = [
-            "python", r"ThirdPartyRepository\SUPIR\test.py",
-            "--img_dir", input_image,
+            sys.executable, r"ThirdPartyRepository\SUPIR\test.py",
+            "--img_dir", os.path.dirname(input_image),
             "--save_dir", output_dir,
             "--upscale", str(upscale),
             "--min_size", str(min_size),
@@ -2334,15 +2315,20 @@ def generate_image_upscale_supir(input_image, upscale, min_size, edm_steps, s_st
 
         if enable_linearly:
             command.extend([
-                "--linear_CFG", str(linear_CFG),
-                "--linear_s_stage2", str(linear_s_stage2),
+                "--linear_CFG",
+                "--linear_s_stage2",
                 "--spt_linear_CFG", str(spt_linear_CFG),
                 "--spt_linear_s_stage2", str(spt_linear_s_stage2)
             ])
 
         subprocess.run(command, check=True)
 
-        return output_path, "Image upscaled successfully using SUPIR!"
+        generated_files = [f for f in os.listdir(output_dir) if f.endswith(f".{output_format}")]
+        if generated_files:
+            latest_file = max(generated_files, key=lambda x: os.path.getctime(os.path.join(output_dir, x)))
+            return os.path.join(output_dir, latest_file), "Image upscaled successfully using SUPIR!"
+        else:
+            return None, "No output image found. SUPIR may have failed to generate an image."
 
     except Exception as e:
         return None, str(e)
