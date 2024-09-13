@@ -10,7 +10,7 @@ A simple and convenient interface for using various neural network models. You c
 
 The goal of the project - to create the easiest possible application to use neural network models
 
-### Text: <img width="1120" alt="1" src="https://github.com/user-attachments/assets/69c489b4-3cb7-49f1-9888-a1484e60face">
+### Text: <img width="1118" alt="1" src="https://github.com/user-attachments/assets/d0947d54-eb8b-4f20-986b-579f9652ff95">
 
 ### Image: <img width="1117" alt="2" src="https://github.com/user-attachments/assets/12af1753-327c-4bc5-b997-22d9c3c8d17d">
 
@@ -50,7 +50,7 @@ The goal of the project - to create the easiest possible application to use neur
 * Support StableFast3D, Shap-E, SV34D and Zero123Plus for 3D generation
 * Support Wav2Lip
 * Support LivePortrait for animate an image
-* Support Multimodal (Moondream 2), LORA and WebSearch (with DuckDuckGo) for LLM
+* Support Multimodal (Moondream 2), PDF-Parsing (OpenParse), TTS (CoquiTTS), STT (Whisper), LORA and WebSearch (with DuckDuckGo) for LLM
 * MetaData-Info viewer for generating image, video and audio
 * Model settings inside the interface
 * Online and offline Wiki
@@ -140,6 +140,7 @@ First of all, I want to thank the developers of [PyCharm](https://www.jetbrains.
 * `audio-separator` - https://github.com/nomadkaraoke/python-audio-separator
 * `pixeloe` - https://github.com/KohakuBlueleaf/PixelOE
 * `k-diffusion` - https://github.com/crowsonkb/k-diffusion
+* `open-parse` - https://github.com/Filimoa/open-parse
 
 ## Third Party Licenses:
 
