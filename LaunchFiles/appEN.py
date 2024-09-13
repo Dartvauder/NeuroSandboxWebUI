@@ -35,7 +35,6 @@ import random
 import tempfile
 import shutil
 from datetime import datetime
-from huggingface_hub import snapshot_download
 from diffusers.utils import load_image, export_to_video, export_to_gif, export_to_ply, pt_to_pil
 from compel import Compel, ReturnedEmbeddingsType
 import trimesh
@@ -46,6 +45,7 @@ import imageio
 from PIL import Image, ImageDraw
 from PIL.PngImagePlugin import PngInfo
 import ffmpeg
+import taglib
 from mutagen import File
 from tqdm import tqdm
 import requests
@@ -68,11 +68,6 @@ import tomesd
 import openparse
 import string
 import hashlib
-from mutagen.mp4 import MP4
-from mutagen.id3 import ID3, TXXX
-from mutagen.mp3 import MP3
-from mutagen.oggvorbis import OggVorbis
-from mutagen.wave import WAVE
 
 
 def lazy_import(module_name, fromlist):
@@ -351,39 +346,36 @@ def decrypt_image(encrypted_image, key):
     return Image.fromarray(decrypted_img)
 
 
-def add_metadata_to_video(video_path, metadata):
-    video = MP4(video_path)
-    video["Video_generation_data"] = json.dumps(metadata)
-    video.save()
+def add_metadata_to_file(file_path, metadata):
+    try:
+        metadata_str = json.dumps(metadata)
+        file_extension = os.path.splitext(file_path)[1].lower()
 
+        if file_extension in ['.png', '.jpeg', '.gif']:
+            img = Image.open(file_path)
+            metadata = PngInfo()
+            metadata.add_text("COMMENT", metadata_str)
+            img.save(file_path, pnginfo=metadata)
+        elif file_extension in ['.mp4', '.avi', '.mov']:
+            input_args = {'-metadata': f'comment={metadata_str}'}
+            (
+                ffmpeg
+                .input(file_path)
+                .output(file_path + '_temp', **input_args)
+                .overwrite_output()
+                .run(quiet=True)
+            )
+            os.replace(file_path + '_temp', file_path)
+        elif file_extension in ['.wav', '.mp3', '.ogg']:
+            with taglib.File(file_path, save_on_exit=True) as audio:
+                audio.tags["COMMENT"] = [metadata_str]
+        else:
+            print(f"Unsupported file type: {file_extension}")
+            return
 
-def add_metadata_to_audio(audio_path, metadata):
-    audio = File(audio_path, easy=True)
-
-    if audio is None:
-        print(f"Unsupported audio format for file: {audio_path}")
-        return
-
-    metadata_str = json.dumps(metadata)
-
-    if isinstance(audio, MP3):
-        audio = ID3(audio_path)
-        audio["TXXX:Audio_generation_data"] = TXXX(encoding=3, desc="Audio_generation_data", text=metadata_str)
-    elif isinstance(audio, OggVorbis):
-        audio["Audio_generation_data"] = metadata_str
-    elif isinstance(audio, WAVE):
-        audio.tags = {"Audio_generation_data": metadata_str}
-    else:
-        audio["Audio_generation_data"] = metadata_str
-
-    audio.save()
-
-
-def add_metadata_to_gif(gif_path, metadata):
-    img = Image.open(gif_path)
-    metadata_str = json.dumps(metadata)
-    img.info["Image_generation_data"] = metadata_str
-    img.save(gif_path, save_all=True, append_images=img.copy(), duration=img.info['duration'], loop=0, comment=metadata_str)
+        print(f"Metadata successfully added to {file_path}")
+    except Exception as e:
+        print(f"Error adding metadata to {file_path}: {str(e)}")
 
 
 def load_settings():
@@ -1747,12 +1739,10 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
                 "textual_inversion": textual_inversion_model_names if textual_inversion_model_names else None
             }
 
-            metadata_str = json.dumps(metadata)
+            image.save(image_path, format=output_format.upper())
 
-            png_info = PngInfo()
-            png_info.add_text("Image_generation_data", metadata_str)
+            add_metadata_to_file(image_path, metadata)
 
-            image.save(image_path, format=output_format.upper(), pnginfo=png_info)
             image_paths.append(image_path)
 
         return image_paths, f"Images generated successfully. Seed used: {seed}"
@@ -3136,7 +3126,7 @@ def generate_image_animatediff(prompt, negative_prompt, input_video, strength, m
         }
 
         export_to_gif(frames, gif_path)
-        add_metadata_to_gif(gif_path, metadata)
+        add_metadata_to_file(gif_path, metadata)
 
         return gif_path, f"GIF generated successfully. Seed used: {seed}"
 
@@ -3466,12 +3456,8 @@ def generate_image_sd3_txt2img(prompt, negative_prompt, seed, lora_model_names, 
                 "clip_skip": clip_skip,
             }
 
-            metadata_str = json.dumps(metadata)
-
-            png_info = PngInfo()
-            png_info.add_text("Image_generation_data", metadata_str)
-
-            images.save(image_path, format=output_format.upper(), pnginfo=png_info)
+            image.save(image_path, format=output_format.upper())
+            add_metadata_to_file(image_path, metadata)
             image_paths.append(image_path)
 
         return image_paths, f"Images generated successfully. Seed used: {seed}"
@@ -3806,12 +3792,8 @@ def generate_image_cascade(prompt, negative_prompt, seed, width, height, prior_s
                 "seed": seed
             }
 
-            metadata_str = json.dumps(metadata)
-
-            png_info = PngInfo()
-            png_info.add_text("Image_generation_data", metadata_str)
-
-            image.save(image_path, format=output_format.upper(), pnginfo=png_info)
+            image.save(image_path, format=output_format.upper())
+            add_metadata_to_file(image_path, metadata)
 
             image_paths.append(image_path)
 
@@ -4236,12 +4218,8 @@ def generate_image_kandinsky_txt2img(prompt, negative_prompt, version, seed, num
             "Kandinsky_version": version
         }
 
-        metadata_str = json.dumps(metadata)
-
-        png_info = PngInfo()
-        png_info.add_text("Image_generation_data", metadata_str)
-
-        image.save(image_path, format=output_format.upper(), pnginfo=png_info)
+        image.save(image_path, format=output_format.upper())
+        add_metadata_to_file(image_path, metadata)
 
         return image_path, f"Image generated successfully. Seed used: {seed}"
 
@@ -4557,12 +4535,8 @@ def generate_image_flux(prompt, model_name, quantize_model_name, enable_quantize
             "seed": seed
         }
 
-        metadata_str = json.dumps(metadata)
-
-        png_info = PngInfo()
-        png_info.add_text("Image_generation_data", metadata_str)
-
-        output.save(image_path, format=output_format.upper(), pnginfo=png_info)
+        output.save(image_path, format=output_format.upper())
+        add_metadata_to_file(image_path, metadata)
 
         return image_path, f"Image generated successfully. Seed used: {seed}"
 
@@ -4626,12 +4600,8 @@ def generate_image_hunyuandit_txt2img(prompt, negative_prompt, seed, num_inferen
             "seed": seed
         }
 
-        metadata_str = json.dumps(metadata)
-
-        png_info = PngInfo()
-        png_info.add_text("Image_generation_data", metadata_str)
-
-        image.save(image_path, format=output_format.upper(), pnginfo=png_info)
+        image.save(image_path, format=output_format.upper())
+        add_metadata_to_file(image_path, metadata)
 
         return image_path, f"Image generated successfully. Seed used: {seed}"
 
@@ -4757,12 +4727,8 @@ def generate_image_lumina(prompt, negative_prompt, seed, num_inference_steps, gu
             "seed": seed
         }
 
-        metadata_str = json.dumps(metadata)
-
-        png_info = PngInfo()
-        png_info.add_text("Image_generation_data", metadata_str)
-
-        image.save(image_path, format=output_format.upper(), pnginfo=png_info)
+        image.save(image_path, format=output_format.upper())
+        add_metadata_to_file(image_path, metadata)
 
         return image_path, f"Image generated successfully. Seed used: {seed}"
 
@@ -4851,12 +4817,8 @@ def generate_image_kolors_txt2img(prompt, negative_prompt, seed, lora_model_name
             "seed": seed
         }
 
-        metadata_str = json.dumps(metadata)
-
-        png_info = PngInfo()
-        png_info.add_text("Image_generation_data", metadata_str)
-
-        image.save(image_path, format=output_format.upper(), pnginfo=png_info)
+        image.save(image_path, format=output_format.upper())
+        add_metadata_to_file(image_path, metadata)
 
         return image_path, f"Image generated successfully. Seed used: {seed}"
 
@@ -5085,12 +5047,8 @@ def generate_image_auraflow(prompt, negative_prompt, seed, lora_model_names, lor
             "seed": seed
         }
 
-        metadata_str = json.dumps(metadata)
-
-        png_info = PngInfo()
-        png_info.add_text("Image_generation_data", metadata_str)
-
-        image.save(image_path, format=output_format.upper(), pnginfo=png_info)
+        image.save(image_path, format=output_format.upper())
+        add_metadata_to_file(image_path, metadata)
 
         return image_path, f"Image generated successfully. Seed used: {seed}"
 
@@ -5177,12 +5135,8 @@ def generate_image_wurstchen(prompt, negative_prompt, seed, width, height, prior
             "seed": seed
         }
 
-        metadata_str = json.dumps(metadata)
-
-        png_info = PngInfo()
-        png_info.add_text("Image_generation_data", metadata_str)
-
-        decoder_output.save(image_path, format=output_format.upper(), pnginfo=png_info)
+        decoder_output.save(image_path, format=output_format.upper())
+        add_metadata_to_file(image_path, metadata)
 
         return image_path, f"Image generated successfully. Seed used: {seed}"
 
@@ -5311,12 +5265,8 @@ def generate_image_deepfloyd_txt2img(prompt, negative_prompt, seed, num_inferenc
             "seed": seed
         }
 
-        metadata_str = json.dumps(metadata)
-
-        png_info = PngInfo()
-        png_info.add_text("Image_generation_data", metadata_str)
-
-        image.save(stage_iii_path, format=output_format.upper(), pnginfo=png_info)
+        image.save(stage_iii_path, format=output_format.upper())
+        add_metadata_to_file(stage_iii_path, metadata)
 
         return stage_i_path, stage_ii_path, stage_iii_path, f"Image generated successfully. Seed used: {seed}"
 
@@ -5673,12 +5623,8 @@ def generate_image_pixart(prompt, negative_prompt, version, seed, num_inference_
             "seed": seed
         }
 
-        metadata_str = json.dumps(metadata)
-
-        png_info = PngInfo()
-        png_info.add_text("Image_generation_data", metadata_str)
-
-        image.save(image_path, format=output_format.upper(), pnginfo=png_info)
+        image.save(image_path, format=output_format.upper())
+        add_metadata_to_file(image_path, metadata)
 
         return image_path, f"Image generated successfully. Seed used: {seed}"
 
@@ -5742,12 +5688,8 @@ def generate_image_playgroundv2(prompt, negative_prompt, seed, height, width, nu
             "seed": seed
         }
 
-        metadata_str = json.dumps(metadata)
-
-        png_info = PngInfo()
-        png_info.add_text("Image_generation_data", metadata_str)
-
-        image.save(image_path, format=output_format.upper(), pnginfo=png_info)
+        image.save(image_path, format=output_format.upper())
+        add_metadata_to_file(image_path, metadata)
 
         return image_path, f"Image generated successfully. Seed used: {seed}"
 
@@ -5904,10 +5846,10 @@ def generate_video_modelscope(prompt, negative_prompt, seed, num_inference_steps
 
         if output_format == "mp4":
             export_to_video(video_frames, video_path)
-            add_metadata_to_video(video_path, metadata)
+            add_metadata_to_file(video_path, metadata)
         else:
             export_to_gif(video_frames, video_path)
-            add_metadata_to_gif(video_path, metadata)
+            add_metadata_to_file(video_path, metadata)
 
         return video_path, f"Video generated successfully. Seed used: {seed}"
 
@@ -6028,7 +5970,7 @@ def generate_video_zeroscope2(prompt, video_to_enhance, seed, strength, num_infe
             }
 
             export_to_video(video_frames, video_path)
-            add_metadata_to_video(video_path, metadata)
+            add_metadata_to_file(video_path, metadata)
 
             return video_path, f"Video generated successfully. Seed used: {seed}"
 
@@ -6099,7 +6041,7 @@ def generate_video_cogvideox(prompt, negative_prompt, seed, cogvideox_version, n
         }
 
         export_to_video(video, video_path, fps=fps)
-        add_metadata_to_video(video_path, metadata)
+        add_metadata_to_file(video_path, metadata)
 
         return video_path, f"Video generated successfully. Seed used: {seed}"
 
@@ -6163,7 +6105,7 @@ def generate_video_latte(prompt, negative_prompt, seed, num_inference_steps, gui
         }
 
         export_to_gif(videos, gif_path)
-        add_metadata_to_gif(gif_path, metadata)
+        add_metadata_to_file(gif_path, metadata)
 
         return gif_path, f"Video generated successfully. Seed used: {seed}"
 
@@ -6443,7 +6385,7 @@ def generate_stableaudio(prompt, negative_prompt, seed, num_inference_steps, gui
         else:
             sf.write(audio_path, output, pipe.vae.sampling_rate)
 
-        add_metadata_to_audio(audio_path, metadata)
+        add_metadata_to_file(audio_path, metadata)
 
         spectrogram_path = generate_mel_spectrogram(audio_path)
 
@@ -6568,7 +6510,7 @@ def generate_audio_audiocraft(prompt, input_audio=None, model_name=None, model_t
         else:
             audio_write(audio_path, wav.cpu(), model.sample_rate, strategy="loudness", loudness_compressor=True)
 
-        add_metadata_to_audio(audio_path, metadata)
+        add_metadata_to_file(audio_path, metadata)
 
         if output_format == "mp3":
             spectrogram_path = generate_mel_spectrogram(audio_path + ".mp3")
@@ -6649,7 +6591,7 @@ def generate_audio_audioldm2(prompt, negative_prompt, model_name, seed, num_infe
         else:
             scipy.io.wavfile.write(audio_path, rate=16000, data=audio[0])
 
-        add_metadata_to_audio(audio_path, metadata)
+        add_metadata_to_file(audio_path, metadata)
 
         spectrogram_path = generate_mel_spectrogram(audio_path)
 
@@ -6716,7 +6658,7 @@ def generate_bark_audio(text, voice_preset, max_length, fine_temperature, coarse
         else:
             sf.write(audio_path, audio_array, 24000)
 
-        add_metadata_to_audio(audio_path, metadata)
+        add_metadata_to_file(audio_path, metadata)
 
         spectrogram_path = generate_mel_spectrogram(audio_path)
 
@@ -7219,24 +7161,32 @@ def display_metadata(file):
     if file is None:
         return "Please upload a file."
 
-    file_extension = os.path.splitext(file.name)[1].lower()
+    try:
+        file_extension = os.path.splitext(file.name)[1].lower()
+        metadata = None
 
-    if file_extension in ['.png', '.gif', '.jpeg']:
-        metadata = get_image_metadata(file.name)
-        metadata_type = "Image_generation_data"
-    elif file_extension in ['.mp4', '.avi', '.mov']:
-        metadata = get_video_metadata(file.name)
-        metadata_type = "Video_generation_data"
-    elif file_extension in ['.wav', '.mp3', '.ogg']:
-        metadata = get_audio_metadata(file.name)
-        metadata_type = "Audio_generation_data"
-    else:
-        return "Unsupported file type."
+        if file_extension in ['.png', '.jpeg', '.gif']:
+            img = Image.open(file.name)
+            metadata_str = img.info.get("COMMENT")
+            if metadata_str:
+                metadata = json.loads(metadata_str)
+        elif file_extension in ['.mp4', '.avi', '.mov']:
+            probe = ffmpeg.probe(file.name)
+            metadata_str = next(s for s in probe['streams'] if s['codec_type'] == 'video').get('tags', {}).get('comment')
+            if metadata_str:
+                metadata = json.loads(metadata_str)
+        elif file_extension in ['.wav', '.mp3', '.ogg']:
+            with taglib.File(file.name) as audio:
+                metadata_str = audio.tags.get("COMMENT")
+                if metadata_str:
+                    metadata = json.loads(metadata_str[0])
 
-    if metadata:
-        return f"{metadata_type}:\n" + json.dumps(metadata, indent=2)
-    else:
-        return f"No {metadata_type} found in the file."
+        if metadata:
+            return f"COMMENT:\n{json.dumps(metadata, indent=2)}"
+        else:
+            return "No COMMENT metadata found in the file."
+    except Exception as e:
+        return f"Error reading metadata: {str(e)}"
 
 
 def get_wiki_content(url, local_file="Wiki.md"):
