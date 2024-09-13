@@ -50,7 +50,7 @@
 
 # Image:
 
-### StableDiffusion - has twenty sub-tabs:
+### StableDiffusion - has twenty one sub-tabs:
 
 #### txt2img:
 
@@ -106,6 +106,13 @@
 2) Select your model
 3) Set up the model according to the parameters you need
 4) Click the `Submit` button to get the upscaled image
+
+#### upscale (SUPIR):
+
+1) Upload the initial image
+2) Set up the model according to the parameters you need
+3) Click the `Submit` button to get the upscaled image
+#### WARNING: You need to download models myself from [Google drive for SUPIR model](https://drive.google.com/file/d/1ohCIBV_RAej1zuiidHph5qXNuD4GRxO3/view?usp=drive_link) and [HuggingFace for best base model](https://huggingface.co/RunDiffusion/Juggernaut-XL-v9/blob/main/Juggernaut-XL_v9_RunDiffusionPhoto_v2.safetensors) and put them along the way: */ThirdPartyRepository/SUPIR/options*
 
 #### refiner (SDXL):
 
