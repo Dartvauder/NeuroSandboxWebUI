@@ -432,11 +432,6 @@ def authenticate(username, password):
     return username == auth.get('username') and password == auth.get('password')
 
 
-def get_hf_token():
-    settings = load_settings()
-    return settings.get('hf_token', '')
-
-
 def perform_web_search(query):
     try:
         query_lower = query.lower()
@@ -6185,18 +6180,12 @@ def generate_3d_stablefast3d(image, texture_resolution, foreground_ratio, remesh
     if not image:
         return None, "Please upload an image!"
 
-    hf_token = get_hf_token()
-    if hf_token is None:
-        return None, "Hugging Face token not found. Please create a file named 'HF-Token.txt' in the root directory and paste your token there."
-
     try:
         today = datetime.now().date()
         output_dir = os.path.join('outputs', f"StableFast3D_{today.strftime('%Y%m%d')}")
         os.makedirs(output_dir, exist_ok=True)
 
         output_path = os.path.join(output_dir, "0", "mesh.glb")
-
-        os.environ["HUGGING_FACE_HUB_TOKEN"] = hf_token
 
         command = f"python ThirdPartyRepository/StableFast3D/run.py \"{image}\" --output-dir {output_dir} --texture-resolution {texture_resolution} --foreground-ratio {foreground_ratio} --remesh_option {remesh_option}"
 
@@ -6208,8 +6197,6 @@ def generate_3d_stablefast3d(image, texture_resolution, foreground_ratio, remesh
         return None, str(e)
 
     finally:
-        if "HUGGING_FACE_HUB_TOKEN" in os.environ:
-            del os.environ["HUGGING_FACE_HUB_TOKEN"]
         flush()
 
 
@@ -6303,12 +6290,8 @@ def generate_sv34d(input_file, version, elevation_deg=None):
 
     if not os.path.exists(model_path):
         print(f"Downloading SV34D {version} model...")
-        hf_token = get_hf_token()
-        if hf_token is None:
-            return None, "Hugging Face token not found. Please create a file named 'HF-Token.txt' in the root directory and paste your token there."
-
         try:
-            response = requests.get(model_files[version], headers={"Authorization": f"Bearer {hf_token}"})
+            response = requests.get(model_files[version])
             response.raise_for_status()
             with open(model_path, 'wb') as f:
                 f.write(response.content)
@@ -6415,18 +6398,8 @@ def generate_stableaudio(prompt, negative_prompt, seed, num_inference_steps, gui
     if not os.path.exists(sa_model_path):
         print("Downloading Stable Audio Open model...")
         os.makedirs(sa_model_path, exist_ok=True)
-
-        hf_token = get_hf_token()
-        if hf_token is None:
-            return None, None, "Hugging Face token not found. Please create a file named 'hftoken.txt' in the root directory and paste your token there."
-
-        try:
-            snapshot_download(repo_id="stabilityai/stable-audio-open-1.0",
-                              local_dir=sa_model_path,
-                              token=hf_token)
-            print("Stable Audio Open model downloaded")
-        except Exception as e:
-            return None, None, f"Error downloading model: {str(e)}"
+        Repo.clone_from("https://huggingface.co/stabilityai/stable-audio-open-1.0", sa_model_path)
+        print("Stable Audio Open model downloaded")
 
     pipe = StableAudioPipeline().StableAudioPipeline.from_pretrained(sa_model_path, torch_dtype=torch.float16)
     pipe = pipe.to(device)
