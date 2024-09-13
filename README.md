@@ -141,6 +141,7 @@ First of all, I want to thank the developers of [PyCharm](https://www.jetbrains.
 * `pixeloe` - https://github.com/KohakuBlueleaf/PixelOE
 * `k-diffusion` - https://github.com/crowsonkb/k-diffusion
 * `open-parse` - https://github.com/Filimoa/open-parse
+* `AudioSR` - https://github.com/haoheliu/versatile_audio_super_resolution/
 
 ## Third Party Licenses:
 
