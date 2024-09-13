@@ -344,6 +344,26 @@ def decrypt_image(encrypted_image, key):
     return Image.fromarray(decrypted_img)
 
 
+def add_noise_to_video(input_path, output_path, noise_level):
+    ffmpeg_command = f"ffmpeg -i {input_path} -vf \"noise=alls={noise_level}:allf=t\" -c:a copy {output_path}"
+    subprocess.run(ffmpeg_command, shell=True, check=True)
+
+
+def remove_noise_from_video(input_path, output_path):
+    ffmpeg_command = f"ffmpeg -i {input_path} -vf \"noise=alls=0:allf=t\" -c:a copy {output_path}"
+    subprocess.run(ffmpeg_command, shell=True, check=True)
+
+
+def add_noise_to_audio(input_path, output_path, noise_level):
+    ffmpeg_command = f"ffmpeg -i {input_path} -af \"anoisesrc=amplitude={noise_level}:duration=0,amix=inputs=2:duration=longest\" {output_path}"
+    subprocess.run(ffmpeg_command, shell=True, check=True)
+
+
+def remove_noise_from_audio(input_path, output_path):
+    ffmpeg_command = f"ffmpeg -i {input_path} -af \"highpass=f=200,lowpass=f=3000\" {output_path}"
+    subprocess.run(ffmpeg_command, shell=True, check=True)
+
+
 def load_settings():
     if not os.path.exists('Settings.json'):
         default_settings = {
@@ -550,6 +570,15 @@ def downscale_video(video_path, scale_factor):
     out.release()
 
     return output_path
+
+
+def downscale_audio(input_path, output_path, downscale_factor):
+    audio = AudioSegment.from_file(input_path)
+    original_sample_rate = audio.frame_rate
+    target_sample_rate = int(original_sample_rate * downscale_factor)
+    downscaled_audio = audio.set_frame_rate(target_sample_rate)
+    downscaled_audio.export(output_path, format="wav")
+    return original_sample_rate, target_sample_rate
 
 
 def change_image_format(input_image, new_format, enable_format_changer):
@@ -6576,11 +6605,11 @@ def generate_image_extras(input_image, remove_background, enable_facerestore, fi
         flush()
 
 
-def generate_video_extras(input_video, enable_downscale, downscale_factor, enable_format_changer, new_format):
+def generate_video_extras(input_video, enable_downscale, downscale_factor, enable_format_changer, new_format, enable_encryption, enable_decryption, noise_level):
     if not input_video:
         return None, "Please upload a video!"
 
-    if not enable_downscale and not enable_format_changer:
+    if not enable_downscale and not enable_format_changer and not enable_encryption and not enable_decryption:
         return None, "Please choose an option to modify the video"
 
     try:
@@ -6594,6 +6623,16 @@ def generate_video_extras(input_video, enable_downscale, downscale_factor, enabl
             if message.startswith("Error"):
                 return None, message
 
+        if enable_encryption:
+            noisy_output_path = os.path.join(os.path.dirname(output_path), f"noisy_{os.path.basename(output_path)}")
+            add_noise_to_video(output_path, noisy_output_path, noise_level)
+            output_path = noisy_output_path
+
+        if enable_decryption:
+            clean_output_path = os.path.join(os.path.dirname(output_path), f"clean_{os.path.basename(output_path)}")
+            remove_noise_from_video(output_path, clean_output_path)
+            output_path = clean_output_path
+
         return output_path, "Video processing completed successfully."
 
     except Exception as e:
@@ -6603,11 +6642,13 @@ def generate_video_extras(input_video, enable_downscale, downscale_factor, enabl
         flush()
 
 
-def generate_audio_extras(input_audio, enable_format_changer, new_format):
+def generate_audio_extras(input_audio, enable_format_changer, new_format, enable_audiosr, enable_downscale, downscale_factor, enable_encryption, enable_decryption, noise_level):
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+
     if not input_audio:
         return None, "Please upload an audio file!"
 
-    if not enable_format_changer:
+    if not enable_format_changer and not enable_audiosr and not enable_encryption and not enable_decryption and not enable_downscale:
         return None, "Please choose an option to modify the audio"
 
     try:
@@ -6617,6 +6658,39 @@ def generate_audio_extras(input_audio, enable_format_changer, new_format):
             output_path, message = change_audio_format(output_path, new_format, enable_format_changer)
             if message.startswith("Error"):
                 return None, message
+
+        if enable_audiosr:
+            today = datetime.now().date()
+            audio_dir = os.path.join('outputs', f"AudioSR_{today.strftime('%Y%m%d')}")
+            os.makedirs(audio_dir, exist_ok=True)
+            output_filename = f"audiosr_{datetime.now().strftime('%Y%m%d_%H%M%S')}.wav"
+            audiosr_output_path = os.path.join(audio_dir, output_filename)
+
+            command = f"audiosr -i {output_path} -s {audiosr_output_path} -d {device}"
+            subprocess.run(command, shell=True, check=True)
+
+            output_path = audiosr_output_path
+
+        if enable_downscale:
+            today = datetime.now().date()
+            audio_dir = os.path.join('outputs', f"AudioDownscale_{today.strftime('%Y%m%d')}")
+            os.makedirs(audio_dir, exist_ok=True)
+            output_filename = f"downscaled_{datetime.now().strftime('%Y%m%d_%H%M%S')}.wav"
+            downscale_output_path = os.path.join(audio_dir, output_filename)
+
+            original_rate, target_rate = downscale_audio(output_path, downscale_output_path, downscale_factor)
+
+            output_path = downscale_output_path
+
+        if enable_encryption:
+            noisy_output_path = os.path.join(os.path.dirname(output_path), f"noisy_{os.path.basename(output_path)}")
+            add_noise_to_audio(output_path, noisy_output_path, noise_level)
+            output_path = noisy_output_path
+
+        if enable_decryption:
+            clean_output_path = os.path.join(os.path.dirname(output_path), f"clean_{os.path.basename(output_path)}")
+            remove_noise_from_audio(output_path, clean_output_path)
+            output_path = clean_output_path
 
         return output_path, "Audio processing completed successfully."
 
@@ -9125,6 +9199,9 @@ video_extras_interface = gr.Interface(
         gr.Slider(minimum=0.1, maximum=1.0, value=0.5, step=0.1, label="DownScale Factor"),
         gr.Checkbox(label="Enable Format Changer", value=False),
         gr.Radio(choices=["mp4", "mkv"], label="New Video Format", value="mp4"),
+        gr.Checkbox(label="Enable Encryption (Add Noise)", value=False),
+        gr.Checkbox(label="Enable Decryption (Remove Noise)", value=False),
+        gr.Slider(minimum=1, maximum=100, value=50, step=1, label="Noise Level")
     ],
     outputs=[
         gr.Video(label="Modified video"),
@@ -9144,6 +9221,12 @@ audio_extras_interface = gr.Interface(
         gr.Audio(label="Audio to modify", type="filepath"),
         gr.Checkbox(label="Enable Format Changer", value=False),
         gr.Radio(choices=["wav", "mp3", "ogg"], label="New Audio Format", value="wav"),
+        gr.Checkbox(label="Enable AudioSR", value=False),
+        gr.Checkbox(label="Enable Downscale", value=False),
+        gr.Slider(minimum=0.1, maximum=1.0, value=0.5, step=0.1, label="Downscale Factor"),
+        gr.Checkbox(label="Enable Encryption (Add Noise)", value=False),
+        gr.Checkbox(label="Enable Decryption (Remove Noise)", value=False),
+        gr.Slider(minimum=0.01, maximum=0.5, value=0.1, step=0.01, label="Noise Level")
     ],
     outputs=[
         gr.Audio(label="Modified audio", type="filepath"),
