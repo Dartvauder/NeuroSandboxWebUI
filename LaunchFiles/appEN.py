@@ -63,6 +63,7 @@ from insightface.app import FaceAnalysis
 from insightface.utils import face_align
 from DeepCache import DeepCacheSDHelper
 import tomesd
+import openparse
 
 
 def lazy_import(module_name, fromlist):
@@ -425,6 +426,15 @@ def perform_web_search(query):
         return error_message
 
 
+def parse_pdf(pdf_path):
+    parser = openparse.DocumentParser()
+    parsed_doc = parser.parse(pdf_path)
+    parsed_content = ""
+    for node in parsed_doc.nodes:
+        parsed_content += str(node) + "\n"
+    return parsed_content
+
+
 def remove_bg(src_img_path, out_img_path):
     model_path = "inputs/image/sd_models/rembg"
     os.makedirs(model_path, exist_ok=True)
@@ -753,7 +763,7 @@ def load_multiband_diffusion_model():
     return multiband_diffusion_path
 
 
-def generate_text_and_speech(input_text, system_prompt, input_audio, input_image, llm_model_name, llm_lora_model_name, enable_web_search, enable_libretranslate, target_lang, enable_multimodal, enable_tts,
+def generate_text_and_speech(input_text, system_prompt, input_audio, llm_model_name, llm_lora_model_name, enable_web_search, enable_libretranslate, target_lang, enable_openparse, pdf_file, enable_multimodal, input_image, enable_tts,
                              llm_settings_html, llm_model_type, max_length, max_tokens,
                              temperature, top_p, top_k, chat_history_format, tts_settings_html, speaker_wav, language, tts_temperature, tts_top_p, tts_top_k, tts_speed, output_format):
     global chat_history, chat_dir, tts_model, whisper_model
@@ -778,6 +788,12 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, input_image
         web_context = f"Web search results: {search_results}\n\n"
     else:
         web_context = ""
+
+    if enable_openparse and pdf_file:
+        parsed_content = parse_pdf(pdf_file.name)
+        openparse_context = f"Parsed PDF content: {parsed_content}\n\n"
+    else:
+        openparse_context = ""
 
     if enable_multimodal and llm_model_name == "moondream2":
         if llm_model_type == "llama":
@@ -921,7 +937,7 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, input_image
 
                 messages = [
                     {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": web_context + context + prompt}
+                    {"role": "user", "content": openparse_context + web_context + context + prompt}
                 ]
 
                 if llm_model_type == "transformers":
@@ -930,7 +946,7 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, input_image
                     tokenizer.pad_token = tokenizer.eos_token
                     tokenizer.padding_side = "left"
 
-                    full_prompt = f"{system_prompt}\n\n{web_context}{context}Human: {prompt}\nAssistant:"
+                    full_prompt = f"{system_prompt}\n\n{openparse_context}{web_context}{context}Human: {prompt}\nAssistant:"
                     inputs = tokenizer(full_prompt, return_tensors="pt", padding=True, truncation=True).to(device)
 
                     text = ""
@@ -969,7 +985,7 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, input_image
                     if not chat_history or chat_history[-1][1] is not None:
                         chat_history.append([prompt, ""])
 
-                    full_prompt = f"{system_prompt}\n\n{web_context}{context}Human: {prompt}\nAssistant:"
+                    full_prompt = f"{system_prompt}\n\n{openparse_context}{web_context}{context}Human: {prompt}\nAssistant:"
 
                     for token in llm_model(
                             full_prompt,
@@ -7000,16 +7016,18 @@ chat_interface = gr.Interface(
         gr.Textbox(label="Enter your request"),
         gr.Textbox(label="Enter your system prompt"),
         gr.Audio(type="filepath", label="Record your request (optional)"),
-        gr.Image(label="Upload your image (optional)", type="filepath"),
-        gr.Dropdown(choices=llm_models_list, label="Select LLM model", value=None),
-        gr.Dropdown(choices=llm_lora_models_list, label="Select LoRA model (optional)", value=None)
+        gr.Dropdown(choices=llm_models_list, label="Select LLM model", value=None)
     ],
     additional_inputs=[
+        gr.Dropdown(choices=llm_lora_models_list, label="Select LoRA model (optional)", value=None),
         gr.Checkbox(label="Enable WebSearch", value=False),
         gr.Checkbox(label="Enable LibreTranslate", value=False),
         gr.Dropdown(choices=["en", "es", "fr", "de", "it", "pt", "pl", "tr", "ru", "nl", "cs", "ar", "zh", "ja", "hi"],
                     label="Select target language", value="ru", interactive=True),
+        gr.Checkbox(label="Enable OpenParse", value=False),
+        gr.File(label="Upload PDF file (for OpenParse)", type="filepath"),
         gr.Checkbox(label="Enable Multimodal", value=False),
+        gr.Image(label="Upload your image (for Multimodal)", type="filepath"),
         gr.Checkbox(label="Enable TTS", value=False),
         gr.HTML("<h3>LLM Settings</h3>"),
         gr.Radio(choices=["transformers", "llama"], label="Select model type", value="transformers"),
