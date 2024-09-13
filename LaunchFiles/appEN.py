@@ -47,7 +47,6 @@ import ffmpeg
 from mutagen import File
 from tqdm import tqdm
 import requests
-import gdown
 import asyncio
 import websockets
 import io
