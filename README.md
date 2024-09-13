@@ -140,6 +140,7 @@ First of all, I want to thank the developers of [PyCharm](https://www.jetbrains.
 * `audio-separator` - https://github.com/nomadkaraoke/python-audio-separator
 * `pixeloe` - https://github.com/KohakuBlueleaf/PixelOE
 * `k-diffusion` - https://github.com/crowsonkb/k-diffusion
+* `open-parse` - https://github.com/Filimoa/open-parse
 
 ## Third Party Licenses:
 
