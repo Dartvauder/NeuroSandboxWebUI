@@ -32,6 +32,8 @@ import json
 import torch
 from einops import rearrange
 import random
+import tempfile
+import shutil
 from datetime import datetime
 from huggingface_hub import snapshot_download
 from diffusers.utils import load_image, export_to_video, export_to_gif, export_to_ply, pt_to_pil
@@ -6875,7 +6877,7 @@ def demucs_separate(audio_file, output_format="wav"):
 
 
 def generate_image_extras(input_image, remove_background, enable_facerestore, fidelity_weight, restore_upscale,
-                          enable_pixeloe, target_size, patch_size, enable_ddcolor, ddcolor_input_size,
+                          enable_pixeloe, mode, target_size, patch_size, thickness, contrast, saturation, enable_ddcolor, ddcolor_input_size,
                           enable_downscale, downscale_factor, enable_format_changer, new_format, enable_encryption, enable_decryption, decryption_key):
     global key
     if not input_image:
@@ -6902,16 +6904,32 @@ def generate_image_extras(input_image, remove_background, enable_facerestore, fi
 
         if enable_pixeloe:
             img = cv2.imread(output_path)
-            img = pixelize().pixelize(img, target_size=target_size, patch_size=patch_size)
+            img = pixelize().pixelize(img, mode=mode, target_size=target_size, patch_size=patch_size, thickness=thickness, contrast=contrast, saturation=saturation)
             pixeloe_output_path = os.path.join(os.path.dirname(output_path), f"pixeloe_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}")
             cv2.imwrite(pixeloe_output_path, img)
             output_path = pixeloe_output_path
 
         if enable_ddcolor:
-            ddcolor_output_path = os.path.join(os.path.dirname(output_path), f"ddcolor_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}")
-            command = f"python ThirdPartyRepository/DDColor/colorization_pipeline_hf.py --model_name ddcolor_modelscope --input {output_path} --output {ddcolor_output_path} --input_size {ddcolor_input_size}"
-            subprocess.run(command, shell=True, check=True)
-            output_path = ddcolor_output_path
+            with tempfile.TemporaryDirectory() as temp_dir:
+                temp_input_path = os.path.join(temp_dir, os.path.basename(output_path))
+                shutil.copy(output_path, temp_input_path)
+
+                temp_output_dir = os.path.join(temp_dir, "output")
+                os.makedirs(temp_output_dir, exist_ok=True)
+
+                ddcolor_output_path = os.path.join(os.path.dirname(output_path),
+                                                   f"ddcolor_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}")
+                command = f"python ThirdPartyRepository/DDColor/colorization_pipeline_hf.py --model_name ddcolor_modelscope --input {temp_input_path} --output {temp_output_dir} --input_size {ddcolor_input_size}"
+                subprocess.run(command, shell=True, check=True)
+
+
+                generated_files = os.listdir(temp_output_dir)
+                if generated_files:
+                    generated_file = generated_files[0]
+                    shutil.copy(os.path.join(temp_output_dir, generated_file), ddcolor_output_path)
+                    output_path = ddcolor_output_path
+                else:
+                    print("No DDcolor images")
 
         if enable_downscale:
             output_path = downscale_image(output_path, downscale_factor)
@@ -9504,10 +9522,14 @@ image_extras_interface = gr.Interface(
         gr.Checkbox(label="Remove BackGround", value=False),
         gr.Checkbox(label="Enable FaceRestore", value=False),
         gr.Slider(minimum=0.01, maximum=1, value=0.5, step=0.01, label="Fidelity weight (For FaceRestore)"),
-        gr.Slider(minimum=0.1, maximum=4, value=2, step=0.1, label="Upscale (For FaceRestore)"),
+        gr.Slider(minimum=0.1, maximum=2, value=2, step=0.1, label="Upscale (For FaceRestore)"),
         gr.Checkbox(label="Enable PixelOE", value=False),
+        gr.Radio(choices=["center", "contrast", "k-centroid", "bicubic", "nearest"], label="PixelOE Mode", value="contrast"),
         gr.Slider(minimum=32, maximum=1024, value=256, step=32, label="Target Size (For PixelOE)"),
         gr.Slider(minimum=1, maximum=48, value=8, step=1, label="Patch Size (For PixelOE)"),
+        gr.Slider(minimum=1, maximum=10, value=1, step=1, label="Thickness (For PixelOE)"),
+        gr.Slider(minimum=1, maximum=10, value=1, step=1, label="contrast (For PixelOE)"),
+        gr.Slider(minimum=1, maximum=10, value=1, step=1, label="saturation (For PixelOE)"),
         gr.Checkbox(label="Enable DDColor", value=False),
         gr.Slider(minimum=256, maximum=1024, value=512, step=64, label="Input Size (For DDColor)"),
         gr.Checkbox(label="Enable DownScale", value=False),
@@ -9618,7 +9640,7 @@ faceswap_interface = gr.Interface(
         gr.Number(label="Reference frame number"),
         gr.Checkbox(label="Enable FaceRestore", value=False),
         gr.Slider(minimum=0.01, maximum=1, value=0.5, step=0.01, label="Fidelity weight"),
-        gr.Slider(minimum=0.1, maximum=4, value=2, step=0.1, label="Upscale")
+        gr.Slider(minimum=0.1, maximum=2, value=2, step=0.1, label="Upscale")
     ],
     additional_inputs_accordion=gr.Accordion(label="FaceSwap (Roop) Settings", open=False),
     outputs=[
