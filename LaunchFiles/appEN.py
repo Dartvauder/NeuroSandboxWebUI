@@ -357,15 +357,8 @@ def add_metadata_to_file(file_path, metadata):
             metadata.add_text("COMMENT", metadata_str)
             img.save(file_path, pnginfo=metadata)
         elif file_extension in ['.mp4', '.avi', '.mov']:
-            input_args = {'-metadata': f'comment={metadata_str}'}
-            (
-                ffmpeg
-                .input(file_path)
-                .output(file_path + '_temp', **input_args)
-                .overwrite_output()
-                .run(quiet=True)
-            )
-            os.replace(file_path + '_temp', file_path)
+            with taglib.File(file_path, save_on_exit=True) as video:
+                video.tags["COMMENT"] = [metadata_str]
         elif file_extension in ['.wav', '.mp3', '.ogg']:
             with taglib.File(file_path, save_on_exit=True) as audio:
                 audio.tags["COMMENT"] = [metadata_str]
@@ -7171,10 +7164,10 @@ def display_metadata(file):
             if metadata_str:
                 metadata = json.loads(metadata_str)
         elif file_extension in ['.mp4', '.avi', '.mov']:
-            probe = ffmpeg.probe(file.name)
-            metadata_str = next(s for s in probe['streams'] if s['codec_type'] == 'video').get('tags', {}).get('comment')
-            if metadata_str:
-                metadata = json.loads(metadata_str)
+            with taglib.File(file.name) as video:
+                metadata_str = video.tags.get("COMMENT")
+                if metadata_str:
+                    metadata = json.loads(metadata_str[0])
         elif file_extension in ['.wav', '.mp3', '.ogg']:
             with taglib.File(file.name) as audio:
                 metadata_str = audio.tags.get("COMMENT")
