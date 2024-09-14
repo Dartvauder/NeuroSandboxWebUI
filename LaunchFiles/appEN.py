@@ -1717,6 +1717,7 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
             image_path = os.path.join(image_dir, image_filename)
 
             metadata = {
+                "tab": "txt2img",
                 "prompt": prompt,
                 "negative_prompt": negative_prompt,
                 "num_inference_steps": stable_diffusion_steps,
@@ -1921,6 +1922,7 @@ def generate_image_img2img(prompt, negative_prompt, init_image,
             image_filename = f"img2img_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{i}.{output_format}"
             image_path = os.path.join(image_dir, image_filename)
             metadata = {
+                "tab": "img2img",
                 "prompt": prompt,
                 "negative_prompt": negative_prompt,
                 "num_inference_steps": stable_diffusion_steps,
