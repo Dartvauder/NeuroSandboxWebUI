@@ -177,6 +177,7 @@ DDIMInverseScheduler = lazy_import('diffusers', 'DDIMInverseScheduler')
 TCDScheduler = lazy_import('diffusers', 'TCDScheduler')
 DDIMScheduler = lazy_import('diffusers', 'DDIMScheduler')
 DDPMScheduler = lazy_import('diffusers', 'DDPMScheduler')
+DPMSolverMultistepInverseScheduler = lazy_import('diffusers', 'DPMSolverMultistepInverseScheduler')
 DEFAULT_STAGE_C_TIMESTEPS = lazy_import('diffusers.pipelines.wuerstchen', 'DEFAULT_STAGE_C_TIMESTEPS')
 
 # Another imports
@@ -1542,6 +1543,9 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
         elif stable_diffusion_scheduler == "DDPMScheduler":
             stable_diffusion_model.scheduler = DDPMScheduler().DDPMScheduler.from_config(
                 stable_diffusion_model.scheduler.config)
+        elif stable_diffusion_scheduler == "DPMSolverMultistepInverseScheduler":
+            stable_diffusion_model.scheduler = DPMSolverMultistepInverseScheduler().DPMSolverMultistepInverseScheduler.from_config(
+                stable_diffusion_model.scheduler.config)
 
         if hasattr(stable_diffusion_model.scheduler, "use_karras_sigmas"):
             stable_diffusion_model.scheduler.use_karras_sigmas = enable_karras_sigmas
@@ -1852,6 +1856,9 @@ def generate_image_img2img(prompt, negative_prompt, init_image,
                 stable_diffusion_model.scheduler.config)
         elif stable_diffusion_scheduler == "DDPMScheduler":
             stable_diffusion_model.scheduler = DDPMScheduler().DDPMScheduler.from_config(
+                stable_diffusion_model.scheduler.config)
+        elif stable_diffusion_scheduler == "DPMSolverMultistepInverseScheduler":
+            stable_diffusion_model.scheduler = DPMSolverMultistepInverseScheduler().DPMSolverMultistepInverseScheduler.from_config(
                 stable_diffusion_model.scheduler.config)
 
         if hasattr(stable_diffusion_model.scheduler, "use_karras_sigmas"):
@@ -7684,7 +7691,7 @@ txt2img_interface = gr.Interface(
             "KDPM2AncestralDiscreteScheduler", "EulerAncestralDiscreteScheduler",
             "HeunDiscreteScheduler", "LMSDiscreteScheduler", "DEISMultistepScheduler",
             "UniPCMultistepScheduler", "LCMScheduler", "DPMSolverSDEScheduler",
-            "DDIMInverseScheduler", "TCDScheduler", "DDIMScheduler", "DDPMScheduler"
+            "DDIMInverseScheduler", "TCDScheduler", "DDIMScheduler", "DDPMScheduler", "DPMSolverMultistepInverseScheduler"
         ], label="Select scheduler", value="EulerDiscreteScheduler"),
         gr.Checkbox(label="Enable Karras Sigmas", value=False),
         gr.Checkbox(label="Enable Thresholding", value=False),
@@ -7748,7 +7755,7 @@ img2img_interface = gr.Interface(
             "KDPM2AncestralDiscreteScheduler", "EulerAncestralDiscreteScheduler",
             "HeunDiscreteScheduler", "LMSDiscreteScheduler", "DEISMultistepScheduler",
             "UniPCMultistepScheduler", "LCMScheduler", "DPMSolverSDEScheduler",
-            "DDIMInverseScheduler", "TCDScheduler", "DDIMScheduler", "DDPMScheduler"
+            "DDIMInverseScheduler", "TCDScheduler", "DDIMScheduler", "DDPMScheduler", "DPMSolverMultistepInverseScheduler"
         ], label="Select scheduler", value="EulerDiscreteScheduler"),
         gr.Checkbox(label="Enable Karras Sigmas", value=False),
         gr.Checkbox(label="Enable Thresholding", value=False),
