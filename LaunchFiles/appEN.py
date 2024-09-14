@@ -44,9 +44,7 @@ import scipy
 import imageio
 from PIL import Image, ImageDraw
 from PIL.PngImagePlugin import PngInfo
-import ffmpeg
 import taglib
-from mutagen import File
 from tqdm import tqdm
 import requests
 import asyncio
@@ -300,6 +298,12 @@ async def send_stop_command():
         logging.error(f"Error in WebSocket client: {e}")
 
 
+async def stop_generation():
+    global stop_signal
+    stop_signal = True
+    await send_stop_command()
+
+
 def process_in_memory_data(data: str) -> str:
     with io.StringIO() as memory_stream:
         memory_stream.write(data)
@@ -307,12 +311,6 @@ def process_in_memory_data(data: str) -> str:
         result = memory_stream.read()
 
     return result
-
-
-async def stop_generation():
-    global stop_signal
-    stop_signal = True
-    await send_stop_command()
 
 
 def flush():
