@@ -7076,7 +7076,7 @@ def display_metadata(file):
         return f"Error reading metadata: {str(e)}"
 
 
-def get_wiki_content(url, local_file="Wiki.md"):
+def get_wiki_content(url, local_file="Wikies/WikiEN.md"):
     try:
         response = requests.get(url)
         if response.status_code == 200:
@@ -9492,7 +9492,7 @@ wiki_interface = gr.Interface(
     fn=get_wiki_content,
     inputs=[
         gr.Textbox(label="Online Wiki", value="https://github.com/Dartvauder/NeuroSandboxWebUI/wiki", interactive=False),
-        gr.Textbox(label="Local Wiki", value="Wiki.md", interactive=False)
+        gr.Textbox(label="Local Wiki", value="Wikies/WikiEN.md", interactive=False)
     ],
     outputs=gr.HTML(label="Wiki Content"),
     title="NeuroSandboxWebUI - Wiki",
