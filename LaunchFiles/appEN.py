@@ -159,8 +159,24 @@ AuraFlowPipeline = lazy_import('diffusers', 'AuraFlowPipeline')
 WuerstchenDecoderPipeline = lazy_import('diffusers', 'WuerstchenDecoderPipeline')
 WuerstchenPriorPipeline = lazy_import('diffusers', 'WuerstchenPriorPipeline')
 StableDiffusionSAGPipeline = lazy_import('diffusers', 'StableDiffusionSAGPipeline')
-DDIMScheduler = lazy_import('diffusers', 'DDIMScheduler')
+DPMSolverSinglestepScheduler = lazy_import('diffusers', 'DPMSolverSinglestepScheduler')
 DPMSolverMultistepScheduler = lazy_import('diffusers', 'DPMSolverMultistepScheduler')
+EDMDPMSolverMultistepScheduler = lazy_import('diffusers', 'EDMDPMSolverMultistepScheduler')
+EDMEulerScheduler = lazy_import('diffusers', 'EDMEulerScheduler')
+KDPM2DiscreteScheduler = lazy_import('diffusers', 'KDPM2DiscreteScheduler')
+KDPM2AncestralDiscreteScheduler = lazy_import('diffusers', 'KDPM2AncestralDiscreteScheduler')
+EulerDiscreteScheduler = lazy_import('diffusers', 'EulerDiscreteScheduler')
+EulerAncestralDiscreteScheduler = lazy_import('diffusers', 'EulerAncestralDiscreteScheduler')
+HeunDiscreteScheduler = lazy_import('diffusers', 'HeunDiscreteScheduler')
+LMSDiscreteScheduler = lazy_import('diffusers', 'LMSDiscreteScheduler')
+DEISMultistepScheduler = lazy_import('diffusers', 'DEISMultistepScheduler')
+UniPCMultistepScheduler = lazy_import('diffusers', 'UniPCMultistepScheduler')
+LCMScheduler = lazy_import('diffusers', 'LCMScheduler')
+DPMSolverSDEScheduler = lazy_import('diffusers', 'DPMSolverSDEScheduler')
+DDIMInverseScheduler = lazy_import('diffusers', 'DDIMInverseScheduler')
+TCDScheduler = lazy_import('diffusers', 'TCDScheduler')
+DDIMScheduler = lazy_import('diffusers', 'DDIMScheduler')
+DDPMScheduler = lazy_import('diffusers', 'DDPMScheduler')
 DEFAULT_STAGE_C_TIMESTEPS = lazy_import('diffusers.pipelines.wuerstchen', 'DEFAULT_STAGE_C_TIMESTEPS')
 
 # Another imports
@@ -1417,7 +1433,7 @@ def translate_text(text, source_lang, target_lang, enable_translate_history, tra
 
 
 def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name, vae_model_name, lora_model_names, lora_scales, textual_inversion_model_names, stable_diffusion_settings_html,
-                           stable_diffusion_model_type, stable_diffusion_sampler, stable_diffusion_steps,
+                           stable_diffusion_model_type, stable_diffusion_scheduler, enable_karras_sigmas, enable_thresholding, solver_order, stable_diffusion_steps,
                            stable_diffusion_cfg, stable_diffusion_width, stable_diffusion_height,
                            stable_diffusion_clip_skip, num_images_per_prompt, seed, enable_freeu, freeu_s1, freeu_s2, freeu_b1, freeu_b2, enable_sag, sag_scale, enable_pag, pag_scale, enable_token_merging, ratio, enable_deepcache, cache_interval, cache_branch_id, output_format):
 
@@ -1470,6 +1486,74 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
     stable_diffusion_model.text_encoder.to(device)
     stable_diffusion_model.vae.to(device)
     stable_diffusion_model.unet.to(device)
+
+    try:
+        if stable_diffusion_scheduler == "EulerDiscreteScheduler":
+            stable_diffusion_model.scheduler = EulerDiscreteScheduler().EulerDiscreteScheduler.from_config(
+                stable_diffusion_model.scheduler.config)
+        elif stable_diffusion_scheduler == "DPMSolverSinglestepScheduler":
+            stable_diffusion_model.scheduler = DPMSolverSinglestepScheduler().DPMSolverSinglestepScheduler.from_config(
+                stable_diffusion_model.scheduler.config)
+        elif stable_diffusion_scheduler == "DPMSolverMultistepScheduler":
+            stable_diffusion_model.scheduler = DPMSolverMultistepScheduler().DPMSolverMultistepScheduler.from_config(
+                stable_diffusion_model.scheduler.config)
+        elif stable_diffusion_scheduler == "EDMDPMSolverMultistepScheduler":
+            stable_diffusion_model.scheduler = EDMDPMSolverMultistepScheduler().EDMDPMSolverMultistepScheduler.from_config(
+                stable_diffusion_model.scheduler.config)
+        elif stable_diffusion_scheduler == "EDMEulerScheduler":
+            stable_diffusion_model.scheduler = EDMEulerScheduler().EDMEulerScheduler.from_config(
+                stable_diffusion_model.scheduler.config)
+        elif stable_diffusion_scheduler == "KDPM2DiscreteScheduler":
+            stable_diffusion_model.scheduler = KDPM2DiscreteScheduler().KDPM2DiscreteScheduler.from_config(
+                stable_diffusion_model.scheduler.config)
+        elif stable_diffusion_scheduler == "KDPM2AncestralDiscreteScheduler":
+            stable_diffusion_model.scheduler = KDPM2AncestralDiscreteScheduler().KDPM2AncestralDiscreteScheduler.from_config(
+                stable_diffusion_model.scheduler.config)
+        elif stable_diffusion_scheduler == "EulerAncestralDiscreteScheduler":
+            stable_diffusion_model.scheduler = EulerAncestralDiscreteScheduler().EulerAncestralDiscreteScheduler.from_config(
+                stable_diffusion_model.scheduler.config)
+        elif stable_diffusion_scheduler == "HeunDiscreteScheduler":
+            stable_diffusion_model.scheduler = HeunDiscreteScheduler().HeunDiscreteScheduler.from_config(
+                stable_diffusion_model.scheduler.config)
+        elif stable_diffusion_scheduler == "LMSDiscreteScheduler":
+            stable_diffusion_model.scheduler = LMSDiscreteScheduler().LMSDiscreteScheduler.from_config(
+                stable_diffusion_model.scheduler.config)
+        elif stable_diffusion_scheduler == "DEISMultistepScheduler":
+            stable_diffusion_model.scheduler = DEISMultistepScheduler().DEISMultistepScheduler.from_config(
+                stable_diffusion_model.scheduler.config)
+        elif stable_diffusion_scheduler == "UniPCMultistepScheduler":
+            stable_diffusion_model.scheduler = UniPCMultistepScheduler().UniPCMultistepScheduler.from_config(
+                stable_diffusion_model.scheduler.config)
+        elif stable_diffusion_scheduler == "LCMScheduler":
+            stable_diffusion_model.scheduler = LCMScheduler().LCMScheduler.from_config(
+                stable_diffusion_model.scheduler.config)
+        elif stable_diffusion_scheduler == "DPMSolverSDEScheduler":
+            stable_diffusion_model.scheduler = DPMSolverSDEScheduler().DPMSolverSDEScheduler.from_config(
+                stable_diffusion_model.scheduler.config)
+        elif stable_diffusion_scheduler == "DDIMInverseScheduler":
+            stable_diffusion_model.scheduler = DDIMInverseScheduler().DDIMInverseScheduler.from_config(
+                stable_diffusion_model.scheduler.config)
+        elif stable_diffusion_scheduler == "TCDScheduler":
+            stable_diffusion_model.scheduler = TCDScheduler().TCDScheduler.from_config(
+                stable_diffusion_model.scheduler.config)
+        elif stable_diffusion_scheduler == "DDIMScheduler":
+            stable_diffusion_model.scheduler = DDIMScheduler().DDIMScheduler.from_config(
+                stable_diffusion_model.scheduler.config)
+        elif stable_diffusion_scheduler == "DDPMScheduler":
+            stable_diffusion_model.scheduler = DDPMScheduler().DDPMScheduler.from_config(
+                stable_diffusion_model.scheduler.config)
+
+        if hasattr(stable_diffusion_model.scheduler, "use_karras_sigmas"):
+            stable_diffusion_model.scheduler.use_karras_sigmas = enable_karras_sigmas
+        if hasattr(stable_diffusion_model.scheduler, "thresholding"):
+            stable_diffusion_model.scheduler.thresholding = enable_thresholding
+        if hasattr(stable_diffusion_model.scheduler, "solver_order"):
+            stable_diffusion_model.scheduler.solver_order = solver_order
+
+        print(f"Scheduler successfully set to {stable_diffusion_scheduler}")
+    except Exception as e:
+        print(f"Error initializing scheduler: {e}")
+        print("Using default scheduler")
 
     stable_diffusion_model.safety_checker = None
 
@@ -1583,7 +1667,7 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
                                             num_inference_steps=stable_diffusion_steps,
                                             guidance_scale=stable_diffusion_cfg, height=stable_diffusion_height,
                                             width=stable_diffusion_width, clip_skip=stable_diffusion_clip_skip,
-                                            sampler=stable_diffusion_sampler, num_images_per_prompt=num_images_per_prompt,
+                                            num_images_per_prompt=num_images_per_prompt,
                                             generator=generator).images
         elif enable_sag:
             images = stable_diffusion_model(
@@ -1621,7 +1705,7 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
                                             num_inference_steps=stable_diffusion_steps,
                                             guidance_scale=stable_diffusion_cfg, height=stable_diffusion_height,
                                             width=stable_diffusion_width, clip_skip=stable_diffusion_clip_skip,
-                                            sampler=stable_diffusion_sampler, num_images_per_prompt=num_images_per_prompt,
+                                            num_images_per_prompt=num_images_per_prompt,
                                             generator=generator).images
 
         image_paths = []
@@ -1640,7 +1724,7 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
                 "height": stable_diffusion_height,
                 "width": stable_diffusion_width,
                 "clip_skip": stable_diffusion_clip_skip,
-                "sampler": stable_diffusion_sampler,
+                "scheduler": stable_diffusion_scheduler,
                 "seed": seed,
                 "Stable_diffusion_model": stable_diffusion_model_name,
                 "Stable_diffusion_model_type": stable_diffusion_model_type,
@@ -1668,7 +1752,7 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
 
 def generate_image_img2img(prompt, negative_prompt, init_image,
                            strength, stable_diffusion_model_type, stable_diffusion_model_name, vae_model_name, seed,
-                           stable_diffusion_sampler, stable_diffusion_steps, stable_diffusion_cfg,
+                           stable_diffusion_scheduler, enable_karras_sigmas, enable_thresholding, solver_order, stable_diffusion_steps, stable_diffusion_cfg,
                            stable_diffusion_clip_skip, num_images_per_prompt, output_format):
 
     if not stable_diffusion_model_name:
@@ -1713,11 +1797,79 @@ def generate_image_img2img(prompt, negative_prompt, init_image,
     stable_diffusion_model.vae.to(device)
     stable_diffusion_model.unet.to(device)
 
+    try:
+        if stable_diffusion_scheduler == "EulerDiscreteScheduler":
+            stable_diffusion_model.scheduler = EulerDiscreteScheduler().EulerDiscreteScheduler.from_config(
+                stable_diffusion_model.scheduler.config)
+        elif stable_diffusion_scheduler == "DPMSolverSinglestepScheduler":
+            stable_diffusion_model.scheduler = DPMSolverSinglestepScheduler().DPMSolverSinglestepScheduler.from_config(
+                stable_diffusion_model.scheduler.config)
+        elif stable_diffusion_scheduler == "DPMSolverMultistepScheduler":
+            stable_diffusion_model.scheduler = DPMSolverMultistepScheduler().DPMSolverMultistepScheduler.from_config(
+                stable_diffusion_model.scheduler.config)
+        elif stable_diffusion_scheduler == "EDMDPMSolverMultistepScheduler":
+            stable_diffusion_model.scheduler = EDMDPMSolverMultistepScheduler().EDMDPMSolverMultistepScheduler.from_config(
+                stable_diffusion_model.scheduler.config)
+        elif stable_diffusion_scheduler == "EDMEulerScheduler":
+            stable_diffusion_model.scheduler = EDMEulerScheduler().EDMEulerScheduler.from_config(
+                stable_diffusion_model.scheduler.config)
+        elif stable_diffusion_scheduler == "KDPM2DiscreteScheduler":
+            stable_diffusion_model.scheduler = KDPM2DiscreteScheduler().KDPM2DiscreteScheduler.from_config(
+                stable_diffusion_model.scheduler.config)
+        elif stable_diffusion_scheduler == "KDPM2AncestralDiscreteScheduler":
+            stable_diffusion_model.scheduler = KDPM2AncestralDiscreteScheduler().KDPM2AncestralDiscreteScheduler.from_config(
+                stable_diffusion_model.scheduler.config)
+        elif stable_diffusion_scheduler == "EulerAncestralDiscreteScheduler":
+            stable_diffusion_model.scheduler = EulerAncestralDiscreteScheduler().EulerAncestralDiscreteScheduler.from_config(
+                stable_diffusion_model.scheduler.config)
+        elif stable_diffusion_scheduler == "HeunDiscreteScheduler":
+            stable_diffusion_model.scheduler = HeunDiscreteScheduler().HeunDiscreteScheduler.from_config(
+                stable_diffusion_model.scheduler.config)
+        elif stable_diffusion_scheduler == "LMSDiscreteScheduler":
+            stable_diffusion_model.scheduler = LMSDiscreteScheduler().LMSDiscreteScheduler.from_config(
+                stable_diffusion_model.scheduler.config)
+        elif stable_diffusion_scheduler == "DEISMultistepScheduler":
+            stable_diffusion_model.scheduler = DEISMultistepScheduler().DEISMultistepScheduler.from_config(
+                stable_diffusion_model.scheduler.config)
+        elif stable_diffusion_scheduler == "UniPCMultistepScheduler":
+            stable_diffusion_model.scheduler = UniPCMultistepScheduler().UniPCMultistepScheduler.from_config(
+                stable_diffusion_model.scheduler.config)
+        elif stable_diffusion_scheduler == "LCMScheduler":
+            stable_diffusion_model.scheduler = LCMScheduler().LCMScheduler.from_config(
+                stable_diffusion_model.scheduler.config)
+        elif stable_diffusion_scheduler == "DPMSolverSDEScheduler":
+            stable_diffusion_model.scheduler = DPMSolverSDEScheduler().DPMSolverSDEScheduler.from_config(
+                stable_diffusion_model.scheduler.config)
+        elif stable_diffusion_scheduler == "DDIMInverseScheduler":
+            stable_diffusion_model.scheduler = DDIMInverseScheduler().DDIMInverseScheduler.from_config(
+                stable_diffusion_model.scheduler.config)
+        elif stable_diffusion_scheduler == "TCDScheduler":
+            stable_diffusion_model.scheduler = TCDScheduler().TCDScheduler.from_config(
+                stable_diffusion_model.scheduler.config)
+        elif stable_diffusion_scheduler == "DDIMScheduler":
+            stable_diffusion_model.scheduler = DDIMScheduler().DDIMScheduler.from_config(
+                stable_diffusion_model.scheduler.config)
+        elif stable_diffusion_scheduler == "DDPMScheduler":
+            stable_diffusion_model.scheduler = DDPMScheduler().DDPMScheduler.from_config(
+                stable_diffusion_model.scheduler.config)
+
+        if hasattr(stable_diffusion_model.scheduler, "use_karras_sigmas"):
+            stable_diffusion_model.scheduler.use_karras_sigmas = enable_karras_sigmas
+        if hasattr(stable_diffusion_model.scheduler, "thresholding"):
+            stable_diffusion_model.scheduler.thresholding = enable_thresholding
+        if hasattr(stable_diffusion_model.scheduler, "solver_order"):
+            stable_diffusion_model.scheduler.solver_order = solver_order
+
+        print(f"Scheduler successfully set to {stable_diffusion_scheduler}")
+    except Exception as e:
+        print(f"Error initializing scheduler: {e}")
+        print("Using default scheduler")
+
+    stable_diffusion_model.safety_checker = None
+
     stable_diffusion_model.enable_vae_slicing()
     stable_diffusion_model.enable_vae_tiling()
     stable_diffusion_model.enable_model_cpu_offload()
-
-    stable_diffusion_model.safety_checker = None
 
     if vae_model_name is not None:
         vae_model_path = os.path.join("inputs", "image", "sd_models", "vae", f"{vae_model_name}.safetensors")
@@ -1749,7 +1901,7 @@ def generate_image_img2img(prompt, negative_prompt, init_image,
             images = stable_diffusion_model(prompt_embeds=prompt_embeds, pooled_prompt_embeds=pooled_prompt_embeds, negative_prompt=negative_prompt,
                                             num_inference_steps=stable_diffusion_steps, generator=generator,
                                             guidance_scale=stable_diffusion_cfg, clip_skip=stable_diffusion_clip_skip,
-                                            sampler=stable_diffusion_sampler, image=init_image, strength=strength, num_images_per_prompt=num_images_per_prompt).images
+                                            image=init_image, strength=strength, num_images_per_prompt=num_images_per_prompt).images
         else:
             compel_proc = Compel(tokenizer=stable_diffusion_model.tokenizer,
                                  text_encoder=stable_diffusion_model.text_encoder)
@@ -1759,7 +1911,7 @@ def generate_image_img2img(prompt, negative_prompt, init_image,
             images = stable_diffusion_model(prompt_embeds=prompt_embeds, negative_prompt_embeds=negative_prompt_embeds,
                                             num_inference_steps=stable_diffusion_steps, generator=generator,
                                             guidance_scale=stable_diffusion_cfg, clip_skip=stable_diffusion_clip_skip,
-                                            sampler=stable_diffusion_sampler, image=init_image, strength=strength, num_images_per_prompt=num_images_per_prompt).images
+                                            image=init_image, strength=strength, num_images_per_prompt=num_images_per_prompt).images
 
         image_paths = []
         for i, image in enumerate(images):
@@ -1768,7 +1920,24 @@ def generate_image_img2img(prompt, negative_prompt, init_image,
             os.makedirs(image_dir, exist_ok=True)
             image_filename = f"img2img_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{i}.{output_format}"
             image_path = os.path.join(image_dir, image_filename)
+            metadata = {
+                "prompt": prompt,
+                "negative_prompt": negative_prompt,
+                "num_inference_steps": stable_diffusion_steps,
+                "guidance_scale": stable_diffusion_cfg,
+                "clip_skip": stable_diffusion_clip_skip,
+                "scheduler": stable_diffusion_scheduler,
+                "strength": strength,
+                "seed": seed,
+                "Stable_diffusion_model": stable_diffusion_model_name,
+                "Stable_diffusion_model_type": stable_diffusion_model_type,
+                "vae": vae_model_name if vae_model_name else None
+            }
+
             image.save(image_path, format=output_format.upper())
+
+            add_metadata_to_file(image_path, metadata)
+
             image_paths.append(image_path)
 
         return image_paths, f"Images generated successfully. Seed used: {seed}"
@@ -7507,8 +7676,17 @@ txt2img_interface = gr.Interface(
         gr.Dropdown(choices=textual_inversion_models_list, label="Select Embedding models (optional)", value=None, multiselect=True),
         gr.HTML("<h3>StableDiffusion Settings</h3>"),
         gr.Radio(choices=["SD", "SD2", "SDXL"], label="Select model type", value="SD"),
-        gr.Dropdown(choices=["euler_ancestral", "euler", "lms", "heun", "dpm", "dpm_solver", "dpm_solver++"],
-                    label="Select sampler", value="euler_ancestral"),
+        gr.Dropdown(choices=[
+            "EulerDiscreteScheduler", "DPMSolverSinglestepScheduler", "DPMSolverMultistepScheduler",
+            "EDMDPMSolverMultistepScheduler", "EDMEulerScheduler", "KDPM2DiscreteScheduler",
+            "KDPM2AncestralDiscreteScheduler", "EulerAncestralDiscreteScheduler",
+            "HeunDiscreteScheduler", "LMSDiscreteScheduler", "DEISMultistepScheduler",
+            "UniPCMultistepScheduler", "LCMScheduler", "DPMSolverSDEScheduler",
+            "DDIMInverseScheduler", "TCDScheduler", "DDIMScheduler", "DDPMScheduler"
+        ], label="Select scheduler", value="EulerDiscreteScheduler"),
+        gr.Checkbox(label="Enable Karras Sigmas", value=False),
+        gr.Checkbox(label="Enable Thresholding", value=False),
+        gr.Slider(minimum=1, maximum=3, value=2, step=1, label="Solver Order"),
         gr.Slider(minimum=1, maximum=100, value=30, step=1, label="Steps"),
         gr.Slider(minimum=1.0, maximum=30.0, value=8, step=0.1, label="CFG"),
         gr.Slider(minimum=256, maximum=2048, value=512, step=64, label="Width"),
@@ -7562,8 +7740,17 @@ img2img_interface = gr.Interface(
         gr.Textbox(label="Seed (optional)", value="")
     ],
     additional_inputs=[
-        gr.Dropdown(choices=["euler_ancestral", "euler", "lms", "heun", "dpm", "dpm_solver", "dpm_solver++"],
-                    label="Select sampler", value="euler_ancestral"),
+        gr.Dropdown(choices=[
+            "EulerDiscreteScheduler", "DPMSolverSinglestepScheduler", "DPMSolverMultistepScheduler",
+            "EDMDPMSolverMultistepScheduler", "EDMEulerScheduler", "KDPM2DiscreteScheduler",
+            "KDPM2AncestralDiscreteScheduler", "EulerAncestralDiscreteScheduler",
+            "HeunDiscreteScheduler", "LMSDiscreteScheduler", "DEISMultistepScheduler",
+            "UniPCMultistepScheduler", "LCMScheduler", "DPMSolverSDEScheduler",
+            "DDIMInverseScheduler", "TCDScheduler", "DDIMScheduler", "DDPMScheduler"
+        ], label="Select scheduler", value="EulerDiscreteScheduler"),
+        gr.Checkbox(label="Enable Karras Sigmas", value=False),
+        gr.Checkbox(label="Enable Thresholding", value=False),
+        gr.Slider(minimum=1, maximum=3, value=2, step=1, label="Solver Order"),
         gr.Slider(minimum=1, maximum=100, value=30, step=1, label="Steps"),
         gr.Slider(minimum=1.0, maximum=30.0, value=8, step=0.1, label="CFG"),
         gr.Slider(minimum=1, maximum=4, value=1, step=1, label="Clip skip"),
