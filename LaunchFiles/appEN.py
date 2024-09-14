@@ -177,6 +177,7 @@ DDIMInverseScheduler = lazy_import('diffusers', 'DDIMInverseScheduler')
 TCDScheduler = lazy_import('diffusers', 'TCDScheduler')
 DDIMScheduler = lazy_import('diffusers', 'DDIMScheduler')
 DDPMScheduler = lazy_import('diffusers', 'DDPMScheduler')
+CosineDPMSolverMultistepScheduler = lazy_import('diffusers', 'CosineDPMSolverMultistepScheduler')
 DPMSolverMultistepInverseScheduler = lazy_import('diffusers', 'DPMSolverMultistepInverseScheduler')
 DEFAULT_STAGE_C_TIMESTEPS = lazy_import('diffusers.pipelines.wuerstchen', 'DEFAULT_STAGE_C_TIMESTEPS')
 
@@ -1531,6 +1532,9 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
         elif stable_diffusion_scheduler == "DPMSolverSDEScheduler":
             stable_diffusion_model.scheduler = DPMSolverSDEScheduler().DPMSolverSDEScheduler.from_config(
                 stable_diffusion_model.scheduler.config)
+        elif stable_diffusion_scheduler == "CosineDPMSolverMultistepScheduler":
+            stable_diffusion_model.scheduler = CosineDPMSolverMultistepScheduler().CosineDPMSolverMultistepScheduler.from_config(
+                stable_diffusion_model.scheduler.config)
         elif stable_diffusion_scheduler == "DDIMInverseScheduler":
             stable_diffusion_model.scheduler = DDIMInverseScheduler().DDIMInverseScheduler.from_config(
                 stable_diffusion_model.scheduler.config)
@@ -1844,6 +1848,9 @@ def generate_image_img2img(prompt, negative_prompt, init_image,
                 stable_diffusion_model.scheduler.config)
         elif stable_diffusion_scheduler == "DPMSolverSDEScheduler":
             stable_diffusion_model.scheduler = DPMSolverSDEScheduler().DPMSolverSDEScheduler.from_config(
+                stable_diffusion_model.scheduler.config)
+        elif stable_diffusion_scheduler == "CosineDPMSolverMultistepScheduler":
+            stable_diffusion_model.scheduler = CosineDPMSolverMultistepScheduler().CosineDPMSolverMultistepScheduler.from_config(
                 stable_diffusion_model.scheduler.config)
         elif stable_diffusion_scheduler == "DDIMInverseScheduler":
             stable_diffusion_model.scheduler = DDIMInverseScheduler().DDIMInverseScheduler.from_config(
@@ -7690,7 +7697,7 @@ txt2img_interface = gr.Interface(
             "EDMDPMSolverMultistepScheduler", "EDMEulerScheduler", "KDPM2DiscreteScheduler",
             "KDPM2AncestralDiscreteScheduler", "EulerAncestralDiscreteScheduler",
             "HeunDiscreteScheduler", "LMSDiscreteScheduler", "DEISMultistepScheduler",
-            "UniPCMultistepScheduler", "LCMScheduler", "DPMSolverSDEScheduler",
+            "UniPCMultistepScheduler", "LCMScheduler", "DPMSolverSDEScheduler", "CosineDPMSolverMultistepScheduler",
             "DDIMInverseScheduler", "TCDScheduler", "DDIMScheduler", "DDPMScheduler", "DPMSolverMultistepInverseScheduler"
         ], label="Select scheduler", value="EulerDiscreteScheduler"),
         gr.Checkbox(label="Enable Karras Sigmas", value=False),
@@ -7754,7 +7761,7 @@ img2img_interface = gr.Interface(
             "EDMDPMSolverMultistepScheduler", "EDMEulerScheduler", "KDPM2DiscreteScheduler",
             "KDPM2AncestralDiscreteScheduler", "EulerAncestralDiscreteScheduler",
             "HeunDiscreteScheduler", "LMSDiscreteScheduler", "DEISMultistepScheduler",
-            "UniPCMultistepScheduler", "LCMScheduler", "DPMSolverSDEScheduler",
+            "UniPCMultistepScheduler", "LCMScheduler", "DPMSolverSDEScheduler", "CosineDPMSolverMultistepScheduler",
             "DDIMInverseScheduler", "TCDScheduler", "DDIMScheduler", "DDPMScheduler", "DPMSolverMultistepInverseScheduler"
         ], label="Select scheduler", value="EulerDiscreteScheduler"),
         gr.Checkbox(label="Enable Karras Sigmas", value=False),
