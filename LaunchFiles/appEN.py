@@ -3136,7 +3136,7 @@ def generate_image_animatediff(prompt, negative_prompt, input_video, strength, m
         flush()
 
 
-def generate_hotshotxl(prompt, negative_prompt, steps, width, height, video_length, video_duration, output_format="gif"):
+def generate_hotshotxl(prompt, negative_prompt, steps, width, height, video_length, video_duration):
 
     hotshotxl_model_path = os.path.join("inputs", "image", "sd_models", "hotshot_xl")
     hotshotxl_base_model_path = os.path.join("inputs", "image", "sd_models", "hotshot_xl_base")
@@ -3154,7 +3154,7 @@ def generate_hotshotxl(prompt, negative_prompt, steps, width, height, video_leng
         print("HotShot-XL base model downloaded")
 
     try:
-        output_filename = f"hotshotxl_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
+        output_filename = f"hotshotxl_{datetime.now().strftime('%Y%m%d_%H%M%S')}.gif"
         output_path = os.path.join('outputs', f"HotshotXL_{datetime.now().strftime('%Y%m%d')}", output_filename)
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
 
@@ -5837,12 +5837,8 @@ def generate_video_modelscope(prompt, negative_prompt, seed, num_inference_steps
             "model": "ModelScope"
         }
 
-        if output_format == "mp4":
-            export_to_video(video_frames, video_path)
-            add_metadata_to_file(video_path, metadata)
-        else:
-            export_to_gif(video_frames, video_path)
-            add_metadata_to_file(video_path, metadata)
+        export_to_video(video_frames, video_path)
+        add_metadata_to_file(video_path, metadata)
 
         return video_path, f"Video generated successfully. Seed used: {seed}"
 
@@ -5855,7 +5851,7 @@ def generate_video_modelscope(prompt, negative_prompt, seed, num_inference_steps
 
 
 def generate_video_zeroscope2(prompt, video_to_enhance, seed, strength, num_inference_steps, width, height, num_frames,
-                              enable_video_enhance):
+                              enable_video_enhance, output_format):
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -5922,9 +5918,22 @@ def generate_video_zeroscope2(prompt, video_to_enhance, seed, strength, num_infe
 
                 processed_frames.append(frame)
 
-            video_filename = f"zeroscope2_{datetime.now().strftime('%Y%m%d_%H%M%S')}.mp4"
+            video_filename = f"zeroscope2_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
             video_path = os.path.join(video_dir, video_filename)
+            metadata = {
+                "prompt": prompt,
+                "seed": seed,
+                "strength": strength if enable_video_enhance else None,
+                "steps": num_inference_steps,
+                "width": width,
+                "height": height,
+                "num_frames": num_frames,
+                "enable_video_enhance": enable_video_enhance if enable_video_enhance else None,
+                "model": "ZeroScope 2"
+            }
+
             export_to_video(video_frames, video_path)
+            add_metadata_to_file(video_path, metadata)
 
             return video_path, f"Video generated successfully. Seed used: {seed}"
 
@@ -5948,7 +5957,7 @@ def generate_video_zeroscope2(prompt, video_to_enhance, seed, strength, num_infe
 
             video_frames = base_pipe(prompt, num_inference_steps=num_inference_steps, width=width, height=height, num_frames=num_frames, generator=generator).frames[0]
 
-            video_filename = f"zeroscope2_{datetime.now().strftime('%Y%m%d_%H%M%S')}.mp4"
+            video_filename = f"zeroscope2_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
             video_path = os.path.join(video_dir, video_filename)
             metadata = {
                 "prompt": prompt,
@@ -5978,7 +5987,7 @@ def generate_video_zeroscope2(prompt, video_to_enhance, seed, strength, num_infe
             flush()
 
 
-def generate_video_cogvideox(prompt, negative_prompt, cogvideox_version, seed, num_inference_steps, guidance_scale, height, width, num_frames, fps):
+def generate_video_cogvideox(prompt, negative_prompt, cogvideox_version, seed, num_inference_steps, guidance_scale, height, width, num_frames, fps, output_format):
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -6018,7 +6027,7 @@ def generate_video_cogvideox(prompt, negative_prompt, cogvideox_version, seed, n
         video_dir = os.path.join('outputs', f"CogVideoX_{today.strftime('%Y%m%d')}")
         os.makedirs(video_dir, exist_ok=True)
 
-        video_filename = f"cogvideox_{datetime.now().strftime('%Y%m%d_%H%M%S')}.mp4"
+        video_filename = f"cogvideox_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
         video_path = os.path.join(video_dir, video_filename)
         metadata = {
             "prompt": prompt,
@@ -8033,8 +8042,7 @@ hotshotxl_interface = gr.Interface(
         gr.Slider(minimum=256, maximum=1024, value=512, step=64, label="Width"),
         gr.Slider(minimum=256, maximum=1024, value=512, step=64, label="Height"),
         gr.Slider(minimum=2, maximum=80, value=8, step=1, label="Video Length (frames)"),
-        gr.Slider(minimum=100, maximum=10000, value=1000, step=1, label="Video Duration (seconds)"),
-        gr.Radio(choices=["gif"], label="Output format", value="gif", interactive=False, visible=False)
+        gr.Slider(minimum=100, maximum=10000, value=1000, step=1, label="Video Duration (seconds)")
     ],
     additional_inputs_accordion=gr.Accordion(label="HotShot-XL Settings", open=False),
     outputs=[
@@ -9032,7 +9040,7 @@ modelscope_interface = gr.Interface(
         gr.Slider(minimum=256, maximum=1024, value=320, step=64, label="Height"),
         gr.Slider(minimum=256, maximum=1024, value=576, step=64, label="Width"),
         gr.Slider(minimum=16, maximum=128, value=64, step=1, label="Number of Frames"),
-        gr.Radio(choices=["mp4", "gif"], label="Select output format", value="mp4", interactive=True)
+        gr.Radio(choices=["mp4", "mov", "avi"], label="Select output format", value="mp4", interactive=True)
     ],
     additional_inputs_accordion=gr.Accordion(label="ModelScope Settings", open=False),
     outputs=[
@@ -9062,7 +9070,8 @@ zeroscope2_interface = gr.Interface(
         gr.Slider(minimum=256, maximum=1280, value=576, step=64, label="Width"),
         gr.Slider(minimum=256, maximum=1280, value=320, step=64, label="Height"),
         gr.Slider(minimum=1, maximum=100, value=36, step=1, label="Frames"),
-        gr.Checkbox(label="Enable Video Enhancement", value=False)
+        gr.Checkbox(label="Enable Video Enhancement", value=False),
+        gr.Radio(choices=["mp4", "mov", "avi"], label="Select output format", value="mp4", interactive=True)
     ],
     additional_inputs_accordion=gr.Accordion(label="ZeroScope 2 Settings", open=False),
     outputs=[
@@ -9093,7 +9102,8 @@ cogvideox_interface = gr.Interface(
         gr.Slider(minimum=256, maximum=1024, value=480, step=64, label="Height"),
         gr.Slider(minimum=256, maximum=1024, value=720, step=64, label="Width"),
         gr.Slider(minimum=1, maximum=100, value=30, step=1, label="Number of Frames"),
-        gr.Slider(minimum=1, maximum=60, value=10, step=1, label="FPS")
+        gr.Slider(minimum=1, maximum=60, value=10, step=1, label="FPS"),
+        gr.Radio(choices=["mp4", "mov", "avi"], label="Select output format", value="mp4", interactive=True)
     ],
     additional_inputs_accordion=gr.Accordion(label="CogVideoX Settings", open=False),
     outputs=[
