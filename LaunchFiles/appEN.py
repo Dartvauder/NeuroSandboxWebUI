@@ -7792,16 +7792,16 @@ supir_upscale_interface = gr.Interface(
     fn=generate_image_upscale_supir,
     inputs=[
         gr.Image(label="Image to upscale", type="filepath"),
-        gr.Slider(minimum=1, maximum=4, value=2, step=1, label="Upscale factor")
+        gr.Slider(minimum=1, maximum=10, value=4, step=1, label="Upscale factor")
     ],
     additional_inputs=[
-        gr.Slider(minimum=512, maximum=2048, value=1024, step=64, label="Minimum size"),
+        gr.Slider(minimum=512, maximum=4096, value=1024, step=64, label="Minimum size"),
         gr.Slider(minimum=1, maximum=100, value=50, step=1, label="EDM steps"),
         gr.Number(label="S Stage1", value=-1),
         gr.Slider(minimum=0, maximum=20, value=5, step=0.1, label="S Churn"),
         gr.Slider(minimum=0, maximum=10, value=1, step=0.1, label="S Noise"),
         gr.Slider(minimum=1, maximum=30, value=7, step=0.1, label="S CFG"),
-        gr.Slider(minimum=0, maximum=10, value=1, step=0.1, label="S Stage2"),
+        gr.Number(label="S Stage2", value=1),
         gr.Textbox(label="Prompt", value=""),
         gr.Textbox(label="Negative Prompt", value=""),
         gr.Radio(choices=['None', 'AdaIn', 'Wavelet'], label="Color Fix Type", value='None'),
