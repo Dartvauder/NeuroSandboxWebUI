@@ -466,3 +466,15 @@
 * RVC models can be taken from [VoiceModels](https://voice-models.com)
 * StableAudio, AudioCraft, AudioLDM 2, TTS, Whisper, MMS, SeamlessM4Tv2, Wav2Lip, LivePortrait, SunoBark, MoonDream2, Upscalers (Latent and Real-ESRGAN), Refiner, GLIGEN, Depth, Pix2Pix, Controlnet, AnimateDiff, HotShot-XL, Videos, LDM3D, SD3, Cascade, T2I-IP-ADAPTER, IP-Adapter-FaceID, Riffusion, Rembg, Roop, CodeFormer, DDColor, PixelOE, Real-ESRGAN, StableFast3D, Shap-E, SV34D, Zero123Plus, UVR, Demucs, Kandinsky, Flux, HunyuanDiT, Lumina-T2X, Kolors, AuraFlow, AuraSR, Würstchen, DeepFloydIF, PixArt, PlaygroundV2.5, ModelScope, ZeroScope 2, CogVideoX, Latte and Multiband diffusion models are downloads automatically in *inputs* folder when are they used 
 * You can take voices anywhere. Record yours or take a recording from the Internet. Or just use those that are already in the project. The main thing is that it is pre-processed!
+
+## Known Bugs:
+
+* SeamlessM4T `both generations` parameter not working with audio
+* FLUX `Enable quantized` and `Quantized models` parameters not working at all
+* RVC, Supir and SV34D not working at all
+
+## Plans for future:
+
+* Interface: Make a `stop` button for Image and Audio tabs, and a `reload` button to update model lists and gallery
+* StableDiffusion: Make generation with preview in real-time every ten steps
+* FLUX: Make a img2img, inpainting, controlnet-union sub-tabs with the appropriate functionality
