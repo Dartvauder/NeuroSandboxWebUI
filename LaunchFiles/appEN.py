@@ -2664,7 +2664,7 @@ def generate_image_upscale_latent(prompt, image_path, upscale_factor, seed, num_
         flush()
 
 
-def generate_image_upscale_supir(input_image, upscale, min_size, edm_steps, s_stage1, s_churn, s_noise, s_cfg, s_stage2, a_prompt, n_prompt, color_fix_type, enable_linearly, linear_CFG, linear_s_stage2, spt_linear_CFG, spt_linear_s_stage2, output_format):
+def generate_image_upscale_supir(input_image, model, upscale, min_size, edm_steps, s_stage1, s_churn, s_noise, s_cfg, s_stage2, a_prompt, n_prompt, color_fix_type, enable_linearly, linear_CFG, linear_s_stage2, spt_linear_CFG, spt_linear_s_stage2, output_format):
     if not input_image:
         return None, "Please upload an image to upscale!"
 
@@ -2680,6 +2680,7 @@ def generate_image_upscale_supir(input_image, upscale, min_size, edm_steps, s_st
             sys.executable, r"ThirdPartyRepository\SUPIR\test.py",
             "--img_dir", os.path.dirname(input_image),
             "--save_dir", output_dir,
+            "--SUPIR_sign", model,
             "--upscale", str(upscale),
             "--min_size", str(min_size),
             "--edm_steps", str(edm_steps),
@@ -8217,6 +8218,7 @@ supir_upscale_interface = gr.Interface(
     fn=generate_image_upscale_supir,
     inputs=[
         gr.Image(label="Image to upscale", type="filepath"),
+        gr.Radio(choices=['Q', 'F'], label="SUPIR model", value='Q'),
         gr.Slider(minimum=1, maximum=10, value=4, step=1, label="Upscale factor")
     ],
     additional_inputs=[
