@@ -58,6 +58,7 @@ from pynvml import nvmlInit, nvmlDeviceGetHandleByIndex, nvmlDeviceGetTemperatur
 from insightface.app import FaceAnalysis
 from insightface.utils import face_align
 from DeepCache import DeepCacheSDHelper
+from tgate import TgateSDLoader, TgateSDXLLoader
 import tomesd
 import openparse
 import string
@@ -1440,7 +1441,7 @@ def translate_text(text, source_lang, target_lang, enable_translate_history, tra
 def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name, vae_model_name, lora_model_names, lora_scales, textual_inversion_model_names, stable_diffusion_settings_html,
                            stable_diffusion_model_type, stable_diffusion_scheduler, stable_diffusion_steps,
                            stable_diffusion_cfg, stable_diffusion_width, stable_diffusion_height,
-                           stable_diffusion_clip_skip, num_images_per_prompt, seed, stop_button, enable_freeu, freeu_s1, freeu_s2, freeu_b1, freeu_b2, enable_sag, sag_scale, enable_pag, pag_scale, enable_token_merging, ratio, enable_deepcache, cache_interval, cache_branch_id, output_format):
+                           stable_diffusion_clip_skip, num_images_per_prompt, seed, stop_button, enable_freeu, freeu_s1, freeu_s2, freeu_b1, freeu_b2, enable_sag, sag_scale, enable_pag, pag_scale, enable_token_merging, ratio, enable_deepcache, cache_interval, cache_branch_id, enable_tgate, gate_step, output_format):
     global stop_signal
     stop_signal = False
     stop_idx = None
@@ -1699,6 +1700,44 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
                 width=stable_diffusion_width,
                 clip_skip=stable_diffusion_clip_skip,
                 pag_scale=pag_scale,
+                num_images_per_prompt=num_images_per_prompt,
+                generator=generator,
+                callback_on_step_end=interrupt_callback
+            ).images
+        elif enable_tgate and stable_diffusion_model_type == "SDXL":
+            stable_diffusion_model = TgateSDXLLoader(
+                stable_diffusion_model,
+                gate_step=gate_step,
+                num_inference_steps=stable_diffusion_steps,
+            ).to(device)
+            images = stable_diffusion_model.tgate(
+                prompt=prompt,
+                negative_prompt=negative_prompt,
+                num_inference_steps=stable_diffusion_steps,
+                gate_step=gate_step,
+                guidance_scale=stable_diffusion_cfg,
+                height=stable_diffusion_height,
+                width=stable_diffusion_width,
+                clip_skip=stable_diffusion_clip_skip,
+                num_images_per_prompt=num_images_per_prompt,
+                generator=generator,
+                callback_on_step_end=interrupt_callback
+            ).images
+        elif enable_tgate and stable_diffusion_model_type == "SD":
+            stable_diffusion_model = TgateSDLoader(
+                stable_diffusion_model,
+                gate_step=gate_step,
+                num_inference_steps=stable_diffusion_steps,
+            ).to(device)
+            images = stable_diffusion_model.tgate(
+                prompt=prompt,
+                negative_prompt=negative_prompt,
+                num_inference_steps=stable_diffusion_steps,
+                gate_step=gate_step,
+                guidance_scale=stable_diffusion_cfg,
+                height=stable_diffusion_height,
+                width=stable_diffusion_width,
+                clip_skip=stable_diffusion_clip_skip,
                 num_images_per_prompt=num_images_per_prompt,
                 generator=generator,
                 callback_on_step_end=interrupt_callback
@@ -7789,6 +7828,8 @@ txt2img_interface = gr.Interface(
         gr.Checkbox(label="Enable DeepCache", value=False),
         gr.Slider(minimum=1, maximum=5, value=3, step=1, label="DeepCache Interval"),
         gr.Slider(minimum=0, maximum=1, value=0, step=1, label="DeepCache BranchID"),
+        gr.Checkbox(label="Enable T-GATE", value=False),
+        gr.Slider(minimum=1, maximum=50, value=10, step=1, label="T-GATE steps"),
         gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True)
     ],
     additional_inputs_accordion=gr.Accordion(label="Additional StableDiffusion Settings", open=False),
