@@ -58,6 +58,7 @@ from pynvml import nvmlInit, nvmlDeviceGetHandleByIndex, nvmlDeviceGetTemperatur
 from insightface.app import FaceAnalysis
 from insightface.utils import face_align
 from DeepCache import DeepCacheSDHelper
+from tgate import TgateSDLoader, TgateSDXLLoader
 import tomesd
 import openparse
 import string
@@ -173,12 +174,9 @@ DEISMultistepScheduler = lazy_import('diffusers', 'DEISMultistepScheduler')
 UniPCMultistepScheduler = lazy_import('diffusers', 'UniPCMultistepScheduler')
 LCMScheduler = lazy_import('diffusers', 'LCMScheduler')
 DPMSolverSDEScheduler = lazy_import('diffusers', 'DPMSolverSDEScheduler')
-DDIMInverseScheduler = lazy_import('diffusers', 'DDIMInverseScheduler')
 TCDScheduler = lazy_import('diffusers', 'TCDScheduler')
 DDIMScheduler = lazy_import('diffusers', 'DDIMScheduler')
 DDPMScheduler = lazy_import('diffusers', 'DDPMScheduler')
-CosineDPMSolverMultistepScheduler = lazy_import('diffusers', 'CosineDPMSolverMultistepScheduler')
-DPMSolverMultistepInverseScheduler = lazy_import('diffusers', 'DPMSolverMultistepInverseScheduler')
 DEFAULT_STAGE_C_TIMESTEPS = lazy_import('diffusers.pipelines.wuerstchen', 'DEFAULT_STAGE_C_TIMESTEPS')
 
 # Another imports
@@ -218,6 +216,7 @@ tts_model = None
 whisper_model = None
 audiocraft_model_path = None
 multiband_diffusion_path = None
+stop_signal = False
 
 
 def print_system_info():
@@ -254,6 +253,11 @@ except Exception as e:
 def flush():
     gc.collect()
     torch.cuda.empty_cache()
+
+
+def stop_generation():
+    global stop_signal
+    stop_signal = True
 
 
 def generate_key(length=16):
@@ -1435,9 +1439,12 @@ def translate_text(text, source_lang, target_lang, enable_translate_history, tra
 
 
 def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name, vae_model_name, lora_model_names, lora_scales, textual_inversion_model_names, stable_diffusion_settings_html,
-                           stable_diffusion_model_type, stable_diffusion_scheduler, enable_karras_sigmas, enable_thresholding, solver_order, stable_diffusion_steps,
+                           stable_diffusion_model_type, stable_diffusion_scheduler, stable_diffusion_steps,
                            stable_diffusion_cfg, stable_diffusion_width, stable_diffusion_height,
-                           stable_diffusion_clip_skip, num_images_per_prompt, seed, enable_freeu, freeu_s1, freeu_s2, freeu_b1, freeu_b2, enable_sag, sag_scale, enable_pag, pag_scale, enable_token_merging, ratio, enable_deepcache, cache_interval, cache_branch_id, output_format):
+                           stable_diffusion_clip_skip, num_images_per_prompt, seed, stop_button, enable_freeu, freeu_s1, freeu_s2, freeu_b1, freeu_b2, enable_sag, sag_scale, enable_pag, pag_scale, enable_token_merging, ratio, enable_deepcache, cache_interval, cache_branch_id, enable_tgate, gate_step, output_format):
+    global stop_signal
+    stop_signal = False
+    stop_idx = None
 
     if not stable_diffusion_model_name:
         return None, "Please, select a StableDiffusion model!"
@@ -1532,12 +1539,6 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
         elif stable_diffusion_scheduler == "DPMSolverSDEScheduler":
             stable_diffusion_model.scheduler = DPMSolverSDEScheduler().DPMSolverSDEScheduler.from_config(
                 stable_diffusion_model.scheduler.config)
-        elif stable_diffusion_scheduler == "CosineDPMSolverMultistepScheduler":
-            stable_diffusion_model.scheduler = CosineDPMSolverMultistepScheduler().CosineDPMSolverMultistepScheduler.from_config(
-                stable_diffusion_model.scheduler.config)
-        elif stable_diffusion_scheduler == "DDIMInverseScheduler":
-            stable_diffusion_model.scheduler = DDIMInverseScheduler().DDIMInverseScheduler.from_config(
-                stable_diffusion_model.scheduler.config)
         elif stable_diffusion_scheduler == "TCDScheduler":
             stable_diffusion_model.scheduler = TCDScheduler().TCDScheduler.from_config(
                 stable_diffusion_model.scheduler.config)
@@ -1547,16 +1548,6 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
         elif stable_diffusion_scheduler == "DDPMScheduler":
             stable_diffusion_model.scheduler = DDPMScheduler().DDPMScheduler.from_config(
                 stable_diffusion_model.scheduler.config)
-        elif stable_diffusion_scheduler == "DPMSolverMultistepInverseScheduler":
-            stable_diffusion_model.scheduler = DPMSolverMultistepInverseScheduler().DPMSolverMultistepInverseScheduler.from_config(
-                stable_diffusion_model.scheduler.config)
-
-        if hasattr(stable_diffusion_model.scheduler, "use_karras_sigmas"):
-            stable_diffusion_model.scheduler.use_karras_sigmas = enable_karras_sigmas
-        if hasattr(stable_diffusion_model.scheduler, "thresholding"):
-            stable_diffusion_model.scheduler.thresholding = enable_thresholding
-        if hasattr(stable_diffusion_model.scheduler, "solver_order"):
-            stable_diffusion_model.scheduler.solver_order = solver_order
 
         print(f"Scheduler successfully set to {stable_diffusion_scheduler}")
     except Exception as e:
@@ -1661,6 +1652,14 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
             helper.set_params(cache_interval=cache_interval, cache_branch_id=cache_branch_id)
             helper.enable()
 
+        def interrupt_callback(stable_diffusion_model, i, t, callback_kwargs):
+            nonlocal stop_idx
+            if stop_signal and stop_idx is None:
+                stop_idx = i
+            if i == stop_idx:
+                stable_diffusion_model._interrupt = True
+            return callback_kwargs
+
         if stable_diffusion_model_type == "SDXL":
             compel = Compel(
                 tokenizer=[stable_diffusion_model.tokenizer, stable_diffusion_model.tokenizer_2],
@@ -1676,7 +1675,7 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
                                             guidance_scale=stable_diffusion_cfg, height=stable_diffusion_height,
                                             width=stable_diffusion_width, clip_skip=stable_diffusion_clip_skip,
                                             num_images_per_prompt=num_images_per_prompt,
-                                            generator=generator).images
+                                            generator=generator, callback_on_step_end=interrupt_callback).images
         elif enable_sag:
             images = stable_diffusion_model(
                 prompt=prompt,
@@ -1688,7 +1687,8 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
                 clip_skip=stable_diffusion_clip_skip,
                 sag_scale=sag_scale,
                 num_images_per_prompt=num_images_per_prompt,
-                generator=generator
+                generator=generator,
+                callback_on_step_end=interrupt_callback
             ).images
         elif enable_pag:
             images = stable_diffusion_model(
@@ -1701,7 +1701,46 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
                 clip_skip=stable_diffusion_clip_skip,
                 pag_scale=pag_scale,
                 num_images_per_prompt=num_images_per_prompt,
-                generator=generator
+                generator=generator,
+                callback_on_step_end=interrupt_callback
+            ).images
+        elif enable_tgate and stable_diffusion_model_type == "SDXL":
+            stable_diffusion_model = TgateSDXLLoader(
+                stable_diffusion_model,
+                gate_step=gate_step,
+                num_inference_steps=stable_diffusion_steps,
+            ).to(device)
+            images = stable_diffusion_model.tgate(
+                prompt=prompt,
+                negative_prompt=negative_prompt,
+                num_inference_steps=stable_diffusion_steps,
+                gate_step=gate_step,
+                guidance_scale=stable_diffusion_cfg,
+                height=stable_diffusion_height,
+                width=stable_diffusion_width,
+                clip_skip=stable_diffusion_clip_skip,
+                num_images_per_prompt=num_images_per_prompt,
+                generator=generator,
+                callback_on_step_end=interrupt_callback
+            ).images
+        elif enable_tgate and stable_diffusion_model_type == "SD":
+            stable_diffusion_model = TgateSDLoader(
+                stable_diffusion_model,
+                gate_step=gate_step,
+                num_inference_steps=stable_diffusion_steps,
+            ).to(device)
+            images = stable_diffusion_model.tgate(
+                prompt=prompt,
+                negative_prompt=negative_prompt,
+                num_inference_steps=stable_diffusion_steps,
+                gate_step=gate_step,
+                guidance_scale=stable_diffusion_cfg,
+                height=stable_diffusion_height,
+                width=stable_diffusion_width,
+                clip_skip=stable_diffusion_clip_skip,
+                num_images_per_prompt=num_images_per_prompt,
+                generator=generator,
+                callback_on_step_end=interrupt_callback
             ).images
         else:
             compel_proc = Compel(tokenizer=stable_diffusion_model.tokenizer,
@@ -1714,7 +1753,7 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
                                             guidance_scale=stable_diffusion_cfg, height=stable_diffusion_height,
                                             width=stable_diffusion_width, clip_skip=stable_diffusion_clip_skip,
                                             num_images_per_prompt=num_images_per_prompt,
-                                            generator=generator).images
+                                            generator=generator, callback_on_step_end=interrupt_callback).images
 
         image_paths = []
         for i, image in enumerate(images):
@@ -1759,10 +1798,13 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
         flush()
 
 
-def generate_image_img2img(prompt, negative_prompt, init_image,
-                           strength, stable_diffusion_model_type, stable_diffusion_model_name, vae_model_name, seed,
-                           stable_diffusion_scheduler, enable_karras_sigmas, enable_thresholding, solver_order, stable_diffusion_steps, stable_diffusion_cfg,
+def generate_image_img2img(prompt, negative_prompt, init_image, strength, stable_diffusion_model_type,
+                           stable_diffusion_model_name, vae_model_name, lora_model_names, lora_scales, textual_inversion_model_names, seed, stop_button,
+                           stable_diffusion_scheduler, stable_diffusion_steps, stable_diffusion_cfg,
                            stable_diffusion_clip_skip, num_images_per_prompt, output_format):
+    global stop_signal
+    stop_signal = False
+    stop_idx = None
 
     if not stable_diffusion_model_name:
         return None, "Please, select a StableDiffusion model!"
@@ -1849,12 +1891,6 @@ def generate_image_img2img(prompt, negative_prompt, init_image,
         elif stable_diffusion_scheduler == "DPMSolverSDEScheduler":
             stable_diffusion_model.scheduler = DPMSolverSDEScheduler().DPMSolverSDEScheduler.from_config(
                 stable_diffusion_model.scheduler.config)
-        elif stable_diffusion_scheduler == "CosineDPMSolverMultistepScheduler":
-            stable_diffusion_model.scheduler = CosineDPMSolverMultistepScheduler().CosineDPMSolverMultistepScheduler.from_config(
-                stable_diffusion_model.scheduler.config)
-        elif stable_diffusion_scheduler == "DDIMInverseScheduler":
-            stable_diffusion_model.scheduler = DDIMInverseScheduler().DDIMInverseScheduler.from_config(
-                stable_diffusion_model.scheduler.config)
         elif stable_diffusion_scheduler == "TCDScheduler":
             stable_diffusion_model.scheduler = TCDScheduler().TCDScheduler.from_config(
                 stable_diffusion_model.scheduler.config)
@@ -1864,16 +1900,6 @@ def generate_image_img2img(prompt, negative_prompt, init_image,
         elif stable_diffusion_scheduler == "DDPMScheduler":
             stable_diffusion_model.scheduler = DDPMScheduler().DDPMScheduler.from_config(
                 stable_diffusion_model.scheduler.config)
-        elif stable_diffusion_scheduler == "DPMSolverMultistepInverseScheduler":
-            stable_diffusion_model.scheduler = DPMSolverMultistepInverseScheduler().DPMSolverMultistepInverseScheduler.from_config(
-                stable_diffusion_model.scheduler.config)
-
-        if hasattr(stable_diffusion_model.scheduler, "use_karras_sigmas"):
-            stable_diffusion_model.scheduler.use_karras_sigmas = enable_karras_sigmas
-        if hasattr(stable_diffusion_model.scheduler, "thresholding"):
-            stable_diffusion_model.scheduler.thresholding = enable_thresholding
-        if hasattr(stable_diffusion_model.scheduler, "solver_order"):
-            stable_diffusion_model.scheduler.solver_order = solver_order
 
         print(f"Scheduler successfully set to {stable_diffusion_scheduler}")
     except Exception as e:
@@ -1894,6 +1920,69 @@ def generate_image_img2img(prompt, negative_prompt, init_image,
                                                  variant="fp16")
             stable_diffusion_model.vae = vae.to(device)
 
+    if isinstance(lora_scales, str):
+        lora_scales = [float(scale.strip()) for scale in lora_scales.split(',') if scale.strip()]
+    elif isinstance(lora_scales, (int, float)):
+        lora_scales = [float(lora_scales)]
+
+    lora_loaded = False
+    if lora_model_names and lora_scales:
+        if len(lora_model_names) != len(lora_scales):
+            print(
+                f"Warning: Number of LoRA models ({len(lora_model_names)}) does not match number of scales ({len(lora_scales)}). Using available scales.")
+
+        for i, lora_model_name in enumerate(lora_model_names):
+            if i < len(lora_scales):
+                lora_scale = lora_scales[i]
+            else:
+                lora_scale = 1.0
+
+            lora_model_path = os.path.join("inputs", "image", "sd_models", "lora", lora_model_name)
+            if os.path.exists(lora_model_path):
+                adapter_name = os.path.splitext(os.path.basename(lora_model_name))[0]
+                try:
+                    stable_diffusion_model.load_lora_weights(lora_model_path, adapter_name=adapter_name)
+                    stable_diffusion_model.fuse_lora(lora_scale=lora_scale)
+                    lora_loaded = True
+                    print(f"Loaded LoRA {lora_model_name} with scale {lora_scale}")
+                except Exception as e:
+                    print(f"Error loading LoRA {lora_model_name}: {str(e)}")
+
+    ti_loaded = False
+    if textual_inversion_model_names:
+        for textual_inversion_model_name in textual_inversion_model_names:
+            textual_inversion_model_path = os.path.join("inputs", "image", "sd_models", "embedding",
+                                                        textual_inversion_model_name)
+            if os.path.exists(textual_inversion_model_path):
+                try:
+                    token = f"<{os.path.splitext(textual_inversion_model_name)[0]}>"
+                    stable_diffusion_model.load_textual_inversion(textual_inversion_model_path, token=token)
+                    ti_loaded = True
+                    print(f"Loaded textual inversion: {token}")
+                except Exception as e:
+                    print(f"Error loading Textual Inversion {textual_inversion_model_name}: {str(e)}")
+
+    def process_prompt_with_ti(input_prompt, textual_inversion_model_names):
+        if not textual_inversion_model_names:
+            return input_prompt
+
+        processed_prompt = input_prompt
+        for ti_name in textual_inversion_model_names:
+            base_name = os.path.splitext(ti_name)[0]
+            token = f"<{base_name}>"
+            if base_name in processed_prompt or token.lower() in processed_prompt or token.upper() in processed_prompt:
+                processed_prompt = processed_prompt.replace(base_name, token)
+                processed_prompt = processed_prompt.replace(token.lower(), token)
+                processed_prompt = processed_prompt.replace(token.upper(), token)
+                print(f"Applied Textual Inversion token: {token}")
+
+        if processed_prompt != input_prompt:
+            print(f"Prompt changed from '{input_prompt}' to '{processed_prompt}'")
+        else:
+            print("No Textual Inversion tokens applied to this prompt")
+
+        return processed_prompt
+
     try:
         if seed == "" or seed is None:
             seed = random.randint(0, 2 ** 32 - 1)
@@ -1904,6 +1993,17 @@ def generate_image_img2img(prompt, negative_prompt, init_image,
         init_image = Image.open(init_image).convert("RGB")
         init_image = stable_diffusion_model.image_processor.preprocess(init_image)
 
+        processed_prompt = process_prompt_with_ti(prompt, textual_inversion_model_names)
+        processed_negative_prompt = process_prompt_with_ti(negative_prompt, textual_inversion_model_names)
+
+        def interrupt_callback(stable_diffusion_model, i, t, callback_kwargs):
+            nonlocal stop_idx
+            if stop_signal and stop_idx is None:
+                stop_idx = i
+            if i == stop_idx:
+                stable_diffusion_model._interrupt = True
+            return callback_kwargs
+
         if stable_diffusion_model_type == "SDXL":
             compel = Compel(
                 tokenizer=[stable_diffusion_model.tokenizer, stable_diffusion_model.tokenizer_2],
@@ -1911,22 +2011,23 @@ def generate_image_img2img(prompt, negative_prompt, init_image,
                 returned_embeddings_type=ReturnedEmbeddingsType.PENULTIMATE_HIDDEN_STATES_NON_NORMALIZED,
                 requires_pooled=[False, True]
             )
-            prompt_embeds, pooled_prompt_embeds = compel(prompt)
+            prompt_embeds, pooled_prompt_embeds = compel(processed_prompt)
+            negative_prompt = processed_negative_prompt
 
             images = stable_diffusion_model(prompt_embeds=prompt_embeds, pooled_prompt_embeds=pooled_prompt_embeds, negative_prompt=negative_prompt,
                                             num_inference_steps=stable_diffusion_steps, generator=generator,
                                             guidance_scale=stable_diffusion_cfg, clip_skip=stable_diffusion_clip_skip,
-                                            image=init_image, strength=strength, num_images_per_prompt=num_images_per_prompt).images
+                                            image=init_image, strength=strength, num_images_per_prompt=num_images_per_prompt, callback_on_step_end=interrupt_callback).images
         else:
             compel_proc = Compel(tokenizer=stable_diffusion_model.tokenizer,
                                  text_encoder=stable_diffusion_model.text_encoder)
-            prompt_embeds = compel_proc(prompt)
-            negative_prompt_embeds = compel_proc(negative_prompt)
+            prompt_embeds = compel_proc(processed_prompt)
+            negative_prompt_embeds = compel_proc(processed_negative_prompt)
 
             images = stable_diffusion_model(prompt_embeds=prompt_embeds, negative_prompt_embeds=negative_prompt_embeds,
                                             num_inference_steps=stable_diffusion_steps, generator=generator,
                                             guidance_scale=stable_diffusion_cfg, clip_skip=stable_diffusion_clip_skip,
-                                            image=init_image, strength=strength, num_images_per_prompt=num_images_per_prompt).images
+                                            image=init_image, strength=strength, num_images_per_prompt=num_images_per_prompt, callback_on_step_end=interrupt_callback).images
 
         image_paths = []
         for i, image in enumerate(images):
@@ -1947,7 +2048,10 @@ def generate_image_img2img(prompt, negative_prompt, init_image,
                 "seed": seed,
                 "Stable_diffusion_model": stable_diffusion_model_name,
                 "Stable_diffusion_model_type": stable_diffusion_model_type,
-                "vae": vae_model_name if vae_model_name else None
+                "vae": vae_model_name if vae_model_name else None,
+                "lora_models": lora_model_names if lora_model_names else None,
+                "lora_scales": lora_scales if lora_model_names else None,
+                "textual_inversion": textual_inversion_model_names if textual_inversion_model_names else None
             }
 
             image.save(image_path, format=output_format.upper())
@@ -5542,7 +5646,7 @@ def generate_image_deepfloyd_inpaint(prompt, negative_prompt, init_image, mask_i
         print("Deepfloyd models downloaded")
 
     try:
-        
+
         stage_1 = IFInpaintingPipeline().IFInpaintingPipeline.from_pretrained(deepfloydI_model_path, variant="fp16", torch_dtype=torch.float16)
         text_encoder = T5EncoderModel().T5EncoderModel.from_pretrained(
             deepfloydI_model_path, subfolder="text_encoder", device_map="auto", load_in_8bit=True, variant="8bit"
@@ -7697,19 +7801,17 @@ txt2img_interface = gr.Interface(
             "EDMDPMSolverMultistepScheduler", "EDMEulerScheduler", "KDPM2DiscreteScheduler",
             "KDPM2AncestralDiscreteScheduler", "EulerAncestralDiscreteScheduler",
             "HeunDiscreteScheduler", "LMSDiscreteScheduler", "DEISMultistepScheduler",
-            "UniPCMultistepScheduler", "LCMScheduler", "DPMSolverSDEScheduler", "CosineDPMSolverMultistepScheduler",
-            "DDIMInverseScheduler", "TCDScheduler", "DDIMScheduler", "DDPMScheduler", "DPMSolverMultistepInverseScheduler"
+            "UniPCMultistepScheduler", "LCMScheduler", "DPMSolverSDEScheduler",
+            "TCDScheduler", "DDIMScheduler", "DDPMScheduler"
         ], label="Select scheduler", value="EulerDiscreteScheduler"),
-        gr.Checkbox(label="Enable Karras Sigmas", value=False),
-        gr.Checkbox(label="Enable Thresholding", value=False),
-        gr.Slider(minimum=1, maximum=3, value=2, step=1, label="Solver Order"),
         gr.Slider(minimum=1, maximum=100, value=30, step=1, label="Steps"),
         gr.Slider(minimum=1.0, maximum=30.0, value=8, step=0.1, label="CFG"),
         gr.Slider(minimum=256, maximum=2048, value=512, step=64, label="Width"),
         gr.Slider(minimum=256, maximum=2048, value=512, step=64, label="Height"),
         gr.Slider(minimum=1, maximum=4, value=1, step=1, label="Clip skip"),
         gr.Slider(minimum=1, maximum=4, value=1, step=1, label="Number of images to generate"),
-        gr.Textbox(label="Seed (optional)", value="")
+        gr.Textbox(label="Seed (optional)", value=""),
+        gr.Button(value="Stop generation", interactive=True, variant="stop")
     ],
      additional_inputs=[
         gr.Checkbox(label="Enable FreeU", value=False),
@@ -7726,6 +7828,8 @@ txt2img_interface = gr.Interface(
         gr.Checkbox(label="Enable DeepCache", value=False),
         gr.Slider(minimum=1, maximum=5, value=3, step=1, label="DeepCache Interval"),
         gr.Slider(minimum=0, maximum=1, value=0, step=1, label="DeepCache BranchID"),
+        gr.Checkbox(label="Enable T-GATE", value=False),
+        gr.Slider(minimum=1, maximum=50, value=10, step=1, label="T-GATE steps"),
         gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True)
     ],
     additional_inputs_accordion=gr.Accordion(label="Additional StableDiffusion Settings", open=False),
@@ -7753,7 +7857,11 @@ img2img_interface = gr.Interface(
         gr.Radio(choices=["SD", "SD2", "SDXL"], label="Select model type", value="SD"),
         gr.Dropdown(choices=stable_diffusion_models_list, label="Select StableDiffusion model", value=None),
         gr.Dropdown(choices=vae_models_list, label="Select VAE model (optional)", value=None),
-        gr.Textbox(label="Seed (optional)", value="")
+        gr.Dropdown(choices=lora_models_list, label="Select LORA models (optional)", value=None, multiselect=True),
+        gr.Textbox(label="LoRA Scales"),
+        gr.Dropdown(choices=textual_inversion_models_list, label="Select Embedding models (optional)", value=None, multiselect=True),
+        gr.Textbox(label="Seed (optional)", value=""),
+        gr.Button(value="Stop generation", interactive=True, variant="stop")
     ],
     additional_inputs=[
         gr.Dropdown(choices=[
@@ -7761,12 +7869,9 @@ img2img_interface = gr.Interface(
             "EDMDPMSolverMultistepScheduler", "EDMEulerScheduler", "KDPM2DiscreteScheduler",
             "KDPM2AncestralDiscreteScheduler", "EulerAncestralDiscreteScheduler",
             "HeunDiscreteScheduler", "LMSDiscreteScheduler", "DEISMultistepScheduler",
-            "UniPCMultistepScheduler", "LCMScheduler", "DPMSolverSDEScheduler", "CosineDPMSolverMultistepScheduler",
-            "DDIMInverseScheduler", "TCDScheduler", "DDIMScheduler", "DDPMScheduler", "DPMSolverMultistepInverseScheduler"
+            "UniPCMultistepScheduler", "LCMScheduler", "DPMSolverSDEScheduler",
+            "TCDScheduler", "DDIMScheduler", "DDPMScheduler"
         ], label="Select scheduler", value="EulerDiscreteScheduler"),
-        gr.Checkbox(label="Enable Karras Sigmas", value=False),
-        gr.Checkbox(label="Enable Thresholding", value=False),
-        gr.Slider(minimum=1, maximum=3, value=2, step=1, label="Solver Order"),
         gr.Slider(minimum=1, maximum=100, value=30, step=1, label="Steps"),
         gr.Slider(minimum=1.0, maximum=30.0, value=8, step=0.1, label="CFG"),
         gr.Slider(minimum=1, maximum=4, value=1, step=1, label="Clip skip"),
@@ -9865,6 +9970,8 @@ with gr.TabbedInterface(
     tab_names=["Text", "Image", "Video", "3D", "Audio", "Extras", "Interface"],
     theme=theme
 ) as app:
+    txt2img_interface.input_components[17].click(stop_generation, [], [], queue=False)
+    img2img_interface.input_components[11].click(stop_generation, [], [], queue=False)
 
     close_button = gr.Button("Close terminal")
     close_button.click(close_terminal, [], [], queue=False)
