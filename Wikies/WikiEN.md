@@ -74,8 +74,10 @@
 5) Upload the initial image with which the generation will take place
 6) Enter your request (+ and - for prompt weighting)
 7) Click the `Submit` button to get the generated image
-#### Optional: You can select your `vae` model to improve the generation method
+#### Optional: You can select your `vae`, `embedding` and `lora` models to improve the generation method
 #### vae = *inputs/image/sd_models/vae*
+#### lora = *inputs/image/sd_models/lora*
+#### embedding = *inputs/image/sd_models/embedding*
 
 #### depth2img:
 
@@ -475,6 +477,6 @@
 
 ## Plans for future:
 
-* Interface: Make a `stop` button for Image and Audio tabs, and a `reload` button to update model lists and gallery
-* StableDiffusion: Make generation with preview in real-time every ten steps
+* Interface: Make a `reload` button to update model lists and gallery
+* StableDiffusion: Make generation with preview in real-time every five-ten steps
 * FLUX: Make a img2img, inpainting, controlnet-union sub-tabs with the appropriate functionality
