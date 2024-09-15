@@ -120,6 +120,7 @@ StableDiffusionLatentUpscalePipeline = lazy_import('diffusers', 'StableDiffusion
 StableDiffusionUpscalePipeline = lazy_import('diffusers', 'StableDiffusionUpscalePipeline')
 StableDiffusionInpaintPipeline = lazy_import('diffusers', 'StableDiffusionInpaintPipeline')
 StableDiffusionGLIGENPipeline = lazy_import('diffusers', 'StableDiffusionGLIGENPipeline')
+StableDiffusionDiffEditPipeline = lazy_import('diffusers', 'StableDiffusionDiffEditPipeline')
 AnimateDiffPipeline = lazy_import('diffusers', 'AnimateDiffPipeline')
 AnimateDiffSDXLPipeline = lazy_import('diffusers', 'AnimateDiffSDXLPipeline')
 AnimateDiffVideoToVideoPipeline = lazy_import('diffusers', 'AnimateDiffVideoToVideoPipeline')
@@ -180,6 +181,7 @@ DPMSolverSDEScheduler = lazy_import('diffusers', 'DPMSolverSDEScheduler')
 TCDScheduler = lazy_import('diffusers', 'TCDScheduler')
 DDIMScheduler = lazy_import('diffusers', 'DDIMScheduler')
 DDPMScheduler = lazy_import('diffusers', 'DDPMScheduler')
+DDIMInverseScheduler = lazy_import('diffusers', 'DDIMInverseScheduler')
 DEFAULT_STAGE_C_TIMESTEPS = lazy_import('diffusers.pipelines.wuerstchen', 'DEFAULT_STAGE_C_TIMESTEPS')
 
 # Another imports
@@ -2662,7 +2664,7 @@ def generate_image_upscale_latent(prompt, image_path, upscale_factor, seed, num_
         flush()
 
 
-def generate_image_upscale_supir(input_image, upscale, min_size, edm_steps, s_stage1, s_churn, s_noise, s_cfg, s_stage2, a_prompt, n_prompt, color_fix_type, enable_linearly, linear_CFG, linear_s_stage2, spt_linear_CFG, spt_linear_s_stage2, output_format):
+def generate_image_upscale_supir(input_image, model, upscale, min_size, edm_steps, s_stage1, s_churn, s_noise, s_cfg, s_stage2, a_prompt, n_prompt, color_fix_type, enable_linearly, linear_CFG, linear_s_stage2, spt_linear_CFG, spt_linear_s_stage2, output_format):
     if not input_image:
         return None, "Please upload an image to upscale!"
 
@@ -2678,6 +2680,7 @@ def generate_image_upscale_supir(input_image, upscale, min_size, edm_steps, s_st
             sys.executable, r"ThirdPartyRepository\SUPIR\test.py",
             "--img_dir", os.path.dirname(input_image),
             "--save_dir", output_dir,
+            "--SUPIR_sign", model,
             "--upscale", str(upscale),
             "--min_size", str(min_size),
             "--edm_steps", str(edm_steps),
@@ -3195,6 +3198,92 @@ def generate_image_gligen(prompt, negative_prompt, gligen_phrases, gligen_boxes,
 
     finally:
         del stable_diffusion_model
+        del pipe
+        flush()
+
+
+def generate_image_diffedit(source_prompt, source_negative_prompt, target_prompt, target_negative_prompt, init_image, seed, num_inference_steps, guidance_scale, output_format):
+    if not init_image:
+        return None, "Please upload an initial image!"
+
+    sd2_1_model_path = os.path.join("inputs", "image", "sd_models", "sd2-1")
+
+    if not os.path.exists(sd2_1_model_path):
+        print("Downloading Stable Diffusion 2.1 model...")
+        os.makedirs(sd2_1_model_path, exist_ok=True)
+        Repo.clone_from("https://huggingface.co/stabilityai/stable-diffusion-2-1", sd2_1_model_path)
+        print("Stable Diffusion 2.1 model downloaded")
+
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+
+    try:
+        pipe = StableDiffusionDiffEditPipeline().StableDiffusionDiffEditPipeline.from_pretrained(
+            sd2_1_model_path,
+            torch_dtype=torch.float16,
+            safety_checker=None,
+            use_safetensors=True,
+        ).to(device)
+        pipe.scheduler = DDIMScheduler().DDIMScheduler.from_config(pipe.scheduler.config)
+        pipe.inverse_scheduler = DDIMInverseScheduler().DDIMInverseScheduler.from_config(pipe.scheduler.config)
+        pipe.enable_model_cpu_offload()
+        pipe.enable_vae_slicing()
+
+        if seed == "" or seed is None:
+            seed = random.randint(0, 2 ** 32 - 1)
+        else:
+            seed = int(seed)
+        generator = torch.Generator(device).manual_seed(seed)
+
+        raw_image = Image.open(init_image).convert("RGB").resize((768, 768))
+
+        compel_proc = Compel(tokenizer=pipe.tokenizer, text_encoder=pipe.text_encoder)
+        source_prompt_embeds = compel_proc(source_prompt)
+        source_negative_prompt_embeds = compel_proc(source_negative_prompt)
+        target_prompt_embeds = compel_proc(target_prompt)
+        target_negative_prompt_embeds = compel_proc(target_negative_prompt)
+
+        mask_image = pipe.generate_mask(
+            image=raw_image,
+            source_prompt=source_prompt,
+            target_prompt=target_prompt,
+        )
+
+        inv_latents = pipe.invert(
+            prompt_embeds=source_prompt_embeds,
+            negative_prompt_embeds=source_negative_prompt_embeds,
+            image=raw_image
+        ).latents
+
+        output_image = pipe(
+            prompt_embeds=target_prompt_embeds,
+            negative_prompt_embeds=target_negative_prompt_embeds,
+            mask_image=mask_image,
+            image_latents=inv_latents,
+            num_inference_steps=num_inference_steps,
+            guidance_scale=guidance_scale,
+            generator=generator,
+        ).images[0]
+
+        mask_image_pil = Image.fromarray((mask_image.squeeze()*255).astype("uint8"), "L").resize((768, 768))
+
+        today = datetime.now().date()
+        image_dir = os.path.join('outputs', f"StableDiffusion_{today.strftime('%Y%m%d')}")
+        os.makedirs(image_dir, exist_ok=True)
+
+        output_filename = f"diffedit_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
+        output_path = os.path.join(image_dir, output_filename)
+        output_image.save(output_path, format=output_format.upper())
+
+        mask_filename = f"diffedit_mask_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
+        mask_path = os.path.join(image_dir, mask_filename)
+        mask_image_pil.save(mask_path, format=output_format.upper())
+
+        return output_path, mask_path, f"Images generated successfully. Seed used: {seed}"
+
+    except Exception as e:
+        return None, None, str(e)
+
+    finally:
         del pipe
         flush()
 
@@ -8129,6 +8218,7 @@ supir_upscale_interface = gr.Interface(
     fn=generate_image_upscale_supir,
     inputs=[
         gr.Image(label="Image to upscale", type="filepath"),
+        gr.Radio(choices=['Q', 'F'], label="SUPIR model", value='Q'),
         gr.Slider(minimum=1, maximum=10, value=4, step=1, label="Upscale factor")
     ],
     additional_inputs=[
@@ -8290,6 +8380,37 @@ gligen_interface = gr.Interface(
     title="NeuroSandboxWebUI - StableDiffusion (gligen)",
     description="This user interface allows you to generate images using Stable Diffusion and insert objects using GLIGEN. "
                 "Select the Stable Diffusion model, customize the generation settings, enter a prompt, GLIGEN phrases, and bounding boxes. "
+                "Try it and see what happens!",
+    allow_flagging="never",
+    clear_btn=None,
+    stop_btn="Stop",
+    submit_btn="Generate"
+)
+
+diffedit_interface = gr.Interface(
+    fn=generate_image_diffedit,
+    inputs=[
+        gr.Textbox(label="Source Prompt"),
+        gr.Textbox(label="Source Negative Prompt", value=""),
+        gr.Textbox(label="Target Prompt"),
+        gr.Textbox(label="Target Negative Prompt", value=""),
+        gr.Image(label="Initial image", type="filepath"),
+        gr.Textbox(label="Seed (optional)", value="")
+    ],
+    additional_inputs=[
+        gr.Slider(minimum=1, maximum=100, value=50, step=1, label="Steps"),
+        gr.Slider(minimum=1.0, maximum=30.0, value=8, step=0.1, label="Guidance Scale"),
+        gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True)
+    ],
+    additional_inputs_accordion=gr.Accordion(label="DiffEdit Settings", open=False),
+    outputs=[
+        gr.Image(type="filepath", label="Generated image"),
+        gr.Image(type="filepath", label="Mask image"),
+        gr.Textbox(label="Message", type="text")
+    ],
+    title="NeuroSandboxWebUI - StableDiffusion (DiffEdit)",
+    description="This user interface allows you to edit images using DiffEdit. "
+                "Upload an image, provide source and target prompts, and customize the generation settings. "
                 "Try it and see what happens!",
     allow_flagging="never",
     clear_btn=None,
@@ -10048,11 +10169,11 @@ with gr.TabbedInterface(
         gr.TabbedInterface(
             [
                 gr.TabbedInterface(
-                    [txt2img_interface, img2img_interface, depth2img_interface, pix2pix_interface, controlnet_interface, latent_upscale_interface, supir_upscale_interface, sdxl_refiner_interface, inpaint_interface, outpaint_interface, gligen_interface, animatediff_interface, hotshotxl_interface, video_interface, ldm3d_interface,
+                    [txt2img_interface, img2img_interface, depth2img_interface, pix2pix_interface, controlnet_interface, latent_upscale_interface, supir_upscale_interface, sdxl_refiner_interface, inpaint_interface, outpaint_interface, gligen_interface, diffedit_interface, animatediff_interface, hotshotxl_interface, video_interface, ldm3d_interface,
                      gr.TabbedInterface([sd3_txt2img_interface, sd3_img2img_interface, sd3_controlnet_interface, sd3_inpaint_interface],
                                         tab_names=["txt2img", "img2img", "controlnet", "inpaint"]),
                      cascade_interface, t2i_ip_adapter_interface, ip_adapter_faceid_interface, riffusion_interface],
-                    tab_names=["txt2img", "img2img", "depth2img", "pix2pix", "controlnet", "upscale(latent)", "upscale(SUPIR)", "refiner", "inpaint", "outpaint", "gligen", "animatediff", "hotshotxl", "video", "ldm3d", "sd3", "cascade", "t2i-ip-adapter", "ip-adapter-faceid", "riffusion"]
+                    tab_names=["txt2img", "img2img", "depth2img", "pix2pix", "controlnet", "upscale(latent)", "upscale(SUPIR)", "refiner", "inpaint", "outpaint", "gligen", "diffedit", "animatediff", "hotshotxl", "video", "ldm3d", "sd3", "cascade", "t2i-ip-adapter", "ip-adapter-faceid", "riffusion"]
                 ),
                 kandinsky_interface, flux_interface, hunyuandit_interface, lumina_interface, kolors_interface, auraflow_interface, wurstchen_interface, deepfloyd_if_interface, pixart_interface, playgroundv2_interface
             ],
