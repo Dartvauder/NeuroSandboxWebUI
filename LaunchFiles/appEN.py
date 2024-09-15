@@ -1652,12 +1652,36 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
             helper.set_params(cache_interval=cache_interval, cache_branch_id=cache_branch_id)
             helper.enable()
 
-        def interrupt_callback(stable_diffusion_model, i, t, callback_kwargs):
+        def latents_to_rgb(latents):
+            weights = (
+                (60, -60, 25, -70),
+                (60, -5, 15, -50),
+                (60, 10, -5, -35)
+            )
+
+            weights_tensor = torch.t(torch.tensor(weights, dtype=latents.dtype).to(latents.device))
+            biases_tensor = torch.tensor((150, 140, 130), dtype=latents.dtype).to(latents.device)
+            rgb_tensor = torch.einsum("...lxy,lr -> ...rxy", latents, weights_tensor) + biases_tensor.unsqueeze(
+                -1).unsqueeze(-1)
+            image_array = rgb_tensor.clamp(0, 255)[0].byte().cpu().numpy()
+            image_array = image_array.transpose(1, 2, 0)
+
+            return Image.fromarray(image_array)
+
+        def decode_tensors(stable_diffusion_model, i, t, callback_kwargs):
+            latents = callback_kwargs["latents"]
+            image = latents_to_rgb(latents)
+            image.save(f"temp/{i}.png")
+            return callback_kwargs
+
+        def combined_callback(stable_diffusion_model, i, t, callback_kwargs):
             nonlocal stop_idx
             if stop_signal and stop_idx is None:
                 stop_idx = i
             if i == stop_idx:
                 stable_diffusion_model._interrupt = True
+            callback_kwargs = decode_tensors(stable_diffusion_model, i, t, callback_kwargs)
+
             return callback_kwargs
 
         if stable_diffusion_model_type == "SDXL":
@@ -1675,7 +1699,7 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
                                             guidance_scale=stable_diffusion_cfg, height=stable_diffusion_height,
                                             width=stable_diffusion_width, clip_skip=stable_diffusion_clip_skip,
                                             num_images_per_prompt=num_images_per_prompt,
-                                            generator=generator, callback_on_step_end=interrupt_callback).images
+                                            generator=generator, callback_on_step_end=combined_callback, callback_on_step_end_tensor_inputs=["latents"]).images
         elif enable_sag:
             images = stable_diffusion_model(
                 prompt=prompt,
@@ -1688,7 +1712,8 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
                 sag_scale=sag_scale,
                 num_images_per_prompt=num_images_per_prompt,
                 generator=generator,
-                callback_on_step_end=interrupt_callback
+                callback_on_step_end=combined_callback,
+                callback_on_step_end_tensor_inputs=["latents"]
             ).images
         elif enable_pag:
             images = stable_diffusion_model(
@@ -1702,7 +1727,8 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
                 pag_scale=pag_scale,
                 num_images_per_prompt=num_images_per_prompt,
                 generator=generator,
-                callback_on_step_end=interrupt_callback
+                callback_on_step_end=combined_callback,
+                callback_on_step_end_tensor_inputs=["latents"]
             ).images
         elif enable_tgate and stable_diffusion_model_type == "SDXL":
             stable_diffusion_model = TgateSDXLLoader(
@@ -1721,7 +1747,8 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
                 clip_skip=stable_diffusion_clip_skip,
                 num_images_per_prompt=num_images_per_prompt,
                 generator=generator,
-                callback_on_step_end=interrupt_callback
+                callback_on_step_end=combined_callback,
+                callback_on_step_end_tensor_inputs=["latents"]
             ).images
         elif enable_tgate and stable_diffusion_model_type == "SD":
             stable_diffusion_model = TgateSDLoader(
@@ -1740,7 +1767,8 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
                 clip_skip=stable_diffusion_clip_skip,
                 num_images_per_prompt=num_images_per_prompt,
                 generator=generator,
-                callback_on_step_end=interrupt_callback
+                callback_on_step_end=combined_callback,
+                callback_on_step_end_tensor_inputs=["latents"]
             ).images
         else:
             compel_proc = Compel(tokenizer=stable_diffusion_model.tokenizer,
@@ -1753,7 +1781,7 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
                                             guidance_scale=stable_diffusion_cfg, height=stable_diffusion_height,
                                             width=stable_diffusion_width, clip_skip=stable_diffusion_clip_skip,
                                             num_images_per_prompt=num_images_per_prompt,
-                                            generator=generator, callback_on_step_end=interrupt_callback).images
+                                            generator=generator, callback_on_step_end=combined_callback, callback_on_step_end_tensor_inputs=["latents"]).images
 
         image_paths = []
         for i, image in enumerate(images):
@@ -1996,12 +2024,36 @@ def generate_image_img2img(prompt, negative_prompt, init_image, strength, stable
         processed_prompt = process_prompt_with_ti(prompt, textual_inversion_model_names)
         processed_negative_prompt = process_prompt_with_ti(negative_prompt, textual_inversion_model_names)
 
-        def interrupt_callback(stable_diffusion_model, i, t, callback_kwargs):
+        def latents_to_rgb(latents):
+            weights = (
+                (60, -60, 25, -70),
+                (60, -5, 15, -50),
+                (60, 10, -5, -35)
+            )
+
+            weights_tensor = torch.t(torch.tensor(weights, dtype=latents.dtype).to(latents.device))
+            biases_tensor = torch.tensor((150, 140, 130), dtype=latents.dtype).to(latents.device)
+            rgb_tensor = torch.einsum("...lxy,lr -> ...rxy", latents, weights_tensor) + biases_tensor.unsqueeze(
+                -1).unsqueeze(-1)
+            image_array = rgb_tensor.clamp(0, 255)[0].byte().cpu().numpy()
+            image_array = image_array.transpose(1, 2, 0)
+
+            return Image.fromarray(image_array)
+
+        def decode_tensors(stable_diffusion_model, i, t, callback_kwargs):
+            latents = callback_kwargs["latents"]
+            image = latents_to_rgb(latents)
+            image.save(f"temp/{i}.png")
+            return callback_kwargs
+
+        def combined_callback(stable_diffusion_model, i, t, callback_kwargs):
             nonlocal stop_idx
             if stop_signal and stop_idx is None:
                 stop_idx = i
             if i == stop_idx:
                 stable_diffusion_model._interrupt = True
+            callback_kwargs = decode_tensors(stable_diffusion_model, i, t, callback_kwargs)
+
             return callback_kwargs
 
         if stable_diffusion_model_type == "SDXL":
@@ -2017,7 +2069,8 @@ def generate_image_img2img(prompt, negative_prompt, init_image, strength, stable
             images = stable_diffusion_model(prompt_embeds=prompt_embeds, pooled_prompt_embeds=pooled_prompt_embeds, negative_prompt=negative_prompt,
                                             num_inference_steps=stable_diffusion_steps, generator=generator,
                                             guidance_scale=stable_diffusion_cfg, clip_skip=stable_diffusion_clip_skip,
-                                            image=init_image, strength=strength, num_images_per_prompt=num_images_per_prompt, callback_on_step_end=interrupt_callback).images
+                                            image=init_image, strength=strength, num_images_per_prompt=num_images_per_prompt,
+                                            callback_on_step_end=combined_callback, callback_on_step_end_tensor_inputs=["latents"]).images
         else:
             compel_proc = Compel(tokenizer=stable_diffusion_model.tokenizer,
                                  text_encoder=stable_diffusion_model.text_encoder)
@@ -2027,7 +2080,8 @@ def generate_image_img2img(prompt, negative_prompt, init_image, strength, stable
             images = stable_diffusion_model(prompt_embeds=prompt_embeds, negative_prompt_embeds=negative_prompt_embeds,
                                             num_inference_steps=stable_diffusion_steps, generator=generator,
                                             guidance_scale=stable_diffusion_cfg, clip_skip=stable_diffusion_clip_skip,
-                                            image=init_image, strength=strength, num_images_per_prompt=num_images_per_prompt, callback_on_step_end=interrupt_callback).images
+                                            image=init_image, strength=strength, num_images_per_prompt=num_images_per_prompt,
+                                            callback_on_step_end=combined_callback, callback_on_step_end_tensor_inputs=["latents"]).images
 
         image_paths = []
         for i, image in enumerate(images):
