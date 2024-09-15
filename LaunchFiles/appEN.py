@@ -231,7 +231,7 @@ def print_system_info():
     print(f"Machine: {platform.machine()}")
     print(f"Processor: {platform.processor()}")
     print(f"CPU cores: {os.cpu_count()}")
-    print(f"Memory: {psutil.virtual_memory().total / (1024 ** 3):.2f} GB")
+    print(f"RAM: {psutil.virtual_memory().total / (1024 ** 3):.2f} GB")
     print(f"Disk space: {psutil.disk_usage('/').total / (1024 ** 3):.2f} GB")
 
     if torch.cuda.is_available():
