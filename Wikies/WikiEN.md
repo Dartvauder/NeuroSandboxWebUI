@@ -478,5 +478,4 @@
 ## Plans for future:
 
 * Interface: Make a `reload` button to update model lists and gallery
-* StableDiffusion: Make generation with preview in real-time every five-ten steps
 * FLUX: Make a img2img, inpainting, controlnet-union sub-tabs with the appropriate functionality
