@@ -50,7 +50,7 @@
 
 # Image:
 
-### StableDiffusion - has twenty one sub-tabs:
+### StableDiffusion - has twenty two sub-tabs:
 
 #### txt2img:
 
@@ -153,6 +153,12 @@
 5) Enter your request for prompt (+ and - for prompt weighting) and GLIGEN phrases (in "" for box)
 6) Enter GLIGEN boxes (Like a [0.1387, 0.2051, 0.4277, 0.7090] for box)
 7) Click the `Submit` button to get the generated image
+
+#### diffedit:
+
+1) Enter your Source Prompt and Source Negative Prompt for image masking (+ and - for prompt weighting)
+2) Enter your Target Prompt and Target Negative Prompt for image diffediting (+ and - for prompt weighting)
+3) Click the `Submit` button to get the generated image
 
 #### animatediff:
 
