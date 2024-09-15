@@ -12,7 +12,7 @@ The goal of the project - to create the easiest possible application to use neur
 
 ### Text: <img width="1118" alt="1" src="https://github.com/user-attachments/assets/d0947d54-eb8b-4f20-986b-579f9652ff95">
 
-### Image: <img width="1117" alt="2" src="https://github.com/user-attachments/assets/c3df51ef-b516-4a83-a797-6b4f032760ba">
+### Image: <img width="1115" alt="2" src="https://github.com/user-attachments/assets/67f8187e-6dd0-40e6-bbd9-6b97e31b1d5c">
 
 ### Video: <img width="1115" alt="3" src="https://github.com/user-attachments/assets/032b248e-1ea8-4661-8a96-267e4a9ef01c">
 
@@ -31,7 +31,7 @@ The goal of the project - to create the easiest possible application to use neur
 * Flexible and optimized interface (By Gradio)
 * Debug logging to logs from `Install` and `Update` files
 * Support for Transformers and llama.cpp models (LLM)
-* Support for diffusers and safetensors models (StableDiffusion) - txt2img, img2img, depth2img, pix2pix, controlnet, upscale (latent), upscale (SUPIR), refiner, inpaint, outpaint, gligen, diffedit, animatediff, hotshot-xl, video, ldm3d, sd3, cascade, t2i-ip-adapter, ip-adapter-faceid and riffusion tabs
+* Support for diffusers and safetensors models (StableDiffusion) - txt2img, img2img, depth2img, marigold, pix2pix, controlnet, upscale (latent), upscale (SUPIR), refiner, inpaint, outpaint, gligen, diffedit, animatediff, hotshot-xl, video, ldm3d, sd3, cascade, t2i-ip-adapter, ip-adapter-faceid and riffusion tabs
 * Support for stable-diffusion-cpp models for FLUX
 * Support of additional models for image generation: Kandinsky (txt2img, img2img, inpaint), Flux (with LoRA support), HunyuanDiT (txt2img, controlnet), Lumina-T2X, Kolors (txt2img with LoRA support, img2img, ip-adapter-plus), AuraFlow (with LoRA and AuraSR support), Würstchen, DeepFloydIF (txt2img, img2img, inpaint), PixArt and PlaygroundV2.5
 * Support Extras with Rembg, CodeFormer, PixelOE, DDColor, DownScale, Format changer, FaceSwap (Roop) and Upscale (Real-ESRGAN) models for image, video and audio
@@ -40,7 +40,7 @@ The goal of the project - to create the easiest possible application to use neur
 * Support AudioLDM 2 (Models: audio and music)
 * Supports TTS and Whisper models (For LLM and TTS-STT)
 * Support MMS for text-to-speech and speech-to-text
-* Supports Lora, Textual inversion (embedding), Vae, MagicPrompt, Img2img, Depth, Pix2Pix, Controlnet, Upscalers (latent and SUPIR), Refiner, Inpaint, Outpaint, GLIGEN, DiffEdit, AnimateDiff, HotShot-XL, Videos, LDM3D, SD3, Cascade, T2I-IP-ADAPTER, IP-Adapter-FaceID and Riffusion models (For StableDiffusion)
+* Supports Lora, Textual inversion (embedding), Vae, MagicPrompt, Img2img, Depth, Marigold, Pix2Pix, Controlnet, Upscalers (latent and SUPIR), Refiner, Inpaint, Outpaint, GLIGEN, DiffEdit, AnimateDiff, HotShot-XL, Videos, LDM3D, SD3, Cascade, T2I-IP-ADAPTER, IP-Adapter-FaceID and Riffusion models (For StableDiffusion)
 * Support Multiband Diffusion model (For AudioCraft)
 * Support LibreTranslate (Local API) and SeamlessM4Tv2 for language translations
 * Support ModelScope, ZeroScope 2, CogVideoX and Latte for video generation
@@ -212,6 +212,7 @@ First of all, I want to thank the developers of [PyCharm](https://www.jetbrains.
 * [LivePortrait](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/mit.md)
 * [SUPIR](https://github.com/Fanghua-Yu/SUPIR/blob/master/LICENSE)
 * [MagicPrompt](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/mit.md)
+* [Marigold](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/apache-2.0.md)
 
 #### These third-party repository codes are also used in my project:
 

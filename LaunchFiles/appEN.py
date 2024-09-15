@@ -101,6 +101,7 @@ GPT2LMHeadModel = lazy_import('transformers', 'GPT2LMHeadModel')
 GenerationConfig = lazy_import('transformers', 'GenerationConfig')
 
 # Diffusers import
+diffusers = lazy_import('diffusers', '')
 StableDiffusionPipeline = lazy_import('diffusers', 'StableDiffusionPipeline')
 StableDiffusion3Pipeline = lazy_import('diffusers', 'StableDiffusion3Pipeline')
 StableDiffusionXLPipeline = lazy_import('diffusers', 'StableDiffusionXLPipeline')
@@ -2252,6 +2253,68 @@ def generate_image_depth2img(prompt, negative_prompt, init_image, seed, strength
 
     finally:
         del stable_diffusion_model
+        flush()
+
+
+def generate_image_marigold(input_image, num_inference_steps, ensemble_size):
+    if not input_image:
+        return None, None, "Please upload an image!"
+
+    depth_model_path = os.path.join("inputs", "image", "marigold", "depth")
+    normals_model_path = os.path.join("inputs", "image", "marigold", "normals")
+
+    if not os.path.exists(depth_model_path):
+        print("Downloading Marigold Depth model...")
+        os.makedirs(depth_model_path, exist_ok=True)
+        Repo.clone_from("https://huggingface.co/prs-eth/marigold-depth-v1-0", depth_model_path)
+        print("Marigold Depth model downloaded")
+
+    if not os.path.exists(normals_model_path):
+        print("Downloading Marigold Normals model...")
+        os.makedirs(normals_model_path, exist_ok=True)
+        Repo.clone_from("https://huggingface.co/prs-eth/marigold-normals-v0-1", normals_model_path)
+        print("Marigold Normals model downloaded")
+
+    try:
+        device = "cuda" if torch.cuda.is_available() else "cpu"
+
+        depth_pipe = diffusers().diffusers.MarigoldDepthPipeline.from_pretrained(
+            depth_model_path, variant="fp16", torch_dtype=torch.float16
+        ).to(device)
+
+        normals_pipe = diffusers().diffusers.MarigoldNormalsPipeline.from_pretrained(
+            normals_model_path, variant="fp16", torch_dtype=torch.float16
+        ).to(device)
+
+        image = diffusers.utils.load_image(input_image)
+
+        depth = depth_pipe(image, num_inference_steps=num_inference_steps, ensemble_size=ensemble_size)
+        depth_vis = depth_pipe.image_processor.visualize_depth(depth.prediction)
+
+        normals = normals_pipe(image, num_inference_steps=num_inference_steps, ensemble_size=ensemble_size)
+        normals_vis = normals_pipe.image_processor.visualize_normals(normals.prediction)
+
+        today = datetime.now().date()
+        output_dir = os.path.join('outputs', f"Marigold_{today.strftime('%Y%m%d')}")
+        os.makedirs(output_dir, exist_ok=True)
+
+        depth_filename = f"marigold_depth_{datetime.now().strftime('%Y%m%d_%H%M%S')}.png"
+        normals_filename = f"marigold_normals_{datetime.now().strftime('%Y%m%d_%H%M%S')}.png"
+
+        depth_path = os.path.join(output_dir, depth_filename)
+        normals_path = os.path.join(output_dir, normals_filename)
+
+        depth_vis[0].save(depth_path)
+        normals_vis[0].save(normals_path)
+
+        return depth_path, normals_path, "Images generated successfully"
+
+    except Exception as e:
+        return None, None, str(e)
+
+    finally:
+        del depth_pipe
+        del normals_pipe
         flush()
 
 
@@ -8119,6 +8182,28 @@ depth2img_interface = gr.Interface(
     submit_btn="Generate"
 )
 
+marigold_interface = gr.Interface(
+    fn=generate_image_marigold,
+    inputs=[
+        gr.Image(label="Input image", type="filepath"),
+        gr.Slider(minimum=1, maximum=30, value=15, step=1, label="Num inference steps"),
+        gr.Slider(minimum=1, maximum=10, value=5, step=1, label="Ensemble size")
+    ],
+    outputs=[
+        gr.Image(label="Depth image"),
+        gr.Image(label="Normals image"),
+        gr.Textbox(label="Message")
+    ],
+    title="NeuroSandboxWebUI - Marigold",
+    description="This interface allows you to generate depth and normal maps using Marigold models. "
+                "Upload an image and adjust the inference steps and ensemble size. "
+                "The model will generate both depth and normal maps.",
+    allow_flagging="never",
+    clear_btn=None,
+    stop_btn="Stop",
+    submit_btn="Generate"
+)
+
 pix2pix_interface = gr.Interface(
     fn=generate_image_pix2pix,
     inputs=[
@@ -10169,11 +10254,11 @@ with gr.TabbedInterface(
         gr.TabbedInterface(
             [
                 gr.TabbedInterface(
-                    [txt2img_interface, img2img_interface, depth2img_interface, pix2pix_interface, controlnet_interface, latent_upscale_interface, supir_upscale_interface, sdxl_refiner_interface, inpaint_interface, outpaint_interface, gligen_interface, diffedit_interface, animatediff_interface, hotshotxl_interface, video_interface, ldm3d_interface,
+                    [txt2img_interface, img2img_interface, depth2img_interface, marigold_interface, pix2pix_interface, controlnet_interface, latent_upscale_interface, supir_upscale_interface, sdxl_refiner_interface, inpaint_interface, outpaint_interface, gligen_interface, diffedit_interface, animatediff_interface, hotshotxl_interface, video_interface, ldm3d_interface,
                      gr.TabbedInterface([sd3_txt2img_interface, sd3_img2img_interface, sd3_controlnet_interface, sd3_inpaint_interface],
                                         tab_names=["txt2img", "img2img", "controlnet", "inpaint"]),
                      cascade_interface, t2i_ip_adapter_interface, ip_adapter_faceid_interface, riffusion_interface],
-                    tab_names=["txt2img", "img2img", "depth2img", "pix2pix", "controlnet", "upscale(latent)", "upscale(SUPIR)", "refiner", "inpaint", "outpaint", "gligen", "diffedit", "animatediff", "hotshotxl", "video", "ldm3d", "sd3", "cascade", "t2i-ip-adapter", "ip-adapter-faceid", "riffusion"]
+                    tab_names=["txt2img", "img2img", "depth2img", "marigold", "pix2pix", "controlnet", "upscale(latent)", "upscale(SUPIR)", "refiner", "inpaint", "outpaint", "gligen", "diffedit", "animatediff", "hotshotxl", "video", "ldm3d", "sd3", "cascade", "t2i-ip-adapter", "ip-adapter-faceid", "riffusion"]
                 ),
                 kandinsky_interface, flux_interface, hunyuandit_interface, lumina_interface, kolors_interface, auraflow_interface, wurstchen_interface, deepfloyd_if_interface, pixart_interface, playgroundv2_interface
             ],
