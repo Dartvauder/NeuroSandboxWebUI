@@ -96,6 +96,9 @@ SeamlessM4Tv2ForTextToSpeech = lazy_import('transformers', 'SeamlessM4Tv2ForText
 VitsTokenizer = lazy_import('transformers', 'VitsTokenizer')
 VitsModel = lazy_import('transformers', 'VitsModel')
 Wav2Vec2ForCTC = lazy_import('transformers', 'Wav2Vec2ForCTC')
+GPT2Tokenizer = lazy_import('transformers', 'GPT2Tokenizer')
+GPT2LMHeadModel = lazy_import('transformers', 'GPT2LMHeadModel')
+GenerationConfig = lazy_import('transformers', 'GenerationConfig')
 
 # Diffusers import
 StableDiffusionPipeline = lazy_import('diffusers', 'StableDiffusionPipeline')
@@ -584,6 +587,49 @@ def change_audio_format(input_audio, new_format, enable_format_changer):
 
     except Exception as e:
         return None, str(e)
+
+
+def load_magicprompt_model():
+    model_path = os.path.join("inputs", "image", "sd_models", "MagicPrompt")
+    if not os.path.exists(model_path):
+        print("Downloading MagicPrompt model...")
+        os.makedirs(model_path, exist_ok=True)
+        tokenizer = GPT2Tokenizer().GPT2Tokenizer.from_pretrained("Gustavosta/MagicPrompt-Stable-Diffusion")
+        model = GPT2LMHeadModel().GPT2LMHeadModel.from_pretrained("Gustavosta/MagicPrompt-Stable-Diffusion", torch_dtype=torch.float16)
+        tokenizer.save_pretrained(model_path)
+        model.save_pretrained(model_path)
+        print("MagicPrompt model downloaded")
+    else:
+        tokenizer = GPT2Tokenizer().GPT2Tokenizer.from_pretrained(model_path)
+        model = GPT2LMHeadModel().GPT2LMHeadModel.from_pretrained(model_path, torch_dtype=torch.float16)
+    return tokenizer, model
+
+
+def generate_magicprompt(prompt, max_new_tokens):
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    tokenizer, model = load_magicprompt_model()
+    model.to(device)
+    model.eval()
+    inputs = tokenizer(prompt, return_tensors="pt").to("cuda")
+    token_count = inputs["input_ids"].shape[1]
+    max_new_tokens = min(max_new_tokens, 256 - token_count)
+    generation_config = GenerationConfig().GenerationConfig(
+        penalty_alpha=0.7,
+        top_k=50,
+        eos_token_id=model.config.eos_token_id,
+        pad_token_id=model.config.eos_token_id,
+        pad_token=model.config.pad_token_id,
+        do_sample=True,
+    )
+    with torch.no_grad():
+        generated_ids = model.generate(
+            input_ids=inputs["input_ids"],
+            attention_mask=inputs["attention_mask"],
+            max_new_tokens=max_new_tokens,
+            generation_config=generation_config,
+        )
+    enhanced_prompt = tokenizer.decode(generated_ids[0], skip_special_tokens=True)
+    return enhanced_prompt
 
 
 def load_model(model_name, model_type, n_ctx=None):
@@ -1441,7 +1487,11 @@ def translate_text(text, source_lang, target_lang, enable_translate_history, tra
 def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name, vae_model_name, lora_model_names, lora_scales, textual_inversion_model_names, stable_diffusion_settings_html,
                            stable_diffusion_model_type, stable_diffusion_scheduler, stable_diffusion_steps,
                            stable_diffusion_cfg, stable_diffusion_width, stable_diffusion_height,
-                           stable_diffusion_clip_skip, num_images_per_prompt, seed, stop_button, enable_freeu, freeu_s1, freeu_s2, freeu_b1, freeu_b2, enable_sag, sag_scale, enable_pag, pag_scale, enable_token_merging, ratio, enable_deepcache, cache_interval, cache_branch_id, enable_tgate, gate_step, output_format):
+                           stable_diffusion_clip_skip, num_images_per_prompt, seed, stop_button,
+                           enable_freeu, freeu_s1, freeu_s2, freeu_b1, freeu_b2,
+                           enable_sag, sag_scale, enable_pag, pag_scale, enable_token_merging, ratio,
+                           enable_deepcache, cache_interval, cache_branch_id, enable_tgate, gate_step,
+                           enable_magicprompt, magicprompt_max_new_tokens, output_format):
     global stop_signal
     stop_signal = False
     stop_idx = None
@@ -1562,6 +1612,9 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
 
     if enable_freeu:
         stable_diffusion_model.enable_freeu(s1=freeu_s1, s2=freeu_s2, b1=freeu_b1, b2=freeu_b2)
+
+    if enable_magicprompt:
+        prompt = generate_magicprompt(prompt, magicprompt_max_new_tokens)
 
     if vae_model_name is not None:
         vae_model_path = os.path.join("inputs", "image", "sd_models", "vae", f"{vae_model_name}.safetensors")
@@ -7884,6 +7937,8 @@ txt2img_interface = gr.Interface(
         gr.Slider(minimum=0, maximum=1, value=0, step=1, label="DeepCache BranchID"),
         gr.Checkbox(label="Enable T-GATE", value=False),
         gr.Slider(minimum=1, maximum=50, value=10, step=1, label="T-GATE steps"),
+        gr.Checkbox(label="Enable MagicPrompt", value=False),
+        gr.Slider(minimum=32, maximum=256, value=50, step=1, label="MagicPrompt Max New Tokens"),
         gr.Radio(choices=["png", "jpeg"], label="Select output format", value="png", interactive=True)
     ],
     additional_inputs_accordion=gr.Accordion(label="Additional StableDiffusion Settings", open=False),
