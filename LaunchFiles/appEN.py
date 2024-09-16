@@ -7908,7 +7908,7 @@ def reload_model_lists():
 
 
 def reload_interface():
-    updated_lists = reload_model_lists()
+    updated_lists = reload_model_lists()[:18]
     return [gr.Dropdown(choices=list) for list in updated_lists]
 
 
@@ -10381,7 +10381,7 @@ with gr.TabbedInterface(
         gallery_interface.input_components[4]
     ]
 
-    reload_button.click(reload_interface, outputs=dropdowns_to_update)
+    reload_button.click(reload_interface, outputs=dropdowns_to_update[:18])
     close_button.click(close_terminal, [], [], queue=False)
     folder_button.click(open_outputs_folder, [], [], queue=False)
 
