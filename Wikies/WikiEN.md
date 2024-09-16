@@ -489,5 +489,4 @@
 
 ## Plans for future:
 
-* Interface: Make a `reload` button to update model lists and gallery
 * FLUX: Make a img2img, inpainting, controlnet-union sub-tabs with the appropriate functionality
