@@ -1494,7 +1494,7 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
                            enable_freeu, freeu_s1, freeu_s2, freeu_b1, freeu_b2,
                            enable_sag, sag_scale, enable_pag, pag_scale, enable_token_merging, ratio,
                            enable_deepcache, cache_interval, cache_branch_id, enable_tgate, gate_step,
-                           enable_magicprompt, magicprompt_max_new_tokens, output_format):
+                           enable_magicprompt, magicprompt_max_new_tokens, output_format, progress=gr.Progress()):
     global stop_signal
     stop_signal = False
     stop_idx = None
@@ -1742,6 +1742,8 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
                 stable_diffusion_model._interrupt = True
             callback_kwargs = decode_tensors(stable_diffusion_model, i, t, callback_kwargs)
 
+            progress((i + 1) / stable_diffusion_steps, f"Step {i+1}/{stable_diffusion_steps}")
+
             return callback_kwargs
 
         if stable_diffusion_model_type == "SDXL":
@@ -1903,7 +1905,7 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
 def generate_image_img2img(prompt, negative_prompt, init_image, strength, stable_diffusion_model_type,
                            stable_diffusion_model_name, vae_model_name, lora_model_names, lora_scales, textual_inversion_model_names, seed, stop_button,
                            stable_diffusion_scheduler, stable_diffusion_steps, stable_diffusion_cfg,
-                           stable_diffusion_clip_skip, num_images_per_prompt, output_format):
+                           stable_diffusion_clip_skip, num_images_per_prompt, output_format, progress=gr.Progress()):
     global stop_signal
     stop_signal = False
     stop_idx = None
@@ -2131,6 +2133,8 @@ def generate_image_img2img(prompt, negative_prompt, init_image, strength, stable
             if i == stop_idx:
                 stable_diffusion_model._interrupt = True
             callback_kwargs = decode_tensors(stable_diffusion_model, i, t, callback_kwargs)
+
+            progress((i + 1) / stable_diffusion_steps, f"Step {i + 1}/{stable_diffusion_steps}")
 
             return callback_kwargs
 
