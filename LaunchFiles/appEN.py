@@ -2391,7 +2391,7 @@ def generate_image_pix2pix(prompt, negative_prompt, init_image, seed, num_infere
 
 
 def generate_image_controlnet(prompt, negative_prompt, init_image, sd_version, stable_diffusion_model_name, controlnet_model_name, seed,
-                              stable_diffusion_sampler, num_inference_steps, guidance_scale, width, height, controlnet_conditioning_scale, clip_skip, num_images_per_prompt, output_format):
+                              num_inference_steps, guidance_scale, width, height, controlnet_conditioning_scale, clip_skip, num_images_per_prompt, output_format):
 
     if not init_image:
         return None, None, "Please, upload an initial image!"
@@ -2501,7 +2501,7 @@ def generate_image_controlnet(prompt, negative_prompt, init_image, sd_version, s
 
             images = pipe(prompt_embeds=prompt_embeds, negative_prompt_embeds=negative_prompt_embeds,
                          num_inference_steps=num_inference_steps, guidance_scale=guidance_scale, width=width,
-                         height=height, clip_skip=clip_skip, generator=generator, image=control_image, sampler=stable_diffusion_sampler, num_images_per_prompt=num_images_per_prompt).images
+                         height=height, clip_skip=clip_skip, generator=generator, image=control_image, num_images_per_prompt=num_images_per_prompt).images
 
         else:
             controlnet = ControlNetModel().ControlNetModel.from_pretrained(
@@ -2580,7 +2580,7 @@ def generate_image_controlnet(prompt, negative_prompt, init_image, sd_version, s
                 prompt_embeds=prompt_embeds, pooled_prompt_embeds=pooled_prompt_embeds, negative_prompt=negative_prompt, image=control_image,
                 controlnet_conditioning_scale=controlnet_conditioning_scale, generator=generator,
                 num_inference_steps=num_inference_steps, guidance_scale=guidance_scale, clip_skip=clip_skip,
-                width=width, height=height, sampler=stable_diffusion_sampler, num_images_per_prompt=num_images_per_prompt).images
+                width=width, height=height, num_images_per_prompt=num_images_per_prompt).images
 
         image_paths = []
         control_image_paths = []
@@ -2826,7 +2826,7 @@ def generate_image_sdxl_refiner(prompt, init_image, output_format):
         flush()
 
 
-def generate_image_inpaint(prompt, negative_prompt, init_image, mask_image, blur_factor, stable_diffusion_model_type, stable_diffusion_model_name, vae_model_name, seed, stable_diffusion_sampler,
+def generate_image_inpaint(prompt, negative_prompt, init_image, mask_image, blur_factor, stable_diffusion_model_type, stable_diffusion_model_name, vae_model_name, seed,
                            stable_diffusion_steps, stable_diffusion_cfg, width, height, clip_skip, num_images_per_prompt, output_format):
 
     if not stable_diffusion_model_name:
@@ -2931,7 +2931,7 @@ def generate_image_inpaint(prompt, negative_prompt, init_image, mask_image, blur
                                             image=init_image, generator=generator, clip_skip=clip_skip,
                                             mask_image=blurred_mask, width=width, height=height,
                                             num_inference_steps=stable_diffusion_steps,
-                                            guidance_scale=stable_diffusion_cfg, sampler=stable_diffusion_sampler, num_images_per_prompt=num_images_per_prompt).images
+                                            guidance_scale=stable_diffusion_cfg, num_images_per_prompt=num_images_per_prompt).images
         else:
             compel_proc = Compel(tokenizer=stable_diffusion_model.tokenizer,
                                  text_encoder=stable_diffusion_model.text_encoder)
@@ -2942,7 +2942,7 @@ def generate_image_inpaint(prompt, negative_prompt, init_image, mask_image, blur
                                             image=init_image, generator=generator, clip_skip=clip_skip,
                                             mask_image=blurred_mask, width=width, height=height,
                                             num_inference_steps=stable_diffusion_steps,
-                                            guidance_scale=stable_diffusion_cfg, sampler=stable_diffusion_sampler, num_images_per_prompt=num_images_per_prompt).images
+                                            guidance_scale=stable_diffusion_cfg, num_images_per_prompt=num_images_per_prompt).images
 
         image_paths = []
         for i, image in enumerate(images):
@@ -2964,7 +2964,7 @@ def generate_image_inpaint(prompt, negative_prompt, init_image, mask_image, blur
         flush()
 
 
-def generate_image_outpaint(prompt, negative_prompt, init_image, stable_diffusion_model_type, stable_diffusion_model_name, seed, stable_diffusion_sampler,
+def generate_image_outpaint(prompt, negative_prompt, init_image, stable_diffusion_model_type, stable_diffusion_model_name, seed,
                             stable_diffusion_steps, stable_diffusion_cfg, outpaint_direction, outpaint_expansion, clip_skip, num_images_per_prompt, output_format):
 
     if not init_image:
@@ -3075,7 +3075,6 @@ def generate_image_outpaint(prompt, negative_prompt, init_image, stable_diffusio
                 guidance_scale=stable_diffusion_cfg,
                 width=new_width,
                 height=new_height,
-                sampler=stable_diffusion_sampler,
                 num_images_per_prompt=num_images_per_prompt,
                 clip_skip=clip_skip,
                 generator=generator,
@@ -3094,7 +3093,6 @@ def generate_image_outpaint(prompt, negative_prompt, init_image, stable_diffusio
                 guidance_scale=stable_diffusion_cfg,
                 width=new_width,
                 height=new_height,
-                sampler=stable_diffusion_sampler,
                 num_images_per_prompt=num_images_per_prompt,
                 clip_skip=clip_skip,
                 generator=generator,
@@ -3121,8 +3119,7 @@ def generate_image_outpaint(prompt, negative_prompt, init_image, stable_diffusio
         flush()
 
 
-def generate_image_gligen(prompt, negative_prompt, gligen_phrases, gligen_boxes, stable_diffusion_model_type, stable_diffusion_model_name, seed,
-                          stable_diffusion_sampler, stable_diffusion_steps,
+def generate_image_gligen(prompt, negative_prompt, gligen_phrases, gligen_boxes, stable_diffusion_model_type, stable_diffusion_model_name, seed, stable_diffusion_steps,
                           stable_diffusion_cfg, stable_diffusion_width, stable_diffusion_height,
                           stable_diffusion_clip_skip, num_images_per_prompt, output_format):
 
@@ -3194,7 +3191,7 @@ def generate_image_gligen(prompt, negative_prompt, gligen_phrases, gligen_boxes,
                                            num_inference_steps=stable_diffusion_steps, generator=generator,
                                            guidance_scale=stable_diffusion_cfg, height=stable_diffusion_height,
                                            width=stable_diffusion_width, clip_skip=stable_diffusion_clip_skip,
-                                           sampler=stable_diffusion_sampler, num_images_per_prompt=num_images_per_prompt).images
+                                           num_images_per_prompt=num_images_per_prompt).images
         else:
             compel_proc = Compel(tokenizer=stable_diffusion_model.tokenizer,
                                  text_encoder=stable_diffusion_model.text_encoder)
@@ -3205,7 +3202,7 @@ def generate_image_gligen(prompt, negative_prompt, gligen_phrases, gligen_boxes,
                                            num_inference_steps=stable_diffusion_steps, generator=generator,
                                            guidance_scale=stable_diffusion_cfg, height=stable_diffusion_height,
                                            width=stable_diffusion_width, clip_skip=stable_diffusion_clip_skip,
-                                           sampler=stable_diffusion_sampler, num_images_per_prompt=num_images_per_prompt).images
+                                           num_images_per_prompt=num_images_per_prompt).images
 
         gligen_model_path = os.path.join("inputs", "image", "sd_models", "gligen")
 
@@ -7851,6 +7848,46 @@ rvc_models_list = [model_folder for model_folder in os.listdir("inputs/audio/rvc
                    if os.path.isdir(os.path.join("inputs/audio/rvc_models", model_folder))
                    and any(file.endswith('.pth') for file in os.listdir(os.path.join("inputs/audio/rvc_models", model_folder)))]
 
+
+def reload_model_lists():
+    global llm_models_list, llm_lora_models_list, speaker_wavs_list, stable_diffusion_models_list, vae_models_list, lora_models_list, quantized_flux_models_list, flux_lora_models_list, auraflow_lora_models_list, kolors_lora_models_list, textual_inversion_models_list, inpaint_models_list, rvc_models_list
+
+    llm_models_list = [None, "moondream2"] + [model for model in os.listdir("inputs/text/llm_models") if not model.endswith(".txt") and model != "vikhyatk" and model != "lora"]
+    llm_lora_models_list = [None] + [model for model in os.listdir("inputs/text/llm_models/lora") if not model.endswith(".txt")]
+    speaker_wavs_list = [None] + [wav for wav in os.listdir("inputs/audio/voices") if not wav.endswith(".txt")]
+    stable_diffusion_models_list = [None] + [model.replace(".safetensors", "") for model in
+                                             os.listdir("inputs/image/sd_models")
+                                             if (model.endswith(".safetensors") or not model.endswith(".txt") and not os.path.isdir(os.path.join("inputs/image/sd_models")))]
+    vae_models_list = [None] + [model.replace(".safetensors", "") for model in os.listdir("inputs/image/sd_models/vae") if
+                                model.endswith(".safetensors") or not model.endswith(".txt")]
+    lora_models_list = [None] + [model for model in os.listdir("inputs/image/sd_models/lora") if
+                                 model.endswith(".safetensors") or model.endswith(".pt")]
+    quantized_flux_models_list = [None] + [model.replace(".gguf", "") for model in os.listdir("inputs/image/quantize-flux") if
+                                model.endswith(".gguf") or not model.endswith(".txt") and not model.endswith(".safetensors")]
+    flux_lora_models_list = [None] + [model for model in os.listdir("inputs/image/flux-lora") if
+                                 model.endswith(".safetensors")]
+    auraflow_lora_models_list = [None] + [model for model in os.listdir("inputs/image/auraflow-lora") if
+                                 model.endswith(".safetensors")]
+    kolors_lora_models_list = [None] + [model for model in os.listdir("inputs/image/kolors-lora") if
+                                 model.endswith(".safetensors")]
+    textual_inversion_models_list = [None] + [model for model in os.listdir("inputs/image/sd_models/embedding") if model.endswith(".pt") or model.endswith(".safetensors")]
+    inpaint_models_list = [None] + [model.replace(".safetensors", "") for model in
+                                    os.listdir("inputs/image/sd_models/inpaint")
+                                    if model.endswith(".safetensors") or not model.endswith(".txt")]
+    rvc_models_list = [model_folder for model_folder in os.listdir("inputs/audio/rvc_models")
+                       if os.path.isdir(os.path.join("inputs/audio/rvc_models", model_folder))
+                       and any(file.endswith('.pth') for file in os.listdir(os.path.join("inputs/audio/rvc_models", model_folder)))]
+
+    text_files, image_files, video_files, audio_files, model3d_files, _ = get_output_files()
+
+    return [llm_models_list, llm_lora_models_list, speaker_wavs_list, stable_diffusion_models_list, vae_models_list, lora_models_list, quantized_flux_models_list, flux_lora_models_list, auraflow_lora_models_list, kolors_lora_models_list, textual_inversion_models_list, inpaint_models_list, rvc_models_list, text_files, image_files, video_files, audio_files, model3d_files]
+
+
+def reload_interface():
+    updated_lists = reload_model_lists()
+    return [gr.Dropdown(choices=list) for list in updated_lists]
+
+
 settings = load_settings()
 
 chat_interface = gr.Interface(
@@ -8246,8 +8283,6 @@ controlnet_interface = gr.Interface(
         gr.Textbox(label="Seed (optional)", value="")
     ],
     additional_inputs=[
-        gr.Dropdown(choices=["euler_ancestral", "euler", "lms", "heun", "dpm", "dpm_solver", "dpm_solver++"],
-                    label="Select sampler", value="euler_ancestral"),
         gr.Slider(minimum=1, maximum=100, value=30, step=1, label="Steps"),
         gr.Slider(minimum=1.0, maximum=30.0, value=8, step=0.1, label="CFG"),
         gr.Slider(minimum=256, maximum=2048, value=512, step=64, label="Width"),
@@ -8373,8 +8408,6 @@ inpaint_interface = gr.Interface(
         gr.Textbox(label="Seed (optional)", value="")
     ],
     additional_inputs=[
-        gr.Dropdown(choices=["euler_ancestral", "euler", "lms", "heun", "dpm", "dpm_solver", "dpm_solver++"],
-                    label="Select sampler", value="euler_ancestral"),
         gr.Slider(minimum=1, maximum=100, value=30, step=1, label="Steps"),
         gr.Slider(minimum=1.0, maximum=30.0, value=8, step=0.1, label="CFG"),
         gr.Slider(minimum=256, maximum=2048, value=512, step=64, label="Width"),
@@ -8409,8 +8442,6 @@ outpaint_interface = gr.Interface(
         gr.Textbox(label="Seed (optional)", value="")
     ],
     additional_inputs=[
-        gr.Dropdown(choices=["euler_ancestral", "euler", "lms", "heun", "dpm", "dpm_solver", "dpm_solver++"],
-                    label="Select sampler", value="euler_ancestral"),
         gr.Slider(minimum=1, maximum=100, value=30, step=1, label="Steps"),
         gr.Slider(minimum=1.0, maximum=30.0, value=8, step=0.1, label="CFG"),
         gr.Radio(choices=["left", "right", "up", "down"], label="Outpaint direction", value="right"),
@@ -8447,8 +8478,6 @@ gligen_interface = gr.Interface(
         gr.Textbox(label="Seed (optional)", value="")
     ],
     additional_inputs=[
-        gr.Dropdown(choices=["euler_ancestral", "euler", "lms", "heun", "dpm", "dpm_solver", "dpm_solver++"],
-                    label="Select sampler", value="euler_ancestral"),
         gr.Slider(minimum=1, maximum=100, value=30, step=1, label="Steps"),
         gr.Slider(minimum=1.0, maximum=30.0, value=8, step=0.1, label="CFG"),
         gr.Slider(minimum=256, maximum=2048, value=512, step=64, label="Width"),
@@ -10288,10 +10317,46 @@ with gr.TabbedInterface(
     txt2img_interface.input_components[17].click(stop_generation, [], [], queue=False)
     img2img_interface.input_components[11].click(stop_generation, [], [], queue=False)
 
+    reload_button = gr.Button("Reload interface")
     close_button = gr.Button("Close terminal")
-    close_button.click(close_terminal, [], [], queue=False)
-
     folder_button = gr.Button("Outputs")
+
+    dropdowns_to_update = [
+        chat_interface.input_components[3],
+        chat_interface.input_components[4],
+        chat_interface.input_components[22],
+        tts_stt_interface.input_components[3],
+        txt2img_interface.input_components[2],
+        txt2img_interface.input_components[3],
+        txt2img_interface.input_components[4],
+        txt2img_interface.input_components[6],
+        img2img_interface.input_components[5],
+        img2img_interface.input_components[6],
+        img2img_interface.input_components[7],
+        img2img_interface.input_components[9],
+        controlnet_interface.input_components[4],
+        inpaint_interface.input_components[6],
+        inpaint_interface.input_components[7],
+        outpaint_interface.input_components[4],
+        gligen_interface.input_components[5],
+        animatediff_interface.input_components[5],
+        sd3_txt2img_interface.input_components[3],
+        t2i_ip_adapter_interface.input_components[4],
+        ip_adapter_faceid_interface.input_components[5],
+        flux_interface.input_components[2],
+        flux_interface.input_components[5],
+        auraflow_interface.input_components[3],
+        kolors_txt2img_interface.input_components[3],
+        rvc_interface.input_components[1],
+        gallery_interface.input_components[0],
+        gallery_interface.input_components[1],
+        gallery_interface.input_components[2],
+        gallery_interface.input_components[3],
+        gallery_interface.input_components[4]
+    ]
+
+    reload_button.click(reload_interface, outputs=dropdowns_to_update)
+    close_button.click(close_terminal, [], [], queue=False)
     folder_button.click(open_outputs_folder, [], [], queue=False)
 
     github_link = gr.HTML(
