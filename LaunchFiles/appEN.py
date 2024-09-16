@@ -1722,11 +1722,7 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
             image_array = rgb_tensor.clamp(0, 255)[0].byte().cpu().numpy()
             image_array = image_array.transpose(1, 2, 0)
 
-            image = Image.fromarray(image_array)
-
-            image = image.resize((128, 128), Image.BICUBIC)
-
-            return image
+            return Image.fromarray(image_array)
 
         def decode_tensors(stable_diffusion_model, i, t, callback_kwargs):
             latents = callback_kwargs["latents"]
@@ -1846,7 +1842,7 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
                                             generator=generator, callback_on_step_end=combined_callback, callback_on_step_end_tensor_inputs=["latents"]).images
 
         image_paths = []
-        gif_paths = []
+        gif_images = []
         for i, image in enumerate(images):
             today = datetime.now().date()
             image_dir = os.path.join('outputs', f"StableDiffusion_{today.strftime('%Y%m%d')}")
@@ -1874,25 +1870,25 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
             }
 
             image.save(image_path, format=output_format.upper())
-
             add_metadata_to_file(image_path, metadata)
-
             image_paths.append(image_path)
 
-            gif_images = []
-            for i in range(stable_diffusion_steps):
-                if os.path.exists(f"temp/{i}.png"):
-                    gif_images.append(imageio.imread(f"temp/{i}.png"))
+        for i in range(stable_diffusion_steps):
+            if os.path.exists(f"temp/{i}.png"):
+                gif_images.append(imageio.imread(f"temp/{i}.png"))
 
-            gif_path = os.path.join(image_dir, f"txt2img_process_{datetime.now().strftime('%Y%m%d_%H%M%S')}.gif")
+        if gif_images:
+            gif_filename = f"txt2img_process_{datetime.now().strftime('%Y%m%d_%H%M%S')}.gif"
+            gif_path = os.path.join(image_dir, gif_filename)
             imageio.mimsave(gif_path, gif_images, duration=0.1)
-            gif_paths.append(gif_path)
+        else:
+            gif_path = None
 
-            for i in range(stable_diffusion_steps):
-                if os.path.exists(f"temp/{i}.png"):
-                    os.remove(f"temp/{i}.png")
+        for i in range(stable_diffusion_steps):
+            if os.path.exists(f"temp/{i}.png"):
+                os.remove(f"temp/{i}.png")
 
-        return image_paths, gif_paths, f"Images generated successfully. Seed used: {seed}"
+        return image_paths, [gif_path] if gif_path else [], f"Images generated successfully. Seed used: {seed}"
 
     except Exception as e:
         return None, None, str(e)
@@ -2114,11 +2110,7 @@ def generate_image_img2img(prompt, negative_prompt, init_image, strength, stable
             image_array = rgb_tensor.clamp(0, 255)[0].byte().cpu().numpy()
             image_array = image_array.transpose(1, 2, 0)
 
-            image = Image.fromarray(image_array)
-
-            image = image.resize((128, 128), Image.BICUBIC)
-
-            return image
+            return Image.fromarray(image_array)
 
         def decode_tensors(stable_diffusion_model, i, t, callback_kwargs):
             latents = callback_kwargs["latents"]
@@ -2166,7 +2158,7 @@ def generate_image_img2img(prompt, negative_prompt, init_image, strength, stable
                                             callback_on_step_end=combined_callback, callback_on_step_end_tensor_inputs=["latents"]).images
 
         image_paths = []
-        gif_paths = []
+        gif_images = []
         for i, image in enumerate(images):
             today = datetime.now().date()
             image_dir = os.path.join('outputs', f"StableDiffusion_{today.strftime('%Y%m%d')}")
@@ -2192,25 +2184,25 @@ def generate_image_img2img(prompt, negative_prompt, init_image, strength, stable
             }
 
             image.save(image_path, format=output_format.upper())
-
             add_metadata_to_file(image_path, metadata)
-
             image_paths.append(image_path)
 
-            gif_images = []
-            for i in range(stable_diffusion_steps):
-                if os.path.exists(f"temp/{i}.png"):
-                    gif_images.append(imageio.imread(f"temp/{i}.png"))
+        for i in range(stable_diffusion_steps):
+            if os.path.exists(f"temp/{i}.png"):
+                gif_images.append(imageio.imread(f"temp/{i}.png"))
 
-            gif_path = os.path.join(image_dir, f"txt2img_process_{datetime.now().strftime('%Y%m%d_%H%M%S')}.gif")
+        if gif_images:
+            gif_filename = f"img2img_process_{datetime.now().strftime('%Y%m%d_%H%M%S')}.gif"
+            gif_path = os.path.join(image_dir, gif_filename)
             imageio.mimsave(gif_path, gif_images, duration=0.1)
-            gif_paths.append(gif_path)
+        else:
+            gif_path = None
 
-            for i in range(stable_diffusion_steps):
-                if os.path.exists(f"temp/{i}.png"):
-                    os.remove(f"temp/{i}.png")
+        for i in range(stable_diffusion_steps):
+            if os.path.exists(f"temp/{i}.png"):
+                os.remove(f"temp/{i}.png")
 
-        return image_paths, gif_paths, f"Images generated successfully. Seed used: {seed}"
+        return image_paths, [gif_path] if gif_path else [], f"Images generated successfully. Seed used: {seed}"
 
     except Exception as e:
         return None, None, str(e)
