@@ -7878,7 +7878,9 @@ def reload_model_lists():
                        if os.path.isdir(os.path.join("inputs/audio/rvc_models", model_folder))
                        and any(file.endswith('.pth') for file in os.listdir(os.path.join("inputs/audio/rvc_models", model_folder)))]
 
-    return [llm_models_list, llm_lora_models_list, speaker_wavs_list, stable_diffusion_models_list, vae_models_list, lora_models_list, quantized_flux_models_list, flux_lora_models_list, auraflow_lora_models_list, kolors_lora_models_list, textual_inversion_models_list, inpaint_models_list, rvc_models_list]
+    text_files, image_files, video_files, audio_files, model3d_files, _ = get_output_files()
+
+    return [llm_models_list, llm_lora_models_list, speaker_wavs_list, stable_diffusion_models_list, vae_models_list, lora_models_list, quantized_flux_models_list, flux_lora_models_list, auraflow_lora_models_list, kolors_lora_models_list, textual_inversion_models_list, inpaint_models_list, rvc_models_list, text_files, image_files, video_files, audio_files, model3d_files]
 
 
 def reload_interface():
@@ -10346,6 +10348,11 @@ with gr.TabbedInterface(
         auraflow_interface.input_components[3],
         kolors_txt2img_interface.input_components[3],
         rvc_interface.input_components[1],
+        gallery_interface.input_components[0],
+        gallery_interface.input_components[1],
+        gallery_interface.input_components[2],
+        gallery_interface.input_components[3],
+        gallery_interface.input_components[4]
     ]
 
     reload_button.click(reload_interface, outputs=dropdowns_to_update)
