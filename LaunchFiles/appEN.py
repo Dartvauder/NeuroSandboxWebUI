@@ -1500,13 +1500,13 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
     stop_idx = None
 
     if not stable_diffusion_model_name:
-        return None, "Please, select a StableDiffusion model!"
+        return None, None, "Please, select a StableDiffusion model!"
 
     stable_diffusion_model_path = os.path.join("inputs", "image", "sd_models",
                                                f"{stable_diffusion_model_name}.safetensors")
 
     if not os.path.exists(stable_diffusion_model_path):
-        return None, f"StableDiffusion model not found: {stable_diffusion_model_path}"
+        return None, None, f"StableDiffusion model not found: {stable_diffusion_model_path}"
 
     try:
         if enable_sag:
@@ -1533,9 +1533,9 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
                     stable_diffusion_model_path, use_safetensors=True, device_map="auto", attention_slice=1,
                     torch_dtype=torch.float16, variant="fp16")
             else:
-                return None, "Invalid StableDiffusion model type!"
+                return None, None, "Invalid StableDiffusion model type!"
     except (ValueError, KeyError):
-        return None, "The selected model is not compatible with the chosen model type"
+        return None, None, "The selected model is not compatible with the chosen model type"
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -1722,7 +1722,11 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
             image_array = rgb_tensor.clamp(0, 255)[0].byte().cpu().numpy()
             image_array = image_array.transpose(1, 2, 0)
 
-            return Image.fromarray(image_array)
+            image = Image.fromarray(image_array)
+
+            image = image.resize((128, 128), Image.BICUBIC)
+
+            return image
 
         def decode_tensors(stable_diffusion_model, i, t, callback_kwargs):
             latents = callback_kwargs["latents"]
@@ -1840,6 +1844,7 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
                                             generator=generator, callback_on_step_end=combined_callback, callback_on_step_end_tensor_inputs=["latents"]).images
 
         image_paths = []
+        gif_paths = []
         for i, image in enumerate(images):
             today = datetime.now().date()
             image_dir = os.path.join('outputs', f"StableDiffusion_{today.strftime('%Y%m%d')}")
@@ -1872,10 +1877,23 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
 
             image_paths.append(image_path)
 
-        return image_paths, f"Images generated successfully. Seed used: {seed}"
+            gif_images = []
+            for i in range(stable_diffusion_steps):
+                if os.path.exists(f"temp/{i}.png"):
+                    gif_images.append(imageio.imread(f"temp/{i}.png"))
+
+            gif_path = os.path.join(image_dir, f"txt2img_process_{datetime.now().strftime('%Y%m%d_%H%M%S')}.gif")
+            imageio.mimsave(gif_path, gif_images, duration=0.1)
+            gif_paths.append(gif_path)
+
+            for i in range(stable_diffusion_steps):
+                if os.path.exists(f"temp/{i}.png"):
+                    os.remove(f"temp/{i}.png")
+
+        return image_paths, gif_paths, f"Images generated successfully. Seed used: {seed}"
 
     except Exception as e:
-        return None, str(e)
+        return None, None, str(e)
 
     finally:
         del stable_diffusion_model
@@ -1891,16 +1909,16 @@ def generate_image_img2img(prompt, negative_prompt, init_image, strength, stable
     stop_idx = None
 
     if not stable_diffusion_model_name:
-        return None, "Please, select a StableDiffusion model!"
+        return None, None, "Please, select a StableDiffusion model!"
 
     if not init_image:
-        return None, "Please, upload an initial image!"
+        return None, None, "Please, upload an initial image!"
 
     stable_diffusion_model_path = os.path.join("inputs", "image", "sd_models",
                                                f"{stable_diffusion_model_name}.safetensors")
 
     if not os.path.exists(stable_diffusion_model_path):
-        return None, f"StableDiffusion model not found: {stable_diffusion_model_path}"
+        return None, None, f"StableDiffusion model not found: {stable_diffusion_model_path}"
 
     try:
         if stable_diffusion_model_type == "SD":
@@ -1916,9 +1934,9 @@ def generate_image_img2img(prompt, negative_prompt, init_image, strength, stable
                 stable_diffusion_model_path, use_safetensors=True, device_map="auto", attention_slice=1,
                 torch_dtype=torch.float16, variant="fp16")
         else:
-            return None, "Invalid StableDiffusion model type!"
+            return None, None, "Invalid StableDiffusion model type!"
     except (ValueError, KeyError):
-        return None, "The selected model is not compatible with the chosen model type"
+        return None, None, "The selected model is not compatible with the chosen model type"
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -2094,7 +2112,11 @@ def generate_image_img2img(prompt, negative_prompt, init_image, strength, stable
             image_array = rgb_tensor.clamp(0, 255)[0].byte().cpu().numpy()
             image_array = image_array.transpose(1, 2, 0)
 
-            return Image.fromarray(image_array)
+            image = Image.fromarray(image_array)
+
+            image = image.resize((128, 128), Image.BICUBIC)
+
+            return image
 
         def decode_tensors(stable_diffusion_model, i, t, callback_kwargs):
             latents = callback_kwargs["latents"]
@@ -2140,6 +2162,7 @@ def generate_image_img2img(prompt, negative_prompt, init_image, strength, stable
                                             callback_on_step_end=combined_callback, callback_on_step_end_tensor_inputs=["latents"]).images
 
         image_paths = []
+        gif_paths = []
         for i, image in enumerate(images):
             today = datetime.now().date()
             image_dir = os.path.join('outputs', f"StableDiffusion_{today.strftime('%Y%m%d')}")
@@ -2170,10 +2193,23 @@ def generate_image_img2img(prompt, negative_prompt, init_image, strength, stable
 
             image_paths.append(image_path)
 
-        return image_paths, f"Images generated successfully. Seed used: {seed}"
+            gif_images = []
+            for i in range(stable_diffusion_steps):
+                if os.path.exists(f"temp/{i}.png"):
+                    gif_images.append(imageio.imread(f"temp/{i}.png"))
+
+            gif_path = os.path.join(image_dir, f"txt2img_process_{datetime.now().strftime('%Y%m%d_%H%M%S')}.gif")
+            imageio.mimsave(gif_path, gif_images, duration=0.1)
+            gif_paths.append(gif_path)
+
+            for i in range(stable_diffusion_steps):
+                if os.path.exists(f"temp/{i}.png"):
+                    os.remove(f"temp/{i}.png")
+
+        return image_paths, gif_paths, f"Images generated successfully. Seed used: {seed}"
 
     except Exception as e:
-        return None, str(e)
+        return None, None, str(e)
 
     finally:
         del stable_diffusion_model
@@ -3565,24 +3601,8 @@ def generate_image_animatediff(prompt, negative_prompt, input_video, strength, m
 
         gif_filename = f"animatediff_{datetime.now().strftime('%Y%m%d_%H%M%S')}.gif"
         gif_path = os.path.join(output_dir, gif_filename)
-        metadata = {
-            "prompt": prompt,
-            "negative_prompt": negative_prompt,
-            "seed": seed,
-            "model_type": model_type,
-            "stable_diffusion_model": stable_diffusion_model_name,
-            "motion_lora": motion_lora_name if motion_lora_name else None,
-            "num_frames": num_frames,
-            "steps": num_inference_steps,
-            "guidance_scale": guidance_scale,
-            "width": width,
-            "height": height,
-            "clip_skip": clip_skip,
-            "sub-model": "AnimateDiff"
-        }
 
         export_to_gif(frames, gif_path)
-        add_metadata_to_file(gif_path, metadata)
 
         return gif_path, f"GIF generated successfully. Seed used: {seed}"
 
@@ -8133,6 +8153,7 @@ txt2img_interface = gr.Interface(
     additional_inputs_accordion=gr.Accordion(label="Additional StableDiffusion Settings", open=False),
     outputs=[
         gr.Gallery(label="Generated images", elem_id="gallery", columns=[2], rows=[2], object_fit="contain", height="auto"),
+        gr.Gallery(label="Generation process", elem_id="process_gallery", columns=[2], rows=[2], object_fit="contain", height="auto"),
         gr.Textbox(label="Message", type="text")
     ],
     title="NeuroSandboxWebUI - StableDiffusion (txt2img)",
@@ -8179,6 +8200,7 @@ img2img_interface = gr.Interface(
     additional_inputs_accordion=gr.Accordion(label="StableDiffusion Settings", open=False),
     outputs=[
         gr.Gallery(label="Generated images", elem_id="gallery", columns=[2], rows=[2], object_fit="contain", height="auto"),
+        gr.Gallery(label="Generation process", elem_id="process_gallery", columns=[2], rows=[2], object_fit="contain", height="auto"),
         gr.Textbox(label="Message", type="text")
     ],
     title="NeuroSandboxWebUI - StableDiffusion (img2img)",
