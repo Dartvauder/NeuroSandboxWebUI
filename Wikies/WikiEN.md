@@ -164,8 +164,9 @@
 
 1) Enter your Source Prompt and Source Negative Prompt for image masking
 2) Enter your Target Prompt and Target Negative Prompt for image diff-editing
-3) Set up the model according to the parameters you need
-4) Click the `Submit` button to get the generated image
+3) Upload the initial image
+4) Set up the model according to the parameters you need
+5) Click the `Submit` button to get the generated image
 
 #### blip-diffusion:
 
