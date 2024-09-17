@@ -12,6 +12,9 @@ logging.getLogger("httpx").setLevel(logging.WARNING)
 cache_dir = os.path.join("cache")
 os.makedirs(cache_dir, exist_ok=True)
 os.environ["XDG_CACHE_HOME"] = cache_dir
+temp_dir = os.path.join("temp")
+os.makedirs(temp_dir, exist_ok=True)
+os.environ["TMPDIR"] = temp_dir
 import gradio as gr
 import langdetect
 from datasets import load_dataset, Audio
@@ -102,6 +105,7 @@ GenerationConfig = lazy_import('transformers', 'GenerationConfig')
 
 # Diffusers import
 diffusers = lazy_import('diffusers', '')
+BlipDiffusionPipeline = lazy_import('diffusers.pipelines', 'BlipDiffusionPipeline')
 StableDiffusionPipeline = lazy_import('diffusers', 'StableDiffusionPipeline')
 StableDiffusion3Pipeline = lazy_import('diffusers', 'StableDiffusion3Pipeline')
 StableDiffusionXLPipeline = lazy_import('diffusers', 'StableDiffusionXLPipeline')
@@ -3377,6 +3381,54 @@ def generate_image_diffedit(source_prompt, source_negative_prompt, target_prompt
 
     finally:
         del pipe
+        flush()
+
+
+def generate_image_blip_diffusion(text_prompt_input, negative_prompt, cond_image, cond_subject, tgt_subject,
+                                  num_inference_steps, guidance_scale, height, width, output_format):
+    blip_diffusion_path = os.path.join("inputs", "image", "sd_models", "blip-diff")
+
+    if not os.path.exists(blip_diffusion_path):
+        print("Downloading BlipDiffusion model...")
+        os.makedirs(blip_diffusion_path, exist_ok=True)
+        Repo.clone_from("https://huggingface.co/Salesforce/blipdiffusion", blip_diffusion_path)
+        print("BlipDiffusion model downloaded")
+
+    try:
+        device = "cuda" if torch.cuda.is_available() else "cpu"
+        blip_diffusion_pipe = BlipDiffusionPipeline().BlipDiffusionPipeline.from_pretrained(
+            blip_diffusion_path, torch_dtype=torch.float16
+        ).to(device)
+
+        cond_image = Image.open(cond_image).convert("RGB")
+
+        output = blip_diffusion_pipe(
+            text_prompt_input,
+            cond_image,
+            cond_subject,
+            tgt_subject,
+            guidance_scale=guidance_scale,
+            num_inference_steps=num_inference_steps,
+            negative_prompt=negative_prompt,
+            height=height,
+            width=width,
+        ).images
+
+        today = datetime.now().date()
+        image_dir = os.path.join('outputs', f"BlipDiffusion_{today.strftime('%Y%m%d')}")
+        os.makedirs(image_dir, exist_ok=True)
+        image_filename = f"blip_diffusion_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
+        image_path = os.path.join(image_dir, image_filename)
+
+        output[0].save(image_path, format=output_format.upper())
+
+        return image_path, "Image generated successfully."
+
+    except Exception as e:
+        return None, str(e)
+
+    finally:
+        del blip_diffusion_pipe
         flush()
 
 
@@ -8550,6 +8602,32 @@ diffedit_interface = gr.Interface(
     submit_btn="Generate"
 )
 
+blip_diffusion_interface = gr.Interface(
+    fn=generate_image_blip_diffusion,
+    inputs=[
+        gr.Textbox(label="Prompt"),
+        gr.Textbox(label="Negative Prompt", value=""),
+        gr.Image(label="Conditioning Image", type="filepath"),
+        gr.Textbox(label="Conditioning Subject"),
+        gr.Textbox(label="Target Subject"),
+        gr.Slider(minimum=1, maximum=100, value=30, step=1, label="Inference Steps"),
+        gr.Slider(minimum=0.1, maximum=30.0, value=8, step=0.1, label="Guidance Scale"),
+        gr.Slider(minimum=64, maximum=2048, value=512, step=64, label="Height"),
+        gr.Slider(minimum=64, maximum=2048, value=512, step=64, label="Width"),
+        gr.Radio(choices=["png", "jpeg"], label="Output Format", value="png")
+    ],
+    outputs=[
+        gr.Image(type="filepath", label="Generated Image"),
+        gr.Textbox(label="Message")
+    ],
+    title="NeuroSandboxWebUI - BlipDiffusion",
+    description="This interface allows you to generate images using BlipDiffusion. Upload a conditioning image, provide text prompts and subjects, and customize generation parameters.",
+    allow_flagging="never",
+    clear_btn=None,
+    stop_btn="Stop",
+    submit_btn="Generate"
+)
+
 animatediff_interface = gr.Interface(
     fn=generate_image_animatediff,
     inputs=[
@@ -10301,11 +10379,11 @@ with gr.TabbedInterface(
         gr.TabbedInterface(
             [
                 gr.TabbedInterface(
-                    [txt2img_interface, img2img_interface, depth2img_interface, marigold_interface, pix2pix_interface, controlnet_interface, latent_upscale_interface, supir_upscale_interface, sdxl_refiner_interface, inpaint_interface, outpaint_interface, gligen_interface, diffedit_interface, animatediff_interface, hotshotxl_interface, video_interface, ldm3d_interface,
+                    [txt2img_interface, img2img_interface, depth2img_interface, marigold_interface, pix2pix_interface, controlnet_interface, latent_upscale_interface, supir_upscale_interface, sdxl_refiner_interface, inpaint_interface, outpaint_interface, gligen_interface, diffedit_interface, blip_diffusion_interface, animatediff_interface, hotshotxl_interface, video_interface, ldm3d_interface,
                      gr.TabbedInterface([sd3_txt2img_interface, sd3_img2img_interface, sd3_controlnet_interface, sd3_inpaint_interface],
                                         tab_names=["txt2img", "img2img", "controlnet", "inpaint"]),
                      cascade_interface, t2i_ip_adapter_interface, ip_adapter_faceid_interface, riffusion_interface],
-                    tab_names=["txt2img", "img2img", "depth2img", "marigold", "pix2pix", "controlnet", "upscale(latent)", "upscale(SUPIR)", "refiner", "inpaint", "outpaint", "gligen", "diffedit", "animatediff", "hotshotxl", "video", "ldm3d", "sd3", "cascade", "t2i-ip-adapter", "ip-adapter-faceid", "riffusion"]
+                    tab_names=["txt2img", "img2img", "depth2img", "marigold", "pix2pix", "controlnet", "upscale(latent)", "upscale(SUPIR)", "refiner", "inpaint", "outpaint", "gligen", "diffedit", "blip-diffusion", "animatediff", "hotshotxl", "video", "ldm3d", "sd3", "cascade", "t2i-ip-adapter", "ip-adapter-faceid", "riffusion"]
                 ),
                 kandinsky_interface, flux_interface, hunyuandit_interface, lumina_interface, kolors_interface, auraflow_interface, wurstchen_interface, deepfloyd_if_interface, pixart_interface, playgroundv2_interface
             ],
