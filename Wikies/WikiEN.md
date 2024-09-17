@@ -50,7 +50,7 @@
 
 # Image:
 
-### StableDiffusion - has twenty three sub-tabs:
+### StableDiffusion - has twenty four sub-tabs:
 
 #### txt2img:
 
@@ -162,9 +162,19 @@
 
 #### diffedit:
 
-1) Enter your Source Prompt and Source Negative Prompt for image masking (+ and - for prompt weighting)
-2) Enter your Target Prompt and Target Negative Prompt for image diffediting (+ and - for prompt weighting)
-3) Click the `Submit` button to get the generated image
+1) Enter your Source Prompt and Source Negative Prompt for image masking
+2) Enter your Target Prompt and Target Negative Prompt for image diff-editing
+3) Upload the initial image
+4) Set up the model according to the parameters you need
+5) Click the `Submit` button to get the generated image
+
+#### blip-diffusion:
+
+1) Enter your Prompt
+2) Upload the initial image
+3) Enter your Conditioning and Target Subjects
+4) Set up the model according to the parameters you need
+5) Click the `Submit` button to get the generated image
 
 #### animatediff:
 
@@ -478,7 +488,7 @@
 * LLM models can be taken from [HuggingFace](https://huggingface.co/models) or from ModelDownloader inside interface 
 * StableDiffusion, vae, inpaint, embedding and lora models can be taken from [CivitAI](https://civitai.com/models) or from ModelDownloader inside interface
 * RVC models can be taken from [VoiceModels](https://voice-models.com)
-* StableAudio, AudioCraft, AudioLDM 2, TTS, Whisper, MMS, SeamlessM4Tv2, Wav2Lip, LivePortrait, SunoBark, MoonDream2, Upscalers (Latent and Real-ESRGAN), Refiner, GLIGEN, DiffEdit, Depth, Marigold, Pix2Pix, Controlnet, AnimateDiff, HotShot-XL, Videos, LDM3D, SD3, Cascade, T2I-IP-ADAPTER, IP-Adapter-FaceID, Riffusion, Rembg, Roop, CodeFormer, DDColor, PixelOE, Real-ESRGAN, StableFast3D, Shap-E, SV34D, Zero123Plus, UVR, Demucs, Kandinsky, Flux, HunyuanDiT, Lumina-T2X, Kolors, AuraFlow, AuraSR, Würstchen, DeepFloydIF, PixArt, PlaygroundV2.5, ModelScope, ZeroScope 2, CogVideoX, MagicPrompt, Latte and Multiband diffusion models are downloads automatically in *inputs* folder when are they used 
+* StableAudio, AudioCraft, AudioLDM 2, TTS, Whisper, MMS, SeamlessM4Tv2, Wav2Lip, LivePortrait, SunoBark, MoonDream2, Upscalers (Latent and Real-ESRGAN), Refiner, GLIGEN, DiffEdit, BLIP-Diffusion, Depth, Marigold, Pix2Pix, Controlnet, AnimateDiff, HotShot-XL, Videos, LDM3D, SD3, Cascade, T2I-IP-ADAPTER, IP-Adapter-FaceID, Riffusion, Rembg, Roop, CodeFormer, DDColor, PixelOE, Real-ESRGAN, StableFast3D, Shap-E, SV34D, Zero123Plus, UVR, Demucs, Kandinsky, Flux, HunyuanDiT, Lumina-T2X, Kolors, AuraFlow, AuraSR, Würstchen, DeepFloydIF, PixArt, PlaygroundV2.5, ModelScope, ZeroScope 2, CogVideoX, MagicPrompt, Latte and Multiband diffusion models are downloads automatically in *inputs* folder when are they used 
 * You can take voices anywhere. Record yours or take a recording from the Internet. Or just use those that are already in the project. The main thing is that it is pre-processed!
 
 ## Known Bugs:
