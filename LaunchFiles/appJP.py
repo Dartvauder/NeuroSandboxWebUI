@@ -1,1 +1,0 @@
-print("Sorry, not available yet. Coming soon. Please, use appEN.py")
