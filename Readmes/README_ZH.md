@@ -34,7 +34,7 @@
 * 支持Transformers和llama.cpp模型（LLM）
 * 支持diffusers和safetensors模型（StableDiffusion）- txt2img、img2img、depth2img、marigold、pix2pix、controlnet、upscale（latent）、upscale（SUPIR）、refiner、inpaint、outpaint、gligen、diffedit、blip-diffusion、animatediff、hotshot-xl、video、ldm3d、sd3、cascade、t2i-ip-adapter、ip-adapter-faceid和riffusion标签
 * 支持stable-diffusion-cpp模型用于FLUX
-* 支持额外的图像生成模型：Kandinsky（txt2img、img2img、inpaint）、Flux（支持LoRA）、HunyuanDiT（txt2img、controlnet）、Lumina-T2X、Kolors（支持LoRA的txt2img、img2img、ip-adapter-plus）、AuraFlow（支持LoRA和AuraSR）、Würstchen、DeepFloydIF（txt2img、img2img、inpaint）、PixArt和PlaygroundV2.5
+* 支持额外的图像生成模型：Kandinsky（txt2img、img2img、inpaint）、Flux (txt2img 支持 cpp quantize 和 LoRA, img2img, inpaint, controlnet) 、HunyuanDiT（txt2img、controlnet）、Lumina-T2X、Kolors（支持LoRA的txt2img、img2img、ip-adapter-plus）、AuraFlow（支持LoRA和AuraSR）、Würstchen、DeepFloydIF（txt2img、img2img、inpaint）、PixArt和PlaygroundV2.5
 * 支持使用Rembg、CodeFormer、PixelOE、DDColor、DownScale、格式转换器、换脸（Roop）和放大（Real-ESRGAN）模型进行图像、视频和音频的额外处理
 * 支持StableAudio
 * 支持AudioCraft（模型：musicgen、audiogen和magnet）
