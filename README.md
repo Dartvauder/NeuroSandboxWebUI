@@ -2,7 +2,7 @@
 
 # ![main](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/4ea0d891-8979-45ad-b052-626c41ae991a)
 * Work in progress but stable!
-* English | [عربي](/Readmes/README_AR.md) | [Deutsche](/Readmes/README_DE.md) | [Español](/Readmes/README_ES.md) | [Français](/Readmes/README_FR.md) | [日本語](/Readmes/README_JP.md) | [Русский](/Readmes/README_RU.md) | [漢語](/Readmes/README_ZH.md) | [Português](/Readmes/README_PT.md) | [हिंदी](/Readmes/README_HI.md) | [Italiano](/Readmes/README_IT.md) | [韓國語](/Readmes/README_KO.md) | [Polski](/Readmes/README_PL.md) | [Türkçe](/Readmes/README_TR.md)
+* English | [Русский](/Readmes/README_RU.md) | [漢語](/Readmes/README_ZH.md) 
 
 ## Description:
 
@@ -22,7 +22,7 @@ The goal of the project - to create the easiest possible application to use neur
 
 ### Extras: <img width="1118" alt="6" src="https://github.com/user-attachments/assets/c2f3fbb0-a07b-446f-a166-e995c7722463">
 
-### Interface: <img width="1124" alt="7" src="https://github.com/user-attachments/assets/673cb2b1-57ac-4b1d-92aa-61066832ecdb">
+### Interface: <img width="1117" alt="7" src="https://github.com/user-attachments/assets/b3b85000-5dba-4d16-a96b-479c561b1485">
 
 ## Features:
 
@@ -30,6 +30,7 @@ The goal of the project - to create the easiest possible application to use neur
 * You can use the application via your mobile device in localhost (Via IPv4) or anywhere online (Via Share)
 * Flexible and optimized interface (By Gradio)
 * Debug logging to logs from `Install` and `Update` files
+* Available in three languages
 * Support for Transformers and llama.cpp models (LLM)
 * Support for diffusers and safetensors models (StableDiffusion) - txt2img, img2img, depth2img, marigold, pix2pix, controlnet, upscale (latent), upscale (SUPIR), refiner, inpaint, outpaint, gligen, diffedit, blip-diffusion, animatediff, hotshot-xl, video, ldm3d, sd3, cascade, t2i-ip-adapter, ip-adapter-faceid and riffusion tabs
 * Support for stable-diffusion-cpp models for FLUX

@@ -1,6 +1,4 @@
-# Welcome to wiki!
-
-## How to use:
+# How to use:
 
 #### Interface has forty one sub-tabs (some with their own sub-tabs) in seven main tabs (Text, Image, Video, 3D, Audio, Extras and Interface): LLM, TTS-STT, MMS, SeamlessM4Tv2, LibreTranslate, StableDiffusion, Kandinsky, Flux, HunyuanDiT, Lumina-T2X, Kolors, AuraFlow, Würstchen, DeepFloydIF, PixArt, PlaygroundV2.5, Wav2Lip, LivePortrait, ModelScope, ZeroScope 2, CogVideoX, Latte, StableFast3D, Shap-E, SV34D, Zero123Plus, StableAudio, AudioCraft, AudioLDM 2, SunoBark, RVC, UVR, Demucs, Upscale (Real-ESRGAN), FaceSwap, MetaData-Info, Wiki, Gallery, ModelDownloader, Settings and System. Select the one you need and follow the instructions below 
 
