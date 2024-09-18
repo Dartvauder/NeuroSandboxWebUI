@@ -38,7 +38,7 @@ import random
 import tempfile
 import shutil
 from datetime import datetime
-from diffusers.utils import load_image, export_to_video, export_to_gif, export_to_ply, pt_to_pil
+from diffusers.utils import load_image, load_video, export_to_video, export_to_gif, export_to_ply, pt_to_pil
 from compel import Compel, ReturnedEmbeddingsType
 import trimesh
 from git import Repo
@@ -163,6 +163,9 @@ IFInpaintingSuperResolutionPipeline = lazy_import('diffusers', 'IFInpaintingSupe
 PixArtAlphaPipeline = lazy_import('diffusers', 'PixArtAlphaPipeline')
 PixArtSigmaPipeline = lazy_import('diffusers', 'PixArtSigmaPipeline')
 CogVideoXPipeline = lazy_import('diffusers', 'CogVideoXPipeline')
+CogVideoXDPMScheduler = lazy_import('diffusers', 'CogVideoXDPMScheduler')
+CogVideoXVideoToVideoPipeline = lazy_import('diffusers', 'CogVideoXVideoToVideoPipeline')
+CogVideoXImageToVideoPipeline = lazy_import('diffusers', 'CogVideoXImageToVideoPipeline')
 LattePipeline = lazy_import('diffusers', 'LattePipeline')
 KolorsPipeline = lazy_import('diffusers', 'KolorsPipeline')
 AuraFlowPipeline = lazy_import('diffusers', 'AuraFlowPipeline')
@@ -6534,7 +6537,7 @@ def generate_video_zeroscope2(prompt, seed, num_inference_steps, width, height, 
             flush()
 
 
-def generate_video_cogvideox(prompt, negative_prompt, cogvideox_version, seed, num_inference_steps, guidance_scale, height, width, num_frames, fps, output_format):
+def generate_video_cogvideox_text2video(prompt, negative_prompt, cogvideox_version, seed, num_inference_steps, guidance_scale, height, width, num_frames, fps, output_format):
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -6591,6 +6594,102 @@ def generate_video_cogvideox(prompt, negative_prompt, cogvideox_version, seed, n
 
         export_to_video(video, video_path, fps=fps)
         add_metadata_to_file(video_path, metadata)
+
+        return video_path, f"Video generated successfully. Seed used: {seed}"
+
+    except Exception as e:
+        return None, str(e)
+
+    finally:
+        del pipe
+        flush()
+
+
+def generate_video_cogvideox_image2video(prompt, negative_prompt, init_image, seed, guidance_scale, num_inference_steps, fps, output_format):
+
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+
+    if seed == "" or seed is None:
+        seed = random.randint(0, 2 ** 32 - 1)
+    else:
+        seed = int(seed)
+    generator = torch.Generator(device).manual_seed(seed)
+
+    cogvideox_i2v_model_path = os.path.join("inputs", "video", "cogvideox-i2v")
+
+    if not os.path.exists(cogvideox_i2v_model_path):
+        print(f"Downloading CogVideoX I2V model...")
+        os.makedirs(cogvideox_i2v_model_path, exist_ok=True)
+        Repo.clone_from("https://huggingface.co/THUDM/CogVideoX-5b-I2V", cogvideox_i2v_model_path)
+        print(f"CogVideoX I2V model downloaded")
+
+    try:
+        pipe = CogVideoXImageToVideoPipeline().CogVideoXImageToVideoPipeline.from_pretrained(cogvideox_i2v_model_path, torch_dtype=torch.bfloat16)
+        pipe.to(device)
+
+        image = load_image(init_image)
+        video = pipe(image=image, prompt=prompt, negative_prompt=negative_prompt, generator=generator,
+                     guidance_scale=guidance_scale, num_inference_steps=num_inference_steps, use_dynamic_cfg=True)
+
+        today = datetime.now().date()
+        video_dir = os.path.join('outputs', f"CogVideoX_{today.strftime('%Y%m%d')}")
+        os.makedirs(video_dir, exist_ok=True)
+
+        video_filename = f"cogvideox_i2v_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
+        video_path = os.path.join(video_dir, video_filename)
+        export_to_video(video.frames[0], video_path, fps=fps)
+
+        return video_path, f"Video generated successfully. Seed used: {seed}"
+
+    except Exception as e:
+        return None, str(e)
+
+    finally:
+        del pipe
+        flush()
+
+
+def generate_video_cogvideox_video2video(prompt, negative_prompt, init_video, cogvideox_version, seed, strength, guidance_scale, num_inference_steps, fps, output_format):
+
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+
+    if seed == "" or seed is None:
+        seed = random.randint(0, 2 ** 32 - 1)
+    else:
+        seed = int(seed)
+    generator = torch.Generator(device).manual_seed(seed)
+
+    cogvideox_model_path = os.path.join("inputs", "video", "cogvideox", cogvideox_version)
+
+    if not os.path.exists(cogvideox_model_path):
+        print(f"Downloading {cogvideox_version} model...")
+        os.makedirs(cogvideox_model_path, exist_ok=True)
+        Repo.clone_from(f"https://huggingface.co/THUDM/{cogvideox_version}", cogvideox_model_path)
+        print(f"{cogvideox_version} model downloaded")
+
+    try:
+        pipe = CogVideoXVideoToVideoPipeline().CogVideoXVideoToVideoPipeline.from_pretrained(cogvideox_model_path, torch_dtype=torch.bfloat16)
+        pipe.to(device)
+        pipe.scheduler = CogVideoXDPMScheduler().CogVideoXDPMScheduler.from_config(pipe.scheduler.config)
+
+        input_video = load_video(init_video)
+        video = pipe(
+            video=input_video,
+            prompt=prompt,
+            negative_prompt=negative_prompt,
+            strength=strength,
+            guidance_scale=guidance_scale,
+            num_inference_steps=num_inference_steps,
+            generator=generator
+        ).frames[0]
+
+        today = datetime.now().date()
+        video_dir = os.path.join('outputs', f"CogVideoX_{today.strftime('%Y%m%d')}")
+        os.makedirs(video_dir, exist_ok=True)
+
+        video_filename = f"cogvideox_v2v_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
+        video_path = os.path.join(video_dir, video_filename)
+        export_to_video(video, video_path, fps=fps)
 
         return video_path, f"Video generated successfully. Seed used: {seed}"
 
@@ -9716,8 +9815,8 @@ zeroscope2_interface = gr.Interface(
     submit_btn=_("Generate", lang)
 )
 
-cogvideox_interface = gr.Interface(
-    fn=generate_video_cogvideox,
+cogvideox_text2video_interface = gr.Interface(
+    fn=generate_video_cogvideox_text2video,
     inputs=[
         gr.Textbox(label=_("Enter your prompt", lang)),
         gr.Textbox(label=_("Enter your negative prompt", lang), value=""),
@@ -9733,19 +9832,84 @@ cogvideox_interface = gr.Interface(
         gr.Slider(minimum=1, maximum=60, value=10, step=1, label=_("FPS", lang)),
         gr.Radio(choices=["mp4", "mov", "avi"], label=_("Select output format", lang), value="mp4", interactive=True)
     ],
-    additional_inputs_accordion=gr.Accordion(label=_("CogVideoX Settings", lang), open=False),
+    additional_inputs_accordion=gr.Accordion(label=_("CogVideoX T2V Settings", lang), open=False),
     outputs=[
         gr.Video(label=_("Generated video", lang)),
         gr.Textbox(label=_("Message", lang), type="text")
     ],
-    title=_("NeuroSandboxWebUI - CogVideoX", lang),
-    description=_("This user interface allows you to generate videos using CogVideoX. "
+    title=_("NeuroSandboxWebUI - CogVideoX (Text2Video)", lang),
+    description=_("This user interface allows you to generate videos from text using CogVideoX (Text2Video). "
                 "Enter a prompt and customize the generation settings. "
                 "Try it and see what happens!", lang),
     allow_flagging="never",
     clear_btn=None,
     stop_btn=_("Stop", lang),
     submit_btn=_("Generate", lang)
+)
+
+cogvideox_image2video_interface = gr.Interface(
+    fn=generate_video_cogvideox_image2video,
+    inputs=[
+        gr.Textbox(label=_("Enter your prompt", lang)),
+        gr.Textbox(label=_("Enter your negative prompt", lang), value=""),
+        gr.Image(label=_("Initial image", lang), type="filepath"),
+        gr.Textbox(label=_("Seed (optional)", lang), value="")
+    ],
+    additional_inputs=[
+        gr.Slider(minimum=1.0, maximum=20.0, value=6.0, step=0.1, label=_("Guidance Scale", lang)),
+        gr.Slider(minimum=1, maximum=100, value=50, step=1, label=_("Steps", lang)),
+        gr.Slider(minimum=1, maximum=60, value=8, step=1, label=_("FPS", lang)),
+        gr.Radio(choices=["mp4", "mov", "avi"], label=_("Select output format", lang), value="mp4", interactive=True)
+    ],
+    additional_inputs_accordion=gr.Accordion(label=_("CogVideoX I2V Settings", lang), open=False),
+    outputs=[
+        gr.Video(label=_("Generated video", lang)),
+        gr.Textbox(label=_("Message", lang), type="text")
+    ],
+    title=_("NeuroSandboxWebUI - CogVideoX (Image2Video)", lang),
+    description=_("This user interface allows you to generate videos from images using CogVideoX (Image2Video). "
+                "Upload an image, enter a prompt, and customize the generation settings. "
+                "Try it and see what happens!", lang),
+    allow_flagging="never",
+    clear_btn=None,
+    stop_btn=_("Stop", lang),
+    submit_btn=_("Generate", lang)
+)
+
+cogvideox_video2video_interface = gr.Interface(
+    fn=generate_video_cogvideox_video2video,
+    inputs=[
+        gr.Textbox(label=_("Enter your prompt", lang)),
+        gr.Textbox(label=_("Enter your negative prompt", lang), value=""),
+        gr.Video(label=_("Input video", lang)),
+        gr.Radio(choices=["CogVideoX-2B", "CogVideoX-5B"], label=_("Select CogVideoX model version", lang), value="CogVideoX-5B"),
+        gr.Textbox(label=_("Seed (optional)", lang), value="")
+    ],
+    additional_inputs=[
+        gr.Slider(minimum=0.0, maximum=1.0, value=0.8, step=0.1, label=_("Strength", lang)),
+        gr.Slider(minimum=1.0, maximum=20.0, value=6.0, step=0.1, label=_("Guidance Scale", lang)),
+        gr.Slider(minimum=1, maximum=100, value=50, step=1, label=_("Steps", lang)),
+        gr.Slider(minimum=1, maximum=60, value=8, step=1, label=_("FPS", lang)),
+        gr.Radio(choices=["mp4", "mov", "avi"], label=_("Select output format", lang), value="mp4", interactive=True)
+    ],
+    additional_inputs_accordion=gr.Accordion(label=_("CogVideoX V2V Settings", lang), open=False),
+    outputs=[
+        gr.Video(label=_("Generated video", lang)),
+        gr.Textbox(label=_("Message", lang), type="text")
+    ],
+    title=_("NeuroSandboxWebUI - CogVideoX (Video2Video)", lang),
+    description=_("This user interface allows you to generate videos from videos using CogVideoX (Video2Video). "
+                "Upload a video, enter a prompt, and customize the generation settings. "
+                "Try it and see what happens!", lang),
+    allow_flagging="never",
+    clear_btn=None,
+    stop_btn=_("Stop", lang),
+    submit_btn=_("Generate", lang)
+)
+
+cogvideox_interface = gr.TabbedInterface(
+    [cogvideox_text2video_interface, cogvideox_image2video_interface, cogvideox_video2video_interface],
+    tab_names=[_("Text2Video", lang), _("Image2Video", lang), _("Video2Video", lang)]
 )
 
 latte_interface = gr.Interface(

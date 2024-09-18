@@ -339,7 +339,7 @@
 2) Set up the model according to the parameters you need
 3) Click `Submit` to get the generated video
 
-### CogVideoX:
+### CogVideoX (text2video, image2video, video2video):
 
 1) Enter your prompt
 2) Set up the model according to the parameters you need

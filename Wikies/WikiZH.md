@@ -339,7 +339,7 @@
 2) 根据您需要的参数设置模型
 3) 点击`Submit`获取生成的视频
 
-### CogVideoX：
+### CogVideoX (text2video, image2video, video2video):
 
 1) 输入您的提示
 2) 根据您需要的参数设置模型
