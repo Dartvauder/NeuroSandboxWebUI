@@ -142,6 +142,10 @@ AudioLDM2Pipeline = lazy_import('diffusers', 'AudioLDM2Pipeline')
 StableDiffusionInstructPix2PixPipeline = lazy_import('diffusers', 'StableDiffusionInstructPix2PixPipeline')
 StableDiffusionLDM3DPipeline = lazy_import('diffusers', 'StableDiffusionLDM3DPipeline')
 FluxPipeline = lazy_import('diffusers', 'FluxPipeline')
+FluxImg2ImgPipeline = lazy_import('diffusers', 'FluxImg2ImgPipeline')
+FluxInpaintPipeline = lazy_import('diffusers', 'FluxInpaintPipeline')
+FluxControlNetPipeline = lazy_import('diffusers', 'FluxControlNetPipeline')
+FluxControlNetModel = lazy_import('diffusers', 'FluxControlNetModel')
 KandinskyPipeline = lazy_import('diffusers', 'KandinskyPipeline')
 KandinskyPriorPipeline = lazy_import('diffusers', 'KandinskyPriorPipeline')
 KandinskyV22Pipeline = lazy_import('diffusers', 'KandinskyV22Pipeline')
@@ -4972,7 +4976,7 @@ def generate_image_kandinsky_inpaint(prompt, negative_prompt, init_image, mask_i
         flush()
 
 
-def generate_image_flux(prompt, model_name, quantize_model_name, enable_quantize, seed, lora_model_names, lora_scales, guidance_scale, height, width, num_inference_steps, max_sequence_length, output_format):
+def generate_image_flux_txt2img(prompt, model_name, quantize_model_name, enable_quantize, seed, lora_model_names, lora_scales, guidance_scale, height, width, num_inference_steps, max_sequence_length, output_format):
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -5093,6 +5097,216 @@ def generate_image_flux(prompt, model_name, quantize_model_name, enable_quantize
             del stable_diffusion
         else:
             del pipe
+        flush()
+
+
+def generate_image_flux_img2img(prompt, init_image, model_name, num_inference_steps, strength, guidance_scale, width, height, max_sequence_length,
+                                seed, output_format):
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+
+    if seed == "" or seed is None:
+        seed = random.randint(0, 2 ** 32 - 1)
+    else:
+        seed = int(seed)
+    generator = torch.Generator(device).manual_seed(seed)
+
+    flux_model_path = os.path.join("inputs", "image", "flux", model_name)
+
+    if not os.path.exists(flux_model_path):
+        print(f"Downloading Flux {model_name} model...")
+        os.makedirs(flux_model_path, exist_ok=True)
+        Repo.clone_from(f"https://huggingface.co/black-forest-labs/{model_name}", flux_model_path)
+        print(f"Flux {model_name} model downloaded")
+
+    try:
+        pipe = FluxImg2ImgPipeline().FluxImg2ImgPipeline.from_pretrained(flux_model_path, torch_dtype=torch.bfloat16)
+        pipe = pipe.to(device)
+
+        init_image = Image.open(init_image).convert("RGB")
+        init_image = init_image.resize((width, height))
+
+        image = pipe(
+            prompt=prompt,
+            image=init_image,
+            num_inference_steps=num_inference_steps,
+            strength=strength,
+            guidance_scale=guidance_scale,
+            generator=generator,
+            max_sequence_length=max_sequence_length,
+        ).images[0]
+
+        today = datetime.now().date()
+        image_dir = os.path.join('outputs', f"Flux_{today.strftime('%Y%m%d')}")
+        os.makedirs(image_dir, exist_ok=True)
+        image_filename = f"flux_img2img_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
+        image_path = os.path.join(image_dir, image_filename)
+
+        metadata = {
+            "prompt": prompt,
+            "model_name": model_name,
+            "num_inference_steps": num_inference_steps,
+            "strength": strength,
+            "guidance_scale": guidance_scale,
+            "max_sequence_length": max_sequence_length,
+            "seed": seed,
+            "model": "Flux"
+        }
+
+        image.save(image_path, format=output_format.upper())
+        add_metadata_to_file(image_path, metadata)
+
+        return image_path, f"Image generated successfully. Seed used: {seed}"
+
+    except Exception as e:
+        return None, str(e)
+
+    finally:
+        del pipe
+        flush()
+
+
+def generate_image_flux_inpaint(prompt, init_image, mask_image, model_name, num_inference_steps, strength, guidance_scale,
+                                max_sequence_length, seed, output_format):
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+
+    if seed == "" or seed is None:
+        seed = random.randint(0, 2 ** 32 - 1)
+    else:
+        seed = int(seed)
+    generator = torch.Generator(device).manual_seed(seed)
+
+    flux_model_path = os.path.join("inputs", "image", "flux", model_name)
+
+    if not os.path.exists(flux_model_path):
+        print(f"Downloading Flux {model_name} model...")
+        os.makedirs(flux_model_path, exist_ok=True)
+        Repo.clone_from(f"https://huggingface.co/black-forest-labs/{model_name}", flux_model_path)
+        print(f"Flux {model_name} model downloaded")
+
+    try:
+        pipe = FluxInpaintPipeline().FluxInpaintPipeline.from_pretrained(flux_model_path, torch_dtype=torch.bfloat16)
+        pipe = pipe.to(device)
+
+        init_image = Image.open(init_image).convert("RGB")
+        mask_image = Image.open(mask_image).convert("L")
+
+        image = pipe(
+            prompt=prompt,
+            image=init_image,
+            mask_image=mask_image,
+            num_inference_steps=num_inference_steps,
+            strength=strength,
+            guidance_scale=guidance_scale,
+            generator=generator,
+            max_sequence_length=max_sequence_length,
+        ).images[0]
+
+        today = datetime.now().date()
+        image_dir = os.path.join('outputs', f"Flux_{today.strftime('%Y%m%d')}")
+        os.makedirs(image_dir, exist_ok=True)
+        image_filename = f"flux_inpaint_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
+        image_path = os.path.join(image_dir, image_filename)
+
+        metadata = {
+            "prompt": prompt,
+            "model_name": model_name,
+            "num_inference_steps": num_inference_steps,
+            "strength": strength,
+            "guidance_scale": guidance_scale,
+            "max_sequence_length": max_sequence_length,
+            "seed": seed,
+            "model": "Flux"
+        }
+
+        image.save(image_path, format=output_format.upper())
+        add_metadata_to_file(image_path, metadata)
+
+        return image_path, f"Image generated successfully. Seed used: {seed}"
+
+    except Exception as e:
+        return None, str(e)
+
+    finally:
+        del pipe
+        flush()
+
+
+def generate_image_flux_controlnet(prompt, init_image, base_model_name, control_mode, controlnet_conditioning_scale, num_inference_steps,
+                                   guidance_scale, max_sequence_length, seed, output_format):
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+
+    if seed == "" or seed is None:
+        seed = random.randint(0, 2 ** 32 - 1)
+    else:
+        seed = int(seed)
+    generator = torch.Generator(device).manual_seed(seed)
+
+    base_model_path = os.path.join("inputs", "image", "flux", base_model_name)
+    controlnet_model_path = os.path.join("inputs", "image", "flux-controlnet")
+
+    if not os.path.exists(base_model_path):
+        print(f"Downloading Flux {base_model_name} model...")
+        os.makedirs(base_model_path, exist_ok=True)
+        Repo.clone_from(f"https://huggingface.co/black-forest-labs/{base_model_name}", base_model_path)
+        print(f"Flux {base_model_name} model downloaded")
+
+    if not os.path.exists(controlnet_model_path):
+        print("Downloading Flux ControlNet model...")
+        os.makedirs(controlnet_model_path, exist_ok=True)
+        Repo.clone_from("https://huggingface.co/InstantX/FLUX.1-dev-Controlnet-Union", controlnet_model_path)
+        print("Flux ControlNet model downloaded")
+
+    try:
+        controlnet = FluxControlNetModel().FluxControlNetModel.from_pretrained(controlnet_model_path, torch_dtype=torch.bfloat16)
+        pipe = FluxControlNetPipeline().FluxControlNetPipeline.from_pretrained(base_model_path, controlnet=controlnet,
+                                                      torch_dtype=torch.bfloat16)
+        pipe = pipe.to(device)
+
+        init_image = Image.open(init_image).convert("RGB")
+        width, height = init_image.size
+
+        image = pipe(
+            prompt=prompt,
+            control_image=init_image,
+            control_mode=control_mode,
+            width=width,
+            height=height,
+            controlnet_conditioning_scale=controlnet_conditioning_scale,
+            num_inference_steps=num_inference_steps,
+            guidance_scale=guidance_scale,
+            generator=generator,
+            max_sequence_length=max_sequence_length,
+        ).images[0]
+
+        today = datetime.now().date()
+        image_dir = os.path.join('outputs', f"Flux_{today.strftime('%Y%m%d')}")
+        os.makedirs(image_dir, exist_ok=True)
+        image_filename = f"flux_controlnet_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
+        image_path = os.path.join(image_dir, image_filename)
+
+        metadata = {
+            "prompt": prompt,
+            "base_model_name": base_model_name,
+            "control_mode": control_mode,
+            "controlnet_conditioning_scale": controlnet_conditioning_scale,
+            "num_inference_steps": num_inference_steps,
+            "guidance_scale": guidance_scale,
+            "max_sequence_length": max_sequence_length,
+            "seed": seed,
+            "model": "Flux ControlNet"
+        }
+
+        image.save(image_path, format=output_format.upper())
+        add_metadata_to_file(image_path, metadata)
+
+        return image_path, f"Image generated successfully. Seed used: {seed}"
+
+    except Exception as e:
+        return None, str(e)
+
+    finally:
+        del pipe
+        del controlnet
         flush()
 
 
@@ -9254,8 +9468,8 @@ kandinsky_interface = gr.TabbedInterface(
     tab_names=[_("txt2img", lang), _("img2img", lang), _("inpaint", lang)]
 )
 
-flux_interface = gr.Interface(
-    fn=generate_image_flux,
+flux_txt2img_interface = gr.Interface(
+    fn=generate_image_flux_txt2img,
     inputs=[
         gr.Textbox(label=_("Enter your prompt", lang)),
         gr.Dropdown(choices=["FLUX.1-schnell", "FLUX.1-dev"], label=_("Select Flux model", lang), value="FLUX.1-schnell"),
@@ -9278,7 +9492,7 @@ flux_interface = gr.Interface(
         gr.Image(type="filepath", label=_("Generated image", lang)),
         gr.Textbox(label=_("Message", lang), type="text")
     ],
-    title=_("NeuroSandboxWebUI - Flux", lang),
+    title=_("NeuroSandboxWebUI - Flux (txt2img)", lang),
     description=_("This user interface allows you to generate images using Flux models. "
                 "You can select between Schnell and Dev models, and customize the generation settings. "
                 "Try it and see what happens!", lang),
@@ -9286,6 +9500,97 @@ flux_interface = gr.Interface(
     clear_btn=None,
     stop_btn=_("Stop", lang),
     submit_btn=_("Generate", lang)
+)
+
+flux_img2img_interface = gr.Interface(
+    fn=generate_image_flux_img2img,
+    inputs=[
+        gr.Textbox(label=_("Enter your prompt", lang)),
+        gr.Image(label=_("Initial image", lang), type="filepath"),
+        gr.Dropdown(choices=["FLUX.1-schnell", "FLUX.1-dev"], label=_("Select Flux model", lang),
+                    value="FLUX.1-schnell"),
+        gr.Slider(minimum=1, maximum=100, value=4, step=1, label=_("Steps", lang)),
+        gr.Slider(minimum=0.0, maximum=1.0, value=0.95, step=0.01, label=_("Strength", lang)),
+        gr.Slider(minimum=0.0, maximum=10.0, value=0.0, step=0.1, label=_("Guidance Scale", lang)),
+        gr.Slider(minimum=1, maximum=1024, value=256, step=1, label=_("Max Sequence Length", lang)),
+        gr.Textbox(label=_("Seed (optional)", lang), value=""),
+        gr.Radio(choices=["png", "jpeg"], label=_("Select output format", lang), value="png", interactive=True)
+    ],
+    outputs=[
+        gr.Image(type="filepath", label=_("Generated image", lang)),
+        gr.Textbox(label=_("Message", lang), type="text")
+    ],
+    title=_("NeuroSandboxWebUI - Flux (img2img)", lang),
+    description=_("This user interface allows you to generate images from existing images using Flux models. "
+                "Upload an initial image, enter a prompt, and customize the generation settings. "
+                "Try it and see what happens!", lang),
+    allow_flagging="never",
+    clear_btn=None,
+    stop_btn=_("Stop", lang),
+    submit_btn=_("Generate", lang)
+)
+
+flux_inpaint_interface = gr.Interface(
+    fn=generate_image_flux_inpaint,
+    inputs=[
+        gr.Textbox(label=_("Enter your prompt", lang)),
+        gr.Image(label=_("Initial image", lang), type="filepath"),
+        gr.ImageEditor(label=_("Mask image", lang), type="filepath"),
+        gr.Dropdown(choices=["FLUX.1-schnell", "FLUX.1-dev"], label=_("Select Flux model", lang),
+                    value="FLUX.1-schnell"),
+        gr.Slider(minimum=1, maximum=100, value=4, step=1, label=_("Steps", lang)),
+        gr.Slider(minimum=0.0, maximum=1.0, value=0.95, step=0.01, label=_("Strength", lang)),
+        gr.Slider(minimum=0.0, maximum=10.0, value=0.0, step=0.1, label=_("Guidance Scale", lang)),
+        gr.Slider(minimum=1, maximum=1024, value=256, step=1, label=_("Max Sequence Length", lang)),
+        gr.Textbox(label=_("Seed (optional)", lang), value=""),
+        gr.Radio(choices=["png", "jpeg"], label=_("Select output format", lang), value="png", interactive=True)
+    ],
+    outputs=[
+        gr.Image(type="filepath", label=_("Generated image", lang)),
+        gr.Textbox(label=_("Message", lang), type="text")
+    ],
+    title=_("NeuroSandboxWebUI - Flux (inpaint)", lang),
+    description=_("This user interface allows you to perform inpainting using Flux models. "
+                "Upload an initial image, draw a mask, enter a prompt, and customize the generation settings. "
+                "Try it and see what happens!", lang),
+    allow_flagging="never",
+    clear_btn=None,
+    stop_btn=_("Stop", lang),
+    submit_btn=_("Generate", lang)
+)
+
+flux_controlnet_interface = gr.Interface(
+    fn=generate_image_flux_controlnet,
+    inputs=[
+        gr.Textbox(label=_("Enter your prompt", lang)),
+        gr.Image(label=_("Control image", lang), type="filepath"),
+        gr.Dropdown(choices=["FLUX.1-schnell", "FLUX.1-dev"], label=_("Select Flux base model", lang),
+                    value="FLUX.1-dev"),
+        gr.Slider(minimum=0, maximum=6, value=0, step=1, label=_("Control Mode", lang)),
+        gr.Slider(minimum=0.0, maximum=1.0, value=0.5, step=0.01, label=_("ControlNet Conditioning Scale", lang)),
+        gr.Slider(minimum=1, maximum=100, value=24, step=1, label=_("Steps", lang)),
+        gr.Slider(minimum=0.0, maximum=10.0, value=3.5, step=0.1, label=_("Guidance Scale", lang)),
+        gr.Slider(minimum=1, maximum=1024, value=256, step=1, label=_("Max Sequence Length", lang)),
+        gr.Textbox(label=_("Seed (optional)", lang), value=""),
+        gr.Radio(choices=["png", "jpeg"], label=_("Select output format", lang), value="png", interactive=True)
+    ],
+    outputs=[
+        gr.Image(type="filepath", label=_("Generated image", lang)),
+        gr.Textbox(label=_("Message", lang), type="text")
+    ],
+    title=_("NeuroSandboxWebUI - Flux (ControlNet)", lang),
+    description=_("This user interface allows you to generate images using Flux ControlNet. "
+                "Upload a control image, enter a prompt, and customize the generation settings. "
+                "Try it and see what happens!", lang),
+    allow_flagging="never",
+    clear_btn=None,
+    stop_btn=_("Stop", lang),
+    submit_btn=_("Generate", lang)
+)
+
+flux_interface = gr.TabbedInterface(
+    [flux_txt2img_interface, flux_img2img_interface, flux_inpaint_interface, flux_controlnet_interface],
+    tab_names=[_("txt2img", lang), _("img2img", lang), _("inpaint", lang), _("controlnet", lang)]
 )
 
 hunyuandit_txt2img_interface = gr.Interface(
@@ -10607,8 +10912,8 @@ with gr.TabbedInterface(
         sd3_txt2img_interface.input_components[3],
         t2i_ip_adapter_interface.input_components[4],
         ip_adapter_faceid_interface.input_components[5],
-        flux_interface.input_components[2],
-        flux_interface.input_components[5],
+        flux_txt2img_interface.input_components[2],
+        flux_txt2img_interface.input_components[5],
         auraflow_interface.input_components[3],
         kolors_txt2img_interface.input_components[3],
         rvc_interface.input_components[1],
