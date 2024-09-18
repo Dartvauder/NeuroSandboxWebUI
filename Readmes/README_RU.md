@@ -30,7 +30,7 @@
 * Возможность использования приложения через мобильное устройство в локальной сети (через IPv4) или в интернете (через Share)
 * Гибкий и оптимизированный интерфейс (на основе Gradio)
 * Ведение журнала отладки в логах из файлов `Install` и `Update`
-* Доступно на четырнадцати языках
+* Доступно на трех языках
 * Поддержка моделей Transformers и llama.cpp (LLM)
 * Поддержка моделей diffusers и safetensors (StableDiffusion) - txt2img, img2img, depth2img, marigold, pix2pix, controlnet, upscale (latent), upscale (SUPIR), refiner, inpaint, outpaint, gligen, diffedit, blip-diffusion, animatediff, hotshot-xl, video, ldm3d, sd3, cascade, t2i-ip-adapter, ip-adapter-faceid и riffusion вкладки
 * Поддержка моделей stable-diffusion-cpp для FLUX
