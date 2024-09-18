@@ -34,7 +34,7 @@
 * Поддержка моделей Transformers и llama.cpp (LLM)
 * Поддержка моделей diffusers и safetensors (StableDiffusion) - txt2img, img2img, depth2img, marigold, pix2pix, controlnet, upscale (latent), upscale (SUPIR), refiner, inpaint, outpaint, gligen, diffedit, blip-diffusion, animatediff, hotshot-xl, video, ldm3d, sd3, cascade, t2i-ip-adapter, ip-adapter-faceid и riffusion вкладки
 * Поддержка моделей stable-diffusion-cpp для FLUX
-* Поддержка дополнительных моделей для генерации изображений: Kandinsky (txt2img, img2img, inpaint), Flux (с поддержкой LoRA), HunyuanDiT (txt2img, controlnet), Lumina-T2X, Kolors (txt2img с поддержкой LoRA, img2img, ip-adapter-plus), AuraFlow (с поддержкой LoRA и AuraSR), Würstchen, DeepFloydIF (txt2img, img2img, inpaint), PixArt и PlaygroundV2.5
+* Поддержка дополнительных моделей для генерации изображений: Kandinsky (txt2img, img2img, inpaint), Flux (txt2img с поддержкой cpp quantize и LoRA, img2img, inpaint, controlnet), HunyuanDiT (txt2img, controlnet), Lumina-T2X, Kolors (txt2img с поддержкой LoRA, img2img, ip-adapter-plus), AuraFlow (с поддержкой LoRA и AuraSR), Würstchen, DeepFloydIF (txt2img, img2img, inpaint), PixArt и PlaygroundV2.5
 * Поддержка Extras с моделями Rembg, CodeFormer, PixelOE, DDColor, DownScale, Format changer, FaceSwap (Roop) и Upscale (Real-ESRGAN) для изображений, видео и аудио
 * Поддержка StableAudio
 * Поддержка AudioCraft (Модели: musicgen, audiogen и magnet)
