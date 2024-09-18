@@ -249,7 +249,7 @@
 3) Set up the model according to the parameters you need
 4) Click `Submit` to get the generated image
 
-### Flux:
+### Flux (txt2img, img2img, inpaint, controlnet):
 
 1) Enter your prompt
 2) Select your model
