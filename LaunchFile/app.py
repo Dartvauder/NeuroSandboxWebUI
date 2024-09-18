@@ -2347,7 +2347,7 @@ def generate_image_marigold(input_image, num_inference_steps, ensemble_size):
             normals_model_path, variant="fp16", torch_dtype=torch.float16
         ).to(device)
 
-        image = diffusers.utils.load_image(input_image)
+        image = load_image(input_image)
 
         depth = depth_pipe(image, num_inference_steps=num_inference_steps, ensemble_size=ensemble_size)
         depth_vis = depth_pipe.image_processor.visualize_depth(depth.prediction)
@@ -5100,8 +5100,7 @@ def generate_image_flux_txt2img(prompt, model_name, quantize_model_name, enable_
         flush()
 
 
-def generate_image_flux_img2img(prompt, init_image, model_name, num_inference_steps, strength, guidance_scale, width, height, max_sequence_length,
-                                seed, output_format):
+def generate_image_flux_img2img(prompt, init_image, model_name, seed, num_inference_steps, strength, guidance_scale, width, height, max_sequence_length, output_format):
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
     if seed == "" or seed is None:
@@ -5165,8 +5164,8 @@ def generate_image_flux_img2img(prompt, init_image, model_name, num_inference_st
         flush()
 
 
-def generate_image_flux_inpaint(prompt, init_image, mask_image, model_name, num_inference_steps, strength, guidance_scale,
-                                max_sequence_length, seed, output_format):
+def generate_image_flux_inpaint(prompt, init_image, mask_image, model_name, seed, num_inference_steps, strength, guidance_scale,
+                                max_sequence_length, output_format):
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
     if seed == "" or seed is None:
@@ -5231,8 +5230,8 @@ def generate_image_flux_inpaint(prompt, init_image, mask_image, model_name, num_
         flush()
 
 
-def generate_image_flux_controlnet(prompt, init_image, base_model_name, control_mode, controlnet_conditioning_scale, num_inference_steps,
-                                   guidance_scale, max_sequence_length, seed, output_format):
+def generate_image_flux_controlnet(prompt, init_image, base_model_name, seed, control_mode, controlnet_conditioning_scale, num_inference_steps,
+                                   guidance_scale, width, height, max_sequence_length, output_format):
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
     if seed == "" or seed is None:
@@ -5263,7 +5262,6 @@ def generate_image_flux_controlnet(prompt, init_image, base_model_name, control_
         pipe = pipe.to(device)
 
         init_image = Image.open(init_image).convert("RGB")
-        width, height = init_image.size
 
         image = pipe(
             prompt=prompt,
@@ -9487,7 +9485,7 @@ flux_txt2img_interface = gr.Interface(
         gr.Slider(minimum=1, maximum=1024, value=256, step=1, label=_("Max Sequence Length", lang)),
         gr.Radio(choices=["png", "jpeg"], label=_("Select output format", lang), value="png", interactive=True)
     ],
-    additional_inputs_accordion=gr.Accordion(label=_("Flux Settings", lang), open=False),
+    additional_inputs_accordion=gr.Accordion(label=_("Flux txt2img Settings", lang), open=False),
     outputs=[
         gr.Image(type="filepath", label=_("Generated image", lang)),
         gr.Textbox(label=_("Message", lang), type="text")
@@ -9509,13 +9507,18 @@ flux_img2img_interface = gr.Interface(
         gr.Image(label=_("Initial image", lang), type="filepath"),
         gr.Dropdown(choices=["FLUX.1-schnell", "FLUX.1-dev"], label=_("Select Flux model", lang),
                     value="FLUX.1-schnell"),
+        gr.Textbox(label=_("Seed (optional)", lang), value="")
+    ],
+    additional_inputs=[
         gr.Slider(minimum=1, maximum=100, value=4, step=1, label=_("Steps", lang)),
         gr.Slider(minimum=0.0, maximum=1.0, value=0.95, step=0.01, label=_("Strength", lang)),
         gr.Slider(minimum=0.0, maximum=10.0, value=0.0, step=0.1, label=_("Guidance Scale", lang)),
+        gr.Slider(minimum=256, maximum=2048, value=768, step=64, label=_("Height", lang)),
+        gr.Slider(minimum=256, maximum=2048, value=1024, step=64, label=_("Width", lang)),
         gr.Slider(minimum=1, maximum=1024, value=256, step=1, label=_("Max Sequence Length", lang)),
-        gr.Textbox(label=_("Seed (optional)", lang), value=""),
         gr.Radio(choices=["png", "jpeg"], label=_("Select output format", lang), value="png", interactive=True)
     ],
+    additional_inputs_accordion=gr.Accordion(label=_("Flux img2img Settings", lang), open=False),
     outputs=[
         gr.Image(type="filepath", label=_("Generated image", lang)),
         gr.Textbox(label=_("Message", lang), type="text")
@@ -9538,13 +9541,16 @@ flux_inpaint_interface = gr.Interface(
         gr.ImageEditor(label=_("Mask image", lang), type="filepath"),
         gr.Dropdown(choices=["FLUX.1-schnell", "FLUX.1-dev"], label=_("Select Flux model", lang),
                     value="FLUX.1-schnell"),
+        gr.Textbox(label=_("Seed (optional)", lang), value="")
+    ],
+    additional_inputs=[
         gr.Slider(minimum=1, maximum=100, value=4, step=1, label=_("Steps", lang)),
         gr.Slider(minimum=0.0, maximum=1.0, value=0.95, step=0.01, label=_("Strength", lang)),
         gr.Slider(minimum=0.0, maximum=10.0, value=0.0, step=0.1, label=_("Guidance Scale", lang)),
         gr.Slider(minimum=1, maximum=1024, value=256, step=1, label=_("Max Sequence Length", lang)),
-        gr.Textbox(label=_("Seed (optional)", lang), value=""),
         gr.Radio(choices=["png", "jpeg"], label=_("Select output format", lang), value="png", interactive=True)
     ],
+    additional_inputs_accordion=gr.Accordion(label=_("Flux inpaint Settings", lang), open=False),
     outputs=[
         gr.Image(type="filepath", label=_("Generated image", lang)),
         gr.Textbox(label=_("Message", lang), type="text")
@@ -9566,14 +9572,19 @@ flux_controlnet_interface = gr.Interface(
         gr.Image(label=_("Control image", lang), type="filepath"),
         gr.Dropdown(choices=["FLUX.1-schnell", "FLUX.1-dev"], label=_("Select Flux base model", lang),
                     value="FLUX.1-dev"),
+        gr.Textbox(label=_("Seed (optional)", lang), value="")
+    ],
+    additional_inputs=[
         gr.Slider(minimum=0, maximum=6, value=0, step=1, label=_("Control Mode", lang)),
         gr.Slider(minimum=0.0, maximum=1.0, value=0.5, step=0.01, label=_("ControlNet Conditioning Scale", lang)),
         gr.Slider(minimum=1, maximum=100, value=24, step=1, label=_("Steps", lang)),
         gr.Slider(minimum=0.0, maximum=10.0, value=3.5, step=0.1, label=_("Guidance Scale", lang)),
+        gr.Slider(minimum=256, maximum=2048, value=768, step=64, label=_("Height", lang)),
+        gr.Slider(minimum=256, maximum=2048, value=1024, step=64, label=_("Width", lang)),
         gr.Slider(minimum=1, maximum=1024, value=256, step=1, label=_("Max Sequence Length", lang)),
-        gr.Textbox(label=_("Seed (optional)", lang), value=""),
         gr.Radio(choices=["png", "jpeg"], label=_("Select output format", lang), value="png", interactive=True)
     ],
+    additional_inputs_accordion=gr.Accordion(label=_("Flux ControlNet Settings", lang), open=False),
     outputs=[
         gr.Image(type="filepath", label=_("Generated image", lang)),
         gr.Textbox(label=_("Message", lang), type="text")
