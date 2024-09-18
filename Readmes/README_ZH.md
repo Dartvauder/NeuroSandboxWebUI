@@ -114,17 +114,120 @@
 
 首先，我要感谢[PyCharm](https://www.jetbrains.com/pycharm/)和[GitHub](https://desktop.github.com)的开发者。借助他们的应用程序，我能够创建并分享我的代码
 
-[列出了所有使用的库和项目]
+* `gradio` - https://github.com/gradio-app/gradio
+* `transformers` - https://github.com/huggingface/transformers
+* `tts` - https://github.com/coqui-ai/TTS
+* `openai-whisper` - https://github.com/openai/whisper
+* `torch` - https://github.com/pytorch/pytorch
+* `soundfile` - https://github.com/bastibe/python-soundfile
+* `cuda-python` - https://github.com/NVIDIA/cuda-python
+* `gitpython` - https://github.com/gitpython-developers/GitPython
+* `diffusers` - https://github.com/huggingface/diffusers
+* `llama.cpp-python` - https://github.com/abetlen/llama-cpp-python
+* `stable-diffusion-cpp-python` - https://github.com/william-murray1204/stable-diffusion-cpp-python
+* `audiocraft` - https://github.com/facebookresearch/audiocraft
+* `AudioLDM2` - https://github.com/haoheliu/AudioLDM2
+* `xformers` - https://github.com/facebookresearch/xformers
+* `demucs` - https://github.com/facebookresearch/demucs
+* `libretranslate` - https://github.com/LibreTranslate/LibreTranslate
+* `libretranslatepy` - https://github.com/argosopentech/LibreTranslate-py
+* `rembg` - https://github.com/danielgatis/rembg
+* `trimesh` - https://github.com/mikedh/trimesh
+* `suno-bark` - https://github.com/suno-ai/bark
+* `IP-Adapter` - https://github.com/tencent-ailab/IP-Adapter
+* `PyNanoInstantMeshes` - https://github.com/vork/PyNanoInstantMeshes
+* `CLIP` - https://github.com/openai/CLIP
+* `rvc-python` - https://github.com/daswer123/rvc-python
+* `audio-separator` - https://github.com/nomadkaraoke/python-audio-separator
+* `pixeloe` - https://github.com/KohakuBlueleaf/PixelOE
+* `k-diffusion` - https://github.com/crowsonkb/k-diffusion
+* `open-parse` - https://github.com/Filimoa/open-parse
+* `AudioSR` - https://github.com/haoheliu/versatile_audio_super_resolution
 
 ## 第三方许可证：
 
 #### 许多模型都有自己的使用许可证。在使用之前，我建议您熟悉它们：
 
-[列出了所有使用的模型及其许可证链接]
+* [Transformers](https://github.com/huggingface/transformers/blob/main/LICENSE)
+* [llama.cpp](https://github.com/ggerganov/llama.cpp/blob/master/LICENSE)
+* [stable-diffusion.cpp](https://github.com/leejet/stable-diffusion.cpp/blob/master/LICENSE)
+* [CoquiTTS](https://coqui.ai/cpml)
+* [OpenAI-Whisper](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/apache-2.0.md)
+* [LibreTranslate](https://github.com/LibreTranslate/LibreTranslate/blob/main/LICENSE)
+* [Diffusers](https://github.com/huggingface/diffusers/blob/main/LICENSE)
+* [StableDiffusion1.5](https://huggingface.co/spaces/CompVis/stable-diffusion-license)
+* [StableDiffusion2](https://huggingface.co/stabilityai/stable-diffusion-xl-base-1.0/blob/main/LICENSE.md)
+* [StableDiffusion3](https://huggingface.co/stabilityai/stable-diffusion-3-medium-diffusers/blob/main/LICENSE)
+* [StableDiffusionXL](https://huggingface.co/stabilityai/stable-diffusion-xl-base-1.0/blob/main/LICENSE.md)
+* [StableCascade](https://huggingface.co/stabilityai/stable-cascade/blob/main/LICENSE)
+* [LatentDiffusionModel3D](https://huggingface.co/spaces/CompVis/stable-diffusion-license)
+* [StableVideoDiffusion](https://huggingface.co/stabilityai/stable-video-diffusion-img2vid-xt-1-1/blob/main/LICENSE)
+* [I2VGen-XL](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/mit.md)
+* [Rembg](https://github.com/danielgatis/rembg/blob/main/LICENSE.txt)
+* [Shap-E](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/mit.md)
+* [StableAudioOpen](https://huggingface.co/stabilityai/stable-audio-open-1.0/blob/main/LICENSE)
+* [AudioCraft](https://spdx.org/licenses/CC-BY-NC-4.0)
+* [AudioLDM2](https://spdx.org/licenses/CC-BY-NC-SA-4.0)
+* [Demucs](https://github.com/facebookresearch/demucs/blob/main/LICENSE)
+* [SunoBark](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/mit.md)
+* [Moondream2](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/apache-2.0.md)
+* [ZeroScope2](https://spdx.org/licenses/CC-BY-NC-4.0)
+* [GLIGEN](https://huggingface.co/spaces/CompVis/stable-diffusion-license)
+* [Wav2Lip](https://github.com/Rudrabha/Wav2Lip)
+* [Roop](https://github.com/s0md3v/roop/blob/main/LICENSE)
+* [CodeFormer](https://github.com/sczhou/CodeFormer/blob/master/LICENSE)
+* [ControlNet](https://github.com/lllyasviel/ControlNet/blob/main/LICENSE)
+* [AnimateDiff](https://github.com/guoyww/AnimateDiff/blob/main/LICENSE.txt)
+* [Pix2Pix](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/mit.md)
+* [Kandinsky 2.1; 2.2; 3](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/apache-2.0.md)
+* [Flux-schnell](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/apache-2.0.md)
+* [Flux-dev](https://huggingface.co/black-forest-labs/FLUX.1-dev/blob/main/LICENSE.md)
+* [HunyuanDiT](https://huggingface.co/Tencent-Hunyuan/HunyuanDiT/blob/main/LICENSE.txt)
+* [Lumina-T2X](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/apache-2.0.md)
+* [DeepFloydIF](https://huggingface.co/spaces/DeepFloyd/deepfloyd-if-license)
+* [PixArt](https://huggingface.co/stabilityai/stable-diffusion-xl-base-1.0/blob/main/LICENSE.md)
+* [CogVideoX](https://huggingface.co/THUDM/CogVideoX-2b/blob/main/LICENSE)
+* [Latte](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/apache-2.0.md)
+* [Kolors](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/apache-2.0.md)
+* [AuraFlow](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/apache-2.0.md)
+* [Würstchen](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/mit.md)
+* [ModelScope](https://spdx.org/licenses/CC-BY-NC-4.0)
+* [StableFast3D](https://github.com/Stability-AI/stable-fast-3d/blob/main/LICENSE.md)
+* [SV34D](https://huggingface.co/stabilityai/sv4d/blob/main/LICENSE.md)
+* [Zero123Plus](https://huggingface.co/blog/open_rail)
+* [Real-ESRGAN](https://github.com/xinntao/Real-ESRGAN/blob/master/LICENSE)
+* [Refiner](https://huggingface.co/stabilityai/stable-diffusion-xl-base-1.0/blob/main/LICENSE.md)
+* [PlaygroundV2.5](https://huggingface.co/playgroundai/playground-v2.5-1024px-aesthetic/blob/main/LICENSE.md)
+* [AuraSR](https://huggingface.co/fal/AuraSR/blob/main/LICENSE.md)
+* [IP-Adapter-FaceID](https://huggingface.co/h94/IP-Adapter-FaceID)
+* [T2I-IP-Adapter](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/apache-2.0.md)
+* [MMS](https://spdx.org/licenses/CC-BY-NC-4.0)
+* [SeamlessM4Tv2](https://spdx.org/licenses/CC-BY-NC-4.0)
+* [HotShot-XL](https://github.com/hotshotco/Hotshot-XL/blob/main/LICENSE)
+* [Riffusion](https://huggingface.co/spaces/CompVis/stable-diffusion-license)
+* [MozillaCommonVoice17](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/cc0-1.0.md)
+* [UVR-MDX](https://github.com/kuielab/mdx-net/blob/main/LICENSE)
+* [RVC](https://github.com/RVC-Project/Retrieval-based-Voice-Conversion-WebUI/blob/main/LICENSE)
+* [DDColor](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/apache-2.0.md)
+* [PixelOE](https://github.com/KohakuBlueleaf/PixelOE/blob/main/LICENSE)
+* [LivePortrait](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/mit.md)
+* [SUPIR](https://github.com/Fanghua-Yu/SUPIR/blob/master/LICENSE)
+* [MagicPrompt](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/mit.md)
+* [Marigold](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/apache-2.0.md)
+* [BLIP-Diffusion](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/apache-2.0.md)
 
 #### 这些第三方仓库代码也在我的项目中使用：
 
-[列出了所有使用的第三方仓库代码]
+* [Generative-Models for SV34D](https://github.com/Stability-AI/generative-models)
+* [CodeFormer for extras](https://github.com/sczhou/CodeFormer)
+* [Real-ESRGAN for upscale](https://github.com/xinntao/Real-ESRGAN)
+* [HotShot-XL for StableDiffusion](https://github.com/hotshotco/Hotshot-XL)
+* [Roop for extras](https://github.com/s0md3v/roop)
+* [StableFast3D for 3D](https://github.com/Stability-AI/stable-fast-3d)
+* [Riffusion for StableDiffusion](https://github.com/riffusion/riffusion-hobby)
+* [DDColor for extras](https://github.com/piddnad/DDColor)
+* [LivePortrait for video](https://github.com/KwaiVGI/LivePortrait)
+* [SUPIR for StableDiffusion](https://github.com/Fanghua-Yu/SUPIR)
 
 ## 捐赠
 
