@@ -249,7 +249,7 @@
 3) 根据您需要的参数设置模型
 4) 点击`Submit`获取生成的图像
 
-### Flux：
+### Flux (txt2img, img2img, inpaint, controlnet):
 
 1) 输入您的提示
 2) 选择您的模型
@@ -496,5 +496,3 @@
 * RVC、Supir和SV34D完全无法工作
 
 ## 未来计划：
-
-* FLUX：制作img2img、inpainting、controlnet-union子选项卡，并提供相应功能

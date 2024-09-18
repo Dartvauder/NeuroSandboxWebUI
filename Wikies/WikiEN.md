@@ -249,7 +249,7 @@
 3) Set up the model according to the parameters you need
 4) Click `Submit` to get the generated image
 
-### Flux:
+### Flux (txt2img, img2img, inpaint, controlnet):
 
 1) Enter your prompt
 2) Select your model
@@ -496,5 +496,3 @@
 * RVC, Supir and SV34D not working at all
 
 ## Plans for future:
-
-* FLUX: Make a img2img, inpainting, controlnet-union sub-tabs with the appropriate functionality
