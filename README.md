@@ -106,7 +106,7 @@ To work with the virtual environment through the terminal, run `./Venv.sh`
 
 ## Wiki
 
-* https://github.com/Dartvauder/NeuroSandboxWebUI/wiki
+* https://github.com/Dartvauder/NeuroSandboxWebUI/wiki/EN‐Wiki
 
 ## Acknowledgment to developers
 
