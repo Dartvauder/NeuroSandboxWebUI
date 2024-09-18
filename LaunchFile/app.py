@@ -2347,7 +2347,7 @@ def generate_image_marigold(input_image, num_inference_steps, ensemble_size):
             normals_model_path, variant="fp16", torch_dtype=torch.float16
         ).to(device)
 
-        image = diffusers.utils.load_image(input_image)
+        image = load_image(input_image)
 
         depth = depth_pipe(image, num_inference_steps=num_inference_steps, ensemble_size=ensemble_size)
         depth_vis = depth_pipe.image_processor.visualize_depth(depth.prediction)
