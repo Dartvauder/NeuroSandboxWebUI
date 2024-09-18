@@ -1,4 +1,4 @@
-## Как пользоваться:
+# Как пользоваться:
 
 #### Интерфейс имеет сорок один подраздел (некоторые с собственными подразделами) в семи основных разделах (Текст, Изображение, Видео, 3D, Аудио, Дополнительно и Интерфейс): LLM, TTS-STT, MMS, SeamlessM4Tv2, LibreTranslate, StableDiffusion, Kandinsky, Flux, HunyuanDiT, Lumina-T2X, Kolors, AuraFlow, Würstchen, DeepFloydIF, PixArt, PlaygroundV2.5, Wav2Lip, LivePortrait, ModelScope, ZeroScope 2, CogVideoX, Latte, StableFast3D, Shap-E, SV34D, Zero123Plus, StableAudio, AudioCraft, AudioLDM 2, SunoBark, RVC, UVR, Demucs, Upscale (Real-ESRGAN), FaceSwap, MetaData-Info, Wiki, Gallery, ModelDownloader, Settings и System. Выберите нужный и следуйте инструкциям ниже
 
