@@ -106,7 +106,7 @@
 
 ## Wiki
 
-* https://github.com/Dartvauder/NeuroSandboxWebUI/wiki
+* https://github.com/Dartvauder/NeuroSandboxWebUI/wiki/ZH‐Wiki
 
 ## 致开发者的感谢
 
