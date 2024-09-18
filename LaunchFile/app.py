@@ -10233,8 +10233,8 @@ extras_interface = gr.TabbedInterface(
 wiki_interface = gr.Interface(
     fn=get_wiki_content,
     inputs=[
-        gr.Textbox(label=_("Online Wiki", lang), value="https://github.com/Dartvauder/NeuroSandboxWebUI/wiki", interactive=False),
-        gr.Textbox(label=_("Local Wiki", lang), value="Wikies/WikiEN.md", interactive=False)
+        gr.Textbox(label=_("Online Wiki", lang), value="https://github.com/Dartvauder/NeuroSandboxWebUI/wiki/EN‐Wiki" if lang == "EN" else "https://github.com/Dartvauder/NeuroSandboxWebUI/wiki/RU‐Wiki", interactive=False),
+        gr.Textbox(label=_("Local Wiki", lang), value="Wikies/WikiEN.md" if lang == "EN" else "Wikies/WikiRU.md", interactive=False)
     ],
     outputs=gr.HTML(label=_("Wiki Content", lang)),
     title=_("NeuroSandboxWebUI - Wiki", lang),
