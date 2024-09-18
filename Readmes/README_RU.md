@@ -22,7 +22,7 @@
 
 ### Дополнительно: <img width="1117" alt="6ru" src="https://github.com/user-attachments/assets/177703f5-6984-44b7-a95f-42dd33ed8f64">
 
-### Интерфейс: <img width="1117" alt="7ru" src="https://github.com/user-attachments/assets/f55600b5-fb76-4c37-9342-2daa3d012eba">
+### Интерфейс: <img width="1120" alt="7ru" src="https://github.com/user-attachments/assets/ab1be248-b269-481a-b994-e760ff2ab1fb">
 
 ## Функции:
 
