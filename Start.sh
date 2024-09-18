@@ -28,7 +28,7 @@ echo "Logging in to Hugging Face..."
 huggingface-cli login --token "$HF_TOKEN" --add-to-git-credential
 
 clear
-echo "Launching app.py..."
+echo "Launching NeuroSandboxWebUI..."
 python -c "import os, sys; sys.path.insert(0, os.path.join('$(dirname "${BASH_SOURCE[0]}")', 'LaunchFile')); import app" &
 
 deactivate

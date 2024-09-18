@@ -330,7 +330,8 @@ def load_translation(lang):
 
 translations = {
     "EN": {},
-    "RU": load_translation("ru")
+    "RU": load_translation("ru"),
+    "ZH": load_translation("zh")
 }
 
 def _(text, lang="EN"):
@@ -10233,8 +10234,16 @@ extras_interface = gr.TabbedInterface(
 wiki_interface = gr.Interface(
     fn=get_wiki_content,
     inputs=[
-        gr.Textbox(label=_("Online Wiki", lang), value="https://github.com/Dartvauder/NeuroSandboxWebUI/wiki/EN‐Wiki" if lang == "EN" else "https://github.com/Dartvauder/NeuroSandboxWebUI/wiki/RU‐Wiki", interactive=False),
-        gr.Textbox(label=_("Local Wiki", lang), value="Wikies/WikiEN.md" if lang == "EN" else "Wikies/WikiRU.md", interactive=False)
+        gr.Textbox(label=_("Online Wiki", lang), value=(
+            "https://github.com/Dartvauder/NeuroSandboxWebUI/wiki/EN‐Wiki" if lang == "EN" else
+            "https://github.com/Dartvauder/NeuroSandboxWebUI/wiki/ZH‐Wiki" if lang == "ZH" else
+            "https://github.com/Dartvauder/NeuroSandboxWebUI/wiki/RU‐Wiki"
+        ), interactive=False),
+        gr.Textbox(label=_("Local Wiki", lang), value=(
+            "Wikies/WikiEN.md" if lang == "EN" else
+            "Wikies/WikiZH.md" if lang == "ZH" else
+            "Wikies/WikiRU.md"
+        ), interactive=False)
     ],
     outputs=gr.HTML(label=_("Wiki Content", lang)),
     title=_("NeuroSandboxWebUI - Wiki", lang),
@@ -10289,7 +10298,7 @@ model_downloader_interface = gr.Interface(
 settings_interface = gr.Interface(
     fn=settings_interface,
     inputs=[
-        gr.Radio(choices=["EN", "RU"], label=_("Language", lang), value=settings['language']),
+        gr.Radio(choices=["EN", "RU", "ZH"], label=_("Language", lang), value=settings['language']),
         gr.Radio(choices=["True", "False"], label=_("Share Mode", lang), value="False"),
         gr.Radio(choices=["True", "False"], label=_("Debug Mode", lang), value="False"),
         gr.Radio(choices=["True", "False"], label=_("Monitoring Mode", lang), value="False"),
