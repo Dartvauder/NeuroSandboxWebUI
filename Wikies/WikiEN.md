@@ -496,5 +496,3 @@
 * RVC, Supir and SV34D not working at all
 
 ## Plans for future:
-
-* FLUX: Make a img2img, inpainting, controlnet-union sub-tabs with the appropriate functionality
