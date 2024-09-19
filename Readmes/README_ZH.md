@@ -86,7 +86,7 @@
 2) 在任意位置执行`Git clone https://github.com/Dartvauder/NeuroSandboxWebUI.git`
 3) 运行`Install.bat`并等待安装完成
 4) 安装完成后，运行`Start.bat`
-5) 选择文件版本并等待应用程序启动
+5) 等待应用程序启动
 6) 现在您可以开始生成了！
 
 要获取更新，请运行`Update.bat`
