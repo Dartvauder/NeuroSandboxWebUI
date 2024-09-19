@@ -86,7 +86,7 @@ The goal of the project - to create the easiest possible application to use neur
 2) `Git clone https://github.com/Dartvauder/NeuroSandboxWebUI.git` to any location
 3) Run the `Install.bat` and wait for installation
 4) After installation, run `Start.bat`
-5) Select the file version and wait for the application to launch
+5) Wait for the application to launch
 6) Now you can start generating!
 
 To get update, run `Update.bat`
