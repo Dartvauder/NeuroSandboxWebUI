@@ -1534,7 +1534,7 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
     if enable_quantize:
         try:
             quantize_stable_diffusion_model_path = os.path.join("inputs", "image", "sd_models",
-                                                                f"{stable_diffusion_model_name}.gguf")
+                                                                f"{stable_diffusion_model_name}")
 
             if not os.path.exists(quantize_stable_diffusion_model_path):
                 return None, None, f"StableDiffusion model not found: {quantize_stable_diffusion_model_path}"
@@ -1588,7 +1588,7 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
     else:
         try:
             stable_diffusion_model_path = os.path.join("inputs", "image", "sd_models",
-                                                       f"{stable_diffusion_model_name}.safetensors")
+                                                       f"{stable_diffusion_model_name}")
 
             if not os.path.exists(stable_diffusion_model_path):
                 return None, None, f"StableDiffusion model not found: {stable_diffusion_model_path}"
@@ -1704,7 +1704,7 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
             prompt = generate_magicprompt(prompt, magicprompt_max_new_tokens)
 
         if vae_model_name is not None:
-            vae_model_path = os.path.join("inputs", "image", "sd_models", "vae", f"{vae_model_name}.safetensors")
+            vae_model_path = os.path.join("inputs", "image", "sd_models", "vae", f"{vae_model_name}")
             if os.path.exists(vae_model_path):
                 vae = AutoencoderKL().AutoencoderKL.from_single_file(vae_model_path, device_map="auto",
                                                                      torch_dtype=torch.float16,
@@ -2054,7 +2054,7 @@ def generate_image_img2img(prompt, negative_prompt, init_image, strength, stable
     else:
         try:
             stable_diffusion_model_path = os.path.join("inputs", "image", "sd_models",
-                                                       f"{stable_diffusion_model_name}.safetensors")
+                                                       f"{stable_diffusion_model_name}")
 
             if not os.path.exists(stable_diffusion_model_path):
                 return None, None, f"StableDiffusion model not found: {stable_diffusion_model_path}"
@@ -2153,7 +2153,7 @@ def generate_image_img2img(prompt, negative_prompt, init_image, strength, stable
         stable_diffusion_model.enable_model_cpu_offload()
 
         if vae_model_name is not None:
-            vae_model_path = os.path.join("inputs", "image", "sd_models", "vae", f"{vae_model_name}.safetensors")
+            vae_model_path = os.path.join("inputs", "image", "sd_models", "vae", f"{vae_model_name}")
             if os.path.exists(vae_model_path):
                 vae = AutoencoderKL().AutoencoderKL.from_single_file(vae_model_path, device_map=device,
                                                                      torch_dtype=torch.float16,
@@ -2583,7 +2583,7 @@ def generate_image_controlnet(prompt, negative_prompt, init_image, sd_version, s
         return None, None, "Please, select a ControlNet model!"
 
     stable_diffusion_model_path = os.path.join("inputs", "image", "sd_models",
-                                               f"{stable_diffusion_model_name}.safetensors")
+                                               f"{stable_diffusion_model_name}")
 
     if not os.path.exists(stable_diffusion_model_path):
         return None, None, f"StableDiffusion model not found: {stable_diffusion_model_path}"
@@ -3016,7 +3016,7 @@ def generate_image_inpaint(prompt, negative_prompt, init_image, mask_image, blur
         return None, "Please, upload an initial image and a mask image!"
 
     stable_diffusion_model_path = os.path.join("inputs", "image", "sd_models", "inpaint",
-                                               f"{stable_diffusion_model_name}.safetensors")
+                                               f"{stable_diffusion_model_name}")
 
     if not os.path.exists(stable_diffusion_model_path):
         return None, f"StableDiffusion model not found: {stable_diffusion_model_path}"
@@ -3061,7 +3061,7 @@ def generate_image_inpaint(prompt, negative_prompt, init_image, mask_image, blur
     stable_diffusion_model.safety_checker = None
 
     if vae_model_name is not None:
-        vae_model_path = os.path.join("inputs", "image", "sd_models", "vae", f"{vae_model_name}.safetensors")
+        vae_model_path = os.path.join("inputs", "image", "sd_models", "vae", f"{vae_model_name}")
         if os.path.exists(vae_model_path):
             vae = AutoencoderKL().AutoencoderKL.from_single_file(vae_model_path, device_map="auto",
                                                  torch_dtype=torch.float16,
@@ -3154,7 +3154,7 @@ def generate_image_outpaint(prompt, negative_prompt, init_image, stable_diffusio
         return None, "Please select a StableDiffusion model!"
 
     stable_diffusion_model_path = os.path.join("inputs", "image", "sd_models", "inpaint",
-                                               f"{stable_diffusion_model_name}.safetensors")
+                                               f"{stable_diffusion_model_name}")
 
     if not os.path.exists(stable_diffusion_model_path):
         return None, f"StableDiffusion model not found: {stable_diffusion_model_path}"
@@ -3307,7 +3307,7 @@ def generate_image_gligen(prompt, negative_prompt, gligen_phrases, gligen_boxes,
         return None, "Please, select a StableDiffusion model!"
 
     stable_diffusion_model_path = os.path.join("inputs", "image", "sd_models",
-                                               f"{stable_diffusion_model_name}.safetensors")
+                                               f"{stable_diffusion_model_name}")
 
     if not os.path.exists(stable_diffusion_model_path):
         return None, f"StableDiffusion model not found: {stable_diffusion_model_path}"
@@ -3582,7 +3582,7 @@ def generate_image_animatediff(prompt, negative_prompt, input_video, strength, m
     if not stable_diffusion_model_name:
         return None, "Please, select a StableDiffusion model!"
 
-    stable_diffusion_model_path = os.path.join("inputs", "image", "sd_models", f"{stable_diffusion_model_name}.safetensors")
+    stable_diffusion_model_path = os.path.join("inputs", "image", "sd_models", f"{stable_diffusion_model_name}")
 
     if not os.path.exists(stable_diffusion_model_path):
         return None, f"StableDiffusion model not found: {stable_diffusion_model_path}"
@@ -4492,7 +4492,7 @@ def generate_image_t2i_ip_adapter(prompt, negative_prompt, ip_adapter_image, sta
     if not stable_diffusion_model_name:
         return None, "Please select a StableDiffusion model!"
 
-    stable_diffusion_model_path = os.path.join("inputs", "image", "sd_models", f"{stable_diffusion_model_name}.safetensors")
+    stable_diffusion_model_path = os.path.join("inputs", "image", "sd_models", f"{stable_diffusion_model_name}")
 
     if not os.path.exists(stable_diffusion_model_path):
         return None, f"StableDiffusion model not found: {stable_diffusion_model_path}"
@@ -4579,7 +4579,7 @@ def generate_image_ip_adapter_faceid(prompt, negative_prompt, face_image, s_scal
     if not stable_diffusion_model_name:
         return None, "Please select a StableDiffusion model!"
 
-    stable_diffusion_model_path = os.path.join("inputs", "image", "sd_models", f"{stable_diffusion_model_name}.safetensors")
+    stable_diffusion_model_path = os.path.join("inputs", "image", "sd_models", f"{stable_diffusion_model_name}")
 
     if not os.path.exists(stable_diffusion_model_path):
         return None, f"StableDiffusion model not found: {stable_diffusion_model_path}"
@@ -5109,8 +5109,8 @@ def generate_image_flux_txt2img(prompt, model_name, quantize_model_name, enable_
 
     try:
         if enable_quantize:
-            quantize_flux_model_path = os.path.join("inputs", "image", "quantize-flux", f"{quantize_model_name}.gguf")
-            lora_model_path = os.path.join("inputs", "image", "flux-lora", f"{lora_model_names}.safetensors")
+            quantize_flux_model_path = os.path.join("inputs", "image", "quantize-flux", f"{quantize_model_name}")
+            lora_model_path = os.path.join("inputs", "image", "flux-lora", f"{lora_model_names}")
 
             if not quantize_model_name:
                 return None, "Please select a quantize Flux model!"
@@ -8230,7 +8230,7 @@ def download_model(model_name_llm, model_name_sd):
             model_url = "https://huggingface.co/Lykon/DreamShaper/resolve/main/DreamShaper_8_pruned.safetensors"
         elif model_name_sd == "RealisticVisionV4.0(SDXL)":
             model_url = "https://huggingface.co/SG161222/RealVisXL_V4.0/resolve/main/RealVisXL_V4.0.safetensors"
-        model_path = os.path.join("inputs", "image", "sd_models", f"{model_name_sd}.safetensors")
+        model_path = os.path.join("inputs", "image", "sd_models", f"{model_name_sd}")
 
         if model_url:
             response = requests.get(model_url, allow_redirects=True)
@@ -8344,11 +8344,11 @@ stable_diffusion_models_list = [None] + [model for model in os.listdir("inputs/i
                                          if (model.endswith(".safetensors") or model.endswith(".ckpt") or model.endswith(".gguf") or not model.endswith(".txt") and not os.path.isdir(os.path.join("inputs/image/sd_models")))]
 audiocraft_models_list = [None] + ["musicgen-stereo-medium", "audiogen-medium", "musicgen-stereo-melody", "musicgen-medium", "musicgen-melody", "musicgen-large",
                                    "hybrid-magnet-medium", "magnet-medium-30sec", "magnet-medium-10sec", "audio-magnet-medium"]
-vae_models_list = [None] + [model.replace(".safetensors", "") for model in os.listdir("inputs/image/sd_models/vae") if
+vae_models_list = [None] + [model for model in os.listdir("inputs/image/sd_models/vae") if
                             model.endswith(".safetensors") or not model.endswith(".txt")]
 lora_models_list = [None] + [model for model in os.listdir("inputs/image/sd_models/lora") if
                              model.endswith(".safetensors") or model.endswith(".pt")]
-quantized_flux_models_list = [None] + [model.replace(".gguf", "") for model in os.listdir("inputs/image/quantize-flux") if
+quantized_flux_models_list = [None] + [model for model in os.listdir("inputs/image/quantize-flux") if
                             model.endswith(".gguf") or not model.endswith(".txt") and not model.endswith(".safetensors")]
 flux_lora_models_list = [None] + [model for model in os.listdir("inputs/image/flux-lora") if
                              model.endswith(".safetensors")]
@@ -8357,9 +8357,9 @@ auraflow_lora_models_list = [None] + [model for model in os.listdir("inputs/imag
 kolors_lora_models_list = [None] + [model for model in os.listdir("inputs/image/kolors-lora") if
                              model.endswith(".safetensors")]
 textual_inversion_models_list = [None] + [model for model in os.listdir("inputs/image/sd_models/embedding") if model.endswith(".pt") or model.endswith(".safetensors")]
-inpaint_models_list = [None] + [model.replace(".safetensors", "") for model in
+inpaint_models_list = [None] + [model for model in
                                 os.listdir("inputs/image/sd_models/inpaint")
-                                if model.endswith(".safetensors") or not model.endswith(".txt")]
+                                if (model.endswith(".safetensors") or model.endswith(".ckpt") or not model.endswith(".txt"))]
 controlnet_models_list = [None, "openpose", "depth", "canny", "lineart", "scribble"]
 rvc_models_list = [model_folder for model_folder in os.listdir("inputs/audio/rvc_models")
                    if os.path.isdir(os.path.join("inputs/audio/rvc_models", model_folder))
@@ -8369,31 +8369,38 @@ rvc_models_list = [model_folder for model_folder in os.listdir("inputs/audio/rvc
 def reload_model_lists():
     global llm_models_list, llm_lora_models_list, speaker_wavs_list, stable_diffusion_models_list, vae_models_list, lora_models_list, quantized_flux_models_list, flux_lora_models_list, auraflow_lora_models_list, kolors_lora_models_list, textual_inversion_models_list, inpaint_models_list, rvc_models_list
 
-    llm_models_list = [None, "moondream2"] + [model for model in os.listdir("inputs/text/llm_models") if not model.endswith(".txt") and model != "vikhyatk" and model != "lora"]
-    llm_lora_models_list = [None] + [model for model in os.listdir("inputs/text/llm_models/lora") if not model.endswith(".txt")]
+    llm_models_list = [None, "moondream2"] + [model for model in os.listdir("inputs/text/llm_models") if
+                                              not model.endswith(".txt") and model != "vikhyatk" and model != "lora"]
+    llm_lora_models_list = [None] + [model for model in os.listdir("inputs/text/llm_models/lora") if
+                                     not model.endswith(".txt")]
     speaker_wavs_list = [None] + [wav for wav in os.listdir("inputs/audio/voices") if not wav.endswith(".txt")]
-    stable_diffusion_models_list = [None] + [model.replace(".safetensors", "") for model in
-                                             os.listdir("inputs/image/sd_models")
-                                             if (model.endswith(".safetensors") or not model.endswith(".txt") and not os.path.isdir(os.path.join("inputs/image/sd_models")))]
-    vae_models_list = [None] + [model.replace(".safetensors", "") for model in os.listdir("inputs/image/sd_models/vae") if
+    stable_diffusion_models_list = [None] + [model for model in os.listdir("inputs/image/sd_models")
+                                             if (model.endswith(".safetensors") or model.endswith(
+            ".ckpt") or model.endswith(".gguf") or not model.endswith(".txt") and not os.path.isdir(
+            os.path.join("inputs/image/sd_models")))]
+    vae_models_list = [None] + [model for model in os.listdir("inputs/image/sd_models/vae") if
                                 model.endswith(".safetensors") or not model.endswith(".txt")]
     lora_models_list = [None] + [model for model in os.listdir("inputs/image/sd_models/lora") if
                                  model.endswith(".safetensors") or model.endswith(".pt")]
-    quantized_flux_models_list = [None] + [model.replace(".gguf", "") for model in os.listdir("inputs/image/quantize-flux") if
-                                model.endswith(".gguf") or not model.endswith(".txt") and not model.endswith(".safetensors")]
+    quantized_flux_models_list = [None] + [model for model in os.listdir("inputs/image/quantize-flux") if
+                                           model.endswith(".gguf") or not model.endswith(".txt") and not model.endswith(
+                                               ".safetensors")]
     flux_lora_models_list = [None] + [model for model in os.listdir("inputs/image/flux-lora") if
-                                 model.endswith(".safetensors")]
+                                      model.endswith(".safetensors")]
     auraflow_lora_models_list = [None] + [model for model in os.listdir("inputs/image/auraflow-lora") if
-                                 model.endswith(".safetensors")]
+                                          model.endswith(".safetensors")]
     kolors_lora_models_list = [None] + [model for model in os.listdir("inputs/image/kolors-lora") if
-                                 model.endswith(".safetensors")]
-    textual_inversion_models_list = [None] + [model for model in os.listdir("inputs/image/sd_models/embedding") if model.endswith(".pt") or model.endswith(".safetensors")]
-    inpaint_models_list = [None] + [model.replace(".safetensors", "") for model in
+                                        model.endswith(".safetensors")]
+    textual_inversion_models_list = [None] + [model for model in os.listdir("inputs/image/sd_models/embedding") if
+                                              model.endswith(".pt") or model.endswith(".safetensors")]
+    inpaint_models_list = [None] + [model for model in
                                     os.listdir("inputs/image/sd_models/inpaint")
-                                    if model.endswith(".safetensors") or not model.endswith(".txt")]
+                                    if (model.endswith(".safetensors") or model.endswith(".ckpt") or not model.endswith(
+            ".txt"))]
     rvc_models_list = [model_folder for model_folder in os.listdir("inputs/audio/rvc_models")
                        if os.path.isdir(os.path.join("inputs/audio/rvc_models", model_folder))
-                       and any(file.endswith('.pth') for file in os.listdir(os.path.join("inputs/audio/rvc_models", model_folder)))]
+                       and any(
+            file.endswith('.pth') for file in os.listdir(os.path.join("inputs/audio/rvc_models", model_folder)))]
 
     text_files, image_files, video_files, audio_files, model3d_files, _ = get_output_files()
 
