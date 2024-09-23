@@ -11014,8 +11014,8 @@ with gr.TabbedInterface(
     tab_names=[_("Text", lang), _("Image", lang), _("Video", lang), _("3D", lang), _("Audio", lang), _("Extras", lang), _("Interface", lang)],
     theme=theme
 ) as app:
-    txt2img_interface.input_components[17].click(stop_generation, [], [], queue=False)
-    img2img_interface.input_components[11].click(stop_generation, [], [], queue=False)
+    txt2img_interface.input_components[18].click(stop_generation, [], [], queue=False)
+    img2img_interface.input_components[12].click(stop_generation, [], [], queue=False)
 
     reload_button = gr.Button(_("Reload interface", lang))
     close_button = gr.Button(_("Close terminal", lang))
