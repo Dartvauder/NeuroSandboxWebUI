@@ -1516,7 +1516,7 @@ def translate_text(text, source_lang, target_lang, enable_translate_history, tra
         flush()
 
 
-def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name, vae_model_name, lora_model_names, lora_scales, textual_inversion_model_names, stable_diffusion_settings_html,
+def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name, enable_quantize, vae_model_name, lora_model_names, lora_scales, textual_inversion_model_names, stable_diffusion_settings_html,
                            stable_diffusion_model_type, stable_diffusion_scheduler, stable_diffusion_steps,
                            stable_diffusion_cfg, stable_diffusion_width, stable_diffusion_height,
                            stable_diffusion_clip_skip, num_images_per_prompt, seed, stop_button,
@@ -1531,404 +1531,462 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
     if not stable_diffusion_model_name:
         return None, None, "Please, select a StableDiffusion model!"
 
-    stable_diffusion_model_path = os.path.join("inputs", "image", "sd_models",
-                                               f"{stable_diffusion_model_name}.safetensors")
+    if enable_quantize:
+        try:
+            quantize_stable_diffusion_model_path = os.path.join("inputs", "image", "sd_models",
+                                                                f"{stable_diffusion_model_name}.gguf")
 
-    if not os.path.exists(stable_diffusion_model_path):
-        return None, None, f"StableDiffusion model not found: {stable_diffusion_model_path}"
+            if not os.path.exists(quantize_stable_diffusion_model_path):
+                return None, None, f"StableDiffusion model not found: {quantize_stable_diffusion_model_path}"
 
-    try:
-        if enable_sag:
-            stable_diffusion_model = StableDiffusionSAGPipeline().StableDiffusionSAGPipeline.from_single_file(
-                stable_diffusion_model_path, use_safetensors=True, device_map="auto",
-                torch_dtype=torch.float16, variant="fp16"
+            stable_diffusion = StableDiffusion().StableDiffusion(
+                model_path=quantize_stable_diffusion_model_path,
+                wtype="default"
             )
-        elif enable_pag:
-            stable_diffusion_model = AutoPipelineForText2Image().AutoPipelineForText2Image.from_single_file(
-                stable_diffusion_model_path, use_safetensors=True, device_map="auto",
-                torch_dtype=torch.float16, variant="fp16", enable_pag=True
+
+            output = stable_diffusion.txt_to_img(
+                prompt=prompt,
+                negative_prompt=negative_prompt,
+                cfg_scale=stable_diffusion_cfg,
+                height=stable_diffusion_height,
+                width=stable_diffusion_width,
+                sample_steps=stable_diffusion_steps,
+                seed=seed,
+                sample_method="euler"
             )
-        else:
-            if stable_diffusion_model_type == "SD":
-                stable_diffusion_model = StableDiffusionPipeline().StableDiffusionPipeline.from_single_file(
+
+            image_paths = []
+            for i, image in enumerate(output):
+                today = datetime.now().date()
+                image_dir = os.path.join('outputs', f"StableDiffusion_{today.strftime('%Y%m%d')}")
+                os.makedirs(image_dir, exist_ok=True)
+                image_filename = f"txt2img_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{i}.{output_format}"
+                image_path = os.path.join(image_dir, image_filename)
+
+                metadata = {
+                    "tab": "txt2img",
+                    "prompt": prompt,
+                    "negative_prompt": negative_prompt,
+                    "num_inference_steps": stable_diffusion_steps,
+                    "guidance_scale": stable_diffusion_cfg,
+                    "height": stable_diffusion_height,
+                    "width": stable_diffusion_width,
+                    "seed": seed,
+                    "Stable_diffusion_model": stable_diffusion_model_name,
+                    "quantized": "Yes"
+                }
+
+                image.save(image_path, format=output_format.upper())
+                add_metadata_to_file(image_path, metadata)
+                image_paths.append(image_path)
+
+            return image_paths, None, f"Images generated successfully using quantized model. Seed used: {seed}"
+
+        except Exception as e:
+            return None, None, str(e)
+
+    else:
+        try:
+            stable_diffusion_model_path = os.path.join("inputs", "image", "sd_models",
+                                                       f"{stable_diffusion_model_name}.safetensors")
+
+            if not os.path.exists(stable_diffusion_model_path):
+                return None, None, f"StableDiffusion model not found: {stable_diffusion_model_path}"
+
+            if enable_sag:
+                stable_diffusion_model = StableDiffusionSAGPipeline().StableDiffusionSAGPipeline.from_single_file(
                     stable_diffusion_model_path, use_safetensors=True, device_map="auto",
-                    torch_dtype=torch.float16, variant="fp16")
-            elif stable_diffusion_model_type == "SD2":
-                stable_diffusion_model = StableDiffusionPipeline().StableDiffusionPipeline.from_single_file(
+                    torch_dtype=torch.float16, variant="fp16"
+                )
+            elif enable_pag:
+                stable_diffusion_model = AutoPipelineForText2Image().AutoPipelineForText2Image.from_single_file(
                     stable_diffusion_model_path, use_safetensors=True, device_map="auto",
-                    torch_dtype=torch.float16, variant="fp16")
-            elif stable_diffusion_model_type == "SDXL":
-                stable_diffusion_model = StableDiffusionXLPipeline().StableDiffusionXLPipeline.from_single_file(
-                    stable_diffusion_model_path, use_safetensors=True, device_map="auto", attention_slice=1,
-                    torch_dtype=torch.float16, variant="fp16")
+                    torch_dtype=torch.float16, variant="fp16", enable_pag=True
+                )
             else:
-                return None, None, "Invalid StableDiffusion model type!"
-    except (ValueError, KeyError):
-        return None, None, "The selected model is not compatible with the chosen model type"
+                if stable_diffusion_model_type == "SD":
+                    stable_diffusion_model = StableDiffusionPipeline().StableDiffusionPipeline.from_single_file(
+                        stable_diffusion_model_path, use_safetensors=True, device_map="auto",
+                        torch_dtype=torch.float16, variant="fp16")
+                elif stable_diffusion_model_type == "SD2":
+                    stable_diffusion_model = StableDiffusionPipeline().StableDiffusionPipeline.from_single_file(
+                        stable_diffusion_model_path, use_safetensors=True, device_map="auto",
+                        torch_dtype=torch.float16, variant="fp16")
+                elif stable_diffusion_model_type == "SDXL":
+                    stable_diffusion_model = StableDiffusionXLPipeline().StableDiffusionXLPipeline.from_single_file(
+                        stable_diffusion_model_path, use_safetensors=True, device_map="auto", attention_slice=1,
+                        torch_dtype=torch.float16, variant="fp16")
+                else:
+                    return None, None, "Invalid StableDiffusion model type!"
+        except (ValueError, KeyError):
+            return None, None, "The selected model is not compatible with the chosen model type"
 
-    device = "cuda" if torch.cuda.is_available() else "cpu"
+        device = "cuda" if torch.cuda.is_available() else "cpu"
 
-    if XFORMERS_AVAILABLE:
-        stable_diffusion_model.enable_xformers_memory_efficient_attention(attention_op=None)
-        stable_diffusion_model.vae.enable_xformers_memory_efficient_attention(attention_op=None)
-        stable_diffusion_model.unet.enable_xformers_memory_efficient_attention(attention_op=None)
+        if XFORMERS_AVAILABLE:
+            stable_diffusion_model.enable_xformers_memory_efficient_attention(attention_op=None)
+            stable_diffusion_model.vae.enable_xformers_memory_efficient_attention(attention_op=None)
+            stable_diffusion_model.unet.enable_xformers_memory_efficient_attention(attention_op=None)
 
-    stable_diffusion_model.to(device)
-    stable_diffusion_model.text_encoder.to(device)
-    stable_diffusion_model.vae.to(device)
-    stable_diffusion_model.unet.to(device)
+        stable_diffusion_model.to(device)
+        stable_diffusion_model.text_encoder.to(device)
+        stable_diffusion_model.vae.to(device)
+        stable_diffusion_model.unet.to(device)
 
-    try:
-        if stable_diffusion_scheduler == "EulerDiscreteScheduler":
-            stable_diffusion_model.scheduler = EulerDiscreteScheduler().EulerDiscreteScheduler.from_config(
-                stable_diffusion_model.scheduler.config)
-        elif stable_diffusion_scheduler == "DPMSolverSinglestepScheduler":
-            stable_diffusion_model.scheduler = DPMSolverSinglestepScheduler().DPMSolverSinglestepScheduler.from_config(
-                stable_diffusion_model.scheduler.config)
-        elif stable_diffusion_scheduler == "DPMSolverMultistepScheduler":
-            stable_diffusion_model.scheduler = DPMSolverMultistepScheduler().DPMSolverMultistepScheduler.from_config(
-                stable_diffusion_model.scheduler.config)
-        elif stable_diffusion_scheduler == "EDMDPMSolverMultistepScheduler":
-            stable_diffusion_model.scheduler = EDMDPMSolverMultistepScheduler().EDMDPMSolverMultistepScheduler.from_config(
-                stable_diffusion_model.scheduler.config)
-        elif stable_diffusion_scheduler == "EDMEulerScheduler":
-            stable_diffusion_model.scheduler = EDMEulerScheduler().EDMEulerScheduler.from_config(
-                stable_diffusion_model.scheduler.config)
-        elif stable_diffusion_scheduler == "KDPM2DiscreteScheduler":
-            stable_diffusion_model.scheduler = KDPM2DiscreteScheduler().KDPM2DiscreteScheduler.from_config(
-                stable_diffusion_model.scheduler.config)
-        elif stable_diffusion_scheduler == "KDPM2AncestralDiscreteScheduler":
-            stable_diffusion_model.scheduler = KDPM2AncestralDiscreteScheduler().KDPM2AncestralDiscreteScheduler.from_config(
-                stable_diffusion_model.scheduler.config)
-        elif stable_diffusion_scheduler == "EulerAncestralDiscreteScheduler":
-            stable_diffusion_model.scheduler = EulerAncestralDiscreteScheduler().EulerAncestralDiscreteScheduler.from_config(
-                stable_diffusion_model.scheduler.config)
-        elif stable_diffusion_scheduler == "HeunDiscreteScheduler":
-            stable_diffusion_model.scheduler = HeunDiscreteScheduler().HeunDiscreteScheduler.from_config(
-                stable_diffusion_model.scheduler.config)
-        elif stable_diffusion_scheduler == "LMSDiscreteScheduler":
-            stable_diffusion_model.scheduler = LMSDiscreteScheduler().LMSDiscreteScheduler.from_config(
-                stable_diffusion_model.scheduler.config)
-        elif stable_diffusion_scheduler == "DEISMultistepScheduler":
-            stable_diffusion_model.scheduler = DEISMultistepScheduler().DEISMultistepScheduler.from_config(
-                stable_diffusion_model.scheduler.config)
-        elif stable_diffusion_scheduler == "UniPCMultistepScheduler":
-            stable_diffusion_model.scheduler = UniPCMultistepScheduler().UniPCMultistepScheduler.from_config(
-                stable_diffusion_model.scheduler.config)
-        elif stable_diffusion_scheduler == "LCMScheduler":
-            stable_diffusion_model.scheduler = LCMScheduler().LCMScheduler.from_config(
-                stable_diffusion_model.scheduler.config)
-        elif stable_diffusion_scheduler == "DPMSolverSDEScheduler":
-            stable_diffusion_model.scheduler = DPMSolverSDEScheduler().DPMSolverSDEScheduler.from_config(
-                stable_diffusion_model.scheduler.config)
-        elif stable_diffusion_scheduler == "TCDScheduler":
-            stable_diffusion_model.scheduler = TCDScheduler().TCDScheduler.from_config(
-                stable_diffusion_model.scheduler.config)
-        elif stable_diffusion_scheduler == "DDIMScheduler":
-            stable_diffusion_model.scheduler = DDIMScheduler().DDIMScheduler.from_config(
-                stable_diffusion_model.scheduler.config)
-        elif stable_diffusion_scheduler == "DDPMScheduler":
-            stable_diffusion_model.scheduler = DDPMScheduler().DDPMScheduler.from_config(
-                stable_diffusion_model.scheduler.config)
+        try:
+            if stable_diffusion_scheduler == "EulerDiscreteScheduler":
+                stable_diffusion_model.scheduler = EulerDiscreteScheduler().EulerDiscreteScheduler.from_config(
+                    stable_diffusion_model.scheduler.config)
+            elif stable_diffusion_scheduler == "DPMSolverSinglestepScheduler":
+                stable_diffusion_model.scheduler = DPMSolverSinglestepScheduler().DPMSolverSinglestepScheduler.from_config(
+                    stable_diffusion_model.scheduler.config)
+            elif stable_diffusion_scheduler == "DPMSolverMultistepScheduler":
+                stable_diffusion_model.scheduler = DPMSolverMultistepScheduler().DPMSolverMultistepScheduler.from_config(
+                    stable_diffusion_model.scheduler.config)
+            elif stable_diffusion_scheduler == "EDMDPMSolverMultistepScheduler":
+                stable_diffusion_model.scheduler = EDMDPMSolverMultistepScheduler().EDMDPMSolverMultistepScheduler.from_config(
+                    stable_diffusion_model.scheduler.config)
+            elif stable_diffusion_scheduler == "EDMEulerScheduler":
+                stable_diffusion_model.scheduler = EDMEulerScheduler().EDMEulerScheduler.from_config(
+                    stable_diffusion_model.scheduler.config)
+            elif stable_diffusion_scheduler == "KDPM2DiscreteScheduler":
+                stable_diffusion_model.scheduler = KDPM2DiscreteScheduler().KDPM2DiscreteScheduler.from_config(
+                    stable_diffusion_model.scheduler.config)
+            elif stable_diffusion_scheduler == "KDPM2AncestralDiscreteScheduler":
+                stable_diffusion_model.scheduler = KDPM2AncestralDiscreteScheduler().KDPM2AncestralDiscreteScheduler.from_config(
+                    stable_diffusion_model.scheduler.config)
+            elif stable_diffusion_scheduler == "EulerAncestralDiscreteScheduler":
+                stable_diffusion_model.scheduler = EulerAncestralDiscreteScheduler().EulerAncestralDiscreteScheduler.from_config(
+                    stable_diffusion_model.scheduler.config)
+            elif stable_diffusion_scheduler == "HeunDiscreteScheduler":
+                stable_diffusion_model.scheduler = HeunDiscreteScheduler().HeunDiscreteScheduler.from_config(
+                    stable_diffusion_model.scheduler.config)
+            elif stable_diffusion_scheduler == "LMSDiscreteScheduler":
+                stable_diffusion_model.scheduler = LMSDiscreteScheduler().LMSDiscreteScheduler.from_config(
+                    stable_diffusion_model.scheduler.config)
+            elif stable_diffusion_scheduler == "DEISMultistepScheduler":
+                stable_diffusion_model.scheduler = DEISMultistepScheduler().DEISMultistepScheduler.from_config(
+                    stable_diffusion_model.scheduler.config)
+            elif stable_diffusion_scheduler == "UniPCMultistepScheduler":
+                stable_diffusion_model.scheduler = UniPCMultistepScheduler().UniPCMultistepScheduler.from_config(
+                    stable_diffusion_model.scheduler.config)
+            elif stable_diffusion_scheduler == "LCMScheduler":
+                stable_diffusion_model.scheduler = LCMScheduler().LCMScheduler.from_config(
+                    stable_diffusion_model.scheduler.config)
+            elif stable_diffusion_scheduler == "DPMSolverSDEScheduler":
+                stable_diffusion_model.scheduler = DPMSolverSDEScheduler().DPMSolverSDEScheduler.from_config(
+                    stable_diffusion_model.scheduler.config)
+            elif stable_diffusion_scheduler == "TCDScheduler":
+                stable_diffusion_model.scheduler = TCDScheduler().TCDScheduler.from_config(
+                    stable_diffusion_model.scheduler.config)
+            elif stable_diffusion_scheduler == "DDIMScheduler":
+                stable_diffusion_model.scheduler = DDIMScheduler().DDIMScheduler.from_config(
+                    stable_diffusion_model.scheduler.config)
+            elif stable_diffusion_scheduler == "DDPMScheduler":
+                stable_diffusion_model.scheduler = DDPMScheduler().DDPMScheduler.from_config(
+                    stable_diffusion_model.scheduler.config)
 
-        print(f"Scheduler successfully set to {stable_diffusion_scheduler}")
-    except Exception as e:
-        print(f"Error initializing scheduler: {e}")
-        print("Using default scheduler")
+            print(f"Scheduler successfully set to {stable_diffusion_scheduler}")
+        except Exception as e:
+            print(f"Error initializing scheduler: {e}")
+            print("Using default scheduler")
 
-    stable_diffusion_model.safety_checker = None
+        stable_diffusion_model.safety_checker = None
 
-    stable_diffusion_model.enable_vae_slicing()
-    stable_diffusion_model.enable_vae_tiling()
-    stable_diffusion_model.enable_model_cpu_offload()
+        stable_diffusion_model.enable_vae_slicing()
+        stable_diffusion_model.enable_vae_tiling()
+        stable_diffusion_model.enable_model_cpu_offload()
 
-    if enable_freeu:
-        stable_diffusion_model.enable_freeu(s1=freeu_s1, s2=freeu_s2, b1=freeu_b1, b2=freeu_b2)
+        if enable_freeu:
+            stable_diffusion_model.enable_freeu(s1=freeu_s1, s2=freeu_s2, b1=freeu_b1, b2=freeu_b2)
 
-    if enable_magicprompt:
-        prompt = generate_magicprompt(prompt, magicprompt_max_new_tokens)
+        if enable_magicprompt:
+            prompt = generate_magicprompt(prompt, magicprompt_max_new_tokens)
 
-    if vae_model_name is not None:
-        vae_model_path = os.path.join("inputs", "image", "sd_models", "vae", f"{vae_model_name}.safetensors")
-        if os.path.exists(vae_model_path):
-            vae = AutoencoderKL().AutoencoderKL.from_single_file(vae_model_path, device_map="auto",
-                                                 torch_dtype=torch.float16,
-                                                 variant="fp16")
-            stable_diffusion_model.vae = vae.to(device)
+        if vae_model_name is not None:
+            vae_model_path = os.path.join("inputs", "image", "sd_models", "vae", f"{vae_model_name}.safetensors")
+            if os.path.exists(vae_model_path):
+                vae = AutoencoderKL().AutoencoderKL.from_single_file(vae_model_path, device_map="auto",
+                                                                     torch_dtype=torch.float16,
+                                                                     variant="fp16")
+                stable_diffusion_model.vae = vae.to(device)
 
-    if isinstance(lora_scales, str):
-        lora_scales = [float(scale.strip()) for scale in lora_scales.split(',') if scale.strip()]
-    elif isinstance(lora_scales, (int, float)):
-        lora_scales = [float(lora_scales)]
+        if isinstance(lora_scales, str):
+            lora_scales = [float(scale.strip()) for scale in lora_scales.split(',') if scale.strip()]
+        elif isinstance(lora_scales, (int, float)):
+            lora_scales = [float(lora_scales)]
 
-    lora_loaded = False
-    if lora_model_names and lora_scales:
-        if len(lora_model_names) != len(lora_scales):
-            print(
-                f"Warning: Number of LoRA models ({len(lora_model_names)}) does not match number of scales ({len(lora_scales)}). Using available scales.")
+        lora_loaded = False
+        if lora_model_names and lora_scales:
+            if len(lora_model_names) != len(lora_scales):
+                print(
+                    f"Warning: Number of LoRA models ({len(lora_model_names)}) does not match number of scales ({len(lora_scales)}). Using available scales.")
 
-        for i, lora_model_name in enumerate(lora_model_names):
-            if i < len(lora_scales):
-                lora_scale = lora_scales[i]
+            for i, lora_model_name in enumerate(lora_model_names):
+                if i < len(lora_scales):
+                    lora_scale = lora_scales[i]
+                else:
+                    lora_scale = 1.0
+
+                lora_model_path = os.path.join("inputs", "image", "sd_models", "lora", lora_model_name)
+                if os.path.exists(lora_model_path):
+                    adapter_name = os.path.splitext(os.path.basename(lora_model_name))[0]
+                    try:
+                        stable_diffusion_model.load_lora_weights(lora_model_path, adapter_name=adapter_name)
+                        stable_diffusion_model.fuse_lora(lora_scale=lora_scale)
+                        lora_loaded = True
+                        print(f"Loaded LoRA {lora_model_name} with scale {lora_scale}")
+                    except Exception as e:
+                        print(f"Error loading LoRA {lora_model_name}: {str(e)}")
+
+        ti_loaded = False
+        if textual_inversion_model_names:
+            for textual_inversion_model_name in textual_inversion_model_names:
+                textual_inversion_model_path = os.path.join("inputs", "image", "sd_models", "embedding",
+                                                            textual_inversion_model_name)
+                if os.path.exists(textual_inversion_model_path):
+                    try:
+                        token = f"<{os.path.splitext(textual_inversion_model_name)[0]}>"
+                        stable_diffusion_model.load_textual_inversion(textual_inversion_model_path, token=token)
+                        ti_loaded = True
+                        print(f"Loaded textual inversion: {token}")
+                    except Exception as e:
+                        print(f"Error loading Textual Inversion {textual_inversion_model_name}: {str(e)}")
+
+        def process_prompt_with_ti(input_prompt, textual_inversion_model_names):
+            if not textual_inversion_model_names:
+                return input_prompt
+
+            processed_prompt = input_prompt
+            for ti_name in textual_inversion_model_names:
+                base_name = os.path.splitext(ti_name)[0]
+                token = f"<{base_name}>"
+                if base_name in processed_prompt or token.lower() in processed_prompt or token.upper() in processed_prompt:
+                    processed_prompt = processed_prompt.replace(base_name, token)
+                    processed_prompt = processed_prompt.replace(token.lower(), token)
+                    processed_prompt = processed_prompt.replace(token.upper(), token)
+                    print(f"Applied Textual Inversion token: {token}")
+
+            if processed_prompt != input_prompt:
+                print(f"Prompt changed from '{input_prompt}' to '{processed_prompt}'")
             else:
-                lora_scale = 1.0
+                print("No Textual Inversion tokens applied to this prompt")
 
-            lora_model_path = os.path.join("inputs", "image", "sd_models", "lora", lora_model_name)
-            if os.path.exists(lora_model_path):
-                adapter_name = os.path.splitext(os.path.basename(lora_model_name))[0]
-                try:
-                    stable_diffusion_model.load_lora_weights(lora_model_path, adapter_name=adapter_name)
-                    stable_diffusion_model.fuse_lora(lora_scale=lora_scale)
-                    lora_loaded = True
-                    print(f"Loaded LoRA {lora_model_name} with scale {lora_scale}")
-                except Exception as e:
-                    print(f"Error loading LoRA {lora_model_name}: {str(e)}")
+            return processed_prompt
 
-    ti_loaded = False
-    if textual_inversion_model_names:
-        for textual_inversion_model_name in textual_inversion_model_names:
-            textual_inversion_model_path = os.path.join("inputs", "image", "sd_models", "embedding",
-                                                        textual_inversion_model_name)
-            if os.path.exists(textual_inversion_model_path):
-                try:
-                    token = f"<{os.path.splitext(textual_inversion_model_name)[0]}>"
-                    stable_diffusion_model.load_textual_inversion(textual_inversion_model_path, token=token)
-                    ti_loaded = True
-                    print(f"Loaded textual inversion: {token}")
-                except Exception as e:
-                    print(f"Error loading Textual Inversion {textual_inversion_model_name}: {str(e)}")
+        try:
+            if seed == "" or seed is None:
+                seed = random.randint(0, 2 ** 32 - 1)
+            else:
+                seed = int(seed)
+            generator = torch.Generator(device).manual_seed(seed)
 
-    def process_prompt_with_ti(input_prompt, textual_inversion_model_names):
-        if not textual_inversion_model_names:
-            return input_prompt
+            processed_prompt = process_prompt_with_ti(prompt, textual_inversion_model_names)
+            processed_negative_prompt = process_prompt_with_ti(negative_prompt, textual_inversion_model_names)
 
-        processed_prompt = input_prompt
-        for ti_name in textual_inversion_model_names:
-            base_name = os.path.splitext(ti_name)[0]
-            token = f"<{base_name}>"
-            if base_name in processed_prompt or token.lower() in processed_prompt or token.upper() in processed_prompt:
-                processed_prompt = processed_prompt.replace(base_name, token)
-                processed_prompt = processed_prompt.replace(token.lower(), token)
-                processed_prompt = processed_prompt.replace(token.upper(), token)
-                print(f"Applied Textual Inversion token: {token}")
+            if enable_token_merging:
+                tomesd.apply_patch(stable_diffusion_model, ratio=ratio)
 
-        if processed_prompt != input_prompt:
-            print(f"Prompt changed from '{input_prompt}' to '{processed_prompt}'")
-        else:
-            print("No Textual Inversion tokens applied to this prompt")
+            if enable_deepcache:
+                helper = DeepCacheSDHelper(pipe=stable_diffusion_model)
+                helper.set_params(cache_interval=cache_interval, cache_branch_id=cache_branch_id)
+                helper.enable()
 
-        return processed_prompt
+            def latents_to_rgb(latents):
+                weights = (
+                    (60, -60, 25, -70),
+                    (60, -5, 15, -50),
+                    (60, 10, -5, -35)
+                )
 
-    try:
-        if seed == "" or seed is None:
-            seed = random.randint(0, 2 ** 32 - 1)
-        else:
-            seed = int(seed)
-        generator = torch.Generator(device).manual_seed(seed)
+                weights_tensor = torch.t(torch.tensor(weights, dtype=latents.dtype).to(latents.device))
+                biases_tensor = torch.tensor((150, 140, 130), dtype=latents.dtype).to(latents.device)
+                rgb_tensor = torch.einsum("...lxy,lr -> ...rxy", latents, weights_tensor) + biases_tensor.unsqueeze(
+                    -1).unsqueeze(-1)
+                image_array = rgb_tensor.clamp(0, 255)[0].byte().cpu().numpy()
+                image_array = image_array.transpose(1, 2, 0)
 
-        processed_prompt = process_prompt_with_ti(prompt, textual_inversion_model_names)
-        processed_negative_prompt = process_prompt_with_ti(negative_prompt, textual_inversion_model_names)
+                return Image.fromarray(image_array)
 
-        if enable_token_merging:
-            tomesd.apply_patch(stable_diffusion_model, ratio=ratio)
+            def decode_tensors(stable_diffusion_model, i, t, callback_kwargs):
+                latents = callback_kwargs["latents"]
+                image = latents_to_rgb(latents)
+                image.save(f"temp/{i}.png")
+                return callback_kwargs
 
-        if enable_deepcache:
-            helper = DeepCacheSDHelper(pipe=stable_diffusion_model)
-            helper.set_params(cache_interval=cache_interval, cache_branch_id=cache_branch_id)
-            helper.enable()
+            def combined_callback(stable_diffusion_model, i, t, callback_kwargs):
+                nonlocal stop_idx
+                if stop_signal and stop_idx is None:
+                    stop_idx = i
+                if i == stop_idx:
+                    stable_diffusion_model._interrupt = True
+                callback_kwargs = decode_tensors(stable_diffusion_model, i, t, callback_kwargs)
 
-        def latents_to_rgb(latents):
-            weights = (
-                (60, -60, 25, -70),
-                (60, -5, 15, -50),
-                (60, 10, -5, -35)
-            )
+                progress((i + 1) / stable_diffusion_steps, f"Step {i + 1}/{stable_diffusion_steps}")
 
-            weights_tensor = torch.t(torch.tensor(weights, dtype=latents.dtype).to(latents.device))
-            biases_tensor = torch.tensor((150, 140, 130), dtype=latents.dtype).to(latents.device)
-            rgb_tensor = torch.einsum("...lxy,lr -> ...rxy", latents, weights_tensor) + biases_tensor.unsqueeze(
-                -1).unsqueeze(-1)
-            image_array = rgb_tensor.clamp(0, 255)[0].byte().cpu().numpy()
-            image_array = image_array.transpose(1, 2, 0)
+                return callback_kwargs
 
-            return Image.fromarray(image_array)
+            if stable_diffusion_model_type == "SDXL":
+                compel = Compel(
+                    tokenizer=[stable_diffusion_model.tokenizer, stable_diffusion_model.tokenizer_2],
+                    text_encoder=[stable_diffusion_model.text_encoder, stable_diffusion_model.text_encoder_2],
+                    returned_embeddings_type=ReturnedEmbeddingsType.PENULTIMATE_HIDDEN_STATES_NON_NORMALIZED,
+                    requires_pooled=[False, True]
+                )
+                prompt_embeds, pooled_prompt_embeds = compel(processed_prompt)
+                negative_prompt = processed_negative_prompt
+                images = stable_diffusion_model(prompt_embeds=prompt_embeds, pooled_prompt_embeds=pooled_prompt_embeds,
+                                                negative_prompt=negative_prompt,
+                                                num_inference_steps=stable_diffusion_steps,
+                                                guidance_scale=stable_diffusion_cfg, height=stable_diffusion_height,
+                                                width=stable_diffusion_width, clip_skip=stable_diffusion_clip_skip,
+                                                num_images_per_prompt=num_images_per_prompt,
+                                                generator=generator, callback_on_step_end=combined_callback,
+                                                callback_on_step_end_tensor_inputs=["latents"]).images
+            elif enable_sag:
+                images = stable_diffusion_model(
+                    prompt=prompt,
+                    negative_prompt=negative_prompt,
+                    num_inference_steps=stable_diffusion_steps,
+                    guidance_scale=stable_diffusion_cfg,
+                    height=stable_diffusion_height,
+                    width=stable_diffusion_width,
+                    clip_skip=stable_diffusion_clip_skip,
+                    sag_scale=sag_scale,
+                    num_images_per_prompt=num_images_per_prompt,
+                    generator=generator,
+                    callback_on_step_end=combined_callback,
+                    callback_on_step_end_tensor_inputs=["latents"]
+                ).images
+            elif enable_pag:
+                images = stable_diffusion_model(
+                    prompt=prompt,
+                    negative_prompt=negative_prompt,
+                    num_inference_steps=stable_diffusion_steps,
+                    guidance_scale=stable_diffusion_cfg,
+                    height=stable_diffusion_height,
+                    width=stable_diffusion_width,
+                    clip_skip=stable_diffusion_clip_skip,
+                    pag_scale=pag_scale,
+                    num_images_per_prompt=num_images_per_prompt,
+                    generator=generator,
+                    callback_on_step_end=combined_callback,
+                    callback_on_step_end_tensor_inputs=["latents"]
+                ).images
+            elif enable_tgate and stable_diffusion_model_type == "SDXL":
+                stable_diffusion_model = TgateSDXLLoader(
+                    stable_diffusion_model,
+                    gate_step=gate_step,
+                    num_inference_steps=stable_diffusion_steps,
+                ).to(device)
+                images = stable_diffusion_model.tgate(
+                    prompt=prompt,
+                    negative_prompt=negative_prompt,
+                    num_inference_steps=stable_diffusion_steps,
+                    gate_step=gate_step,
+                    guidance_scale=stable_diffusion_cfg,
+                    height=stable_diffusion_height,
+                    width=stable_diffusion_width,
+                    clip_skip=stable_diffusion_clip_skip,
+                    num_images_per_prompt=num_images_per_prompt,
+                    generator=generator,
+                    callback_on_step_end=combined_callback,
+                    callback_on_step_end_tensor_inputs=["latents"]
+                ).images
+            elif enable_tgate and stable_diffusion_model_type == "SD":
+                stable_diffusion_model = TgateSDLoader(
+                    stable_diffusion_model,
+                    gate_step=gate_step,
+                    num_inference_steps=stable_diffusion_steps,
+                ).to(device)
+                images = stable_diffusion_model.tgate(
+                    prompt=prompt,
+                    negative_prompt=negative_prompt,
+                    num_inference_steps=stable_diffusion_steps,
+                    gate_step=gate_step,
+                    guidance_scale=stable_diffusion_cfg,
+                    height=stable_diffusion_height,
+                    width=stable_diffusion_width,
+                    clip_skip=stable_diffusion_clip_skip,
+                    num_images_per_prompt=num_images_per_prompt,
+                    generator=generator,
+                    callback_on_step_end=combined_callback,
+                    callback_on_step_end_tensor_inputs=["latents"]
+                ).images
+            else:
+                compel_proc = Compel(tokenizer=stable_diffusion_model.tokenizer,
+                                     text_encoder=stable_diffusion_model.text_encoder)
+                prompt_embeds = compel_proc(processed_prompt)
+                negative_prompt_embeds = compel_proc(processed_negative_prompt)
 
-        def decode_tensors(stable_diffusion_model, i, t, callback_kwargs):
-            latents = callback_kwargs["latents"]
-            image = latents_to_rgb(latents)
-            image.save(f"temp/{i}.png")
-            return callback_kwargs
+                images = stable_diffusion_model(prompt_embeds=prompt_embeds,
+                                                negative_prompt_embeds=negative_prompt_embeds,
+                                                num_inference_steps=stable_diffusion_steps,
+                                                guidance_scale=stable_diffusion_cfg, height=stable_diffusion_height,
+                                                width=stable_diffusion_width, clip_skip=stable_diffusion_clip_skip,
+                                                num_images_per_prompt=num_images_per_prompt,
+                                                generator=generator, callback_on_step_end=combined_callback,
+                                                callback_on_step_end_tensor_inputs=["latents"]).images
 
-        def combined_callback(stable_diffusion_model, i, t, callback_kwargs):
-            nonlocal stop_idx
-            if stop_signal and stop_idx is None:
-                stop_idx = i
-            if i == stop_idx:
-                stable_diffusion_model._interrupt = True
-            callback_kwargs = decode_tensors(stable_diffusion_model, i, t, callback_kwargs)
+            image_paths = []
+            gif_images = []
+            for i, image in enumerate(images):
+                today = datetime.now().date()
+                image_dir = os.path.join('outputs', f"StableDiffusion_{today.strftime('%Y%m%d')}")
+                os.makedirs(image_dir, exist_ok=True)
+                image_filename = f"txt2img_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{i}.{output_format}"
+                image_path = os.path.join(image_dir, image_filename)
 
-            progress((i + 1) / stable_diffusion_steps, f"Step {i+1}/{stable_diffusion_steps}")
+                metadata = {
+                    "tab": "txt2img",
+                    "prompt": prompt,
+                    "negative_prompt": negative_prompt,
+                    "num_inference_steps": stable_diffusion_steps,
+                    "guidance_scale": stable_diffusion_cfg,
+                    "height": stable_diffusion_height,
+                    "width": stable_diffusion_width,
+                    "clip_skip": stable_diffusion_clip_skip,
+                    "scheduler": stable_diffusion_scheduler,
+                    "seed": seed,
+                    "Stable_diffusion_model": stable_diffusion_model_name,
+                    "Stable_diffusion_model_type": stable_diffusion_model_type,
+                    "vae": vae_model_name if vae_model_name else None,
+                    "lora_models": lora_model_names if lora_model_names else None,
+                    "lora_scales": lora_scales if lora_model_names else None,
+                    "textual_inversion": textual_inversion_model_names if textual_inversion_model_names else None
+                }
 
-            return callback_kwargs
+                image.save(image_path, format=output_format.upper())
+                add_metadata_to_file(image_path, metadata)
+                image_paths.append(image_path)
 
-        if stable_diffusion_model_type == "SDXL":
-            compel = Compel(
-                tokenizer=[stable_diffusion_model.tokenizer, stable_diffusion_model.tokenizer_2],
-                text_encoder=[stable_diffusion_model.text_encoder, stable_diffusion_model.text_encoder_2],
-                returned_embeddings_type=ReturnedEmbeddingsType.PENULTIMATE_HIDDEN_STATES_NON_NORMALIZED,
-                requires_pooled=[False, True]
-            )
-            prompt_embeds, pooled_prompt_embeds = compel(processed_prompt)
-            negative_prompt = processed_negative_prompt
-            images = stable_diffusion_model(prompt_embeds=prompt_embeds, pooled_prompt_embeds=pooled_prompt_embeds,
-                                            negative_prompt=negative_prompt,
-                                            num_inference_steps=stable_diffusion_steps,
-                                            guidance_scale=stable_diffusion_cfg, height=stable_diffusion_height,
-                                            width=stable_diffusion_width, clip_skip=stable_diffusion_clip_skip,
-                                            num_images_per_prompt=num_images_per_prompt,
-                                            generator=generator, callback_on_step_end=combined_callback, callback_on_step_end_tensor_inputs=["latents"]).images
-        elif enable_sag:
-            images = stable_diffusion_model(
-                prompt=prompt,
-                negative_prompt=negative_prompt,
-                num_inference_steps=stable_diffusion_steps,
-                guidance_scale=stable_diffusion_cfg,
-                height=stable_diffusion_height,
-                width=stable_diffusion_width,
-                clip_skip=stable_diffusion_clip_skip,
-                sag_scale=sag_scale,
-                num_images_per_prompt=num_images_per_prompt,
-                generator=generator,
-                callback_on_step_end=combined_callback,
-                callback_on_step_end_tensor_inputs=["latents"]
-            ).images
-        elif enable_pag:
-            images = stable_diffusion_model(
-                prompt=prompt,
-                negative_prompt=negative_prompt,
-                num_inference_steps=stable_diffusion_steps,
-                guidance_scale=stable_diffusion_cfg,
-                height=stable_diffusion_height,
-                width=stable_diffusion_width,
-                clip_skip=stable_diffusion_clip_skip,
-                pag_scale=pag_scale,
-                num_images_per_prompt=num_images_per_prompt,
-                generator=generator,
-                callback_on_step_end=combined_callback,
-                callback_on_step_end_tensor_inputs=["latents"]
-            ).images
-        elif enable_tgate and stable_diffusion_model_type == "SDXL":
-            stable_diffusion_model = TgateSDXLLoader(
-                stable_diffusion_model,
-                gate_step=gate_step,
-                num_inference_steps=stable_diffusion_steps,
-            ).to(device)
-            images = stable_diffusion_model.tgate(
-                prompt=prompt,
-                negative_prompt=negative_prompt,
-                num_inference_steps=stable_diffusion_steps,
-                gate_step=gate_step,
-                guidance_scale=stable_diffusion_cfg,
-                height=stable_diffusion_height,
-                width=stable_diffusion_width,
-                clip_skip=stable_diffusion_clip_skip,
-                num_images_per_prompt=num_images_per_prompt,
-                generator=generator,
-                callback_on_step_end=combined_callback,
-                callback_on_step_end_tensor_inputs=["latents"]
-            ).images
-        elif enable_tgate and stable_diffusion_model_type == "SD":
-            stable_diffusion_model = TgateSDLoader(
-                stable_diffusion_model,
-                gate_step=gate_step,
-                num_inference_steps=stable_diffusion_steps,
-            ).to(device)
-            images = stable_diffusion_model.tgate(
-                prompt=prompt,
-                negative_prompt=negative_prompt,
-                num_inference_steps=stable_diffusion_steps,
-                gate_step=gate_step,
-                guidance_scale=stable_diffusion_cfg,
-                height=stable_diffusion_height,
-                width=stable_diffusion_width,
-                clip_skip=stable_diffusion_clip_skip,
-                num_images_per_prompt=num_images_per_prompt,
-                generator=generator,
-                callback_on_step_end=combined_callback,
-                callback_on_step_end_tensor_inputs=["latents"]
-            ).images
-        else:
-            compel_proc = Compel(tokenizer=stable_diffusion_model.tokenizer,
-                                 text_encoder=stable_diffusion_model.text_encoder)
-            prompt_embeds = compel_proc(processed_prompt)
-            negative_prompt_embeds = compel_proc(processed_negative_prompt)
+            for i in range(stable_diffusion_steps):
+                if os.path.exists(f"temp/{i}.png"):
+                    gif_images.append(imageio.imread(f"temp/{i}.png"))
 
-            images = stable_diffusion_model(prompt_embeds=prompt_embeds, negative_prompt_embeds=negative_prompt_embeds,
-                                            num_inference_steps=stable_diffusion_steps,
-                                            guidance_scale=stable_diffusion_cfg, height=stable_diffusion_height,
-                                            width=stable_diffusion_width, clip_skip=stable_diffusion_clip_skip,
-                                            num_images_per_prompt=num_images_per_prompt,
-                                            generator=generator, callback_on_step_end=combined_callback, callback_on_step_end_tensor_inputs=["latents"]).images
+            if gif_images:
+                gif_filename = f"txt2img_process_{datetime.now().strftime('%Y%m%d_%H%M%S')}.gif"
+                gif_path = os.path.join(image_dir, gif_filename)
+                imageio.mimsave(gif_path, gif_images, duration=0.1)
+            else:
+                gif_path = None
 
-        image_paths = []
-        gif_images = []
-        for i, image in enumerate(images):
-            today = datetime.now().date()
-            image_dir = os.path.join('outputs', f"StableDiffusion_{today.strftime('%Y%m%d')}")
-            os.makedirs(image_dir, exist_ok=True)
-            image_filename = f"txt2img_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{i}.{output_format}"
-            image_path = os.path.join(image_dir, image_filename)
+            for i in range(stable_diffusion_steps):
+                if os.path.exists(f"temp/{i}.png"):
+                    os.remove(f"temp/{i}.png")
 
-            metadata = {
-                "tab": "txt2img",
-                "prompt": prompt,
-                "negative_prompt": negative_prompt,
-                "num_inference_steps": stable_diffusion_steps,
-                "guidance_scale": stable_diffusion_cfg,
-                "height": stable_diffusion_height,
-                "width": stable_diffusion_width,
-                "clip_skip": stable_diffusion_clip_skip,
-                "scheduler": stable_diffusion_scheduler,
-                "seed": seed,
-                "Stable_diffusion_model": stable_diffusion_model_name,
-                "Stable_diffusion_model_type": stable_diffusion_model_type,
-                "vae": vae_model_name if vae_model_name else None,
-                "lora_models": lora_model_names if lora_model_names else None,
-                "lora_scales": lora_scales if lora_model_names else None,
-                "textual_inversion": textual_inversion_model_names if textual_inversion_model_names else None
-            }
+            return image_paths, [gif_path] if gif_path else [], f"Images generated successfully. Seed used: {seed}"
 
-            image.save(image_path, format=output_format.upper())
-            add_metadata_to_file(image_path, metadata)
-            image_paths.append(image_path)
+        except Exception as e:
+            return None, None, str(e)
 
-        for i in range(stable_diffusion_steps):
-            if os.path.exists(f"temp/{i}.png"):
-                gif_images.append(imageio.imread(f"temp/{i}.png"))
-
-        if gif_images:
-            gif_filename = f"txt2img_process_{datetime.now().strftime('%Y%m%d_%H%M%S')}.gif"
-            gif_path = os.path.join(image_dir, gif_filename)
-            imageio.mimsave(gif_path, gif_images, duration=0.1)
-        else:
-            gif_path = None
-
-        for i in range(stable_diffusion_steps):
-            if os.path.exists(f"temp/{i}.png"):
-                os.remove(f"temp/{i}.png")
-
-        return image_paths, [gif_path] if gif_path else [], f"Images generated successfully. Seed used: {seed}"
-
-    except Exception as e:
-        return None, None, str(e)
-
-    finally:
-        del stable_diffusion_model
-        flush()
+        finally:
+            del stable_diffusion_model
+            flush()
 
 
 def generate_image_img2img(prompt, negative_prompt, init_image, strength, stable_diffusion_model_type,
-                           stable_diffusion_model_name, vae_model_name, lora_model_names, lora_scales, textual_inversion_model_names, seed, stop_button,
+                           stable_diffusion_model_name, enable_quantize, vae_model_name, lora_model_names, lora_scales, textual_inversion_model_names, seed, stop_button,
                            stable_diffusion_scheduler, stable_diffusion_steps, stable_diffusion_cfg,
                            stable_diffusion_clip_skip, num_images_per_prompt, output_format, progress=gr.Progress()):
     global stop_signal
@@ -1941,304 +1999,365 @@ def generate_image_img2img(prompt, negative_prompt, init_image, strength, stable
     if not init_image:
         return None, None, "Please, upload an initial image!"
 
-    stable_diffusion_model_path = os.path.join("inputs", "image", "sd_models",
-                                               f"{stable_diffusion_model_name}.safetensors")
+    if enable_quantize:
+        try:
+            quantize_stable_diffusion_model_path = os.path.join("inputs", "image", "sd_models",
+                                                                f"{stable_diffusion_model_name}.gguf")
 
-    if not os.path.exists(stable_diffusion_model_path):
-        return None, None, f"StableDiffusion model not found: {stable_diffusion_model_path}"
+            if not os.path.exists(quantize_stable_diffusion_model_path):
+                return None, None, f"StableDiffusion model not found: {quantize_stable_diffusion_model_path}"
 
-    try:
-        if stable_diffusion_model_type == "SD":
-            stable_diffusion_model = StableDiffusionImg2ImgPipeline().StableDiffusionImg2ImgPipeline.from_single_file(
-                stable_diffusion_model_path, use_safetensors=True, device_map="auto",
-                torch_dtype=torch.float16, variant="fp16")
-        elif stable_diffusion_model_type == "SD2":
-            stable_diffusion_model = StableDiffusionImg2ImgPipeline().StableDiffusionImg2ImgPipeline.from_single_file(
-                stable_diffusion_model_path, use_safetensors=True, device_map="auto",
-                torch_dtype=torch.float16, variant="fp16")
-        elif stable_diffusion_model_type == "SDXL":
-            stable_diffusion_model = StableDiffusionXLImg2ImgPipeline().StableDiffusionXLImg2ImgPipeline.from_single_file(
-                stable_diffusion_model_path, use_safetensors=True, device_map="auto", attention_slice=1,
-                torch_dtype=torch.float16, variant="fp16")
-        else:
-            return None, None, "Invalid StableDiffusion model type!"
-    except (ValueError, KeyError):
-        return None, None, "The selected model is not compatible with the chosen model type"
+            stable_diffusion = StableDiffusion().StableDiffusion(
+                model_path=quantize_stable_diffusion_model_path,
+                wtype="default"
+            )
 
-    device = "cuda" if torch.cuda.is_available() else "cpu"
+            output = stable_diffusion.img_to_img(
+                prompt=prompt,
+                negative_prompt=negative_prompt,
+                cfg_scale=stable_diffusion_cfg,
+                sample_steps=stable_diffusion_steps,
+                seed=seed,
+                sample_method="euler",
+                image=init_image,
+                strength=strength
+            )
 
-    if XFORMERS_AVAILABLE:
-        stable_diffusion_model.enable_xformers_memory_efficient_attention(attention_op=None)
-        stable_diffusion_model.vae.enable_xformers_memory_efficient_attention(attention_op=None)
-        stable_diffusion_model.unet.enable_xformers_memory_efficient_attention(attention_op=None)
+            image_paths = []
+            for i, image in enumerate(output):
+                today = datetime.now().date()
+                image_dir = os.path.join('outputs', f"StableDiffusion_{today.strftime('%Y%m%d')}")
+                os.makedirs(image_dir, exist_ok=True)
+                image_filename = f"img2img_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{i}.{output_format}"
+                image_path = os.path.join(image_dir, image_filename)
 
-    stable_diffusion_model.to(device)
-    stable_diffusion_model.text_encoder.to(device)
-    stable_diffusion_model.vae.to(device)
-    stable_diffusion_model.unet.to(device)
+                metadata = {
+                    "tab": "img2img",
+                    "prompt": prompt,
+                    "negative_prompt": negative_prompt,
+                    "num_inference_steps": stable_diffusion_steps,
+                    "guidance_scale": stable_diffusion_cfg,
+                    "seed": seed,
+                    "Stable_diffusion_model": stable_diffusion_model_name,
+                    "quantized": "Yes"
+                }
 
-    try:
-        if stable_diffusion_scheduler == "EulerDiscreteScheduler":
-            stable_diffusion_model.scheduler = EulerDiscreteScheduler().EulerDiscreteScheduler.from_config(
-                stable_diffusion_model.scheduler.config)
-        elif stable_diffusion_scheduler == "DPMSolverSinglestepScheduler":
-            stable_diffusion_model.scheduler = DPMSolverSinglestepScheduler().DPMSolverSinglestepScheduler.from_config(
-                stable_diffusion_model.scheduler.config)
-        elif stable_diffusion_scheduler == "DPMSolverMultistepScheduler":
-            stable_diffusion_model.scheduler = DPMSolverMultistepScheduler().DPMSolverMultistepScheduler.from_config(
-                stable_diffusion_model.scheduler.config)
-        elif stable_diffusion_scheduler == "EDMDPMSolverMultistepScheduler":
-            stable_diffusion_model.scheduler = EDMDPMSolverMultistepScheduler().EDMDPMSolverMultistepScheduler.from_config(
-                stable_diffusion_model.scheduler.config)
-        elif stable_diffusion_scheduler == "EDMEulerScheduler":
-            stable_diffusion_model.scheduler = EDMEulerScheduler().EDMEulerScheduler.from_config(
-                stable_diffusion_model.scheduler.config)
-        elif stable_diffusion_scheduler == "KDPM2DiscreteScheduler":
-            stable_diffusion_model.scheduler = KDPM2DiscreteScheduler().KDPM2DiscreteScheduler.from_config(
-                stable_diffusion_model.scheduler.config)
-        elif stable_diffusion_scheduler == "KDPM2AncestralDiscreteScheduler":
-            stable_diffusion_model.scheduler = KDPM2AncestralDiscreteScheduler().KDPM2AncestralDiscreteScheduler.from_config(
-                stable_diffusion_model.scheduler.config)
-        elif stable_diffusion_scheduler == "EulerAncestralDiscreteScheduler":
-            stable_diffusion_model.scheduler = EulerAncestralDiscreteScheduler().EulerAncestralDiscreteScheduler.from_config(
-                stable_diffusion_model.scheduler.config)
-        elif stable_diffusion_scheduler == "HeunDiscreteScheduler":
-            stable_diffusion_model.scheduler = HeunDiscreteScheduler().HeunDiscreteScheduler.from_config(
-                stable_diffusion_model.scheduler.config)
-        elif stable_diffusion_scheduler == "LMSDiscreteScheduler":
-            stable_diffusion_model.scheduler = LMSDiscreteScheduler().LMSDiscreteScheduler.from_config(
-                stable_diffusion_model.scheduler.config)
-        elif stable_diffusion_scheduler == "DEISMultistepScheduler":
-            stable_diffusion_model.scheduler = DEISMultistepScheduler().DEISMultistepScheduler.from_config(
-                stable_diffusion_model.scheduler.config)
-        elif stable_diffusion_scheduler == "UniPCMultistepScheduler":
-            stable_diffusion_model.scheduler = UniPCMultistepScheduler().UniPCMultistepScheduler.from_config(
-                stable_diffusion_model.scheduler.config)
-        elif stable_diffusion_scheduler == "LCMScheduler":
-            stable_diffusion_model.scheduler = LCMScheduler().LCMScheduler.from_config(
-                stable_diffusion_model.scheduler.config)
-        elif stable_diffusion_scheduler == "DPMSolverSDEScheduler":
-            stable_diffusion_model.scheduler = DPMSolverSDEScheduler().DPMSolverSDEScheduler.from_config(
-                stable_diffusion_model.scheduler.config)
-        elif stable_diffusion_scheduler == "TCDScheduler":
-            stable_diffusion_model.scheduler = TCDScheduler().TCDScheduler.from_config(
-                stable_diffusion_model.scheduler.config)
-        elif stable_diffusion_scheduler == "DDIMScheduler":
-            stable_diffusion_model.scheduler = DDIMScheduler().DDIMScheduler.from_config(
-                stable_diffusion_model.scheduler.config)
-        elif stable_diffusion_scheduler == "DDPMScheduler":
-            stable_diffusion_model.scheduler = DDPMScheduler().DDPMScheduler.from_config(
-                stable_diffusion_model.scheduler.config)
+                image.save(image_path, format=output_format.upper())
+                add_metadata_to_file(image_path, metadata)
+                image_paths.append(image_path)
 
-        print(f"Scheduler successfully set to {stable_diffusion_scheduler}")
-    except Exception as e:
-        print(f"Error initializing scheduler: {e}")
-        print("Using default scheduler")
+            return image_paths, None, f"Images generated successfully using quantized model. Seed used: {seed}"
 
-    stable_diffusion_model.safety_checker = None
+        except Exception as e:
+            return None, None, str(e)
 
-    stable_diffusion_model.enable_vae_slicing()
-    stable_diffusion_model.enable_vae_tiling()
-    stable_diffusion_model.enable_model_cpu_offload()
+    else:
+        try:
+            stable_diffusion_model_path = os.path.join("inputs", "image", "sd_models",
+                                                       f"{stable_diffusion_model_name}.safetensors")
 
-    if vae_model_name is not None:
-        vae_model_path = os.path.join("inputs", "image", "sd_models", "vae", f"{vae_model_name}.safetensors")
-        if os.path.exists(vae_model_path):
-            vae = AutoencoderKL().AutoencoderKL.from_single_file(vae_model_path, device_map=device,
-                                                 torch_dtype=torch.float16,
-                                                 variant="fp16")
-            stable_diffusion_model.vae = vae.to(device)
+            if not os.path.exists(stable_diffusion_model_path):
+                return None, None, f"StableDiffusion model not found: {stable_diffusion_model_path}"
 
-    if isinstance(lora_scales, str):
-        lora_scales = [float(scale.strip()) for scale in lora_scales.split(',') if scale.strip()]
-    elif isinstance(lora_scales, (int, float)):
-        lora_scales = [float(lora_scales)]
-
-    lora_loaded = False
-    if lora_model_names and lora_scales:
-        if len(lora_model_names) != len(lora_scales):
-            print(
-                f"Warning: Number of LoRA models ({len(lora_model_names)}) does not match number of scales ({len(lora_scales)}). Using available scales.")
-
-        for i, lora_model_name in enumerate(lora_model_names):
-            if i < len(lora_scales):
-                lora_scale = lora_scales[i]
+            if stable_diffusion_model_type == "SD":
+                stable_diffusion_model = StableDiffusionImg2ImgPipeline().StableDiffusionImg2ImgPipeline.from_single_file(
+                    stable_diffusion_model_path, use_safetensors=True, device_map="auto",
+                    torch_dtype=torch.float16, variant="fp16")
+            elif stable_diffusion_model_type == "SD2":
+                stable_diffusion_model = StableDiffusionImg2ImgPipeline().StableDiffusionImg2ImgPipeline.from_single_file(
+                    stable_diffusion_model_path, use_safetensors=True, device_map="auto",
+                    torch_dtype=torch.float16, variant="fp16")
+            elif stable_diffusion_model_type == "SDXL":
+                stable_diffusion_model = StableDiffusionXLImg2ImgPipeline().StableDiffusionXLImg2ImgPipeline.from_single_file(
+                    stable_diffusion_model_path, use_safetensors=True, device_map="auto", attention_slice=1,
+                    torch_dtype=torch.float16, variant="fp16")
             else:
-                lora_scale = 1.0
+                return None, None, "Invalid StableDiffusion model type!"
+        except (ValueError, KeyError):
+            return None, None, "The selected model is not compatible with the chosen model type"
 
-            lora_model_path = os.path.join("inputs", "image", "sd_models", "lora", lora_model_name)
-            if os.path.exists(lora_model_path):
-                adapter_name = os.path.splitext(os.path.basename(lora_model_name))[0]
-                try:
-                    stable_diffusion_model.load_lora_weights(lora_model_path, adapter_name=adapter_name)
-                    stable_diffusion_model.fuse_lora(lora_scale=lora_scale)
-                    lora_loaded = True
-                    print(f"Loaded LoRA {lora_model_name} with scale {lora_scale}")
-                except Exception as e:
-                    print(f"Error loading LoRA {lora_model_name}: {str(e)}")
+        device = "cuda" if torch.cuda.is_available() else "cpu"
 
-    ti_loaded = False
-    if textual_inversion_model_names:
-        for textual_inversion_model_name in textual_inversion_model_names:
-            textual_inversion_model_path = os.path.join("inputs", "image", "sd_models", "embedding",
-                                                        textual_inversion_model_name)
-            if os.path.exists(textual_inversion_model_path):
-                try:
-                    token = f"<{os.path.splitext(textual_inversion_model_name)[0]}>"
-                    stable_diffusion_model.load_textual_inversion(textual_inversion_model_path, token=token)
-                    ti_loaded = True
-                    print(f"Loaded textual inversion: {token}")
-                except Exception as e:
-                    print(f"Error loading Textual Inversion {textual_inversion_model_name}: {str(e)}")
+        if XFORMERS_AVAILABLE:
+            stable_diffusion_model.enable_xformers_memory_efficient_attention(attention_op=None)
+            stable_diffusion_model.vae.enable_xformers_memory_efficient_attention(attention_op=None)
+            stable_diffusion_model.unet.enable_xformers_memory_efficient_attention(attention_op=None)
 
-    def process_prompt_with_ti(input_prompt, textual_inversion_model_names):
-        if not textual_inversion_model_names:
-            return input_prompt
+        stable_diffusion_model.to(device)
+        stable_diffusion_model.text_encoder.to(device)
+        stable_diffusion_model.vae.to(device)
+        stable_diffusion_model.unet.to(device)
 
-        processed_prompt = input_prompt
-        for ti_name in textual_inversion_model_names:
-            base_name = os.path.splitext(ti_name)[0]
-            token = f"<{base_name}>"
-            if base_name in processed_prompt or token.lower() in processed_prompt or token.upper() in processed_prompt:
-                processed_prompt = processed_prompt.replace(base_name, token)
-                processed_prompt = processed_prompt.replace(token.lower(), token)
-                processed_prompt = processed_prompt.replace(token.upper(), token)
-                print(f"Applied Textual Inversion token: {token}")
+        try:
+            if stable_diffusion_scheduler == "EulerDiscreteScheduler":
+                stable_diffusion_model.scheduler = EulerDiscreteScheduler().EulerDiscreteScheduler.from_config(
+                    stable_diffusion_model.scheduler.config)
+            elif stable_diffusion_scheduler == "DPMSolverSinglestepScheduler":
+                stable_diffusion_model.scheduler = DPMSolverSinglestepScheduler().DPMSolverSinglestepScheduler.from_config(
+                    stable_diffusion_model.scheduler.config)
+            elif stable_diffusion_scheduler == "DPMSolverMultistepScheduler":
+                stable_diffusion_model.scheduler = DPMSolverMultistepScheduler().DPMSolverMultistepScheduler.from_config(
+                    stable_diffusion_model.scheduler.config)
+            elif stable_diffusion_scheduler == "EDMDPMSolverMultistepScheduler":
+                stable_diffusion_model.scheduler = EDMDPMSolverMultistepScheduler().EDMDPMSolverMultistepScheduler.from_config(
+                    stable_diffusion_model.scheduler.config)
+            elif stable_diffusion_scheduler == "EDMEulerScheduler":
+                stable_diffusion_model.scheduler = EDMEulerScheduler().EDMEulerScheduler.from_config(
+                    stable_diffusion_model.scheduler.config)
+            elif stable_diffusion_scheduler == "KDPM2DiscreteScheduler":
+                stable_diffusion_model.scheduler = KDPM2DiscreteScheduler().KDPM2DiscreteScheduler.from_config(
+                    stable_diffusion_model.scheduler.config)
+            elif stable_diffusion_scheduler == "KDPM2AncestralDiscreteScheduler":
+                stable_diffusion_model.scheduler = KDPM2AncestralDiscreteScheduler().KDPM2AncestralDiscreteScheduler.from_config(
+                    stable_diffusion_model.scheduler.config)
+            elif stable_diffusion_scheduler == "EulerAncestralDiscreteScheduler":
+                stable_diffusion_model.scheduler = EulerAncestralDiscreteScheduler().EulerAncestralDiscreteScheduler.from_config(
+                    stable_diffusion_model.scheduler.config)
+            elif stable_diffusion_scheduler == "HeunDiscreteScheduler":
+                stable_diffusion_model.scheduler = HeunDiscreteScheduler().HeunDiscreteScheduler.from_config(
+                    stable_diffusion_model.scheduler.config)
+            elif stable_diffusion_scheduler == "LMSDiscreteScheduler":
+                stable_diffusion_model.scheduler = LMSDiscreteScheduler().LMSDiscreteScheduler.from_config(
+                    stable_diffusion_model.scheduler.config)
+            elif stable_diffusion_scheduler == "DEISMultistepScheduler":
+                stable_diffusion_model.scheduler = DEISMultistepScheduler().DEISMultistepScheduler.from_config(
+                    stable_diffusion_model.scheduler.config)
+            elif stable_diffusion_scheduler == "UniPCMultistepScheduler":
+                stable_diffusion_model.scheduler = UniPCMultistepScheduler().UniPCMultistepScheduler.from_config(
+                    stable_diffusion_model.scheduler.config)
+            elif stable_diffusion_scheduler == "LCMScheduler":
+                stable_diffusion_model.scheduler = LCMScheduler().LCMScheduler.from_config(
+                    stable_diffusion_model.scheduler.config)
+            elif stable_diffusion_scheduler == "DPMSolverSDEScheduler":
+                stable_diffusion_model.scheduler = DPMSolverSDEScheduler().DPMSolverSDEScheduler.from_config(
+                    stable_diffusion_model.scheduler.config)
+            elif stable_diffusion_scheduler == "TCDScheduler":
+                stable_diffusion_model.scheduler = TCDScheduler().TCDScheduler.from_config(
+                    stable_diffusion_model.scheduler.config)
+            elif stable_diffusion_scheduler == "DDIMScheduler":
+                stable_diffusion_model.scheduler = DDIMScheduler().DDIMScheduler.from_config(
+                    stable_diffusion_model.scheduler.config)
+            elif stable_diffusion_scheduler == "DDPMScheduler":
+                stable_diffusion_model.scheduler = DDPMScheduler().DDPMScheduler.from_config(
+                    stable_diffusion_model.scheduler.config)
 
-        if processed_prompt != input_prompt:
-            print(f"Prompt changed from '{input_prompt}' to '{processed_prompt}'")
-        else:
-            print("No Textual Inversion tokens applied to this prompt")
+            print(f"Scheduler successfully set to {stable_diffusion_scheduler}")
+        except Exception as e:
+            print(f"Error initializing scheduler: {e}")
+            print("Using default scheduler")
 
-        return processed_prompt
+        stable_diffusion_model.safety_checker = None
 
-    try:
-        if seed == "" or seed is None:
-            seed = random.randint(0, 2 ** 32 - 1)
-        else:
-            seed = int(seed)
-        generator = torch.Generator(device).manual_seed(seed)
+        stable_diffusion_model.enable_vae_slicing()
+        stable_diffusion_model.enable_vae_tiling()
+        stable_diffusion_model.enable_model_cpu_offload()
 
-        init_image = Image.open(init_image).convert("RGB")
-        init_image = stable_diffusion_model.image_processor.preprocess(init_image)
+        if vae_model_name is not None:
+            vae_model_path = os.path.join("inputs", "image", "sd_models", "vae", f"{vae_model_name}.safetensors")
+            if os.path.exists(vae_model_path):
+                vae = AutoencoderKL().AutoencoderKL.from_single_file(vae_model_path, device_map=device,
+                                                                     torch_dtype=torch.float16,
+                                                                     variant="fp16")
+                stable_diffusion_model.vae = vae.to(device)
 
-        processed_prompt = process_prompt_with_ti(prompt, textual_inversion_model_names)
-        processed_negative_prompt = process_prompt_with_ti(negative_prompt, textual_inversion_model_names)
+        if isinstance(lora_scales, str):
+            lora_scales = [float(scale.strip()) for scale in lora_scales.split(',') if scale.strip()]
+        elif isinstance(lora_scales, (int, float)):
+            lora_scales = [float(lora_scales)]
 
-        def latents_to_rgb(latents):
-            weights = (
-                (60, -60, 25, -70),
-                (60, -5, 15, -50),
-                (60, 10, -5, -35)
-            )
+        lora_loaded = False
+        if lora_model_names and lora_scales:
+            if len(lora_model_names) != len(lora_scales):
+                print(
+                    f"Warning: Number of LoRA models ({len(lora_model_names)}) does not match number of scales ({len(lora_scales)}). Using available scales.")
 
-            weights_tensor = torch.t(torch.tensor(weights, dtype=latents.dtype).to(latents.device))
-            biases_tensor = torch.tensor((150, 140, 130), dtype=latents.dtype).to(latents.device)
-            rgb_tensor = torch.einsum("...lxy,lr -> ...rxy", latents, weights_tensor) + biases_tensor.unsqueeze(
-                -1).unsqueeze(-1)
-            image_array = rgb_tensor.clamp(0, 255)[0].byte().cpu().numpy()
-            image_array = image_array.transpose(1, 2, 0)
+            for i, lora_model_name in enumerate(lora_model_names):
+                if i < len(lora_scales):
+                    lora_scale = lora_scales[i]
+                else:
+                    lora_scale = 1.0
 
-            return Image.fromarray(image_array)
+                lora_model_path = os.path.join("inputs", "image", "sd_models", "lora", lora_model_name)
+                if os.path.exists(lora_model_path):
+                    adapter_name = os.path.splitext(os.path.basename(lora_model_name))[0]
+                    try:
+                        stable_diffusion_model.load_lora_weights(lora_model_path, adapter_name=adapter_name)
+                        stable_diffusion_model.fuse_lora(lora_scale=lora_scale)
+                        lora_loaded = True
+                        print(f"Loaded LoRA {lora_model_name} with scale {lora_scale}")
+                    except Exception as e:
+                        print(f"Error loading LoRA {lora_model_name}: {str(e)}")
 
-        def decode_tensors(stable_diffusion_model, i, t, callback_kwargs):
-            latents = callback_kwargs["latents"]
-            image = latents_to_rgb(latents)
-            image.save(f"temp/{i}.png")
-            return callback_kwargs
+        ti_loaded = False
+        if textual_inversion_model_names:
+            for textual_inversion_model_name in textual_inversion_model_names:
+                textual_inversion_model_path = os.path.join("inputs", "image", "sd_models", "embedding",
+                                                            textual_inversion_model_name)
+                if os.path.exists(textual_inversion_model_path):
+                    try:
+                        token = f"<{os.path.splitext(textual_inversion_model_name)[0]}>"
+                        stable_diffusion_model.load_textual_inversion(textual_inversion_model_path, token=token)
+                        ti_loaded = True
+                        print(f"Loaded textual inversion: {token}")
+                    except Exception as e:
+                        print(f"Error loading Textual Inversion {textual_inversion_model_name}: {str(e)}")
 
-        def combined_callback(stable_diffusion_model, i, t, callback_kwargs):
-            nonlocal stop_idx
-            if stop_signal and stop_idx is None:
-                stop_idx = i
-            if i == stop_idx:
-                stable_diffusion_model._interrupt = True
-            callback_kwargs = decode_tensors(stable_diffusion_model, i, t, callback_kwargs)
+        def process_prompt_with_ti(input_prompt, textual_inversion_model_names):
+            if not textual_inversion_model_names:
+                return input_prompt
 
-            progress((i + 1) / stable_diffusion_steps, f"Step {i + 1}/{stable_diffusion_steps}")
+            processed_prompt = input_prompt
+            for ti_name in textual_inversion_model_names:
+                base_name = os.path.splitext(ti_name)[0]
+                token = f"<{base_name}>"
+                if base_name in processed_prompt or token.lower() in processed_prompt or token.upper() in processed_prompt:
+                    processed_prompt = processed_prompt.replace(base_name, token)
+                    processed_prompt = processed_prompt.replace(token.lower(), token)
+                    processed_prompt = processed_prompt.replace(token.upper(), token)
+                    print(f"Applied Textual Inversion token: {token}")
 
-            return callback_kwargs
+            if processed_prompt != input_prompt:
+                print(f"Prompt changed from '{input_prompt}' to '{processed_prompt}'")
+            else:
+                print("No Textual Inversion tokens applied to this prompt")
 
-        if stable_diffusion_model_type == "SDXL":
-            compel = Compel(
-                tokenizer=[stable_diffusion_model.tokenizer, stable_diffusion_model.tokenizer_2],
-                text_encoder=[stable_diffusion_model.text_encoder, stable_diffusion_model.text_encoder_2],
-                returned_embeddings_type=ReturnedEmbeddingsType.PENULTIMATE_HIDDEN_STATES_NON_NORMALIZED,
-                requires_pooled=[False, True]
-            )
-            prompt_embeds, pooled_prompt_embeds = compel(processed_prompt)
-            negative_prompt = processed_negative_prompt
+            return processed_prompt
 
-            images = stable_diffusion_model(prompt_embeds=prompt_embeds, pooled_prompt_embeds=pooled_prompt_embeds, negative_prompt=negative_prompt,
-                                            num_inference_steps=stable_diffusion_steps, generator=generator,
-                                            guidance_scale=stable_diffusion_cfg, clip_skip=stable_diffusion_clip_skip,
-                                            image=init_image, strength=strength, num_images_per_prompt=num_images_per_prompt,
-                                            callback_on_step_end=combined_callback, callback_on_step_end_tensor_inputs=["latents"]).images
-        else:
-            compel_proc = Compel(tokenizer=stable_diffusion_model.tokenizer,
-                                 text_encoder=stable_diffusion_model.text_encoder)
-            prompt_embeds = compel_proc(processed_prompt)
-            negative_prompt_embeds = compel_proc(processed_negative_prompt)
+        try:
+            if seed == "" or seed is None:
+                seed = random.randint(0, 2 ** 32 - 1)
+            else:
+                seed = int(seed)
+            generator = torch.Generator(device).manual_seed(seed)
 
-            images = stable_diffusion_model(prompt_embeds=prompt_embeds, negative_prompt_embeds=negative_prompt_embeds,
-                                            num_inference_steps=stable_diffusion_steps, generator=generator,
-                                            guidance_scale=stable_diffusion_cfg, clip_skip=stable_diffusion_clip_skip,
-                                            image=init_image, strength=strength, num_images_per_prompt=num_images_per_prompt,
-                                            callback_on_step_end=combined_callback, callback_on_step_end_tensor_inputs=["latents"]).images
+            init_image = Image.open(init_image).convert("RGB")
+            init_image = stable_diffusion_model.image_processor.preprocess(init_image)
 
-        image_paths = []
-        gif_images = []
-        for i, image in enumerate(images):
-            today = datetime.now().date()
-            image_dir = os.path.join('outputs', f"StableDiffusion_{today.strftime('%Y%m%d')}")
-            os.makedirs(image_dir, exist_ok=True)
-            image_filename = f"img2img_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{i}.{output_format}"
-            image_path = os.path.join(image_dir, image_filename)
-            metadata = {
-                "tab": "img2img",
-                "prompt": prompt,
-                "negative_prompt": negative_prompt,
-                "num_inference_steps": stable_diffusion_steps,
-                "guidance_scale": stable_diffusion_cfg,
-                "clip_skip": stable_diffusion_clip_skip,
-                "scheduler": stable_diffusion_scheduler,
-                "strength": strength,
-                "seed": seed,
-                "Stable_diffusion_model": stable_diffusion_model_name,
-                "Stable_diffusion_model_type": stable_diffusion_model_type,
-                "vae": vae_model_name if vae_model_name else None,
-                "lora_models": lora_model_names if lora_model_names else None,
-                "lora_scales": lora_scales if lora_model_names else None,
-                "textual_inversion": textual_inversion_model_names if textual_inversion_model_names else None
-            }
+            processed_prompt = process_prompt_with_ti(prompt, textual_inversion_model_names)
+            processed_negative_prompt = process_prompt_with_ti(negative_prompt, textual_inversion_model_names)
 
-            image.save(image_path, format=output_format.upper())
-            add_metadata_to_file(image_path, metadata)
-            image_paths.append(image_path)
+            def latents_to_rgb(latents):
+                weights = (
+                    (60, -60, 25, -70),
+                    (60, -5, 15, -50),
+                    (60, 10, -5, -35)
+                )
 
-        for i in range(stable_diffusion_steps):
-            if os.path.exists(f"temp/{i}.png"):
-                gif_images.append(imageio.imread(f"temp/{i}.png"))
+                weights_tensor = torch.t(torch.tensor(weights, dtype=latents.dtype).to(latents.device))
+                biases_tensor = torch.tensor((150, 140, 130), dtype=latents.dtype).to(latents.device)
+                rgb_tensor = torch.einsum("...lxy,lr -> ...rxy", latents, weights_tensor) + biases_tensor.unsqueeze(
+                    -1).unsqueeze(-1)
+                image_array = rgb_tensor.clamp(0, 255)[0].byte().cpu().numpy()
+                image_array = image_array.transpose(1, 2, 0)
 
-        if gif_images:
-            gif_filename = f"img2img_process_{datetime.now().strftime('%Y%m%d_%H%M%S')}.gif"
-            gif_path = os.path.join(image_dir, gif_filename)
-            imageio.mimsave(gif_path, gif_images, duration=0.1)
-        else:
-            gif_path = None
+                return Image.fromarray(image_array)
 
-        for i in range(stable_diffusion_steps):
-            if os.path.exists(f"temp/{i}.png"):
-                os.remove(f"temp/{i}.png")
+            def decode_tensors(stable_diffusion_model, i, t, callback_kwargs):
+                latents = callback_kwargs["latents"]
+                image = latents_to_rgb(latents)
+                image.save(f"temp/{i}.png")
+                return callback_kwargs
 
-        return image_paths, [gif_path] if gif_path else [], f"Images generated successfully. Seed used: {seed}"
+            def combined_callback(stable_diffusion_model, i, t, callback_kwargs):
+                nonlocal stop_idx
+                if stop_signal and stop_idx is None:
+                    stop_idx = i
+                if i == stop_idx:
+                    stable_diffusion_model._interrupt = True
+                callback_kwargs = decode_tensors(stable_diffusion_model, i, t, callback_kwargs)
 
-    except Exception as e:
-        return None, None, str(e)
+                progress((i + 1) / stable_diffusion_steps, f"Step {i + 1}/{stable_diffusion_steps}")
 
-    finally:
-        del stable_diffusion_model
-        flush()
+                return callback_kwargs
+
+            if stable_diffusion_model_type == "SDXL":
+                compel = Compel(
+                    tokenizer=[stable_diffusion_model.tokenizer, stable_diffusion_model.tokenizer_2],
+                    text_encoder=[stable_diffusion_model.text_encoder, stable_diffusion_model.text_encoder_2],
+                    returned_embeddings_type=ReturnedEmbeddingsType.PENULTIMATE_HIDDEN_STATES_NON_NORMALIZED,
+                    requires_pooled=[False, True]
+                )
+                prompt_embeds, pooled_prompt_embeds = compel(processed_prompt)
+                negative_prompt = processed_negative_prompt
+
+                images = stable_diffusion_model(prompt_embeds=prompt_embeds, pooled_prompt_embeds=pooled_prompt_embeds,
+                                                negative_prompt=negative_prompt,
+                                                num_inference_steps=stable_diffusion_steps, generator=generator,
+                                                guidance_scale=stable_diffusion_cfg,
+                                                clip_skip=stable_diffusion_clip_skip,
+                                                image=init_image, strength=strength,
+                                                num_images_per_prompt=num_images_per_prompt,
+                                                callback_on_step_end=combined_callback,
+                                                callback_on_step_end_tensor_inputs=["latents"]).images
+            else:
+                compel_proc = Compel(tokenizer=stable_diffusion_model.tokenizer,
+                                     text_encoder=stable_diffusion_model.text_encoder)
+                prompt_embeds = compel_proc(processed_prompt)
+                negative_prompt_embeds = compel_proc(processed_negative_prompt)
+
+                images = stable_diffusion_model(prompt_embeds=prompt_embeds,
+                                                negative_prompt_embeds=negative_prompt_embeds,
+                                                num_inference_steps=stable_diffusion_steps, generator=generator,
+                                                guidance_scale=stable_diffusion_cfg,
+                                                clip_skip=stable_diffusion_clip_skip,
+                                                image=init_image, strength=strength,
+                                                num_images_per_prompt=num_images_per_prompt,
+                                                callback_on_step_end=combined_callback,
+                                                callback_on_step_end_tensor_inputs=["latents"]).images
+
+            image_paths = []
+            gif_images = []
+            for i, image in enumerate(images):
+                today = datetime.now().date()
+                image_dir = os.path.join('outputs', f"StableDiffusion_{today.strftime('%Y%m%d')}")
+                os.makedirs(image_dir, exist_ok=True)
+                image_filename = f"img2img_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{i}.{output_format}"
+                image_path = os.path.join(image_dir, image_filename)
+                metadata = {
+                    "tab": "img2img",
+                    "prompt": prompt,
+                    "negative_prompt": negative_prompt,
+                    "num_inference_steps": stable_diffusion_steps,
+                    "guidance_scale": stable_diffusion_cfg,
+                    "clip_skip": stable_diffusion_clip_skip,
+                    "scheduler": stable_diffusion_scheduler,
+                    "strength": strength,
+                    "seed": seed,
+                    "Stable_diffusion_model": stable_diffusion_model_name,
+                    "Stable_diffusion_model_type": stable_diffusion_model_type,
+                    "vae": vae_model_name if vae_model_name else None,
+                    "lora_models": lora_model_names if lora_model_names else None,
+                    "lora_scales": lora_scales if lora_model_names else None,
+                    "textual_inversion": textual_inversion_model_names if textual_inversion_model_names else None
+                }
+
+                image.save(image_path, format=output_format.upper())
+                add_metadata_to_file(image_path, metadata)
+                image_paths.append(image_path)
+
+            for i in range(stable_diffusion_steps):
+                if os.path.exists(f"temp/{i}.png"):
+                    gif_images.append(imageio.imread(f"temp/{i}.png"))
+
+            if gif_images:
+                gif_filename = f"img2img_process_{datetime.now().strftime('%Y%m%d_%H%M%S')}.gif"
+                gif_path = os.path.join(image_dir, gif_filename)
+                imageio.mimsave(gif_path, gif_images, duration=0.1)
+            else:
+                gif_path = None
+
+            for i in range(stable_diffusion_steps):
+                if os.path.exists(f"temp/{i}.png"):
+                    os.remove(f"temp/{i}.png")
+
+            return image_paths, [gif_path] if gif_path else [], f"Images generated successfully. Seed used: {seed}"
+
+        except Exception as e:
+            return None, None, str(e)
+
+        finally:
+            del stable_diffusion_model
+            flush()
 
 
 def generate_image_depth2img(prompt, negative_prompt, init_image, seed, strength, clip_skip, num_images_per_prompt,
@@ -8221,9 +8340,8 @@ def open_outputs_folder():
 llm_models_list = [None, "moondream2"] + [model for model in os.listdir("inputs/text/llm_models") if not model.endswith(".txt") and model != "vikhyatk" and model != "lora"]
 llm_lora_models_list = [None] + [model for model in os.listdir("inputs/text/llm_models/lora") if not model.endswith(".txt")]
 speaker_wavs_list = [None] + [wav for wav in os.listdir("inputs/audio/voices") if not wav.endswith(".txt")]
-stable_diffusion_models_list = [None] + [model.replace(".safetensors", "") for model in
-                                         os.listdir("inputs/image/sd_models")
-                                         if (model.endswith(".safetensors") or not model.endswith(".txt") and not os.path.isdir(os.path.join("inputs/image/sd_models")))]
+stable_diffusion_models_list = [None] + [model for model in os.listdir("inputs/image/sd_models")
+                                         if (model.endswith(".safetensors") or model.endswith(".ckpt") or model.endswith(".gguf") or not model.endswith(".txt") and not os.path.isdir(os.path.join("inputs/image/sd_models")))]
 audiocraft_models_list = [None] + ["musicgen-stereo-medium", "audiogen-medium", "musicgen-stereo-melody", "musicgen-medium", "musicgen-melody", "musicgen-large",
                                    "hybrid-magnet-medium", "magnet-medium-30sec", "magnet-medium-10sec", "audio-magnet-medium"]
 vae_models_list = [None] + [model.replace(".safetensors", "") for model in os.listdir("inputs/image/sd_models/vae") if
@@ -8479,6 +8597,7 @@ txt2img_interface = gr.Interface(
         gr.Textbox(label=_("Enter your prompt", lang), placeholder=_("+ and - for Weighting; ('p', 'p').blend(0.x, 0.x) for Blending; ['p', 'p', 'p'].and() for Conjunction", lang)),
         gr.Textbox(label=_("Enter your negative prompt", lang), value=""),
         gr.Dropdown(choices=stable_diffusion_models_list, label=_("Select StableDiffusion model", lang), value=None),
+        gr.Checkbox(label=_("Enable Quantize", lang), value=False),
         gr.Dropdown(choices=vae_models_list, label=_("Select VAE model (optional)", lang), value=None),
         gr.Dropdown(choices=lora_models_list, label=_("Select LORA models (optional)", lang), value=None, multiselect=True),
         gr.Textbox(label=_("LoRA Scales", lang)),
@@ -8546,6 +8665,7 @@ img2img_interface = gr.Interface(
         gr.Slider(minimum=0.0, maximum=1.0, value=0.5, step=0.01, label=_("Strength (Initial image)", lang)),
         gr.Radio(choices=["SD", "SD2", "SDXL"], label=_("Select model type", lang), value="SD"),
         gr.Dropdown(choices=stable_diffusion_models_list, label=_("Select StableDiffusion model", lang), value=None),
+        gr.Checkbox(label=_("Enable Quantize", lang), value=False),
         gr.Dropdown(choices=vae_models_list, label=_("Select VAE model (optional)", lang), value=None),
         gr.Dropdown(choices=lora_models_list, label=_("Select LORA models (optional)", lang), value=None, multiselect=True),
         gr.Textbox(label=_("LoRA Scales", lang)),
