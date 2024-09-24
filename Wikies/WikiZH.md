@@ -492,7 +492,6 @@
 ## 已知问题：
 
 * SeamlessM4T的`both generations`参数不适用于音频
-* FLUX的`Enable quantized`和`Quantized models`参数完全不起作用
 * RVC、Supir和SV34D完全无法工作
 
 ## 未来计划：
