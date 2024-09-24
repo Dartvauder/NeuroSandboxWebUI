@@ -1548,12 +1548,12 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
             env['PYTHONPATH'] = os.pathsep.join(sys.path)
 
             result = subprocess.run(
-                [sys.executable, 'inputs/image/sd_models/sd-quantize.py', json.dumps(params)],
+                [sys.executable, 'inputs/image/sd_models/sd-txt2img-quantize.py', json.dumps(params)],
                 capture_output=True, text=True, env=env
             )
 
             if result.returncode != 0:
-                return None, None, f"Error in sd-quantize.py: {result.stderr}"
+                return None, None, f"Error in sd-txt2img-quantize.py: {result.stderr}"
 
             image_paths = []
             for line in result.stdout.split('\n'):
@@ -1983,50 +1983,33 @@ def generate_image_img2img(prompt, negative_prompt, init_image, strength, stable
 
     if enable_quantize:
         try:
-            quantize_stable_diffusion_model_path = os.path.join("inputs", "image", "sd_models",
-                                                                f"{stable_diffusion_model_name}.gguf")
+            params = {
+                'model_name': stable_diffusion_model_name,
+                'prompt': prompt,
+                'negative_prompt': negative_prompt,
+                'cfg_scale': stable_diffusion_cfg,
+                'sample_steps': stable_diffusion_steps,
+                'image': init_image,
+                'strength': strength
+            }
 
-            if not os.path.exists(quantize_stable_diffusion_model_path):
-                return None, None, f"StableDiffusion model not found: {quantize_stable_diffusion_model_path}"
+            env = os.environ.copy()
+            env['PYTHONPATH'] = os.pathsep.join(sys.path)
 
-            stable_diffusion = StableDiffusion().StableDiffusion(
-                model_path=quantize_stable_diffusion_model_path,
-                wtype="default"
+            result = subprocess.run(
+                [sys.executable, 'inputs/image/sd_models/sd-img2img-quantize.py', json.dumps(params)],
+                capture_output=True, text=True, env=env
             )
 
-            output = stable_diffusion.img_to_img(
-                prompt=prompt,
-                negative_prompt=negative_prompt,
-                cfg_scale=stable_diffusion_cfg,
-                sample_steps=stable_diffusion_steps,
-                seed=seed,
-                sample_method="euler",
-                image=init_image,
-                strength=strength
-            )
+            if result.returncode != 0:
+                return None, None, f"Error in sd-img2img-quantize.py: {result.stderr}"
 
             image_paths = []
-            for i, image in enumerate(output):
-                today = datetime.now().date()
-                image_dir = os.path.join('outputs', f"StableDiffusion_{today.strftime('%Y%m%d')}")
-                os.makedirs(image_dir, exist_ok=True)
-                image_filename = f"img2img_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{i}.{output_format}"
-                image_path = os.path.join(image_dir, image_filename)
-
-                metadata = {
-                    "tab": "img2img",
-                    "prompt": prompt,
-                    "negative_prompt": negative_prompt,
-                    "num_inference_steps": stable_diffusion_steps,
-                    "guidance_scale": stable_diffusion_cfg,
-                    "seed": seed,
-                    "Stable_diffusion_model": stable_diffusion_model_name,
-                    "quantized": "Yes"
-                }
-
-                image.save(image_path, format=output_format.upper())
-                add_metadata_to_file(image_path, metadata)
-                image_paths.append(image_path)
+            for line in result.stdout.split('\n'):
+                if line.startswith("IMAGE_PATH:"):
+                    image_path = line.split("IMAGE_PATH:")[1].strip()
+                    if os.path.exists(image_path):
+                        image_paths.append(image_path)
 
             return image_paths, None, f"Images generated successfully using quantized model. Seed used: {seed}"
 

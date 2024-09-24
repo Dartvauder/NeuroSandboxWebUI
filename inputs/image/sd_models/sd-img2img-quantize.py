@@ -14,13 +14,13 @@ def generate_images(params):
         wtype="default"
     )
 
-    output = stable_diffusion.txt_to_img(
+    output = stable_diffusion.img_to_img(
         prompt=params['prompt'],
         negative_prompt=params['negative_prompt'],
         cfg_scale=params['cfg_scale'],
-        height=params['height'],
-        width=params['width'],
         sample_steps=params['sample_steps'],
+        image=params['init_image'],
+        strength=params['strength'],
         sample_method="euler"
     )
 
@@ -29,7 +29,7 @@ def generate_images(params):
         today = datetime.now().date()
         image_dir = os.path.join('outputs', f"StableDiffusion_{today.strftime('%Y%m%d')}")
         os.makedirs(image_dir, exist_ok=True)
-        image_filename = f"txt2img-quantize_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{i}"
+        image_filename = f"img2img-quantize_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{i}.png"
         image_path = os.path.join(image_dir, image_filename)
 
         image.save(image_path, format="png")
