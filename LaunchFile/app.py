@@ -1534,52 +1534,52 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
 
     if enable_quantize:
         try:
-            quantize_stable_diffusion_model_path = os.path.join("inputs", "image", "sd_models",
-                                                                f"{stable_diffusion_model_name}")
+            params = {
+                'model_name': stable_diffusion_model_name,
+                'prompt': prompt,
+                'negative_prompt': negative_prompt,
+                'cfg_scale': stable_diffusion_cfg,
+                'height': stable_diffusion_height,
+                'width': stable_diffusion_width,
+                'sample_steps': stable_diffusion_steps,
+                'seed': seed,
+                'output_format': output_format
+            }
 
-            if not os.path.exists(quantize_stable_diffusion_model_path):
-                return None, None, f"StableDiffusion model not found: {quantize_stable_diffusion_model_path}"
+            env = os.environ.copy()
+            env['PYTHONPATH'] = os.pathsep.join(sys.path)
 
-            stable_diffusion = StableDiffusion().StableDiffusion(
-                model_path=quantize_stable_diffusion_model_path,
-                wtype="default"
+            result = subprocess.run(
+                [sys.executable, 'inputs/image/sd_models/sd-quantize.py', json.dumps(params)],
+                capture_output=True, text=True, env=env
             )
 
-            output = stable_diffusion.txt_to_img(
-                prompt=prompt,
-                negative_prompt=negative_prompt,
-                cfg_scale=stable_diffusion_cfg,
-                height=stable_diffusion_height,
-                width=stable_diffusion_width,
-                sample_steps=stable_diffusion_steps,
-                seed=seed,
-                sample_method="euler"
-            )
+            if result.returncode != 0:
+                return None, None, f"Error in sd-quantize.py: {result.stderr}"
 
             image_paths = []
-            for i, image in enumerate(output):
-                today = datetime.now().date()
-                image_dir = os.path.join('outputs', f"StableDiffusion_{today.strftime('%Y%m%d')}")
-                os.makedirs(image_dir, exist_ok=True)
-                image_filename = f"txt2img_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{i}.{output_format}"
-                image_path = os.path.join(image_dir, image_filename)
+            for line in result.stdout.split('\n'):
+                if line.startswith("IMAGE_PATH:"):
+                    image_path = line.split("IMAGE_PATH:")[1].strip()
+                    if os.path.exists(image_path):
+                        image_paths.append(image_path)
 
-                metadata = {
-                    "tab": "txt2img",
-                    "prompt": prompt,
-                    "negative_prompt": negative_prompt,
-                    "num_inference_steps": stable_diffusion_steps,
-                    "guidance_scale": stable_diffusion_cfg,
-                    "height": stable_diffusion_height,
-                    "width": stable_diffusion_width,
-                    "seed": seed,
-                    "Stable_diffusion_model": stable_diffusion_model_name,
-                    "quantized": "Yes"
-                }
+                        metadata = {
+                            "tab": "txt2img",
+                            "prompt": prompt,
+                            "negative_prompt": negative_prompt,
+                            "num_inference_steps": stable_diffusion_steps,
+                            "guidance_scale": stable_diffusion_cfg,
+                            "height": stable_diffusion_height,
+                            "width": stable_diffusion_width,
+                            "seed": seed,
+                            "Stable_diffusion_model": stable_diffusion_model_name,
+                            "quantized": "Yes"
+                        }
+                        add_metadata_to_file(image_path, metadata)
 
-                image.save(image_path, format=output_format.upper())
-                add_metadata_to_file(image_path, metadata)
-                image_paths.append(image_path)
+            if not image_paths:
+                return None, None, "No images were generated"
 
             return image_paths, None, f"Images generated successfully using quantized model. Seed used: {seed}"
 
