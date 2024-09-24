@@ -28,6 +28,7 @@ import matplotlib.pyplot as plt
 import librosa
 import librosa.display
 import base64
+import io
 import gc
 import cv2
 import subprocess
@@ -5109,28 +5110,27 @@ def generate_image_flux_txt2img(prompt, model_name, quantize_model_name, enable_
 
     try:
         if enable_quantize:
-            quantize_flux_model_path = os.path.join("inputs", "image", "quantize-flux", f"{quantize_model_name}")
-            lora_model_path = os.path.join("inputs", "image", "flux-lora", f"{lora_model_names}")
+            params = {
+                'prompt': prompt,
+                'guidance_scale': guidance_scale,
+                'height': height,
+                'width': width,
+                'num_inference_steps': num_inference_steps,
+                'seed': seed,
+                'quantize_flux_model_path': f"{quantize_model_name}"
+            }
 
-            if not quantize_model_name:
-                return None, "Please select a quantize Flux model!"
+            env = os.environ.copy()
+            env['PYTHONPATH'] = os.pathsep.join(sys.path)
 
-            stable_diffusion = StableDiffusion().StableDiffusion(
-                diffusion_model_path=quantize_flux_model_path,
-                clip_l_path="inputs/image/quantize-flux/clip_l.safetensors",
-                t5xxl_path="inputs/image/quantize-flux/t5xxl_fp16.safetensors",
-                vae_path="inputs/image/quantize-flux/ae.safetensors",
-                lora_model_dir=lora_model_path,
-                wtype="default")
+            result = subprocess.run([sys.executable, 'inputs/image/quantize-flux/flux-quantize.py', json.dumps(params)],
+                                    capture_output=True, text=True)
 
-            output = stable_diffusion.txt_to_img(
-                prompt=prompt,
-                cfg_scale=guidance_scale,
-                height=height,
-                width=width,
-                sample_steps=num_inference_steps,
-                seed=seed,
-                sample_method="euler")
+            if result.returncode != 0:
+                return None, f"Error in flux-quantize.py: {result.stderr}"
+
+            image_path = result.stdout.strip()
+            return image_path, f"Image generated successfully. Seed used: {seed}"
         else:
             if not os.path.exists(flux_model_path):
                 print(f"Downloading Flux {model_name} model...")
@@ -5184,36 +5184,36 @@ def generate_image_flux_txt2img(prompt, model_name, quantize_model_name, enable_
                 generator=generator
             ).images[0]
 
-        today = datetime.now().date()
-        image_dir = os.path.join('outputs', f"Flux_{today.strftime('%Y%m%d')}")
-        os.makedirs(image_dir, exist_ok=True)
-        image_filename = f"flux_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
-        image_path = os.path.join(image_dir, image_filename)
-        metadata = {
-            "prompt": prompt,
-            "flux_model": model_name,
-            "quantized_model": quantize_model_name if enable_quantize else None,
-            "lora_models": lora_model_names if lora_model_names else None,
-            "lora_scales": lora_scales if lora_model_names else None,
-            "guidance_scale": guidance_scale,
-            "height": height,
-            "width": width,
-            "steps": num_inference_steps,
-            "max_sequence_length": max_sequence_length,
-            "seed": seed
-        }
+            today = datetime.now().date()
+            image_dir = os.path.join('outputs', f"Flux_{today.strftime('%Y%m%d')}")
+            os.makedirs(image_dir, exist_ok=True)
+            image_filename = f"flux_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
+            image_path = os.path.join(image_dir, image_filename)
+            metadata = {
+                "prompt": prompt,
+                "flux_model": model_name,
+                "quantized_model": quantize_model_name if enable_quantize else None,
+                "lora_models": lora_model_names if lora_model_names else None,
+                "lora_scales": lora_scales if lora_model_names else None,
+                "guidance_scale": guidance_scale,
+                "height": height,
+                "width": width,
+                "steps": num_inference_steps,
+                "max_sequence_length": max_sequence_length,
+                "seed": seed
+            }
 
-        output.save(image_path, format=output_format.upper())
-        add_metadata_to_file(image_path, metadata)
+            output.save(image_path, format=output_format.upper())
+            add_metadata_to_file(image_path, metadata)
 
-        return image_path, f"Image generated successfully. Seed used: {seed}"
+            return image_path, f"Image generated successfully. Seed used: {seed}"
 
     except Exception as e:
         return None, str(e)
 
     finally:
         if enable_quantize:
-            del stable_diffusion
+            flush()
         else:
             del pipe
         flush()
@@ -8341,7 +8341,7 @@ llm_models_list = [None, "moondream2"] + [model for model in os.listdir("inputs/
 llm_lora_models_list = [None] + [model for model in os.listdir("inputs/text/llm_models/lora") if not model.endswith(".txt")]
 speaker_wavs_list = [None] + [wav for wav in os.listdir("inputs/audio/voices") if not wav.endswith(".txt")]
 stable_diffusion_models_list = [None] + [model for model in os.listdir("inputs/image/sd_models")
-                                         if (model.endswith(".safetensors") or model.endswith(".ckpt") or model.endswith(".gguf") or not model.endswith(".txt") and not os.path.isdir(os.path.join("inputs/image/sd_models")))]
+                                         if (model.endswith(".safetensors") or model.endswith(".ckpt") or model.endswith(".gguf") or not model.endswith(".txt") and not model.endswith(".py") and not os.path.isdir(os.path.join("inputs/image/sd_models")))]
 audiocraft_models_list = [None] + ["musicgen-stereo-medium", "audiogen-medium", "musicgen-stereo-melody", "musicgen-medium", "musicgen-melody", "musicgen-large",
                                    "hybrid-magnet-medium", "magnet-medium-30sec", "magnet-medium-10sec", "audio-magnet-medium"]
 vae_models_list = [None] + [model for model in os.listdir("inputs/image/sd_models/vae") if
@@ -8349,7 +8349,7 @@ vae_models_list = [None] + [model for model in os.listdir("inputs/image/sd_model
 lora_models_list = [None] + [model for model in os.listdir("inputs/image/sd_models/lora") if
                              model.endswith(".safetensors") or model.endswith(".pt")]
 quantized_flux_models_list = [None] + [model for model in os.listdir("inputs/image/quantize-flux") if
-                            model.endswith(".gguf") or not model.endswith(".txt") and not model.endswith(".safetensors")]
+                            model.endswith(".gguf") or not model.endswith(".txt") and not model.endswith(".safetensors") and not model.endswith(".py")]
 flux_lora_models_list = [None] + [model for model in os.listdir("inputs/image/flux-lora") if
                              model.endswith(".safetensors")]
 auraflow_lora_models_list = [None] + [model for model in os.listdir("inputs/image/auraflow-lora") if
@@ -8376,15 +8376,15 @@ def reload_model_lists():
     speaker_wavs_list = [None] + [wav for wav in os.listdir("inputs/audio/voices") if not wav.endswith(".txt")]
     stable_diffusion_models_list = [None] + [model for model in os.listdir("inputs/image/sd_models")
                                              if (model.endswith(".safetensors") or model.endswith(
-            ".ckpt") or model.endswith(".gguf") or not model.endswith(".txt") and not os.path.isdir(
-            os.path.join("inputs/image/sd_models")))]
+            ".ckpt") or model.endswith(".gguf") or not model.endswith(".txt") and not model.endswith(
+            ".py") and not os.path.isdir(os.path.join("inputs/image/sd_models")))]
     vae_models_list = [None] + [model for model in os.listdir("inputs/image/sd_models/vae") if
                                 model.endswith(".safetensors") or not model.endswith(".txt")]
     lora_models_list = [None] + [model for model in os.listdir("inputs/image/sd_models/lora") if
                                  model.endswith(".safetensors") or model.endswith(".pt")]
     quantized_flux_models_list = [None] + [model for model in os.listdir("inputs/image/quantize-flux") if
                                            model.endswith(".gguf") or not model.endswith(".txt") and not model.endswith(
-                                               ".safetensors")]
+                                               ".safetensors") and not model.endswith(".py")]
     flux_lora_models_list = [None] + [model for model in os.listdir("inputs/image/flux-lora") if
                                       model.endswith(".safetensors")]
     auraflow_lora_models_list = [None] + [model for model in os.listdir("inputs/image/auraflow-lora") if
