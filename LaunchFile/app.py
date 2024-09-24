@@ -1542,8 +1542,6 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
                 'height': stable_diffusion_height,
                 'width': stable_diffusion_width,
                 'sample_steps': stable_diffusion_steps,
-                'seed': seed,
-                'output_format': output_format
             }
 
             env = os.environ.copy()
@@ -1563,23 +1561,6 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
                     image_path = line.split("IMAGE_PATH:")[1].strip()
                     if os.path.exists(image_path):
                         image_paths.append(image_path)
-
-                        metadata = {
-                            "tab": "txt2img",
-                            "prompt": prompt,
-                            "negative_prompt": negative_prompt,
-                            "num_inference_steps": stable_diffusion_steps,
-                            "guidance_scale": stable_diffusion_cfg,
-                            "height": stable_diffusion_height,
-                            "width": stable_diffusion_width,
-                            "seed": seed,
-                            "Stable_diffusion_model": stable_diffusion_model_name,
-                            "quantized": "Yes"
-                        }
-                        add_metadata_to_file(image_path, metadata)
-
-            if not image_paths:
-                return None, None, "No images were generated"
 
             return image_paths, None, f"Images generated successfully using quantized model. Seed used: {seed}"
 

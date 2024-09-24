@@ -3,7 +3,6 @@ import json
 import os
 from datetime import datetime
 from stable_diffusion_cpp import StableDiffusion
-from PIL import Image
 
 
 def generate_images(params):
@@ -22,7 +21,6 @@ def generate_images(params):
         height=params['height'],
         width=params['width'],
         sample_steps=params['sample_steps'],
-        seed=params['seed'],
         sample_method="euler"
     )
 
@@ -31,10 +29,10 @@ def generate_images(params):
         today = datetime.now().date()
         image_dir = os.path.join('outputs', f"StableDiffusion_{today.strftime('%Y%m%d')}")
         os.makedirs(image_dir, exist_ok=True)
-        image_filename = f"txt2img_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{i}.{params['output_format']}"
+        image_filename = f"txt2img-quantize_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{i}"
         image_path = os.path.join(image_dir, image_filename)
 
-        image.save(image_path, format=params['output_format'].upper())
+        image.save(image_path, format="png")
         image_paths.append(image_path)
 
     return image_paths
