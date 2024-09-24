@@ -492,7 +492,6 @@
 ## Известные ошибки:
 
 * Параметр SeamlessM4T `both generations` не работает с аудио
-* Параметры FLUX `Enable quantized` и `Quantized models` не работают вообще
 * RVC, Supir и SV34D не работают вообще
 
 ## Планы на будущее:

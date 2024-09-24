@@ -492,7 +492,6 @@
 ## Known Bugs:
 
 * SeamlessM4T `both generations` parameter not working with audio
-* FLUX `Enable quantized` and `Quantized models` parameters not working at all
 * RVC, Supir and SV34D not working at all
 
 ## Plans for future:
