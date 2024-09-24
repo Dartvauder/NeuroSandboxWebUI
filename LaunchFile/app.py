@@ -5129,7 +5129,18 @@ def generate_image_flux_txt2img(prompt, model_name, quantize_model_name, enable_
             if result.returncode != 0:
                 return None, f"Error in flux-quantize.py: {result.stderr}"
 
-            image_path = result.stdout.strip()
+            image_path = None
+            for line in result.stdout.split('\n'):
+                if line.startswith("IMAGE_PATH:"):
+                    image_path = line.split("IMAGE_PATH:")[1].strip()
+                    break
+
+            if not image_path:
+                return None, "Image path not found in the output"
+
+            if not os.path.exists(image_path):
+                return None, f"Generated image not found at {image_path}"
+
             return image_path, f"Image generated successfully. Seed used: {seed}"
         else:
             if not os.path.exists(flux_model_path):

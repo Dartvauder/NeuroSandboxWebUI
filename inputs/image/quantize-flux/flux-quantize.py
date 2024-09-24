@@ -43,13 +43,10 @@ def generate_image(params):
 if __name__ == "__main__":
     try:
         params = json.loads(sys.argv[1])
-        print(f"Received parameters: {params}")
-
-        img_str = generate_image(params)
-        print(img_str)
+        image_path = generate_image(params)
+        print(f"IMAGE_PATH:{image_path}")
     except Exception as e:
         print(f"Error occurred: {str(e)}", file=sys.stderr)
         import traceback
-
         traceback.print_exc(file=sys.stderr)
         sys.exit(1)
