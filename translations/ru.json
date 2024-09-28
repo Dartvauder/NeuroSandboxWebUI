@@ -13,6 +13,8 @@
   "Min P": "Минимальное P",
   "Typical P": "Типичное P",
   "Stop sequences (optional)": "Последовательности остановки (необязательно)",
+  "TTS Repetition penalty": "TTS Штраф за повторение",
+  "TTS Length penalty": "TTS Штраф за длину",
   "Enable Do Sample": "Включить выборку",
   "Enable Early Stopping": "Включить раннюю остановку",
   "Repetition penalty": "Штраф за повторение",

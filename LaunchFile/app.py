@@ -841,7 +841,7 @@ def get_languages():
 
 def generate_text_and_speech(input_text, system_prompt, input_audio, llm_model_type, llm_model_name, llm_lora_model_name, enable_web_search, enable_libretranslate, target_lang, enable_openparse, pdf_file, enable_multimodal, input_image, enable_tts,
                              llm_settings_html, max_new_tokens, max_length, min_length, n_ctx, n_batch, temperature, top_p, min_p, typical_p, top_k,
-                             do_sample, early_stopping, stopping, repetition_penalty, frequency_penalty, presence_penalty, length_penalty, no_repeat_ngram_size, num_beams, num_return_sequences, chat_history_format, tts_settings_html, speaker_wav, language, tts_temperature, tts_top_p, tts_top_k, tts_speed, output_format):
+                             do_sample, early_stopping, stopping, repetition_penalty, frequency_penalty, presence_penalty, length_penalty, no_repeat_ngram_size, num_beams, num_return_sequences, chat_history_format, tts_settings_html, speaker_wav, language, tts_temperature, tts_top_p, tts_top_k, tts_speed, tts_repetition_penalty, tts_length_penalty, output_format):
     global chat_history, chat_dir, tts_model, whisper_model
 
     if 'chat_history' not in globals() or chat_history is None:
@@ -1134,11 +1134,9 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, llm_model_t
                     with open(chat_history_path, "w", encoding="utf-8") as f:
                         json.dump(chat_history_json, f, ensure_ascii=False, indent=4)
                 if enable_tts and text:
-                    repetition_penalty = 2.0
-                    length_penalty = 1.0
                     wav = tts_model.tts(text=text, speaker_wav=f"inputs/audio/voices/{speaker_wav}", language=language,
                                         temperature=tts_temperature, top_p=tts_top_p, top_k=tts_top_k, speed=tts_speed,
-                                        repetition_penalty=repetition_penalty, length_penalty=length_penalty)
+                                        repetition_penalty=tts_repetition_penalty, length_penalty=tts_length_penalty)
                     now = datetime.now()
                     audio_filename = f"TTS_{now.strftime('%Y%m%d_%H%M%S')}.{output_format}"
                     audio_path = os.path.join(chat_dir, 'audio', audio_filename)
@@ -1167,7 +1165,7 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, llm_model_t
         yield chat_history, audio_path, chat_dir, None
 
 
-def generate_tts_stt(text, audio, tts_settings_html, speaker_wav, language, tts_temperature, tts_top_p, tts_top_k, tts_speed, tts_output_format, stt_output_format):
+def generate_tts_stt(text, audio, tts_settings_html, speaker_wav, language, tts_temperature, tts_top_p, tts_top_k, tts_speed, tts_repetition_penalty, tts_length_penalty, tts_output_format, stt_output_format):
     global tts_model, whisper_model
 
     tts_output = None
@@ -1186,7 +1184,8 @@ def generate_tts_stt(text, audio, tts_settings_html, speaker_wav, language, tts_
 
         try:
             wav = tts_model.tts(text=text, speaker_wav=f"inputs/audio/voices/{speaker_wav}", language=language,
-                                temperature=tts_temperature, top_p=tts_top_p, top_k=tts_top_k, speed=tts_speed)
+                                temperature=tts_temperature, top_p=tts_top_p, top_k=tts_top_k, speed=tts_speed,
+                                repetition_penalty=tts_repetition_penalty, length_penalty=tts_length_penalty                                )
         except Exception as e:
             return None, str(e)
 
@@ -8628,6 +8627,8 @@ chat_interface = gr.Interface(
         gr.Slider(minimum=0.01, maximum=1.0, value=0.9, step=0.01, label=_("TTS Top P", lang), interactive=True),
         gr.Slider(minimum=1, maximum=100, value=20, step=1, label=_("TTS Top K", lang), interactive=True),
         gr.Slider(minimum=0.5, maximum=2.0, value=1.0, step=0.1, label=_("TTS Speed", lang), interactive=True),
+        gr.Slider(minimum=0.1, maximum=2.0, value=2.0, step=0.1, label=_("TTS Repetition penalty", lang), interactive=True),
+        gr.Slider(minimum=0.1, maximum=2.0, value=1.0, step=0.1, label=_("TTS Length penalty", lang), interactive=True),
         gr.Radio(choices=["wav", "mp3", "ogg"], label=_("Select output format", lang), value="wav", interactive=True)
     ],
     additional_inputs_accordion=gr.Accordion(label=_("LLM and TTS Settings", lang), open=False),
@@ -8657,6 +8658,9 @@ tts_stt_interface = gr.Interface(
         gr.Slider(minimum=0.01, maximum=1.0, value=0.9, step=0.01, label=_("TTS Top P", lang), interactive=True),
         gr.Slider(minimum=1, maximum=100, value=20, step=1, label=_("TTS Top K", lang), interactive=True),
         gr.Slider(minimum=0.5, maximum=2.0, value=1.0, step=0.1, label=_("TTS Speed", lang), interactive=True),
+        gr.Slider(minimum=0.1, maximum=2.0, value=2.0, step=0.1, label=_("TTS Repetition penalty", lang),
+                  interactive=True),
+        gr.Slider(minimum=0.1, maximum=2.0, value=1.0, step=0.1, label=_("TTS Length penalty", lang), interactive=True),
         gr.Radio(choices=["wav", "mp3", "ogg"], label=_("Select TTS output format", lang), value="wav", interactive=True),
         gr.Dropdown(choices=["txt", "json"], label=_("Select STT output format", lang), value="txt", interactive=True)
     ],

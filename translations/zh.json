@@ -13,6 +13,8 @@
   "Min P": "最小P值",
   "Typical P": "典型P值",
   "Stop sequences (optional)": "停止序列（可选）",
+  "TTS Repetition penalty": "TTS重复惩罚",
+  "TTS Length penalty": "TTS长度惩罚",
   "Enable Do Sample": "启用采样",
   "Enable Early Stopping": "启用提前停止",
   "Repetition penalty": "重复惩罚",
