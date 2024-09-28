@@ -28,7 +28,6 @@ import matplotlib.pyplot as plt
 import librosa
 import librosa.display
 import base64
-import io
 import gc
 import cv2
 import subprocess
@@ -665,7 +664,7 @@ def generate_magicprompt(prompt, max_new_tokens):
     return enhanced_prompt
 
 
-def load_model(model_name, model_type, n_ctx=None):
+def load_model(model_name, model_type, n_ctx, n_batch):
     if model_name:
         model_path = f"inputs/text/llm_models/{model_name}"
         if model_type == "transformers":
@@ -675,7 +674,7 @@ def load_model(model_name, model_type, n_ctx=None):
                 model = AutoModelForCausalLM().AutoModelForCausalLM.from_pretrained(
                     model_path,
                     device_map=device,
-                    load_in_4bit=True,
+                    load_in_8bit=True,
                     torch_dtype=torch.float16,
                     trust_remote_code=True
                 )
@@ -687,8 +686,7 @@ def load_model(model_name, model_type, n_ctx=None):
         elif model_type == "llama":
             try:
                 device = "cuda" if torch.cuda.is_available() else "cpu"
-                model = Llama().Llama(model_path, n_gpu_layers=-1 if device == "cuda" else 0)
-                model.n_ctx = n_ctx
+                model = Llama().Llama(model_path, n_gpu_layers=-1 if device == "cuda" else 0, n_ctx=n_ctx, n_batch=n_batch)
                 tokenizer = None
                 return tokenizer, model, None
             except (ValueError, RuntimeError):
@@ -841,9 +839,9 @@ def get_languages():
     }
 
 
-def generate_text_and_speech(input_text, system_prompt, input_audio, llm_model_name, llm_lora_model_name, enable_web_search, enable_libretranslate, target_lang, enable_openparse, pdf_file, enable_multimodal, input_image, enable_tts,
-                             llm_settings_html, llm_model_type, max_length, max_tokens,
-                             temperature, top_p, top_k, chat_history_format, tts_settings_html, speaker_wav, language, tts_temperature, tts_top_p, tts_top_k, tts_speed, output_format):
+def generate_text_and_speech(input_text, system_prompt, input_audio, llm_model_type, llm_model_name, llm_lora_model_name, enable_web_search, enable_libretranslate, target_lang, enable_openparse, pdf_file, enable_multimodal, input_image, enable_tts,
+                             llm_settings_html, max_new_tokens, max_length, min_length, n_ctx, n_batch, temperature, top_p, min_p, typical_p, top_k,
+                             do_sample, early_stopping, stopping, repetition_penalty, frequency_penalty, presence_penalty, length_penalty, no_repeat_ngram_size, num_beams, num_return_sequences, chat_history_format, tts_settings_html, speaker_wav, language, tts_temperature, tts_top_p, tts_top_k, tts_speed, output_format):
     global chat_history, chat_dir, tts_model, whisper_model
 
     if 'chat_history' not in globals() or chat_history is None:
@@ -895,7 +893,7 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, llm_model_n
                 local_dir=moondream2_path,
                 filename="*text-model*",
                 chat_handler=chat_handler,
-                n_ctx=2048,
+                n_ctx=n_ctx,
             )
             try:
                 if input_image:
@@ -979,7 +977,11 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, llm_model_n
                 flush()
 
     else:
-        tokenizer, llm_model, error_message = load_model(llm_model_name, llm_model_type)
+        if llm_model_type == "llama":
+            tokenizer, llm_model, error_message = load_model(llm_model_name, llm_model_type, n_ctx, n_batch)
+        else:
+            tokenizer, llm_model, error_message = load_model(llm_model_name, llm_model_type, n_ctx=None, n_batch=None)
+
         if llm_lora_model_name:
             tokenizer, llm_model, error_message = load_lora_model(llm_model_name, llm_lora_model_name, llm_model_type)
         if error_message:
@@ -1024,6 +1026,9 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, llm_model_n
 
                     tokenizer.pad_token = tokenizer.eos_token
                     tokenizer.padding_side = "left"
+                    stop_words = stopping.split(',') if stopping.strip() else None
+                    stop_ids = [tokenizer.encode(word.strip(), add_special_tokens=False)[0] for word in
+                                stop_words] if stop_words else None
 
                     full_prompt = f"{system_prompt}\n\n{openparse_context}{web_context}{context}Human: {prompt}\nAssistant:"
                     inputs = tokenizer(full_prompt, return_tensors="pt", padding=True, truncation=True).to(device)
@@ -1037,13 +1042,20 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, llm_model_n
                         with torch.no_grad():
                             output = llm_model.generate(
                                 **inputs,
-                                max_new_tokens=max_length,
-                                do_sample=True,
+                                max_new_tokens=max_new_tokens,
+                                max_length=max_length,
+                                min_length=min_length,
+                                do_sample=do_sample,
+                                early_stopping=early_stopping,
                                 top_p=top_p,
                                 top_k=top_k,
                                 temperature=temperature,
-                                repetition_penalty=1.1,
-                                no_repeat_ngram_size=2,
+                                repetition_penalty=repetition_penalty,
+                                length_penalty=length_penalty,
+                                no_repeat_ngram_size=no_repeat_ngram_size,
+                                num_beams=num_beams,
+                                num_return_sequences=num_return_sequences,
+                                eos_token_id=stop_ids if stop_ids else tokenizer.eos_token_id
                             )
 
                         next_token = output[0][inputs['input_ids'].shape[1]:]
@@ -1064,18 +1076,24 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, llm_model_n
                     if not chat_history or chat_history[-1][1] is not None:
                         chat_history.append([prompt, ""])
 
+                    stop_sequences = [seq.strip() for seq in stopping.split(',')] if stopping.strip() else None
+
                     full_prompt = f"{system_prompt}\n\n{openparse_context}{web_context}{context}Human: {prompt}\nAssistant:"
 
                     for token in llm_model(
                             full_prompt,
-                            max_tokens=max_tokens,
-                            stop=["Human:", "\n"],
-                            stream=True,
-                            echo=False,
-                            temperature=temperature,
+                            max_tokens=max_new_tokens,
                             top_p=top_p,
+                            min_p=min_p,
+                            typical_p=typical_p,
                             top_k=top_k,
-                            repeat_penalty=1.1,
+                            temperature=temperature,
+                            repeat_penalty=repetition_penalty,
+                            frequency_penalty=frequency_penalty,
+                            presence_penalty=presence_penalty,
+                            stop=stop_sequences,
+                            stream=True,
+                            echo=False
                     ):
 
                         text += token['choices'][0]['text']
@@ -8567,10 +8585,11 @@ chat_interface = gr.Interface(
         gr.Textbox(label=_("Enter your request", lang)),
         gr.Textbox(label=_("Enter your system prompt", lang)),
         gr.Audio(type="filepath", label=_("Record your request (optional)", lang)),
-        gr.Dropdown(choices=llm_models_list, label=_("Select LLM model", lang), value=None)
+        gr.Radio(choices=["transformers", "llama"], label=_("Select model type", lang), value="transformers"),
+        gr.Dropdown(choices=llm_models_list, label=_("Select LLM model", lang), value=None),
+        gr.Dropdown(choices=llm_lora_models_list, label=_("Select LoRA model (optional)", lang), value=None),
     ],
     additional_inputs=[
-        gr.Dropdown(choices=llm_lora_models_list, label=_("Select LoRA model (optional)", lang), value=None),
         gr.Checkbox(label=_("Enable WebSearch", lang), value=False),
         gr.Checkbox(label=_("Enable LibreTranslate", lang), value=False),
         gr.Dropdown(choices=["en", "es", "fr", "de", "it", "pt", "pl", "tr", "ru", "nl", "cs", "ar", "zh", "ja", "hi"],
@@ -8581,12 +8600,26 @@ chat_interface = gr.Interface(
         gr.Image(label=_("Upload your image (for Multimodal)", lang), type="filepath"),
         gr.Checkbox(label=_("Enable TTS", lang), value=False),
         gr.HTML(_("<h3>LLM Settings</h3>", lang)),
-        gr.Radio(choices=["transformers", "llama"], label=_("Select model type", lang), value="transformers"),
-        gr.Slider(minimum=256, maximum=4096, value=512, step=1, label=_("Max length (for transformers type models)", lang)),
-        gr.Slider(minimum=256, maximum=4096, value=512, step=1, label=_("Max tokens (for llama type models)", lang)),
+        gr.Slider(minimum=256, maximum=32768, value=512, step=1, label=_("Max tokens", lang)),
+        gr.Slider(minimum=256, maximum=32768, value=512, step=1, label=_("Max length", lang)),
+        gr.Slider(minimum=256, maximum=32768, value=512, step=1, label=_("Min length", lang)),
+        gr.Slider(minimum=256, maximum=32768, value=512, step=1, label=_("Context size (N_CTX) for llama type models", lang)),
+        gr.Slider(minimum=256, maximum=32768, value=512, step=1, label=_("Context batch (N_BATCH) for llama type models", lang)),
         gr.Slider(minimum=0.1, maximum=2.0, value=0.7, step=0.1, label=_("Temperature", lang)),
         gr.Slider(minimum=0.01, maximum=1.0, value=0.9, step=0.01, label=_("Top P", lang)),
-        gr.Slider(minimum=1, maximum=100, value=20, step=1, label=_("Top K", lang)),
+        gr.Slider(minimum=0.01, maximum=1.0, value=0.05, step=0.01, label=_("Min P", lang)),
+        gr.Slider(minimum=0.01, maximum=1.0, value=1.0, step=0.01, label=_("Typical P", lang)),
+        gr.Slider(minimum=1, maximum=200, value=40, step=1, label=_("Top K", lang)),
+        gr.Checkbox(label=_("Enable Do Sample", lang), value=False),
+        gr.Checkbox(label=_("Enable Early Stopping", lang), value=False),
+        gr.Textbox(label=_("Stop sequences (optional)", lang), value=""),
+        gr.Slider(minimum=0.1, maximum=2.0, value=1.0, step=0.1, label=_("Repetition penalty", lang)),
+        gr.Slider(minimum=0.1, maximum=2.0, value=0.0, step=0.1, label=_("Frequency penalty", lang)),
+        gr.Slider(minimum=0.1, maximum=2.0, value=0.0, step=0.1, label=_("Presence penalty", lang)),
+        gr.Slider(minimum=0.1, maximum=2.0, value=1.0, step=0.1, label=_("Length penalty", lang)),
+        gr.Slider(minimum=1, maximum=10, value=2, step=1, label=_("No repeat ngram size", lang)),
+        gr.Slider(minimum=0, maximum=10, value=0, step=1, label=_("Num beams", lang)),
+        gr.Slider(minimum=1, maximum=10, value=1, step=1, label=_("Num return sequences", lang)),
         gr.Radio(choices=["txt", "json"], label=_("Select chat history format", lang), value="txt", interactive=True),
         gr.HTML(_("<h3>TTS Settings</h3>", lang)),
         gr.Dropdown(choices=speaker_wavs_list, label=_("Select voice", lang), interactive=True),
@@ -11184,9 +11217,9 @@ with gr.TabbedInterface(
     folder_button = gr.Button(_("Outputs", lang))
 
     dropdowns_to_update = [
-        chat_interface.input_components[3],
         chat_interface.input_components[4],
-        chat_interface.input_components[22],
+        chat_interface.input_components[5],
+        chat_interface.input_components[38],
         tts_stt_interface.input_components[3],
         txt2img_interface.input_components[2],
         txt2img_interface.input_components[3],
@@ -11203,6 +11236,9 @@ with gr.TabbedInterface(
         gligen_interface.input_components[5],
         animatediff_interface.input_components[5],
         sd3_txt2img_interface.input_components[3],
+        sd3_txt2img_interface.input_components[6],
+        sd3_img2img_interface.input_components[5],
+        flux_img2img_interface.input_components[3],
         t2i_ip_adapter_interface.input_components[4],
         ip_adapter_faceid_interface.input_components[5],
         flux_txt2img_interface.input_components[2],
