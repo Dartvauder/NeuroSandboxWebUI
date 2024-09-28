@@ -228,6 +228,7 @@ except ImportError:
     pass
     print("Xformers is not installed. Proceeding without it")
 
+chat_history = None
 chat_dir = None
 tts_model = None
 whisper_model = None
@@ -1035,7 +1036,7 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, llm_model_t
 
                     text = ""
                     if not chat_history or chat_history[-1][1] is not None:
-                        chat_history.append([prompt, ""])
+                        chat_history.append([prompt, text])
 
                     for i in range(max_length):
 
@@ -1074,7 +1075,7 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, llm_model_t
                 elif llm_model_type == "llama":
                     text = ""
                     if not chat_history or chat_history[-1][1] is not None:
-                        chat_history.append([prompt, ""])
+                        chat_history.append([prompt, text])
 
                     stop_sequences = [seq.strip() for seq in stopping.split(',')] if stopping.strip() else None
 
@@ -8611,7 +8612,7 @@ chat_interface = gr.Interface(
         gr.Slider(minimum=1, maximum=200, value=40, step=1, label=_("Top K", lang)),
         gr.Checkbox(label=_("Enable Do Sample", lang), value=False),
         gr.Checkbox(label=_("Enable Early Stopping", lang), value=False),
-        gr.Textbox(label=_("Stop sequences (optional)", lang), value=""),
+        gr.Textbox(label=_("Stop sequences (optional)", lang), value="Human:"),
         gr.Slider(minimum=0.1, maximum=2.0, value=1.0, step=0.1, label=_("Repetition penalty", lang)),
         gr.Slider(minimum=0.1, maximum=2.0, value=0.0, step=0.1, label=_("Frequency penalty", lang)),
         gr.Slider(minimum=0.1, maximum=2.0, value=0.0, step=0.1, label=_("Presence penalty", lang)),
