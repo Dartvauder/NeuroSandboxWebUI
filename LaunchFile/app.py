@@ -1533,6 +1533,12 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
         return None, None, "Please, select a StableDiffusion model!"
 
     if enable_quantize:
+
+        if seed == "" or seed is None:
+            seed = random.randint(0, 2 ** 32 - 1)
+        else:
+            seed = int(seed)
+
         try:
             params = {
                 'model_name': stable_diffusion_model_name,
@@ -1985,6 +1991,12 @@ def generate_image_img2img(prompt, negative_prompt, init_image, strength, stable
 
     if enable_quantize:
         try:
+
+            if seed == "" or seed is None:
+                seed = random.randint(0, 2 ** 32 - 1)
+            else:
+                seed = int(seed)
+
             params = {
                 'model_name': stable_diffusion_model_name,
                 'prompt': prompt,
@@ -4005,6 +4017,11 @@ def generate_image_sd3_txt2img(prompt, negative_prompt, model_type, quantize_sd3
             if not quantize_sd3_model_name:
                 return None, "Please select a GGUF model!"
 
+            if seed == "" or seed is None:
+                seed = random.randint(0, 2 ** 32 - 1)
+            else:
+                seed = int(seed)
+
             params = {
                 'model_name': quantize_sd3_model_name,
                 'prompt': prompt,
@@ -4169,6 +4186,11 @@ def generate_image_sd3_img2img(prompt, negative_prompt, init_image, strength, mo
         try:
             if not quantize_sd3_model_name:
                 return None, "Please select a GGUF model!"
+
+            if seed == "" or seed is None:
+                seed = random.randint(0, 2 ** 32 - 1)
+            else:
+                seed = int(seed)
 
             params = {
                 'model_name': quantize_sd3_model_name,
