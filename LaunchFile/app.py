@@ -3999,9 +3999,12 @@ def generate_image_ldm3d(prompt, negative_prompt, seed, width, height, num_infer
         flush()
 
 
-def generate_image_sd3_txt2img(prompt, negative_prompt, quantize_sd3_model_name, enable_quantize, seed, lora_model_names, lora_scales, num_inference_steps, guidance_scale, width, height, max_sequence_length, clip_skip, num_images_per_prompt, output_format):
+def generate_image_sd3_txt2img(prompt, negative_prompt, model_type, quantize_sd3_model_name, enable_quantize, seed, lora_model_names, lora_scales, num_inference_steps, guidance_scale, width, height, max_sequence_length, clip_skip, num_images_per_prompt, output_format):
     if enable_quantize:
         try:
+            if not quantize_sd3_model_name:
+                return None, "Please select a GGUF model!"
+
             params = {
                 'model_name': quantize_sd3_model_name,
                 'prompt': prompt,
@@ -4041,25 +4044,34 @@ def generate_image_sd3_txt2img(prompt, negative_prompt, quantize_sd3_model_name,
             return None, str(e)
 
     else:
-        sd3_model_path = os.path.join("inputs", "image", "sd_models", "sd3")
-
-        if not os.path.exists(sd3_model_path):
-            print("Downloading Stable Diffusion 3 model...")
-            os.makedirs(sd3_model_path, exist_ok=True)
-            Repo.clone_from("https://huggingface.co/stabilityai/stable-diffusion-3-medium-diffusers", sd3_model_path)
-            print("Stable Diffusion 3 model downloaded")
-
         try:
+            if model_type == "Diffusers":
+                sd3_model_path = os.path.join("inputs", "image", "sd_models", "sd3")
+                if not os.path.exists(sd3_model_path):
+                    print("Downloading Stable Diffusion 3 model...")
+                    os.makedirs(sd3_model_path, exist_ok=True)
+                    Repo.clone_from("https://huggingface.co/stabilityai/stable-diffusion-3-medium-diffusers",
+                                    sd3_model_path)
+                    print("Stable Diffusion 3 model downloaded")
+                quantization_config = BitsAndBytesConfig().BitsAndBytesConfig(load_in_8bit=True)
 
-            quantization_config = BitsAndBytesConfig().BitsAndBytesConfig(load_in_8bit=True)
+                text_encoder = T5EncoderModel().T5EncoderModel.from_pretrained(
+                    sd3_model_path,
+                    subfolder="text_encoder_3",
+                    quantization_config=quantization_config,
+                )
+                pipe = StableDiffusion3Pipeline().from_pretrained(sd3_model_path, device_map="balanced",
+                                                                  text_encoder_3=text_encoder,
+                                                                  torch_dtype=torch.float16)
+            else:
+                if not quantize_sd3_model_name:
+                    return None, "Please select a model!"
 
-            text_encoder = T5EncoderModel().T5EncoderModel.from_pretrained(
-                sd3_model_path,
-                subfolder="text_encoder_3",
-                quantization_config=quantization_config,
-            )
-            pipe = StableDiffusion3Pipeline().from_pretrained(sd3_model_path, device_map="balanced",
-                                                              text_encoder_3=text_encoder, torch_dtype=torch.float16)
+                stable_diffusion_model_path = os.path.join("inputs", "image", "sd_models",
+                                                           f"{quantize_sd3_model_name}")
+                pipe = StableDiffusion3Pipeline().from_single_file(stable_diffusion_model_path, device_map="balanced",
+                                                                  text_encoder_3=None,
+                                                                  torch_dtype=torch.float16)
 
             pipe.enable_model_cpu_offload()
 
@@ -4149,9 +4161,15 @@ def generate_image_sd3_txt2img(prompt, negative_prompt, quantize_sd3_model_name,
             flush()
 
 
-def generate_image_sd3_img2img(prompt, negative_prompt, init_image, strength, quantize_sd3_model_name, enable_quantize, seed, num_inference_steps, guidance_scale, width, height, max_sequence_length, clip_skip, num_images_per_prompt, output_format):
+def generate_image_sd3_img2img(prompt, negative_prompt, init_image, strength, model_type, quantize_sd3_model_name, enable_quantize, seed, num_inference_steps, guidance_scale, width, height, max_sequence_length, clip_skip, num_images_per_prompt, output_format):
+    if not init_image:
+        return None, "Please upload an initial image!"
+
     if enable_quantize:
         try:
+            if not quantize_sd3_model_name:
+                return None, "Please select a GGUF model!"
+
             params = {
                 'model_name': quantize_sd3_model_name,
                 'prompt': prompt,
@@ -4193,29 +4211,33 @@ def generate_image_sd3_img2img(prompt, negative_prompt, init_image, strength, qu
             return None, str(e)
 
     else:
-        sd3_model_path = os.path.join("inputs", "image", "sd_models", "sd3")
-
-        if not init_image:
-            return None, "Please upload an initial image!"
-
-        if not os.path.exists(sd3_model_path):
-            print("Downloading Stable Diffusion 3 model...")
-            os.makedirs(sd3_model_path, exist_ok=True)
-            Repo.clone_from("https://huggingface.co/stabilityai/stable-diffusion-3-medium-diffusers", sd3_model_path)
-            print("Stable Diffusion 3 model downloaded")
-
         try:
-            quantization_config = BitsAndBytesConfig().BitsAndBytesConfig(load_in_8bit=True)
+            if model_type == "Diffusers":
+                sd3_model_path = os.path.join("inputs", "image", "sd_models", "sd3")
+                if not os.path.exists(sd3_model_path):
+                    print("Downloading Stable Diffusion 3 model...")
+                    os.makedirs(sd3_model_path, exist_ok=True)
+                    Repo.clone_from("https://huggingface.co/stabilityai/stable-diffusion-3-medium-diffusers",
+                                    sd3_model_path)
+                    print("Stable Diffusion 3 model downloaded")
+                quantization_config = BitsAndBytesConfig().BitsAndBytesConfig(load_in_8bit=True)
 
-            text_encoder = T5EncoderModel().T5EncoderModel.from_pretrained(
-                sd3_model_path,
-                subfolder="text_encoder_3",
-                quantization_config=quantization_config,
-            )
-            pipe = StableDiffusion3Img2ImgPipeline().StableDiffusion3Img2ImgPipeline.from_pretrained(sd3_model_path,
-                                                                                                     device_map="balanced",
-                                                                                                     text_encoder_3=text_encoder,
-                                                                                                     torch_dtype=torch.float16)
+                text_encoder = T5EncoderModel().T5EncoderModel.from_pretrained(
+                    sd3_model_path,
+                    subfolder="text_encoder_3",
+                    quantization_config=quantization_config,
+                )
+                pipe = StableDiffusion3Pipeline().from_pretrained(sd3_model_path, device_map="balanced",
+                                                                  text_encoder_3=text_encoder,
+                                                                  torch_dtype=torch.float16)
+            else:
+                if not quantize_sd3_model_name:
+                    return None, "Please select a model!"
+                stable_diffusion_model_path = os.path.join("inputs", "image", "sd_models",
+                                                           f"{quantize_sd3_model_name}")
+                pipe = StableDiffusion3Pipeline().from_single_file(stable_diffusion_model_path, device_map="balanced",
+                                                                   text_encoder_3=None,
+                                                                   torch_dtype=torch.float16)
 
             pipe.enable_model_cpu_offload()
 
@@ -5164,6 +5186,9 @@ def generate_image_flux_txt2img(prompt, model_name, quantize_model_name, enable_
 
     try:
         if enable_quantize:
+            if not quantize_model_name:
+                return None, "Please select a GGUF model!"
+
             params = {
                 'prompt': prompt,
                 'guidance_scale': guidance_scale,
@@ -5284,6 +5309,9 @@ def generate_image_flux_txt2img(prompt, model_name, quantize_model_name, enable_
 
 
 def generate_image_flux_img2img(prompt, init_image, model_name, quantize_model_name, enable_quantize, seed, num_inference_steps, strength, guidance_scale, width, height, max_sequence_length, output_format):
+    if not init_image:
+        return None, "Please upload an initial image!"
+
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
     if seed == "" or seed is None:
@@ -5295,6 +5323,9 @@ def generate_image_flux_img2img(prompt, init_image, model_name, quantize_model_n
     flux_model_path = os.path.join("inputs", "image", "flux", model_name)
 
     if enable_quantize:
+        if not quantize_model_name:
+            return None, "Please select a GGUF model!"
+
         params = {
             'prompt': prompt,
             'guidance_scale': guidance_scale,
@@ -9297,6 +9328,7 @@ sd3_txt2img_interface = gr.Interface(
     inputs=[
         gr.Textbox(label=_("Enter your prompt", lang)),
         gr.Textbox(label=_("Enter your negative prompt", lang), value=""),
+        gr.Radio(choices=["Diffusers", "Safetensors"], label=_("Select model type", lang), value="Diffusers"),
         gr.Dropdown(choices=stable_diffusion_models_list, label=_("Select StableDiffusion model", lang), value=None),
         gr.Checkbox(label=_("Enable Quantize", lang), value=False),
         gr.Textbox(label=_("Seed (optional)", lang), value="")
@@ -9335,6 +9367,7 @@ sd3_img2img_interface = gr.Interface(
         gr.Textbox(label=_("Enter your negative prompt", lang), value=""),
         gr.Image(label=_("Initial image", lang), type="filepath"),
         gr.Slider(minimum=0.0, maximum=1.0, value=0.8, step=0.01, label=_("Strength (Initial image)", lang)),
+        gr.Radio(choices=["Diffusers", "Safetensors"], label=_("Select model type", lang), value="Diffusers"),
         gr.Dropdown(choices=stable_diffusion_models_list, label=_("Select StableDiffusion model", lang), value=None),
         gr.Checkbox(label=_("Enable Quantize", lang), value=False),
         gr.Textbox(label=_("Seed (optional)", lang), value="")
