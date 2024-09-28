@@ -1542,6 +1542,7 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
                 'height': stable_diffusion_height,
                 'width': stable_diffusion_width,
                 'sample_steps': stable_diffusion_steps,
+                'seed': seed
             }
 
             env = os.environ.copy()
@@ -1556,9 +1557,10 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
                 return None, None, f"Error in sd-txt2img-quantize.py: {result.stderr}"
 
             image_paths = []
-            for line in result.stdout.split('\n'):
-                if line.startswith("IMAGE_PATH:"):
-                    image_path = line.split("IMAGE_PATH:")[1].strip()
+            output = result.stdout.strip()
+            for part in output.split("IMAGE_PATH:"):
+                if part:
+                    image_path = part.strip().split('\n')[0]
                     if os.path.exists(image_path):
                         image_paths.append(image_path)
 
@@ -1990,7 +1992,8 @@ def generate_image_img2img(prompt, negative_prompt, init_image, strength, stable
                 'cfg_scale': stable_diffusion_cfg,
                 'sample_steps': stable_diffusion_steps,
                 'image': init_image,
-                'strength': strength
+                'strength': strength,
+                'seed': seed
             }
 
             env = os.environ.copy()
@@ -2005,9 +2008,10 @@ def generate_image_img2img(prompt, negative_prompt, init_image, strength, stable
                 return None, None, f"Error in sd-img2img-quantize.py: {result.stderr}"
 
             image_paths = []
-            for line in result.stdout.split('\n'):
-                if line.startswith("IMAGE_PATH:"):
-                    image_path = line.split("IMAGE_PATH:")[1].strip()
+            output = result.stdout.strip()
+            for part in output.split("IMAGE_PATH:"):
+                if part:
+                    image_path = part.strip().split('\n')[0]
                     if os.path.exists(image_path):
                         image_paths.append(image_path)
 
@@ -3995,183 +3999,269 @@ def generate_image_ldm3d(prompt, negative_prompt, seed, width, height, num_infer
         flush()
 
 
-def generate_image_sd3_txt2img(prompt, negative_prompt, seed, lora_model_names, lora_scales, num_inference_steps, guidance_scale, width, height, max_sequence_length, clip_skip, num_images_per_prompt, output_format):
-
-    sd3_model_path = os.path.join("inputs", "image", "sd_models", "sd3")
-
-    if not os.path.exists(sd3_model_path):
-        print("Downloading Stable Diffusion 3 model...")
-        os.makedirs(sd3_model_path, exist_ok=True)
-        Repo.clone_from("https://huggingface.co/stabilityai/stable-diffusion-3-medium-diffusers", sd3_model_path)
-        print("Stable Diffusion 3 model downloaded")
-
-    try:
-
-        quantization_config = BitsAndBytesConfig().BitsAndBytesConfig(load_in_8bit=True)
-
-        text_encoder = T5EncoderModel().T5EncoderModel.from_pretrained(
-            sd3_model_path,
-            subfolder="text_encoder_3",
-            quantization_config=quantization_config,
-        )
-        pipe = StableDiffusion3Pipeline().from_pretrained(sd3_model_path, device_map="balanced", text_encoder_3=text_encoder, torch_dtype=torch.float16)
-
-        pipe.enable_model_cpu_offload()
-
-        device = "cuda" if torch.cuda.is_available() else "cpu"
-
-        if seed == "" or seed is None:
-            seed = random.randint(0, 2 ** 32 - 1)
-        else:
-            seed = int(seed)
-        generator = torch.Generator(device).manual_seed(seed)
-
-        if isinstance(lora_scales, str):
-            lora_scales = [float(scale.strip()) for scale in lora_scales.split(',') if scale.strip()]
-        elif isinstance(lora_scales, (int, float)):
-            lora_scales = [float(lora_scales)]
-
-        lora_loaded = False
-        if lora_model_names and lora_scales:
-            if len(lora_model_names) != len(lora_scales):
-                print(
-                    f"Warning: Number of LoRA models ({len(lora_model_names)}) does not match number of scales ({len(lora_scales)}). Using available scales.")
-
-            for i, lora_model_name in enumerate(lora_model_names):
-                if i < len(lora_scales):
-                    lora_scale = lora_scales[i]
-                else:
-                    lora_scale = 1.0
-
-                lora_model_path = os.path.join("inputs", "image", "sd_models", "lora", lora_model_name)
-                if os.path.exists(lora_model_path):
-                    adapter_name = os.path.splitext(os.path.basename(lora_model_name))[0]
-                    try:
-                        pipe.load_lora_weights(lora_model_path, adapter_name=adapter_name)
-                        pipe.fuse_lora(lora_scale=lora_scale)
-                        lora_loaded = True
-                        print(f"Loaded LoRA {lora_model_name} with scale {lora_scale}")
-                    except Exception as e:
-                        print(f"Error loading LoRA {lora_model_name}: {str(e)}")
-
-        images = pipe(
-            prompt=prompt,
-            negative_prompt=negative_prompt,
-            num_inference_steps=num_inference_steps,
-            guidance_scale=guidance_scale,
-            width=width,
-            height=height,
-            max_sequence_length=max_sequence_length,
-            num_images_per_prompt=num_images_per_prompt,
-            clip_skip=clip_skip,
-            generator=generator,
-        ).images
-
-        image_paths = []
-        for i, image in enumerate(images):
-            today = datetime.now().date()
-            image_dir = os.path.join('outputs', f"StableDiffusion_{today.strftime('%Y%m%d')}")
-            os.makedirs(image_dir, exist_ok=True)
-            image_filename = f"sd3_txt2img_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{i}.{output_format}"
-            image_path = os.path.join(image_dir, image_filename)
-            metadata = {
-                "prompt": prompt,
-                "negative_prompt": negative_prompt,
-                "model": "Stable Diffusion 3",
-                "seed": seed,
-                "lora_models": lora_model_names if lora_model_names else None,
-                "lora_scales": lora_scales if lora_model_names else None,
-                "steps": num_inference_steps,
-                "guidance_scale": guidance_scale,
-                "width": width,
-                "height": height,
-                "max_sequence_length": max_sequence_length,
-                "clip_skip": clip_skip,
+def generate_image_sd3_txt2img(prompt, negative_prompt, quantize_sd3_model_name, enable_quantize, seed, lora_model_names, lora_scales, num_inference_steps, guidance_scale, width, height, max_sequence_length, clip_skip, num_images_per_prompt, output_format):
+    if enable_quantize:
+        try:
+            params = {
+                'model_name': quantize_sd3_model_name,
+                'prompt': prompt,
+                'negative_prompt': negative_prompt,
+                'cfg_scale': guidance_scale,
+                'height': height,
+                'width': width,
+                'sample_steps': num_inference_steps,
+                'seed': seed
             }
 
-            image.save(image_path, format=output_format.upper())
-            add_metadata_to_file(image_path, metadata)
-            image_paths.append(image_path)
+            env = os.environ.copy()
+            env['PYTHONPATH'] = os.pathsep.join(sys.path)
 
-        return image_paths, f"Images generated successfully. Seed used: {seed}"
+            result = subprocess.run(
+                [sys.executable, 'inputs/image/sd_models/sd-txt2img-quantize.py', json.dumps(params)],
+                capture_output=True, text=True, env=env
+            )
 
-    except Exception as e:
-        return None, str(e)
+            if result.returncode != 0:
+                return None, f"Error in sd-txt2img-quantize.py: {result.stderr}"
 
-    finally:
-        del pipe
-        del text_encoder
-        flush()
+            image_path = None
+            output = result.stdout.strip()
+            if "IMAGE_PATH:" in output:
+                image_path = output.split("IMAGE_PATH:")[-1].strip()
+
+            if not image_path:
+                return None, "Image path not found in the output"
+
+            if not os.path.exists(image_path):
+                return None, f"Generated image not found at {image_path}"
+
+            return image_path, f"Image generated successfully. Seed used: {seed}"
+
+        except Exception as e:
+            return None, str(e)
+
+    else:
+        sd3_model_path = os.path.join("inputs", "image", "sd_models", "sd3")
+
+        if not os.path.exists(sd3_model_path):
+            print("Downloading Stable Diffusion 3 model...")
+            os.makedirs(sd3_model_path, exist_ok=True)
+            Repo.clone_from("https://huggingface.co/stabilityai/stable-diffusion-3-medium-diffusers", sd3_model_path)
+            print("Stable Diffusion 3 model downloaded")
+
+        try:
+
+            quantization_config = BitsAndBytesConfig().BitsAndBytesConfig(load_in_8bit=True)
+
+            text_encoder = T5EncoderModel().T5EncoderModel.from_pretrained(
+                sd3_model_path,
+                subfolder="text_encoder_3",
+                quantization_config=quantization_config,
+            )
+            pipe = StableDiffusion3Pipeline().from_pretrained(sd3_model_path, device_map="balanced",
+                                                              text_encoder_3=text_encoder, torch_dtype=torch.float16)
+
+            pipe.enable_model_cpu_offload()
+
+            device = "cuda" if torch.cuda.is_available() else "cpu"
+
+            if seed == "" or seed is None:
+                seed = random.randint(0, 2 ** 32 - 1)
+            else:
+                seed = int(seed)
+            generator = torch.Generator(device).manual_seed(seed)
+
+            if isinstance(lora_scales, str):
+                lora_scales = [float(scale.strip()) for scale in lora_scales.split(',') if scale.strip()]
+            elif isinstance(lora_scales, (int, float)):
+                lora_scales = [float(lora_scales)]
+
+            lora_loaded = False
+            if lora_model_names and lora_scales:
+                if len(lora_model_names) != len(lora_scales):
+                    print(
+                        f"Warning: Number of LoRA models ({len(lora_model_names)}) does not match number of scales ({len(lora_scales)}). Using available scales.")
+
+                for i, lora_model_name in enumerate(lora_model_names):
+                    if i < len(lora_scales):
+                        lora_scale = lora_scales[i]
+                    else:
+                        lora_scale = 1.0
+
+                    lora_model_path = os.path.join("inputs", "image", "sd_models", "lora", lora_model_name)
+                    if os.path.exists(lora_model_path):
+                        adapter_name = os.path.splitext(os.path.basename(lora_model_name))[0]
+                        try:
+                            pipe.load_lora_weights(lora_model_path, adapter_name=adapter_name)
+                            pipe.fuse_lora(lora_scale=lora_scale)
+                            lora_loaded = True
+                            print(f"Loaded LoRA {lora_model_name} with scale {lora_scale}")
+                        except Exception as e:
+                            print(f"Error loading LoRA {lora_model_name}: {str(e)}")
+
+            images = pipe(
+                prompt=prompt,
+                negative_prompt=negative_prompt,
+                num_inference_steps=num_inference_steps,
+                guidance_scale=guidance_scale,
+                width=width,
+                height=height,
+                max_sequence_length=max_sequence_length,
+                num_images_per_prompt=num_images_per_prompt,
+                clip_skip=clip_skip,
+                generator=generator,
+            ).images
+
+            image_paths = []
+            for i, image in enumerate(images):
+                today = datetime.now().date()
+                image_dir = os.path.join('outputs', f"StableDiffusion_{today.strftime('%Y%m%d')}")
+                os.makedirs(image_dir, exist_ok=True)
+                image_filename = f"sd3_txt2img_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{i}.{output_format}"
+                image_path = os.path.join(image_dir, image_filename)
+                metadata = {
+                    "prompt": prompt,
+                    "negative_prompt": negative_prompt,
+                    "model": "Stable Diffusion 3",
+                    "seed": seed,
+                    "lora_models": lora_model_names if lora_model_names else None,
+                    "lora_scales": lora_scales if lora_model_names else None,
+                    "steps": num_inference_steps,
+                    "guidance_scale": guidance_scale,
+                    "width": width,
+                    "height": height,
+                    "max_sequence_length": max_sequence_length,
+                    "clip_skip": clip_skip,
+                }
+
+                image.save(image_path, format=output_format.upper())
+                add_metadata_to_file(image_path, metadata)
+                image_paths.append(image_path)
+
+            return image_paths, f"Images generated successfully. Seed used: {seed}"
+
+        except Exception as e:
+            return None, str(e)
+
+        finally:
+            del pipe
+            del text_encoder
+            flush()
 
 
-def generate_image_sd3_img2img(prompt, negative_prompt, init_image, strength, seed, num_inference_steps, guidance_scale, width, height, max_sequence_length, clip_skip, num_images_per_prompt, output_format):
+def generate_image_sd3_img2img(prompt, negative_prompt, init_image, strength, quantize_sd3_model_name, enable_quantize, seed, num_inference_steps, guidance_scale, width, height, max_sequence_length, clip_skip, num_images_per_prompt, output_format):
+    if enable_quantize:
+        try:
+            params = {
+                'model_name': quantize_sd3_model_name,
+                'prompt': prompt,
+                'negative_prompt': negative_prompt,
+                'cfg_scale': guidance_scale,
+                'height': height,
+                'width': width,
+                'sample_steps': num_inference_steps,
+                'image': init_image,
+                'strength': strength,
+                'seed': seed
+            }
 
-    sd3_model_path = os.path.join("inputs", "image", "sd_models", "sd3")
+            env = os.environ.copy()
+            env['PYTHONPATH'] = os.pathsep.join(sys.path)
 
-    if not init_image:
-        return None, "Please upload an initial image!"
+            result = subprocess.run(
+                [sys.executable, 'inputs/image/sd_models/sd-img2img-quantize.py', json.dumps(params)],
+                capture_output=True, text=True, env=env
+            )
 
-    if not os.path.exists(sd3_model_path):
-        print("Downloading Stable Diffusion 3 model...")
-        os.makedirs(sd3_model_path, exist_ok=True)
-        Repo.clone_from("https://huggingface.co/stabilityai/stable-diffusion-3-medium-diffusers", sd3_model_path)
-        print("Stable Diffusion 3 model downloaded")
+            if result.returncode != 0:
+                return None, f"Error in sd-img2img-quantize.py: {result.stderr}"
 
-    try:
-        quantization_config = BitsAndBytesConfig().BitsAndBytesConfig(load_in_8bit=True)
+            image_path = None
+            output = result.stdout.strip()
+            if "IMAGE_PATH:" in output:
+                image_path = output.split("IMAGE_PATH:")[-1].strip()
 
-        text_encoder = T5EncoderModel().T5EncoderModel.from_pretrained(
-            sd3_model_path,
-            subfolder="text_encoder_3",
-            quantization_config=quantization_config,
-        )
-        pipe = StableDiffusion3Img2ImgPipeline().StableDiffusion3Img2ImgPipeline.from_pretrained(sd3_model_path, device_map="balanced", text_encoder_3=text_encoder, torch_dtype=torch.float16)
+            if not image_path:
+                return None, "Image path not found in the output"
 
-        pipe.enable_model_cpu_offload()
+            if not os.path.exists(image_path):
+                return None, f"Generated image not found at {image_path}"
 
-        init_image = Image.open(init_image).convert("RGB")
-        init_image = init_image.resize((width, height))
+            return image_path, f"Image generated successfully. Seed used: {seed}"
 
-        device = "cuda" if torch.cuda.is_available() else "cpu"
+        except Exception as e:
+            return None, str(e)
 
-        if seed == "" or seed is None:
-            seed = random.randint(0, 2 ** 32 - 1)
-        else:
-            seed = int(seed)
-        generator = torch.Generator(device).manual_seed(seed)
+    else:
+        sd3_model_path = os.path.join("inputs", "image", "sd_models", "sd3")
 
-        images = pipe(
-            prompt=prompt,
-            negative_prompt=negative_prompt,
-            image=init_image,
-            strength=strength,
-            num_inference_steps=num_inference_steps,
-            guidance_scale=guidance_scale,
-            max_sequence_length=max_sequence_length,
-            num_images_per_prompt=num_images_per_prompt,
-            clip_skip=clip_skip,
-            generator=generator,
-        ).images
+        if not init_image:
+            return None, "Please upload an initial image!"
 
-        image_paths = []
-        for i, image in enumerate(images):
-            today = datetime.now().date()
-            image_dir = os.path.join('outputs', f"StableDiffusion_{today.strftime('%Y%m%d')}")
-            os.makedirs(image_dir, exist_ok=True)
-            image_filename = f"sd3_img2img_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{i}.{output_format}"
-            image_path = os.path.join(image_dir, image_filename)
-            image.save(image_path, format=output_format.upper())
-            image_paths.append(image_path)
+        if not os.path.exists(sd3_model_path):
+            print("Downloading Stable Diffusion 3 model...")
+            os.makedirs(sd3_model_path, exist_ok=True)
+            Repo.clone_from("https://huggingface.co/stabilityai/stable-diffusion-3-medium-diffusers", sd3_model_path)
+            print("Stable Diffusion 3 model downloaded")
 
-        return image_paths, f"Images generated successfully. Seed used: {seed}"
+        try:
+            quantization_config = BitsAndBytesConfig().BitsAndBytesConfig(load_in_8bit=True)
 
-    except Exception as e:
-        return None, str(e)
+            text_encoder = T5EncoderModel().T5EncoderModel.from_pretrained(
+                sd3_model_path,
+                subfolder="text_encoder_3",
+                quantization_config=quantization_config,
+            )
+            pipe = StableDiffusion3Img2ImgPipeline().StableDiffusion3Img2ImgPipeline.from_pretrained(sd3_model_path,
+                                                                                                     device_map="balanced",
+                                                                                                     text_encoder_3=text_encoder,
+                                                                                                     torch_dtype=torch.float16)
 
-    finally:
-        del pipe
-        del text_encoder
-        flush()
+            pipe.enable_model_cpu_offload()
+
+            init_image = Image.open(init_image).convert("RGB")
+            init_image = init_image.resize((width, height))
+
+            device = "cuda" if torch.cuda.is_available() else "cpu"
+
+            if seed == "" or seed is None:
+                seed = random.randint(0, 2 ** 32 - 1)
+            else:
+                seed = int(seed)
+            generator = torch.Generator(device).manual_seed(seed)
+
+            images = pipe(
+                prompt=prompt,
+                negative_prompt=negative_prompt,
+                image=init_image,
+                strength=strength,
+                num_inference_steps=num_inference_steps,
+                guidance_scale=guidance_scale,
+                max_sequence_length=max_sequence_length,
+                num_images_per_prompt=num_images_per_prompt,
+                clip_skip=clip_skip,
+                generator=generator,
+            ).images
+
+            image_paths = []
+            for i, image in enumerate(images):
+                today = datetime.now().date()
+                image_dir = os.path.join('outputs', f"StableDiffusion_{today.strftime('%Y%m%d')}")
+                os.makedirs(image_dir, exist_ok=True)
+                image_filename = f"sd3_img2img_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{i}.{output_format}"
+                image_path = os.path.join(image_dir, image_filename)
+                image.save(image_path, format=output_format.upper())
+                image_paths.append(image_path)
+
+            return image_paths, f"Images generated successfully. Seed used: {seed}"
+
+        except Exception as e:
+            return None, str(e)
+
+        finally:
+            del pipe
+            del text_encoder
+            flush()
 
 
 def generate_image_sd3_controlnet(prompt, negative_prompt, init_image, controlnet_model, seed, num_inference_steps, guidance_scale, controlnet_conditioning_scale, width, height, max_sequence_length, clip_skip, num_images_per_prompt, output_format):
@@ -5087,17 +5177,16 @@ def generate_image_flux_txt2img(prompt, model_name, quantize_model_name, enable_
             env = os.environ.copy()
             env['PYTHONPATH'] = os.pathsep.join(sys.path)
 
-            result = subprocess.run([sys.executable, 'inputs/image/quantize-flux/flux-quantize.py', json.dumps(params)],
+            result = subprocess.run([sys.executable, 'inputs/image/quantize-flux/flux-txt2img-quantize.py', json.dumps(params)],
                                     capture_output=True, text=True)
 
             if result.returncode != 0:
-                return None, f"Error in flux-quantize.py: {result.stderr}"
+                return None, f"Error in flux-txt2img-quantize.py: {result.stderr}"
 
             image_path = None
-            for line in result.stdout.split('\n'):
-                if line.startswith("IMAGE_PATH:"):
-                    image_path = line.split("IMAGE_PATH:")[1].strip()
-                    break
+            output = result.stdout.strip()
+            if "IMAGE_PATH:" in output:
+                image_path = output.split("IMAGE_PATH:")[-1].strip()
 
             if not image_path:
                 return None, "Image path not found in the output"
@@ -5194,7 +5283,7 @@ def generate_image_flux_txt2img(prompt, model_name, quantize_model_name, enable_
         flush()
 
 
-def generate_image_flux_img2img(prompt, init_image, model_name, seed, num_inference_steps, strength, guidance_scale, width, height, max_sequence_length, output_format):
+def generate_image_flux_img2img(prompt, init_image, model_name, quantize_model_name, enable_quantize, seed, num_inference_steps, strength, guidance_scale, width, height, max_sequence_length, output_format):
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
     if seed == "" or seed is None:
@@ -5205,57 +5294,93 @@ def generate_image_flux_img2img(prompt, init_image, model_name, seed, num_infere
 
     flux_model_path = os.path.join("inputs", "image", "flux", model_name)
 
-    if not os.path.exists(flux_model_path):
-        print(f"Downloading Flux {model_name} model...")
-        os.makedirs(flux_model_path, exist_ok=True)
-        Repo.clone_from(f"https://huggingface.co/black-forest-labs/{model_name}", flux_model_path)
-        print(f"Flux {model_name} model downloaded")
-
-    try:
-        pipe = FluxImg2ImgPipeline().FluxImg2ImgPipeline.from_pretrained(flux_model_path, torch_dtype=torch.bfloat16)
-        pipe = pipe.to(device)
-
-        init_image = Image.open(init_image).convert("RGB")
-        init_image = init_image.resize((width, height))
-
-        image = pipe(
-            prompt=prompt,
-            image=init_image,
-            num_inference_steps=num_inference_steps,
-            strength=strength,
-            guidance_scale=guidance_scale,
-            generator=generator,
-            max_sequence_length=max_sequence_length,
-        ).images[0]
-
-        today = datetime.now().date()
-        image_dir = os.path.join('outputs', f"Flux_{today.strftime('%Y%m%d')}")
-        os.makedirs(image_dir, exist_ok=True)
-        image_filename = f"flux_img2img_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
-        image_path = os.path.join(image_dir, image_filename)
-
-        metadata = {
-            "prompt": prompt,
-            "model_name": model_name,
-            "num_inference_steps": num_inference_steps,
-            "strength": strength,
-            "guidance_scale": guidance_scale,
-            "max_sequence_length": max_sequence_length,
-            "seed": seed,
-            "model": "Flux"
+    if enable_quantize:
+        params = {
+            'prompt': prompt,
+            'guidance_scale': guidance_scale,
+            'height': height,
+            'width': width,
+            'num_inference_steps': num_inference_steps,
+            'seed': seed,
+            'quantize_flux_model_path': f"{quantize_model_name}",
+            'image': init_image,
+            'strength': strength
         }
 
-        image.save(image_path, format=output_format.upper())
-        add_metadata_to_file(image_path, metadata)
+        env = os.environ.copy()
+        env['PYTHONPATH'] = os.pathsep.join(sys.path)
+
+        result = subprocess.run([sys.executable, 'inputs/image/quantize-flux/flux-img2img-quantize.py', json.dumps(params)],
+                                capture_output=True, text=True)
+
+        if result.returncode != 0:
+            return None, f"Error in flux-img2img-quantize.py: {result.stderr}"
+
+        image_path = None
+        output = result.stdout.strip()
+        if "IMAGE_PATH:" in output:
+            image_path = output.split("IMAGE_PATH:")[-1].strip()
+
+        if not image_path:
+            return None, "Image path not found in the output"
+
+        if not os.path.exists(image_path):
+            return None, f"Generated image not found at {image_path}"
 
         return image_path, f"Image generated successfully. Seed used: {seed}"
+    else:
+        if not os.path.exists(flux_model_path):
+            print(f"Downloading Flux {model_name} model...")
+            os.makedirs(flux_model_path, exist_ok=True)
+            Repo.clone_from(f"https://huggingface.co/black-forest-labs/{model_name}", flux_model_path)
+            print(f"Flux {model_name} model downloaded")
 
-    except Exception as e:
-        return None, str(e)
+        try:
+            pipe = FluxImg2ImgPipeline().FluxImg2ImgPipeline.from_pretrained(flux_model_path,
+                                                                             torch_dtype=torch.bfloat16)
+            pipe = pipe.to(device)
 
-    finally:
-        del pipe
-        flush()
+            init_image = Image.open(init_image).convert("RGB")
+            init_image = init_image.resize((width, height))
+
+            image = pipe(
+                prompt=prompt,
+                image=init_image,
+                num_inference_steps=num_inference_steps,
+                strength=strength,
+                guidance_scale=guidance_scale,
+                generator=generator,
+                max_sequence_length=max_sequence_length,
+            ).images[0]
+
+            today = datetime.now().date()
+            image_dir = os.path.join('outputs', f"Flux_{today.strftime('%Y%m%d')}")
+            os.makedirs(image_dir, exist_ok=True)
+            image_filename = f"flux_img2img_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
+            image_path = os.path.join(image_dir, image_filename)
+
+            metadata = {
+                "prompt": prompt,
+                "model_name": model_name,
+                "num_inference_steps": num_inference_steps,
+                "strength": strength,
+                "guidance_scale": guidance_scale,
+                "max_sequence_length": max_sequence_length,
+                "seed": seed,
+                "model": "Flux"
+            }
+
+            image.save(image_path, format=output_format.upper())
+            add_metadata_to_file(image_path, metadata)
+
+            return image_path, f"Image generated successfully. Seed used: {seed}"
+
+        except Exception as e:
+            return None, str(e)
+
+        finally:
+            del pipe
+            flush()
 
 
 def generate_image_flux_inpaint(prompt, init_image, mask_image, model_name, seed, num_inference_steps, strength, guidance_scale,
@@ -9172,6 +9297,8 @@ sd3_txt2img_interface = gr.Interface(
     inputs=[
         gr.Textbox(label=_("Enter your prompt", lang)),
         gr.Textbox(label=_("Enter your negative prompt", lang), value=""),
+        gr.Dropdown(choices=stable_diffusion_models_list, label=_("Select StableDiffusion model", lang), value=None),
+        gr.Checkbox(label=_("Enable Quantize", lang), value=False),
         gr.Textbox(label=_("Seed (optional)", lang), value="")
     ],
     additional_inputs=[
@@ -9208,6 +9335,8 @@ sd3_img2img_interface = gr.Interface(
         gr.Textbox(label=_("Enter your negative prompt", lang), value=""),
         gr.Image(label=_("Initial image", lang), type="filepath"),
         gr.Slider(minimum=0.0, maximum=1.0, value=0.8, step=0.01, label=_("Strength (Initial image)", lang)),
+        gr.Dropdown(choices=stable_diffusion_models_list, label=_("Select StableDiffusion model", lang), value=None),
+        gr.Checkbox(label=_("Enable Quantize", lang), value=False),
         gr.Textbox(label=_("Seed (optional)", lang), value="")
     ],
     additional_inputs=[
@@ -9609,6 +9738,9 @@ flux_img2img_interface = gr.Interface(
         gr.Image(label=_("Initial image", lang), type="filepath"),
         gr.Dropdown(choices=["FLUX.1-schnell", "FLUX.1-dev"], label=_("Select Flux model", lang),
                     value="FLUX.1-schnell"),
+        gr.Dropdown(choices=quantized_flux_models_list,
+                    label=_("Select quantized Flux model (optional if enabled quantize)", lang), value=None),
+        gr.Checkbox(label=_("Enable Quantize", lang), value=False),
         gr.Textbox(label=_("Seed (optional)", lang), value="")
     ],
     additional_inputs=[

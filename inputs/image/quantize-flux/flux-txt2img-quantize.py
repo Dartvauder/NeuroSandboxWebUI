@@ -33,7 +33,7 @@ def generate_image(params):
 
     output_dir = os.path.join('outputs', f"Flux_{datetime.now().strftime('%Y%m%d')}")
     os.makedirs(output_dir, exist_ok=True)
-    image_filename = f"flux-quantize_{datetime.now().strftime('%Y%m%d_%H%M%S')}.png"
+    image_filename = f"flux-txt2img-quantize_{datetime.now().strftime('%Y%m%d_%H%M%S')}.png"
     image_path = os.path.join(output_dir, image_filename)
 
     output[0].save(image_path, format="PNG")
