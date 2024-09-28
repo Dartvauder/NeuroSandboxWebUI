@@ -4044,18 +4044,15 @@ def generate_image_sd3_txt2img(prompt, negative_prompt, model_type, quantize_sd3
             if result.returncode != 0:
                 return None, f"Error in sd-txt2img-quantize.py: {result.stderr}"
 
-            image_path = None
+            image_paths = []
             output = result.stdout.strip()
-            if "IMAGE_PATH:" in output:
-                image_path = output.split("IMAGE_PATH:")[-1].strip()
+            for part in output.split("IMAGE_PATH:"):
+                if part:
+                    image_path = part.strip().split('\n')[0]
+                    if os.path.exists(image_path):
+                        image_paths.append(image_path)
 
-            if not image_path:
-                return None, "Image path not found in the output"
-
-            if not os.path.exists(image_path):
-                return None, f"Generated image not found at {image_path}"
-
-            return image_path, f"Image generated successfully. Seed used: {seed}"
+            return image_paths, f"Images generated successfully using quantized model. Seed used: {seed}"
 
         except Exception as e:
             return None, str(e)
@@ -4216,18 +4213,15 @@ def generate_image_sd3_img2img(prompt, negative_prompt, init_image, strength, mo
             if result.returncode != 0:
                 return None, f"Error in sd-img2img-quantize.py: {result.stderr}"
 
-            image_path = None
+            image_paths = []
             output = result.stdout.strip()
-            if "IMAGE_PATH:" in output:
-                image_path = output.split("IMAGE_PATH:")[-1].strip()
+            for part in output.split("IMAGE_PATH:"):
+                if part:
+                    image_path = part.strip().split('\n')[0]
+                    if os.path.exists(image_path):
+                        image_paths.append(image_path)
 
-            if not image_path:
-                return None, "Image path not found in the output"
-
-            if not os.path.exists(image_path):
-                return None, f"Generated image not found at {image_path}"
-
-            return image_path, f"Image generated successfully. Seed used: {seed}"
+            return image_paths, f"Images generated successfully using quantized model. Seed used: {seed}"
 
         except Exception as e:
             return None, str(e)
