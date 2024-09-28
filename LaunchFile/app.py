@@ -4075,7 +4075,7 @@ def generate_image_sd3_txt2img(prompt, negative_prompt, model_type, quantize_sd3
                     subfolder="text_encoder_3",
                     quantization_config=quantization_config,
                 )
-                pipe = StableDiffusion3Pipeline().from_pretrained(sd3_model_path, device_map="balanced",
+                pipe = StableDiffusion3Pipeline().StableDiffusion3Pipeline.from_pretrained(sd3_model_path, device_map="balanced",
                                                                   text_encoder_3=text_encoder,
                                                                   torch_dtype=torch.float16)
             else:
@@ -4084,9 +4084,8 @@ def generate_image_sd3_txt2img(prompt, negative_prompt, model_type, quantize_sd3
 
                 stable_diffusion_model_path = os.path.join("inputs", "image", "sd_models",
                                                            f"{quantize_sd3_model_name}")
-                pipe = StableDiffusion3Pipeline().from_single_file(stable_diffusion_model_path, device_map="balanced",
-                                                                  text_encoder_3=None,
-                                                                  torch_dtype=torch.float16)
+                pipe = StableDiffusion3Pipeline().StableDiffusion3Pipeline.from_single_file(stable_diffusion_model_path, device_map="balanced",
+                                                                                              torch_dtype=torch.float16)
 
             pipe.enable_model_cpu_offload()
 
@@ -4244,7 +4243,7 @@ def generate_image_sd3_img2img(prompt, negative_prompt, init_image, strength, mo
                     subfolder="text_encoder_3",
                     quantization_config=quantization_config,
                 )
-                pipe = StableDiffusion3Pipeline().from_pretrained(sd3_model_path, device_map="balanced",
+                pipe = StableDiffusion3Img2ImgPipeline().StableDiffusion3Img2ImgPipeline.from_pretrained(sd3_model_path, device_map="balanced",
                                                                   text_encoder_3=text_encoder,
                                                                   torch_dtype=torch.float16)
             else:
@@ -4252,9 +4251,8 @@ def generate_image_sd3_img2img(prompt, negative_prompt, init_image, strength, mo
                     return None, "Please select a model!"
                 stable_diffusion_model_path = os.path.join("inputs", "image", "sd_models",
                                                            f"{quantize_sd3_model_name}")
-                pipe = StableDiffusion3Pipeline().from_single_file(stable_diffusion_model_path, device_map="balanced",
-                                                                   text_encoder_3=None,
-                                                                   torch_dtype=torch.float16)
+                pipe = StableDiffusion3Img2ImgPipeline().StableDiffusion3Img2ImgPipeline.from_single_file(stable_diffusion_model_path, device_map="balanced",
+                                                                                            torch_dtype=torch.float16)
 
             pipe.enable_model_cpu_offload()
 
