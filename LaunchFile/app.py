@@ -846,7 +846,8 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, llm_model_n
                              temperature, top_p, top_k, chat_history_format, tts_settings_html, speaker_wav, language, tts_temperature, tts_top_p, tts_top_k, tts_speed, output_format):
     global chat_history, chat_dir, tts_model, whisper_model
 
-    chat_history = []
+    if chat_history is None:
+        chat_history = []
 
     if not input_text and not input_audio:
         chat_history.append(["Please, enter your request!", None])
