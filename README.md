@@ -31,7 +31,7 @@ The goal of the project - to create the easiest possible application to use neur
 * Flexible and optimized interface (By Gradio)
 * Debug logging to logs from `Install` and `Update` files
 * Available in three languages
-* Support for Transformers and llama.cpp models (LLM)
+* Support for Transformers, GPTQ, AWQ, ExLlamaV2 and llama.cpp models (LLM)
 * Support for diffusers and safetensors models (StableDiffusion) - txt2img, img2img, depth2img, marigold, pix2pix, controlnet, upscale (latent), upscale (SUPIR), refiner, inpaint, outpaint, gligen, diffedit, blip-diffusion, animatediff, hotshot-xl, video, ldm3d, sd3, cascade, t2i-ip-adapter, ip-adapter-faceid and riffusion tabs
 * Support for stable-diffusion-cpp models for FLUX and Stable Diffusion
 * Support of additional models for image generation: Kandinsky (txt2img, img2img, inpaint), Flux (txt2img with cpp quantize and LoRA support, img2img, inpaint, controlnet), HunyuanDiT (txt2img, controlnet), Lumina-T2X, Kolors (txt2img with LoRA support, img2img, ip-adapter-plus), AuraFlow (with LoRA and AuraSR support), Würstchen, DeepFloydIF (txt2img, img2img, inpaint), PixArt and PlaygroundV2.5
@@ -116,6 +116,9 @@ First of all, I want to thank the developers of [PyCharm](https://www.jetbrains.
 
 * `gradio` - https://github.com/gradio-app/gradio
 * `transformers` - https://github.com/huggingface/transformers
+* `auto-gptq` - https://github.com/AutoGPTQ/AutoGPTQ
+* `autoawq` - https://github.com/casper-hansen/AutoAWQ
+* `exllamav2` - https://github.com/turboderp/exllamav2
 * `tts` - https://github.com/coqui-ai/TTS
 * `openai-whisper` - https://github.com/openai/whisper
 * `torch` - https://github.com/pytorch/pytorch
