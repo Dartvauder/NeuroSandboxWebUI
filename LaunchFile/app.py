@@ -1081,7 +1081,7 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, llm_model_t
 
                     text = ""
                     if not chat_history or chat_history[-1][1] is not None:
-                        chat_history.append([prompt, text])
+                        chat_history.append([prompt, ""])
 
                     for i in range(max_length):
 
@@ -1120,7 +1120,7 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, llm_model_t
                 elif llm_model_type == "llama":
                     text = ""
                     if not chat_history or chat_history[-1][1] is not None:
-                        chat_history.append([prompt, text])
+                        chat_history.append([prompt, ""])
 
                     stop_sequences = [seq.strip() for seq in stopping.split(',')] if stopping.strip() else None
 
