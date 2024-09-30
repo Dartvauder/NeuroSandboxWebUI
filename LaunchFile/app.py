@@ -197,6 +197,12 @@ DDIMInverseScheduler = lazy_import('diffusers', 'DDIMInverseScheduler')
 DEFAULT_STAGE_C_TIMESTEPS = lazy_import('diffusers.pipelines.wuerstchen', 'DEFAULT_STAGE_C_TIMESTEPS')
 
 # Another imports
+AutoGPTQForCausalLM = lazy_import('auto_gptq', 'AutoGPTQForCausalLM')
+AutoAWQForCausalLM = lazy_import('awq', 'AutoAWQForCausalLM')
+ExLlamaV2 = lazy_import('exllamav2', 'ExLlamaV2')
+ExLlamaV2Config = lazy_import('exllamav2', 'ExLlamaV2Config')
+ExLlamaV2Tokenizer = lazy_import('exllamav2', 'ExLlamaV2Tokenizer')
+ExLlamaV2StreamingGenerator = lazy_import('exllamav2.generator', 'ExLlamaV2StreamingGenerator')
 TTS = lazy_import('TTS.api', 'TTS')
 whisper = lazy_import('whisper', "")
 AuraSR = lazy_import('aura_sr', 'AuraSR')
@@ -694,26 +700,65 @@ def load_model(model_name, model_type, n_ctx, n_batch):
                 return None, None, "The selected model is not compatible with the 'llama' model type"
             except Exception as e:
                 return None, None, str(e)
+        elif model_type == "GPTQ":
+            try:
+                tokenizer = AutoTokenizer().AutoTokenizer.from_pretrained(model_path, use_fast=True)
+                model = AutoGPTQForCausalLM().AutoGPTQForCausalLM.from_quantized(model_path, use_safetensors=True, trust_remote_code=True, device="cuda:0", use_triton=False, quantize_config=None)
+                return tokenizer, model, None
+            except Exception as e:
+                return None, None, f"Error loading GPTQ model: {str(e)}"
+        elif model_type == "AWQ":
+            try:
+                tokenizer = AutoTokenizer().AutoTokenizer.from_pretrained(model_path, use_fast=True)
+                model = AutoAWQForCausalLM().AutoAWQForCausalLM.from_quantized(model_path, fuse_layers=True, trust_remote_code=True, safetensors=True)
+                return tokenizer, model, None
+            except Exception as e:
+                return None, None, f"Error loading AWQ model: {str(e)}"
+        elif model_type == "ExLlamaV2":
+            try:
+                config = ExLlamaV2Config().ExLlamaV2Config
+                config.model_dir = model_path
+                config.prepare()
+
+                model = ExLlamaV2().ExLlamaV2(config)
+                model.load()
+
+                tokenizer = ExLlamaV2Tokenizer().ExLlamaV2Tokenizer(config)
+
+                return tokenizer, model, None
+            except Exception as e:
+                return None, None, f"Error loading ExLlamaV2 model: {str(e)}"
     return None, None, None
 
 
 def load_lora_model(base_model_name, lora_model_name, model_type):
-
     base_model_path = f"inputs/text/llm_models/{base_model_name}"
     lora_model_path = f"inputs/text/llm_models/lora/{lora_model_name}"
 
     try:
         device = "cuda" if torch.cuda.is_available() else "cpu"
         if model_type == "llama":
-            model = Llama().Llama(base_model_path, n_gpu_layers=-1 if device == "cuda" else 0, lora_path=lora_model_path)
+            model = Llama().Llama(base_model_path, n_gpu_layers=-1 if device == "cuda" else 0,
+                                  lora_path=lora_model_path)
             tokenizer = None
             return tokenizer, model, None
-        else:
-            base_model = AutoModelForCausalLM().AutoModelForCausalLM.from_pretrained(base_model_path).to(device)
+        elif model_type in ["transformers", "GPTQ", "AWQ"]:
+            if model_type == "transformers":
+                base_model = AutoModelForCausalLM().AutoModelForCausalLM.from_pretrained(base_model_path).to(device)
+            elif model_type == "GPTQ":
+                base_model = AutoGPTQForCausalLM().AutoGPTQForCausalLM.from_quantized(base_model_path, use_safetensors=True,
+                                                                trust_remote_code=True, device="cuda:0",
+                                                                use_triton=False, quantize_config=None)
+            elif model_type == "AWQ":
+                base_model = AutoAWQForCausalLM().AutoAWQForCausalLM.from_quantized(base_model_path, fuse_layers=True,
+                                                               trust_remote_code=True, safetensors=True)
+
             model = PeftModel.from_pretrained(base_model, lora_model_path).to(device)
             merged_model = model.merge_and_unload()
             tokenizer = AutoTokenizer().AutoTokenizer.from_pretrained(base_model_path)
             return tokenizer, merged_model, None
+        elif model_type == "ExLlamaV2":
+            return None, None, "LoRA not currently supported for ExLlamaV2"
     except Exception as e:
         return None, None, str(e)
     finally:
@@ -1022,7 +1067,7 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, llm_model_t
                     {"role": "user", "content": openparse_context + web_context + context + prompt}
                 ]
 
-                if llm_model_type == "transformers":
+                if llm_model_type in ["transformers", "GPTQ", "AWQ"]:
                     device = "cuda" if torch.cuda.is_available() else "cpu"
 
                     tokenizer.pad_token = tokenizer.eos_token
@@ -1101,6 +1146,28 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, llm_model_t
 
                         chat_history[-1][1] = text
 
+                        yield chat_history, None, chat_dir, None
+
+                elif llm_model_type == "ExLlamaV2":
+
+                    full_prompt = f"{system_prompt}\n\n{openparse_context}{web_context}{context}Human: {prompt}\nAssistant:"
+
+                    generator = ExLlamaV2StreamingGenerator().ExLlamaV2StreamingGenerator(llm_model, tokenizer, max_new_tokens)
+                    generator.settings.temperature = temperature
+                    generator.settings.top_p = top_p
+                    generator.settings.top_k = top_k
+                    generator.settings.typical = typical_p
+                    generator.settings.token_repetition_penalty = repetition_penalty
+
+                    text = ""
+                    if not chat_history or chat_history[-1][1] is not None:
+                        chat_history.append([prompt, ""])
+
+                    generator.begin_stream(full_prompt, max_new_tokens)
+
+                    for token in generator:
+                        text += token
+                        chat_history[-1][1] = text
                         yield chat_history, None, chat_dir, None
 
                 if enable_libretranslate:
@@ -8585,7 +8652,7 @@ chat_interface = gr.Interface(
         gr.Textbox(label=_("Enter your request", lang)),
         gr.Textbox(label=_("Enter your system prompt", lang)),
         gr.Audio(type="filepath", label=_("Record your request (optional)", lang)),
-        gr.Radio(choices=["transformers", "llama"], label=_("Select model type", lang), value="transformers"),
+        gr.Radio(choices=["transformers", "llama", "GPTQ", "AWQ", "ExLlamaV2"], label=_("Select model type", lang), value="transformers"),
         gr.Dropdown(choices=llm_models_list, label=_("Select LLM model", lang), value=None),
         gr.Dropdown(choices=llm_lora_models_list, label=_("Select LoRA model (optional)", lang), value=None),
     ],

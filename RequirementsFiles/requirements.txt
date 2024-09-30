@@ -384,3 +384,12 @@ torchlibrosa==0.1.0
 uritemplate==4.1.1
 pytaglib==3.0.0
 tgate==1.0.0
+autoawq==0.2.6
+zstandard==0.23.0
+autoawq-kernels==0.0.7
+auto-gptq==0.7.1
+gekko==1.2.1
+rouge==1.0.1
+exllamav2==0.2.3
+cramjam==2.8.4
+fastparquet==2024.5.0
