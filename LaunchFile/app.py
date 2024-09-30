@@ -787,7 +787,7 @@ def load_moondream2_model(model_id, revision):
             device = "cuda" if torch.cuda.is_available() else "cpu"
             model = AutoModelForCausalLM().AutoModelForCausalLM.from_pretrained(moondream2_model_path, trust_remote_code=True).to(device)
             tokenizer = AutoTokenizer().AutoTokenizer.from_pretrained(moondream2_model_path)
-        return model, tokenizer
+        return model, tokenizer, None
 
     except Exception as e:
         return None, None, str(e)
@@ -895,12 +895,12 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, llm_model_t
 
     if not input_text and not input_audio:
         chat_history.append(["Please, enter your request!", None])
-        yield chat_history, None, None, None
+        yield chat_history, None, None
         return
     prompt = transcribe_audio(input_audio) if input_audio else input_text
     if not llm_model_name:
         chat_history.append([None, "Please, select a LLM model!"])
-        yield chat_history, None, None, None
+        yield chat_history, None, None
         return
 
     if not system_prompt:
@@ -952,8 +952,8 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, llm_model_t
 
                     data_uri = image_to_base64_data_uri(image_path)
                 else:
-                    yield chat_history, None, None, "Please upload an image for multimodal input."
-                    return
+                    chat_history.append([None, "Please upload an image for multimodal input."])
+                    yield chat_history, None, None
 
                 context = ""
                 for human_text, ai_text in chat_history[-5:]:
@@ -975,10 +975,11 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, llm_model_t
 
                 for token in llm.create_chat_completion(messages=messages):
                     chat_history[-1][1] += token
-                    yield chat_history, None, chat_dir, None
+                    yield chat_history, None, None
 
             except Exception as e:
-                yield str(e), None, None, None
+                chat_history.append([None, str(e)])
+                yield chat_history, None, None
 
             finally:
                 del llm
@@ -995,7 +996,8 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, llm_model_t
                     image = Image.open(input_image)
                     enc_image = model.encode_image(image)
                 else:
-                    yield chat_history, None, None, "Please upload an image for multimodal input."
+                    chat_history.append([None, "Please upload an image for multimodal input."])
+                    yield chat_history, None, None
                     return
 
                 context = ""
@@ -1012,10 +1014,11 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, llm_model_t
 
                 for token in model.answer_question(enc_image, prompt_with_context, tokenizer):
                     chat_history[-1][1] += token
-                    yield chat_history, None, chat_dir, None
+                    yield chat_history, None, None
 
             except Exception as e:
-                yield str(e), None, None, None
+                chat_history.append([None, str(e)])
+                yield chat_history, None, None
 
             finally:
                 del model
@@ -1032,7 +1035,7 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, llm_model_t
             tokenizer, llm_model, error_message = load_lora_model(llm_model_name, llm_lora_model_name, llm_model_type)
         if error_message:
             chat_history.append([None, error_message])
-            yield chat_history, None, None, None
+            yield chat_history, None, None
             return
         tts_model = None
         whisper_model = None
@@ -1045,7 +1048,7 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, llm_model_t
                     tts_model = load_tts_model()
                 if not speaker_wav or not language:
                     chat_history.append([None, "Please, select a voice and language for TTS!"])
-                    yield chat_history, None, None, None
+                    yield chat_history, None, None
                     return
                 device = "cuda" if torch.cuda.is_available() else "cpu"
                 tts_model = tts_model.to(device)
@@ -1112,7 +1115,7 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, llm_model_t
 
                         text += next_token_text
                         chat_history[-1][1] = text
-                        yield chat_history, None, chat_dir, None
+                        yield chat_history, None, None
 
                         inputs = tokenizer(full_prompt + text, return_tensors="pt", padding=True, truncation=True).to(
                             device)
@@ -1146,7 +1149,7 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, llm_model_t
 
                         chat_history[-1][1] = text
 
-                        yield chat_history, None, chat_dir, None
+                        yield chat_history, None, None
 
                 elif llm_model_type == "ExLlamaV2":
 
@@ -1168,7 +1171,7 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, llm_model_t
                     for token in generator:
                         text += token
                         chat_history[-1][1] = text
-                        yield chat_history, None, chat_dir, None
+                        yield chat_history, None, None
 
                 if enable_libretranslate:
                     try:
@@ -1178,7 +1181,7 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, llm_model_t
                         text = translation
                     except urllib.error.URLError:
                         chat_history.append([None, "LibreTranslate is not running. Please start the LibreTranslate server."])
-                        yield chat_history, None, None, None
+                        yield chat_history, None, None
                         return
 
                 if not chat_dir:
@@ -1216,7 +1219,8 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, llm_model_t
                         sf.write(audio_path, wav, 22050)
 
         except Exception as e:
-            yield str(e), None, None, None
+            chat_history.append([None, str(e)])
+            yield chat_history, None, None
 
         finally:
             if tokenizer is not None:
@@ -1230,7 +1234,7 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, llm_model_t
             flush()
 
         chat_history[-1][1] = text
-        yield chat_history, audio_path, chat_dir, None
+        yield chat_history, audio_path, chat_dir
 
 
 def generate_tts_stt(text, audio, tts_settings_html, speaker_wav, language, tts_temperature, tts_top_p, tts_top_k, tts_speed, tts_repetition_penalty, tts_length_penalty, tts_output_format, stt_output_format):
@@ -8702,7 +8706,8 @@ chat_interface = gr.Interface(
     additional_inputs_accordion=gr.Accordion(label=_("LLM and TTS Settings", lang), open=False),
     outputs=[
         gr.Chatbot(label=_("LLM text response", lang), value=[], avatar_images=["avatars/user.png", "avatars/ai.png"], show_copy_button=True),
-        gr.Audio(label=_("LLM audio response", lang), type="filepath")
+        gr.Audio(label=_("LLM audio response", lang), type="filepath"),
+        gr.Textbox(label=_("Message", lang))
     ],
     title=_("NeuroSandboxWebUI - LLM", lang),
     description=_("This user interface allows you to enter any text or audio and receive generated response. You can select the LLM model, avatar, voice and language for tts from the drop-down lists. You can also customize the model settings from the sliders. Try it and see what happens!", lang),
