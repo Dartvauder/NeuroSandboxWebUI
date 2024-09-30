@@ -6,6 +6,7 @@ import logging
 import importlib
 os.chdir(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
+os.environ['BUILD_CUDA_EXT'] = '1'
 os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
 warnings.filterwarnings("ignore")
 logging.getLogger("httpx").setLevel(logging.WARNING)
@@ -703,14 +704,14 @@ def load_model(model_name, model_type, n_ctx, n_batch):
         elif model_type == "GPTQ":
             try:
                 tokenizer = AutoTokenizer().AutoTokenizer.from_pretrained(model_path, use_fast=True)
-                model = AutoGPTQForCausalLM().AutoGPTQForCausalLM.from_quantized(model_path, use_safetensors=True, trust_remote_code=True, device="cuda:0", use_triton=False, quantize_config=None)
+                model = AutoGPTQForCausalLM().AutoGPTQForCausalLM.from_pretrained(model_path, device_map="auto", torch_dtype=torch.float16)
                 return tokenizer, model, None
             except Exception as e:
                 return None, None, f"Error loading GPTQ model: {str(e)}"
         elif model_type == "AWQ":
             try:
                 tokenizer = AutoTokenizer().AutoTokenizer.from_pretrained(model_path, use_fast=True)
-                model = AutoAWQForCausalLM().AutoAWQForCausalLM.from_quantized(model_path, fuse_layers=True, trust_remote_code=True, safetensors=True)
+                model = AutoAWQForCausalLM().AutoAWQForCausalLM.from_pretrained(model_path, device_map="auto", torch_dtype=torch.float16)
                 return tokenizer, model, None
             except Exception as e:
                 return None, None, f"Error loading AWQ model: {str(e)}"
