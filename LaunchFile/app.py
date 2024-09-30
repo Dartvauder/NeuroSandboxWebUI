@@ -18,7 +18,6 @@ os.environ["TMPDIR"] = temp_dir
 import gradio as gr
 import langdetect
 from datasets import load_dataset, Audio
-from peft import PeftModel
 from libretranslatepy import LibreTranslateAPI
 import urllib.error
 import soundfile as sf
@@ -102,6 +101,7 @@ Wav2Vec2ForCTC = lazy_import('transformers', 'Wav2Vec2ForCTC')
 GPT2Tokenizer = lazy_import('transformers', 'GPT2Tokenizer')
 GPT2LMHeadModel = lazy_import('transformers', 'GPT2LMHeadModel')
 GenerationConfig = lazy_import('transformers', 'GenerationConfig')
+PeftModel = lazy_import('peft', 'PeftModel')
 
 # Diffusers import
 diffusers = lazy_import('diffusers', '')
@@ -753,7 +753,7 @@ def load_lora_model(base_model_name, lora_model_name, model_type):
                 base_model = AutoAWQForCausalLM().AutoAWQForCausalLM.from_quantized(base_model_path, fuse_layers=True,
                                                                trust_remote_code=True, safetensors=True)
 
-            model = PeftModel.from_pretrained(base_model, lora_model_path).to(device)
+            model = PeftModel().PeftModel.from_pretrained(base_model, lora_model_path).to(device)
             merged_model = model.merge_and_unload()
             tokenizer = AutoTokenizer().AutoTokenizer.from_pretrained(base_model_path)
             return tokenizer, merged_model, None
