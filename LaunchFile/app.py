@@ -6,6 +6,7 @@ import logging
 import importlib
 os.chdir(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
+os.environ['BUILD_CUDA_EXT'] = '1'
 os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
 warnings.filterwarnings("ignore")
 logging.getLogger("httpx").setLevel(logging.WARNING)
@@ -703,14 +704,14 @@ def load_model(model_name, model_type, n_ctx, n_batch):
         elif model_type == "GPTQ":
             try:
                 tokenizer = AutoTokenizer().AutoTokenizer.from_pretrained(model_path, use_fast=True)
-                model = AutoGPTQForCausalLM().AutoGPTQForCausalLM.from_quantized(model_path, use_safetensors=True, trust_remote_code=True, device="cuda:0", use_triton=False, quantize_config=None)
+                model = AutoGPTQForCausalLM().AutoGPTQForCausalLM.from_pretrained(model_path, device_map="auto", torch_dtype=torch.float16)
                 return tokenizer, model, None
             except Exception as e:
                 return None, None, f"Error loading GPTQ model: {str(e)}"
         elif model_type == "AWQ":
             try:
                 tokenizer = AutoTokenizer().AutoTokenizer.from_pretrained(model_path, use_fast=True)
-                model = AutoAWQForCausalLM().AutoAWQForCausalLM.from_quantized(model_path, fuse_layers=True, trust_remote_code=True, safetensors=True)
+                model = AutoAWQForCausalLM().AutoAWQForCausalLM.from_pretrained(model_path, device_map="auto", torch_dtype=torch.float16)
                 return tokenizer, model, None
             except Exception as e:
                 return None, None, f"Error loading AWQ model: {str(e)}"
@@ -834,6 +835,10 @@ def load_whisper_model():
         print("Whisper downloaded")
     model_file = os.path.join(whisper_model_path, "medium.pt")
     return whisper().whisper.load_model(model_file)
+
+
+def supports_chat_template(tokenizer):
+    return hasattr(tokenizer, 'apply_chat_template')
 
 
 def load_audiocraft_model(model_name):
@@ -1053,11 +1058,6 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, llm_model_t
                     if ai_text:
                         context += f"AI: {ai_text}\n"
 
-                messages = [
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": openparse_context + web_context + context + prompt}
-                ]
-
                 if llm_model_type in ["transformers", "GPTQ", "AWQ"]:
                     device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -1067,14 +1067,23 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, llm_model_t
                     stop_ids = [tokenizer.encode(word.strip(), add_special_tokens=False)[0] for word in
                                 stop_words] if stop_words else None
 
-                    full_prompt = f"{system_prompt}\n\n{openparse_context}{web_context}{context}Human: {prompt}\nAssistant:"
+                    if supports_chat_template(tokenizer):
+                        messages = [
+                            {"role": "system", "content": openparse_context + web_context + context + system_prompt},
+                            {"role": "user", "content": prompt}
+                        ]
+                        full_prompt = tokenizer.apply_chat_template(messages, tokenize=False,
+                                                                    add_generation_prompt=True)
+                    else:
+                        full_prompt = f"<|im_start|>system\n{openparse_context}{web_context}{context}{system_prompt}<|im_end|>\n<|im_start|>user\n{prompt}<|im_end|>\n<|im_start|>assistant\n"
+
                     inputs = tokenizer(full_prompt, return_tensors="pt", padding=True, truncation=True).to(device)
 
                     text = ""
                     if not chat_history or chat_history[-1][1] is not None:
                         chat_history.append([prompt, ""])
 
-                    for i in range(max_length):
+                    for i in range(max_new_tokens):
 
                         with torch.no_grad():
                             output = llm_model.generate(
@@ -1104,9 +1113,6 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, llm_model_t
                         text += next_token_text
                         chat_history[-1][1] = text
                         yield chat_history, None, None
-
-                        inputs = tokenizer(full_prompt + text, return_tensors="pt", padding=True, truncation=True).to(
-                            device)
 
                 elif llm_model_type == "llama":
                     text = ""
@@ -8674,8 +8680,8 @@ chat_interface = gr.Interface(
         gr.Slider(minimum=0.1, maximum=2.0, value=0.0, step=0.1, label=_("Presence penalty", lang)),
         gr.Slider(minimum=0.1, maximum=2.0, value=1.0, step=0.1, label=_("Length penalty", lang)),
         gr.Slider(minimum=1, maximum=10, value=2, step=1, label=_("No repeat ngram size", lang)),
-        gr.Slider(minimum=0, maximum=10, value=0, step=1, label=_("Num beams", lang)),
-        gr.Slider(minimum=0, maximum=10, value=0, step=1, label=_("Num return sequences", lang)),
+        gr.Slider(minimum=1, maximum=10, value=1, step=1, label=_("Num beams", lang)),
+        gr.Slider(minimum=1, maximum=10, value=1, step=1, label=_("Num return sequences", lang)),
         gr.Radio(choices=["txt", "json"], label=_("Select chat history format", lang), value="txt", interactive=True),
         gr.HTML(_("<h3>TTS Settings</h3>", lang)),
         gr.Dropdown(choices=speaker_wavs_list, label=_("Select voice", lang), interactive=True),
