@@ -837,6 +837,10 @@ def load_whisper_model():
     return whisper().whisper.load_model(model_file)
 
 
+def supports_chat_template(tokenizer):
+    return hasattr(tokenizer, 'apply_chat_template')
+
+
 def load_audiocraft_model(model_name):
     global audiocraft_model_path
     audiocraft_model_path = os.path.join("inputs", "audio", "audiocraft", model_name)
@@ -1063,12 +1067,16 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, llm_model_t
                     stop_ids = [tokenizer.encode(word.strip(), add_special_tokens=False)[0] for word in
                                 stop_words] if stop_words else None
 
-                    messages = [
-                        {"role": "system", "content": openparse_context + web_context + context + system_prompt},
-                        {"role": "user", "content": prompt}
-                    ]
+                    if supports_chat_template(tokenizer):
+                        messages = [
+                            {"role": "system", "content": openparse_context + web_context + context + system_prompt},
+                            {"role": "user", "content": prompt}
+                        ]
+                        full_prompt = tokenizer.apply_chat_template(messages, tokenize=False,
+                                                                    add_generation_prompt=True)
+                    else:
+                        full_prompt = f"<|im_start|>system\n{openparse_context}{web_context}{context}{system_prompt}<|im_end|>\n<|im_start|>user\n{prompt}<|im_end|>\n<|im_start|>assistant\n"
 
-                    full_prompt = tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
                     inputs = tokenizer(full_prompt, return_tensors="pt", padding=True, truncation=True).to(device)
 
                     text = ""
