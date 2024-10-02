@@ -6,7 +6,6 @@ import logging
 import importlib
 os.chdir(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
-os.environ['BUILD_CUDA_EXT'] = '1'
 os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
 warnings.filterwarnings("ignore")
 logging.getLogger("httpx").setLevel(logging.WARNING)
@@ -8674,7 +8673,7 @@ chat_interface = gr.Interface(
         gr.Slider(minimum=1, maximum=200, value=40, step=1, label=_("Top K", lang)),
         gr.Checkbox(label=_("Enable Do Sample", lang), value=False),
         gr.Checkbox(label=_("Enable Early Stopping", lang), value=False),
-        gr.Textbox(label=_("Stop sequences (optional)", lang), value="Human:"),
+        gr.Textbox(label=_("Stop sequences (optional)", lang), value=""),
         gr.Slider(minimum=0.1, maximum=2.0, value=1.0, step=0.1, label=_("Repetition penalty", lang)),
         gr.Slider(minimum=0.1, maximum=2.0, value=0.0, step=0.1, label=_("Frequency penalty", lang)),
         gr.Slider(minimum=0.1, maximum=2.0, value=0.0, step=0.1, label=_("Presence penalty", lang)),

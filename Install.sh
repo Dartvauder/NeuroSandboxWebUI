@@ -18,10 +18,16 @@ mkdir -p "$CURRENT_DIR/logs"
 ERROR_LOG="$CURRENT_DIR/logs/installation_errors.log"
 touch "$ERROR_LOG"
 
+export BUILD_CUDA_EXT=1
+export INSTALL_KERNELS=1
+
 pip install --no-deps -r "$CURRENT_DIR/RequirementsFiles/requirements.txt" 2>> "$ERROR_LOG"
 pip install --no-deps -r "$CURRENT_DIR/RequirementsFiles/requirements-cuda.txt" 2>> "$ERROR_LOG"
 pip install --no-deps -r "$CURRENT_DIR/RequirementsFiles/requirements-llama-cpp.txt" 2>> "$ERROR_LOG"
 pip install --no-deps -r "$CURRENT_DIR/RequirementsFiles/requirements-stable-diffusion-cpp.txt" 2>> "$ERROR_LOG"
+pip install -vvv --no-build-isolation -e git+https://github.com/PanQiWei/AutoGPTQ.git#egg=auto_gptq 2>> "$ERROR_LOG"
+pip install -vvv --no-build-isolation -e git+https://github.com/casper-hansen/AutoAWQ.git#egg=autoawq 2>> "$ERROR_LOG"
+pip install -vvv --no-build-isolation -e git+https://github.com/turboderp/exllamav2.git#egg=exllamav2 2>> "$ERROR_LOG"
 pip install git+https://github.com/tencent-ailab/IP-Adapter.git 2>> "$ERROR_LOG"
 pip install git+https://github.com/vork/PyNanoInstantMeshes.git 2>> "$ERROR_LOG"
 pip install git+https://github.com/openai/CLIP.git 2>> "$ERROR_LOG"
