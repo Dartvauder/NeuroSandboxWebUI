@@ -1054,11 +1054,6 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, llm_model_t
                     if ai_text:
                         context += f"AI: {ai_text}\n"
 
-                messages = [
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": openparse_context + web_context + context + prompt}
-                ]
-
                 if llm_model_type in ["transformers", "GPTQ", "AWQ"]:
                     device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -1068,6 +1063,11 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, llm_model_t
                     stop_ids = [tokenizer.encode(word.strip(), add_special_tokens=False)[0] for word in
                                 stop_words] if stop_words else None
 
+                    messages = [
+                        {"role": "system", "content": openparse_context + web_context + context + system_prompt},
+                        {"role": "user", "content": prompt}
+                    ]
+
                     full_prompt = tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
                     inputs = tokenizer(full_prompt, return_tensors="pt", padding=True, truncation=True).to(device)
 
@@ -1075,30 +1075,36 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, llm_model_t
                     if not chat_history or chat_history[-1][1] is not None:
                         chat_history.append([prompt, ""])
 
-                    with torch.no_grad():
-                        output = llm_model.generate(
-                            **inputs,
-                            max_new_tokens=max_new_tokens,
-                            max_length=max_length,
-                            min_length=min_length,
-                            do_sample=do_sample,
-                            early_stopping=early_stopping,
-                            top_p=top_p,
-                            top_k=top_k,
-                            temperature=temperature,
-                            repetition_penalty=repetition_penalty,
-                            length_penalty=length_penalty,
-                            no_repeat_ngram_size=no_repeat_ngram_size,
-                            num_beams=num_beams,
-                            num_return_sequences=num_return_sequences,
-                            eos_token_id=stop_ids if stop_ids else tokenizer.eos_token_id
-                        )
+                    for i in range(max_new_tokens):
 
-                    generated_text = tokenizer.decode(output[0][inputs['input_ids'].shape[1]:],
-                                                      skip_special_tokens=True)
-                    text += generated_text
-                    chat_history[-1][1] = text
-                    yield chat_history, None, None
+                        with torch.no_grad():
+                            output = llm_model.generate(
+                                **inputs,
+                                max_new_tokens=max_new_tokens,
+                                max_length=max_length,
+                                min_length=min_length,
+                                do_sample=do_sample,
+                                early_stopping=early_stopping,
+                                top_p=top_p,
+                                top_k=top_k,
+                                temperature=temperature,
+                                repetition_penalty=repetition_penalty,
+                                length_penalty=length_penalty,
+                                no_repeat_ngram_size=no_repeat_ngram_size,
+                                num_beams=num_beams,
+                                num_return_sequences=num_return_sequences,
+                                eos_token_id=stop_ids if stop_ids else tokenizer.eos_token_id
+                            )
+
+                        next_token = output[0][inputs['input_ids'].shape[1]:]
+                        next_token_text = tokenizer.decode(next_token, skip_special_tokens=True)
+
+                        if next_token_text.strip() == "":
+                            break
+
+                        text += next_token_text
+                        chat_history[-1][1] = text
+                        yield chat_history, None, None
 
                 elif llm_model_type == "llama":
                     text = ""
