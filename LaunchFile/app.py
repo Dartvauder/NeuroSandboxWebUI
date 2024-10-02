@@ -6,7 +6,6 @@ import logging
 import importlib
 os.chdir(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
-os.environ['BUILD_CUDA_EXT'] = '1'
 os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
 warnings.filterwarnings("ignore")
 logging.getLogger("httpx").setLevel(logging.WARNING)
@@ -1083,36 +1082,31 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, llm_model_t
                     if not chat_history or chat_history[-1][1] is not None:
                         chat_history.append([prompt, ""])
 
-                    for i in range(max_new_tokens):
+                    with torch.no_grad():
+                        output = llm_model.generate(
+                            **inputs,
+                            max_new_tokens=max_new_tokens,
+                            max_length=max_length,
+                            min_length=min_length,
+                            do_sample=do_sample,
+                            early_stopping=early_stopping,
+                            top_p=top_p,
+                            top_k=top_k,
+                            temperature=temperature,
+                            repetition_penalty=repetition_penalty,
+                            length_penalty=length_penalty,
+                            no_repeat_ngram_size=no_repeat_ngram_size,
+                            num_beams=num_beams,
+                            num_return_sequences=num_return_sequences,
+                            eos_token_id=stop_ids if stop_ids else tokenizer.eos_token_id
+                        )
 
-                        with torch.no_grad():
-                            output = llm_model.generate(
-                                **inputs,
-                                max_new_tokens=max_new_tokens,
-                                max_length=max_length,
-                                min_length=min_length,
-                                do_sample=do_sample,
-                                early_stopping=early_stopping,
-                                top_p=top_p,
-                                top_k=top_k,
-                                temperature=temperature,
-                                repetition_penalty=repetition_penalty,
-                                length_penalty=length_penalty,
-                                no_repeat_ngram_size=no_repeat_ngram_size,
-                                num_beams=num_beams,
-                                num_return_sequences=num_return_sequences,
-                                eos_token_id=stop_ids if stop_ids else tokenizer.eos_token_id
-                            )
+                    next_token = output[0][inputs['input_ids'].shape[1]:]
+                    next_token_text = tokenizer.decode(next_token, skip_special_tokens=True)
 
-                        next_token = output[0][inputs['input_ids'].shape[1]:]
-                        next_token_text = tokenizer.decode(next_token, skip_special_tokens=True)
-
-                        if next_token_text.strip() == "":
-                            break
-
-                        text += next_token_text
-                        chat_history[-1][1] = text
-                        yield chat_history, None, None
+                    text += next_token_text
+                    chat_history[-1][1] = text
+                    yield chat_history, None, None
 
                 elif llm_model_type == "llama":
                     text = ""
@@ -8674,7 +8668,7 @@ chat_interface = gr.Interface(
         gr.Slider(minimum=1, maximum=200, value=40, step=1, label=_("Top K", lang)),
         gr.Checkbox(label=_("Enable Do Sample", lang), value=False),
         gr.Checkbox(label=_("Enable Early Stopping", lang), value=False),
-        gr.Textbox(label=_("Stop sequences (optional)", lang), value="Human:"),
+        gr.Textbox(label=_("Stop sequences (optional)", lang), value=""),
         gr.Slider(minimum=0.1, maximum=2.0, value=1.0, step=0.1, label=_("Repetition penalty", lang)),
         gr.Slider(minimum=0.1, maximum=2.0, value=0.0, step=0.1, label=_("Frequency penalty", lang)),
         gr.Slider(minimum=0.1, maximum=2.0, value=0.0, step=0.1, label=_("Presence penalty", lang)),

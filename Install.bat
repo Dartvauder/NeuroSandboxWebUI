@@ -18,10 +18,17 @@ if not exist "%CURRENT_DIR%logs" mkdir "%CURRENT_DIR%logs"
 set ERROR_LOG="%CURRENT_DIR%logs\installation_errors.log"
 type nul > %ERROR_LOG%
 
+set BUILD_CUDA_EXT=1
+set INSTALL_KERNELS=1
+
 pip install --no-deps -r "%CURRENT_DIR%RequirementsFiles\requirements.txt" 2>> %ERROR_LOG%
 pip install --no-deps -r "%CURRENT_DIR%RequirementsFiles\requirements-cuda.txt" 2>> %ERROR_LOG%
 pip install --no-deps -r "%CURRENT_DIR%RequirementsFiles\requirements-llama-cpp.txt" 2>> %ERROR_LOG%
 pip install --no-deps -r "%CURRENT_DIR%RequirementsFiles\requirements-stable-diffusion-cpp.txt" 2>> %ERROR_LOG%
+pip install -vvv --no-build-isolation -e git+https://github.com/PanQiWei/AutoGPTQ.git#egg=auto_gptq 2>> "$ERROR_LOG"
+pip install https://huggingface.co/madbuda/triton-windows-builds/resolve/main/triton-2.1.0-cp310-cp310-win_amd64.whl 2>> "$ERROR_LOG"
+pip install -vvv --no-build-isolation -e git+https://github.com/casper-hansen/AutoAWQ.git#egg=autoawq 2>> "$ERROR_LOG"
+pip install -vvv --no-build-isolation -e git+https://github.com/turboderp/exllamav2.git#egg=exllamav2 2>> "$ERROR_LOG"
 pip install git+https://github.com/tencent-ailab/IP-Adapter.git 2>> %ERROR_LOG%
 pip install git+https://github.com/vork/PyNanoInstantMeshes.git 2>> %ERROR_LOG%
 pip install git+https://github.com/openai/CLIP.git 2>> %ERROR_LOG%
