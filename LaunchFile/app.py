@@ -198,6 +198,7 @@ DEFAULT_STAGE_C_TIMESTEPS = lazy_import('diffusers.pipelines.wuerstchen', 'DEFAU
 
 # Another imports
 AutoGPTQForCausalLM = lazy_import('auto_gptq', 'AutoGPTQForCausalLM')
+BaseQuantizeConfig = lazy_import('auto_gptq', 'BaseQuantizeConfig')
 AutoAWQForCausalLM = lazy_import('awq', 'AutoAWQForCausalLM')
 ExLlamaV2 = lazy_import('exllamav2', 'ExLlamaV2')
 ExLlamaV2Config = lazy_import('exllamav2', 'ExLlamaV2Config')
@@ -347,6 +348,7 @@ translations = {
     "RU": load_translation("ru"),
     "ZH": load_translation("zh")
 }
+
 
 def _(text, lang="EN"):
     return translations[lang].get(text, text)
@@ -672,12 +674,12 @@ def generate_magicprompt(prompt, max_new_tokens):
 
 
 def load_model(model_name, model_type, n_ctx, n_batch):
+    device = "cuda" if torch.cuda.is_available() else "cpu"
     if model_name:
         model_path = f"inputs/text/llm_models/{model_name}"
         if model_type == "transformers":
             try:
                 tokenizer = AutoTokenizer().AutoTokenizer.from_pretrained(model_path)
-                device = "cuda" if torch.cuda.is_available() else "cpu"
                 model = AutoModelForCausalLM().AutoModelForCausalLM.from_pretrained(
                     model_path,
                     device_map=device,
@@ -692,7 +694,6 @@ def load_model(model_name, model_type, n_ctx, n_batch):
                 return None, None, str(e)
         elif model_type == "llama":
             try:
-                device = "cuda" if torch.cuda.is_available() else "cpu"
                 model = Llama().Llama(model_path, n_gpu_layers=-1 if device == "cuda" else 0, n_ctx=n_ctx, n_batch=n_batch)
                 tokenizer = None
                 return tokenizer, model, None
@@ -703,20 +704,21 @@ def load_model(model_name, model_type, n_ctx, n_batch):
         elif model_type == "GPTQ":
             try:
                 tokenizer = AutoTokenizer().AutoTokenizer.from_pretrained(model_path, use_fast=True)
-                model = AutoGPTQForCausalLM().AutoGPTQForCausalLM.from_pretrained(model_path, device_map="auto", torch_dtype=torch.float16)
+                quantize_config = BaseQuantizeConfig().BaseQuantizeConfig()
+                model = AutoGPTQForCausalLM().AutoGPTQForCausalLM.from_pretrained(model_path, device_map=device, torch_dtype=torch.float16, quantize_config=quantize_config)
                 return tokenizer, model, None
             except Exception as e:
                 return None, None, f"Error loading GPTQ model: {str(e)}"
         elif model_type == "AWQ":
             try:
                 tokenizer = AutoTokenizer().AutoTokenizer.from_pretrained(model_path, use_fast=True)
-                model = AutoAWQForCausalLM().AutoAWQForCausalLM.from_pretrained(model_path, device_map="auto", torch_dtype=torch.float16)
+                model = AutoAWQForCausalLM().AutoAWQForCausalLM.from_pretrained(model_path, device_map=device, torch_dtype=torch.float16)
                 return tokenizer, model, None
             except Exception as e:
                 return None, None, f"Error loading AWQ model: {str(e)}"
         elif model_type == "ExLlamaV2":
             try:
-                config = ExLlamaV2Config().ExLlamaV2Config
+                config = ExLlamaV2Config().ExLlamaV2Config()
                 config.model_dir = model_path
                 config.prepare()
 
@@ -1144,6 +1146,7 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, llm_model_t
                     full_prompt = f"{system_prompt}\n\n{openparse_context}{web_context}{context}Human: {prompt}\nAssistant:"
 
                     generator = ExLlamaV2StreamingGenerator().ExLlamaV2StreamingGenerator(llm_model, tokenizer, max_new_tokens)
+                    generator.disallow_tokens([tokenizer.eos_token_id])
                     generator.settings.temperature = temperature
                     generator.settings.top_p = top_p
                     generator.settings.top_k = top_k
