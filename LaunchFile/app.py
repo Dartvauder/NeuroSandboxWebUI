@@ -703,9 +703,23 @@ def load_model(model_name, model_type, n_ctx, n_batch):
                 return None, None, str(e)
         elif model_type == "GPTQ":
             try:
+                config_path = os.path.join(model_path, "config.json")
+                if os.path.exists(config_path):
+                    with open(config_path, 'r', encoding='utf-8') as f:
+                        config = json.load(f)
+
+                    if 'quantization_config' in config:
+                        if 'use_exllama' in config['quantization_config']:
+                            config['quantization_config']['use_exllama'] = False
+                        if 'use_cuda_fp16' in config['quantization_config']:
+                            config['quantization_config']['use_cuda_fp16'] = True
+
+                    with open(config_path, 'w', encoding='utf-8') as f:
+                        json.dump(config, f, indent=2)
+                    print(f"Updated config.json: modified quantization settings")
                 tokenizer = AutoTokenizer().AutoTokenizer.from_pretrained(model_path, use_fast=True)
                 quantize_config = BaseQuantizeConfig().BaseQuantizeConfig()
-                model = AutoGPTQForCausalLM().AutoGPTQForCausalLM.from_pretrained(model_path, device_map=device, torch_dtype=torch.float16, quantize_config=quantize_config)
+                model = AutoGPTQForCausalLM().AutoGPTQForCausalLM.from_pretrained(model_path, device_map=device, torch_dtype=torch.float32, quantize_config=quantize_config, low_cpu_mem_usage=True)
                 return tokenizer, model, None
             except Exception as e:
                 return None, None, f"Error loading GPTQ model: {str(e)}"
@@ -1146,7 +1160,7 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, llm_model_t
                     full_prompt = f"{system_prompt}\n\n{openparse_context}{web_context}{context}Human: {prompt}\nAssistant:"
 
                     generator = ExLlamaV2StreamingGenerator().ExLlamaV2StreamingGenerator(llm_model, tokenizer, max_new_tokens)
-                    generator.disallow_tokens([tokenizer.eos_token_id])
+                    generator.set_stop_conditions([tokenizer.eos_token_id])
                     generator.settings.temperature = temperature
                     generator.settings.top_p = top_p
                     generator.settings.top_k = top_k
