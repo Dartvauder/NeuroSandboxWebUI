@@ -684,6 +684,7 @@ def load_model(model_name, model_type, n_ctx, n_batch):
                     model_path,
                     device_map=device,
                     load_in_8bit=True,
+                    low_cpu_mem_usage=True,
                     torch_dtype=torch.float16,
                     trust_remote_code=True
                 )
@@ -708,7 +709,8 @@ def load_model(model_name, model_type, n_ctx, n_batch):
                     model_path,
                     torch_dtype=torch.float16,
                     low_cpu_mem_usage=True,
-                    device_map="auto"
+                    device_map="auto",
+                    trust_remote_code=True
                 )
                 return tokenizer, model, None
             except Exception as e:
@@ -720,7 +722,8 @@ def load_model(model_name, model_type, n_ctx, n_batch):
                     model_path,
                     torch_dtype=torch.float16,
                     low_cpu_mem_usage=True,
-                    device_map="auto"
+                    device_map="auto",
+                    trust_remote_code=True
                 )
                 return tokenizer, model, None
             except Exception as e:
