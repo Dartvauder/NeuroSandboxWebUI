@@ -6,7 +6,7 @@
 
 ## Описание:
 
-Простой и удобный интерфейс для использования различных моделей нейронных сетей. Вы можете общаться с LLM и Moondream2, используя текстовый, голосовой и визуальный ввод; использовать StableDiffusion, Kandinsky, Flux, HunyuanDiT, Lumina-T2X, Kolors, AuraFlow, Würstchen, DeepFloydIF, PixArt и PlaygroundV2.5 для генерации изображений; ModelScope, ZeroScope 2, CogVideoX и Latte для генерации видео; StableFast3D, Shap-E, SV34D и Zero123Plus для генерации 3D-объектов; StableAudioOpen, AudioCraft и AudioLDM 2 для генерации музыки и аудио; CoquiTTS, MMS и SunoBark для преобразования текста в речь; OpenAI-Whisper и MMS для преобразования речи в текст; Wav2Lip для синхронизации губ; LivePortrait для анимации изображений; Roop для замены лиц; Rembg для удаления фона; CodeFormer для восстановления лиц; PixelOE для пикселизации изображений; DDColor для раскрашивания изображений; LibreTranslate и SeamlessM4Tv2 для перевода текста; Demucs и UVR для разделения аудиофайлов; RVC для преобразования голоса. Вы также можете просматривать файлы из выходной директории в галерее, загружать модели LLM и StableDiffusion, изменять настройки приложения внутри интерфейса и проверять системные датчики.
+Простой и удобный интерфейс для использования различных моделей нейронных сетей. Вы можете общаться с LLM, используя текстовый, голосовой и визуальный ввод; использовать StableDiffusion, Kandinsky, Flux, HunyuanDiT, Lumina-T2X, Kolors, AuraFlow, Würstchen, DeepFloydIF, PixArt и PlaygroundV2.5 для генерации изображений; ModelScope, ZeroScope 2, CogVideoX и Latte для генерации видео; StableFast3D, Shap-E, SV34D и Zero123Plus для генерации 3D-объектов; StableAudioOpen, AudioCraft и AudioLDM 2 для генерации музыки и аудио; CoquiTTS, MMS и SunoBark для преобразования текста в речь; OpenAI-Whisper и MMS для преобразования речи в текст; Wav2Lip для синхронизации губ; LivePortrait для анимации изображений; Roop для замены лиц; Rembg для удаления фона; CodeFormer для восстановления лиц; PixelOE для пикселизации изображений; DDColor для раскрашивания изображений; LibreTranslate и SeamlessM4Tv2 для перевода текста; Demucs и UVR для разделения аудиофайлов; RVC для преобразования голоса. Вы также можете просматривать файлы из выходной директории в галерее, загружать модели LLM и StableDiffusion, изменять настройки приложения внутри интерфейса и проверять системные датчики.
 
 Цель проекта - создать максимально простое в использовании приложение для работы с моделями нейронных сетей.
 
@@ -51,7 +51,7 @@
 * Поддержка StableFast3D, Shap-E, SV34D и Zero123Plus для 3D генерации
 * Поддержка Wav2Lip
 * Поддержка LivePortrait для анимации изображений
-* Поддержка Multimodal (Moondream 2), PDF-Parsing (OpenParse), TTS (CoquiTTS), STT (Whisper), LORA и WebSearch (с DuckDuckGo) для LLM
+* Поддержка Multimodal (Moondream 2, LLaVA-NeXT-Video, Qwen2-Audio), PDF-Parsing (OpenParse), TTS (CoquiTTS), STT (Whisper), LORA и WebSearch (с DuckDuckGo) для LLM
 * Просмотр MetaData-Info для сгенерированных изображений, видео и аудио
 * Настройки моделей внутри интерфейса
 * Онлайн и оффлайн Wiki
@@ -152,6 +152,9 @@
 #### Многие модели имеют свои собственные лицензии на использование. Перед использованием я советую вам ознакомиться с ними:
 
 * [Transformers](https://github.com/huggingface/transformers/blob/main/LICENSE)
+* [AutoGPTQ](https://github.com/AutoGPTQ/AutoGPTQ/blob/main/LICENSE)
+* [AutoAWQ](https://github.com/casper-hansen/AutoAWQ/blob/main/LICENSE)
+* [exllamav2](https://github.com/turboderp/exllamav2/blob/master/LICENSE)
 * [llama.cpp](https://github.com/ggerganov/llama.cpp/blob/master/LICENSE)
 * [stable-diffusion.cpp](https://github.com/leejet/stable-diffusion.cpp/blob/master/LICENSE)
 * [CoquiTTS](https://coqui.ai/cpml)
@@ -174,6 +177,8 @@
 * [Demucs](https://github.com/facebookresearch/demucs/blob/main/LICENSE)
 * [SunoBark](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/mit.md)
 * [Moondream2](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/apache-2.0.md)
+* [LLaVA-NeXT-Video](https://huggingface.co/meta-llama/Llama-2-7b-chat-hf/blob/main/LICENSE.txt)
+* [Qwen2-Audio](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/apache-2.0.md)
 * [ZeroScope2](https://spdx.org/licenses/CC-BY-NC-4.0)
 * [GLIGEN](https://huggingface.co/spaces/CompVis/stable-diffusion-license)
 * [Wav2Lip](https://github.com/Rudrabha/Wav2Lip)
