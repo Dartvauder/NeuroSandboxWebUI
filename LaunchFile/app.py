@@ -15,6 +15,7 @@ os.environ["XDG_CACHE_HOME"] = cache_dir
 temp_dir = os.path.join("temp")
 os.makedirs(temp_dir, exist_ok=True)
 os.environ["TMPDIR"] = temp_dir
+from threading import Thread
 import gradio as gr
 import langdetect
 from datasets import load_dataset, Audio
@@ -83,7 +84,7 @@ def lazy_import(module_name, fromlist):
 AutoModelForCausalLM = lazy_import('transformers', 'AutoModelForCausalLM')
 AutoTokenizer = lazy_import('transformers', 'AutoTokenizer')
 AutoProcessor = lazy_import('transformers', 'AutoProcessor')
-TextStreamer = lazy_import('transformers', 'TextStreamer')
+TextIteratorStreamer = lazy_import('transformers', 'TextIteratorStreamer')
 BarkModel = lazy_import('transformers', 'BarkModel')
 pipeline = lazy_import('transformers', 'pipeline')
 T5EncoderModel = lazy_import('transformers', 'T5EncoderModel')
@@ -1072,7 +1073,6 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, llm_model_t
 
                 if llm_model_type in ["transformers", "GPTQ", "AWQ"]:
                     device = "cuda" if torch.cuda.is_available() else "cpu"
-                    streamer = TextStreamer().TextStreamer(tokenizer, skip_prompt=True, skip_special_tokens=True)
 
                     tokenizer.pad_token = tokenizer.eos_token
                     tokenizer.padding_side = "left"
@@ -1084,34 +1084,42 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, llm_model_t
 
                     inputs = tokenizer(full_prompt, return_tensors="pt", padding=True).to(device)
 
+                    streamer = TextIteratorStreamer().TextIteratorStreamer(tokenizer, skip_prompt=True, skip_special_tokens=True)
+
+                    generation_kwargs = dict(
+                        input_ids=inputs["input_ids"],
+                        attention_mask=inputs["attention_mask"],
+                        max_new_tokens=max_new_tokens,
+                        max_length=max_length,
+                        min_length=min_length,
+                        do_sample=do_sample,
+                        temperature=temperature,
+                        top_p=top_p,
+                        top_k=top_k,
+                        repetition_penalty=repetition_penalty,
+                        length_penalty=length_penalty,
+                        num_beams=num_beams,
+                        no_repeat_ngram_size=no_repeat_ngram_size,
+                        num_return_sequences=num_return_sequences,
+                        early_stopping=early_stopping,
+                        pad_token_id=tokenizer.eos_token_id,
+                        eos_token_id=stop_ids if stop_ids else tokenizer.eos_token_id,
+                        streamer=streamer
+                    )
+
+                    thread = Thread(target=llm_model.generate, kwargs=generation_kwargs)
+                    thread.start()
+
                     text = ""
                     if not chat_history or chat_history[-1][1] is not None:
                         chat_history.append([prompt, ""])
 
-                    for output in llm_model.generate(
-                            input_ids=inputs["input_ids"],
-                            attention_mask=inputs["attention_mask"],
-                            max_new_tokens=max_new_tokens,
-                            max_length=max_length,
-                            min_length=min_length,
-                            do_sample=do_sample,
-                            temperature=temperature,
-                            top_p=top_p,
-                            top_k=top_k,
-                            repetition_penalty=repetition_penalty,
-                            length_penalty=length_penalty,
-                            num_beams=num_beams,
-                            no_repeat_ngram_size=no_repeat_ngram_size,
-                            num_return_sequences=num_return_sequences,
-                            early_stopping=early_stopping,
-                            pad_token_id=tokenizer.eos_token_id,
-                            eos_token_id=stop_ids if stop_ids else tokenizer.eos_token_id,
-                            streamer=streamer
-                    ):
-                        new_text = tokenizer.decode(output[inputs['input_ids'].shape[1]:], skip_special_tokens=True)
+                    for new_text in streamer:
                         text += new_text
                         chat_history[-1][1] = text
                         yield chat_history, None, None
+
+                    thread.join()
 
                 elif llm_model_type == "llama":
                     text = ""
