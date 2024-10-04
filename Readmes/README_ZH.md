@@ -6,7 +6,7 @@
 
 ## 描述：
 
-一个简单方便的界面，用于使用各种神经网络模型。您可以通过文本、语音和图像输入与LLM和Moondream2进行通信；使用StableDiffusion、Kandinsky、Flux、HunyuanDiT、Lumina-T2X、Kolors、AuraFlow、Würstchen、DeepFloydIF、PixArt和PlaygroundV2.5生成图像；使用ModelScope、ZeroScope 2、CogVideoX和Latte生成视频；使用StableFast3D、Shap-E、SV34D和Zero123Plus生成3D对象；使用StableAudioOpen、AudioCraft和AudioLDM 2生成音乐和音频；使用CoquiTTS、MMS和SunoBark进行文本到语音转换；使用OpenAI-Whisper和MMS进行语音到文本转换；使用Wav2Lip进行唇形同步；使用LivePortrait为图像添加动画；使用Roop进行换脸；使用Rembg移除背景；使用CodeFormer修复面部；使用PixelOE进行图像像素化；使用DDColor为图像上色；使用LibreTranslate和SeamlessM4Tv2进行文本翻译；使用Demucs和UVR进行音频文件分离；使用RVC进行语音转换。您还可以在图库中查看输出目录中的文件，下载LLM和StableDiffusion模型，在界面内更改应用程序设置并检查系统传感器。
+一个简单方便的界面，用于使用各种神经网络模型。您可以通过文本、语音和图像输入与LLM进行通信；使用StableDiffusion、Kandinsky、Flux、HunyuanDiT、Lumina-T2X、Kolors、AuraFlow、Würstchen、DeepFloydIF、PixArt和PlaygroundV2.5生成图像；使用ModelScope、ZeroScope 2、CogVideoX和Latte生成视频；使用StableFast3D、Shap-E、SV34D和Zero123Plus生成3D对象；使用StableAudioOpen、AudioCraft和AudioLDM 2生成音乐和音频；使用CoquiTTS、MMS和SunoBark进行文本到语音转换；使用OpenAI-Whisper和MMS进行语音到文本转换；使用Wav2Lip进行唇形同步；使用LivePortrait为图像添加动画；使用Roop进行换脸；使用Rembg移除背景；使用CodeFormer修复面部；使用PixelOE进行图像像素化；使用DDColor为图像上色；使用LibreTranslate和SeamlessM4Tv2进行文本翻译；使用Demucs和UVR进行音频文件分离；使用RVC进行语音转换。您还可以在图库中查看输出目录中的文件，下载LLM和StableDiffusion模型，在界面内更改应用程序设置并检查系统传感器。
 
 项目目标 - 创建一个尽可能简单易用的神经网络模型应用程序
 
@@ -51,7 +51,7 @@
 * 支持StableFast3D、Shap-E、SV34D和Zero123Plus进行3D生成
 * 支持Wav2Lip
 * 支持LivePortrait为图像添加动画
-* 支持LLM的多模态（Moondream 2）、PDF解析（OpenParse）、TTS（CoquiTTS）、STT（Whisper）、LORA和网络搜索（使用DuckDuckGo）
+* 支持LLM的多模态（Moondream 2, LLaVA-NeXT-Video, Qwen2-Audio）、PDF解析（OpenParse）、TTS（CoquiTTS）、STT（Whisper）、LORA和网络搜索（使用DuckDuckGo）
 * 用于生成图像、视频和音频的元数据信息查看器
 * 界面内的模型设置
 * 在线和离线Wiki
@@ -152,6 +152,9 @@
 #### 许多模型都有自己的使用许可证。在使用之前，我建议您熟悉它们：
 
 * [Transformers](https://github.com/huggingface/transformers/blob/main/LICENSE)
+* [AutoGPTQ](https://github.com/AutoGPTQ/AutoGPTQ/blob/main/LICENSE)
+* [AutoAWQ](https://github.com/casper-hansen/AutoAWQ/blob/main/LICENSE)
+* [exllamav2](https://github.com/turboderp/exllamav2/blob/master/LICENSE)
 * [llama.cpp](https://github.com/ggerganov/llama.cpp/blob/master/LICENSE)
 * [stable-diffusion.cpp](https://github.com/leejet/stable-diffusion.cpp/blob/master/LICENSE)
 * [CoquiTTS](https://coqui.ai/cpml)
@@ -174,6 +177,8 @@
 * [Demucs](https://github.com/facebookresearch/demucs/blob/main/LICENSE)
 * [SunoBark](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/mit.md)
 * [Moondream2](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/apache-2.0.md)
+* [LLaVA-NeXT-Video](https://huggingface.co/meta-llama/Llama-2-7b-chat-hf/blob/main/LICENSE.txt)
+* [Qwen2-Audio](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/apache-2.0.md)
 * [ZeroScope2](https://spdx.org/licenses/CC-BY-NC-4.0)
 * [GLIGEN](https://huggingface.co/spaces/CompVis/stable-diffusion-license)
 * [Wav2Lip](https://github.com/Rudrabha/Wav2Lip)
