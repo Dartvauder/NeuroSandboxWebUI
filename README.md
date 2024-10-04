@@ -6,7 +6,7 @@
 
 ## Description:
 
-A simple and convenient interface for using various neural network models. You can communicate with LLM and Moondream2 using text, voice and image input; use StableDiffusion, Kandinsky, Flux, HunyuanDiT, Lumina-T2X, Kolors, AuraFlow, Würstchen, DeepFloydIF, PixArt and PlaygroundV2.5, to generate images; ModelScope, ZeroScope 2, CogVideoX and Latte to generate videos; StableFast3D, Shap-E, SV34D and Zero123Plus to generate 3D objects; StableAudioOpen, AudioCraft and AudioLDM 2 to generate music and audio; CoquiTTS, MMS and SunoBark for text-to-speech; OpenAI-Whisper and MMS for speech-to-text; Wav2Lip for lip-sync; LivePortrait for animate an image; Roop to faceswap; Rembg to remove background; CodeFormer for face restore; PixelOE for image pixelization; DDColor for image colorization; LibreTranslate and SeamlessM4Tv2 for text translation; Demucs and UVR for audio file separation; RVC for voice conversion. You can also view files from the outputs directory in gallery, download the LLM and StableDiffusion models, change the application settings inside the interface and check system sensors
+A simple and convenient interface for using various neural network models. You can communicate with LLM using text, voice and image input; use StableDiffusion, Kandinsky, Flux, HunyuanDiT, Lumina-T2X, Kolors, AuraFlow, Würstchen, DeepFloydIF, PixArt and PlaygroundV2.5, to generate images; ModelScope, ZeroScope 2, CogVideoX and Latte to generate videos; StableFast3D, Shap-E, SV34D and Zero123Plus to generate 3D objects; StableAudioOpen, AudioCraft and AudioLDM 2 to generate music and audio; CoquiTTS, MMS and SunoBark for text-to-speech; OpenAI-Whisper and MMS for speech-to-text; Wav2Lip for lip-sync; LivePortrait for animate an image; Roop to faceswap; Rembg to remove background; CodeFormer for face restore; PixelOE for image pixelization; DDColor for image colorization; LibreTranslate and SeamlessM4Tv2 for text translation; Demucs and UVR for audio file separation; RVC for voice conversion. You can also view files from the outputs directory in gallery, download the LLM and StableDiffusion models, change the application settings inside the interface and check system sensors
 
 The goal of the project - to create the easiest possible application to use neural network models
 
@@ -51,7 +51,7 @@ The goal of the project - to create the easiest possible application to use neur
 * Support StableFast3D, Shap-E, SV34D and Zero123Plus for 3D generation
 * Support Wav2Lip
 * Support LivePortrait for animate an image
-* Support Multimodal (Moondream 2), PDF-Parsing (OpenParse), TTS (CoquiTTS), STT (Whisper), LORA and WebSearch (with DuckDuckGo) for LLM
+* Support Multimodal (Moondream 2, LLaVA-NeXT-Video, Qwen2-Audio), PDF-Parsing (OpenParse), TTS (CoquiTTS), STT (Whisper), LORA and WebSearch (with DuckDuckGo) for LLM
 * MetaData-Info viewer for generating image, video and audio
 * Model settings inside the interface
 * Online and offline Wiki
@@ -152,6 +152,9 @@ First of all, I want to thank the developers of [PyCharm](https://www.jetbrains.
 #### Many models have their own license for use. Before using it, I advise you to familiarize yourself with them:
 
 * [Transformers](https://github.com/huggingface/transformers/blob/main/LICENSE)
+* [AutoGPTQ](https://github.com/AutoGPTQ/AutoGPTQ/blob/main/LICENSE)
+* [AutoAWQ](https://github.com/casper-hansen/AutoAWQ/blob/main/LICENSE)
+* [exllamav2](https://github.com/turboderp/exllamav2/blob/master/LICENSE)
 * [llama.cpp](https://github.com/ggerganov/llama.cpp/blob/master/LICENSE)
 * [stable-diffusion.cpp](https://github.com/leejet/stable-diffusion.cpp/blob/master/LICENSE)
 * [CoquiTTS](https://coqui.ai/cpml)
@@ -174,6 +177,8 @@ First of all, I want to thank the developers of [PyCharm](https://www.jetbrains.
 * [Demucs](https://github.com/facebookresearch/demucs/blob/main/LICENSE)
 * [SunoBark](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/mit.md)
 * [Moondream2](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/apache-2.0.md)
+* [LLaVA-NeXT-Video](https://huggingface.co/meta-llama/Llama-2-7b-chat-hf/blob/main/LICENSE.txt)
+* [Qwen2-Audio](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/apache-2.0.md)
 * [ZeroScope2](https://spdx.org/licenses/CC-BY-NC-4.0)
 * [GLIGEN](https://huggingface.co/spaces/CompVis/stable-diffusion-license)
 * [Wav2Lip](https://github.com/Rudrabha/Wav2Lip)
