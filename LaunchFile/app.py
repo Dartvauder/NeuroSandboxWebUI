@@ -678,7 +678,7 @@ def load_model(model_name, model_type, n_ctx, n_batch):
     device = "cuda" if torch.cuda.is_available() else "cpu"
     if model_name:
         model_path = f"inputs/text/llm_models/{model_name}"
-        if model_type == "transformers":
+        if model_type == "Transformers":
             try:
                 tokenizer = AutoTokenizer().AutoTokenizer.from_pretrained(model_path)
                 model = AutoModelForCausalLM().AutoModelForCausalLM.from_pretrained(
@@ -725,6 +725,19 @@ def load_model(model_name, model_type, n_ctx, n_batch):
                 return tokenizer, model, None
             except Exception as e:
                 return None, None, str(e)
+        elif model_type == "BNB":
+            try:
+                tokenizer = AutoTokenizer().AutoTokenizer.from_pretrained(model_path)
+                model = AutoModelForCausalLM().AutoModelForCausalLM.from_pretrained(
+                    model_path,
+                    device_map=device,
+                    low_cpu_mem_usage=True,
+                    torch_dtype=torch.float16,
+                    trust_remote_code=True
+                )
+                return tokenizer, model, None
+            except Exception as e:
+                return None, None, str(e)
         elif model_type == "ExLlamaV2":
                 return None, None, "ExLlamaV2 is not support now"
     return None, None, None
@@ -741,8 +754,8 @@ def load_lora_model(base_model_name, lora_model_name, model_type):
                                   lora_path=lora_model_path)
             tokenizer = None
             return tokenizer, model, None
-        elif model_type in ["transformers", "GPTQ", "AWQ"]:
-            if model_type == "transformers":
+        elif model_type in ["Transformers", "GPTQ", "AWQ", "BNB"]:
+            if model_type == "Transformers":
                 base_model = AutoModelForCausalLM().AutoModelForCausalLM.from_pretrained(
                     base_model_path,
                     device_map=device,
@@ -765,6 +778,14 @@ def load_lora_model(base_model_name, lora_model_name, model_type):
                     torch_dtype=torch.float16,
                     low_cpu_mem_usage=True,
                     device_map="auto",
+                    trust_remote_code=True
+                )
+            elif model_type == "BNB":
+                base_model = AutoModelForCausalLM().AutoModelForCausalLM.from_pretrained(
+                    base_model_path,
+                    device_map=device,
+                    low_cpu_mem_usage=True,
+                    torch_dtype=torch.float16,
                     trust_remote_code=True
                 )
             model = PeftModel().PeftModel.from_pretrained(base_model, lora_model_path).to(device)
@@ -1071,7 +1092,7 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, llm_model_t
                     if ai_text:
                         context += f"AI: {ai_text}\n"
 
-                if llm_model_type in ["transformers", "GPTQ", "AWQ"]:
+                if llm_model_type in ["Transformers", "GPTQ", "AWQ", "BNB"]:
                     device = "cuda" if torch.cuda.is_available() else "cpu"
 
                     tokenizer.pad_token = tokenizer.eos_token
@@ -1121,7 +1142,7 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, llm_model_t
 
                     thread.join()
 
-                elif llm_model_type == "llama":
+                elif llm_model_type == "Llama":
                     text = ""
                     if not chat_history or chat_history[-1][1] is not None:
                         chat_history.append([prompt, ""])
@@ -8638,7 +8659,7 @@ chat_interface = gr.Interface(
         gr.Textbox(label=_("Enter your request", lang)),
         gr.Textbox(label=_("Enter your system prompt", lang)),
         gr.Audio(type="filepath", label=_("Record your request (optional)", lang)),
-        gr.Radio(choices=["transformers", "llama", "GPTQ", "AWQ", "ExLlamaV2"], label=_("Select model type", lang), value="transformers"),
+        gr.Radio(choices=["Transformers", "GPTQ", "AWQ", "BNB", "Llama", "ExLlamaV2"], label=_("Select model type", lang), value="transformers"),
         gr.Dropdown(choices=llm_models_list, label=_("Select LLM model", lang), value=None),
         gr.Dropdown(choices=llm_lora_models_list, label=_("Select LoRA model (optional)", lang), value=None),
     ],
