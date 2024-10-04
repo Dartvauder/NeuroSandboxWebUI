@@ -203,8 +203,10 @@ AutoGPTQForCausalLM = lazy_import('auto_gptq', 'AutoGPTQForCausalLM')
 AutoAWQForCausalLM = lazy_import('awq', 'AutoAWQForCausalLM')
 ExLlamaV2 = lazy_import('exllamav2', 'ExLlamaV2')
 ExLlamaV2Config = lazy_import('exllamav2', 'ExLlamaV2Config')
+ExLlamaV2Cache = lazy_import('exllamav2', 'ExLlamaV2Cache')
 ExLlamaV2Tokenizer = lazy_import('exllamav2', 'ExLlamaV2Tokenizer')
 ExLlamaV2StreamingGenerator = lazy_import('exllamav2.generator', 'ExLlamaV2StreamingGenerator')
+ExLlamaV2Lora = lazy_import('exllamav2.lora', 'ExLlamaV2Lora')
 TTS = lazy_import('TTS.api', 'TTS')
 whisper = lazy_import('whisper', "")
 AuraSR = lazy_import('aura_sr', 'AuraSR')
@@ -739,7 +741,17 @@ def load_model(model_name, model_type, n_ctx, n_batch):
             except Exception as e:
                 return None, None, str(e)
         elif model_type == "ExLlamaV2":
-                return None, None, "ExLlamaV2 is not support now"
+            try:
+                config = ExLlamaV2Config()
+                config.model_dir = model_path
+                config.prepare()
+                model = ExLlamaV2().ExLlamaV2(config)
+                cache = ExLlamaV2Cache().ExLlamaV2Cache(model)
+                tokenizer = ExLlamaV2Tokenizer().ExLlamaV2Tokenizer(config)
+                model.load_autosplit(cache)
+                return tokenizer, model, None
+            except Exception as e:
+                return None, None, str(e)
     return None, None, None
 
 
@@ -793,7 +805,15 @@ def load_lora_model(base_model_name, lora_model_name, model_type):
             tokenizer = AutoTokenizer().AutoTokenizer.from_pretrained(base_model_path)
             return tokenizer, merged_model, None
         elif model_type == "ExLlamaV2":
-            return None, None, "ExLlamaV2 is not support now"
+            config = ExLlamaV2Config()
+            config.model_dir = base_model_path
+            config.prepare()
+            model = ExLlamaV2().ExLlamaV2(config)
+            cache = ExLlamaV2Cache().ExLlamaV2Cache(model)
+            tokenizer = ExLlamaV2Tokenizer().ExLlamaV2Tokenizer(config)
+            model.load_autosplit(cache)
+            ExLlamaV2Lora().ExLlamaV2Lora(lora_model_path)
+            return tokenizer, model, None
     except Exception as e:
         return None, None, str(e)
     finally:
@@ -1174,7 +1194,24 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, llm_model_t
                         yield chat_history, None, None
 
                 elif llm_model_type == "ExLlamaV2":
-                    return None, None, "ExLlamaV2 is not support now"
+                    text = ""
+                    if not chat_history or chat_history[-1][1] is not None:
+                        chat_history.append([prompt, ""])
+
+                    generator = ExLlamaV2StreamingGenerator().ExLlamaV2StreamingGenerator(llm_model, tokenizer)
+
+                    settings.temperature = temperature
+                    settings.top_k = top_k
+                    settings.top_p = top_p
+                    settings.token_repetition_penalty = repetition_penalty
+                    settings.disallow_tokens = tokenizer.encode(stopping) if stopping else None
+
+                    full_prompt = f"{system_prompt}\n\n{openparse_context}{web_context}{context}Human: {prompt}\nAssistant:"
+
+                    for token in generator.generate_simple(full_prompt, settings, max_new_tokens):
+                        text += token
+                        chat_history[-1][1] = text
+                        yield chat_history, None, None
 
                 if enable_libretranslate:
                     try:
