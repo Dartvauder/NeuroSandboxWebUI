@@ -7,6 +7,7 @@
   "LLM and TTS Settings": "LLM и TTS настройки",
   "TTS and STT Settings": "TTS и STT настройки",
   "Upload your video (for Multimodal)": "Загрузите ваше видео (для мультимодального режима)",
+  "Upload your audio (for Multimodal)": "Загрузите свое аудио (для мультимодального режима)",
   "Max tokens": "Максимум токенов",
   "Min length": "Минимальная длина",
   "Context size (N_CTX) for llama type models": "Размер контекста (N_CTX) для моделей типа llama",
