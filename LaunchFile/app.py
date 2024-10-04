@@ -30,6 +30,7 @@ import librosa.display
 import base64
 import gc
 import cv2
+import av
 import subprocess
 import json
 import torch
@@ -85,6 +86,8 @@ AutoModelForCausalLM = lazy_import('transformers', 'AutoModelForCausalLM')
 AutoTokenizer = lazy_import('transformers', 'AutoTokenizer')
 AutoProcessor = lazy_import('transformers', 'AutoProcessor')
 TextIteratorStreamer = lazy_import('transformers', 'TextIteratorStreamer')
+LlavaNextVideoProcessor = lazy_import('transformers', 'LlavaNextVideoProcessor')
+LlavaNextVideoForConditionalGeneration = lazy_import('transformers', 'LlavaNextVideoForConditionalGeneration')
 BarkModel = lazy_import('transformers', 'BarkModel')
 pipeline = lazy_import('transformers', 'pipeline')
 T5EncoderModel = lazy_import('transformers', 'T5EncoderModel')
@@ -826,11 +829,11 @@ def load_lora_model(base_model_name, lora_model_name, model_type):
 
 def load_moondream2_model(model_id, revision):
     moondream2_model_path = os.path.join("inputs", "text", model_id)
+    device = "cuda" if torch.cuda.is_available() else "cpu"
     try:
         if not os.path.exists(moondream2_model_path):
             print(f"Downloading MoonDream2 model...")
             os.makedirs(moondream2_model_path, exist_ok=True)
-            device = "cuda" if torch.cuda.is_available() else "cpu"
             model = AutoModelForCausalLM().AutoModelForCausalLM.from_pretrained(
                 model_id, trust_remote_code=True, revision=revision
             ).to(device)
@@ -839,7 +842,6 @@ def load_moondream2_model(model_id, revision):
             tokenizer.save_pretrained(moondream2_model_path)
             print("MoonDream2 model downloaded")
         else:
-            device = "cuda" if torch.cuda.is_available() else "cpu"
             model = AutoModelForCausalLM().AutoModelForCausalLM.from_pretrained(moondream2_model_path, trust_remote_code=True).to(device)
             tokenizer = AutoTokenizer().AutoTokenizer.from_pretrained(moondream2_model_path)
         return model, tokenizer, None
@@ -848,6 +850,38 @@ def load_moondream2_model(model_id, revision):
         return None, None, str(e)
     finally:
         del tokenizer
+        del model
+        flush()
+
+
+def load_llava_next_video_model():
+    model_path = os.path.join("inputs", "text", "LLaVA-NeXT-Video")
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    try:
+        if not os.path.exists(model_path):
+            print("Downloading LLaVA-NeXT-Video model...")
+            os.makedirs(model_path, exist_ok=True)
+            model = LlavaNextVideoForConditionalGeneration().LlavaNextVideoForConditionalGeneration.from_pretrained(
+                "llava-hf/LLaVA-NeXT-Video-7B-hf",
+                torch_dtype=torch.float16,
+                low_cpu_mem_usage=True,
+                trust_remote_code=True
+            ).to(device)
+            processor = LlavaNextVideoProcessor().LlavaNextVideoProcessor.from_pretrained(
+                "llava-hf/LLaVA-NeXT-Video-7B-hf")
+            model.save_pretrained(model_path)
+            processor.save_pretrained(model_path)
+            print("LLaVA-NeXT-Video model downloaded")
+        else:
+            model = LlavaNextVideoForConditionalGeneration().LlavaNextVideoForConditionalGeneration.from_pretrained(
+                model_path, torch_dtype=torch.float16, low_cpu_mem_usage=True, trust_remote_code=True).to(device)
+            processor = LlavaNextVideoProcessor().LlavaNextVideoProcessor.from_pretrained(model_path)
+        return model, processor, None
+
+    except Exception as e:
+        return None, None, str(e)
+    finally:
+        del processor
         del model
         flush()
 
@@ -935,6 +969,19 @@ def load_multiband_diffusion_model():
     return multiband_diffusion_path
 
 
+def read_video_pyav(container, indices):
+    frames = []
+    container.seek(0)
+    start_index = indices[0]
+    end_index = indices[-1]
+    for i, frame in enumerate(container.decode(video=0)):
+        if i > end_index:
+            break
+        if i >= start_index and i in indices:
+            frames.append(frame)
+    return np.stack([x.to_ndarray(format="rgb24") for x in frames])
+
+
 def get_languages():
     return {
         "Arabic": "ara", "Chinese": "cmn", "English": "eng", "French": "fra",
@@ -944,7 +991,7 @@ def get_languages():
     }
 
 
-def generate_text_and_speech(input_text, system_prompt, input_audio, llm_model_type, llm_model_name, llm_lora_model_name, enable_web_search, enable_libretranslate, target_lang, enable_openparse, pdf_file, enable_multimodal, input_image, enable_tts,
+def generate_text_and_speech(input_text, system_prompt, input_audio, llm_model_type, llm_model_name, llm_lora_model_name, enable_web_search, enable_libretranslate, target_lang, enable_openparse, pdf_file, enable_multimodal, input_image, input_video, enable_tts,
                              llm_settings_html, max_new_tokens, max_length, min_length, n_ctx, n_batch, temperature, top_p, min_p, typical_p, top_k,
                              do_sample, early_stopping, stopping, repetition_penalty, frequency_penalty, presence_penalty, length_penalty, no_repeat_ngram_size, num_beams, num_return_sequences, chat_history_format, tts_settings_html, speaker_wav, language, tts_temperature, tts_top_p, tts_top_k, tts_speed, tts_repetition_penalty, tts_length_penalty, output_format):
     global chat_history, chat_dir, tts_model, whisper_model
@@ -1074,6 +1121,61 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, llm_model_t
             finally:
                 del model
                 del tokenizer
+                flush()
+
+    elif enable_multimodal and llm_model_name == "LLaVA-NeXT-Video":
+        device = "cuda" if torch.cuda.is_available() else "cpu"
+        if llm_model_type == "llama":
+            return None, None, "LLaVA-NeXT-Video is not supported with llama model type."
+        else:
+
+            model, processor = load_llava_next_video_model()
+
+            try:
+                if input_video:
+                    container = av.open(input_video)
+                    total_frames = container.streams.video[0].frames
+                    indices = np.arange(0, total_frames, total_frames / 8).astype(int)
+                    clip = read_video_pyav(container, indices)
+                else:
+                    return None, None, "Please upload a video for LLaVA-NeXT-Video input."
+
+                context = ""
+                for human_text, ai_text in chat_history[-5:]:
+                    if human_text:
+                        context += f"Human: {human_text}\n"
+                    if ai_text:
+                        context += f"AI: {ai_text}\n"
+
+                conversation = [
+                    {
+                        "role": "user",
+                        "content": [
+                            {"type": "text", "text": f"{context}Human: {prompt}"},
+                            {"type": "video"},
+                        ],
+                    },
+                ]
+
+                if not chat_history or chat_history[-1][1] is not None:
+                    chat_history.append([prompt, ""])
+
+                prompt = processor.apply_chat_template(conversation, add_generation_prompt=True)
+                inputs_video = processor(text=prompt, videos=clip, padding=True, return_tensors="pt").to(device)
+
+                output = model.generate(**inputs_video, max_new_tokens=max_new_tokens, do_sample=do_sample,
+                                        temperature=temperature, top_p=top_p, top_k=top_k)
+
+                response = processor.decode(output[0][2:], skip_special_tokens=True)
+                chat_history[-1][1] = response
+                yield chat_history, None, None
+
+            except Exception as e:
+                return None, None, str(e)
+
+            finally:
+                del model
+                del processor
                 flush()
 
     else:
@@ -8609,7 +8711,7 @@ def open_outputs_folder():
             os.system(f'open "{outputs_folder}"' if os.name == "darwin" else f'xdg-open "{outputs_folder}"')
 
 
-llm_models_list = [None, "moondream2"] + [model for model in os.listdir("inputs/text/llm_models") if not model.endswith(".txt") and model != "vikhyatk" and model != "lora"]
+llm_models_list = [None, "moondream2", "LLaVA-NeXT-Video"] + [model for model in os.listdir("inputs/text/llm_models") if not model.endswith(".txt") and model != "vikhyatk" and model != "lora"]
 llm_lora_models_list = [None] + [model for model in os.listdir("inputs/text/llm_models/lora") if not model.endswith(".txt")]
 speaker_wavs_list = [None] + [wav for wav in os.listdir("inputs/audio/voices") if not wav.endswith(".txt")]
 stable_diffusion_models_list = [None] + [model for model in os.listdir("inputs/image/sd_models")
@@ -8641,7 +8743,7 @@ rvc_models_list = [model_folder for model_folder in os.listdir("inputs/audio/rvc
 def reload_model_lists():
     global llm_models_list, llm_lora_models_list, speaker_wavs_list, stable_diffusion_models_list, vae_models_list, lora_models_list, quantized_flux_models_list, flux_lora_models_list, auraflow_lora_models_list, kolors_lora_models_list, textual_inversion_models_list, inpaint_models_list, rvc_models_list
 
-    llm_models_list = [None, "moondream2"] + [model for model in os.listdir("inputs/text/llm_models") if
+    llm_models_list = [None, "moondream2", "LLaVA-NeXT-Video"] + [model for model in os.listdir("inputs/text/llm_models") if
                                               not model.endswith(".txt") and model != "vikhyatk" and model != "lora"]
     llm_lora_models_list = [None] + [model for model in os.listdir("inputs/text/llm_models/lora") if
                                      not model.endswith(".txt")]
@@ -8709,6 +8811,7 @@ chat_interface = gr.Interface(
         gr.File(label=_("Upload PDF file (for OpenParse)", lang), type="filepath"),
         gr.Checkbox(label=_("Enable Multimodal", lang), value=False),
         gr.Image(label=_("Upload your image (for Multimodal)", lang), type="filepath"),
+        gr.Video(label=_("Upload your video (for Multimodal)", lang)),
         gr.Checkbox(label=_("Enable TTS", lang), value=False),
         gr.HTML(_("<h3>LLM Settings</h3>", lang)),
         gr.Slider(minimum=256, maximum=32768, value=512, step=1, label=_("Max tokens", lang)),

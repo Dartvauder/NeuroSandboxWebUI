@@ -6,6 +6,7 @@
   "Select LoRA model (optional)": "选择LoRA模型（可选）",
   "LLM and TTS Settings": "LLM和TTS设置",
   "TTS and STT Settings": "TTS和STT设置",
+  "Upload your video (for Multimodal)": "上传您的视频（用于多模态）",
   "Max tokens": "最大令牌数",
   "Min length": "最小长度",
   "Context size (N_CTX) for llama type models": "llama类型模型的上下文大小 (N_CTX)",
