@@ -13,6 +13,9 @@ mkdir -p "$CURRENT_DIR/logs"
 ERROR_LOG="$CURRENT_DIR/logs/update_errors.log"
 touch "$ERROR_LOG"
 
+export BUILD_CUDA_EXT=1
+export INSTALL_KERNELS=1
+
 python3 -m pip install --upgrade pip
 pip install wheel setuptools
 pip install --no-deps -r "$CURRENT_DIR/RequirementsFiles/requirements.txt" 2>> "$ERROR_LOG"
