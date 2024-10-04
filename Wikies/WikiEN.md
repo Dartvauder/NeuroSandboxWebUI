@@ -8,7 +8,7 @@
 
 1) First upload your models to the folder: *inputs/text/llm_models*
 2) Select your model from the drop-down list
-3) Select model type (`transformers` or `llama`)
+3) Select model type
 4) Set up the model according to the parameters you need
 5) Type (or speak) your request
 6) Click the `Submit` button to receive the generated text and audio response
