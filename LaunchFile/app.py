@@ -8696,7 +8696,7 @@ chat_interface = gr.Interface(
         gr.Textbox(label=_("Enter your request", lang)),
         gr.Textbox(label=_("Enter your system prompt", lang)),
         gr.Audio(type="filepath", label=_("Record your request (optional)", lang)),
-        gr.Radio(choices=["Transformers", "GPTQ", "AWQ", "BNB", "Llama", "ExLlamaV2"], label=_("Select model type", lang), value="transformers"),
+        gr.Radio(choices=["Transformers", "GPTQ", "AWQ", "BNB", "Llama", "ExLlamaV2"], label=_("Select model type", lang), value="Transformers"),
         gr.Dropdown(choices=llm_models_list, label=_("Select LLM model", lang), value=None),
         gr.Dropdown(choices=llm_lora_models_list, label=_("Select LoRA model (optional)", lang), value=None),
     ],
