@@ -901,16 +901,16 @@ def load_qwen2_audio_model():
     return processor, model
 
 
-def process_qwen2_audio(processor, model, audio_file, prompt):
+def process_qwen2_audio(processor, model, input_audio_mm, prompt):
     conversation = [
         {'role': 'system', 'content': 'You are a helpful assistant.'},
         {"role": "user", "content": [
-            {"type": "audio", "audio_url": audio_file},
+            {"type": "audio", "audio_url": input_audio_mm},
             {"type": "text", "text": prompt},
         ]},
     ]
     text = processor.apply_chat_template(conversation, add_generation_prompt=True, tokenize=False)
-    audio, _ = librosa.load(audio_file, sr=processor.feature_extractor.sampling_rate)
+    audio, _ = librosa.load(input_audio_mm, sr=processor.feature_extractor.sampling_rate)
     inputs = processor(text=text, audios=[audio], return_tensors="pt", padding=True)
     inputs.input_ids = inputs.input_ids.to("cuda")
     generate_ids = model.generate(**inputs, max_length=256)
@@ -1024,7 +1024,7 @@ def get_languages():
     }
 
 
-def generate_text_and_speech(input_text, system_prompt, input_audio, llm_model_type, llm_model_name, llm_lora_model_name, enable_web_search, enable_libretranslate, target_lang, enable_openparse, pdf_file, enable_multimodal, input_image, input_video, enable_tts,
+def generate_text_and_speech(input_text, system_prompt, input_audio, llm_model_type, llm_model_name, llm_lora_model_name, enable_web_search, enable_libretranslate, target_lang, enable_openparse, pdf_file, enable_multimodal, input_image, input_video, input_audio_mm, enable_tts,
                              llm_settings_html, max_new_tokens, max_length, min_length, n_ctx, n_batch, temperature, top_p, min_p, typical_p, top_k,
                              do_sample, early_stopping, stopping, repetition_penalty, frequency_penalty, presence_penalty, length_penalty, no_repeat_ngram_size, num_beams, num_return_sequences, chat_history_format, tts_settings_html, speaker_wav, language, tts_temperature, tts_top_p, tts_top_k, tts_speed, tts_repetition_penalty, tts_length_penalty, output_format):
     global chat_history, chat_dir, tts_model, whisper_model
@@ -1217,7 +1217,7 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, llm_model_t
             return None, None, "Qwen2-Audio is not supported with llama model type."
         else:
             try:
-                response = process_qwen2_audio(processor, model, input_audio, prompt)
+                response = process_qwen2_audio(processor, model, input_audio_mm, prompt)
                 if not chat_history or chat_history[-1][1] is not None:
                     chat_history.append([prompt, ""])
                 chat_history[-1][1] = response
@@ -8863,6 +8863,7 @@ chat_interface = gr.Interface(
         gr.Checkbox(label=_("Enable Multimodal", lang), value=False),
         gr.Image(label=_("Upload your image (for Multimodal)", lang), type="filepath"),
         gr.Video(label=_("Upload your video (for Multimodal)", lang)),
+        gr.Audio(label=_("Upload your audio (for Multimodal)", lang), type="filepath"),
         gr.Checkbox(label=_("Enable TTS", lang), value=False),
         gr.HTML(_("<h3>LLM Settings</h3>", lang)),
         gr.Slider(minimum=256, maximum=32768, value=512, step=1, label=_("Max tokens", lang)),
@@ -11490,7 +11491,7 @@ with gr.TabbedInterface(
     dropdowns_to_update = [
         chat_interface.input_components[4],
         chat_interface.input_components[5],
-        chat_interface.input_components[38],
+        chat_interface.input_components[40],
         tts_stt_interface.input_components[3],
         txt2img_interface.input_components[2],
         txt2img_interface.input_components[4],
