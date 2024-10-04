@@ -689,8 +689,6 @@ def load_model(model_name, model_type, n_ctx, n_batch):
                     trust_remote_code=True
                 )
                 return tokenizer, model, None
-            except (OSError, RuntimeError):
-                return None, None, "The selected model is not compatible with the 'transformers' model type"
             except Exception as e:
                 return None, None, str(e)
         elif model_type == "llama":
@@ -698,8 +696,6 @@ def load_model(model_name, model_type, n_ctx, n_batch):
                 model = Llama().Llama(model_path, n_gpu_layers=-1 if device == "cuda" else 0, n_ctx=n_ctx, n_batch=n_batch)
                 tokenizer = None
                 return tokenizer, model, None
-            except (ValueError, RuntimeError):
-                return None, None, "The selected model is not compatible with the 'llama' model type"
             except Exception as e:
                 return None, None, str(e)
         elif model_type == "GPTQ":
@@ -714,7 +710,7 @@ def load_model(model_name, model_type, n_ctx, n_batch):
                 )
                 return tokenizer, model, None
             except Exception as e:
-                return None, None, f"Error loading GPTQ model: {str(e)}"
+                return None, None, str(e)
         elif model_type == "AWQ":
             try:
                 tokenizer = AutoTokenizer().AutoTokenizer.from_pretrained(model_path)
@@ -727,21 +723,9 @@ def load_model(model_name, model_type, n_ctx, n_batch):
                 )
                 return tokenizer, model, None
             except Exception as e:
-                return None, None, f"Error loading AWQ model: {str(e)}"
+                return None, None, str(e)
         elif model_type == "ExLlamaV2":
-            try:
-                config = ExLlamaV2Config().ExLlamaV2Config()
-                config.model_dir = model_path
-                config.prepare()
-
-                model = ExLlamaV2().ExLlamaV2(config)
-                model.load()
-
-                tokenizer = ExLlamaV2Tokenizer().ExLlamaV2Tokenizer(config)
-
-                return tokenizer, model, None
-            except Exception as e:
-                return None, None, f"Error loading ExLlamaV2 model: {str(e)}"
+                return None, None, "ExLlamaV2 is not support now"
     return None, None, None
 
 
@@ -787,7 +771,7 @@ def load_lora_model(base_model_name, lora_model_name, model_type):
             tokenizer = AutoTokenizer().AutoTokenizer.from_pretrained(base_model_path)
             return tokenizer, merged_model, None
         elif model_type == "ExLlamaV2":
-            return None, None, "LoRA not currently supported for ExLlamaV2"
+            return None, None, "ExLlamaV2 is not support now"
     except Exception as e:
         return None, None, str(e)
     finally:
@@ -1124,7 +1108,7 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, llm_model_t
                             eos_token_id=stop_ids if stop_ids else tokenizer.eos_token_id,
                             streamer=streamer
                     ):
-                        new_text = tokenizer.decode(output[0][inputs['input_ids'].shape[1]:], skip_special_tokens=True)
+                        new_text = tokenizer.decode(output[inputs['input_ids'].shape[1]:], skip_special_tokens=True)
                         text += new_text
                         chat_history[-1][1] = text
                         yield chat_history, None, None
@@ -1161,27 +1145,7 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, llm_model_t
                         yield chat_history, None, None
 
                 elif llm_model_type == "ExLlamaV2":
-
-                    full_prompt = f"{system_prompt}\n\n{openparse_context}{web_context}{context}Human: {prompt}\nAssistant:"
-
-                    generator = ExLlamaV2StreamingGenerator().ExLlamaV2StreamingGenerator(llm_model, tokenizer, max_new_tokens)
-                    generator.set_stop_conditions([tokenizer.eos_token_id])
-                    generator.settings.temperature = temperature
-                    generator.settings.top_p = top_p
-                    generator.settings.top_k = top_k
-                    generator.settings.typical = typical_p
-                    generator.settings.token_repetition_penalty = repetition_penalty
-
-                    text = ""
-                    if not chat_history or chat_history[-1][1] is not None:
-                        chat_history.append([prompt, ""])
-
-                    generator.begin_stream(full_prompt, max_new_tokens)
-
-                    for token in generator:
-                        text += token
-                        chat_history[-1][1] = text
-                        yield chat_history, None, None
+                    return None, None, "ExLlamaV2 is not support now"
 
                 if enable_libretranslate:
                     try:
