@@ -390,3 +390,4 @@ gekko==1.2.1
 rouge==1.0.1
 cramjam==2.8.4
 fastparquet==2024.5.0
+optimum==1.22.0
