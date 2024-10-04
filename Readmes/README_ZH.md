@@ -10,7 +10,7 @@
 
 项目目标 - 创建一个尽可能简单易用的神经网络模型应用程序
 
-### 文本：<img width="1119" alt="1zh" src="https://github.com/user-attachments/assets/1cbda009-8230-4dc2-beb7-a77505e96d81">
+### 文本：<img width="1115" alt="1zh" src="https://github.com/user-attachments/assets/58f09287-4f5b-4175-b0cf-94d18ce82a7e">
 
 ### 图像：<img width="1127" alt="2zh" src="https://github.com/user-attachments/assets/151001bc-27b2-4561-84f1-7ec521ad972e">
 

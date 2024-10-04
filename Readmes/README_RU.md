@@ -10,7 +10,7 @@
 
 Цель проекта - создать максимально простое в использовании приложение для работы с моделями нейронных сетей.
 
-### Текст: <img width="1118" alt="1ru" src="https://github.com/user-attachments/assets/e268ea7f-3d22-4ccf-a37b-b44ea1a12783">
+### Текст: <img width="1115" alt="1ru" src="https://github.com/user-attachments/assets/c928df15-51e3-4047-97fb-9b736dded88d">
 
 ### Изображение: <img width="1116" alt="2ru" src="https://github.com/user-attachments/assets/96e85712-858f-4672-8827-5a1e31a1a816">
 

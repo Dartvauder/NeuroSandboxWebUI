@@ -10,7 +10,7 @@ A simple and convenient interface for using various neural network models. You c
 
 The goal of the project - to create the easiest possible application to use neural network models
 
-### Text: <img width="1118" alt="1" src="https://github.com/user-attachments/assets/d0947d54-eb8b-4f20-986b-579f9652ff95">
+### Text: <img width="1112" alt="1" src="https://github.com/user-attachments/assets/68d290f4-87e7-4f09-b669-e95590cbcce7">
 
 ### Image: <img width="1112" alt="2" src="https://github.com/user-attachments/assets/02085575-1ae3-4e71-93eb-499c3103623a">
 
