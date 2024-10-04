@@ -8618,6 +8618,9 @@ def reload_interface():
     return [gr.Dropdown(choices=list) for list in updated_lists]
 
 
+avatar_user = "avatars/user.png"
+avatar_ai = "avatars/ai.png"
+
 settings = load_settings()
 lang = settings['language']
 
@@ -8676,7 +8679,7 @@ chat_interface = gr.Interface(
     ],
     additional_inputs_accordion=gr.Accordion(label=_("LLM and TTS Settings", lang), open=False),
     outputs=[
-        gr.Chatbot(label=_("LLM text response", lang), value=[], avatar_images=["avatars/user.png", "avatars/ai.png"], show_copy_button=True),
+        gr.Chatbot(label=_("LLM text response", lang), value=[], avatar_images=[avatar_user, avatar_ai], show_copy_button=True),
         gr.Audio(label=_("LLM audio response", lang), type="filepath"),
         gr.Textbox(label=_("Message", lang))
     ],
