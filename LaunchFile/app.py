@@ -103,7 +103,6 @@ Wav2Vec2ForCTC = lazy_import('transformers', 'Wav2Vec2ForCTC')
 GPT2Tokenizer = lazy_import('transformers', 'GPT2Tokenizer')
 GPT2LMHeadModel = lazy_import('transformers', 'GPT2LMHeadModel')
 GenerationConfig = lazy_import('transformers', 'GenerationConfig')
-PeftModel = lazy_import('peft', 'PeftModel')
 
 # Diffusers import
 diffusers = lazy_import('diffusers', '')
@@ -225,6 +224,7 @@ Separator = lazy_import('audio_separator.separator', 'Separator')
 pixelize = lazy_import('pixeloe.pixelize', 'pixelize')
 RVCInference = lazy_import('rvc_python.infer', 'RVCInference')
 remove = lazy_import('rembg', 'remove')
+PeftModel = lazy_import('peft', 'PeftModel')
 
 
 XFORMERS_AVAILABLE = False
@@ -825,7 +825,7 @@ def load_lora_model(base_model_name, lora_model_name, model_type):
 
 
 def load_moondream2_model(model_id, revision):
-    moondream2_model_path = os.path.join("inputs", "text", "llm_models", model_id)
+    moondream2_model_path = os.path.join("inputs", "text", model_id)
     try:
         if not os.path.exists(moondream2_model_path):
             print(f"Downloading MoonDream2 model...")
@@ -976,7 +976,7 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, llm_model_t
 
     if enable_multimodal and llm_model_name == "moondream2":
         if llm_model_type == "llama":
-            moondream2_path = os.path.join("inputs", "text", "llm_models", "moondream2")
+            moondream2_path = os.path.join("inputs", "text", "moondream2-cpp")
 
             if not os.path.exists(moondream2_path):
                 print("Downloading Moondream2 model...")
