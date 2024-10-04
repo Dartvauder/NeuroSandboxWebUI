@@ -758,15 +758,30 @@ def load_lora_model(base_model_name, lora_model_name, model_type):
             return tokenizer, model, None
         elif model_type in ["transformers", "GPTQ", "AWQ"]:
             if model_type == "transformers":
-                base_model = AutoModelForCausalLM().AutoModelForCausalLM.from_pretrained(base_model_path).to(device)
+                base_model = AutoModelForCausalLM().AutoModelForCausalLM.from_pretrained(
+                    base_model_path,
+                    device_map=device,
+                    load_in_8bit=True,
+                    low_cpu_mem_usage=True,
+                    torch_dtype=torch.float16,
+                    trust_remote_code=True
+                )
             elif model_type == "GPTQ":
-                base_model = AutoGPTQForCausalLM().AutoGPTQForCausalLM.from_quantized(base_model_path, use_safetensors=True,
-                                                                trust_remote_code=True, device="cuda:0",
-                                                                use_triton=False, quantize_config=None)
+                base_model = AutoGPTQForCausalLM().AutoGPTQForCausalLM.from_quantized(
+                    base_model_path,
+                    torch_dtype=torch.float16,
+                    low_cpu_mem_usage=True,
+                    device_map="auto",
+                    trust_remote_code=True
+                )
             elif model_type == "AWQ":
-                base_model = AutoAWQForCausalLM().AutoAWQForCausalLM.from_quantized(base_model_path, fuse_layers=True,
-                                                               trust_remote_code=True, safetensors=True)
-
+                base_model = AutoAWQForCausalLM().AutoAWQForCausalLM.from_quantized(
+                    base_model_path,
+                    torch_dtype=torch.float16,
+                    low_cpu_mem_usage=True,
+                    device_map="auto",
+                    trust_remote_code=True
+                )
             model = PeftModel().PeftModel.from_pretrained(base_model, lora_model_path).to(device)
             merged_model = model.merge_and_unload()
             tokenizer = AutoTokenizer().AutoTokenizer.from_pretrained(base_model_path)
@@ -1081,45 +1096,38 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, llm_model_t
                     stop_ids = [tokenizer.encode(word.strip(), add_special_tokens=False)[0] for word in
                                 stop_words] if stop_words else None
 
-                    if supports_chat_template(tokenizer):
-                        full_prompt = [
-                            {"role": "system", "content": openparse_context + web_context + context + system_prompt},
-                            {"role": "user", "content": prompt}
-                        ]
-                    else:
-                        full_prompt = f"<|im_start|>system\n{openparse_context}{web_context}{context}{system_prompt}<|im_end|>\n<|im_start|>user\n{prompt}<|im_end|>\n<|im_start|>assistant\n"
+                    full_prompt = f"<|im_start|>system\n{openparse_context}{web_context}{context}{system_prompt}<|im_end|>\n<|im_start|>user\n{prompt}<|im_end|>\n<|im_start|>assistant\n"
 
-                    inputs = tokenizer.apply_chat_template(full_prompt, tokenize=True, add_generation_prompt=True, return_tensors="pt", padding=True).to(device)
+                    inputs = tokenizer(full_prompt, return_tensors="pt", padding=True).to(device)
 
                     text = ""
                     if not chat_history or chat_history[-1][1] is not None:
                         chat_history.append([prompt, ""])
 
-                    output = llm_model.generate(
-                        **inputs,
-                        streamer=streamer,
-                        max_new_tokens=max_new_tokens,
-                        max_length=max_length,
-                        min_length=min_length,
-                        do_sample=do_sample,
-                        early_stopping=early_stopping,
-                        top_p=top_p,
-                        top_k=top_k,
-                        temperature=temperature,
-                        repetition_penalty=repetition_penalty,
-                        length_penalty=length_penalty,
-                        no_repeat_ngram_size=no_repeat_ngram_size,
-                        num_beams=num_beams,
-                        num_return_sequences=num_return_sequences,
-                        eos_token_id=stop_ids if stop_ids else tokenizer.eos_token_id
-                    )
-
-                    next_token = output[0][inputs['input_ids'].shape[1]:]
-                    next_token_text = tokenizer.decode(next_token, skip_special_tokens=True)
-
-                    text += next_token_text
-                    chat_history[-1][1] = text
-                    yield chat_history, None, None
+                    for output in llm_model.generate(
+                            input_ids=inputs["input_ids"],
+                            attention_mask=inputs["attention_mask"],
+                            max_new_tokens=max_new_tokens,
+                            max_length=max_length,
+                            min_length=min_length,
+                            do_sample=do_sample,
+                            temperature=temperature,
+                            top_p=top_p,
+                            top_k=top_k,
+                            repetition_penalty=repetition_penalty,
+                            length_penalty=length_penalty,
+                            num_beams=num_beams,
+                            no_repeat_ngram_size=no_repeat_ngram_size,
+                            num_return_sequences=num_return_sequences,
+                            early_stopping=early_stopping,
+                            pad_token_id=tokenizer.eos_token_id,
+                            eos_token_id=stop_ids if stop_ids else tokenizer.eos_token_id,
+                            streamer=streamer
+                    ):
+                        new_text = tokenizer.decode(output[0][inputs['input_ids'].shape[1]:], skip_special_tokens=True)
+                        text += new_text
+                        chat_history[-1][1] = text
+                        yield chat_history, None, None
 
                 elif llm_model_type == "llama":
                     text = ""
