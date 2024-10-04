@@ -83,6 +83,7 @@ def lazy_import(module_name, fromlist):
 AutoModelForCausalLM = lazy_import('transformers', 'AutoModelForCausalLM')
 AutoTokenizer = lazy_import('transformers', 'AutoTokenizer')
 AutoProcessor = lazy_import('transformers', 'AutoProcessor')
+TextStreamer = lazy_import('transformers', 'TextStreamer')
 BarkModel = lazy_import('transformers', 'BarkModel')
 pipeline = lazy_import('transformers', 'pipeline')
 T5EncoderModel = lazy_import('transformers', 'T5EncoderModel')
@@ -198,7 +199,6 @@ DEFAULT_STAGE_C_TIMESTEPS = lazy_import('diffusers.pipelines.wuerstchen', 'DEFAU
 
 # Another imports
 AutoGPTQForCausalLM = lazy_import('auto_gptq', 'AutoGPTQForCausalLM')
-BaseQuantizeConfig = lazy_import('auto_gptq', 'BaseQuantizeConfig')
 AutoAWQForCausalLM = lazy_import('awq', 'AutoAWQForCausalLM')
 ExLlamaV2 = lazy_import('exllamav2', 'ExLlamaV2')
 ExLlamaV2Config = lazy_import('exllamav2', 'ExLlamaV2Config')
@@ -703,30 +703,25 @@ def load_model(model_name, model_type, n_ctx, n_batch):
                 return None, None, str(e)
         elif model_type == "GPTQ":
             try:
-                config_path = os.path.join(model_path, "config.json")
-                if os.path.exists(config_path):
-                    with open(config_path, 'r', encoding='utf-8') as f:
-                        config = json.load(f)
-
-                    if 'quantization_config' in config:
-                        if 'use_exllama' in config['quantization_config']:
-                            config['quantization_config']['use_exllama'] = False
-                        if 'use_cuda_fp16' in config['quantization_config']:
-                            config['quantization_config']['use_cuda_fp16'] = True
-
-                    with open(config_path, 'w', encoding='utf-8') as f:
-                        json.dump(config, f, indent=2)
-                    print(f"Updated config.json: modified quantization settings")
-                tokenizer = AutoTokenizer().AutoTokenizer.from_pretrained(model_path, use_fast=True)
-                quantize_config = BaseQuantizeConfig().BaseQuantizeConfig()
-                model = AutoGPTQForCausalLM().AutoGPTQForCausalLM.from_pretrained(model_path, device_map=device, torch_dtype=torch.float32, quantize_config=quantize_config, low_cpu_mem_usage=True)
+                tokenizer = AutoTokenizer().AutoTokenizer.from_pretrained(model_path)
+                model = AutoGPTQForCausalLM().AutoGPTQForCausalLM.from_quantized(
+                    model_path,
+                    torch_dtype=torch.float16,
+                    low_cpu_mem_usage=True,
+                    device_map="auto"
+                )
                 return tokenizer, model, None
             except Exception as e:
                 return None, None, f"Error loading GPTQ model: {str(e)}"
         elif model_type == "AWQ":
             try:
-                tokenizer = AutoTokenizer().AutoTokenizer.from_pretrained(model_path, use_fast=True)
-                model = AutoAWQForCausalLM().AutoAWQForCausalLM.from_pretrained(model_path, device_map=device, torch_dtype=torch.float16)
+                tokenizer = AutoTokenizer().AutoTokenizer.from_pretrained(model_path)
+                model = AutoAWQForCausalLM().AutoAWQForCausalLM.from_quantized(
+                    model_path,
+                    torch_dtype=torch.float16,
+                    low_cpu_mem_usage=True,
+                    device_map="auto"
+                )
                 return tokenizer, model, None
             except Exception as e:
                 return None, None, f"Error loading AWQ model: {str(e)}"
@@ -1075,6 +1070,7 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, llm_model_t
 
                 if llm_model_type in ["transformers", "GPTQ", "AWQ"]:
                     device = "cuda" if torch.cuda.is_available() else "cpu"
+                    streamer = TextStreamer().TextStreamer(tokenizer, skip_prompt=True, skip_special_tokens=True)
 
                     tokenizer.pad_token = tokenizer.eos_token
                     tokenizer.padding_side = "left"
@@ -1083,39 +1079,37 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, llm_model_t
                                 stop_words] if stop_words else None
 
                     if supports_chat_template(tokenizer):
-                        messages = [
+                        full_prompt = [
                             {"role": "system", "content": openparse_context + web_context + context + system_prompt},
                             {"role": "user", "content": prompt}
                         ]
-                        full_prompt = tokenizer.apply_chat_template(messages, tokenize=False,
-                                                                    add_generation_prompt=True)
                     else:
                         full_prompt = f"<|im_start|>system\n{openparse_context}{web_context}{context}{system_prompt}<|im_end|>\n<|im_start|>user\n{prompt}<|im_end|>\n<|im_start|>assistant\n"
 
-                    inputs = tokenizer(full_prompt, return_tensors="pt", padding=True, truncation=True).to(device)
+                    inputs = tokenizer.apply_chat_template(full_prompt, tokenize=True, add_generation_prompt=True, return_tensors="pt", padding=True).to(device)
 
                     text = ""
                     if not chat_history or chat_history[-1][1] is not None:
                         chat_history.append([prompt, ""])
 
-                    with torch.no_grad():
-                        output = llm_model.generate(
-                            **inputs,
-                            max_new_tokens=max_new_tokens,
-                            max_length=max_length,
-                            min_length=min_length,
-                            do_sample=do_sample,
-                            early_stopping=early_stopping,
-                            top_p=top_p,
-                            top_k=top_k,
-                            temperature=temperature,
-                            repetition_penalty=repetition_penalty,
-                            length_penalty=length_penalty,
-                            no_repeat_ngram_size=no_repeat_ngram_size,
-                            num_beams=num_beams,
-                            num_return_sequences=num_return_sequences,
-                            eos_token_id=stop_ids if stop_ids else tokenizer.eos_token_id
-                        )
+                    output = llm_model.generate(
+                        **inputs,
+                        streamer=streamer,
+                        max_new_tokens=max_new_tokens,
+                        max_length=max_length,
+                        min_length=min_length,
+                        do_sample=do_sample,
+                        early_stopping=early_stopping,
+                        top_p=top_p,
+                        top_k=top_k,
+                        temperature=temperature,
+                        repetition_penalty=repetition_penalty,
+                        length_penalty=length_penalty,
+                        no_repeat_ngram_size=no_repeat_ngram_size,
+                        num_beams=num_beams,
+                        num_return_sequences=num_return_sequences,
+                        eos_token_id=stop_ids if stop_ids else tokenizer.eos_token_id
+                    )
 
                     next_token = output[0][inputs['input_ids'].shape[1]:]
                     next_token_text = tokenizer.decode(next_token, skip_special_tokens=True)
