@@ -88,6 +88,7 @@ AutoProcessor = lazy_import('transformers', 'AutoProcessor')
 TextIteratorStreamer = lazy_import('transformers', 'TextIteratorStreamer')
 LlavaNextVideoProcessor = lazy_import('transformers', 'LlavaNextVideoProcessor')
 LlavaNextVideoForConditionalGeneration = lazy_import('transformers', 'LlavaNextVideoForConditionalGeneration')
+Qwen2AudioForConditionalGeneration = lazy_import('transformers', 'Qwen2AudioForConditionalGeneration')
 BarkModel = lazy_import('transformers', 'BarkModel')
 pipeline = lazy_import('transformers', 'pipeline')
 T5EncoderModel = lazy_import('transformers', 'T5EncoderModel')
@@ -886,6 +887,38 @@ def load_llava_next_video_model():
         flush()
 
 
+def load_qwen2_audio_model():
+    qwen2_audio_path = os.path.join("inputs", "text", "Qwen2-Audio")
+    if not os.path.exists(qwen2_audio_path):
+        print("Downloading Qwen2-Audio model...")
+        os.makedirs(qwen2_audio_path, exist_ok=True)
+        Repo.clone_from("https://huggingface.co/Qwen/Qwen2-Audio-7B-Instruct", qwen2_audio_path)
+        print("Qwen2-Audio model downloaded")
+
+    processor = AutoProcessor().AutoProcessor.from_pretrained(qwen2_audio_path)
+    model = Qwen2AudioForConditionalGeneration().Qwen2AudioForConditionalGeneration.from_pretrained(qwen2_audio_path,
+                                                                                                    device_map="auto")
+    return processor, model
+
+
+def process_qwen2_audio(processor, model, audio_file, prompt):
+    conversation = [
+        {'role': 'system', 'content': 'You are a helpful assistant.'},
+        {"role": "user", "content": [
+            {"type": "audio", "audio_url": audio_file},
+            {"type": "text", "text": prompt},
+        ]},
+    ]
+    text = processor.apply_chat_template(conversation, add_generation_prompt=True, tokenize=False)
+    audio, _ = librosa.load(audio_file, sr=processor.feature_extractor.sampling_rate)
+    inputs = processor(text=text, audios=[audio], return_tensors="pt", padding=True)
+    inputs.input_ids = inputs.input_ids.to("cuda")
+    generate_ids = model.generate(**inputs, max_length=256)
+    generate_ids = generate_ids[:, inputs.input_ids.size(1):]
+    response = processor.batch_decode(generate_ids, skip_special_tokens=True, clean_up_tokenization_spaces=False)[0]
+    return response
+
+
 def transcribe_audio(audio_file_path):
     device = "cuda" if torch.cuda.is_available() else "cpu"
     whisper_model_path = "inputs/text/whisper-medium"
@@ -1177,6 +1210,21 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, llm_model_t
                 del model
                 del processor
                 flush()
+
+    elif enable_multimodal and llm_model_name == "Qwen2-Audio":
+        processor, model = load_qwen2_audio_model()
+        try:
+            response = process_qwen2_audio(processor, model, input_audio, prompt)
+            if not chat_history or chat_history[-1][1] is not None:
+                chat_history.append([prompt, ""])
+            chat_history[-1][1] = response
+            yield chat_history, None, None
+        except Exception as e:
+            return None, None, str(e)
+        finally:
+            del processor
+            del model
+            flush()
 
     else:
         if llm_model_type == "llama":
@@ -8711,7 +8759,7 @@ def open_outputs_folder():
             os.system(f'open "{outputs_folder}"' if os.name == "darwin" else f'xdg-open "{outputs_folder}"')
 
 
-llm_models_list = [None, "moondream2", "LLaVA-NeXT-Video"] + [model for model in os.listdir("inputs/text/llm_models") if not model.endswith(".txt") and model != "vikhyatk" and model != "lora"]
+llm_models_list = [None, "moondream2", "LLaVA-NeXT-Video", "Qwen2-Audio"] + [model for model in os.listdir("inputs/text/llm_models") if not model.endswith(".txt") and model != "vikhyatk" and model != "lora"]
 llm_lora_models_list = [None] + [model for model in os.listdir("inputs/text/llm_models/lora") if not model.endswith(".txt")]
 speaker_wavs_list = [None] + [wav for wav in os.listdir("inputs/audio/voices") if not wav.endswith(".txt")]
 stable_diffusion_models_list = [None] + [model for model in os.listdir("inputs/image/sd_models")
@@ -8743,7 +8791,7 @@ rvc_models_list = [model_folder for model_folder in os.listdir("inputs/audio/rvc
 def reload_model_lists():
     global llm_models_list, llm_lora_models_list, speaker_wavs_list, stable_diffusion_models_list, vae_models_list, lora_models_list, quantized_flux_models_list, flux_lora_models_list, auraflow_lora_models_list, kolors_lora_models_list, textual_inversion_models_list, inpaint_models_list, rvc_models_list
 
-    llm_models_list = [None, "moondream2", "LLaVA-NeXT-Video"] + [model for model in os.listdir("inputs/text/llm_models") if
+    llm_models_list = [None, "moondream2", "LLaVA-NeXT-Video", "Qwen2-Audio"] + [model for model in os.listdir("inputs/text/llm_models") if
                                               not model.endswith(".txt") and model != "vikhyatk" and model != "lora"]
     llm_lora_models_list = [None] + [model for model in os.listdir("inputs/text/llm_models/lora") if
                                      not model.endswith(".txt")]
