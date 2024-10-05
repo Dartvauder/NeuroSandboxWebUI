@@ -1,0 +1,15 @@
+name: "🦆 Normal Issue report"
+description: Just describe your issue
+title: '🦆 [Issue] - <title>'
+labels: [
+  "issue"
+]
+body:
+  - type: textarea
+    id: Issue
+    validations:
+      required: true
+    attributes:
+      label: Issue
+      description: |
+        A clear and concise description of issue
