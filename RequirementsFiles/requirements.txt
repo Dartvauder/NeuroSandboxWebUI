@@ -86,7 +86,7 @@ GitPython==3.1.43
 google-pasta==0.2.0
 GPUtil==1.4.0
 gpytoolbox==0.3.2
-gradio==4.44.0
+gradio==4.44.1
 gradio_client==1.3.0
 grpcio==1.62.2
 gruut==2.2.3
@@ -281,7 +281,7 @@ torchsde==0.2.6
 tqdm==4.66.5
 trainer==0.0.36
 trampoline==0.1.2
-transformers==4.44.2
+transformers==4.45.1
 treetable==0.2.5
 trimesh==4.4.7
 trio==0.25.0
