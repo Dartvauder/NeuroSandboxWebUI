@@ -709,7 +709,7 @@ def load_model(model_name, model_type, n_ctx, n_batch):
                 return tokenizer, model, None
             except Exception as e:
                 return None, None, str(e)
-        elif model_type == "llama":
+        elif model_type == "Llama":
             try:
                 model = Llama().Llama(model_path, n_gpu_layers=-1 if device == "cuda" else 0, n_ctx=n_ctx, n_batch=n_batch)
                 tokenizer = None
@@ -776,7 +776,7 @@ def load_lora_model(base_model_name, lora_model_name, model_type):
 
     try:
         device = "cuda" if torch.cuda.is_available() else "cpu"
-        if model_type == "llama":
+        if model_type == "Llama":
             model = Llama().Llama(base_model_path, n_gpu_layers=-1 if device == "cuda" else 0,
                                   lora_path=lora_model_path)
             tokenizer = None
@@ -1066,7 +1066,7 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, llm_model_t
         openparse_context = ""
 
     if enable_multimodal and llm_model_name == "Moondream2-Image":
-        if llm_model_type == "llama":
+        if llm_model_type == "Llama":
             moondream2_path = os.path.join("inputs", "text", "moondream2-cpp")
 
             if not os.path.exists(moondream2_path):
@@ -1169,7 +1169,7 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, llm_model_t
 
     elif enable_multimodal and llm_model_name == "LLaVA-NeXT-Video":
         device = "cuda" if torch.cuda.is_available() else "cpu"
-        if llm_model_type == "llama":
+        if llm_model_type == "Llama":
             return None, None, "LLaVA-NeXT-Video is not supported with llama model type."
         else:
 
@@ -1224,7 +1224,7 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, llm_model_t
 
     elif enable_multimodal and llm_model_name == "Qwen2-Audio":
         processor, model = load_qwen2_audio_model()
-        if llm_model_type == "llama":
+        if llm_model_type == "Llama":
             return None, None, "Qwen2-Audio is not supported with llama model type."
         else:
             try:
@@ -1241,7 +1241,7 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, llm_model_t
                 flush()
 
     else:
-        if llm_model_type == "llama":
+        if llm_model_type == "Llama":
             tokenizer, llm_model, error_message = load_model(llm_model_name, llm_model_type, n_ctx, n_batch)
         else:
             tokenizer, llm_model, error_message = load_model(llm_model_name, llm_model_type, n_ctx=None, n_batch=None)
