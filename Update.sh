@@ -8,6 +8,10 @@ CURRENT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &> /dev/null && pwd)"
 
 source "$CURRENT_DIR/venv/bin/activate"
 
+echo "Setting up local pip cache..."
+mkdir -p "$CURRENT_DIR/pip_cache"
+export PIP_CACHE_DIR="$CURRENT_DIR/pip_cache"
+
 echo "Updating dependencies..."
 mkdir -p "$CURRENT_DIR/logs"
 ERROR_LOG="$CURRENT_DIR/logs/update_errors.log"

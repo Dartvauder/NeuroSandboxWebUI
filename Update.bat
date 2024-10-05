@@ -9,6 +9,10 @@ set CURRENT_DIR=%~dp0
 
 call "%CURRENT_DIR%venv\Scripts\activate.bat"
 
+echo Setting up local pip cache...
+if not exist "%CURRENT_DIR%pip_cache" mkdir "%CURRENT_DIR%pip_cache"
+set PIP_CACHE_DIR=%CURRENT_DIR%pip_cache
+
 echo Updating dependencies...
 if not exist "%CURRENT_DIR%logs" mkdir "%CURRENT_DIR%logs"
 set ERROR_LOG="%CURRENT_DIR%logs\update_errors.log"
@@ -23,10 +27,10 @@ pip install --no-deps -r "%CURRENT_DIR%RequirementsFiles\requirements.txt" 2>> %
 pip install --no-deps -r "%CURRENT_DIR%RequirementsFiles\requirements-cuda.txt" 2>> %ERROR_LOG%
 pip install --no-deps -r "%CURRENT_DIR%RequirementsFiles\requirements-llama-cpp.txt" 2>> %ERROR_LOG%
 pip install --no-deps -r "%CURRENT_DIR%RequirementsFiles\requirements-stable-diffusion-cpp.txt" 2>> %ERROR_LOG%
-pip install --no-build-isolation -e git+https://github.com/PanQiWei/AutoGPTQ.git#egg=auto_gptq 2>> "$ERROR_LOG"
-pip install https://huggingface.co/madbuda/triton-windows-builds/resolve/main/triton-2.1.0-cp310-cp310-win_amd64.whl 2>> "$ERROR_LOG"
-pip install --no-build-isolation -e git+https://github.com/casper-hansen/AutoAWQ.git#egg=autoawq 2>> "$ERROR_LOG"
-pip install --no-build-isolation -e git+https://github.com/turboderp/exllamav2.git#egg=exllamav2 2>> "$ERROR_LOG"
+pip install --no-build-isolation -e git+https://github.com/PanQiWei/AutoGPTQ.git#egg=auto_gptq 2>> %ERROR_LOG%
+pip install https://huggingface.co/madbuda/triton-windows-builds/resolve/main/triton-2.1.0-cp310-cp310-win_amd64.whl 2>> %ERROR_LOG%
+pip install --no-build-isolation -e git+https://github.com/casper-hansen/AutoAWQ.git#egg=autoawq 2>> %ERROR_LOG%
+pip install --no-build-isolation -e git+https://github.com/turboderp/exllamav2.git#egg=exllamav2 2>> %ERROR_LOG%
 pip install git+https://github.com/tencent-ailab/IP-Adapter.git 2>> %ERROR_LOG%
 pip install git+https://github.com/vork/PyNanoInstantMeshes.git 2>> %ERROR_LOG%
 pip install git+https://github.com/openai/CLIP.git 2>> %ERROR_LOG%
