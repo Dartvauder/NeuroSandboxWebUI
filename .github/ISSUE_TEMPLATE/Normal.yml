@@ -2,7 +2,7 @@ name: "🦆 Normal Issue report"
 description: Just describe your issue
 title: '🦆 [Issue] - <title>'
 labels: [
-  "duck"
+  "issue"
 ]
 body:
   - type: textarea
