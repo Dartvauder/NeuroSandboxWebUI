@@ -930,6 +930,15 @@ def process_qwen2_audio(processor, model, input_audio_mm, prompt):
     return response
 
 
+def get_existing_chats():
+    chat_files = []
+    for root, dirs, files in os.walk('outputs'):
+        for file in files:
+            if file.endswith('.txt') and file.startswith('chat_history'):
+                chat_files.append(os.path.join(root, file))
+    return [None] + chat_files
+
+
 def transcribe_audio(audio_file_path):
     device = "cuda" if torch.cuda.is_available() else "cpu"
     whisper_model_path = "inputs/text/whisper-medium"
@@ -1035,12 +1044,18 @@ def get_languages():
     }
 
 
-def generate_text_and_speech(input_text, system_prompt, input_audio, llm_model_type, llm_model_name, llm_lora_model_name, enable_web_search, enable_libretranslate, target_lang, enable_openparse, pdf_file, enable_multimodal, input_image, input_video, input_audio_mm, enable_tts,
+def generate_text_and_speech(input_text, system_prompt, input_audio, llm_model_type, llm_model_name, llm_lora_model_name, selected_chat_file, enable_web_search, enable_libretranslate, target_lang, enable_openparse, pdf_file, enable_multimodal, input_image, input_video, input_audio_mm, enable_tts,
                              llm_settings_html, max_new_tokens, max_length, min_length, n_ctx, n_batch, temperature, top_p, min_p, typical_p, top_k,
                              do_sample, early_stopping, stopping, repetition_penalty, frequency_penalty, presence_penalty, length_penalty, no_repeat_ngram_size, num_beams, num_return_sequences, chat_history_format, tts_settings_html, speaker_wav, language, tts_temperature, tts_top_p, tts_top_k, tts_speed, tts_repetition_penalty, tts_length_penalty, output_format):
     global chat_history, chat_dir, tts_model, whisper_model
 
-    if 'chat_history' not in globals() or chat_history is None:
+    if selected_chat_file:
+        chat_dir = os.path.dirname(selected_chat_file)
+        with open(selected_chat_file, 'r', encoding='utf-8') as f:
+            chat_history = [line.strip().split(': ', 1) for line in f.readlines() if line.strip()]
+
+        yield chat_history, None, chat_dir
+    elif 'chat_history' not in globals() or chat_history is None:
         chat_history = []
 
     if not input_text and not input_audio:
@@ -1392,7 +1407,8 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, llm_model_t
                     os.makedirs(chat_dir)
                     os.makedirs(os.path.join(chat_dir, 'text'))
                     os.makedirs(os.path.join(chat_dir, 'audio'))
-                chat_history_path = os.path.join(chat_dir, 'text', f'chat_history.{chat_history_format}')
+
+                chat_history_path = selected_chat_file if selected_chat_file else os.path.join(chat_dir, 'text', f'chat_history.{chat_history_format}')
                 if chat_history_format == "txt":
                     with open(chat_history_path, "a", encoding="utf-8") as f:
                         f.write(f"Human: {prompt}\n")
@@ -8865,6 +8881,7 @@ chat_interface = gr.Interface(
         gr.Radio(choices=["Transformers", "GPTQ", "AWQ", "BNB", "Llama", "ExLlamaV2"], label=_("Select model type", lang), value="Transformers"),
         gr.Dropdown(choices=llm_models_list, label=_("Select LLM model", lang), value=None),
         gr.Dropdown(choices=llm_lora_models_list, label=_("Select LoRA model (optional)", lang), value=None),
+        gr.Dropdown(choices=get_existing_chats(), label=_("Select existing chat (optional)", lang), value=None)
     ],
     additional_inputs=[
         gr.Checkbox(label=_("Enable WebSearch", lang), value=False),
