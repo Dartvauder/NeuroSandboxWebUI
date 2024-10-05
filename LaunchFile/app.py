@@ -1362,7 +1362,7 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, llm_model_t
                     full_prompt = f"{system_prompt}\n\n{openparse_context}{web_context}{context}Human: {prompt}\nAssistant:"
 
                     for token in generator.generate_simple(full_prompt, settings, max_new_tokens):
-                        text += token
+                        text += token['choices'][0]['text']
                         chat_history[-1][1] = text
                         yield chat_history, None, None
 
@@ -1423,7 +1423,11 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, llm_model_t
                 del whisper_model
             flush()
 
-        chat_history[-1][1] = text
+        if chat_history:
+            chat_history[-1][1] = text
+        else:
+            chat_history.append([prompt, text])
+
         yield chat_history, audio_path, chat_dir
 
 
