@@ -377,7 +377,7 @@ def load_settings():
             "auth": {"username": "admin", "password": "admin"},
             "server_name": "localhost",
             "server_port": 7860,
-            "hf_token": "",
+            "hf_token": "hf_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
             "share_server_address": None,
             "theme": "Default",
             "custom_theme": {
