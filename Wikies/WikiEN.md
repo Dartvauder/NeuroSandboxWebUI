@@ -12,7 +12,7 @@
 4) Set up the model according to the parameters you need
 5) Type (or speak) your request
 6) Click the `Submit` button to receive the generated text and audio response
-#### Optional: you can enable `TTS` mode, select the `voice` and `language` needed to receive an audio response. You can enable `multimodal` and upload an image to get its description. You can enable `websearch` for Internet access. You can enable `libretranslate` to get the translate. You can enable `OpenParse` for working with pdf files. Also you can choose `LORA` model to improve generation
+#### Optional: you can enable `TTS` mode, select the `voice` and `language` needed to receive an audio response. You can enable `multimodal` and upload an image, video and audio files to get its description. You can enable `websearch` for Internet access. You can enable `libretranslate` to get the translate. You can enable `OpenParse` for working with pdf files. Also you can choose `LORA` model to improve generation
 #### Voice samples = *inputs/audio/voices*
 #### LORA = *inputs/text/llm_models/lora*
 #### The voice must be pre-processed (22050 kHz, mono, WAV)

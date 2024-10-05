@@ -12,7 +12,7 @@
 4) 根据您需要的参数设置模型
 5) 输入（或说出）您的请求
 6) 点击`Submit`按钮接收生成的文本和音频响应
-#### 可选：您可以启用`TTS`模式，选择所需的`voice`和`language`以接收音频响应。您可以启用`multimodal`并上传图像以获取其描述。您可以启用`websearch`以访问互联网。您可以启用`libretranslate`以获得翻译。您可以启用`OpenParse`以处理PDF文件。您还可以选择`LORA`模型来改进生成
+#### 可选：您可以启用 TTS 模式，选择所需的 声音 和 语言 以接收音频回复。您可以启用 多模态 并上传图像、视频和音频文件以获取其描述。您可以启用 网络搜索 以访问互联网。您可以启用 libretranslate 以获得翻译。您可以启用 OpenParse 以处理 PDF 文件。此外，您还可以选择 LORA 模型来改善生成。
 #### 语音样本 = *inputs/audio/voices*
 #### LORA = *inputs/text/llm_models/lora*
 #### 语音必须预处理（22050 kHz，单声道，WAV）

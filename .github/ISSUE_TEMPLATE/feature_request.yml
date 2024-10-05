@@ -1,6 +1,9 @@
-name: "Feature request"
+name: "💫 Feature request"
 description: Submit a proposal/request for a new feature
-labels: [ "Feature request" ]
+title: "💫 [FeatureRequest] - <title>"
+labels: [
+  "enhancement"
+]
 body:
   - type: textarea
     id: feature-request
