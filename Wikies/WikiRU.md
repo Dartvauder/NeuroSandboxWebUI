@@ -488,10 +488,3 @@
 * Модели RVC можно взять с [VoiceModels](https://voice-models.com)
 * Модели StableAudio, AudioCraft, AudioLDM 2, TTS, Whisper, MMS, SeamlessM4Tv2, Wav2Lip, LivePortrait, SunoBark, MoonDream2, Upscalers (Latent и Real-ESRGAN), Refiner, GLIGEN, DiffEdit, BLIP-Diffusion, Depth, Marigold, Pix2Pix, Controlnet, AnimateDiff, HotShot-XL, Videos, LDM3D, SD3, Cascade, T2I-IP-ADAPTER, IP-Adapter-FaceID, Riffusion, Rembg, Roop, CodeFormer, DDColor, PixelOE, Real-ESRGAN, StableFast3D, Shap-E, SV34D, Zero123Plus, UVR, Demucs, Kandinsky, Flux, HunyuanDiT, Lumina-T2X, Kolors, AuraFlow, AuraSR, Würstchen, DeepFloydIF, PixArt, PlaygroundV2.5, ModelScope, ZeroScope 2, CogVideoX, MagicPrompt, Latte и Multiband diffusion загружаются автоматически в папку *inputs* при их использовании
 * Голоса вы можете взять где угодно. Запишите свой или возьмите запись из Интернета. Или просто используйте те, которые уже есть в проекте. Главное, чтобы они были предварительно обработаны!
-
-## Известные ошибки:
-
-* Параметр SeamlessM4T `both generations` не работает с аудио
-* RVC, Supir и SV34D не работают вообще
-
-## Планы на будущее:
