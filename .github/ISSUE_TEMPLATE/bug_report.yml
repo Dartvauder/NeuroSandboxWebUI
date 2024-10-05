@@ -18,7 +18,7 @@ body:
     attributes:
       label: "Reproduction steps"
       description: Please enter an explicit description of your issue
-      value: |
+      value:
       render: bash
     validations:
       required: true
