@@ -6,6 +6,7 @@
   "Select LoRA model (optional)": "Выберите модель LoRA (необязательно)",
   "LLM and TTS Settings": "LLM и TTS настройки",
   "TTS and STT Settings": "TTS и STT настройки",
+  "Select existing chat (optional)": "Выберите существующий чат (необязательно)",
   "Upload your video (for Multimodal)": "Загрузите ваше видео (для мультимодального режима)",
   "Upload your audio (for Multimodal)": "Загрузите свое аудио (для мультимодального режима)",
   "Max tokens": "Максимум токенов",
