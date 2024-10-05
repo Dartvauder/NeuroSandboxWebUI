@@ -8859,7 +8859,9 @@ def reload_model_lists():
 
     text_files, image_files, video_files, audio_files, model3d_files, _ = get_output_files()
 
-    return [llm_models_list, llm_lora_models_list, speaker_wavs_list, stable_diffusion_models_list, vae_models_list, lora_models_list, quantized_flux_models_list, flux_lora_models_list, auraflow_lora_models_list, kolors_lora_models_list, textual_inversion_models_list, inpaint_models_list, rvc_models_list, text_files, image_files, video_files, audio_files, model3d_files]
+    chat_files, _ = get_existing_chats()
+
+    return [llm_models_list, llm_lora_models_list, speaker_wavs_list, stable_diffusion_models_list, vae_models_list, lora_models_list, quantized_flux_models_list, flux_lora_models_list, auraflow_lora_models_list, kolors_lora_models_list, textual_inversion_models_list, inpaint_models_list, rvc_models_list, text_files, image_files, video_files, audio_files, model3d_files, chat_files]
 
 
 def reload_interface():
@@ -11523,7 +11525,8 @@ with gr.TabbedInterface(
     dropdowns_to_update = [
         chat_interface.input_components[4],
         chat_interface.input_components[5],
-        chat_interface.input_components[40],
+        chat_interface.input_components[6],
+        chat_interface.input_components[41],
         tts_stt_interface.input_components[3],
         txt2img_interface.input_components[2],
         txt2img_interface.input_components[4],
