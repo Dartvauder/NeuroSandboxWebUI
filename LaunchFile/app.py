@@ -373,10 +373,12 @@ def load_settings():
             "api_open": False,
             "queue_max_size": 10,
             "status_update_rate": "auto",
+            "max_file_size": 1000,
             "auth": {"username": "admin", "password": "admin"},
             "server_name": "localhost",
             "server_port": 7860,
             "hf_token": "",
+            "share_server_address": "",
             "theme": "Default",
             "custom_theme": {
                 "enabled": False,
@@ -8665,7 +8667,7 @@ def download_model(llm_model_url, sd_model_url):
     return "\n".join(messages)
 
 
-def settings_interface(language, share_value, debug_value, monitoring_value, auto_launch, api_status, open_api, queue_max_size, status_update_rate, gradio_auth, server_name, server_port, hf_token, theme,
+def settings_interface(language, share_value, debug_value, monitoring_value, auto_launch, api_status, open_api, queue_max_size, status_update_rate, max_file_size, gradio_auth, server_name, server_port, hf_token, share_server_address, theme,
                        enable_custom_theme, primary_hue, secondary_hue, neutral_hue,
                        spacing_size, radius_size, text_size, font, font_mono):
     settings = load_settings()
@@ -8679,12 +8681,14 @@ def settings_interface(language, share_value, debug_value, monitoring_value, aut
     settings['api_open'] = open_api == "True"
     settings['queue_max_size'] = int(queue_max_size) if queue_max_size else 10
     settings['status_update_rate'] = status_update_rate
+    settings['max_file_size'] = int(max_file_size) if max_file_size else 1000
     if gradio_auth:
         username, password = gradio_auth.split(':')
         settings['auth'] = {"username": username, "password": password}
     settings['server_name'] = server_name
     settings['server_port'] = int(server_port) if server_port else 7860
     settings['hf_token'] = hf_token
+    settings['share_server_address'] = share_server_address
     settings['theme'] = theme
     settings['custom_theme']['enabled'] = enable_custom_theme
     settings['custom_theme']['primary_hue'] = primary_hue
@@ -8709,8 +8713,10 @@ def settings_interface(language, share_value, debug_value, monitoring_value, aut
     message += f"\nQueue max size is {settings['queue_max_size']}"
     message += f"\nStatus update rate is {settings['status_update_rate']}"
     message += f"\nNew Gradio Auth is {settings['auth']}"
-    message += f" Server will run on {settings['server_name']}:{settings['server_port']}"
+    message += f"\nServer will run on {settings['server_name']}:{settings['server_port']}"
     message += f"\nNew HF-Token is {settings['hf_token']}"
+    message += f"\nNew Share server address is {settings['share_server_address']}"
+    message += f"\nNew Max file size is {settings['max_file_size']}"
     message += f"\nTheme set to {theme and settings['custom_theme'] if enable_custom_theme else theme}"
     message += f"\nPlease restart the application for changes to take effect!"
 
@@ -8838,7 +8844,6 @@ def reload_interface():
 
 avatar_user = "avatars/user.png"
 avatar_ai = "avatars/ai.png"
-
 settings = load_settings()
 lang = settings['language']
 
@@ -11373,10 +11378,12 @@ settings_interface = gr.Interface(
         gr.Radio(choices=["True", "False"], label=_("Open API", lang), value="False"),
         gr.Number(label=_("Queue max size", lang), value=settings['queue_max_size']),
         gr.Textbox(label=_("Queue status update rate", lang), value=settings['status_update_rate']),
+        gr.Number(label=_("Max file size", lang), value=settings['max_file_size']),
         gr.Textbox(label=_("Gradio Auth", lang), value=settings['auth']),
         gr.Textbox(label=_("Server Name", lang), value=settings['server_name']),
         gr.Number(label=_("Server Port", lang), value=settings['server_port']),
-        gr.Textbox(label=_("Hugging Face Token", lang), value=settings['hf_token'])
+        gr.Textbox(label=_("Hugging Face Token", lang), value=settings['hf_token']),
+        gr.Textbox(label=_("Share server address", lang), value=settings['share_server_address'])
     ],
     additional_inputs=[
         gr.Radio(choices=["Base", "Default", "Glass", "Monochrome", "Soft"], label=_("Theme", lang), value=settings['theme']),
@@ -11549,6 +11556,8 @@ with gr.TabbedInterface(
         auth=authenticate if settings['auth'] else None,
         server_name=settings['server_name'],
         server_port=settings['server_port'],
+        max_file_size=settings['max_file_size'] * gr.FileSize.MB,
+        share_server_address=settings['share_server_address'],
         favicon_path="project-image.png",
         auth_message=_("Welcome to NeuroSandboxWebUI!", lang)
     )

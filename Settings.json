@@ -8,6 +8,7 @@
     "api_open": false,
     "queue_max_size": 10,
     "status_update_rate": "auto",
+    "max_file_size": 1000,
     "auth": {
         "username": "admin",
         "password": "admin"
@@ -15,6 +16,7 @@
     "server_name": "localhost",
     "server_port": 7860,
     "hf_token": "hf_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+    "share_server_address": "",
     "theme": "Default",
     "custom_theme": {
         "enabled": false,
