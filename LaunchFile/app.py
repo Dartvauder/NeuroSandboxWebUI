@@ -378,7 +378,7 @@ def load_settings():
             "server_name": "localhost",
             "server_port": 7860,
             "hf_token": "",
-            "share_server_address": "",
+            "share_server_address": None,
             "theme": "Default",
             "custom_theme": {
                 "enabled": False,
@@ -394,12 +394,21 @@ def load_settings():
         }
         with open('Settings.json', 'w') as f:
             json.dump(default_settings, f, indent=4)
+        return default_settings
 
     with open('Settings.json', 'r') as f:
-        return json.load(f)
+        settings = json.load(f)
+
+    if settings['share_server_address'] == "":
+        settings['share_server_address'] = None
+
+    return settings
 
 
 def save_settings(settings):
+    if settings['share_server_address'] is None:
+        settings['share_server_address'] = ""
+
     with open('Settings.json', 'w') as f:
         json.dump(settings, f, indent=4)
 
@@ -11557,7 +11566,7 @@ with gr.TabbedInterface(
         server_name=settings['server_name'],
         server_port=settings['server_port'],
         max_file_size=settings['max_file_size'] * gr.FileSize.MB,
-        share_server_address=settings['share_server_address'],
+        share_server_address=settings['share_server_address'] if settings['share_server_address'] else None,
         favicon_path="project-image.png",
         auth_message=_("Welcome to NeuroSandboxWebUI!", lang)
     )
