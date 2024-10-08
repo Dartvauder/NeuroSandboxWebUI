@@ -691,7 +691,7 @@ def generate_magicprompt(prompt, max_new_tokens):
     return enhanced_prompt
 
 
-def load_model(model_name, model_type, n_ctx, n_batch):
+def load_model(model_name, model_type, n_ctx, n_batch, n_ubatch, freq_base, freq_scale):
     device = "cuda" if torch.cuda.is_available() else "cpu"
     if model_name:
         model_path = f"inputs/text/llm_models/{model_name}"
@@ -711,7 +711,7 @@ def load_model(model_name, model_type, n_ctx, n_batch):
                 return None, None, str(e)
         elif model_type == "Llama":
             try:
-                model = Llama().Llama(model_path, n_gpu_layers=-1 if device == "cuda" else 0, n_ctx=n_ctx, n_batch=n_batch)
+                model = Llama().Llama(model_path, n_gpu_layers=-1 if device == "cuda" else 0, n_ctx=n_ctx, n_batch=n_batch, n_ubatch=n_ubatch, freq_base=freq_base, freq_scale=freq_scale)
                 tokenizer = None
                 return tokenizer, model, None
             except Exception as e:
@@ -1045,7 +1045,7 @@ def get_languages():
 
 
 def generate_text_and_speech(input_text, system_prompt, input_audio, llm_model_type, llm_model_name, llm_lora_model_name, selected_chat_file, enable_web_search, enable_libretranslate, target_lang, enable_openparse, pdf_file, enable_multimodal, input_image, input_video, input_audio_mm, enable_tts,
-                             llm_settings_html, max_new_tokens, max_length, min_length, n_ctx, n_batch, temperature, top_p, min_p, typical_p, top_k,
+                             llm_settings_html, max_new_tokens, max_length, min_length, n_ctx, n_batch, n_ubatch, freq_base, freq_scale, temperature, top_p, min_p, typical_p, top_k,
                              do_sample, early_stopping, stopping, repetition_penalty, frequency_penalty, presence_penalty, length_penalty, no_repeat_ngram_size, num_beams, num_return_sequences, chat_history_format, tts_settings_html, speaker_wav, language, tts_temperature, tts_top_p, tts_top_k, tts_speed, tts_repetition_penalty, tts_length_penalty, output_format):
     global chat_history, chat_dir, tts_model, whisper_model
 
@@ -1285,9 +1285,9 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, llm_model_t
 
     else:
         if llm_model_type == "Llama":
-            tokenizer, llm_model, error_message = load_model(llm_model_name, llm_model_type, n_ctx, n_batch)
+            tokenizer, llm_model, error_message = load_model(llm_model_name, llm_model_type, n_ctx, n_batch, n_ubatch, freq_base, freq_scale)
         else:
-            tokenizer, llm_model, error_message = load_model(llm_model_name, llm_model_type, n_ctx=None, n_batch=None)
+            tokenizer, llm_model, error_message = load_model(llm_model_name, llm_model_type, n_ctx=None, n_batch=None, n_ubatch=None, freq_base=None, freq_scale=None)
 
         if llm_lora_model_name:
             tokenizer, llm_model, error_message = load_lora_model(llm_model_name, llm_lora_model_name, llm_model_type)
@@ -8929,8 +8929,11 @@ chat_interface = gr.Interface(
         gr.Slider(minimum=256, maximum=32768, value=512, step=1, label=_("Max tokens", lang)),
         gr.Slider(minimum=256, maximum=32768, value=512, step=1, label=_("Max length", lang)),
         gr.Slider(minimum=256, maximum=32768, value=512, step=1, label=_("Min length", lang)),
-        gr.Slider(minimum=256, maximum=32768, value=512, step=1, label=_("Context size (N_CTX) for llama type models", lang)),
-        gr.Slider(minimum=256, maximum=32768, value=512, step=1, label=_("Context batch (N_BATCH) for llama type models", lang)),
+        gr.Slider(minimum=0, maximum=32768, value=0, step=1, label=_("Context size (N_CTX) for llama type models", lang)),
+        gr.Slider(minimum=0, maximum=32768, value=0, step=1, label=_("Context batch (N_BATCH) for llama type models", lang)),
+        gr.Slider(minimum=0, maximum=32768, value=0, step=1, label=_("Physical batch size (N_UBATCH) for llama type models", lang)),
+        gr.Slider(minimum=0, maximum=1000000, value=0, step=1, label=_("RoPE base frequency (FREQ_BASE) for llama type models", lang)),
+        gr.Slider(minimum=0, maximum=10000, value=0, step=1, label=_("RoPE frequency scaling factor (FREQ_SCALE) for llama type models", lang)),
         gr.Slider(minimum=0.1, maximum=2.0, value=0.7, step=0.1, label=_("Temperature", lang)),
         gr.Slider(minimum=0.01, maximum=1.0, value=0.9, step=0.01, label=_("Top P", lang)),
         gr.Slider(minimum=0.01, maximum=1.0, value=0.05, step=0.01, label=_("Min P", lang)),
@@ -11554,7 +11557,7 @@ with gr.TabbedInterface(
         chat_interface.input_components[4],
         chat_interface.input_components[5],
         chat_interface.input_components[6],
-        chat_interface.input_components[41],
+        chat_interface.input_components[44],
         tts_stt_interface.input_components[3],
         txt2img_interface.input_components[2],
         txt2img_interface.input_components[4],
