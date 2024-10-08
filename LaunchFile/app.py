@@ -209,6 +209,7 @@ ExLlamaV2Config = lazy_import('exllamav2', 'ExLlamaV2Config')
 ExLlamaV2Cache = lazy_import('exllamav2', 'ExLlamaV2Cache')
 ExLlamaV2Tokenizer = lazy_import('exllamav2', 'ExLlamaV2Tokenizer')
 ExLlamaV2StreamingGenerator = lazy_import('exllamav2.generator', 'ExLlamaV2StreamingGenerator')
+ExLlamaV2Sampler = lazy_import('exllamav2.generator', 'ExLlamaV2Sampler')
 ExLlamaV2Lora = lazy_import('exllamav2.lora', 'ExLlamaV2Lora')
 TTS = lazy_import('TTS.api', 'TTS')
 whisper = lazy_import('whisper', "")
@@ -757,14 +758,15 @@ def load_model(model_name, model_type, n_ctx, n_batch, n_ubatch, freq_base, freq
                 return None, None, str(e)
         elif model_type == "ExLlamaV2":
             try:
-                config = ExLlamaV2Config()
+                config = ExLlamaV2Config().ExLlamaV2Config()
                 config.model_dir = model_path
                 config.prepare()
                 model = ExLlamaV2().ExLlamaV2(config)
+                model.load()
                 cache = ExLlamaV2Cache().ExLlamaV2Cache(model)
-                tokenizer = ExLlamaV2Tokenizer().ExLlamaV2Tokenizer(config)
                 model.load_autosplit(cache)
-                return tokenizer, model, None
+                tokenizer = ExLlamaV2Tokenizer().ExLlamaV2Tokenizer(config)
+                return cache, tokenizer, model
             except Exception as e:
                 return None, None, str(e)
     return None, None, None
@@ -820,14 +822,15 @@ def load_lora_model(base_model_name, lora_model_name, model_type):
             tokenizer = AutoTokenizer().AutoTokenizer.from_pretrained(base_model_path)
             return tokenizer, merged_model, None
         elif model_type == "ExLlamaV2":
-            config = ExLlamaV2Config()
+            config = ExLlamaV2Config().ExLlamaV2Config()
             config.model_dir = base_model_path
             config.prepare()
             model = ExLlamaV2().ExLlamaV2(config)
+            model.load()
             cache = ExLlamaV2Cache().ExLlamaV2Cache(model)
-            tokenizer = ExLlamaV2Tokenizer().ExLlamaV2Tokenizer(config)
             model.load_autosplit(cache)
-            ExLlamaV2Lora().ExLlamaV2Lora(lora_model_path)
+            tokenizer = ExLlamaV2Tokenizer().ExLlamaV2Tokenizer(config)
+            ExLlamaV2Lora().ExLlamaV2Lora.from_directory(base_model_path, lora_model_path)
             return tokenizer, model, None
     except Exception as e:
         return None, None, str(e)
@@ -1286,6 +1289,8 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, llm_model_t
     else:
         if llm_model_type == "Llama":
             tokenizer, llm_model, error_message = load_model(llm_model_name, llm_model_type, n_ctx, n_batch, n_ubatch, freq_base, freq_scale)
+        elif llm_model_type == "ExLlamaV2":
+            cache, tokenizer, llm_model, error_message = load_model(llm_model_name, llm_model_type, n_ctx=None, n_batch=None, n_ubatch=None, freq_base=None, freq_scale=None)
         else:
             tokenizer, llm_model, error_message = load_model(llm_model_name, llm_model_type, n_ctx=None, n_batch=None, n_ubatch=None, freq_base=None, freq_scale=None)
 
@@ -1405,13 +1410,18 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, llm_model_t
                     if not chat_history or chat_history[-1][1] is not None:
                         chat_history.append([prompt, ""])
 
-                    generator = ExLlamaV2StreamingGenerator().ExLlamaV2StreamingGenerator(llm_model, tokenizer)
+                    generator = ExLlamaV2StreamingGenerator().ExLlamaV2StreamingGenerator(cache, llm_model, tokenizer)
 
-                    settings.temperature = temperature
-                    settings.top_k = top_k
-                    settings.top_p = top_p
-                    settings.token_repetition_penalty = repetition_penalty
-                    settings.disallow_tokens = tokenizer.encode(stopping) if stopping else None
+                    settings = ExLlamaV2Sampler().ExLlamaV2Sampler.Settings(
+                        temperature=temperature,
+                        top_k=top_k,
+                        top_p=top_p,
+                        typical=typical_p,
+                        token_repetition_penalty=repetition_penalty,
+                        token_frequency_penalty=frequency_penalty,
+                        token_presence_penalty=presence_penalty
+                    )
+                    generator.set_stop_conditions(tokenizer.encode(stopping) if stopping else None)
 
                     full_prompt = f"<|im_start|>system\n{openparse_context}{web_context}{context}{system_prompt}<|im_end|>\n<|im_start|>user\n{prompt}<|im_end|>\n<|im_start|>assistant\n"
 
