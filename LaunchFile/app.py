@@ -1051,8 +1051,36 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, llm_model_t
 
     if selected_chat_file:
         chat_dir = os.path.dirname(selected_chat_file)
-        with open(selected_chat_file, 'r', encoding='utf-8') as f:
-            chat_history = [line.strip().split(': ', 1) for line in f.readlines() if line.strip()]
+        file_extension = os.path.splitext(selected_chat_file)[1].lower()
+
+        if file_extension == '.txt':
+            with open(selected_chat_file, 'r', encoding='utf-8') as f:
+                lines = f.readlines()
+                chat_history = []
+                for line in lines:
+                    if line.startswith("Human:"):
+                        chat_history.append([line.split(":", 1)[1].strip(), None])
+                    elif line.startswith("AI:"):
+                        if chat_history and chat_history[-1][1] is None:
+                            chat_history[-1][1] = line.split(":", 1)[1].strip()
+                        else:
+                            chat_history.append([None, line.split(":", 1)[1].strip()])
+        elif file_extension == '.json':
+            with open(selected_chat_file, 'r', encoding='utf-8') as f:
+                json_data = json.load(f)
+            chat_history = []
+            for entry in json_data:
+                if isinstance(entry, list) and len(entry) == 2:
+                    human_message, ai_message = entry
+                    if human_message.startswith("Human:"):
+                        human_message = human_message[6:].strip()
+                    if ai_message.startswith("AI:"):
+                        ai_message = ai_message[3:].strip()
+                    chat_history.append([human_message, ai_message])
+                else:
+                    print(f"Skipping invalid entry in JSON: {entry}")
+        else:
+            return None, None, f"Unsupported file format: {file_extension}"
 
         yield chat_history, None, chat_dir
     elif 'chat_history' not in globals() or chat_history is None:
@@ -1419,7 +1447,7 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, llm_model_t
                     if os.path.exists(chat_history_path):
                         with open(chat_history_path, "r", encoding="utf-8") as f:
                             chat_history_json = json.load(f)
-                    chat_history_json.append(["Human: " + prompt, "AI: " + (text if text else "")])
+                    chat_history_json.append([f"Human: {prompt}", f"AI: {text}" if text else ""])
                     with open(chat_history_path, "w", encoding="utf-8") as f:
                         json.dump(chat_history_json, f, ensure_ascii=False, indent=4)
                 if enable_tts and text:
