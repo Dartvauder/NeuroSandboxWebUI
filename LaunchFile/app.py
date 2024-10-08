@@ -1348,7 +1348,7 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, llm_model_t
 
                     stop_sequences = [seq.strip() for seq in stopping.split(',')] if stopping.strip() else None
 
-                    full_prompt = f"{system_prompt}\n\n{openparse_context}{web_context}{context}Human: {prompt}\nAssistant:"
+                    full_prompt = f"<|im_start|>system\n{openparse_context}{web_context}{context}{system_prompt}<|im_end|>\n<|im_start|>user\n{prompt}<|im_end|>\n<|im_start|>assistant\n"
 
                     for token in llm_model(
                             full_prompt,
@@ -1385,7 +1385,7 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, llm_model_t
                     settings.token_repetition_penalty = repetition_penalty
                     settings.disallow_tokens = tokenizer.encode(stopping) if stopping else None
 
-                    full_prompt = f"{system_prompt}\n\n{openparse_context}{web_context}{context}Human: {prompt}\nAssistant:"
+                    full_prompt = f"<|im_start|>system\n{openparse_context}{web_context}{context}{system_prompt}<|im_end|>\n<|im_start|>user\n{prompt}<|im_end|>\n<|im_start|>assistant\n"
 
                     for token in generator.generate_simple(full_prompt, settings, max_new_tokens):
                         text += token['choices'][0]['text']
