@@ -272,8 +272,12 @@ def print_system_info():
     else:
         print("CUDA available: No")
 
+    if XFORMERS_AVAILABLE:
+        print(f"Xformers version: {xformers.__version__}")
+    elif not XFORMERS_AVAILABLE:
+        print("Xformers available: No")
+
     print(f"PyTorch version: {torch.__version__}")
-    print(f"Xformers version: {xformers.__version__}")
 
 
 try:
@@ -336,12 +340,12 @@ def add_metadata_to_file(file_path, metadata):
             with taglib.File(file_path, save_on_exit=True) as audio:
                 audio.tags["COMMENT"] = [metadata_str]
         else:
-            print(f"Unsupported file type: {file_extension}")
+            gr.Info(f"Unsupported file type: {file_extension}")
             return
 
-        print(f"Metadata successfully added to {file_path}")
+        gr.Info(f"Metadata successfully added to {file_path}")
     except Exception as e:
-        print(f"Error adding metadata to {file_path}: {str(e)}")
+        gr.Error(f"Error adding metadata to {file_path}: {str(e)}")
 
 
 def load_translation(lang):
@@ -460,13 +464,13 @@ def perform_web_search(query):
             else:
                 result = "No relevant information found."
 
-        print(f"Web search results for '{query}': {result}")
+        gr.Info(f"Web search results for '{query}': {result}")
 
         return result
 
     except Exception as e:
         error_message = f"An error occurred: {str(e)}"
-        print(error_message)
+        gr.Error(error_message)
         return error_message
 
 
@@ -588,7 +592,7 @@ def downscale_audio(input_path, output_path, downscale_factor):
 
 def change_image_format(input_image, new_format, enable_format_changer):
     if not input_image or not enable_format_changer:
-        return None, "Please upload an image and enable format changer!"
+        gr.Info("Please upload an image and enable format changer!")
 
     try:
         input_format = os.path.splitext(input_image)[1][1:]
@@ -604,12 +608,12 @@ def change_image_format(input_image, new_format, enable_format_changer):
         return output_path, f"Image format changed from {input_format} to {new_format}"
 
     except Exception as e:
-        return None, str(e)
+        gr.Error(f"An error occurred: {str(e)}")
 
 
 def change_video_format(input_video, new_format, enable_format_changer):
     if not input_video or not enable_format_changer:
-        return None, "Please upload a video and enable format changer!"
+        gr.Info("Please upload a video and enable format changer!")
 
     try:
         input_format = os.path.splitext(input_video)[1][1:]
@@ -625,12 +629,12 @@ def change_video_format(input_video, new_format, enable_format_changer):
         return output_path, f"Video format changed from {input_format} to {new_format}"
 
     except Exception as e:
-        return None, str(e)
+        gr.Error(f"An error occurred: {str(e)}")
 
 
 def change_audio_format(input_audio, new_format, enable_format_changer):
     if not input_audio or not enable_format_changer:
-        return None, "Please upload an audio file and enable format changer!"
+        gr.Info("Please upload an audio file and enable format changer!")
 
     try:
         input_format = os.path.splitext(input_audio)[1][1:]
@@ -646,19 +650,19 @@ def change_audio_format(input_audio, new_format, enable_format_changer):
         return output_path, f"Audio format changed from {input_format} to {new_format}"
 
     except Exception as e:
-        return None, str(e)
+        gr.Error(f"An error occurred: {str(e)}")
 
 
 def load_magicprompt_model():
     model_path = os.path.join("inputs", "image", "sd_models", "MagicPrompt")
     if not os.path.exists(model_path):
-        print("Downloading MagicPrompt model...")
+        gr.Info("Downloading MagicPrompt model...")
         os.makedirs(model_path, exist_ok=True)
         tokenizer = GPT2Tokenizer().GPT2Tokenizer.from_pretrained("Gustavosta/MagicPrompt-Stable-Diffusion")
         model = GPT2LMHeadModel().GPT2LMHeadModel.from_pretrained("Gustavosta/MagicPrompt-Stable-Diffusion", torch_dtype=torch.float16)
         tokenizer.save_pretrained(model_path)
         model.save_pretrained(model_path)
-        print("MagicPrompt model downloaded")
+        gr.Info("MagicPrompt model downloaded")
     else:
         tokenizer = GPT2Tokenizer().GPT2Tokenizer.from_pretrained(model_path)
         model = GPT2LMHeadModel().GPT2LMHeadModel.from_pretrained(model_path, torch_dtype=torch.float16)
@@ -709,14 +713,14 @@ def load_model(model_name, model_type, n_ctx, n_batch, n_ubatch, freq_base, freq
                 )
                 return tokenizer, model, None
             except Exception as e:
-                return None, None, str(e)
+                gr.Error(f"An error occurred: {str(e)}")
         elif model_type == "Llama":
             try:
                 model = Llama().Llama(model_path, n_gpu_layers=-1 if device == "cuda" else 0, n_ctx=n_ctx, n_batch=n_batch, n_ubatch=n_ubatch, freq_base=freq_base, freq_scale=freq_scale)
                 tokenizer = None
                 return tokenizer, model, None
             except Exception as e:
-                return None, None, str(e)
+                gr.Error(f"An error occurred: {str(e)}")
         elif model_type == "GPTQ":
             try:
                 tokenizer = AutoTokenizer().AutoTokenizer.from_pretrained(model_path)
@@ -729,7 +733,7 @@ def load_model(model_name, model_type, n_ctx, n_batch, n_ubatch, freq_base, freq
                 )
                 return tokenizer, model, None
             except Exception as e:
-                return None, None, str(e)
+                gr.Error(f"An error occurred: {str(e)}")
         elif model_type == "AWQ":
             try:
                 tokenizer = AutoTokenizer().AutoTokenizer.from_pretrained(model_path)
@@ -742,7 +746,7 @@ def load_model(model_name, model_type, n_ctx, n_batch, n_ubatch, freq_base, freq
                 )
                 return tokenizer, model, None
             except Exception as e:
-                return None, None, str(e)
+                gr.Error(f"An error occurred: {str(e)}")
         elif model_type == "BNB":
             try:
                 tokenizer = AutoTokenizer().AutoTokenizer.from_pretrained(model_path)
@@ -755,7 +759,7 @@ def load_model(model_name, model_type, n_ctx, n_batch, n_ubatch, freq_base, freq
                 )
                 return tokenizer, model, None
             except Exception as e:
-                return None, None, str(e)
+                gr.Error(f"An error occurred: {str(e)}")
         elif model_type == "ExLlamaV2":
             try:
                 config = ExLlamaV2Config().ExLlamaV2Config()
@@ -768,7 +772,7 @@ def load_model(model_name, model_type, n_ctx, n_batch, n_ubatch, freq_base, freq
                 tokenizer = ExLlamaV2Tokenizer().ExLlamaV2Tokenizer(config)
                 return cache, tokenizer, model
             except Exception as e:
-                return None, None, str(e)
+                gr.Error(f"An error occurred: {str(e)}")
     return None, None, None
 
 
@@ -833,7 +837,7 @@ def load_lora_model(base_model_name, lora_model_name, model_type):
             ExLlamaV2Lora().ExLlamaV2Lora.from_directory(base_model_path, lora_model_path)
             return tokenizer, model, None
     except Exception as e:
-        return None, None, str(e)
+        gr.Error(f"An error occurred: {str(e)}")
     finally:
         if 'tokenizer' in locals():
             del tokenizer
@@ -847,7 +851,7 @@ def load_moondream2_model(model_id, revision):
     device = "cuda" if torch.cuda.is_available() else "cpu"
     try:
         if not os.path.exists(moondream2_model_path):
-            print(f"Downloading MoonDream2 model...")
+            gr.Info(f"Downloading MoonDream2 model...")
             os.makedirs(moondream2_model_path, exist_ok=True)
             model = AutoModelForCausalLM().AutoModelForCausalLM.from_pretrained(
                 model_id, trust_remote_code=True, revision=revision
@@ -855,14 +859,14 @@ def load_moondream2_model(model_id, revision):
             tokenizer = AutoTokenizer().AutoTokenizer.from_pretrained(model_id, revision=revision)
             model.save_pretrained(moondream2_model_path)
             tokenizer.save_pretrained(moondream2_model_path)
-            print("MoonDream2 model downloaded")
+            gr.Info("MoonDream2 model downloaded")
         else:
             model = AutoModelForCausalLM().AutoModelForCausalLM.from_pretrained(moondream2_model_path, trust_remote_code=True).to(device)
             tokenizer = AutoTokenizer().AutoTokenizer.from_pretrained(moondream2_model_path)
         return model, tokenizer, None
 
     except Exception as e:
-        return None, None, str(e)
+        gr.Error(f"An error occurred: {str(e)}")
     finally:
         del tokenizer
         del model
@@ -874,7 +878,7 @@ def load_llava_next_video_model():
     device = "cuda" if torch.cuda.is_available() else "cpu"
     try:
         if not os.path.exists(model_path):
-            print("Downloading LLaVA-NeXT-Video model...")
+            gr.Info("Downloading LLaVA-NeXT-Video model...")
             os.makedirs(model_path, exist_ok=True)
             model = LlavaNextVideoForConditionalGeneration().LlavaNextVideoForConditionalGeneration.from_pretrained(
                 "llava-hf/LLaVA-NeXT-Video-7B-hf",
@@ -886,7 +890,7 @@ def load_llava_next_video_model():
                 "llava-hf/LLaVA-NeXT-Video-7B-hf")
             model.save_pretrained(model_path)
             processor.save_pretrained(model_path)
-            print("LLaVA-NeXT-Video model downloaded")
+            gr.Info("LLaVA-NeXT-Video model downloaded")
         else:
             model = LlavaNextVideoForConditionalGeneration().LlavaNextVideoForConditionalGeneration.from_pretrained(
                 model_path, torch_dtype=torch.float16, low_cpu_mem_usage=True, trust_remote_code=True).to(device)
@@ -894,7 +898,7 @@ def load_llava_next_video_model():
         return model, processor, None
 
     except Exception as e:
-        return None, None, str(e)
+        gr.Error(f"An error occurred: {str(e)}")
     finally:
         del processor
         del model
@@ -904,10 +908,10 @@ def load_llava_next_video_model():
 def load_qwen2_audio_model():
     qwen2_audio_path = os.path.join("inputs", "text", "Qwen2-Audio")
     if not os.path.exists(qwen2_audio_path):
-        print("Downloading Qwen2-Audio model...")
+        gr.Info("Downloading Qwen2-Audio model...")
         os.makedirs(qwen2_audio_path, exist_ok=True)
         Repo.clone_from("https://huggingface.co/Qwen/Qwen2-Audio-7B-Instruct", qwen2_audio_path)
-        print("Qwen2-Audio model downloaded")
+        gr.Info("Qwen2-Audio model downloaded")
 
     processor = AutoProcessor().AutoProcessor.from_pretrained(qwen2_audio_path)
     model = Qwen2AudioForConditionalGeneration().Qwen2AudioForConditionalGeneration.from_pretrained(qwen2_audio_path,
@@ -946,11 +950,13 @@ def transcribe_audio(audio_file_path):
     device = "cuda" if torch.cuda.is_available() else "cpu"
     whisper_model_path = "inputs/text/whisper-medium"
     if not os.path.exists(whisper_model_path):
+        gr.Info("Downloading Whisper...")
         os.makedirs(whisper_model_path, exist_ok=True)
         url = ("https://openaipublic.azureedge.net/main/whisper/models"
                "/345ae4da62f9b3d59415adc60127b97c714f32e89e936602e85993674d08dcb1/medium.pt")
         r = requests.get(url, allow_redirects=True)
         open(os.path.join(whisper_model_path, "medium.pt"), "wb").write(r.content)
+        gr.Info("Whisper model downloaded")
     model_file = os.path.join(whisper_model_path, "medium.pt")
     model = whisper().whisper.load_model(model_file, device=device)
     result = model.transcribe(audio_file_path)
@@ -960,23 +966,23 @@ def transcribe_audio(audio_file_path):
 def load_tts_model():
     tts_model_path = "inputs/audio/XTTS-v2"
     if not os.path.exists(tts_model_path):
-        print("Downloading TTS...")
+        gr.Info("Downloading TTS...")
         os.makedirs(tts_model_path, exist_ok=True)
         Repo.clone_from("https://huggingface.co/coqui/XTTS-v2", tts_model_path)
-        print("TTS model downloaded")
+        gr.Info("TTS model downloaded")
     return TTS().TTS(model_path=tts_model_path, config_path=f"{tts_model_path}/config.json")
 
 
 def load_whisper_model():
     whisper_model_path = "inputs/text/whisper-medium"
     if not os.path.exists(whisper_model_path):
-        print("Downloading Whisper...")
+        gr.Info("Downloading Whisper...")
         os.makedirs(whisper_model_path, exist_ok=True)
         url = ("https://openaipublic.azureedge.net/main/whisper/models"
                "/345ae4da62f9b3d59415adc60127b97c714f32e89e936602e85993674d08dcb1/medium.pt")
         r = requests.get(url, allow_redirects=True)
         open(os.path.join(whisper_model_path, "medium.pt"), "wb").write(r.content)
-        print("Whisper downloaded")
+        gr.Info("Whisper downloaded")
     model_file = os.path.join(whisper_model_path, "medium.pt")
     return whisper().whisper.load_model(model_file)
 
@@ -989,7 +995,7 @@ def load_audiocraft_model(model_name):
     global audiocraft_model_path
     audiocraft_model_path = os.path.join("inputs", "audio", "audiocraft", model_name)
     if not os.path.exists(audiocraft_model_path):
-        print(f"Downloading AudioCraft model: {model_name}...")
+        gr.Info(f"Downloading AudioCraft model: {model_name}...")
         os.makedirs(audiocraft_model_path, exist_ok=True)
         if model_name == "musicgen-stereo-medium":
             Repo.clone_from("https://huggingface.co/facebook/musicgen-stereo-medium", audiocraft_model_path)
@@ -1011,17 +1017,17 @@ def load_audiocraft_model(model_name):
             Repo.clone_from("https://huggingface.co/facebook/magnet-medium-10secs", audiocraft_model_path)
         elif model_name == "audio-magnet-medium":
             Repo.clone_from("https://huggingface.co/facebook/audio-magnet-medium", audiocraft_model_path)
-        print(f"AudioCraft model {model_name} downloaded")
+        gr.Info(f"AudioCraft model {model_name} downloaded")
     return audiocraft_model_path
 
 
 def load_multiband_diffusion_model():
     multiband_diffusion_path = os.path.join("inputs", "audio", "audiocraft", "multiband-diffusion")
     if not os.path.exists(multiband_diffusion_path):
-        print(f"Downloading Multiband Diffusion model")
+        gr.Info(f"Downloading Multiband Diffusion model")
         os.makedirs(multiband_diffusion_path, exist_ok=True)
         Repo.clone_from("https://huggingface.co/facebook/multiband-diffusion", multiband_diffusion_path)
-        print("Multiband Diffusion model downloaded")
+        gr.Info("Multiband Diffusion model downloaded")
     return multiband_diffusion_path
 
 
@@ -1081,20 +1087,20 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, llm_model_t
                         ai_message = ai_message[3:].strip()
                     chat_history.append([human_message, ai_message])
                 else:
-                    print(f"Skipping invalid entry in JSON: {entry}")
+                    gr.Info(f"Skipping invalid entry in JSON: {entry}")
         else:
-            return None, None, f"Unsupported file format: {file_extension}"
+            gr.Info(f"Unsupported file format: {file_extension}")
 
         yield chat_history, None, chat_dir
     elif 'chat_history' not in globals() or chat_history is None:
         chat_history = []
 
     if not input_text and not input_audio:
-        return None, None, "Please, enter your request!"
+        gr.Info("Please, enter your request!")
     prompt = transcribe_audio(input_audio) if input_audio else input_text
 
     if not llm_model_name:
-        return None, None, "Please, select a LLM model!"
+        gr.Info("Please, select a LLM model!")
 
     if not system_prompt:
         system_prompt = "You are a helpful assistant."
@@ -1116,10 +1122,10 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, llm_model_t
             moondream2_path = os.path.join("inputs", "text", "moondream2-cpp")
 
             if not os.path.exists(moondream2_path):
-                print("Downloading Moondream2 model...")
+                gr.Info("Downloading Moondream2 model...")
                 os.makedirs(moondream2_path, exist_ok=True)
                 Repo.clone_from("https://huggingface.co/vikhyatk/moondream2", moondream2_path)
-                print("Moondream2 model downloaded")
+                gr.Info("Moondream2 model downloaded")
 
             chat_handler = MoondreamChatHandler().MoondreamChatHandler.from_pretrained(
                 repo_id="vikhyatk/moondream2",
@@ -1145,7 +1151,7 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, llm_model_t
 
                     data_uri = image_to_base64_data_uri(image_path)
                 else:
-                    return None, None, "Please upload an image for multimodal input."
+                    gr.Info("Please upload an image for multimodal input.")
 
                 context = ""
                 for human_text, ai_text in chat_history[-5:]:
@@ -1170,7 +1176,7 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, llm_model_t
                     yield chat_history, None, None
 
             except Exception as e:
-                return None, None, str(e)
+                gr.Error(f"An error occurred: {str(e)}")
 
             finally:
                 del llm
@@ -1187,7 +1193,7 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, llm_model_t
                     image = Image.open(input_image)
                     enc_image = model.encode_image(image)
                 else:
-                    return None, None, "Please upload an image for multimodal input."
+                    gr.Info("Please upload an image for multimodal input.")
 
                 context = ""
                 for human_text, ai_text in chat_history[-5:]:
@@ -1206,7 +1212,7 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, llm_model_t
                     yield chat_history, None, None
 
             except Exception as e:
-                return None, None, str(e)
+                gr.Error(f"An error occurred: {str(e)}")
 
             finally:
                 del model
@@ -1216,7 +1222,7 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, llm_model_t
     elif enable_multimodal and llm_model_name == "LLaVA-NeXT-Video":
         device = "cuda" if torch.cuda.is_available() else "cpu"
         if llm_model_type == "Llama":
-            return None, None, "LLaVA-NeXT-Video is not supported with llama model type."
+            gr.Info("LLaVA-NeXT-Video is not supported with llama model type.")
         else:
 
             model, processor = load_llava_next_video_model()
@@ -1228,7 +1234,7 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, llm_model_t
                     indices = np.arange(0, total_frames, total_frames / 8).astype(int)
                     clip = read_video_pyav(container, indices)
                 else:
-                    return None, None, "Please upload a video for LLaVA-NeXT-Video input."
+                    gr.Info("Please upload a video for LLaVA-NeXT-Video input.")
 
                 context = ""
                 for human_text, ai_text in chat_history[-5:]:
@@ -1261,7 +1267,7 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, llm_model_t
                 yield chat_history, None, None
 
             except Exception as e:
-                return None, None, str(e)
+                gr.Error(f"An error occurred: {str(e)}")
 
             finally:
                 del model
@@ -1269,9 +1275,11 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, llm_model_t
                 flush()
 
     elif enable_multimodal and llm_model_name == "Qwen2-Audio":
+        if not input_audio_mm:
+            gr.Info("Please upload a audio for Qwen2-Audio input.")
         processor, model = load_qwen2_audio_model()
         if llm_model_type == "Llama":
-            return None, None, "Qwen2-Audio is not supported with llama model type."
+            gr.Info("Qwen2-Audio is not supported with llama model type.")
         else:
             try:
                 response = process_qwen2_audio(processor, model, input_audio_mm, prompt)
@@ -1280,7 +1288,7 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, llm_model_t
                 chat_history[-1][1] = response
                 yield chat_history, None, None
             except Exception as e:
-                return None, None, str(e)
+                gr.Error(f"An error occurred: {str(e)}")
             finally:
                 del processor
                 del model
@@ -1297,7 +1305,7 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, llm_model_t
         if llm_lora_model_name:
             tokenizer, llm_model, error_message = load_lora_model(llm_model_name, llm_lora_model_name, llm_model_type)
         if error_message:
-            return None, None, error_message
+            gr.Info(error_message)
         tts_model = None
         whisper_model = None
         text = None
@@ -1308,7 +1316,7 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, llm_model_t
                 if not tts_model:
                     tts_model = load_tts_model()
                 if not speaker_wav or not language:
-                    return None, None, "Please, select a voice and language for TTS!"
+                    gr.Info("Please, select a voice and language for TTS!")
                 device = "cuda" if torch.cuda.is_available() else "cpu"
                 tts_model = tts_model.to(device)
             if input_audio:
@@ -1437,7 +1445,7 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, llm_model_t
                         translation = translator.translate(text, detect_lang, target_lang)
                         text = translation
                     except urllib.error.URLError:
-                        return None, None, "LibreTranslate is not running. Please start the LibreTranslate server."
+                        gr.Info("LibreTranslate is not running. Please start the LibreTranslate server.")
 
                 if not chat_dir:
                     now = datetime.now()
@@ -1475,7 +1483,7 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, llm_model_t
                         sf.write(audio_path, wav, 22050)
 
         except Exception as e:
-            return None, None, str(e)
+            gr.Error(f"An error occurred: {str(e)}")
 
         finally:
             if tokenizer is not None:
@@ -1503,13 +1511,13 @@ def generate_tts_stt(text, audio, tts_settings_html, speaker_wav, language, tts_
     stt_output = None
 
     if not text and not audio:
-        return None, "Please enter text for TTS or record audio for STT!"
+        gr.Info("Please enter text for TTS or record audio for STT!")
 
     if text:
         if not tts_model:
             tts_model = load_tts_model()
         if not speaker_wav or not language:
-            return None, "Please select a voice and language for TTS!"
+            gr.Info("Please select a voice and language for TTS!")
         device = "cuda" if torch.cuda.is_available() else "cpu"
         tts_model = tts_model.to(device)
 
@@ -1518,7 +1526,7 @@ def generate_tts_stt(text, audio, tts_settings_html, speaker_wav, language, tts_
                                 temperature=tts_temperature, top_p=tts_top_p, top_k=tts_top_k, speed=tts_speed,
                                 repetition_penalty=tts_repetition_penalty, length_penalty=tts_length_penalty                                )
         except Exception as e:
-            return None, str(e)
+            gr.Error(f"An error occurred: {str(e)}")
 
         finally:
             del tts_model
@@ -1547,7 +1555,7 @@ def generate_tts_stt(text, audio, tts_settings_html, speaker_wav, language, tts_
             stt_output = transcribe_audio(audio)
 
         except Exception as e:
-            return None, str(e)
+            gr.Error(f"An error occurred: {str(e)}")
 
         finally:
             del whisper_model
@@ -1594,16 +1602,16 @@ def generate_mms_tts(text, language, output_format):
     model_path = os.path.join("inputs", "text", "mms", "text2speech", language)
 
     if not os.path.exists(model_path):
-        print(f"Downloading MMS TTS model for {language}...")
+        gr.Info(f"Downloading MMS TTS model for {language}...")
         os.makedirs(model_path, exist_ok=True)
         Repo.clone_from(f"https://huggingface.co/{model_names[language]}", model_path)
-        print(f"MMS TTS model for {language} downloaded")
+        gr.Info(f"MMS TTS model for {language} downloaded")
 
     if not text:
-        return None, "Please enter your request!"
+        gr.Info("Please enter your request!")
 
     if not language:
-        return None, "Please select a language!"
+        gr.Info("Please select a language!")
 
     try:
         tokenizer = VitsTokenizer().VitsTokenizer.from_pretrained(model_path)
@@ -1625,12 +1633,12 @@ def generate_mms_tts(text, language, output_format):
         elif output_format == "ogg":
             sf.write(output_file, waveform.numpy(), model.config.sampling_rate, format='ogg')
         else:
-            return None, f"Unsupported output format: {output_format}"
+            gr.Info(f"Unsupported output format: {output_format}")
 
         return output_file, None
 
     except Exception as e:
-        return None, str(e)
+        gr.Error(f"An error occurred: {str(e)}")
 
     finally:
         del model
@@ -1642,17 +1650,17 @@ def transcribe_mms_stt(audio_file, language, output_format):
     model_path = os.path.join("inputs", "text", "mms", "speech2text")
 
     if not os.path.exists(model_path):
-        print("Downloading MMS STT model...")
+        gr.Info("Downloading MMS STT model...")
         os.makedirs(model_path, exist_ok=True)
         repo = Repo.clone_from("https://huggingface.co/facebook/mms-1b-all", model_path, no_checkout=True)
         repo.git.checkout("HEAD", "--", ".")
-        print("MMS STT model downloaded")
+        gr.Info("MMS STT model downloaded")
 
     if not audio_file:
-        return None, "Please record your request!"
+        gr.Info("Please record your request!")
 
     if not language:
-        return None, "Please select a language!"
+        gr.Info("Please select a language!")
 
     try:
         processor = AutoProcessor().AutoProcessor.from_pretrained(model_path)
@@ -1681,12 +1689,12 @@ def transcribe_mms_stt(audio_file, language, output_format):
             with open(output_file, "w", encoding="utf-8") as f:
                 json.dump({"transcription": transcription}, f, ensure_ascii=False, indent=4)
         else:
-            return None, f"Unsupported output format: {output_format}"
+            gr.Info(f"Unsupported output format: {output_format}")
 
         return transcription, None
 
     except Exception as e:
-        return None, str(e)
+        gr.Error(f"An error occurred: {str(e)}")
 
     finally:
         del model
@@ -1704,22 +1712,22 @@ def seamless_m4tv2_process(input_type, input_text, input_audio, src_lang, tgt_la
     MODEL_PATH = os.path.join("inputs", "text", "seamless-m4t-v2")
 
     if not os.path.exists(MODEL_PATH):
-        print("Downloading SeamlessM4Tv2 model...")
+        gr.Info("Downloading SeamlessM4Tv2 model...")
         os.makedirs(MODEL_PATH, exist_ok=True)
         Repo.clone_from("https://huggingface.co/facebook/seamless-m4t-v2-large", MODEL_PATH)
-        print("SeamlessM4Tv2 model downloaded")
+        gr.Info("SeamlessM4Tv2 model downloaded")
 
     if not input_text and not input_audio:
-        return None, "Please enter your request!"
+        gr.Info("Please enter your request!")
 
     if not src_lang:
-        return None, "Please select your source language!"
+        gr.Info("Please select your source language!")
 
     if not tgt_lang:
-        return None, "Please select your target language!"
+        gr.Info("Please select your target language!")
 
     if not dataset_lang:
-        return None, "Please select your dataset language!"
+        gr.Info("Please select your dataset language!")
 
     try:
         processor = AutoProcessor().AutoProcessor.from_pretrained(MODEL_PATH)
@@ -1773,7 +1781,7 @@ def seamless_m4tv2_process(input_type, input_text, input_audio, src_lang, tgt_la
             elif audio_output_format == "ogg":
                 sf.write(audio_path, audio_output, 16000, format='ogg')
             else:
-                print(f"Unsupported audio format: {audio_output_format}")
+                gr.Info(f"Unsupported audio format: {audio_output_format}")
                 audio_path = None
         else:
             audio_path = None
@@ -1791,7 +1799,7 @@ def seamless_m4tv2_process(input_type, input_text, input_audio, src_lang, tgt_la
                 with open(text_path, "w", encoding="utf-8") as f:
                     json.dump({"text": text_output}, f, ensure_ascii=False, indent=4)
             else:
-                print(f"Unsupported text format: {text_output_format}")
+                gr.Info(f"Unsupported text format: {text_output_format}")
                 text_output = None
         else:
             text_output = None
@@ -1799,7 +1807,7 @@ def seamless_m4tv2_process(input_type, input_text, input_audio, src_lang, tgt_la
         return text_output, audio_path, None
 
     except Exception as e:
-        return None, None, str(e)
+        gr.Error(f"An error occurred: {str(e)}")
 
     finally:
         del model
@@ -1810,13 +1818,13 @@ def seamless_m4tv2_process(input_type, input_text, input_audio, src_lang, tgt_la
 def translate_text(text, source_lang, target_lang, enable_translate_history, translate_history_format, file=None):
 
     if not text:
-        return None, "Please enter your request!"
+        gr.Info("Please enter your request!")
 
     if not source_lang:
-        return None, "Please select your source language!"
+        gr.Info("Please select your source language!")
 
     if not target_lang:
-        return None, "Please select your target language!"
+        gr.Info("Please select your target language!")
 
     try:
         translator = LibreTranslateAPI("http://127.0.0.1:5000")
@@ -1857,10 +1865,10 @@ def translate_text(text, source_lang, target_lang, enable_translate_history, tra
 
     except urllib.error.URLError as e:
         error_message = "LibreTranslate is not running. Please start the LibreTranslate server."
-        return error_message
+        gr.Info(error_message)
 
     except Exception as e:
-        return str(e)
+        gr.Error(f"An error occurred: {str(e)}")
 
     finally:
         flush()
@@ -1879,7 +1887,7 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
     stop_idx = None
 
     if not stable_diffusion_model_name:
-        return None, None, "Please, select a StableDiffusion model!"
+        gr.Info("Please, select a StableDiffusion model!")
 
     if enable_quantize:
 
@@ -1909,7 +1917,7 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
             )
 
             if result.returncode != 0:
-                return None, None, f"Error in sd-txt2img-quantize.py: {result.stderr}"
+                gr.Info(f"Error in sd-txt2img-quantize.py: {result.stderr}")
 
             image_paths = []
             output = result.stdout.strip()
@@ -1922,7 +1930,7 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
             return image_paths, None, f"Images generated successfully using quantized model. Seed used: {seed}"
 
         except Exception as e:
-            return None, None, str(e)
+            gr.Error(f"An error occurred: {str(e)}")
 
     else:
         try:
@@ -1930,7 +1938,7 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
                                                        f"{stable_diffusion_model_name}")
 
             if not os.path.exists(stable_diffusion_model_path):
-                return None, None, f"StableDiffusion model not found: {stable_diffusion_model_path}"
+                gr.Info(f"StableDiffusion model not found: {stable_diffusion_model_path}")
 
             if enable_sag:
                 stable_diffusion_model = StableDiffusionSAGPipeline().StableDiffusionSAGPipeline.from_single_file(
@@ -1956,9 +1964,9 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
                         stable_diffusion_model_path, use_safetensors=True, device_map="auto", attention_slice=1,
                         torch_dtype=torch.float16, variant="fp16")
                 else:
-                    return None, None, "Invalid StableDiffusion model type!"
+                    gr.Info("Invalid StableDiffusion model type!")
         except (ValueError, KeyError):
-            return None, None, "The selected model is not compatible with the chosen model type"
+            gr.Error("The selected model is not compatible with the chosen model type")
 
         device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -2025,10 +2033,10 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
                 stable_diffusion_model.scheduler = DDPMScheduler().DDPMScheduler.from_config(
                     stable_diffusion_model.scheduler.config)
 
-            print(f"Scheduler successfully set to {stable_diffusion_scheduler}")
+            gr.Info(f"Scheduler successfully set to {stable_diffusion_scheduler}")
         except Exception as e:
-            print(f"Error initializing scheduler: {e}")
-            print("Using default scheduler")
+            gr.Error(f"Error initializing scheduler: {e}")
+            gr.Info("Using default scheduler")
 
         stable_diffusion_model.safety_checker = None
 
@@ -2058,7 +2066,7 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
         lora_loaded = False
         if lora_model_names and lora_scales:
             if len(lora_model_names) != len(lora_scales):
-                print(
+                gr.Info(
                     f"Warning: Number of LoRA models ({len(lora_model_names)}) does not match number of scales ({len(lora_scales)}). Using available scales.")
 
             for i, lora_model_name in enumerate(lora_model_names):
@@ -2074,9 +2082,9 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
                         stable_diffusion_model.load_lora_weights(lora_model_path, adapter_name=adapter_name)
                         stable_diffusion_model.fuse_lora(lora_scale=lora_scale)
                         lora_loaded = True
-                        print(f"Loaded LoRA {lora_model_name} with scale {lora_scale}")
+                        gr.Info(f"Loaded LoRA {lora_model_name} with scale {lora_scale}")
                     except Exception as e:
-                        print(f"Error loading LoRA {lora_model_name}: {str(e)}")
+                        gr.Error(f"Error loading LoRA {lora_model_name}: {str(e)}")
 
         ti_loaded = False
         if textual_inversion_model_names:
@@ -2088,9 +2096,9 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
                         token = f"<{os.path.splitext(textual_inversion_model_name)[0]}>"
                         stable_diffusion_model.load_textual_inversion(textual_inversion_model_path, token=token)
                         ti_loaded = True
-                        print(f"Loaded textual inversion: {token}")
+                        gr.Info(f"Loaded textual inversion: {token}")
                     except Exception as e:
-                        print(f"Error loading Textual Inversion {textual_inversion_model_name}: {str(e)}")
+                        gr.Error(f"Error loading Textual Inversion {textual_inversion_model_name}: {str(e)}")
 
         def process_prompt_with_ti(input_prompt, textual_inversion_model_names):
             if not textual_inversion_model_names:
@@ -2104,12 +2112,12 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
                     processed_prompt = processed_prompt.replace(base_name, token)
                     processed_prompt = processed_prompt.replace(token.lower(), token)
                     processed_prompt = processed_prompt.replace(token.upper(), token)
-                    print(f"Applied Textual Inversion token: {token}")
+                    gr.Info(f"Applied Textual Inversion token: {token}")
 
             if processed_prompt != input_prompt:
-                print(f"Prompt changed from '{input_prompt}' to '{processed_prompt}'")
+                gr.Info(f"Prompt changed from '{input_prompt}' to '{processed_prompt}'")
             else:
-                print("No Textual Inversion tokens applied to this prompt")
+                gr.Info("No Textual Inversion tokens applied to this prompt")
 
             return processed_prompt
 
@@ -2317,7 +2325,7 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
             return image_paths, [gif_path] if gif_path else [], f"Images generated successfully. Seed used: {seed}"
 
         except Exception as e:
-            return None, None, str(e)
+            gr.Error(f"An error occurred: {str(e)}")
 
         finally:
             del stable_diffusion_model
@@ -2333,10 +2341,10 @@ def generate_image_img2img(prompt, negative_prompt, init_image, strength, stable
     stop_idx = None
 
     if not stable_diffusion_model_name:
-        return None, None, "Please, select a StableDiffusion model!"
+        gr.Info("Please, select a StableDiffusion model!")
 
     if not init_image:
-        return None, None, "Please, upload an initial image!"
+        gr.Info("Please, upload an initial image!")
 
     if enable_quantize:
         try:
@@ -2366,7 +2374,7 @@ def generate_image_img2img(prompt, negative_prompt, init_image, strength, stable
             )
 
             if result.returncode != 0:
-                return None, None, f"Error in sd-img2img-quantize.py: {result.stderr}"
+                gr.Info(f"Error in sd-img2img-quantize.py: {result.stderr}")
 
             image_paths = []
             output = result.stdout.strip()
@@ -2379,7 +2387,7 @@ def generate_image_img2img(prompt, negative_prompt, init_image, strength, stable
             return image_paths, None, f"Images generated successfully using quantized model. Seed used: {seed}"
 
         except Exception as e:
-            return None, None, str(e)
+            gr.Error(f"An error occurred: {str(e)}")
 
     else:
         try:
@@ -2387,7 +2395,7 @@ def generate_image_img2img(prompt, negative_prompt, init_image, strength, stable
                                                        f"{stable_diffusion_model_name}")
 
             if not os.path.exists(stable_diffusion_model_path):
-                return None, None, f"StableDiffusion model not found: {stable_diffusion_model_path}"
+                gr.Info(f"StableDiffusion model not found: {stable_diffusion_model_path}")
 
             if stable_diffusion_model_type == "SD":
                 stable_diffusion_model = StableDiffusionImg2ImgPipeline().StableDiffusionImg2ImgPipeline.from_single_file(
@@ -2404,7 +2412,7 @@ def generate_image_img2img(prompt, negative_prompt, init_image, strength, stable
             else:
                 return None, None, "Invalid StableDiffusion model type!"
         except (ValueError, KeyError):
-            return None, None, "The selected model is not compatible with the chosen model type"
+            gr.Error("The selected model is not compatible with the chosen model type")
 
         device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -2471,10 +2479,10 @@ def generate_image_img2img(prompt, negative_prompt, init_image, strength, stable
                 stable_diffusion_model.scheduler = DDPMScheduler().DDPMScheduler.from_config(
                     stable_diffusion_model.scheduler.config)
 
-            print(f"Scheduler successfully set to {stable_diffusion_scheduler}")
+            gr.Info(f"Scheduler successfully set to {stable_diffusion_scheduler}")
         except Exception as e:
-            print(f"Error initializing scheduler: {e}")
-            print("Using default scheduler")
+            gr.Error(f"Error initializing scheduler: {e}")
+            gr.Info("Using default scheduler")
 
         stable_diffusion_model.safety_checker = None
 
@@ -2498,7 +2506,7 @@ def generate_image_img2img(prompt, negative_prompt, init_image, strength, stable
         lora_loaded = False
         if lora_model_names and lora_scales:
             if len(lora_model_names) != len(lora_scales):
-                print(
+                gr.Info(
                     f"Warning: Number of LoRA models ({len(lora_model_names)}) does not match number of scales ({len(lora_scales)}). Using available scales.")
 
             for i, lora_model_name in enumerate(lora_model_names):
@@ -2514,9 +2522,9 @@ def generate_image_img2img(prompt, negative_prompt, init_image, strength, stable
                         stable_diffusion_model.load_lora_weights(lora_model_path, adapter_name=adapter_name)
                         stable_diffusion_model.fuse_lora(lora_scale=lora_scale)
                         lora_loaded = True
-                        print(f"Loaded LoRA {lora_model_name} with scale {lora_scale}")
+                        gr.Info(f"Loaded LoRA {lora_model_name} with scale {lora_scale}")
                     except Exception as e:
-                        print(f"Error loading LoRA {lora_model_name}: {str(e)}")
+                        gr.Error(f"Error loading LoRA {lora_model_name}: {str(e)}")
 
         ti_loaded = False
         if textual_inversion_model_names:
@@ -2528,9 +2536,9 @@ def generate_image_img2img(prompt, negative_prompt, init_image, strength, stable
                         token = f"<{os.path.splitext(textual_inversion_model_name)[0]}>"
                         stable_diffusion_model.load_textual_inversion(textual_inversion_model_path, token=token)
                         ti_loaded = True
-                        print(f"Loaded textual inversion: {token}")
+                        gr.Info(f"Loaded textual inversion: {token}")
                     except Exception as e:
-                        print(f"Error loading Textual Inversion {textual_inversion_model_name}: {str(e)}")
+                        gr.Error(f"Error loading Textual Inversion {textual_inversion_model_name}: {str(e)}")
 
         def process_prompt_with_ti(input_prompt, textual_inversion_model_names):
             if not textual_inversion_model_names:
@@ -2544,12 +2552,12 @@ def generate_image_img2img(prompt, negative_prompt, init_image, strength, stable
                     processed_prompt = processed_prompt.replace(base_name, token)
                     processed_prompt = processed_prompt.replace(token.lower(), token)
                     processed_prompt = processed_prompt.replace(token.upper(), token)
-                    print(f"Applied Textual Inversion token: {token}")
+                    gr.Info(f"Applied Textual Inversion token: {token}")
 
             if processed_prompt != input_prompt:
-                print(f"Prompt changed from '{input_prompt}' to '{processed_prompt}'")
+                gr.Info(f"Prompt changed from '{input_prompt}' to '{processed_prompt}'")
             else:
-                print("No Textual Inversion tokens applied to this prompt")
+                gr.Info("No Textual Inversion tokens applied to this prompt")
 
             return processed_prompt
 
@@ -2683,7 +2691,7 @@ def generate_image_img2img(prompt, negative_prompt, init_image, strength, stable
             return image_paths, [gif_path] if gif_path else [], f"Images generated successfully. Seed used: {seed}"
 
         except Exception as e:
-            return None, None, str(e)
+            gr.Error(f"An error occurred: {str(e)}")
 
         finally:
             del stable_diffusion_model
@@ -2694,15 +2702,15 @@ def generate_image_depth2img(prompt, negative_prompt, init_image, seed, strength
                              output_format):
 
     if not init_image:
-        return None, "Please, upload an initial image!"
+        gr.Info("Please, upload an initial image!")
 
     stable_diffusion_model_path = os.path.join("inputs", "image", "sd_models", "depth")
 
     if not os.path.exists(stable_diffusion_model_path):
-        print("Downloading depth2img model...")
+        gr.Info("Downloading depth2img model...")
         os.makedirs(stable_diffusion_model_path, exist_ok=True)
         Repo.clone_from("https://huggingface.co/stabilityai/stable-diffusion-2-depth", stable_diffusion_model_path)
-        print("Depth2img model downloaded")
+        gr.Info("Depth2img model downloaded")
 
     try:
         stable_diffusion_model = StableDiffusionDepth2ImgPipeline().StableDiffusionDepth2ImgPipeline.from_pretrained(
@@ -2710,7 +2718,7 @@ def generate_image_depth2img(prompt, negative_prompt, init_image, seed, strength
             torch_dtype=torch.float16, variant="fp16",
         )
     except Exception as e:
-        return None, str(e)
+        gr.Error(f"An error occurred: {str(e)}")
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -2759,7 +2767,7 @@ def generate_image_depth2img(prompt, negative_prompt, init_image, seed, strength
         return image_paths, f"Images generated successfully. Seed used: {seed}"
 
     except Exception as e:
-        return None, str(e)
+        gr.Error(f"An error occurred: {str(e)}")
 
     finally:
         del stable_diffusion_model
@@ -2768,22 +2776,22 @@ def generate_image_depth2img(prompt, negative_prompt, init_image, seed, strength
 
 def generate_image_marigold(input_image, num_inference_steps, ensemble_size):
     if not input_image:
-        return None, None, "Please upload an image!"
+        gr.Info("Please upload an image!")
 
     depth_model_path = os.path.join("inputs", "image", "marigold", "depth")
     normals_model_path = os.path.join("inputs", "image", "marigold", "normals")
 
     if not os.path.exists(depth_model_path):
-        print("Downloading Marigold Depth model...")
+        gr.Info("Downloading Marigold Depth model...")
         os.makedirs(depth_model_path, exist_ok=True)
         Repo.clone_from("https://huggingface.co/prs-eth/marigold-depth-v1-0", depth_model_path)
-        print("Marigold Depth model downloaded")
+        gr.Info("Marigold Depth model downloaded")
 
     if not os.path.exists(normals_model_path):
-        print("Downloading Marigold Normals model...")
+        gr.Info("Downloading Marigold Normals model...")
         os.makedirs(normals_model_path, exist_ok=True)
         Repo.clone_from("https://huggingface.co/prs-eth/marigold-normals-v0-1", normals_model_path)
-        print("Marigold Normals model downloaded")
+        gr.Info("Marigold Normals model downloaded")
 
     try:
         device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -2820,7 +2828,7 @@ def generate_image_marigold(input_image, num_inference_steps, ensemble_size):
         return depth_path, normals_path, "Images generated successfully"
 
     except Exception as e:
-        return None, None, str(e)
+        gr.Error(f"An error occurred: {str(e)}")
 
     finally:
         del depth_pipe
@@ -2832,15 +2840,15 @@ def generate_image_pix2pix(prompt, negative_prompt, init_image, seed, num_infere
                            clip_skip, num_images_per_prompt, output_format):
 
     if not init_image:
-        return None, "Please, upload an initial image!"
+        gr.Info("Please, upload an initial image!")
 
     pix2pix_model_path = os.path.join("inputs", "image", "sd_models", "pix2pix")
 
     if not os.path.exists(pix2pix_model_path):
-        print("Downloading Pix2Pix model...")
+        gr.Info("Downloading Pix2Pix model...")
         os.makedirs(pix2pix_model_path, exist_ok=True)
         Repo.clone_from("https://huggingface.co/timbrooks/instruct-pix2pix", pix2pix_model_path)
-        print("Pix2Pix model downloaded")
+        gr.Info("Pix2Pix model downloaded")
 
     try:
         device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -2893,7 +2901,7 @@ def generate_image_pix2pix(prompt, negative_prompt, init_image, seed, num_infere
         return image_paths, f"Images generated successfully. Seed used: {seed}"
 
     except Exception as e:
-        return None, str(e)
+        gr.Error(f"An error occurred: {str(e)}")
 
     finally:
         del pipe
@@ -2904,23 +2912,23 @@ def generate_image_controlnet(prompt, negative_prompt, init_image, sd_version, s
                               num_inference_steps, guidance_scale, width, height, controlnet_conditioning_scale, clip_skip, num_images_per_prompt, output_format):
 
     if not init_image:
-        return None, None, "Please, upload an initial image!"
+        gr.Info("Please, upload an initial image!")
 
     if not stable_diffusion_model_name:
-        return None, None, "Please, select a StableDiffusion model!"
+        gr.Info("Please, select a StableDiffusion model!")
 
     if not controlnet_model_name:
-        return None, None, "Please, select a ControlNet model!"
+        gr.Info("Please, select a ControlNet model!")
 
     stable_diffusion_model_path = os.path.join("inputs", "image", "sd_models",
                                                f"{stable_diffusion_model_name}")
 
     if not os.path.exists(stable_diffusion_model_path):
-        return None, None, f"StableDiffusion model not found: {stable_diffusion_model_path}"
+        gr.Info(f"StableDiffusion model not found: {stable_diffusion_model_path}")
 
     controlnet_model_path = os.path.join("inputs", "image", "sd_models", "controlnet", controlnet_model_name)
     if not os.path.exists(controlnet_model_path):
-        print(f"Downloading ControlNet {controlnet_model_name} model...")
+        gr.Info(f"Downloading ControlNet {controlnet_model_name} model...")
         os.makedirs(controlnet_model_path, exist_ok=True)
         if controlnet_model_name == "openpose":
             Repo.clone_from("https://huggingface.co/lllyasviel/control_v11p_sd15_openpose", controlnet_model_path)
@@ -2938,7 +2946,7 @@ def generate_image_controlnet(prompt, negative_prompt, init_image, sd_version, s
             Repo.clone_from("https://huggingface.co/lllyasviel/control_v11p_sd15_lineart", controlnet_model_path)
         elif controlnet_model_name == "scribble":
             Repo.clone_from("https://huggingface.co/lllyasviel/control_v11p_sd15_scribble", controlnet_model_path)
-        print(f"ControlNet {controlnet_model_name} model downloaded")
+        gr.Info(f"ControlNet {controlnet_model_name} model downloaded")
 
     try:
         device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -3076,7 +3084,7 @@ def generate_image_controlnet(prompt, negative_prompt, init_image, sd_version, s
                 control_image = np.concatenate([control_image, control_image, control_image], axis=2)
                 control_image = Image.fromarray(control_image)
             else:
-                return None, None, f"ControlNet model {controlnet_model_name} is not supported for SDXL"
+                gr.Info(f"ControlNet model {controlnet_model_name} is not supported for SDXL")
 
             compel = Compel(
                 tokenizer=[pipe.tokenizer, pipe.tokenizer_2],
@@ -3112,7 +3120,7 @@ def generate_image_controlnet(prompt, negative_prompt, init_image, sd_version, s
         return image_paths, control_image_paths, f"Images generated successfully. Seed used: {seed}"
 
     except Exception as e:
-        return None, None, str(e)
+        gr.Error(f"An error occurred: {str(e)}")
 
     finally:
         try:
@@ -3130,7 +3138,7 @@ def generate_image_controlnet(prompt, negative_prompt, init_image, sd_version, s
 def generate_image_upscale_latent(prompt, image_path, upscale_factor, seed, num_inference_steps, guidance_scale, output_format):
 
     if not image_path:
-        return None, "Please, upload an initial image!"
+        gr.Info("Please, upload an initial image!")
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -3145,10 +3153,10 @@ def generate_image_upscale_latent(prompt, image_path, upscale_factor, seed, num_
             model_id = "stabilityai/sd-x2-latent-upscaler"
             model_path = os.path.join("inputs", "image", "sd_models", "upscale", "x2-upscaler")
             if not os.path.exists(model_path):
-                print(f"Downloading Upscale model: {model_id}")
+                gr.Info(f"Downloading Upscale model: {model_id}")
                 os.makedirs(model_path, exist_ok=True)
                 Repo.clone_from(f"https://huggingface.co/{model_id}", model_path)
-                print(f"Upscale model {model_id} downloaded")
+                gr.Info(f"Upscale model {model_id} downloaded")
 
             upscaler = StableDiffusionLatentUpscalePipeline().StableDiffusionLatentUpscalePipeline.from_pretrained(
                 model_path,
@@ -3188,10 +3196,10 @@ def generate_image_upscale_latent(prompt, image_path, upscale_factor, seed, num_
             model_id = "stabilityai/stable-diffusion-x4-upscaler"
             model_path = os.path.join("inputs", "image", "sd_models", "upscale", "x4-upscaler")
             if not os.path.exists(model_path):
-                print(f"Downloading Upscale model: {model_id}")
+                gr.Info(f"Downloading Upscale model: {model_id}")
                 os.makedirs(model_path, exist_ok=True)
                 Repo.clone_from(f"https://huggingface.co/{model_id}", model_path)
-                print(f"Upscale model {model_id} downloaded")
+                gr.Info(f"Upscale model {model_id} downloaded")
 
             upscaler = StableDiffusionUpscalePipeline().StableDiffusionUpscalePipeline.from_pretrained(
                 model_path,
@@ -3230,7 +3238,7 @@ def generate_image_upscale_latent(prompt, image_path, upscale_factor, seed, num_
         return image_path, None
 
     except Exception as e:
-        return None, str(e)
+        gr.Error(f"An error occurred: {str(e)}")
 
     finally:
         del upscaler
@@ -3239,7 +3247,7 @@ def generate_image_upscale_latent(prompt, image_path, upscale_factor, seed, num_
 
 def generate_image_upscale_supir(input_image, model, upscale, min_size, edm_steps, s_stage1, s_churn, s_noise, s_cfg, s_stage2, a_prompt, n_prompt, color_fix_type, enable_linearly, linear_CFG, linear_s_stage2, spt_linear_CFG, spt_linear_s_stage2, output_format):
     if not input_image:
-        return None, "Please upload an image to upscale!"
+        gr.Info("Please upload an image to upscale!")
 
     try:
         today = datetime.now().date()
@@ -3282,10 +3290,10 @@ def generate_image_upscale_supir(input_image, model, upscale, min_size, edm_step
             latest_file = max(generated_files, key=lambda x: os.path.getctime(os.path.join(output_dir, x)))
             return os.path.join(output_dir, latest_file), "Image upscaled successfully using SUPIR!"
         else:
-            return None, "No output image found. SUPIR may have failed to generate an image."
+            gr.Info("No output image found. SUPIR may have failed to generate an image.")
 
     except Exception as e:
-        return None, str(e)
+        gr.Error(f"An error occurred: {str(e)}")
 
     finally:
         flush()
@@ -3294,15 +3302,15 @@ def generate_image_upscale_supir(input_image, model, upscale, min_size, edm_step
 def generate_image_sdxl_refiner(prompt, init_image, output_format):
 
     if not init_image:
-        return None, "Please upload an initial image!"
+        gr.Info("Please upload an initial image!")
 
     sdxl_refiner_path = os.path.join("inputs", "image", "sd_models", "sdxl-refiner-1.0")
 
     if not os.path.exists(sdxl_refiner_path):
-        print("Downloading SDXL Refiner model...")
+        gr.Info("Downloading SDXL Refiner model...")
         os.makedirs(sdxl_refiner_path, exist_ok=True)
         Repo.clone_from("https://huggingface.co/stabilityai/stable-diffusion-xl-refiner-1.0", sdxl_refiner_path)
-        print("SDXL Refiner model downloaded")
+        gr.Info("SDXL Refiner model downloaded")
 
     try:
         device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -3329,7 +3337,7 @@ def generate_image_sdxl_refiner(prompt, init_image, output_format):
         return image_path, None
 
     except Exception as e:
-        return None, str(e)
+        gr.Error(f"An error occurred: {str(e)}")
 
     finally:
         del pipe
@@ -3340,16 +3348,16 @@ def generate_image_inpaint(prompt, negative_prompt, init_image, mask_image, blur
                            stable_diffusion_steps, stable_diffusion_cfg, width, height, clip_skip, num_images_per_prompt, output_format):
 
     if not stable_diffusion_model_name:
-        return None, "Please, select a StableDiffusion model!"
+        gr.Info("Please, select a StableDiffusion model!")
 
     if not init_image or not mask_image:
-        return None, "Please, upload an initial image and a mask image!"
+        gr.Info("Please, upload an initial image and a mask image!")
 
     stable_diffusion_model_path = os.path.join("inputs", "image", "sd_models", "inpaint",
                                                f"{stable_diffusion_model_name}")
 
     if not os.path.exists(stable_diffusion_model_path):
-        return None, f"StableDiffusion model not found: {stable_diffusion_model_path}"
+        gr.Info(f"StableDiffusion model not found: {stable_diffusion_model_path}")
 
     try:
         if stable_diffusion_model_type == "SD":
@@ -3370,7 +3378,7 @@ def generate_image_inpaint(prompt, negative_prompt, init_image, mask_image, blur
         else:
             return None, "Invalid StableDiffusion model type!"
     except (ValueError, KeyError):
-        return None, "The selected model is not compatible with the chosen model type"
+        gr.Error("The selected model is not compatible with the chosen model type")
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -3467,7 +3475,7 @@ def generate_image_inpaint(prompt, negative_prompt, init_image, mask_image, blur
         return image_paths, f"Images generated successfully. Seed used: {seed}"
 
     except Exception as e:
-        return None, str(e)
+        gr.Error(f"An error occurred: {str(e)}")
 
     finally:
         del stable_diffusion_model
@@ -3478,16 +3486,16 @@ def generate_image_outpaint(prompt, negative_prompt, init_image, stable_diffusio
                             stable_diffusion_steps, stable_diffusion_cfg, outpaint_direction, outpaint_expansion, clip_skip, num_images_per_prompt, output_format):
 
     if not init_image:
-        return None, "Please upload an initial image!"
+        gr.Info("Please upload an initial image!")
 
     if not stable_diffusion_model_name:
-        return None, "Please select a StableDiffusion model!"
+        gr.Info("Please select a StableDiffusion model!")
 
     stable_diffusion_model_path = os.path.join("inputs", "image", "sd_models", "inpaint",
                                                f"{stable_diffusion_model_name}")
 
     if not os.path.exists(stable_diffusion_model_path):
-        return None, f"StableDiffusion model not found: {stable_diffusion_model_path}"
+        gr.Info(f"StableDiffusion model not found: {stable_diffusion_model_path}")
 
     try:
         if stable_diffusion_model_type == "SD":
@@ -3506,7 +3514,7 @@ def generate_image_outpaint(prompt, negative_prompt, init_image, stable_diffusio
                 torch_dtype=torch.float16, variant="fp16"
             )
         else:
-            return None, "Invalid StableDiffusion model type!"
+            gr.Info("Invalid StableDiffusion model type!")
 
         device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -3622,7 +3630,7 @@ def generate_image_outpaint(prompt, negative_prompt, init_image, stable_diffusio
         return image_paths, f"Images generated successfully. Seed used: {seed}"
 
     except Exception as e:
-        return None, str(e)
+        gr.Error(f"An error occurred: {str(e)}")
 
     finally:
         del pipe
@@ -3634,13 +3642,13 @@ def generate_image_gligen(prompt, negative_prompt, gligen_phrases, gligen_boxes,
                           stable_diffusion_clip_skip, num_images_per_prompt, output_format):
 
     if not stable_diffusion_model_name:
-        return None, "Please, select a StableDiffusion model!"
+        gr.Info("Please, select a StableDiffusion model!")
 
     stable_diffusion_model_path = os.path.join("inputs", "image", "sd_models",
                                                f"{stable_diffusion_model_name}")
 
     if not os.path.exists(stable_diffusion_model_path):
-        return None, f"StableDiffusion model not found: {stable_diffusion_model_path}"
+        gr.Info(f"StableDiffusion model not found: {stable_diffusion_model_path}")
 
     try:
         if stable_diffusion_model_type == "SD":
@@ -3659,9 +3667,9 @@ def generate_image_gligen(prompt, negative_prompt, gligen_phrases, gligen_boxes,
                 torch_dtype=torch.float16, variant="fp16"
             )
         else:
-            return None, "Invalid StableDiffusion model type!"
+            gr.Info("Invalid StableDiffusion model type!")
     except (ValueError, KeyError):
-        return None, "The selected model is not compatible with the chosen model type"
+        gr.Error("The selected model is not compatible with the chosen model type")
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -3717,10 +3725,10 @@ def generate_image_gligen(prompt, negative_prompt, gligen_phrases, gligen_boxes,
         gligen_model_path = os.path.join("inputs", "image", "sd_models", "gligen")
 
         if not os.path.exists(gligen_model_path):
-            print("Downloading GLIGEN model...")
+            gr.Info("Downloading GLIGEN model...")
             os.makedirs(gligen_model_path, exist_ok=True)
             Repo.clone_from("https://huggingface.co/masterful/gligen-1-4-inpainting-text-box", os.path.join(gligen_model_path, "inpainting"))
-            print("GLIGEN model downloaded")
+            gr.Info("GLIGEN model downloaded")
 
         gligen_boxes = json.loads(gligen_boxes)
 
@@ -3764,7 +3772,7 @@ def generate_image_gligen(prompt, negative_prompt, gligen_phrases, gligen_boxes,
         return image_paths, f"Images generated successfully. Seed used: {seed}"
 
     except Exception as e:
-        return None, str(e)
+        gr.Error(f"An error occurred: {str(e)}")
 
     finally:
         del stable_diffusion_model
@@ -3774,15 +3782,15 @@ def generate_image_gligen(prompt, negative_prompt, gligen_phrases, gligen_boxes,
 
 def generate_image_diffedit(source_prompt, source_negative_prompt, target_prompt, target_negative_prompt, init_image, seed, num_inference_steps, guidance_scale, output_format):
     if not init_image:
-        return None, "Please upload an initial image!"
+        gr.Info("Please upload an initial image!")
 
     sd2_1_model_path = os.path.join("inputs", "image", "sd_models", "sd2-1")
 
     if not os.path.exists(sd2_1_model_path):
-        print("Downloading Stable Diffusion 2.1 model...")
+        gr.Info("Downloading Stable Diffusion 2.1 model...")
         os.makedirs(sd2_1_model_path, exist_ok=True)
         Repo.clone_from("https://huggingface.co/stabilityai/stable-diffusion-2-1", sd2_1_model_path)
-        print("Stable Diffusion 2.1 model downloaded")
+        gr.Info("Stable Diffusion 2.1 model downloaded")
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -3851,7 +3859,7 @@ def generate_image_diffedit(source_prompt, source_negative_prompt, target_prompt
         return output_path, mask_path, f"Images generated successfully. Seed used: {seed}"
 
     except Exception as e:
-        return None, None, str(e)
+        gr.Error(f"An error occurred: {str(e)}")
 
     finally:
         del pipe
@@ -3862,11 +3870,14 @@ def generate_image_blip_diffusion(text_prompt_input, negative_prompt, cond_image
                                   num_inference_steps, guidance_scale, height, width, output_format):
     blip_diffusion_path = os.path.join("inputs", "image", "sd_models", "blip-diff")
 
+    if not cond_image:
+        gr.Info("Please upload an conditional image!")
+
     if not os.path.exists(blip_diffusion_path):
-        print("Downloading BlipDiffusion model...")
+        gr.Info("Downloading BlipDiffusion model...")
         os.makedirs(blip_diffusion_path, exist_ok=True)
         Repo.clone_from("https://huggingface.co/Salesforce/blipdiffusion", blip_diffusion_path)
-        print("BlipDiffusion model downloaded")
+        gr.Info("BlipDiffusion model downloaded")
 
     try:
         device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -3899,7 +3910,7 @@ def generate_image_blip_diffusion(text_prompt_input, negative_prompt, cond_image
         return image_path, "Image generated successfully."
 
     except Exception as e:
-        return None, str(e)
+        gr.Error(f"An error occurred: {str(e)}")
 
     finally:
         del blip_diffusion_pipe
@@ -3910,19 +3921,19 @@ def generate_image_animatediff(prompt, negative_prompt, input_video, strength, m
                                guidance_scale, width, height, clip_skip):
 
     if not stable_diffusion_model_name:
-        return None, "Please, select a StableDiffusion model!"
+        gr.Info("Please, select a StableDiffusion model!")
 
     stable_diffusion_model_path = os.path.join("inputs", "image", "sd_models", f"{stable_diffusion_model_name}")
 
     if not os.path.exists(stable_diffusion_model_path):
-        return None, f"StableDiffusion model not found: {stable_diffusion_model_path}"
+        gr.Info(f"StableDiffusion model not found: {stable_diffusion_model_path}")
 
     motion_adapter_path = os.path.join("inputs", "image", "sd_models", "motion_adapter")
     if not os.path.exists(motion_adapter_path):
-        print("Downloading motion adapter...")
+        gr.Info("Downloading motion adapter...")
         os.makedirs(motion_adapter_path, exist_ok=True)
         Repo.clone_from("https://huggingface.co/guoyww/animatediff-motion-adapter-v1-5-2", motion_adapter_path)
-        print("Motion adapter downloaded")
+        gr.Info("Motion adapter downloaded")
 
     try:
         device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -4011,7 +4022,7 @@ def generate_image_animatediff(prompt, negative_prompt, input_video, strength, m
                 if motion_lora_name:
                     motion_lora_path = os.path.join("inputs", "image", "sd_models", "motion_lora", motion_lora_name)
                     if not os.path.exists(motion_lora_path):
-                        print(f"Downloading {motion_lora_name} motion lora...")
+                        gr.Info(f"Downloading {motion_lora_name} motion lora...")
                         os.makedirs(motion_lora_path, exist_ok=True)
                         if motion_lora_name == "zoom-in":
                             Repo.clone_from("https://huggingface.co/guoyww/animatediff-motion-lora-zoom-in",
@@ -4031,7 +4042,7 @@ def generate_image_animatediff(prompt, negative_prompt, input_video, strength, m
                         elif motion_lora_name == "pan-left":
                             Repo.clone_from("https://huggingface.co/guoyww/animatediff-motion-lora-pan-left",
                                             motion_lora_path)
-                        print(f"{motion_lora_name} motion lora downloaded")
+                        gr.Info(f"{motion_lora_name} motion lora downloaded")
                     pipe.load_lora_weights(motion_lora_path, adapter_name=motion_lora_name)
 
                 pipe.enable_vae_slicing()
@@ -4060,10 +4071,10 @@ def generate_image_animatediff(prompt, negative_prompt, input_video, strength, m
         elif model_type == "sdxl":
             sdxl_adapter_path = os.path.join("inputs", "image", "sd_models", "motion_adapter_sdxl")
             if not os.path.exists(sdxl_adapter_path):
-                print("Downloading SDXL motion adapter...")
+                gr.Info("Downloading SDXL motion adapter...")
                 os.makedirs(sdxl_adapter_path, exist_ok=True)
                 Repo.clone_from("https://huggingface.co/guoyww/animatediff-motion-adapter-sdxl-beta", sdxl_adapter_path)
-                print("SDXL motion adapter downloaded")
+                gr.Info("SDXL motion adapter downloaded")
 
             adapter = MotionAdapter().MotionAdapter.from_pretrained(sdxl_adapter_path, torch_dtype=torch.float16)
             stable_diffusion_model = StableDiffusionXLPipeline().StableDiffusionXLPipeline.from_single_file(
@@ -4129,7 +4140,7 @@ def generate_image_animatediff(prompt, negative_prompt, input_video, strength, m
         return gif_path, f"GIF generated successfully. Seed used: {seed}"
 
     except Exception as e:
-        return None, str(e)
+        gr.Error(f"An error occurred: {str(e)}")
 
     finally:
         try:
@@ -4147,16 +4158,16 @@ def generate_hotshotxl(prompt, negative_prompt, steps, width, height, video_leng
     hotshotxl_base_model_path = os.path.join("inputs", "image", "sd_models", "hotshot_xl_base")
 
     if not os.path.exists(hotshotxl_model_path):
-        print("Downloading HotShot-XL...")
+        gr.Info("Downloading HotShot-XL...")
         os.makedirs(hotshotxl_model_path, exist_ok=True)
         Repo.clone_from("https://huggingface.co/hotshotco/Hotshot-XL", hotshotxl_model_path)
-        print("HotShot-XL downloaded")
+        gr.Info("HotShot-XL downloaded")
 
     if not os.path.exists(hotshotxl_base_model_path):
-        print("Downloading HotShot-XL base model...")
+        gr.Info("Downloading HotShot-XL base model...")
         os.makedirs(hotshotxl_base_model_path, exist_ok=True)
         Repo.clone_from("https://huggingface.co/hotshotco/SDXL-512", hotshotxl_base_model_path)
-        print("HotShot-XL base model downloaded")
+        gr.Info("HotShot-XL base model downloaded")
 
     try:
         output_filename = f"hotshotxl_{datetime.now().strftime('%Y%m%d_%H%M%S')}.gif"
@@ -4182,7 +4193,7 @@ def generate_hotshotxl(prompt, negative_prompt, steps, width, height, video_leng
         return output_path, "GIF generated successfully!"
 
     except Exception as e:
-        return None, str(e)
+        gr.Error(f"An error occurred: {str(e)}")
 
     finally:
         flush()
@@ -4192,7 +4203,7 @@ def generate_video(init_image, output_format, seed, video_settings_html, motion_
                    iv2gen_xl_settings_html, prompt, negative_prompt, num_inference_steps, guidance_scale):
 
     if not init_image:
-        return None, None, "Please upload an initial image!"
+        gr.Info("Please upload an initial image!")
 
     today = datetime.now().date()
     video_dir = os.path.join('outputs', f"StableDiffusion_{today.strftime('%Y%m%d')}")
@@ -4203,10 +4214,10 @@ def generate_video(init_image, output_format, seed, video_settings_html, motion_
         video_model_path = os.path.join("inputs", "image", "sd_models", "video", "SVD")
 
         if not os.path.exists(video_model_path):
-            print(f"Downloading StableVideoDiffusion model")
+            gr.Info(f"Downloading StableVideoDiffusion model")
             os.makedirs(video_model_path, exist_ok=True)
             Repo.clone_from(f"https://huggingface.co/{video_model_name}", video_model_path)
-            print(f"StableVideoDiffusion model downloaded")
+            gr.Info(f"StableVideoDiffusion model downloaded")
 
         try:
             device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -4236,7 +4247,7 @@ def generate_video(init_image, output_format, seed, video_settings_html, motion_
             return video_path, None, f"MP4 generated successfully. Seed used: {seed}"
 
         except Exception as e:
-            return None, None, str(e)
+            gr.Error(f"An error occurred: {str(e)}")
 
         finally:
             try:
@@ -4250,10 +4261,10 @@ def generate_video(init_image, output_format, seed, video_settings_html, motion_
         video_model_path = os.path.join("inputs", "image", "sd_models", "video", "i2vgenxl")
 
         if not os.path.exists(video_model_path):
-            print(f"Downloading i2vgen-xl model")
+            gr.Info(f"Downloading i2vgen-xl model")
             os.makedirs(video_model_path, exist_ok=True)
             Repo.clone_from(f"https://huggingface.co/{video_model_name}", video_model_path)
-            print(f"i2vgen-xl model downloaded")
+            gr.Info(f"i2vgen-xl model downloaded")
 
         try:
             device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -4284,7 +4295,7 @@ def generate_video(init_image, output_format, seed, video_settings_html, motion_
             return None, video_path, f"GIF generated successfully. Seed used: {seed}"
 
         except Exception as e:
-            return None, None, str(e)
+            gr.Error(f"An error occurred: {str(e)}")
 
         finally:
             try:
@@ -4299,10 +4310,10 @@ def generate_image_ldm3d(prompt, negative_prompt, seed, width, height, num_infer
     ldm3d_model_path = os.path.join("inputs", "image", "sd_models", "ldm3d")
 
     if not os.path.exists(ldm3d_model_path):
-        print("Downloading LDM3D model...")
+        gr.Info("Downloading LDM3D model...")
         os.makedirs(ldm3d_model_path, exist_ok=True)
         Repo.clone_from("https://huggingface.co/Intel/ldm3d-4c", ldm3d_model_path)
-        print("LDM3D model downloaded")
+        gr.Info("LDM3D model downloaded")
 
     try:
         device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -4353,7 +4364,7 @@ def generate_image_ldm3d(prompt, negative_prompt, seed, width, height, num_infer
         return rgb_image_paths, depth_image_paths, f"Images generated successfully. Seed used: {seed}"
 
     except Exception as e:
-        return None, None, str(e)
+        gr.Error(f"An error occurred: {str(e)}")
 
     finally:
         del pipe
@@ -4364,7 +4375,7 @@ def generate_image_sd3_txt2img(prompt, negative_prompt, model_type, quantize_sd3
     if enable_quantize:
         try:
             if not quantize_sd3_model_name:
-                return None, "Please select a GGUF model!"
+                gr.Info("Please select a GGUF model!")
 
             if seed == "" or seed is None:
                 seed = random.randint(0, 2 ** 32 - 1)
@@ -4391,7 +4402,7 @@ def generate_image_sd3_txt2img(prompt, negative_prompt, model_type, quantize_sd3
             )
 
             if result.returncode != 0:
-                return None, f"Error in sd-txt2img-quantize.py: {result.stderr}"
+                gr.Info(f"Error in sd-txt2img-quantize.py: {result.stderr}")
 
             image_paths = []
             output = result.stdout.strip()
@@ -4404,18 +4415,18 @@ def generate_image_sd3_txt2img(prompt, negative_prompt, model_type, quantize_sd3
             return image_paths, f"Images generated successfully using quantized model. Seed used: {seed}"
 
         except Exception as e:
-            return None, str(e)
+            gr.Error(f"An error occurred: {str(e)}")
 
     else:
         try:
             if model_type == "Diffusers":
                 sd3_model_path = os.path.join("inputs", "image", "sd_models", "sd3")
                 if not os.path.exists(sd3_model_path):
-                    print("Downloading Stable Diffusion 3 model...")
+                    gr.Info("Downloading Stable Diffusion 3 model...")
                     os.makedirs(sd3_model_path, exist_ok=True)
                     Repo.clone_from("https://huggingface.co/stabilityai/stable-diffusion-3-medium-diffusers",
                                     sd3_model_path)
-                    print("Stable Diffusion 3 model downloaded")
+                    gr.Info("Stable Diffusion 3 model downloaded")
                 quantization_config = BitsAndBytesConfig().BitsAndBytesConfig(load_in_8bit=True)
 
                 text_encoder = T5EncoderModel().T5EncoderModel.from_pretrained(
@@ -4428,7 +4439,7 @@ def generate_image_sd3_txt2img(prompt, negative_prompt, model_type, quantize_sd3
                                                                   torch_dtype=torch.float16)
             else:
                 if not quantize_sd3_model_name:
-                    return None, "Please select a model!"
+                    gr.Info("Please select a model!")
 
                 stable_diffusion_model_path = os.path.join("inputs", "image", "sd_models",
                                                            f"{quantize_sd3_model_name}")
@@ -4453,7 +4464,7 @@ def generate_image_sd3_txt2img(prompt, negative_prompt, model_type, quantize_sd3
             lora_loaded = False
             if lora_model_names and lora_scales:
                 if len(lora_model_names) != len(lora_scales):
-                    print(
+                    gr.Info(
                         f"Warning: Number of LoRA models ({len(lora_model_names)}) does not match number of scales ({len(lora_scales)}). Using available scales.")
 
                 for i, lora_model_name in enumerate(lora_model_names):
@@ -4469,9 +4480,9 @@ def generate_image_sd3_txt2img(prompt, negative_prompt, model_type, quantize_sd3
                             pipe.load_lora_weights(lora_model_path, adapter_name=adapter_name)
                             pipe.fuse_lora(lora_scale=lora_scale)
                             lora_loaded = True
-                            print(f"Loaded LoRA {lora_model_name} with scale {lora_scale}")
+                            gr.Info(f"Loaded LoRA {lora_model_name} with scale {lora_scale}")
                         except Exception as e:
-                            print(f"Error loading LoRA {lora_model_name}: {str(e)}")
+                            gr.Error(f"Error loading LoRA {lora_model_name}: {str(e)}")
 
             images = pipe(
                 prompt=prompt,
@@ -4515,7 +4526,7 @@ def generate_image_sd3_txt2img(prompt, negative_prompt, model_type, quantize_sd3
             return image_paths, f"Images generated successfully. Seed used: {seed}"
 
         except Exception as e:
-            return None, str(e)
+            gr.Error(f"An error occurred: {str(e)}")
 
         finally:
             del pipe
@@ -4525,12 +4536,12 @@ def generate_image_sd3_txt2img(prompt, negative_prompt, model_type, quantize_sd3
 
 def generate_image_sd3_img2img(prompt, negative_prompt, init_image, strength, model_type, quantize_sd3_model_name, enable_quantize, seed, num_inference_steps, guidance_scale, width, height, max_sequence_length, clip_skip, num_images_per_prompt, output_format):
     if not init_image:
-        return None, "Please upload an initial image!"
+        gr.Info("Please upload an initial image!")
 
     if enable_quantize:
         try:
             if not quantize_sd3_model_name:
-                return None, "Please select a GGUF model!"
+                gr.Info("Please select a GGUF model!")
 
             if seed == "" or seed is None:
                 seed = random.randint(0, 2 ** 32 - 1)
@@ -4559,7 +4570,7 @@ def generate_image_sd3_img2img(prompt, negative_prompt, init_image, strength, mo
             )
 
             if result.returncode != 0:
-                return None, f"Error in sd-img2img-quantize.py: {result.stderr}"
+                gr.Info(f"Error in sd-img2img-quantize.py: {result.stderr}")
 
             image_paths = []
             output = result.stdout.strip()
@@ -4572,18 +4583,18 @@ def generate_image_sd3_img2img(prompt, negative_prompt, init_image, strength, mo
             return image_paths, f"Images generated successfully using quantized model. Seed used: {seed}"
 
         except Exception as e:
-            return None, str(e)
+            gr.Error(f"An error occurred: {str(e)}")
 
     else:
         try:
             if model_type == "Diffusers":
                 sd3_model_path = os.path.join("inputs", "image", "sd_models", "sd3")
                 if not os.path.exists(sd3_model_path):
-                    print("Downloading Stable Diffusion 3 model...")
+                    gr.Info("Downloading Stable Diffusion 3 model...")
                     os.makedirs(sd3_model_path, exist_ok=True)
                     Repo.clone_from("https://huggingface.co/stabilityai/stable-diffusion-3-medium-diffusers",
                                     sd3_model_path)
-                    print("Stable Diffusion 3 model downloaded")
+                    gr.Info("Stable Diffusion 3 model downloaded")
                 quantization_config = BitsAndBytesConfig().BitsAndBytesConfig(load_in_8bit=True)
 
                 text_encoder = T5EncoderModel().T5EncoderModel.from_pretrained(
@@ -4596,7 +4607,7 @@ def generate_image_sd3_img2img(prompt, negative_prompt, init_image, strength, mo
                                                                   torch_dtype=torch.float16)
             else:
                 if not quantize_sd3_model_name:
-                    return None, "Please select a model!"
+                    gr.Info("Please select a model!")
                 stable_diffusion_model_path = os.path.join("inputs", "image", "sd_models",
                                                            f"{quantize_sd3_model_name}")
                 pipe = StableDiffusion3Img2ImgPipeline().StableDiffusion3Img2ImgPipeline.from_single_file(stable_diffusion_model_path, device_map="balanced",
@@ -4641,7 +4652,7 @@ def generate_image_sd3_img2img(prompt, negative_prompt, init_image, strength, mo
             return image_paths, f"Images generated successfully. Seed used: {seed}"
 
         except Exception as e:
-            return None, str(e)
+            gr.Error(f"An error occurred: {str(e)}")
 
         finally:
             del pipe
@@ -4652,25 +4663,25 @@ def generate_image_sd3_img2img(prompt, negative_prompt, init_image, strength, mo
 def generate_image_sd3_controlnet(prompt, negative_prompt, init_image, controlnet_model, seed, num_inference_steps, guidance_scale, controlnet_conditioning_scale, width, height, max_sequence_length, clip_skip, num_images_per_prompt, output_format):
 
     if not init_image:
-        return None, None, "Please upload an initial image!"
+        gr.Info("Please upload an initial image!")
 
     if not controlnet_model:
-        return None, None, "Please select a controlnet model!"
+        gr.Info("Please select a controlnet model!")
 
     sd3_model_path = os.path.join("inputs", "image", "sd_models", "sd3")
     controlnet_path = os.path.join("inputs", "image", "sd_models", "sd3", "controlnet", f"sd3_{controlnet_model}")
 
     if not os.path.exists(sd3_model_path):
-        print("Downloading Stable Diffusion 3 model...")
+        gr.Info("Downloading Stable Diffusion 3 model...")
         os.makedirs(sd3_model_path, exist_ok=True)
         Repo.clone_from("https://huggingface.co/stabilityai/stable-diffusion-3-medium-diffusers", sd3_model_path)
-        print("Stable Diffusion 3 model downloaded")
+        gr.Info("Stable Diffusion 3 model downloaded")
 
     if not os.path.exists(controlnet_path):
-        print(f"Downloading SD3 ControlNet {controlnet_model} model...")
+        gr.Info(f"Downloading SD3 ControlNet {controlnet_model} model...")
         os.makedirs(controlnet_path, exist_ok=True)
         Repo.clone_from(f"https://huggingface.co/InstantX/SD3-Controlnet-{controlnet_model}", controlnet_path)
-        print(f"SD3 ControlNet {controlnet_model} model downloaded")
+        gr.Info(f"SD3 ControlNet {controlnet_model} model downloaded")
 
     try:
         device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -4701,7 +4712,7 @@ def generate_image_sd3_controlnet(prompt, negative_prompt, init_image, controlne
         elif controlnet_model.lower() == "pose":
             control_image = init_image
         else:
-            return None, None, f"Unsupported ControlNet model: {controlnet_model}"
+            gr.Info(f"Unsupported ControlNet model: {controlnet_model}")
 
         if seed == "" or seed is None:
             seed = random.randint(0, 2 ** 32 - 1)
@@ -4743,7 +4754,7 @@ def generate_image_sd3_controlnet(prompt, negative_prompt, init_image, controlne
         return image_paths, control_image_paths, f"Images generated successfully. Seed used: {seed}"
 
     except Exception as e:
-        return None, None, str(e)
+        gr.Error(f"An error occurred: {str(e)}")
 
     finally:
         del pipe
@@ -4757,13 +4768,13 @@ def generate_image_sd3_inpaint(prompt, negative_prompt, init_image, mask_image, 
     sd3_model_path = os.path.join("inputs", "image", "sd_models", "sd3")
 
     if not init_image or not mask_image:
-        return None, "Please, upload an initial image and a mask image!"
+        gr.Info("Please, upload an initial image and a mask image!")
 
     if not os.path.exists(sd3_model_path):
-        print("Downloading Stable Diffusion 3 model...")
+        gr.Info("Downloading Stable Diffusion 3 model...")
         os.makedirs(sd3_model_path, exist_ok=True)
         Repo.clone_from("https://huggingface.co/stabilityai/stable-diffusion-3-medium-diffusers", sd3_model_path)
-        print("Stable Diffusion 3 model downloaded")
+        gr.Info("Stable Diffusion 3 model downloaded")
 
     try:
         quantization_config = BitsAndBytesConfig().BitsAndBytesConfig(load_in_8bit=True)
@@ -4817,7 +4828,7 @@ def generate_image_sd3_inpaint(prompt, negative_prompt, init_image, mask_image, 
         return image_paths, f"Images generated successfully. Seed used: {seed}"
 
     except Exception as e:
-        return None, str(e)
+        gr.Error(f"An error occurred: {str(e)}")
 
     finally:
         del pipe
@@ -4831,13 +4842,13 @@ def generate_image_cascade(prompt, negative_prompt, seed, width, height, prior_s
     stable_cascade_model_path = os.path.join("inputs", "image", "sd_models", "cascade")
 
     if not os.path.exists(stable_cascade_model_path):
-        print("Downloading Stable Cascade models...")
+        gr.Info("Downloading Stable Cascade models...")
         os.makedirs(stable_cascade_model_path, exist_ok=True)
         Repo.clone_from("https://huggingface.co/stabilityai/stable-cascade-prior",
                         os.path.join(stable_cascade_model_path, "prior"))
         Repo.clone_from("https://huggingface.co/stabilityai/stable-cascade",
                         os.path.join(stable_cascade_model_path, "decoder"))
-        print("Stable Cascade models downloaded")
+        gr.Info("Stable Cascade models downloaded")
 
     try:
         device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -4846,7 +4857,7 @@ def generate_image_cascade(prompt, negative_prompt, seed, width, height, prior_s
         decoder = StableCascadeDecoderPipeline().StableCascadeDecoderPipeline.from_pretrained(os.path.join(stable_cascade_model_path, "decoder"),
                                                                variant="bf16", torch_dtype=torch.float16).to(device)
     except (ValueError, OSError):
-        return None, "Failed to load the Stable Cascade models"
+        gr.Error("Failed to load the Stable Cascade models")
 
     if seed == "" or seed is None:
         seed = random.randint(0, 2 ** 32 - 1)
@@ -4908,7 +4919,7 @@ def generate_image_cascade(prompt, negative_prompt, seed, width, height, prior_s
         return image_paths, f"Images generated successfully. Seed used: {seed}"
 
     except Exception as e:
-        return None, str(e)
+        gr.Error(f"An error occurred: {str(e)}")
 
     finally:
         del prior
@@ -4927,22 +4938,22 @@ def generate_image_t2i_ip_adapter(prompt, negative_prompt, ip_adapter_image, sta
     generator = torch.Generator(device).manual_seed(seed)
 
     if not ip_adapter_image:
-        return None, "Please upload an image!"
+        gr.Info("Please upload an image!")
 
     if not stable_diffusion_model_name:
-        return None, "Please select a StableDiffusion model!"
+        gr.Info("Please select a StableDiffusion model!")
 
     stable_diffusion_model_path = os.path.join("inputs", "image", "sd_models", f"{stable_diffusion_model_name}")
 
     if not os.path.exists(stable_diffusion_model_path):
-        return None, f"StableDiffusion model not found: {stable_diffusion_model_path}"
+        gr.Info(f"StableDiffusion model not found: {stable_diffusion_model_path}")
 
     t2i_ip_adapter_path = os.path.join("inputs", "image", "sd_models", "t2i-ip-adapter")
     if not os.path.exists(t2i_ip_adapter_path):
-        print("Downloading T2I IP-Adapter model...")
+        gr.Info("Downloading T2I IP-Adapter model...")
         os.makedirs(t2i_ip_adapter_path, exist_ok=True)
         Repo.clone_from("https://huggingface.co/h94/IP-Adapter", t2i_ip_adapter_path)
-        print("T2I IP-Adapter model downloaded")
+        gr.Info("T2I IP-Adapter model downloaded")
 
     try:
 
@@ -5003,7 +5014,7 @@ def generate_image_t2i_ip_adapter(prompt, negative_prompt, ip_adapter_image, sta
         return image_paths, f"Images generated successfully. Seed used: {seed}"
 
     except Exception as e:
-        return None, str(e)
+        gr.Error(f"An error occurred: {str(e)}")
 
     finally:
         del pipe
@@ -5014,29 +5025,29 @@ def generate_image_t2i_ip_adapter(prompt, negative_prompt, ip_adapter_image, sta
 def generate_image_ip_adapter_faceid(prompt, negative_prompt, face_image, s_scale, stable_diffusion_model_type, stable_diffusion_model_name, num_inference_steps, guidance_scale, width, height, output_format):
 
     if not face_image:
-        return None, "Please upload a face image!"
+        gr.Info("Please upload a face image!")
 
     if not stable_diffusion_model_name:
-        return None, "Please select a StableDiffusion model!"
+        gr.Info("Please select a StableDiffusion model!")
 
     stable_diffusion_model_path = os.path.join("inputs", "image", "sd_models", f"{stable_diffusion_model_name}")
 
     if not os.path.exists(stable_diffusion_model_path):
-        return None, f"StableDiffusion model not found: {stable_diffusion_model_path}"
+        gr.Info(f"StableDiffusion model not found: {stable_diffusion_model_path}")
 
     image_encoder_path = os.path.join("inputs", "image", "sd_models", "image_encoder")
     if not os.path.exists(image_encoder_path):
-        print("Downloading image encoder...")
+        gr.Info("Downloading image encoder...")
         os.makedirs(image_encoder_path, exist_ok=True)
         Repo.clone_from("https://huggingface.co/laion/CLIP-ViT-H-14-laion2B-s32B-b79K", image_encoder_path)
-        print("Image encoder downloaded")
+        gr.Info("Image encoder downloaded")
 
     ip_ckpt_path = os.path.join("inputs", "image", "sd_models", "ip_adapter_faceid")
     if not os.path.exists(ip_ckpt_path):
-        print("Downloading IP-Adapter FaceID checkpoint...")
+        gr.Info("Downloading IP-Adapter FaceID checkpoint...")
         os.makedirs(ip_ckpt_path, exist_ok=True)
         Repo.clone_from("https://huggingface.co/h94/IP-Adapter-FaceID", ip_ckpt_path)
-        print("IP-Adapter FaceID checkpoint downloaded")
+        gr.Info("IP-Adapter FaceID checkpoint downloaded")
 
     if stable_diffusion_model_type == "SD":
         ip_ckpt = os.path.join(ip_ckpt_path, "ip-adapter-faceid-plusv2_sd15.bin")
@@ -5053,7 +5064,7 @@ def generate_image_ip_adapter_faceid(prompt, negative_prompt, face_image, s_scal
         faces = app.get(image)
 
         if not faces:
-            return None, "No face detected in the image."
+            gr.Info("No face detected in the image.")
 
         faceid_embeds = torch.from_numpy(faces[0].normed_embedding).unsqueeze(0)
         face_image = face_align.norm_crop(image, landmark=faces[0].kps, image_size=224)
@@ -5077,7 +5088,7 @@ def generate_image_ip_adapter_faceid(prompt, negative_prompt, face_image, s_scal
                 stable_diffusion_model_path, scheduler=noise_scheduler, use_safetensors=True, device_map="auto", attention_slice=1,
                 torch_dtype=torch.float16, variant="fp16")
         else:
-            return None, "Invalid StableDiffusion model type!"
+            gr.Info("Invalid StableDiffusion model type!")
 
         ip_model = IPAdapterFaceIDPlus().IPAdapterFaceIDPlus(pipe, image_encoder_path, ip_ckpt, device)
 
@@ -5109,7 +5120,7 @@ def generate_image_ip_adapter_faceid(prompt, negative_prompt, face_image, s_scal
         return image_paths, None
 
     except Exception as e:
-        return None, str(e)
+        gr.Error(f"An error occurred: {str(e)}")
 
     finally:
         del pipe
@@ -5130,10 +5141,10 @@ def generate_riffusion_text2image(prompt, negative_prompt, seed, num_inference_s
     riffusion_model_path = os.path.join("inputs", "image", "sd_models", "riffusion")
 
     if not os.path.exists(riffusion_model_path):
-        print("Downloading Riffusion model...")
+        gr.Info("Downloading Riffusion model...")
         os.makedirs(riffusion_model_path, exist_ok=True)
         Repo.clone_from("https://huggingface.co/riffusion/riffusion-model-v1", riffusion_model_path)
-        print("Riffusion model downloaded")
+        gr.Info("Riffusion model downloaded")
 
     try:
         pipe = StableDiffusionPipeline().StableDiffusionPipeline.from_pretrained(riffusion_model_path, torch_dtype=torch.float16)
@@ -5159,7 +5170,7 @@ def generate_riffusion_text2image(prompt, negative_prompt, seed, num_inference_s
         return image_path, f"Image generated successfully. Seed used: {seed}"
 
     except Exception as e:
-        return None, str(e)
+        gr.Error(f"An error occurred: {str(e)}")
 
     finally:
         del pipe
@@ -5168,7 +5179,7 @@ def generate_riffusion_text2image(prompt, negative_prompt, seed, num_inference_s
 
 def generate_riffusion_image2audio(image_path, output_format):
     if not image_path:
-        return None, "Please upload an image file!"
+        gr.Info("Please upload an image file!")
 
     try:
         today = datetime.now().date()
@@ -5183,7 +5194,7 @@ def generate_riffusion_image2audio(image_path, output_format):
         return audio_path, None
 
     except Exception as e:
-        return None, str(e)
+        gr.Error(f"An error occurred: {str(e)}")
 
     finally:
         flush()
@@ -5191,7 +5202,7 @@ def generate_riffusion_image2audio(image_path, output_format):
 
 def generate_riffusion_audio2image(audio_path, output_format):
     if not audio_path:
-        return None, "Please upload an audio file!"
+        gr.Info("Please upload an audio file!")
 
     try:
         today = datetime.now().date()
@@ -5206,7 +5217,7 @@ def generate_riffusion_audio2image(audio_path, output_format):
         return image_path, None
 
     except Exception as e:
-        return None, str(e)
+        gr.Error(f"An error occurred: {str(e)}")
 
     finally:
         flush()
@@ -5222,13 +5233,10 @@ def generate_image_kandinsky_txt2img(prompt, negative_prompt, version, seed, num
         seed = int(seed)
     generator = torch.Generator(device).manual_seed(seed)
 
-    if not prompt:
-        return None, "Please enter a prompt!"
-
     kandinsky_model_path = os.path.join("inputs", "image", "kandinsky")
 
     if not os.path.exists(kandinsky_model_path):
-        print(f"Downloading Kandinsky {version} model...")
+        gr.Info(f"Downloading Kandinsky {version} model...")
         os.makedirs(kandinsky_model_path, exist_ok=True)
         if version == "2.1":
             Repo.clone_from("https://huggingface.co/kandinsky-community/kandinsky-2-1-prior",
@@ -5243,7 +5251,7 @@ def generate_image_kandinsky_txt2img(prompt, negative_prompt, version, seed, num
         elif version == "3":
             Repo.clone_from("https://huggingface.co/kandinsky-community/kandinsky-3",
                             os.path.join(kandinsky_model_path, "3"))
-        print(f"Kandinsky {version} model downloaded")
+        gr.Info(f"Kandinsky {version} model downloaded")
 
     try:
         if version == "2.1":
@@ -5332,7 +5340,7 @@ def generate_image_kandinsky_txt2img(prompt, negative_prompt, version, seed, num
         return image_path, f"Image generated successfully. Seed used: {seed}"
 
     except Exception as e:
-        return None, str(e)
+        gr.Error(f"An error occurred: {str(e)}")
 
     finally:
         try:
@@ -5354,12 +5362,12 @@ def generate_image_kandinsky_img2img(prompt, negative_prompt, init_image, versio
     generator = torch.Generator(device).manual_seed(seed)
 
     if not init_image:
-        return None, "Please upload an initial image!"
+        gr.Info("Please upload an initial image!")
 
     kandinsky_model_path = os.path.join("inputs", "image", "kandinsky")
 
     if not os.path.exists(kandinsky_model_path):
-        print(f"Downloading Kandinsky {version} model...")
+        gr.Info(f"Downloading Kandinsky {version} model...")
         os.makedirs(kandinsky_model_path, exist_ok=True)
         if version == "2.1":
             Repo.clone_from("https://huggingface.co/kandinsky-community/kandinsky-2-1-prior",
@@ -5372,7 +5380,7 @@ def generate_image_kandinsky_img2img(prompt, negative_prompt, init_image, versio
         elif version == "3":
             Repo.clone_from("https://huggingface.co/kandinsky-community/kandinsky-3",
                             os.path.join(kandinsky_model_path, "3"))
-        print(f"Kandinsky {version} model downloaded")
+        gr.Info(f"Kandinsky {version} model downloaded")
 
     try:
         if version == "2.1":
@@ -5454,7 +5462,7 @@ def generate_image_kandinsky_img2img(prompt, negative_prompt, init_image, versio
         return image_path, f"Image generated successfully. Seed used: {seed}"
 
     except Exception as e:
-        return None, str(e)
+        gr.Error(f"An error occurred: {str(e)}")
 
     finally:
         try:
@@ -5470,12 +5478,12 @@ def generate_image_kandinsky_inpaint(prompt, negative_prompt, init_image, mask_i
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
     if not init_image or not mask_image:
-        return None, "Please upload an initial image and provide a mask image!"
+        gr.Info("Please upload an initial image and provide a mask image!")
 
     kandinsky_model_path = os.path.join("inputs", "image", "kandinsky")
 
     if not os.path.exists(kandinsky_model_path):
-        print(f"Downloading Kandinsky {version} model...")
+        gr.Info(f"Downloading Kandinsky {version} model...")
         os.makedirs(kandinsky_model_path, exist_ok=True)
         if version == "2.1":
             Repo.clone_from("https://huggingface.co/kandinsky-community/kandinsky-2-1-inpainter",
@@ -5483,7 +5491,7 @@ def generate_image_kandinsky_inpaint(prompt, negative_prompt, init_image, mask_i
         elif version == "2.2":
             Repo.clone_from("https://huggingface.co/kandinsky-community/kandinsky-2-2-decoder-inpaint",
                             os.path.join(kandinsky_model_path, "2-2-decoder-inpaint"))
-        print(f"Kandinsky {version} inpainting model downloaded")
+        gr.Info(f"Kandinsky {version} inpainting model downloaded")
 
     try:
 
@@ -5528,7 +5536,7 @@ def generate_image_kandinsky_inpaint(prompt, negative_prompt, init_image, mask_i
         return image_path, None
 
     except Exception as e:
-        return None, str(e)
+        gr.Error(f"An error occurred: {str(e)}")
 
     finally:
         del pipe
@@ -5550,7 +5558,7 @@ def generate_image_flux_txt2img(prompt, model_name, quantize_model_name, enable_
     try:
         if enable_quantize:
             if not quantize_model_name:
-                return None, "Please select a GGUF model!"
+                gr.Info("Please select a GGUF model!")
 
             params = {
                 'prompt': prompt,
@@ -5569,7 +5577,7 @@ def generate_image_flux_txt2img(prompt, model_name, quantize_model_name, enable_
                                     capture_output=True, text=True)
 
             if result.returncode != 0:
-                return None, f"Error in flux-txt2img-quantize.py: {result.stderr}"
+                gr.Info(f"Error in flux-txt2img-quantize.py: {result.stderr}")
 
             image_path = None
             output = result.stdout.strip()
@@ -5577,18 +5585,18 @@ def generate_image_flux_txt2img(prompt, model_name, quantize_model_name, enable_
                 image_path = output.split("IMAGE_PATH:")[-1].strip()
 
             if not image_path:
-                return None, "Image path not found in the output"
+                gr.Info("Image path not found in the output")
 
             if not os.path.exists(image_path):
-                return None, f"Generated image not found at {image_path}"
+                gr.Info(f"Generated image not found at {image_path}")
 
             return image_path, f"Image generated successfully. Seed used: {seed}"
         else:
             if not os.path.exists(flux_model_path):
-                print(f"Downloading Flux {model_name} model...")
+                gr.Info(f"Downloading Flux {model_name} model...")
                 os.makedirs(flux_model_path, exist_ok=True)
                 Repo.clone_from(f"https://huggingface.co/black-forest-labs/{model_name}", flux_model_path)
-                print(f"Flux {model_name} model downloaded")
+                gr.Info(f"Flux {model_name} model downloaded")
 
             pipe = FluxPipeline().FluxPipeline.from_pretrained(flux_model_path, torch_dtype=torch.bfloat16)
             pipe.to(device)
@@ -5606,7 +5614,7 @@ def generate_image_flux_txt2img(prompt, model_name, quantize_model_name, enable_
             lora_loaded = False
             if lora_model_names and lora_scales:
                 if len(lora_model_names) != len(lora_scales):
-                    print(
+                    gr.Info(
                         f"Warning: Number of LoRA models ({len(lora_model_names)}) does not match number of scales ({len(lora_scales)}). Using available scales.")
 
                 for i, lora_model_name in enumerate(lora_model_names):
@@ -5622,9 +5630,9 @@ def generate_image_flux_txt2img(prompt, model_name, quantize_model_name, enable_
                             pipe.load_lora_weights(lora_model_path, adapter_name=adapter_name)
                             pipe.fuse_lora(lora_scale=lora_scale)
                             lora_loaded = True
-                            print(f"Loaded LoRA {lora_model_name} with scale {lora_scale}")
+                            gr.Info(f"Loaded LoRA {lora_model_name} with scale {lora_scale}")
                         except Exception as e:
-                            print(f"Error loading LoRA {lora_model_name}: {str(e)}")
+                            gr.Error(f"Error loading LoRA {lora_model_name}: {str(e)}")
 
             output = pipe(
                 prompt=prompt,
@@ -5661,7 +5669,7 @@ def generate_image_flux_txt2img(prompt, model_name, quantize_model_name, enable_
             return image_path, f"Image generated successfully. Seed used: {seed}"
 
     except Exception as e:
-        return None, str(e)
+        gr.Error(f"An error occurred: {str(e)}")
 
     finally:
         if enable_quantize:
@@ -5673,7 +5681,7 @@ def generate_image_flux_txt2img(prompt, model_name, quantize_model_name, enable_
 
 def generate_image_flux_img2img(prompt, init_image, model_name, quantize_model_name, enable_quantize, seed, num_inference_steps, strength, guidance_scale, width, height, max_sequence_length, output_format):
     if not init_image:
-        return None, "Please upload an initial image!"
+        gr.Info("Please upload an initial image!")
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -5687,7 +5695,7 @@ def generate_image_flux_img2img(prompt, init_image, model_name, quantize_model_n
 
     if enable_quantize:
         if not quantize_model_name:
-            return None, "Please select a GGUF model!"
+            gr.Info("Please select a GGUF model!")
 
         params = {
             'prompt': prompt,
@@ -5708,7 +5716,7 @@ def generate_image_flux_img2img(prompt, init_image, model_name, quantize_model_n
                                 capture_output=True, text=True)
 
         if result.returncode != 0:
-            return None, f"Error in flux-img2img-quantize.py: {result.stderr}"
+            gr.Info(f"Error in flux-img2img-quantize.py: {result.stderr}")
 
         image_path = None
         output = result.stdout.strip()
@@ -5716,18 +5724,18 @@ def generate_image_flux_img2img(prompt, init_image, model_name, quantize_model_n
             image_path = output.split("IMAGE_PATH:")[-1].strip()
 
         if not image_path:
-            return None, "Image path not found in the output"
+            gr.Info("Image path not found in the output")
 
         if not os.path.exists(image_path):
-            return None, f"Generated image not found at {image_path}"
+            gr.Info(f"Generated image not found at {image_path}")
 
         return image_path, f"Image generated successfully. Seed used: {seed}"
     else:
         if not os.path.exists(flux_model_path):
-            print(f"Downloading Flux {model_name} model...")
+            gr.Info(f"Downloading Flux {model_name} model...")
             os.makedirs(flux_model_path, exist_ok=True)
             Repo.clone_from(f"https://huggingface.co/black-forest-labs/{model_name}", flux_model_path)
-            print(f"Flux {model_name} model downloaded")
+            gr.Info(f"Flux {model_name} model downloaded")
 
         try:
             pipe = FluxImg2ImgPipeline().FluxImg2ImgPipeline.from_pretrained(flux_model_path,
@@ -5770,7 +5778,7 @@ def generate_image_flux_img2img(prompt, init_image, model_name, quantize_model_n
             return image_path, f"Image generated successfully. Seed used: {seed}"
 
         except Exception as e:
-            return None, str(e)
+            gr.Error(f"An error occurred: {str(e)}")
 
         finally:
             del pipe
@@ -5781,6 +5789,9 @@ def generate_image_flux_inpaint(prompt, init_image, mask_image, model_name, seed
                                 max_sequence_length, output_format):
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
+    if not init_image or not mask_image:
+        gr.Info("Please upload an initial image and provide a mask image!")
+
     if seed == "" or seed is None:
         seed = random.randint(0, 2 ** 32 - 1)
     else:
@@ -5790,10 +5801,10 @@ def generate_image_flux_inpaint(prompt, init_image, mask_image, model_name, seed
     flux_model_path = os.path.join("inputs", "image", "flux", model_name)
 
     if not os.path.exists(flux_model_path):
-        print(f"Downloading Flux {model_name} model...")
+        gr.Info(f"Downloading Flux {model_name} model...")
         os.makedirs(flux_model_path, exist_ok=True)
         Repo.clone_from(f"https://huggingface.co/black-forest-labs/{model_name}", flux_model_path)
-        print(f"Flux {model_name} model downloaded")
+        gr.Info(f"Flux {model_name} model downloaded")
 
     try:
         pipe = FluxInpaintPipeline().FluxInpaintPipeline.from_pretrained(flux_model_path, torch_dtype=torch.bfloat16)
@@ -5836,7 +5847,7 @@ def generate_image_flux_inpaint(prompt, init_image, mask_image, model_name, seed
         return image_path, f"Image generated successfully. Seed used: {seed}"
 
     except Exception as e:
-        return None, str(e)
+        gr.Error(f"An error occurred: {str(e)}")
 
     finally:
         del pipe
@@ -5846,6 +5857,9 @@ def generate_image_flux_inpaint(prompt, init_image, mask_image, model_name, seed
 def generate_image_flux_controlnet(prompt, init_image, base_model_name, seed, control_mode, controlnet_conditioning_scale, num_inference_steps,
                                    guidance_scale, width, height, max_sequence_length, output_format):
     device = "cuda" if torch.cuda.is_available() else "cpu"
+
+    if not init_image:
+        gr.Info("Please upload an initial image!")
 
     if seed == "" or seed is None:
         seed = random.randint(0, 2 ** 32 - 1)
@@ -5857,16 +5871,16 @@ def generate_image_flux_controlnet(prompt, init_image, base_model_name, seed, co
     controlnet_model_path = os.path.join("inputs", "image", "flux-controlnet")
 
     if not os.path.exists(base_model_path):
-        print(f"Downloading Flux {base_model_name} model...")
+        gr.Info(f"Downloading Flux {base_model_name} model...")
         os.makedirs(base_model_path, exist_ok=True)
         Repo.clone_from(f"https://huggingface.co/black-forest-labs/{base_model_name}", base_model_path)
-        print(f"Flux {base_model_name} model downloaded")
+        gr.Info(f"Flux {base_model_name} model downloaded")
 
     if not os.path.exists(controlnet_model_path):
-        print("Downloading Flux ControlNet model...")
+        gr.Info("Downloading Flux ControlNet model...")
         os.makedirs(controlnet_model_path, exist_ok=True)
         Repo.clone_from("https://huggingface.co/InstantX/FLUX.1-dev-Controlnet-Union", controlnet_model_path)
-        print("Flux ControlNet model downloaded")
+        gr.Info("Flux ControlNet model downloaded")
 
     try:
         controlnet = FluxControlNetModel().FluxControlNetModel.from_pretrained(controlnet_model_path, torch_dtype=torch.bfloat16)
@@ -5913,7 +5927,7 @@ def generate_image_flux_controlnet(prompt, init_image, base_model_name, seed, co
         return image_path, f"Image generated successfully. Seed used: {seed}"
 
     except Exception as e:
-        return None, str(e)
+        gr.Error(f"An error occurred: {str(e)}")
 
     finally:
         del pipe
@@ -5934,10 +5948,10 @@ def generate_image_hunyuandit_txt2img(prompt, negative_prompt, seed, num_inferen
     hunyuandit_model_path = os.path.join("inputs", "image", "hunyuandit")
 
     if not os.path.exists(hunyuandit_model_path):
-        print("Downloading HunyuanDiT model...")
+        gr.Info("Downloading HunyuanDiT model...")
         os.makedirs(hunyuandit_model_path, exist_ok=True)
         Repo.clone_from("https://huggingface.co/Tencent-Hunyuan/HunyuanDiT-v1.2-Diffusers", hunyuandit_model_path)
-        print("HunyuanDiT model downloaded")
+        gr.Info("HunyuanDiT model downloaded")
 
     try:
         pipe = HunyuanDiTPipeline().HunyuanDiTPipeline.from_pretrained(hunyuandit_model_path, torch_dtype=torch.float16)
@@ -5976,7 +5990,7 @@ def generate_image_hunyuandit_txt2img(prompt, negative_prompt, seed, num_inferen
         return image_path, f"Image generated successfully. Seed used: {seed}"
 
     except Exception as e:
-        return None, str(e)
+        gr.Error(f"An error occurred: {str(e)}")
 
     finally:
         del pipe
@@ -5986,6 +6000,9 @@ def generate_image_hunyuandit_txt2img(prompt, negative_prompt, seed, num_inferen
 def generate_image_hunyuandit_controlnet(prompt, negative_prompt, init_image, controlnet_model, seed, num_inference_steps, guidance_scale, height, width, output_format):
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
+
+    if not init_image:
+        gr.Info("Please upload an initial image!")
 
     if seed == "" or seed is None:
         seed = random.randint(0, 2 ** 32 - 1)
@@ -5997,16 +6014,16 @@ def generate_image_hunyuandit_controlnet(prompt, negative_prompt, init_image, co
     controlnet_model_path = os.path.join("inputs", "image", "hunyuandit", "controlnet", controlnet_model)
 
     if not os.path.exists(hunyuandit_model_path):
-        print("Downloading HunyuanDiT model...")
+        gr.Info("Downloading HunyuanDiT model...")
         os.makedirs(hunyuandit_model_path, exist_ok=True)
         Repo.clone_from("https://huggingface.co/Tencent-Hunyuan/HunyuanDiT-v1.2-Diffusers", hunyuandit_model_path)
-        print("HunyuanDiT model downloaded")
+        gr.Info("HunyuanDiT model downloaded")
 
     if not os.path.exists(controlnet_model_path):
-        print(f"Downloading HunyuanDiT ControlNet {controlnet_model} model...")
+        gr.Info(f"Downloading HunyuanDiT ControlNet {controlnet_model} model...")
         os.makedirs(controlnet_model_path, exist_ok=True)
         Repo.clone_from(f"https://huggingface.co/Tencent-Hunyuan/HunyuanDiT-v1.2-ControlNet-Diffusers-{controlnet_model}", controlnet_model_path)
-        print(f"HunyuanDiT ControlNet {controlnet_model} model downloaded")
+        gr.Info(f"HunyuanDiT ControlNet {controlnet_model} model downloaded")
 
     try:
         controlnet = HunyuanDiT2DControlNetModel().HunyuanDiT2DControlNetModel.from_pretrained(controlnet_model_path, torch_dtype=torch.float16)
@@ -6037,7 +6054,7 @@ def generate_image_hunyuandit_controlnet(prompt, negative_prompt, init_image, co
         return image_path, f"Image generated successfully. Seed used: {seed}"
 
     except Exception as e:
-        return None, str(e)
+        gr.Error(f"An error occurred: {str(e)}")
 
     finally:
         del pipe
@@ -6058,10 +6075,10 @@ def generate_image_lumina(prompt, negative_prompt, seed, num_inference_steps, gu
     lumina_model_path = os.path.join("inputs", "image", "lumina")
 
     if not os.path.exists(lumina_model_path):
-        print("Downloading Lumina-T2X model...")
+        gr.Info("Downloading Lumina-T2X model...")
         os.makedirs(lumina_model_path, exist_ok=True)
         Repo.clone_from("https://huggingface.co/Alpha-VLLM/Lumina-Next-SFT-diffusers", lumina_model_path)
-        print("Lumina-T2X model downloaded")
+        gr.Info("Lumina-T2X model downloaded")
 
     try:
         pipe = LuminaText2ImgPipeline().LuminaText2ImgPipeline.from_pretrained(
@@ -6103,7 +6120,7 @@ def generate_image_lumina(prompt, negative_prompt, seed, num_inference_steps, gu
         return image_path, f"Image generated successfully. Seed used: {seed}"
 
     except Exception as e:
-        return None, str(e)
+        gr.Error(f"An error occurred: {str(e)}")
 
     finally:
         del pipe
@@ -6123,10 +6140,10 @@ def generate_image_kolors_txt2img(prompt, negative_prompt, seed, lora_model_name
     kolors_model_path = os.path.join("inputs", "image", "kolors")
 
     if not os.path.exists(kolors_model_path):
-        print("Downloading Kolors model...")
+        gr.Info("Downloading Kolors model...")
         os.makedirs(kolors_model_path, exist_ok=True)
         Repo.clone_from("https://huggingface.co/Kwai-Kolors/Kolors-diffusers", kolors_model_path)
-        print("Kolors model downloaded")
+        gr.Info("Kolors model downloaded")
 
     try:
         pipe = KolorsPipeline().KolorsPipeline.from_pretrained(kolors_model_path, torch_dtype=torch.float16, variant="fp16")
@@ -6141,7 +6158,7 @@ def generate_image_kolors_txt2img(prompt, negative_prompt, seed, lora_model_name
         lora_loaded = False
         if lora_model_names and lora_scales:
             if len(lora_model_names) != len(lora_scales):
-                print(
+                gr.Info(
                     f"Warning: Number of LoRA models ({len(lora_model_names)}) does not match number of scales ({len(lora_scales)}). Using available scales.")
 
             for i, lora_model_name in enumerate(lora_model_names):
@@ -6157,9 +6174,9 @@ def generate_image_kolors_txt2img(prompt, negative_prompt, seed, lora_model_name
                         pipe.load_lora_weights(lora_model_path, adapter_name=adapter_name)
                         pipe.fuse_lora(lora_scale=lora_scale)
                         lora_loaded = True
-                        print(f"Loaded LoRA {lora_model_name} with scale {lora_scale}")
+                        gr.Info(f"Loaded LoRA {lora_model_name} with scale {lora_scale}")
                     except Exception as e:
-                        print(f"Error loading LoRA {lora_model_name}: {str(e)}")
+                        gr.Error(f"Error loading LoRA {lora_model_name}: {str(e)}")
 
         image = pipe(
             prompt=prompt,
@@ -6193,7 +6210,7 @@ def generate_image_kolors_txt2img(prompt, negative_prompt, seed, lora_model_name
         return image_path, f"Image generated successfully. Seed used: {seed}"
 
     except Exception as e:
-        return None, str(e)
+        gr.Error(f"An error occurred: {str(e)}")
 
     finally:
         del pipe
@@ -6202,6 +6219,9 @@ def generate_image_kolors_txt2img(prompt, negative_prompt, seed, lora_model_name
 
 def generate_image_kolors_img2img(prompt, negative_prompt, init_image, seed, guidance_scale, num_inference_steps, max_sequence_length, output_format):
     device = "cuda" if torch.cuda.is_available() else "cpu"
+
+    if not init_image:
+        gr.Info("Please upload an initial image!")
 
     if seed == "" or seed is None:
         seed = random.randint(0, 2 ** 32 - 1)
@@ -6212,10 +6232,10 @@ def generate_image_kolors_img2img(prompt, negative_prompt, init_image, seed, gui
     kolors_model_path = os.path.join("inputs", "image", "kolors")
 
     if not os.path.exists(kolors_model_path):
-        print("Downloading Kolors model...")
+        gr.Info("Downloading Kolors model...")
         os.makedirs(kolors_model_path, exist_ok=True)
         Repo.clone_from("https://huggingface.co/Kwai-Kolors/Kolors-diffusers", kolors_model_path)
-        print("Kolors model downloaded")
+        gr.Info("Kolors model downloaded")
 
     try:
         pipe = KolorsPipeline().KolorsPipeline.from_pretrained(kolors_model_path, torch_dtype=torch.float16, variant="fp16")
@@ -6245,7 +6265,7 @@ def generate_image_kolors_img2img(prompt, negative_prompt, init_image, seed, gui
         return image_path, f"Image generated successfully. Seed used: {seed}"
 
     except Exception as e:
-        return None, str(e)
+        gr.Error(f"An error occurred: {str(e)}")
 
     finally:
         del pipe
@@ -6254,6 +6274,9 @@ def generate_image_kolors_img2img(prompt, negative_prompt, init_image, seed, gui
 
 def generate_image_kolors_ip_adapter_plus(prompt, negative_prompt, ip_adapter_image, seed, guidance_scale, num_inference_steps, output_format):
     device = "cuda" if torch.cuda.is_available() else "cpu"
+
+    if not ip_adapter_image:
+        gr.Info("Please upload an initial image!")
 
     if seed == "" or seed is None:
         seed = random.randint(0, 2 ** 32 - 1)
@@ -6265,16 +6288,16 @@ def generate_image_kolors_ip_adapter_plus(prompt, negative_prompt, ip_adapter_im
     ip_adapter_path = os.path.join("inputs", "image", "kolors", "ip_adapter_plus")
 
     if not os.path.exists(kolors_model_path):
-        print("Downloading Kolors model...")
+        gr.Info("Downloading Kolors model...")
         os.makedirs(kolors_model_path, exist_ok=True)
         Repo.clone_from("https://huggingface.co/Kwai-Kolors/Kolors-diffusers", kolors_model_path)
-        print("Kolors model downloaded")
+        gr.Info("Kolors model downloaded")
 
     if not os.path.exists(ip_adapter_path):
-        print("Downloading Kolors IP-Adapter-Plus...")
+        gr.Info("Downloading Kolors IP-Adapter-Plus...")
         os.makedirs(ip_adapter_path, exist_ok=True)
         Repo.clone_from("https://huggingface.co/Kwai-Kolors/Kolors-IP-Adapter-Plus", ip_adapter_path)
-        print("Kolors IP-Adapter-Plus downloaded")
+        gr.Info("Kolors IP-Adapter-Plus downloaded")
 
     try:
         image_encoder = CLIPVisionModelWithProjection().CLIPVisionModelWithProjection.from_pretrained(
@@ -6316,7 +6339,7 @@ def generate_image_kolors_ip_adapter_plus(prompt, negative_prompt, ip_adapter_im
         return image_path, f"Image generated successfully. Seed used: {seed}"
 
     except Exception as e:
-        return None, str(e)
+        gr.Error(f"An error occurred: {str(e)}")
 
     finally:
         del pipe
@@ -6338,16 +6361,16 @@ def generate_image_auraflow(prompt, negative_prompt, seed, lora_model_names, lor
     aurasr_model_path = os.path.join("inputs", "image", "auraflow", "aurasr")
 
     if not os.path.exists(auraflow_model_path):
-        print("Downloading AuraFlow model...")
+        gr.Info("Downloading AuraFlow model...")
         os.makedirs(auraflow_model_path, exist_ok=True)
         Repo.clone_from("https://huggingface.co/fal/AuraFlow-v0.3", auraflow_model_path)
-        print("AuraFlow model downloaded")
+        gr.Info("AuraFlow model downloaded")
 
     if not os.path.exists(aurasr_model_path):
-        print("Downloading AuraSR model...")
+        gr.Info("Downloading AuraSR model...")
         os.makedirs(aurasr_model_path, exist_ok=True)
         Repo.clone_from("https://huggingface.co/fal/AuraSR", aurasr_model_path)
-        print("AuraSR model downloaded")
+        gr.Info("AuraSR model downloaded")
 
     try:
         pipe = AuraFlowPipeline().AuraFlowPipeline.from_pretrained(auraflow_model_path, torch_dtype=torch.float16)
@@ -6361,7 +6384,7 @@ def generate_image_auraflow(prompt, negative_prompt, seed, lora_model_names, lor
         lora_loaded = False
         if lora_model_names and lora_scales:
             if len(lora_model_names) != len(lora_scales):
-                print(
+                gr.Info(
                     f"Warning: Number of LoRA models ({len(lora_model_names)}) does not match number of scales ({len(lora_scales)}). Using available scales.")
 
             for i, lora_model_name in enumerate(lora_model_names):
@@ -6377,9 +6400,9 @@ def generate_image_auraflow(prompt, negative_prompt, seed, lora_model_names, lor
                         pipe.load_lora_weights(lora_model_path, adapter_name=adapter_name)
                         pipe.fuse_lora(lora_scale=lora_scale)
                         lora_loaded = True
-                        print(f"Loaded LoRA {lora_model_name} with scale {lora_scale}")
+                        gr.Info(f"Loaded LoRA {lora_model_name} with scale {lora_scale}")
                     except Exception as e:
-                        print(f"Error loading LoRA {lora_model_name}: {str(e)}")
+                        gr.Error(f"Error loading LoRA {lora_model_name}: {str(e)}")
 
         image = pipe(
             prompt=prompt,
@@ -6423,7 +6446,7 @@ def generate_image_auraflow(prompt, negative_prompt, seed, lora_model_names, lor
         return image_path, f"Image generated successfully. Seed used: {seed}"
 
     except Exception as e:
-        return None, str(e)
+        gr.Error(f"An error occurred: {str(e)}")
 
     finally:
         del pipe
@@ -6445,11 +6468,11 @@ def generate_image_wurstchen(prompt, negative_prompt, seed, width, height, prior
     wurstchen_model_path = os.path.join("inputs", "image", "wurstchen")
 
     if not os.path.exists(wurstchen_model_path):
-        print("Downloading Würstchen models...")
+        gr.Info("Downloading Würstchen models...")
         os.makedirs(wurstchen_model_path, exist_ok=True)
         Repo.clone_from("https://huggingface.co/warp-ai/wuerstchen-prior", os.path.join(wurstchen_model_path, "prior"))
         Repo.clone_from("https://huggingface.co/warp-ai/wuerstchen", os.path.join(wurstchen_model_path, "decoder"))
-        print("Würstchen models downloaded")
+        gr.Info("Würstchen models downloaded")
 
     try:
         dtype = torch.float16 if device == "cuda" else torch.float32
@@ -6511,7 +6534,7 @@ def generate_image_wurstchen(prompt, negative_prompt, seed, width, height, prior
         return image_path, f"Image generated successfully. Seed used: {seed}"
 
     except Exception as e:
-        return None, str(e)
+        gr.Error(f"An error occurred: {str(e)}")
 
     finally:
         del prior_pipeline
@@ -6534,22 +6557,22 @@ def generate_image_deepfloyd_txt2img(prompt, negative_prompt, seed, num_inferenc
     upscale_model_path = os.path.join("inputs", "image", "sd_models", "upscale", "x4-upscaler")
 
     if not os.path.exists(deepfloydI_model_path):
-        print("Downloading DeepfloydIF-I-XL-v1.0 model")
+        gr.Info("Downloading DeepfloydIF-I-XL-v1.0 model")
         os.makedirs(deepfloydI_model_path, exist_ok=True)
         Repo.clone_from("https://huggingface.co/DeepFloyd/IF-I-XL-v1.0", os.path.join(deepfloydI_model_path))
-        print("DeepfloydIF-I-XL-v1.0 model downloaded")
+        gr.Info("DeepfloydIF-I-XL-v1.0 model downloaded")
 
     if not os.path.exists(deepfloydII_model_path):
-        print("Downloading DeepFloydIF-II-L-v1.0 model")
+        gr.Info("Downloading DeepFloydIF-II-L-v1.0 model")
         os.makedirs(deepfloydII_model_path, exist_ok=True)
         Repo.clone_from("https://huggingface.co/DeepFloyd/IF-II-L-v1.0", os.path.join(deepfloydII_model_path))
-        print("DeepFloydIF-II-L-v1.0 model downloaded")
+        gr.Info("DeepFloydIF-II-L-v1.0 model downloaded")
 
     if not os.path.exists(upscale_model_path):
-        print("Downloading 4x-Upscale models...")
+        gr.Info("Downloading 4x-Upscale models...")
         os.makedirs(upscale_model_path, exist_ok=True)
         Repo.clone_from("https://huggingface.co/stabilityai/stable-diffusion-x4-upscaler", os.path.join(upscale_model_path))
-        print("Deepfloyd models downloaded")
+        gr.Info("Deepfloyd models downloaded")
 
     try:
 
@@ -6641,7 +6664,7 @@ def generate_image_deepfloyd_txt2img(prompt, negative_prompt, seed, num_inferenc
         return stage_i_path, stage_ii_path, stage_iii_path, f"Image generated successfully. Seed used: {seed}"
 
     except Exception as e:
-        return None, None, None, str(e)
+        gr.Error(f"An error occurred: {str(e)}")
 
     finally:
         try:
@@ -6665,30 +6688,30 @@ def generate_image_deepfloyd_img2img(prompt, negative_prompt, init_image, seed, 
     generator = torch.Generator(device).manual_seed(seed)
 
     if not init_image:
-        return None, None, None, "Please upload an initial image!"
+        gr.Info("Please upload an initial image!")
 
     deepfloydI_model_path = os.path.join("inputs", "image", "deepfloydI")
     deepfloydII_model_path = os.path.join("inputs", "image", "deepfloydII")
     upscale_model_path = os.path.join("inputs", "image", "sd_models", "upscale", "x4-upscaler")
 
     if not os.path.exists(deepfloydI_model_path):
-        print("Downloading DeepfloydIF-I-XL-v1.0 model")
+        gr.Info("Downloading DeepfloydIF-I-XL-v1.0 model")
         os.makedirs(deepfloydI_model_path, exist_ok=True)
         Repo.clone_from("https://huggingface.co/DeepFloyd/IF-I-XL-v1.0", os.path.join(deepfloydI_model_path))
-        print("DeepfloydIF-I-XL-v1.0 model downloaded")
+        gr.Info("DeepfloydIF-I-XL-v1.0 model downloaded")
 
     if not os.path.exists(deepfloydII_model_path):
-        print("Downloading DeepFloydIF-II-L-v1.0 model")
+        gr.Info("Downloading DeepFloydIF-II-L-v1.0 model")
         os.makedirs(deepfloydII_model_path, exist_ok=True)
         Repo.clone_from("https://huggingface.co/DeepFloyd/IF-II-L-v1.0", os.path.join(deepfloydII_model_path))
-        print("DeepFloydIF-II-L-v1.0 model downloaded")
+        gr.Info("DeepFloydIF-II-L-v1.0 model downloaded")
 
     if not os.path.exists(upscale_model_path):
-        print("Downloading 4x-Upscale models...")
+        gr.Info("Downloading 4x-Upscale models...")
         os.makedirs(upscale_model_path, exist_ok=True)
         Repo.clone_from("https://huggingface.co/stabilityai/stable-diffusion-x4-upscaler",
                         os.path.join(upscale_model_path))
-        print("Deepfloyd models downloaded")
+        gr.Info("Deepfloyd models downloaded")
 
     try:
 
@@ -6772,7 +6795,7 @@ def generate_image_deepfloyd_img2img(prompt, negative_prompt, init_image, seed, 
         return stage_1_path, stage_2_path, stage_3_path, f"Image generated successfully. Seed used: {seed}"
 
     except Exception as e:
-        return None, None, None, str(e)
+        gr.Error(f"An error occurred: {str(e)}")
 
     finally:
         try:
@@ -6790,30 +6813,30 @@ def generate_image_deepfloyd_inpaint(prompt, negative_prompt, init_image, mask_i
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
     if not init_image or not mask_image:
-        return None, None, None, "Please upload an initial image and provide a mask image!"
+        gr.Info("Please upload an initial image and provide a mask image!")
 
     deepfloydI_model_path = os.path.join("inputs", "image", "deepfloydI")
     deepfloydII_model_path = os.path.join("inputs", "image", "deepfloydII")
     upscale_model_path = os.path.join("inputs", "image", "sd_models", "upscale", "x4-upscaler")
 
     if not os.path.exists(deepfloydI_model_path):
-        print("Downloading DeepfloydIF-I-XL-v1.0 model")
+        gr.Info("Downloading DeepfloydIF-I-XL-v1.0 model")
         os.makedirs(deepfloydI_model_path, exist_ok=True)
         Repo.clone_from("https://huggingface.co/DeepFloyd/IF-I-XL-v1.0", os.path.join(deepfloydI_model_path))
-        print("DeepfloydIF-I-XL-v1.0 model downloaded")
+        gr.Info("DeepfloydIF-I-XL-v1.0 model downloaded")
 
     if not os.path.exists(deepfloydII_model_path):
-        print("Downloading DeepFloydIF-II-L-v1.0 model")
+        gr.Info("Downloading DeepFloydIF-II-L-v1.0 model")
         os.makedirs(deepfloydII_model_path, exist_ok=True)
         Repo.clone_from("https://huggingface.co/DeepFloyd/IF-II-L-v1.0", os.path.join(deepfloydII_model_path))
-        print("DeepFloydIF-II-L-v1.0 model downloaded")
+        gr.Info("DeepFloydIF-II-L-v1.0 model downloaded")
 
     if not os.path.exists(upscale_model_path):
-        print("Downloading 4x-Upscale models...")
+        gr.Info("Downloading 4x-Upscale models...")
         os.makedirs(upscale_model_path, exist_ok=True)
         Repo.clone_from("https://huggingface.co/stabilityai/stable-diffusion-x4-upscaler",
                         os.path.join(upscale_model_path))
-        print("Deepfloyd models downloaded")
+        gr.Info("Deepfloyd models downloaded")
 
     try:
 
@@ -6898,7 +6921,7 @@ def generate_image_deepfloyd_inpaint(prompt, negative_prompt, init_image, mask_i
         return stage_1_path, stage_2_path, stage_3_path, None
 
     except Exception as e:
-        return None, None, None, str(e)
+        gr.Error(f"An error occurred: {str(e)}")
 
     finally:
         try:
@@ -6925,7 +6948,7 @@ def generate_image_pixart(prompt, negative_prompt, version, seed, num_inference_
     pixart_model_path = os.path.join("inputs", "image", "pixart")
 
     if not os.path.exists(pixart_model_path):
-        print(f"Downloading PixArt {version} model...")
+        gr.Info(f"Downloading PixArt {version} model...")
         os.makedirs(pixart_model_path, exist_ok=True)
         if version == "Alpha-512":
             Repo.clone_from("https://huggingface.co/PixArt-alpha/PixArt-XL-2-512-MS",
@@ -6939,7 +6962,7 @@ def generate_image_pixart(prompt, negative_prompt, version, seed, num_inference_
         elif version == "Sigma-1024":
             Repo.clone_from("https://huggingface.co/PixArt-alpha/PixArt-Sigma-XL-2-1024-MS",
                             os.path.join(pixart_model_path, "Sigma-1024"))
-        print(f"PixArt {version} model downloaded")
+        gr.Info(f"PixArt {version} model downloaded")
 
     try:
         if version.startswith("Alpha"):
@@ -6999,7 +7022,7 @@ def generate_image_pixart(prompt, negative_prompt, version, seed, num_inference_
         return image_path, f"Image generated successfully. Seed used: {seed}"
 
     except Exception as e:
-        return None, str(e)
+        gr.Error(f"An error occurred: {str(e)}")
 
     finally:
         del pipe
@@ -7020,10 +7043,10 @@ def generate_image_playgroundv2(prompt, negative_prompt, seed, height, width, nu
     playgroundv2_model_path = os.path.join("inputs", "image", "playgroundv2")
 
     if not os.path.exists(playgroundv2_model_path):
-        print("Downloading PlaygroundV2.5 model...")
+        gr.Info("Downloading PlaygroundV2.5 model...")
         os.makedirs(playgroundv2_model_path, exist_ok=True)
         Repo.clone_from("https://huggingface.co/playgroundai/playground-v2.5-1024px-aesthetic", playgroundv2_model_path)
-        print("PlaygroundV2.5 model downloaded")
+        gr.Info("PlaygroundV2.5 model downloaded")
 
     try:
         pipe = DiffusionPipeline().DiffusionPipeline.from_pretrained(
@@ -7064,7 +7087,7 @@ def generate_image_playgroundv2(prompt, negative_prompt, seed, height, width, nu
         return image_path, f"Image generated successfully. Seed used: {seed}"
 
     except Exception as e:
-        return None, str(e)
+        gr.Error(f"An error occurred: {str(e)}")
 
     finally:
         del pipe
@@ -7074,7 +7097,7 @@ def generate_image_playgroundv2(prompt, negative_prompt, seed, height, width, nu
 def generate_wav2lip(image_path, audio_path, fps, pads, face_det_batch_size, wav2lip_batch_size, resize_factor, crop, enable_no_smooth):
 
     if not image_path or not audio_path:
-        return None, "Please upload an image and an audio file!"
+        gr.Info("Please upload an image and an audio file!")
 
     try:
         wav2lip_path = os.path.join("inputs", "image", "Wav2Lip")
@@ -7082,13 +7105,13 @@ def generate_wav2lip(image_path, audio_path, fps, pads, face_det_batch_size, wav
         checkpoint_path = os.path.join(wav2lip_path, "checkpoints", "wav2lip_gan.pth")
 
         if not os.path.exists(checkpoint_path):
-            print("Downloading Wav2Lip GAN model...")
+            gr.Info("Downloading Wav2Lip GAN model...")
             os.makedirs(os.path.dirname(checkpoint_path), exist_ok=True)
             url = "https://huggingface.co/camenduru/Wav2Lip/resolve/main/checkpoints/wav2lip_gan.pth"
             response = requests.get(url, allow_redirects=True)
             with open(checkpoint_path, "wb") as file:
                 file.write(response.content)
-            print("Wav2Lip GAN model downloaded")
+            gr.Info("Wav2Lip GAN model downloaded")
 
         today = datetime.now().date()
         output_dir = os.path.join("outputs", f"FaceAnimation_{today.strftime('%Y%m%d')}")
@@ -7106,7 +7129,7 @@ def generate_wav2lip(image_path, audio_path, fps, pads, face_det_batch_size, wav
         return output_path, None
 
     except Exception as e:
-        return None, str(e)
+        gr.Error(f"An error occurred: {str(e)}")
 
     finally:
         flush()
@@ -7114,16 +7137,16 @@ def generate_wav2lip(image_path, audio_path, fps, pads, face_det_batch_size, wav
 
 def generate_liveportrait(source_image, driving_video, output_format):
     if not source_image or not driving_video:
-        return None, "Please upload both a source image and a driving video!"
+        gr.Info("Please upload both a source image and a driving video!")
 
     liveportrait_model_path = os.path.join("ThirdPartyRepository", "LivePortrait", "pretrained_weights")
 
     if not os.path.exists(liveportrait_model_path):
-        print("Downloading LivePortrait model...")
+        gr.Info("Downloading LivePortrait model...")
         os.makedirs(liveportrait_model_path, exist_ok=True)
         os.system(
             f"huggingface-cli download KwaiVGI/LivePortrait --local-dir {liveportrait_model_path} --exclude '*.git*' 'README.md' 'docs'")
-        print("LivePortrait model downloaded")
+        gr.Info("LivePortrait model downloaded")
 
     try:
         today = datetime.now().date()
@@ -7140,20 +7163,20 @@ def generate_liveportrait(source_image, driving_video, output_format):
         result_folder = [f for f in os.listdir(output_dir) if
                          f.startswith(output_filename) and os.path.isdir(os.path.join(output_dir, f))]
         if not result_folder:
-            return None, "Output folder not found"
+            gr.Info("Output folder not found")
 
         result_folder = os.path.join(output_dir, result_folder[0])
 
         video_files = [f for f in os.listdir(result_folder) if f.endswith(f'.{output_format}') and 'concat' not in f]
         if not video_files:
-            return None, "Output video not found"
+            gr.Info("Output video not found")
 
         output_video = os.path.join(result_folder, video_files[0])
 
         return output_video, None
 
     except Exception as e:
-        return None, str(e)
+        gr.Error(f"An error occurred: {str(e)}")
 
     finally:
         flush()
@@ -7173,10 +7196,10 @@ def generate_video_modelscope(prompt, negative_prompt, seed, num_inference_steps
     modelscope_model_path = os.path.join("inputs", "video", "modelscope")
 
     if not os.path.exists(modelscope_model_path):
-        print("Downloading ModelScope model...")
+        gr.Info("Downloading ModelScope model...")
         os.makedirs(modelscope_model_path, exist_ok=True)
         Repo.clone_from("https://huggingface.co/damo-vilab/text-to-video-ms-1.7b", modelscope_model_path)
-        print("ModelScope model downloaded")
+        gr.Info("ModelScope model downloaded")
 
     try:
         pipe = DiffusionPipeline().DiffusionPipeline.from_pretrained(modelscope_model_path, torch_dtype=torch.float16, variant="fp16")
@@ -7220,7 +7243,7 @@ def generate_video_modelscope(prompt, negative_prompt, seed, num_inference_steps
         return video_path, f"Video generated successfully. Seed used: {seed}"
 
     except Exception as e:
-        return None, str(e)
+        gr.Error(f"An error occurred: {str(e)}")
 
     finally:
         del pipe
@@ -7240,17 +7263,17 @@ def generate_video_zeroscope2(prompt, seed, num_inference_steps, width, height, 
 
     base_model_path = os.path.join("inputs", "video", "zeroscope2", "zeroscope_v2_576w")
     if not os.path.exists(base_model_path):
-        print("Downloading ZeroScope 2 base model...")
+        gr.Info("Downloading ZeroScope 2 base model...")
         os.makedirs(base_model_path, exist_ok=True)
         Repo.clone_from("https://huggingface.co/cerspense/zeroscope_v2_576w", base_model_path)
-        print("ZeroScope 2 base model downloaded")
+        gr.Info("ZeroScope 2 base model downloaded")
 
     enhance_model_path = os.path.join("inputs", "video", "zeroscope2", "zeroscope_v2_XL")
     if not os.path.exists(enhance_model_path):
-        print("Downloading ZeroScope 2 enhance model...")
+        gr.Info("Downloading ZeroScope 2 enhance model...")
         os.makedirs(enhance_model_path, exist_ok=True)
         Repo.clone_from("https://huggingface.co/cerspense/zeroscope_v2_XL", enhance_model_path)
-        print("ZeroScope 2 enhance model downloaded")
+        gr.Info("ZeroScope 2 enhance model downloaded")
 
     today = datetime.now().date()
     video_dir = os.path.join('outputs', f"ZeroScope2_{today.strftime('%Y%m%d')}")
@@ -7258,7 +7281,7 @@ def generate_video_zeroscope2(prompt, seed, num_inference_steps, width, height, 
 
     if enable_video_enhance:
         if not video_to_enhance:
-            return None, "Please upload a video to enhance."
+            gr.Info("Please upload a video to enhance.")
 
         try:
             enhance_pipe = DiffusionPipeline().DiffusionPipeline.from_pretrained(enhance_model_path, torch_dtype=torch.float16)
@@ -7315,7 +7338,7 @@ def generate_video_zeroscope2(prompt, seed, num_inference_steps, width, height, 
             return video_path, f"Video generated successfully. Seed used: {seed}"
 
         except Exception as e:
-            return None, str(e)
+            gr.Error(f"An error occurred: {str(e)}")
 
         finally:
             try:
@@ -7352,7 +7375,7 @@ def generate_video_zeroscope2(prompt, seed, num_inference_steps, width, height, 
             return video_path, f"Video generated successfully. Seed used: {seed}"
 
         except Exception as e:
-            return None, str(e)
+            gr.Error(f"An error occurred: {str(e)}")
 
         finally:
             try:
@@ -7375,10 +7398,10 @@ def generate_video_cogvideox_text2video(prompt, negative_prompt, cogvideox_versi
     cogvideox_model_path = os.path.join("inputs", "video", "cogvideox", cogvideox_version)
 
     if not os.path.exists(cogvideox_model_path):
-        print(f"Downloading {cogvideox_version} model...")
+        gr.Info(f"Downloading {cogvideox_version} model...")
         os.makedirs(cogvideox_model_path, exist_ok=True)
         Repo.clone_from(f"https://huggingface.co/THUDM/{cogvideox_version}", cogvideox_model_path)
-        print(f"{cogvideox_version} model downloaded")
+        gr.Info(f"{cogvideox_version} model downloaded")
 
     try:
         pipe = CogVideoXPipeline().CogVideoXPipeline.from_pretrained(cogvideox_model_path, torch_dtype=torch.float16).to(device)
@@ -7423,7 +7446,7 @@ def generate_video_cogvideox_text2video(prompt, negative_prompt, cogvideox_versi
         return video_path, f"Video generated successfully. Seed used: {seed}"
 
     except Exception as e:
-        return None, str(e)
+        gr.Error(f"An error occurred: {str(e)}")
 
     finally:
         del pipe
@@ -7434,6 +7457,9 @@ def generate_video_cogvideox_image2video(prompt, negative_prompt, init_image, se
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
+    if not init_image:
+        gr.Info("Please, upload an initial image!")
+
     if seed == "" or seed is None:
         seed = random.randint(0, 2 ** 32 - 1)
     else:
@@ -7443,10 +7469,10 @@ def generate_video_cogvideox_image2video(prompt, negative_prompt, init_image, se
     cogvideox_i2v_model_path = os.path.join("inputs", "video", "cogvideox-i2v")
 
     if not os.path.exists(cogvideox_i2v_model_path):
-        print(f"Downloading CogVideoX I2V model...")
+        gr.Info(f"Downloading CogVideoX I2V model...")
         os.makedirs(cogvideox_i2v_model_path, exist_ok=True)
         Repo.clone_from("https://huggingface.co/THUDM/CogVideoX-5b-I2V", cogvideox_i2v_model_path)
-        print(f"CogVideoX I2V model downloaded")
+        gr.Info(f"CogVideoX I2V model downloaded")
 
     try:
         pipe = CogVideoXImageToVideoPipeline().CogVideoXImageToVideoPipeline.from_pretrained(cogvideox_i2v_model_path, torch_dtype=torch.bfloat16)
@@ -7467,7 +7493,7 @@ def generate_video_cogvideox_image2video(prompt, negative_prompt, init_image, se
         return video_path, f"Video generated successfully. Seed used: {seed}"
 
     except Exception as e:
-        return None, str(e)
+        gr.Error(f"An error occurred: {str(e)}")
 
     finally:
         del pipe
@@ -7478,6 +7504,9 @@ def generate_video_cogvideox_video2video(prompt, negative_prompt, init_video, co
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
+    if not init_video:
+        gr.Info("Please, upload an initial video!")
+
     if seed == "" or seed is None:
         seed = random.randint(0, 2 ** 32 - 1)
     else:
@@ -7487,10 +7516,10 @@ def generate_video_cogvideox_video2video(prompt, negative_prompt, init_video, co
     cogvideox_model_path = os.path.join("inputs", "video", "cogvideox", cogvideox_version)
 
     if not os.path.exists(cogvideox_model_path):
-        print(f"Downloading {cogvideox_version} model...")
+        gr.Info(f"Downloading {cogvideox_version} model...")
         os.makedirs(cogvideox_model_path, exist_ok=True)
         Repo.clone_from(f"https://huggingface.co/THUDM/{cogvideox_version}", cogvideox_model_path)
-        print(f"{cogvideox_version} model downloaded")
+        gr.Info(f"{cogvideox_version} model downloaded")
 
     try:
         pipe = CogVideoXVideoToVideoPipeline().CogVideoXVideoToVideoPipeline.from_pretrained(cogvideox_model_path, torch_dtype=torch.bfloat16)
@@ -7519,7 +7548,7 @@ def generate_video_cogvideox_video2video(prompt, negative_prompt, init_video, co
         return video_path, f"Video generated successfully. Seed used: {seed}"
 
     except Exception as e:
-        return None, str(e)
+        gr.Error(f"An error occurred: {str(e)}")
 
     finally:
         del pipe
@@ -7539,10 +7568,10 @@ def generate_video_latte(prompt, negative_prompt, seed, num_inference_steps, gui
     latte_model_path = os.path.join("inputs", "video", "latte")
 
     if not os.path.exists(latte_model_path):
-        print("Downloading Latte model...")
+        gr.Info("Downloading Latte model...")
         os.makedirs(latte_model_path, exist_ok=True)
         Repo.clone_from("https://huggingface.co/maxin-cn/Latte-1", latte_model_path)
-        print("Latte model downloaded")
+        gr.Info("Latte model downloaded")
 
     try:
         pipe = LattePipeline().LattePipeline.from_pretrained(latte_model_path, torch_dtype=torch.float16).to(device)
@@ -7583,7 +7612,7 @@ def generate_video_latte(prompt, negative_prompt, seed, num_inference_steps, gui
         return gif_path, f"Video generated successfully. Seed used: {seed}"
 
     except Exception as e:
-        return None, str(e)
+        gr.Error(f"An error occurred: {str(e)}")
 
     finally:
         del pipe
@@ -7593,7 +7622,7 @@ def generate_video_latte(prompt, negative_prompt, seed, num_inference_steps, gui
 def generate_3d_stablefast3d(image, texture_resolution, foreground_ratio, remesh_option):
 
     if not image:
-        return None, "Please upload an image!"
+        gr.Info("Please upload an image!")
 
     try:
         today = datetime.now().date()
@@ -7609,7 +7638,7 @@ def generate_3d_stablefast3d(image, texture_resolution, foreground_ratio, remesh
         return output_path, None
 
     except Exception as e:
-        return None, str(e)
+        gr.Error(f"An error occurred: {str(e)}")
 
     finally:
         flush()
@@ -7629,10 +7658,10 @@ def generate_3d_shap_e(prompt, init_image, seed, num_inference_steps, guidance_s
         model_name = "openai/shap-e-img2img"
         model_path = os.path.join("inputs", "3D", "shap-e", "img2img")
         if not os.path.exists(model_path):
-            print("Downloading Shap-E img2img model...")
+            gr.Info("Downloading Shap-E img2img model...")
             os.makedirs(model_path, exist_ok=True)
             Repo.clone_from(f"https://huggingface.co/{model_name}", model_path)
-            print("Shap-E img2img model downloaded")
+            gr.Info("Shap-E img2img model downloaded")
 
         pipe = ShapEImg2ImgPipeline().ShapEImg2ImgPipeline.from_pretrained(model_path, torch_dtype=torch.float16, variant="fp16").to(device)
         image = Image.open(init_image).resize((256, 256))
@@ -7648,10 +7677,10 @@ def generate_3d_shap_e(prompt, init_image, seed, num_inference_steps, guidance_s
         model_name = "openai/shap-e"
         model_path = os.path.join("inputs", "3D", "shap-e", "text2img")
         if not os.path.exists(model_path):
-            print("Downloading Shap-E text2img model...")
+            gr.Info("Downloading Shap-E text2img model...")
             os.makedirs(model_path, exist_ok=True)
             Repo.clone_from(f"https://huggingface.co/{model_name}", model_path)
-            print("Shap-E text2img model downloaded")
+            gr.Info("Shap-E text2img model downloaded")
 
         pipe = ShapEPipeline().ShapEPipeline.from_pretrained(model_path, torch_dtype=torch.float16, variant="fp16").to(device)
         images = pipe(
@@ -7682,7 +7711,7 @@ def generate_3d_shap_e(prompt, init_image, seed, num_inference_steps, guidance_s
         return glb_path, f"3D generated successfully. Seed used: {seed}"
 
     except Exception as e:
-        return None, str(e)
+        gr.Error(f"An error occurred: {str(e)}")
 
     finally:
         del pipe
@@ -7691,7 +7720,7 @@ def generate_3d_shap_e(prompt, init_image, seed, num_inference_steps, guidance_s
 
 def generate_sv34d(input_file, version, elevation_deg):
     if not input_file:
-        return None, "Please upload an input file!"
+        gr.Info("Please upload an input file!")
 
     model_files = {
         "3D-U": "https://huggingface.co/stabilityai/sv3d/resolve/main/sv3d_u.safetensors",
@@ -7704,15 +7733,15 @@ def generate_sv34d(input_file, version, elevation_deg):
     model_path = os.path.join(checkpoints_dir, f"sv{version.lower()}.safetensors")
 
     if not os.path.exists(model_path):
-        print(f"Downloading SV34D {version} model...")
+        gr.Info(f"Downloading SV34D {version} model...")
         try:
             response = requests.get(model_files[version])
             response.raise_for_status()
             with open(model_path, 'wb') as f:
                 f.write(response.content)
-            print(f"SV34D {version} model downloaded")
+            gr.Info(f"SV34D {version} model downloaded")
         except Exception as e:
-            return None, f"Error downloading model: {str(e)}"
+            gr.Error(f"An error occurred: {str(e)}")
 
     today = datetime.now().date()
     output_dir = os.path.join('outputs', f"SV34D_{today.strftime('%Y%m%d')}")
@@ -7723,20 +7752,20 @@ def generate_sv34d(input_file, version, elevation_deg):
 
     if version in ["3D-U", "3D-P"]:
         if not input_file.lower().endswith(('.png', '.jpg', '.jpeg')):
-            return None, "Please upload an image file for 3D-U or 3D-P version!"
+            gr.Info("Please upload an image file for 3D-U or 3D-P version!")
 
         if version == "3D-U":
             command = f"python ThirdPartyRepository/generative-models/scripts/sampling/simple_video_sample.py --input_path {input_file} --version sv3d_u --output_folder {output_dir}"
         else:
             if elevation_deg is None:
-                return None, "Please provide elevation degree for 3D-P version!"
+                gr.Info("Please provide elevation degree for 3D-P version!")
             command = f"python ThirdPartyRepository/generative-models/scripts/sampling/simple_video_sample.py --input_path {input_file} --version sv3d_p --elevations_deg {elevation_deg} --output_folder {output_dir}"
     elif version == "4D":
         if not input_file.lower().endswith('.mp4'):
-            return None, "Please upload an MP4 video file for 4D version!"
+            gr.Info("Please upload an MP4 video file for 4D version!")
         command = f"python ThirdPartyRepository/generative-models/scripts/sampling/simple_video_sample_4d.py --input_path {input_file} --output_folder {output_dir}"
     else:
-        return None, "Invalid version selected!"
+        gr.Info("Invalid version selected!")
 
     try:
         subprocess.run(command, shell=True, check=True)
@@ -7745,11 +7774,11 @@ def generate_sv34d(input_file, version, elevation_deg):
             if file.startswith(output_filename):
                 return output_path
 
-    except subprocess.CalledProcessError as e:
-        return None, f"Error occurred: {str(e)}"
+    except subprocess.CalledProcessError as ee:
+        gr.Error(f"An error occurred: {str(ee)}")
 
     except Exception as e:
-        return None, str(e)
+        gr.Error(f"An error occurred: {str(e)}")
 
     finally:
         flush()
@@ -7760,15 +7789,15 @@ def generate_3d_zero123plus(input_image, num_inference_steps, output_format):
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
     if not input_image:
-        return None, "Please upload an input image!"
+        gr.Info("Please upload an input image!")
 
     zero123plus_model_path = os.path.join("inputs", "3D", "zero123plus")
 
     if not os.path.exists(zero123plus_model_path):
-        print("Downloading Zero123Plus model...")
+        gr.Info("Downloading Zero123Plus model...")
         os.makedirs(zero123plus_model_path, exist_ok=True)
         Repo.clone_from("https://huggingface.co/sudo-ai/zero123plus-v1.2", zero123plus_model_path)
-        print("Zero123Plus model downloaded")
+        gr.Info("Zero123Plus model downloaded")
 
     try:
         pipe = DiffusionPipeline().DiffusionPipeline.from_pretrained(
@@ -7791,7 +7820,7 @@ def generate_3d_zero123plus(input_image, num_inference_steps, output_format):
         return output_path, None
 
     except Exception as e:
-        return None, str(e)
+        gr.Error(f"An error occurred: {str(e)}")
 
     finally:
         del pipe
@@ -7811,10 +7840,10 @@ def generate_stableaudio(prompt, negative_prompt, seed, num_inference_steps, gui
     sa_model_path = os.path.join("inputs", "audio", "stableaudio")
 
     if not os.path.exists(sa_model_path):
-        print("Downloading Stable Audio Open model...")
+        gr.Info("Downloading Stable Audio Open model...")
         os.makedirs(sa_model_path, exist_ok=True)
         Repo.clone_from("https://huggingface.co/stabilityai/stable-audio-open-1.0", sa_model_path)
-        print("Stable Audio Open model downloaded")
+        gr.Info("Stable Audio Open model downloaded")
 
     pipe = StableAudioPipeline().StableAudioPipeline.from_pretrained(sa_model_path, torch_dtype=torch.float16)
     pipe = pipe.to(device)
@@ -7865,7 +7894,7 @@ def generate_stableaudio(prompt, negative_prompt, seed, num_inference_steps, gui
         return audio_path, spectrogram_path, f"Audio generated successfully. Seed used: {seed}"
 
     except Exception as e:
-        return None, None, str(e)
+        gr.Error(f"An error occurred: {str(e)}")
 
     finally:
         del pipe
@@ -7878,10 +7907,10 @@ def generate_audio_audiocraft(prompt, input_audio=None, model_name=None, model_t
     global audiocraft_model_path, multiband_diffusion_path
 
     if not model_name:
-        return None, None, "Please, select an AudioCraft model!"
+        gr.Info("Please, select an AudioCraft model!")
 
     if enable_multiband and model_type in ["audiogen", "magnet"]:
-        return None, None, "Multiband Diffusion is not supported with 'audiogen' or 'magnet' model types. Please select 'musicgen' or disable Multiband Diffusion"
+        gr.Info("Multiband Diffusion is not supported with 'audiogen' or 'magnet' model types. Please select 'musicgen' or disable Multiband Diffusion")
 
     if not audiocraft_model_path:
         audiocraft_model_path = load_audiocraft_model(model_name)
@@ -7901,9 +7930,9 @@ def generate_audio_audiocraft(prompt, input_audio=None, model_name=None, model_t
         elif model_type == "magnet":
             model = MAGNeT().MAGNeT.get_pretrained(audiocraft_model_path)
         else:
-            return None, None, "Invalid model type!"
+            gr.Info("Invalid model type!")
     except (ValueError, AssertionError):
-        return None, None, "The selected model is not compatible with the chosen model type"
+        gr.Error("The selected model is not compatible with the chosen model type")
 
     mbd = None
 
@@ -7935,7 +7964,7 @@ def generate_audio_audiocraft(prompt, input_audio=None, model_name=None, model_t
                                         cfg_coef=cfg_coef)
             wav = model.generate(descriptions)
         else:
-            return None, None, f"Unsupported model type: {model_type}"
+            gr.Info(f"Unsupported model type: {model_type}")
 
         progress_bar.update(duration)
 
@@ -7996,7 +8025,7 @@ def generate_audio_audiocraft(prompt, input_audio=None, model_name=None, model_t
             return audio_path + ".wav", spectrogram_path, None
 
     except Exception as e:
-        return None, None, str(e)
+        gr.Error(f"An error occurred: {str(e)}")
 
     finally:
         del model
@@ -8017,15 +8046,15 @@ def generate_audio_audioldm2(prompt, negative_prompt, model_name, seed, num_infe
     generator = torch.Generator(device).manual_seed(seed)
 
     if not model_name:
-        return None, None, "Please, select an AudioLDM 2 model!"
+        gr.Info("Please, select an AudioLDM 2 model!")
 
     model_path = os.path.join("inputs", "audio", "audioldm2", model_name)
 
     if not os.path.exists(model_path):
-        print(f"Downloading AudioLDM 2 model: {model_name}...")
+        gr.Info(f"Downloading AudioLDM 2 model: {model_name}...")
         os.makedirs(model_path, exist_ok=True)
         Repo.clone_from(f"https://huggingface.co/{model_name}", model_path)
-        print(f"AudioLDM 2 model {model_name} downloaded")
+        gr.Info(f"AudioLDM 2 model {model_name} downloaded")
 
     pipe = AudioLDM2Pipeline().AudioLDM2Pipeline.from_pretrained(model_path, torch_dtype=torch.float16)
     pipe = pipe.to(device)
@@ -8071,7 +8100,7 @@ def generate_audio_audioldm2(prompt, negative_prompt, model_name, seed, num_infe
         return audio_path, spectrogram_path, f"Audio generated successfully. Seed used: {seed}"
 
     except Exception as e:
-        return None, None, str(e)
+        gr.Error(f"An error occurred: {str(e)}")
 
     finally:
         del pipe
@@ -8081,15 +8110,15 @@ def generate_audio_audioldm2(prompt, negative_prompt, model_name, seed, num_infe
 def generate_bark_audio(text, voice_preset, max_length, fine_temperature, coarse_temperature, output_format):
 
     if not text:
-        return None, None, "Please enter text for the request!"
+        gr.Info("Please enter text for the request!")
 
     bark_model_path = os.path.join("inputs", "audio", "bark")
 
     if not os.path.exists(bark_model_path):
-        print("Downloading Bark model...")
+        gr.Info("Downloading Bark model...")
         os.makedirs(bark_model_path, exist_ok=True)
         Repo.clone_from("https://huggingface.co/suno/bark", bark_model_path)
-        print("Bark model downloaded")
+        gr.Info("Bark model downloaded")
 
     try:
         device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -8138,7 +8167,7 @@ def generate_bark_audio(text, voice_preset, max_length, fine_temperature, coarse
         return audio_path, spectrogram_path, None
 
     except Exception as e:
-        return None, None, str(e)
+        gr.Error(f"An error occurred: {str(e)}")
 
     finally:
         del model
@@ -8148,7 +8177,7 @@ def generate_bark_audio(text, voice_preset, max_length, fine_temperature, coarse
 
 def process_rvc(input_audio, model_folder, f0method, f0up_key, index_rate, filter_radius, resample_sr, rms_mix_rate, protect, output_format):
     if not input_audio:
-        return None, "Please upload an audio file!"
+        gr.Info("Please upload an audio file!")
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -8157,7 +8186,7 @@ def process_rvc(input_audio, model_folder, f0method, f0up_key, index_rate, filte
     try:
         pth_files = [f for f in os.listdir(model_path) if f.endswith('.pth')]
         if not pth_files:
-            return None, f"No .pth file found in the selected model folder: {model_folder}"
+            gr.Info(f"No .pth file found in the selected model folder: {model_folder}")
 
         model_file = os.path.join(model_path, pth_files[0])
 
@@ -8179,7 +8208,7 @@ def process_rvc(input_audio, model_folder, f0method, f0up_key, index_rate, filte
         return output_path, None
 
     except Exception as e:
-        return None, str(e)
+        gr.Error(f"An error occurred: {str(e)}")
 
     finally:
         del rvc
@@ -8189,7 +8218,7 @@ def process_rvc(input_audio, model_folder, f0method, f0up_key, index_rate, filte
 def separate_audio_uvr(audio_file, output_format, normalization_threshold, sample_rate):
 
     if not audio_file:
-        return None, "Please upload an audio file!"
+        gr.Info("Please upload an audio file!")
 
     try:
         today = datetime.now().date()
@@ -8203,12 +8232,12 @@ def separate_audio_uvr(audio_file, output_format, normalization_threshold, sampl
         output_files = separator.separate(audio_file)
 
         if len(output_files) != 2:
-            return None, None, f"Unexpected number of output files: {len(output_files)}"
+            gr.Info(f"Unexpected number of output files: {len(output_files)}")
 
         return output_files[0], output_files[1], f"Separation complete! Output files: {' '.join(output_files)}"
 
     except Exception as e:
-        return None, None, f"An error occurred: {str(e)}"
+        gr.Error(f"An error occurred: {str(e)}")
 
     finally:
         del separator
@@ -8218,7 +8247,7 @@ def separate_audio_uvr(audio_file, output_format, normalization_threshold, sampl
 def demucs_separate(audio_file, output_format):
 
     if not audio_file:
-        return None, None, "Please upload an audio file!"
+        gr.Info("Please upload an audio file!")
 
     today = datetime.now().date()
     demucs_dir = os.path.join("outputs", f"Demucs_{today.strftime('%Y%m%d')}")
@@ -8258,7 +8287,7 @@ def demucs_separate(audio_file, output_format):
         return vocal_output, instrumental_output, None
 
     except Exception as e:
-        return None, None, str(e)
+        gr.Error(f"An error occurred: {str(e)}")
 
     finally:
         flush()
@@ -8269,10 +8298,10 @@ def generate_image_extras(input_image, remove_background, enable_facerestore, fi
                           enable_downscale, downscale_factor, enable_format_changer, new_format, enable_encryption, enable_decryption, decryption_key):
     global key
     if not input_image:
-        return None, "Please upload an image!"
+        gr.Info("Please upload an image!")
 
     if not remove_background and not enable_facerestore and not enable_pixeloe and not enable_ddcolor and not enable_downscale and not enable_format_changer and not enable_encryption and not enable_decryption:
-        return None, "Please choose an option to modify the image"
+        gr.Info("Please choose an option to modify the image")
 
     try:
         output_path = input_image
@@ -8317,7 +8346,7 @@ def generate_image_extras(input_image, remove_background, enable_facerestore, fi
                     shutil.copy(os.path.join(temp_output_dir, generated_file), ddcolor_output_path)
                     output_path = ddcolor_output_path
                 else:
-                    print("No DDcolor images")
+                    gr.Info("No DDcolor images")
 
         if enable_downscale:
             output_path = downscale_image(output_path, downscale_factor)
@@ -8338,7 +8367,7 @@ def generate_image_extras(input_image, remove_background, enable_facerestore, fi
 
         if enable_decryption:
             if not decryption_key:
-                return None, "Please provide a decryption key!"
+                gr.Info("Please provide a decryption key!")
             img = Image.open(output_path)
             try:
                 decrypted_img = decrypt_image(img, decryption_key)
@@ -8347,7 +8376,7 @@ def generate_image_extras(input_image, remove_background, enable_facerestore, fi
                 decrypted_img.save(decrypted_output_path)
                 output_path = decrypted_output_path
             except Exception as e:
-                return None, f"Decryption failed. Please check your key. Error: {str(e)}"
+                gr.Error(f"Decryption failed. Please check your key. Error: {str(e)}")
 
         if enable_encryption:
             return output_path, f"Image encrypted successfully. Decryption key: {key}"
@@ -8355,7 +8384,7 @@ def generate_image_extras(input_image, remove_background, enable_facerestore, fi
             return output_path, "Image processing completed successfully."
 
     except Exception as e:
-        return None, str(e)
+        gr.Error(f"An error occurred: {str(e)}")
 
     finally:
         flush()
@@ -8363,10 +8392,10 @@ def generate_image_extras(input_image, remove_background, enable_facerestore, fi
 
 def generate_video_extras(input_video, enable_downscale, downscale_factor, enable_format_changer, new_format):
     if not input_video:
-        return None, "Please upload a video!"
+        gr.Info("Please upload a video!")
 
     if not enable_downscale and not enable_format_changer:
-        return None, "Please choose an option to modify the video"
+        gr.Info("Please choose an option to modify the video")
 
     try:
         output_path = input_video
@@ -8382,7 +8411,7 @@ def generate_video_extras(input_video, enable_downscale, downscale_factor, enabl
         return output_path, "Video processing completed successfully."
 
     except Exception as e:
-        return None, str(e)
+        gr.Error(f"An error occurred: {str(e)}")
 
     finally:
         flush()
@@ -8392,10 +8421,10 @@ def generate_audio_extras(input_audio, enable_format_changer, new_format, enable
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
     if not input_audio:
-        return None, "Please upload an audio file!"
+        gr.Info("Please upload an audio file!")
 
     if not enable_format_changer and not enable_audiosr and not enable_downscale:
-        return None, "Please choose an option to modify the audio"
+        gr.Info("Please choose an option to modify the audio")
 
     try:
         output_path = input_audio
@@ -8422,9 +8451,9 @@ def generate_audio_extras(input_audio, enable_format_changer, new_format, enable
                 if wav_files:
                     output_path = os.path.join(subfolder_path, wav_files[0])
                 else:
-                    return None, "AudioSR processed the file, but no output WAV file was found."
+                    gr.Info("AudioSR processed the file, but no output WAV file was found.")
             else:
-                return None, "AudioSR did not create any output folders."
+                gr.Info("AudioSR did not create any output folders.")
 
         if enable_downscale:
             today = datetime.now().date()
@@ -8440,7 +8469,7 @@ def generate_audio_extras(input_audio, enable_format_changer, new_format, enable
         return output_path, "Audio processing completed successfully."
 
     except Exception as e:
-        return None, str(e)
+        gr.Error(f"An error occurred: {str(e)}")
 
     finally:
         flush()
@@ -8451,7 +8480,7 @@ def generate_upscale_realesrgan(input_image, input_video, model_name, outscale, 
     realesrgan_path = os.path.join("inputs", "image", "Real-ESRGAN")
 
     if not input_image and not input_video:
-        return None, "Please, upload an initial image or video!"
+        gr.Info("Please, upload an initial image or video!")
 
     today = datetime.now().date()
     output_dir = os.path.join('outputs', f"RealESRGAN_{today.strftime('%Y%m%d')}")
@@ -8524,10 +8553,10 @@ def generate_upscale_realesrgan(input_image, input_video, model_name, outscale, 
             else:
                 return output_path, None, None
         else:
-            return None, None, "Output file not found"
+            gr.Info("Output file not found")
 
     except Exception as e:
-        return None, None, str(e)
+        gr.Error(f"An error occurred: {str(e)}")
 
     finally:
         flush()
@@ -8536,7 +8565,7 @@ def generate_upscale_realesrgan(input_image, input_video, model_name, outscale, 
 def generate_faceswap(source_image, target_image, target_video, enable_many_faces, reference_face,
                       reference_frame, enable_facerestore, fidelity_weight, restore_upscale):
     if not source_image or (not target_image and not target_video):
-        return None, None, "Please upload source image and either target image or target video!"
+        gr.Info("Please upload source image and either target image or target video!")
 
     try:
         roop_path = os.path.join("inputs", "image", "roop")
@@ -8593,7 +8622,7 @@ def generate_faceswap(source_image, target_image, target_video, enable_many_face
             return output_path, None, None
 
     except Exception as e:
-        return None, None, str(e)
+        gr.Error(f"An error occurred: {str(e)}")
 
     finally:
         flush()
@@ -8601,7 +8630,7 @@ def generate_faceswap(source_image, target_image, target_video, enable_many_face
 
 def display_metadata(file):
     if file is None:
-        return "Please upload a file."
+        gr.Info("Please upload a file.")
 
     try:
         file_extension = os.path.splitext(file.name)[1].lower()
@@ -8626,9 +8655,9 @@ def display_metadata(file):
         if metadata:
             return f"COMMENT:\n{json.dumps(metadata, indent=2)}"
         else:
-            return "No COMMENT metadata found in the file."
+            gr.Info("No COMMENT metadata found in the file.")
     except Exception as e:
-        return f"Error reading metadata: {str(e)}"
+        gr.Error(f"An error occurred: {str(e)}")
 
 
 def get_wiki_content(url, local_file="Wikies/WikiEN.md"):
@@ -8644,7 +8673,7 @@ def get_wiki_content(url, local_file="Wikies/WikiEN.md"):
             content = file.read()
             return markdown.markdown(content)
     except:
-        return "<p>Wiki content is not available.</p>"
+        gr.Error("<p>Wiki content is not available.</p>")
 
 
 def get_output_files():
@@ -8694,7 +8723,7 @@ def get_output_files():
 
 def download_model(llm_model_url, sd_model_url):
     if not llm_model_url and not sd_model_url:
-        return "Please enter at least one model URL to download"
+        gr.Info("Please enter at least one model URL to download")
 
     messages = []
 
@@ -8714,7 +8743,7 @@ def download_model(llm_model_url, sd_model_url):
                     file.write(response.content)
                 messages.append(f"LLM model file {file_name} downloaded successfully!")
         except Exception as e:
-            messages.append(f"Error downloading LLM model: {str(e)}")
+            gr.Error(f"Error downloading LLM model: {str(e)}")
 
     if sd_model_url:
         try:
@@ -8725,7 +8754,7 @@ def download_model(llm_model_url, sd_model_url):
                 file.write(response.content)
             messages.append(f"StableDiffusion model file {file_name} downloaded successfully!")
         except Exception as e:
-            messages.append(f"Error downloading StableDiffusion model: {str(e)}")
+            gr.Info(f"Error downloading StableDiffusion model: {str(e)}")
 
     return "\n".join(messages)
 
