@@ -9301,14 +9301,10 @@ def get_output_files(progress=gr.Progress()):
     progress(0.1, desc="Initializing file search")
     output_dir = "outputs"
     files = []
-    total_dirs = sum([len(dirs) for _, dirs, _ in os.walk(output_dir)])
-    processed_dirs = 0
 
     for root, dirs, filenames in os.walk(output_dir):
         for filename in filenames:
             files.append(os.path.join(root, filename))
-        processed_dirs += 1
-        progress(0.1 + (0.9 * processed_dirs / total_dirs), desc=f"Searching directory {processed_dirs}/{total_dirs}")
 
     progress(1.0, desc="File search complete")
     return files
@@ -12261,8 +12257,8 @@ with gr.TabbedInterface(
 ) as app:
     txt2img_interface.input_components[18].click(stop_generation, [], [], queue=False)
     img2img_interface.input_components[12].click(stop_generation, [], [], queue=False)
-    controlnet_interface.input_components[7].click(stop_generation, [], [], queue=False)
-    inpaint_interface.input_components[9].click(stop_generation, [], [], queue=False)
+    controlnet_interface.input_components[8].click(stop_generation, [], [], queue=False)
+    inpaint_interface.input_components[10].click(stop_generation, [], [], queue=False)
     sd3_txt2img_interface.input_components[6].click(stop_generation, [], [], queue=False)
     sd3_img2img_interface.input_components[8].click(stop_generation, [], [], queue=False)
     sd3_controlnet_interface.input_components[5].click(stop_generation, [], [], queue=False)
@@ -12276,9 +12272,9 @@ with gr.TabbedInterface(
     cogvideox_text2video_interface.input_components[4].click(stop_generation, [], [], queue=False)
     cogvideox_image2video_interface.input_components[4].click(stop_generation, [], [], queue=False)
     cogvideox_video2video_interface.input_components[5].click(stop_generation, [], [], queue=False)
-    latte_interface.input_components[4].click(stop_generation, [], [], queue=False)
-    stableaudio_interface.input_components[4].click(stop_generation, [], [], queue=False)
-    audioldm2_interface.input_components[5].click(stop_generation, [], [], queue=False)
+    latte_interface.input_components[3].click(stop_generation, [], [], queue=False)
+    stableaudio_interface.input_components[3].click(stop_generation, [], [], queue=False)
+    audioldm2_interface.input_components[4].click(stop_generation, [], [], queue=False)
 
     reload_button = gr.Button(_("Reload interface", lang))
     close_button = gr.Button(_("Close terminal", lang))

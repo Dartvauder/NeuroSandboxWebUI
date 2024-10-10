@@ -24,8 +24,9 @@ if "%HF_TOKEN%"=="" (
 echo Logging in to Hugging Face...
 huggingface-cli login --token %HF_TOKEN% --add-to-git-credential
 
-cls
 echo Launching NeuroSandboxWebUI...
+timeout /t 3 /nobreak >nul
+cls
 start /b py -c "import os, sys; sys.path.insert(0, os.path.join(os.path.dirname(__name__), 'LaunchFile')); import app"
 
 call "%CURRENT_DIR%venv\Scripts\deactivate.bat"
