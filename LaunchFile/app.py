@@ -7233,8 +7233,11 @@ def generate_liveportrait(source_image, driving_video, output_format, progress=g
         flush()
 
 
-def generate_video_modelscope(prompt, negative_prompt, seed, num_inference_steps, guidance_scale, height, width, num_frames,
-                              output_format):
+def generate_video_modelscope(prompt, negative_prompt, seed, stop_button, num_inference_steps, guidance_scale, height, width, num_frames,
+                              output_format, progress=gr.Progress()):
+    global stop_signal
+    stop_signal = False
+    stop_idx = None
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -7258,6 +7261,15 @@ def generate_video_modelscope(prompt, negative_prompt, seed, num_inference_steps
         pipe.enable_model_cpu_offload()
         pipe.enable_vae_slicing()
 
+        def combined_callback(i, t, callback_kwargs):
+            nonlocal stop_idx
+            if stop_signal and stop_idx is None:
+                stop_idx = i
+            if i == stop_idx:
+                pipe._interrupt = True
+            progress((i + 1) / num_inference_steps, f"Step {i + 1}/{num_inference_steps}")
+            return callback_kwargs
+
         video_frames = pipe(
             prompt,
             negative_prompt=negative_prompt,
@@ -7266,7 +7278,9 @@ def generate_video_modelscope(prompt, negative_prompt, seed, num_inference_steps
             height=height,
             width=width,
             num_frames=num_frames,
-            generator=generator
+            generator=generator,
+            callback=combined_callback,
+            callback_steps=1
         ).frames[0]
 
         today = datetime.now().date()
@@ -7301,8 +7315,11 @@ def generate_video_modelscope(prompt, negative_prompt, seed, num_inference_steps
         flush()
 
 
-def generate_video_zeroscope2(prompt, seed, num_inference_steps, width, height, num_frames,
-                              enable_video_enhance, video_to_enhance, strength, output_format):
+def generate_video_zeroscope2(prompt, video_to_enhance, seed, stop_button, strength, num_inference_steps, width, height, num_frames,
+                              enable_video_enhance, output_format, progress=gr.Progress()):
+    global stop_signal
+    stop_signal = False
+    stop_idx = None
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -7351,7 +7368,16 @@ def generate_video_zeroscope2(prompt, seed, num_inference_steps, width, height, 
                 frames.append(frame)
             cap.release()
 
-            video_frames = enhance_pipe(prompt, video=frames, strength=strength, generator=generator).frames
+            def combined_callback_enhance(i, t, callback_kwargs):
+                nonlocal stop_idx
+                if stop_signal and stop_idx is None:
+                    stop_idx = i
+                if i == stop_idx:
+                    enhance_pipe._interrupt = True
+                progress((i + 1) / num_inference_steps, f"Step {i + 1}/{num_inference_steps}")
+                return callback_kwargs
+
+            video_frames = enhance_pipe(prompt, video=frames, strength=strength, generator=generator, callback=combined_callback_enhance, callback_steps=1).frames
 
             processed_frames = []
             for frame in video_frames:
@@ -7406,7 +7432,16 @@ def generate_video_zeroscope2(prompt, seed, num_inference_steps, width, height, 
             base_pipe.enable_vae_slicing()
             base_pipe.unet.enable_forward_chunking(chunk_size=1, dim=1)
 
-            video_frames = base_pipe(prompt, num_inference_steps=num_inference_steps, width=width, height=height, num_frames=num_frames, generator=generator).frames[0]
+            def combined_callback_base(i, t, callback_kwargs):
+                nonlocal stop_idx
+                if stop_signal and stop_idx is None:
+                    stop_idx = i
+                if i == stop_idx:
+                    base_pipe._interrupt = True
+                progress((i + 1) / num_inference_steps, f"Step {i + 1}/{num_inference_steps}")
+                return callback_kwargs
+
+            video_frames = base_pipe(prompt, num_inference_steps=num_inference_steps, width=width, height=height, num_frames=num_frames, generator=generator, callback=combined_callback_base, callback_steps=1).frames[0]
 
             video_filename = f"zeroscope2_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
             video_path = os.path.join(video_dir, video_filename)
@@ -7436,7 +7471,10 @@ def generate_video_zeroscope2(prompt, seed, num_inference_steps, width, height, 
             flush()
 
 
-def generate_video_cogvideox_text2video(prompt, negative_prompt, cogvideox_version, seed, num_inference_steps, guidance_scale, height, width, num_frames, fps, output_format, progress=gr.Progress()):
+def generate_video_cogvideox_text2video(prompt, negative_prompt, cogvideox_version, seed, stop_button, num_inference_steps, guidance_scale, height, width, num_frames, fps, output_format, progress=gr.Progress()):
+    global stop_signal
+    stop_signal = False
+    stop_idx = None
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -7446,25 +7484,30 @@ def generate_video_cogvideox_text2video(prompt, negative_prompt, cogvideox_versi
         seed = int(seed)
     generator = torch.Generator(device).manual_seed(seed)
 
-    progress(0.1, desc="Initializing CogVideoX")
     cogvideox_model_path = os.path.join("inputs", "video", "cogvideox", cogvideox_version)
 
     if not os.path.exists(cogvideox_model_path):
-        progress(0.2, desc=f"Downloading {cogvideox_version} model...")
         gr.Info(f"Downloading {cogvideox_version} model...")
         os.makedirs(cogvideox_model_path, exist_ok=True)
         Repo.clone_from(f"https://huggingface.co/THUDM/{cogvideox_version}", cogvideox_model_path)
         gr.Info(f"{cogvideox_version} model downloaded")
 
     try:
-        progress(0.3, desc="Loading CogVideoX pipeline")
         pipe = CogVideoXPipeline().CogVideoXPipeline.from_pretrained(cogvideox_model_path, torch_dtype=torch.float16).to(device)
         pipe.enable_model_cpu_offload()
         pipe.enable_sequential_cpu_offload()
         pipe.vae.enable_slicing()
         pipe.vae.enable_tiling()
 
-        progress(0.4, desc="Preparing generation parameters")
+        def combined_callback(i, t, callback_kwargs):
+            nonlocal stop_idx
+            if stop_signal and stop_idx is None:
+                stop_idx = i
+            if i == stop_idx:
+                pipe._interrupt = True
+            progress((i + 1) / num_inference_steps, f"Step {i + 1}/{num_inference_steps}")
+            return callback_kwargs
+
         video = pipe(
             prompt=prompt,
             negative_prompt=negative_prompt,
@@ -7473,10 +7516,10 @@ def generate_video_cogvideox_text2video(prompt, negative_prompt, cogvideox_versi
             height=height,
             width=width,
             num_frames=num_frames,
-            generator=generator
+            generator=generator,
+            callback_on_step_end=combined_callback
         ).frames[0]
 
-        progress(0.8, desc="Saving generated video")
         today = datetime.now().date()
         video_dir = os.path.join('outputs', f"CogVideoX_{today.strftime('%Y%m%d')}")
         os.makedirs(video_dir, exist_ok=True)
@@ -7499,7 +7542,6 @@ def generate_video_cogvideox_text2video(prompt, negative_prompt, cogvideox_versi
         export_to_video(video, video_path, fps=fps)
         add_metadata_to_file(video_path, metadata)
 
-        progress(1.0, desc="CogVideoX process complete")
         return video_path, f"Video generated successfully. Seed used: {seed}"
 
     except Exception as e:
@@ -7510,7 +7552,10 @@ def generate_video_cogvideox_text2video(prompt, negative_prompt, cogvideox_versi
         flush()
 
 
-def generate_video_cogvideox_image2video(prompt, negative_prompt, init_image, seed, guidance_scale, num_inference_steps, fps, output_format, progress=gr.Progress()):
+def generate_video_cogvideox_image2video(prompt, negative_prompt, init_image, seed, stop_button, guidance_scale, num_inference_steps, fps, output_format, progress=gr.Progress()):
+    global stop_signal
+    stop_signal = False
+    stop_idx = None
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -7523,29 +7568,32 @@ def generate_video_cogvideox_image2video(prompt, negative_prompt, init_image, se
         seed = int(seed)
     generator = torch.Generator(device).manual_seed(seed)
 
-    progress(0.1, desc="Initializing CogVideoX I2V")
     cogvideox_i2v_model_path = os.path.join("inputs", "video", "cogvideox-i2v")
 
     if not os.path.exists(cogvideox_i2v_model_path):
-        progress(0.2, desc="Downloading CogVideoX I2V model...")
         gr.Info(f"Downloading CogVideoX I2V model...")
         os.makedirs(cogvideox_i2v_model_path, exist_ok=True)
         Repo.clone_from("https://huggingface.co/THUDM/CogVideoX-5b-I2V", cogvideox_i2v_model_path)
         gr.Info(f"CogVideoX I2V model downloaded")
 
     try:
-        progress(0.3, desc="Loading CogVideoX I2V pipeline")
         pipe = CogVideoXImageToVideoPipeline().CogVideoXImageToVideoPipeline.from_pretrained(cogvideox_i2v_model_path, torch_dtype=torch.bfloat16)
         pipe.to(device)
 
-        progress(0.4, desc="Processing input image")
         image = load_image(init_image)
 
-        progress(0.5, desc="Generating video")
-        video = pipe(image=image, prompt=prompt, negative_prompt=negative_prompt, generator=generator,
-                     guidance_scale=guidance_scale, num_inference_steps=num_inference_steps, use_dynamic_cfg=True)
+        def combined_callback(i, t, callback_kwargs):
+            nonlocal stop_idx
+            if stop_signal and stop_idx is None:
+                stop_idx = i
+            if i == stop_idx:
+                pipe._interrupt = True
+            progress((i + 1) / num_inference_steps, f"Step {i + 1}/{num_inference_steps}")
+            return callback_kwargs
 
-        progress(0.8, desc="Saving generated video")
+        video = pipe(image=image, prompt=prompt, negative_prompt=negative_prompt, generator=generator,
+                     guidance_scale=guidance_scale, num_inference_steps=num_inference_steps, callback_on_step_end=combined_callback, use_dynamic_cfg=True)
+
         today = datetime.now().date()
         video_dir = os.path.join('outputs', f"CogVideoX_{today.strftime('%Y%m%d')}")
         os.makedirs(video_dir, exist_ok=True)
@@ -7554,7 +7602,6 @@ def generate_video_cogvideox_image2video(prompt, negative_prompt, init_image, se
         video_path = os.path.join(video_dir, video_filename)
         export_to_video(video.frames[0], video_path, fps=fps)
 
-        progress(1.0, desc="CogVideoX I2V process complete")
         return video_path, f"Video generated successfully. Seed used: {seed}"
 
     except Exception as e:
@@ -7565,7 +7612,10 @@ def generate_video_cogvideox_image2video(prompt, negative_prompt, init_image, se
         flush()
 
 
-def generate_video_cogvideox_video2video(prompt, negative_prompt, init_video, cogvideox_version, seed, strength, guidance_scale, num_inference_steps, fps, output_format, progress=gr.Progress()):
+def generate_video_cogvideox_video2video(prompt, negative_prompt, init_video, cogvideox_version, seed, stop_button, strength, guidance_scale, num_inference_steps, fps, output_format, progress=gr.Progress()):
+    global stop_signal
+    stop_signal = False
+    stop_idx = None
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -7578,26 +7628,30 @@ def generate_video_cogvideox_video2video(prompt, negative_prompt, init_video, co
         seed = int(seed)
     generator = torch.Generator(device).manual_seed(seed)
 
-    progress(0.1, desc="Initializing CogVideoX V2V")
     cogvideox_model_path = os.path.join("inputs", "video", "cogvideox", cogvideox_version)
 
     if not os.path.exists(cogvideox_model_path):
-        progress(0.2, desc=f"Downloading {cogvideox_version} model...")
         gr.Info(f"Downloading {cogvideox_version} model...")
         os.makedirs(cogvideox_model_path, exist_ok=True)
         Repo.clone_from(f"https://huggingface.co/THUDM/{cogvideox_version}", cogvideox_model_path)
         gr.Info(f"{cogvideox_version} model downloaded")
 
     try:
-        progress(0.3, desc="Loading CogVideoX V2V pipeline")
         pipe = CogVideoXVideoToVideoPipeline().CogVideoXVideoToVideoPipeline.from_pretrained(cogvideox_model_path, torch_dtype=torch.bfloat16)
         pipe.to(device)
         pipe.scheduler = CogVideoXDPMScheduler().CogVideoXDPMScheduler.from_config(pipe.scheduler.config)
 
-        progress(0.4, desc="Processing input video")
         input_video = load_video(init_video)
 
-        progress(0.5, desc="Generating video")
+        def combined_callback(i, t, callback_kwargs):
+            nonlocal stop_idx
+            if stop_signal and stop_idx is None:
+                stop_idx = i
+            if i == stop_idx:
+                pipe._interrupt = True
+            progress((i + 1) / num_inference_steps, f"Step {i + 1}/{num_inference_steps}")
+            return callback_kwargs
+
         video = pipe(
             video=input_video,
             prompt=prompt,
@@ -7605,10 +7659,10 @@ def generate_video_cogvideox_video2video(prompt, negative_prompt, init_video, co
             strength=strength,
             guidance_scale=guidance_scale,
             num_inference_steps=num_inference_steps,
-            generator=generator
+            generator=generator,
+            callback_on_step_end=combined_callback
         ).frames[0]
 
-        progress(0.8, desc="Saving generated video")
         today = datetime.now().date()
         video_dir = os.path.join('outputs', f"CogVideoX_{today.strftime('%Y%m%d')}")
         os.makedirs(video_dir, exist_ok=True)
@@ -7617,7 +7671,6 @@ def generate_video_cogvideox_video2video(prompt, negative_prompt, init_video, co
         video_path = os.path.join(video_dir, video_filename)
         export_to_video(video, video_path, fps=fps)
 
-        progress(1.0, desc="CogVideoX V2V process complete")
         return video_path, f"Video generated successfully. Seed used: {seed}"
 
     except Exception as e:
@@ -7628,7 +7681,10 @@ def generate_video_cogvideox_video2video(prompt, negative_prompt, init_video, co
         flush()
 
 
-def generate_video_latte(prompt, negative_prompt, seed, num_inference_steps, guidance_scale, height, width, video_length, progress=gr.Progress()):
+def generate_video_latte(prompt, negative_prompt, seed, stop_button, num_inference_steps, guidance_scale, height, width, video_length, progress=gr.Progress()):
+    global stop_signal
+    stop_signal = False
+    stop_idx = None
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -7638,22 +7694,27 @@ def generate_video_latte(prompt, negative_prompt, seed, num_inference_steps, gui
         seed = int(seed)
     generator = torch.Generator(device).manual_seed(seed)
 
-    progress(0.1, desc="Initializing Latte")
     latte_model_path = os.path.join("inputs", "video", "latte")
 
     if not os.path.exists(latte_model_path):
-        progress(0.2, desc="Downloading Latte model...")
         gr.Info("Downloading Latte model...")
         os.makedirs(latte_model_path, exist_ok=True)
         Repo.clone_from("https://huggingface.co/maxin-cn/Latte-1", latte_model_path)
         gr.Info("Latte model downloaded")
 
     try:
-        progress(0.3, desc="Loading Latte pipeline")
         pipe = LattePipeline().LattePipeline.from_pretrained(latte_model_path, torch_dtype=torch.float16).to(device)
         pipe.enable_model_cpu_offload()
 
-        progress(0.4, desc="Generating video")
+        def combined_callback(i, t, callback_kwargs):
+            nonlocal stop_idx
+            if stop_signal and stop_idx is None:
+                stop_idx = i
+            if i == stop_idx:
+                pipe._interrupt = True
+            progress((i + 1) / num_inference_steps, f"Step {i + 1}/{num_inference_steps}")
+            return callback_kwargs
+
         videos = pipe(
             prompt=prompt,
             negative_prompt=negative_prompt,
@@ -7662,10 +7723,10 @@ def generate_video_latte(prompt, negative_prompt, seed, num_inference_steps, gui
             height=height,
             width=width,
             video_length=video_length,
-            generator=generator
+            generator=generator,
+            callback_on_step_end=combined_callback
         ).frames[0]
 
-        progress(0.8, desc="Saving generated video")
         today = datetime.now().date()
         gif_dir = os.path.join('outputs', f"Latte_{today.strftime('%Y%m%d')}")
         os.makedirs(gif_dir, exist_ok=True)
@@ -7687,7 +7748,6 @@ def generate_video_latte(prompt, negative_prompt, seed, num_inference_steps, gui
         export_to_gif(videos, gif_path)
         add_metadata_to_file(gif_path, metadata)
 
-        progress(1.0, desc="Latte process complete")
         return gif_path, f"Video generated successfully. Seed used: {seed}"
 
     except Exception as e:
@@ -7937,7 +7997,10 @@ def generate_3d_zero123plus(input_image, num_inference_steps, output_format, pro
         flush()
 
 
-def generate_stableaudio(prompt, negative_prompt, seed, num_inference_steps, guidance_scale, audio_length, audio_start, num_waveforms, output_format):
+def generate_stableaudio(prompt, negative_prompt, seed, stop_button, num_inference_steps, guidance_scale, audio_length, audio_start, num_waveforms, output_format, progress=gr.Progress()):
+    global stop_signal
+    stop_signal = False
+    stop_idx = None
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -7958,6 +8021,15 @@ def generate_stableaudio(prompt, negative_prompt, seed, num_inference_steps, gui
     pipe = StableAudioPipeline().StableAudioPipeline.from_pretrained(sa_model_path, torch_dtype=torch.float16)
     pipe = pipe.to(device)
 
+    def combined_callback(i, t, callback_kwargs):
+        nonlocal stop_idx
+        if stop_signal and stop_idx is None:
+            stop_idx = i
+        if i == stop_idx:
+            pipe._interrupt = True
+        progress((i + 1) / num_inference_steps, f"Step {i + 1}/{num_inference_steps}")
+        return callback_kwargs
+
     try:
         audio = pipe(
             prompt,
@@ -7967,7 +8039,9 @@ def generate_stableaudio(prompt, negative_prompt, seed, num_inference_steps, gui
             audio_end_in_s=audio_length,
             audio_start_in_s=audio_start,
             num_waveforms_per_prompt=num_waveforms,
-            generator=generator
+            generator=generator,
+            callback=combined_callback,
+            callback_steps=1
         ).audios
 
         output = audio[0].T.float().cpu().numpy()
@@ -8013,7 +8087,7 @@ def generate_stableaudio(prompt, negative_prompt, seed, num_inference_steps, gui
 
 def generate_audio_audiocraft(prompt, input_audio=None, model_name=None, model_type="musicgen",
                               duration=10, top_k=250, top_p=0.0,
-                              temperature=1.0, cfg_coef=3.0, min_cfg_coef=1.0, max_cfg_coef=3.0, enable_multiband=False, output_format="mp3", progress=gr.Progress()):
+                              temperature=1.0, cfg_coef=3.0, min_cfg_coef=1.0, max_cfg_coef=3.0, two_step_cfg=False, use_sampling=True, enable_multiband=False, output_format="mp3", progress=gr.Progress()):
     global audiocraft_model_path, multiband_diffusion_path
 
     progress(0.1, desc="Initializing AudioCraft")
@@ -8058,7 +8132,7 @@ def generate_audio_audiocraft(prompt, input_audio=None, model_name=None, model_t
             melody, sr = torchaudio.load(audio_path)
             descriptions = [prompt]
             model.set_generation_params(duration=duration, top_k=top_k, top_p=top_p, temperature=temperature,
-                                        cfg_coef=cfg_coef)
+                                        cfg_coef=cfg_coef, two_step_cfg=two_step_cfg, use_sampling=use_sampling)
             wav, tokens = model.generate_with_chroma(descriptions, melody[None].expand(1, -1, -1), sr, return_tokens=True)
         elif model_type == "magnet":
             descriptions = [prompt]
@@ -8068,12 +8142,12 @@ def generate_audio_audiocraft(prompt, input_audio=None, model_name=None, model_t
         elif model_type == "musicgen":
             descriptions = [prompt]
             model.set_generation_params(duration=duration, top_k=top_k, top_p=top_p, temperature=temperature,
-                                        cfg_coef=cfg_coef)
+                                        cfg_coef=cfg_coef, two_step_cfg=two_step_cfg, use_sampling=use_sampling)
             wav, tokens = model.generate(descriptions, return_tokens=True)
         elif model_type == "audiogen":
             descriptions = [prompt]
             model.set_generation_params(duration=duration, top_k=top_k, top_p=top_p, temperature=temperature,
-                                        cfg_coef=cfg_coef)
+                                        cfg_coef=cfg_coef, two_step_cfg=two_step_cfg, use_sampling=use_sampling)
             wav = model.generate(descriptions)
         else:
             gr.Info(f"Unsupported model type: {model_type}")
@@ -8146,8 +8220,11 @@ def generate_audio_audiocraft(prompt, input_audio=None, model_name=None, model_t
         flush()
 
 
-def generate_audio_audioldm2(prompt, negative_prompt, model_name, seed, num_inference_steps, audio_length_in_s,
-                             num_waveforms_per_prompt, output_format):
+def generate_audio_audioldm2(prompt, negative_prompt, model_name, seed, stop_button, num_inference_steps, audio_length_in_s,
+                             num_waveforms_per_prompt, output_format, progress=gr.Progress()):
+    global stop_signal
+    stop_signal = False
+    stop_idx = None
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -8171,6 +8248,15 @@ def generate_audio_audioldm2(prompt, negative_prompt, model_name, seed, num_infe
     pipe = AudioLDM2Pipeline().AudioLDM2Pipeline.from_pretrained(model_path, torch_dtype=torch.float16)
     pipe = pipe.to(device)
 
+    def combined_callback(i, t, callback_kwargs):
+        nonlocal stop_idx
+        if stop_signal and stop_idx is None:
+            stop_idx = i
+        if i == stop_idx:
+            pipe._interrupt = True
+        progress((i + 1) / num_inference_steps, f"Step {i + 1}/{num_inference_steps}")
+        return callback_kwargs
+
     try:
         audio = pipe(
             prompt,
@@ -8178,7 +8264,9 @@ def generate_audio_audioldm2(prompt, negative_prompt, model_name, seed, num_infe
             num_inference_steps=num_inference_steps,
             audio_length_in_s=audio_length_in_s,
             num_waveforms_per_prompt=num_waveforms_per_prompt,
-            generator=generator
+            generator=generator,
+            callback=combined_callback,
+            callback_steps=1
         ).audios
 
         today = datetime.now().date()
@@ -10973,7 +11061,8 @@ modelscope_interface = gr.Interface(
     inputs=[
         gr.Textbox(label=_("Enter your prompt", lang)),
         gr.Textbox(label=_("Enter your negative prompt", lang), value=""),
-        gr.Textbox(label=_("Seed (optional)", lang), value="")
+        gr.Textbox(label=_("Seed (optional)", lang), value=""),
+        gr.Button(value=_("Stop generation", lang), interactive=True, variant="stop")
     ],
     additional_inputs=[
         gr.Slider(minimum=1, maximum=100, value=50, step=1, label=_("Steps", lang)),
@@ -11003,7 +11092,8 @@ zeroscope2_interface = gr.Interface(
     inputs=[
         gr.Textbox(label=_("Enter your prompt", lang)),
         gr.Video(label=_("Video to enhance (optional)", lang), interactive=True),
-        gr.Textbox(label=_("Seed (optional)", lang), value="")
+        gr.Textbox(label=_("Seed (optional)", lang), value=""),
+        gr.Button(value=_("Stop generation", lang), interactive=True, variant="stop")
     ],
     additional_inputs=[
         gr.Slider(minimum=0.1, maximum=1.0, value=0.5, step=0.1, label=_("Strength (Video to enhance)", lang)),
@@ -11035,7 +11125,8 @@ cogvideox_text2video_interface = gr.Interface(
         gr.Textbox(label=_("Enter your prompt", lang)),
         gr.Textbox(label=_("Enter your negative prompt", lang), value=""),
         gr.Radio(choices=["CogVideoX-2B", "CogVideoX-5B"], label=_("Select CogVideoX model version", lang), value="CogVideoX-2B"),
-        gr.Textbox(label=_("Seed (optional)", lang), value="")
+        gr.Textbox(label=_("Seed (optional)", lang), value=""),
+        gr.Button(value=_("Stop generation", lang), interactive=True, variant="stop")
     ],
     additional_inputs=[
         gr.Slider(minimum=1, maximum=100, value=50, step=1, label=_("Steps", lang)),
@@ -11067,7 +11158,8 @@ cogvideox_image2video_interface = gr.Interface(
         gr.Textbox(label=_("Enter your prompt", lang)),
         gr.Textbox(label=_("Enter your negative prompt", lang), value=""),
         gr.Image(label=_("Initial image", lang), type="filepath"),
-        gr.Textbox(label=_("Seed (optional)", lang), value="")
+        gr.Textbox(label=_("Seed (optional)", lang), value=""),
+        gr.Button(value=_("Stop generation", lang), interactive=True, variant="stop")
     ],
     additional_inputs=[
         gr.Slider(minimum=1.0, maximum=20.0, value=6.0, step=0.1, label=_("Guidance Scale", lang)),
@@ -11097,7 +11189,8 @@ cogvideox_video2video_interface = gr.Interface(
         gr.Textbox(label=_("Enter your negative prompt", lang), value=""),
         gr.Video(label=_("Input video", lang)),
         gr.Radio(choices=["CogVideoX-2B", "CogVideoX-5B"], label=_("Select CogVideoX model version", lang), value="CogVideoX-5B"),
-        gr.Textbox(label=_("Seed (optional)", lang), value="")
+        gr.Textbox(label=_("Seed (optional)", lang), value=""),
+        gr.Button(value=_("Stop generation", lang), interactive=True, variant="stop")
     ],
     additional_inputs=[
         gr.Slider(minimum=0.0, maximum=1.0, value=0.8, step=0.1, label=_("Strength", lang)),
@@ -11131,7 +11224,8 @@ latte_interface = gr.Interface(
     inputs=[
         gr.Textbox(label=_("Enter your prompt", lang)),
         gr.Textbox(label=_("Enter your negative prompt", lang), value=""),
-        gr.Textbox(label=_("Seed (optional)", lang), value="")
+        gr.Textbox(label=_("Seed (optional)", lang), value=""),
+        gr.Button(value=_("Stop generation", lang), interactive=True, variant="stop")
     ],
     additional_inputs=[
         gr.Slider(minimum=1, maximum=100, value=50, step=1, label=_("Steps", lang)),
@@ -11254,7 +11348,8 @@ stableaudio_interface = gr.Interface(
     inputs=[
         gr.Textbox(label=_("Enter your prompt", lang)),
         gr.Textbox(label=_("Enter your negative prompt", lang)),
-        gr.Textbox(label=_("Seed (optional)", lang), value="")
+        gr.Textbox(label=_("Seed (optional)", lang), value=""),
+        gr.Button(value=_("Stop generation", lang), interactive=True, variant="stop")
     ],
     additional_inputs=[
         gr.Slider(minimum=1, maximum=1000, value=200, step=1, label=_("Steps", lang)),
@@ -11296,6 +11391,8 @@ audiocraft_interface = gr.Interface(
         gr.Slider(minimum=1.0, maximum=10.0, value=3.0, step=0.1, label=_("CFG", lang)),
         gr.Slider(minimum=1.0, maximum=10.0, value=3.0, step=0.1, label=_("Min CFG coef (Magnet model only)", lang)),
         gr.Slider(minimum=1.0, maximum=10.0, value=1.0, step=0.1, label=_("Max CFG coef (Magnet model only)", lang)),
+        gr.Checkbox(label=_("Enable Two-step CFG (Musicgen and Audiogen models only)", lang), value=False),
+        gr.Checkbox(label=_("Enable Sampling (Musicgen and Audiogen models only)", lang), value=True),
         gr.Checkbox(label=_("Enable Multiband Diffusion (Musicgen model only)", lang), value=False),
         gr.Radio(choices=["wav", "mp3", "ogg"], label=_("Select output format (Works only without Multiband Diffusion)", lang),
                  value="wav", interactive=True)
@@ -11322,7 +11419,8 @@ audioldm2_interface = gr.Interface(
         gr.Textbox(label=_("Enter your prompt", lang)),
         gr.Textbox(label=_("Enter your negative prompt", lang), value=""),
         gr.Dropdown(choices=["cvssp/audioldm2", "cvssp/audioldm2-music"], label=_("Select AudioLDM 2 model", lang), value="cvssp/audioldm2"),
-        gr.Textbox(label=_("Seed (optional)", lang), value="")
+        gr.Textbox(label=_("Seed (optional)", lang), value=""),
+        gr.Button(value=_("Stop generation", lang), interactive=True, variant="stop")
     ],
     additional_inputs=[
         gr.Slider(minimum=1, maximum=1000, value=200, step=1, label=_("Steps", lang)),
@@ -11792,6 +11890,14 @@ with gr.TabbedInterface(
 ) as app:
     txt2img_interface.input_components[18].click(stop_generation, [], [], queue=False)
     img2img_interface.input_components[12].click(stop_generation, [], [], queue=False)
+    modelscope_interface.input_components[3].click(stop_generation, [], [], queue=False)
+    zeroscope2_interface.input_components[3].click(stop_generation, [], [], queue=False)
+    cogvideox_text2video_interface.input_components[4].click(stop_generation, [], [], queue=False)
+    cogvideox_image2video_interface.input_components[4].click(stop_generation, [], [], queue=False)
+    cogvideox_video2video_interface.input_components[5].click(stop_generation, [], [], queue=False)
+    latte_interface.input_components[4].click(stop_generation, [], [], queue=False)
+    stableaudio_interface.input_components[4].click(stop_generation, [], [], queue=False)
+    audioldm2_interface.input_components[5].click(stop_generation, [], [], queue=False)
 
     reload_button = gr.Button(_("Reload interface", lang))
     close_button = gr.Button(_("Close terminal", lang))
