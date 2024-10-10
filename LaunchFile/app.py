@@ -1506,7 +1506,7 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, llm_model_t
         yield chat_history_state, audio_path, chat_dir
 
 
-def generate_tts_stt(text, audio, tts_settings_html, speaker_wav, language, tts_temperature, tts_top_p, tts_top_k, tts_speed, tts_repetition_penalty, tts_length_penalty, tts_output_format, stt_output_format):
+def generate_tts_stt(text, audio, tts_settings_html, speaker_wav, language, tts_temperature, tts_top_p, tts_top_k, tts_speed, tts_repetition_penalty, tts_length_penalty, tts_output_format, stt_output_format, progress=gr.Progress()):
     global tts_model, whisper_model
 
     tts_output = None
@@ -1515,79 +1515,87 @@ def generate_tts_stt(text, audio, tts_settings_html, speaker_wav, language, tts_
     if not text and not audio:
         gr.Info("Please enter text for TTS or record audio for STT!")
 
-    if text:
-        if not tts_model:
-            tts_model = load_tts_model()
-        if not speaker_wav or not language:
-            gr.Info("Please select a voice and language for TTS!")
-        device = "cuda" if torch.cuda.is_available() else "cpu"
-        tts_model = tts_model.to(device)
+    try:
+        if text:
+            progress(0, desc="Processing TTS")
+            if not tts_model:
+                progress(0.1, desc="Loading TTS model")
+                tts_model = load_tts_model()
+            if not speaker_wav or not language:
+                gr.Info("Please select a voice and language for TTS!")
+            device = "cuda" if torch.cuda.is_available() else "cpu"
+            tts_model = tts_model.to(device)
 
-        try:
+            progress(0.3, desc="Generating speech")
             wav = tts_model.tts(text=text, speaker_wav=f"inputs/audio/voices/{speaker_wav}", language=language,
                                 temperature=tts_temperature, top_p=tts_top_p, top_k=tts_top_k, speed=tts_speed,
-                                repetition_penalty=tts_repetition_penalty, length_penalty=tts_length_penalty                                )
-        except Exception as e:
-            gr.Error(f"An error occurred: {str(e)}")
+                                repetition_penalty=tts_repetition_penalty, length_penalty=tts_length_penalty)
 
-        finally:
-            del tts_model
-            flush()
+            progress(0.7, desc="Saving audio file")
+            today = datetime.now().date()
+            audio_dir = os.path.join('outputs', f"TTS_{today.strftime('%Y%m%d')}")
+            os.makedirs(audio_dir, exist_ok=True)
+            audio_filename = f"tts_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{tts_output_format}"
+            tts_output = os.path.join(audio_dir, audio_filename)
 
-        today = datetime.now().date()
-        audio_dir = os.path.join('outputs', f"TTS_{today.strftime('%Y%m%d')}")
-        os.makedirs(audio_dir, exist_ok=True)
-        audio_filename = f"tts_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{tts_output_format}"
-        tts_output = os.path.join(audio_dir, audio_filename)
+            if tts_output_format == "mp3":
+                sf.write(tts_output, wav, 22050, format='mp3')
+            elif tts_output_format == "ogg":
+                sf.write(tts_output, wav, 22050, format='ogg')
+            else:
+                sf.write(tts_output, wav, 22050)
 
-        if tts_output_format == "mp3":
-            sf.write(tts_output, wav, 22050, format='mp3')
-        elif tts_output_format == "ogg":
-            sf.write(tts_output, wav, 22050, format='ogg')
-        else:
-            sf.write(tts_output, wav, 22050)
+            progress(1.0, desc="TTS processing complete")
 
-    if audio:
-        if not whisper_model:
-            whisper_model = load_whisper_model()
-        device = "cuda" if torch.cuda.is_available() else "cpu"
-        whisper_model = whisper_model.to(device)
+        if audio:
+            progress(0, desc="Processing STT")
+            if not whisper_model:
+                progress(0.2, desc="Loading STT model")
+                whisper_model = load_whisper_model()
+            device = "cuda" if torch.cuda.is_available() else "cpu"
+            whisper_model = whisper_model.to(device)
 
-        try:
+            progress(0.5, desc="Transcribing audio")
             stt_output = transcribe_audio(audio)
 
-        except Exception as e:
-            gr.Error(f"An error occurred: {str(e)}")
+            if stt_output:
+                progress(0.8, desc="Saving transcription")
+                today = datetime.now().date()
+                stt_dir = os.path.join('outputs', f"STT_{today.strftime('%Y%m%d')}")
+                os.makedirs(stt_dir, exist_ok=True)
 
-        finally:
+                if stt_output_format == "txt":
+                    stt_filename = f"stt_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt"
+                    stt_file_path = os.path.join(stt_dir, stt_filename)
+                    with open(stt_file_path, 'w', encoding='utf-8') as f:
+                        f.write(stt_output)
+                elif stt_output_format == "json":
+                    stt_filename = f"stt_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+                    stt_file_path = os.path.join(stt_dir, stt_filename)
+                    stt_history = []
+                    if os.path.exists(stt_file_path):
+                        with open(stt_file_path, "r", encoding="utf-8") as f:
+                            stt_history = json.load(f)
+                    stt_history.append(stt_output)
+                    with open(stt_file_path, "w", encoding="utf-8") as f:
+                        json.dump(stt_history, f, ensure_ascii=False, indent=4)
+
+            progress(1.0, desc="STT processing complete")
+
+        return tts_output, stt_output
+
+    except Exception as e:
+        gr.Error(f"An error occurred: {str(e)}")
+
+    finally:
+        if tts_model is not None:
+            del tts_model
+        if whisper_model is not None:
             del whisper_model
-            flush()
-
-        if stt_output:
-            today = datetime.now().date()
-            stt_dir = os.path.join('outputs', f"STT_{today.strftime('%Y%m%d')}")
-            os.makedirs(stt_dir, exist_ok=True)
-
-            if stt_output_format == "txt":
-                stt_filename = f"stt_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt"
-                stt_file_path = os.path.join(stt_dir, stt_filename)
-                with open(stt_file_path, 'w', encoding='utf-8') as f:
-                    f.write(stt_output)
-            elif stt_output_format == "json":
-                stt_filename = f"stt_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
-                stt_file_path = os.path.join(stt_dir, stt_filename)
-                stt_history = []
-                if os.path.exists(stt_file_path):
-                    with open(stt_file_path, "r", encoding="utf-8") as f:
-                        stt_history = json.load(f)
-                stt_history.append(stt_output)
-                with open(stt_file_path, "w", encoding="utf-8") as f:
-                    json.dump(stt_history, f, ensure_ascii=False, indent=4)
-
-    return tts_output, stt_output
+        flush()
 
 
-def generate_mms_tts(text, language, output_format):
+def generate_mms_tts(text, language, output_format, progress=gr.Progress()):
     model_names = {
         "English": "facebook/mms-tts-eng",
         "Russian": "facebook/mms-tts-rus",
@@ -1604,10 +1612,12 @@ def generate_mms_tts(text, language, output_format):
     model_path = os.path.join("inputs", "text", "mms", "text2speech", language)
 
     if not os.path.exists(model_path):
+        progress(0.1, desc="Downloading MMS TTS model...")
         gr.Info(f"Downloading MMS TTS model for {language}...")
         os.makedirs(model_path, exist_ok=True)
         Repo.clone_from(f"https://huggingface.co/{model_names[language]}", model_path)
         gr.Info(f"MMS TTS model for {language} downloaded")
+        progress(0.3, desc="Model downloaded")
 
     if not text:
         gr.Info("Please enter your request!")
@@ -1616,14 +1626,17 @@ def generate_mms_tts(text, language, output_format):
         gr.Info("Please select a language!")
 
     try:
+        progress(0.4, desc="Loading model")
         tokenizer = VitsTokenizer().VitsTokenizer.from_pretrained(model_path)
         model = VitsModel().VitsModel.from_pretrained(model_path)
 
+        progress(0.6, desc="Generating speech")
         inputs = tokenizer(text=text, return_tensors="pt")
         with torch.no_grad():
             outputs = model(**inputs)
         waveform = outputs.waveform[0]
 
+        progress(0.8, desc="Saving audio file")
         output_dir = os.path.join("outputs", "MMS_TTS")
         os.makedirs(output_dir, exist_ok=True)
         output_file = os.path.join(output_dir, f"synthesized_speech_{language}{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}")
@@ -1637,6 +1650,7 @@ def generate_mms_tts(text, language, output_format):
         else:
             gr.Info(f"Unsupported output format: {output_format}")
 
+        progress(1.0, desc="Speech generation complete")
         return output_file, None
 
     except Exception as e:
@@ -1648,15 +1662,17 @@ def generate_mms_tts(text, language, output_format):
         flush()
 
 
-def transcribe_mms_stt(audio_file, language, output_format):
+def transcribe_mms_stt(audio_file, language, output_format, progress=gr.Progress()):
     model_path = os.path.join("inputs", "text", "mms", "speech2text")
 
     if not os.path.exists(model_path):
+        progress(0.1, desc="Downloading MMS STT model...")
         gr.Info("Downloading MMS STT model...")
         os.makedirs(model_path, exist_ok=True)
         repo = Repo.clone_from("https://huggingface.co/facebook/mms-1b-all", model_path, no_checkout=True)
         repo.git.checkout("HEAD", "--", ".")
         gr.Info("MMS STT model downloaded")
+        progress(0.3, desc="Model downloaded")
 
     if not audio_file:
         gr.Info("Please record your request!")
@@ -1665,21 +1681,26 @@ def transcribe_mms_stt(audio_file, language, output_format):
         gr.Info("Please select a language!")
 
     try:
+        progress(0.4, desc="Loading model")
         processor = AutoProcessor().AutoProcessor.from_pretrained(model_path)
         model = Wav2Vec2ForCTC().Wav2Vec2ForCTC.from_pretrained(model_path)
 
+        progress(0.5, desc="Preparing audio data")
         stream_data = load_dataset("mozilla-foundation/common_voice_17_0", language.lower(), split="test", streaming=True, trust_remote_code=True)
         stream_data = stream_data.cast_column("audio", Audio(sampling_rate=16000))
 
+        progress(0.6, desc="Processing audio")
         audio, sr = librosa.load(audio_file, sr=16000)
         inputs = processor(audio, sampling_rate=16000, return_tensors="pt")
 
+        progress(0.7, desc="Transcribing audio")
         with torch.no_grad():
             outputs = model(**inputs).logits
 
         ids = torch.argmax(outputs, dim=-1)[0]
         transcription = processor.decode(ids)
 
+        progress(0.9, desc="Saving transcription")
         output_dir = os.path.join("outputs", "MMS_STT")
         os.makedirs(output_dir, exist_ok=True)
         output_file = os.path.join(output_dir, f"transcription_{language}{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}")
@@ -1693,6 +1714,7 @@ def transcribe_mms_stt(audio_file, language, output_format):
         else:
             gr.Info(f"Unsupported output format: {output_format}")
 
+        progress(1.0, desc="Transcription complete")
         return transcription, None
 
     except Exception as e:
@@ -1709,15 +1731,17 @@ def seamless_m4tv2_process(input_type, input_text, input_audio, src_lang, tgt_la
                            enable_text_do_sample, enable_speech_do_sample,
                            speech_temperature, text_temperature,
                            enable_both_generation, task_type,
-                           text_output_format, audio_output_format):
+                           text_output_format, audio_output_format, progress=gr.Progress()):
 
     MODEL_PATH = os.path.join("inputs", "text", "seamless-m4t-v2")
 
     if not os.path.exists(MODEL_PATH):
+        progress(0.1, desc="Downloading SeamlessM4Tv2 model...")
         gr.Info("Downloading SeamlessM4Tv2 model...")
         os.makedirs(MODEL_PATH, exist_ok=True)
         Repo.clone_from("https://huggingface.co/facebook/seamless-m4t-v2-large", MODEL_PATH)
         gr.Info("SeamlessM4Tv2 model downloaded")
+        progress(0.2, desc="Model downloaded")
 
     if not input_text and not input_audio:
         gr.Info("Please enter your request!")
@@ -1732,8 +1756,10 @@ def seamless_m4tv2_process(input_type, input_text, input_audio, src_lang, tgt_la
         gr.Info("Please select your dataset language!")
 
     try:
+        progress(0.3, desc="Loading model")
         processor = AutoProcessor().AutoProcessor.from_pretrained(MODEL_PATH)
 
+        progress(0.4, desc="Processing input")
         if input_type == "Text":
             inputs = processor(text=input_text, src_lang=get_languages()[src_lang], return_tensors="pt")
         elif input_type == "Audio" and input_audio:
@@ -1757,6 +1783,7 @@ def seamless_m4tv2_process(input_type, input_text, input_audio, src_lang, tgt_la
 
         generate_kwargs["text_num_beams"] = text_num_beams
 
+        progress(0.5, desc="Loading task-specific model")
         if task_type == "Speech to Speech":
             model = SeamlessM4Tv2ForSpeechToSpeech().SeamlessM4Tv2ForSpeechToSpeech.from_pretrained(MODEL_PATH)
         elif task_type == "Text to Text":
@@ -1768,8 +1795,10 @@ def seamless_m4tv2_process(input_type, input_text, input_audio, src_lang, tgt_la
         else:
             model = SeamlessM4Tv2Model().SeamlessM4Tv2Model.from_pretrained(MODEL_PATH)
 
+        progress(0.7, desc="Generating output")
         outputs = model.generate(**inputs, **generate_kwargs)
 
+        progress(0.8, desc="Processing output")
         if enable_speech_generation or enable_both_generation:
             audio_output = outputs[0].cpu().numpy().squeeze()
             audio_path = os.path.join('outputs', f"SeamlessM4T_{datetime.now().strftime('%Y%m%d')}",
@@ -1806,6 +1835,7 @@ def seamless_m4tv2_process(input_type, input_text, input_audio, src_lang, tgt_la
         else:
             text_output = None
 
+        progress(1.0, desc="Process complete")
         return text_output, audio_path, None
 
     except Exception as e:
@@ -1817,8 +1847,8 @@ def seamless_m4tv2_process(input_type, input_text, input_audio, src_lang, tgt_la
         flush()
 
 
-def translate_text(text, source_lang, target_lang, enable_translate_history, translate_history_format, file=None):
-
+def translate_text(text, source_lang, target_lang, enable_translate_history, translate_history_format, file=None,
+                   progress=gr.Progress()):
     if not text:
         gr.Info("Please enter your request!")
 
@@ -1829,13 +1859,18 @@ def translate_text(text, source_lang, target_lang, enable_translate_history, tra
         gr.Info("Please select your target language!")
 
     try:
+        progress(0.1, desc="Initializing translation")
         translator = LibreTranslateAPI("http://127.0.0.1:5000")
         if file:
+            progress(0.2, desc="Reading file")
             with open(file.name, "r", encoding="utf-8") as f:
                 text = f.read()
+
+        progress(0.4, desc="Translating text")
         translation = translator.translate(text, source_lang, target_lang)
 
         if enable_translate_history:
+            progress(0.6, desc="Saving translation history")
             today = datetime.now().date()
             translate_dir = os.path.join('outputs', f"Translate_{today.strftime('%Y%m%d')}")
             os.makedirs(translate_dir, exist_ok=True)
@@ -1863,6 +1898,7 @@ def translate_text(text, source_lang, target_lang, enable_translate_history, tra
                 with open(translate_history_path, "w", encoding="utf-8") as f:
                     json.dump(translate_history, f, ensure_ascii=False, indent=4)
 
+        progress(1.0, desc="Translation complete")
         return translation
 
     except urllib.error.URLError as e:
@@ -7096,17 +7132,19 @@ def generate_image_playgroundv2(prompt, negative_prompt, seed, height, width, nu
         flush()
 
 
-def generate_wav2lip(image_path, audio_path, fps, pads, face_det_batch_size, wav2lip_batch_size, resize_factor, crop, enable_no_smooth):
+def generate_wav2lip(image_path, audio_path, fps, pads, face_det_batch_size, wav2lip_batch_size, resize_factor, crop, enable_no_smooth, progress=gr.Progress()):
 
     if not image_path or not audio_path:
         gr.Info("Please upload an image and an audio file!")
 
     try:
+        progress(0.1, desc="Initializing Wav2Lip")
         wav2lip_path = os.path.join("inputs", "image", "Wav2Lip")
 
         checkpoint_path = os.path.join(wav2lip_path, "checkpoints", "wav2lip_gan.pth")
 
         if not os.path.exists(checkpoint_path):
+            progress(0.2, desc="Downloading Wav2Lip GAN model...")
             gr.Info("Downloading Wav2Lip GAN model...")
             os.makedirs(os.path.dirname(checkpoint_path), exist_ok=True)
             url = "https://huggingface.co/camenduru/Wav2Lip/resolve/main/checkpoints/wav2lip_gan.pth"
@@ -7115,6 +7153,7 @@ def generate_wav2lip(image_path, audio_path, fps, pads, face_det_batch_size, wav
                 file.write(response.content)
             gr.Info("Wav2Lip GAN model downloaded")
 
+        progress(0.3, desc="Preparing output directory")
         today = datetime.now().date()
         output_dir = os.path.join("outputs", f"FaceAnimation_{today.strftime('%Y%m%d')}")
         os.makedirs(output_dir, exist_ok=True)
@@ -7122,12 +7161,15 @@ def generate_wav2lip(image_path, audio_path, fps, pads, face_det_batch_size, wav
         output_filename = f"face_animation_{datetime.now().strftime('%Y%m%d_%H%M%S')}.mp4"
         output_path = os.path.join(output_dir, output_filename)
 
+        progress(0.4, desc="Constructing command")
         command = f"py {os.path.join(wav2lip_path, 'inference.py')} --checkpoint_path {checkpoint_path} --face {image_path} --audio {audio_path} --outfile {output_path} --fps {fps} --pads {pads} --face_det_batch_size {face_det_batch_size} --wav2lip_batch_size {wav2lip_batch_size} --resize_factor {resize_factor} --crop {crop} --box {-1}"
         if enable_no_smooth:
             command += " --no-smooth"
 
+        progress(0.5, desc="Running Wav2Lip")
         subprocess.run(command, shell=True, check=True)
 
+        progress(1.0, desc="Wav2Lip process complete")
         return output_path, None
 
     except Exception as e:
@@ -7137,13 +7179,15 @@ def generate_wav2lip(image_path, audio_path, fps, pads, face_det_batch_size, wav
         flush()
 
 
-def generate_liveportrait(source_image, driving_video, output_format):
+def generate_liveportrait(source_image, driving_video, output_format, progress=gr.Progress()):
     if not source_image or not driving_video:
         gr.Info("Please upload both a source image and a driving video!")
 
     liveportrait_model_path = os.path.join("ThirdPartyRepository", "LivePortrait", "pretrained_weights")
 
+    progress(0.1, desc="Checking LivePortrait model")
     if not os.path.exists(liveportrait_model_path):
+        progress(0.2, desc="Downloading LivePortrait model...")
         gr.Info("Downloading LivePortrait model...")
         os.makedirs(liveportrait_model_path, exist_ok=True)
         os.system(
@@ -7151,6 +7195,7 @@ def generate_liveportrait(source_image, driving_video, output_format):
         gr.Info("LivePortrait model downloaded")
 
     try:
+        progress(0.3, desc="Preparing output directory")
         today = datetime.now().date()
         output_dir = os.path.join('outputs', f"LivePortrait_{today.strftime('%Y%m%d')}")
         os.makedirs(output_dir, exist_ok=True)
@@ -7158,10 +7203,13 @@ def generate_liveportrait(source_image, driving_video, output_format):
         output_filename = f"liveportrait_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
         output_path = os.path.join(output_dir, output_filename)
 
+        progress(0.4, desc="Constructing command")
         command = f"python ThirdPartyRepository/LivePortrait/inference.py -s {source_image} -d {driving_video} -o {output_path}"
 
+        progress(0.5, desc="Running LivePortrait")
         subprocess.run(command, shell=True, check=True)
 
+        progress(0.8, desc="Processing output")
         result_folder = [f for f in os.listdir(output_dir) if
                          f.startswith(output_filename) and os.path.isdir(os.path.join(output_dir, f))]
         if not result_folder:
@@ -7175,6 +7223,7 @@ def generate_liveportrait(source_image, driving_video, output_format):
 
         output_video = os.path.join(result_folder, video_files[0])
 
+        progress(1.0, desc="LivePortrait process complete")
         return output_video, None
 
     except Exception as e:
@@ -7387,7 +7436,7 @@ def generate_video_zeroscope2(prompt, seed, num_inference_steps, width, height, 
             flush()
 
 
-def generate_video_cogvideox_text2video(prompt, negative_prompt, cogvideox_version, seed, num_inference_steps, guidance_scale, height, width, num_frames, fps, output_format):
+def generate_video_cogvideox_text2video(prompt, negative_prompt, cogvideox_version, seed, num_inference_steps, guidance_scale, height, width, num_frames, fps, output_format, progress=gr.Progress()):
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -7397,21 +7446,25 @@ def generate_video_cogvideox_text2video(prompt, negative_prompt, cogvideox_versi
         seed = int(seed)
     generator = torch.Generator(device).manual_seed(seed)
 
+    progress(0.1, desc="Initializing CogVideoX")
     cogvideox_model_path = os.path.join("inputs", "video", "cogvideox", cogvideox_version)
 
     if not os.path.exists(cogvideox_model_path):
+        progress(0.2, desc=f"Downloading {cogvideox_version} model...")
         gr.Info(f"Downloading {cogvideox_version} model...")
         os.makedirs(cogvideox_model_path, exist_ok=True)
         Repo.clone_from(f"https://huggingface.co/THUDM/{cogvideox_version}", cogvideox_model_path)
         gr.Info(f"{cogvideox_version} model downloaded")
 
     try:
+        progress(0.3, desc="Loading CogVideoX pipeline")
         pipe = CogVideoXPipeline().CogVideoXPipeline.from_pretrained(cogvideox_model_path, torch_dtype=torch.float16).to(device)
         pipe.enable_model_cpu_offload()
         pipe.enable_sequential_cpu_offload()
         pipe.vae.enable_slicing()
         pipe.vae.enable_tiling()
 
+        progress(0.4, desc="Preparing generation parameters")
         video = pipe(
             prompt=prompt,
             negative_prompt=negative_prompt,
@@ -7423,6 +7476,7 @@ def generate_video_cogvideox_text2video(prompt, negative_prompt, cogvideox_versi
             generator=generator
         ).frames[0]
 
+        progress(0.8, desc="Saving generated video")
         today = datetime.now().date()
         video_dir = os.path.join('outputs', f"CogVideoX_{today.strftime('%Y%m%d')}")
         os.makedirs(video_dir, exist_ok=True)
@@ -7445,6 +7499,7 @@ def generate_video_cogvideox_text2video(prompt, negative_prompt, cogvideox_versi
         export_to_video(video, video_path, fps=fps)
         add_metadata_to_file(video_path, metadata)
 
+        progress(1.0, desc="CogVideoX process complete")
         return video_path, f"Video generated successfully. Seed used: {seed}"
 
     except Exception as e:
@@ -7455,7 +7510,7 @@ def generate_video_cogvideox_text2video(prompt, negative_prompt, cogvideox_versi
         flush()
 
 
-def generate_video_cogvideox_image2video(prompt, negative_prompt, init_image, seed, guidance_scale, num_inference_steps, fps, output_format):
+def generate_video_cogvideox_image2video(prompt, negative_prompt, init_image, seed, guidance_scale, num_inference_steps, fps, output_format, progress=gr.Progress()):
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -7468,22 +7523,29 @@ def generate_video_cogvideox_image2video(prompt, negative_prompt, init_image, se
         seed = int(seed)
     generator = torch.Generator(device).manual_seed(seed)
 
+    progress(0.1, desc="Initializing CogVideoX I2V")
     cogvideox_i2v_model_path = os.path.join("inputs", "video", "cogvideox-i2v")
 
     if not os.path.exists(cogvideox_i2v_model_path):
+        progress(0.2, desc="Downloading CogVideoX I2V model...")
         gr.Info(f"Downloading CogVideoX I2V model...")
         os.makedirs(cogvideox_i2v_model_path, exist_ok=True)
         Repo.clone_from("https://huggingface.co/THUDM/CogVideoX-5b-I2V", cogvideox_i2v_model_path)
         gr.Info(f"CogVideoX I2V model downloaded")
 
     try:
+        progress(0.3, desc="Loading CogVideoX I2V pipeline")
         pipe = CogVideoXImageToVideoPipeline().CogVideoXImageToVideoPipeline.from_pretrained(cogvideox_i2v_model_path, torch_dtype=torch.bfloat16)
         pipe.to(device)
 
+        progress(0.4, desc="Processing input image")
         image = load_image(init_image)
+
+        progress(0.5, desc="Generating video")
         video = pipe(image=image, prompt=prompt, negative_prompt=negative_prompt, generator=generator,
                      guidance_scale=guidance_scale, num_inference_steps=num_inference_steps, use_dynamic_cfg=True)
 
+        progress(0.8, desc="Saving generated video")
         today = datetime.now().date()
         video_dir = os.path.join('outputs', f"CogVideoX_{today.strftime('%Y%m%d')}")
         os.makedirs(video_dir, exist_ok=True)
@@ -7492,6 +7554,7 @@ def generate_video_cogvideox_image2video(prompt, negative_prompt, init_image, se
         video_path = os.path.join(video_dir, video_filename)
         export_to_video(video.frames[0], video_path, fps=fps)
 
+        progress(1.0, desc="CogVideoX I2V process complete")
         return video_path, f"Video generated successfully. Seed used: {seed}"
 
     except Exception as e:
@@ -7502,7 +7565,7 @@ def generate_video_cogvideox_image2video(prompt, negative_prompt, init_image, se
         flush()
 
 
-def generate_video_cogvideox_video2video(prompt, negative_prompt, init_video, cogvideox_version, seed, strength, guidance_scale, num_inference_steps, fps, output_format):
+def generate_video_cogvideox_video2video(prompt, negative_prompt, init_video, cogvideox_version, seed, strength, guidance_scale, num_inference_steps, fps, output_format, progress=gr.Progress()):
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -7515,20 +7578,26 @@ def generate_video_cogvideox_video2video(prompt, negative_prompt, init_video, co
         seed = int(seed)
     generator = torch.Generator(device).manual_seed(seed)
 
+    progress(0.1, desc="Initializing CogVideoX V2V")
     cogvideox_model_path = os.path.join("inputs", "video", "cogvideox", cogvideox_version)
 
     if not os.path.exists(cogvideox_model_path):
+        progress(0.2, desc=f"Downloading {cogvideox_version} model...")
         gr.Info(f"Downloading {cogvideox_version} model...")
         os.makedirs(cogvideox_model_path, exist_ok=True)
         Repo.clone_from(f"https://huggingface.co/THUDM/{cogvideox_version}", cogvideox_model_path)
         gr.Info(f"{cogvideox_version} model downloaded")
 
     try:
+        progress(0.3, desc="Loading CogVideoX V2V pipeline")
         pipe = CogVideoXVideoToVideoPipeline().CogVideoXVideoToVideoPipeline.from_pretrained(cogvideox_model_path, torch_dtype=torch.bfloat16)
         pipe.to(device)
         pipe.scheduler = CogVideoXDPMScheduler().CogVideoXDPMScheduler.from_config(pipe.scheduler.config)
 
+        progress(0.4, desc="Processing input video")
         input_video = load_video(init_video)
+
+        progress(0.5, desc="Generating video")
         video = pipe(
             video=input_video,
             prompt=prompt,
@@ -7539,6 +7608,7 @@ def generate_video_cogvideox_video2video(prompt, negative_prompt, init_video, co
             generator=generator
         ).frames[0]
 
+        progress(0.8, desc="Saving generated video")
         today = datetime.now().date()
         video_dir = os.path.join('outputs', f"CogVideoX_{today.strftime('%Y%m%d')}")
         os.makedirs(video_dir, exist_ok=True)
@@ -7547,6 +7617,7 @@ def generate_video_cogvideox_video2video(prompt, negative_prompt, init_video, co
         video_path = os.path.join(video_dir, video_filename)
         export_to_video(video, video_path, fps=fps)
 
+        progress(1.0, desc="CogVideoX V2V process complete")
         return video_path, f"Video generated successfully. Seed used: {seed}"
 
     except Exception as e:
@@ -7557,7 +7628,7 @@ def generate_video_cogvideox_video2video(prompt, negative_prompt, init_video, co
         flush()
 
 
-def generate_video_latte(prompt, negative_prompt, seed, num_inference_steps, guidance_scale, height, width, video_length):
+def generate_video_latte(prompt, negative_prompt, seed, num_inference_steps, guidance_scale, height, width, video_length, progress=gr.Progress()):
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -7567,18 +7638,22 @@ def generate_video_latte(prompt, negative_prompt, seed, num_inference_steps, gui
         seed = int(seed)
     generator = torch.Generator(device).manual_seed(seed)
 
+    progress(0.1, desc="Initializing Latte")
     latte_model_path = os.path.join("inputs", "video", "latte")
 
     if not os.path.exists(latte_model_path):
+        progress(0.2, desc="Downloading Latte model...")
         gr.Info("Downloading Latte model...")
         os.makedirs(latte_model_path, exist_ok=True)
         Repo.clone_from("https://huggingface.co/maxin-cn/Latte-1", latte_model_path)
         gr.Info("Latte model downloaded")
 
     try:
+        progress(0.3, desc="Loading Latte pipeline")
         pipe = LattePipeline().LattePipeline.from_pretrained(latte_model_path, torch_dtype=torch.float16).to(device)
         pipe.enable_model_cpu_offload()
 
+        progress(0.4, desc="Generating video")
         videos = pipe(
             prompt=prompt,
             negative_prompt=negative_prompt,
@@ -7590,6 +7665,7 @@ def generate_video_latte(prompt, negative_prompt, seed, num_inference_steps, gui
             generator=generator
         ).frames[0]
 
+        progress(0.8, desc="Saving generated video")
         today = datetime.now().date()
         gif_dir = os.path.join('outputs', f"Latte_{today.strftime('%Y%m%d')}")
         os.makedirs(gif_dir, exist_ok=True)
@@ -7611,6 +7687,7 @@ def generate_video_latte(prompt, negative_prompt, seed, num_inference_steps, gui
         export_to_gif(videos, gif_path)
         add_metadata_to_file(gif_path, metadata)
 
+        progress(1.0, desc="Latte process complete")
         return gif_path, f"Video generated successfully. Seed used: {seed}"
 
     except Exception as e:
@@ -7621,22 +7698,26 @@ def generate_video_latte(prompt, negative_prompt, seed, num_inference_steps, gui
         flush()
 
 
-def generate_3d_stablefast3d(image, texture_resolution, foreground_ratio, remesh_option):
+def generate_3d_stablefast3d(image, texture_resolution, foreground_ratio, remesh_option, progress=gr.Progress()):
 
     if not image:
         gr.Info("Please upload an image!")
 
     try:
+        progress(0.1, desc="Preparing output directory")
         today = datetime.now().date()
         output_dir = os.path.join('outputs', f"StableFast3D_{today.strftime('%Y%m%d')}")
         os.makedirs(output_dir, exist_ok=True)
 
         output_path = os.path.join(output_dir, "0", "mesh.glb")
 
+        progress(0.5, desc="Constructing command")
         command = f"python ThirdPartyRepository/StableFast3D/run.py \"{image}\" --output-dir {output_dir} --texture-resolution {texture_resolution} --foreground-ratio {foreground_ratio} --remesh_option {remesh_option}"
 
+        progress(0.7, desc="Running StableFast3D")
         subprocess.run(command, shell=True, check=True)
 
+        progress(1.0, desc="StableFast3D process complete")
         return output_path, None
 
     except Exception as e:
@@ -7646,7 +7727,7 @@ def generate_3d_stablefast3d(image, texture_resolution, foreground_ratio, remesh
         flush()
 
 
-def generate_3d_shap_e(prompt, init_image, seed, num_inference_steps, guidance_scale, frame_size):
+def generate_3d_shap_e(prompt, init_image, seed, num_inference_steps, guidance_scale, frame_size, progress=gr.Progress()):
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -7656,17 +7737,35 @@ def generate_3d_shap_e(prompt, init_image, seed, num_inference_steps, guidance_s
         seed = int(seed)
     generator = torch.Generator(device).manual_seed(seed)
 
+    progress(0.1, desc="Initializing Shap-E")
     if init_image:
         model_name = "openai/shap-e-img2img"
         model_path = os.path.join("inputs", "3D", "shap-e", "img2img")
         if not os.path.exists(model_path):
+            progress(0.2, desc="Downloading Shap-E img2img model...")
             gr.Info("Downloading Shap-E img2img model...")
             os.makedirs(model_path, exist_ok=True)
             Repo.clone_from(f"https://huggingface.co/{model_name}", model_path)
             gr.Info("Shap-E img2img model downloaded")
 
+        progress(0.3, desc="Loading img2img pipeline")
         pipe = ShapEImg2ImgPipeline().ShapEImg2ImgPipeline.from_pretrained(model_path, torch_dtype=torch.float16, variant="fp16").to(device)
         image = Image.open(init_image).resize((256, 256))
+    else:
+        model_name = "openai/shap-e"
+        model_path = os.path.join("inputs", "3D", "shap-e", "text2img")
+        if not os.path.exists(model_path):
+            progress(0.2, desc="Downloading Shap-E text2img model...")
+            gr.Info("Downloading Shap-E text2img model...")
+            os.makedirs(model_path, exist_ok=True)
+            Repo.clone_from(f"https://huggingface.co/{model_name}", model_path)
+            gr.Info("Shap-E text2img model downloaded")
+
+        progress(0.3, desc="Loading text2img pipeline")
+        pipe = ShapEPipeline().ShapEPipeline.from_pretrained(model_path, torch_dtype=torch.float16, variant="fp16").to(device)
+
+    progress(0.4, desc="Generating 3D object")
+    if init_image:
         images = pipe(
             image,
             guidance_scale=guidance_scale,
@@ -7676,15 +7775,6 @@ def generate_3d_shap_e(prompt, init_image, seed, num_inference_steps, guidance_s
             generator=generator,
         ).images
     else:
-        model_name = "openai/shap-e"
-        model_path = os.path.join("inputs", "3D", "shap-e", "text2img")
-        if not os.path.exists(model_path):
-            gr.Info("Downloading Shap-E text2img model...")
-            os.makedirs(model_path, exist_ok=True)
-            Repo.clone_from(f"https://huggingface.co/{model_name}", model_path)
-            gr.Info("Shap-E text2img model downloaded")
-
-        pipe = ShapEPipeline().ShapEPipeline.from_pretrained(model_path, torch_dtype=torch.float16, variant="fp16").to(device)
         images = pipe(
             prompt,
             guidance_scale=guidance_scale,
@@ -7694,15 +7784,18 @@ def generate_3d_shap_e(prompt, init_image, seed, num_inference_steps, guidance_s
             generator=generator,
         ).images
 
+    progress(0.7, desc="Processing output")
     today = datetime.now().date()
     output_dir = os.path.join('outputs', f"Shap-E_{today.strftime('%Y%m%d')}")
     os.makedirs(output_dir, exist_ok=True)
 
     try:
+        progress(0.8, desc="Saving 3D object")
         ply_filename = f"3d_object_{datetime.now().strftime('%Y%m%d_%H%M%S')}.ply"
         ply_path = os.path.join(output_dir, ply_filename)
         export_to_ply(images[0], ply_path)
 
+        progress(0.9, desc="Converting to GLB format")
         mesh = trimesh.load(ply_path)
         rot = trimesh.transformations.rotation_matrix(-np.pi / 2, [1, 0, 0])
         mesh = mesh.apply_transform(rot)
@@ -7710,6 +7803,7 @@ def generate_3d_shap_e(prompt, init_image, seed, num_inference_steps, guidance_s
         glb_path = os.path.join(output_dir, glb_filename)
         mesh.export(glb_path, file_type="glb")
 
+        progress(1.0, desc="Shap-E process complete")
         return glb_path, f"3D generated successfully. Seed used: {seed}"
 
     except Exception as e:
@@ -7720,7 +7814,7 @@ def generate_3d_shap_e(prompt, init_image, seed, num_inference_steps, guidance_s
         flush()
 
 
-def generate_sv34d(input_file, version, elevation_deg):
+def generate_sv34d(input_file, version, elevation_deg, progress=gr.Progress()):
     if not input_file:
         gr.Info("Please upload an input file!")
 
@@ -7730,11 +7824,13 @@ def generate_sv34d(input_file, version, elevation_deg):
         "4D": "https://huggingface.co/stabilityai/sv4d/resolve/main/sv4d.safetensors"
     }
 
+    progress(0.1, desc="Initializing SV34D")
     checkpoints_dir = "ThirdPartyRepository/checkpoints"
     os.makedirs(checkpoints_dir, exist_ok=True)
     model_path = os.path.join(checkpoints_dir, f"sv{version.lower()}.safetensors")
 
     if not os.path.exists(model_path):
+        progress(0.2, desc=f"Downloading SV34D {version} model...")
         gr.Info(f"Downloading SV34D {version} model...")
         try:
             response = requests.get(model_files[version])
@@ -7745,6 +7841,7 @@ def generate_sv34d(input_file, version, elevation_deg):
         except Exception as e:
             gr.Error(f"An error occurred: {str(e)}")
 
+    progress(0.3, desc="Preparing output directory")
     today = datetime.now().date()
     output_dir = os.path.join('outputs', f"SV34D_{today.strftime('%Y%m%d')}")
     os.makedirs(output_dir, exist_ok=True)
@@ -7752,6 +7849,7 @@ def generate_sv34d(input_file, version, elevation_deg):
     output_filename = f"sv34d_{version}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
     output_path = os.path.join(output_dir, output_filename)
 
+    progress(0.4, desc="Constructing command")
     if version in ["3D-U", "3D-P"]:
         if not input_file.lower().endswith(('.png', '.jpg', '.jpeg')):
             gr.Info("Please upload an image file for 3D-U or 3D-P version!")
@@ -7770,10 +7868,13 @@ def generate_sv34d(input_file, version, elevation_deg):
         gr.Info("Invalid version selected!")
 
     try:
+        progress(0.5, desc="Running SV34D")
         subprocess.run(command, shell=True, check=True)
 
+        progress(0.9, desc="Processing output")
         for file in os.listdir(output_dir):
             if file.startswith(output_filename):
+                progress(1.0, desc="SV34D process complete")
                 return output_path
 
     except subprocess.CalledProcessError as ee:
@@ -7786,22 +7887,24 @@ def generate_sv34d(input_file, version, elevation_deg):
         flush()
 
 
-def generate_3d_zero123plus(input_image, num_inference_steps, output_format):
-
-    device = "cuda" if torch.cuda.is_available() else "cpu"
-
+def generate_3d_zero123plus(input_image, num_inference_steps, output_format, progress=gr.Progress()):
     if not input_image:
         gr.Info("Please upload an input image!")
 
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+
+    progress(0.1, desc="Initializing Zero123Plus")
     zero123plus_model_path = os.path.join("inputs", "3D", "zero123plus")
 
     if not os.path.exists(zero123plus_model_path):
+        progress(0.2, desc="Downloading Zero123Plus model...")
         gr.Info("Downloading Zero123Plus model...")
         os.makedirs(zero123plus_model_path, exist_ok=True)
         Repo.clone_from("https://huggingface.co/sudo-ai/zero123plus-v1.2", zero123plus_model_path)
         gr.Info("Zero123Plus model downloaded")
 
     try:
+        progress(0.3, desc="Loading Zero123Plus pipeline")
         pipe = DiffusionPipeline().DiffusionPipeline.from_pretrained(
             zero123plus_model_path,
             custom_pipeline="sudo-ai/zero123plus-pipeline",
@@ -7809,9 +7912,13 @@ def generate_3d_zero123plus(input_image, num_inference_steps, output_format):
         )
         pipe.to(device)
 
+        progress(0.4, desc="Processing input image")
         cond = Image.open(input_image)
+
+        progress(0.5, desc="Generating 3D view")
         result = pipe(cond, num_inference_steps=num_inference_steps).images[0]
 
+        progress(0.8, desc="Saving output")
         today = datetime.now().date()
         output_dir = os.path.join('outputs', f"Zero123Plus_{today.strftime('%Y%m%d')}")
         os.makedirs(output_dir, exist_ok=True)
@@ -7819,6 +7926,7 @@ def generate_3d_zero123plus(input_image, num_inference_steps, output_format):
         output_path = os.path.join(output_dir, output_filename)
         result.save(output_path)
 
+        progress(1.0, desc="Zero123Plus process complete")
         return output_path, None
 
     except Exception as e:
@@ -7905,9 +8013,10 @@ def generate_stableaudio(prompt, negative_prompt, seed, num_inference_steps, gui
 
 def generate_audio_audiocraft(prompt, input_audio=None, model_name=None, model_type="musicgen",
                               duration=10, top_k=250, top_p=0.0,
-                              temperature=1.0, cfg_coef=3.0, min_cfg_coef=1.0, max_cfg_coef=3.0, enable_multiband=False, output_format="mp3"):
+                              temperature=1.0, cfg_coef=3.0, min_cfg_coef=1.0, max_cfg_coef=3.0, enable_multiband=False, output_format="mp3", progress=gr.Progress()):
     global audiocraft_model_path, multiband_diffusion_path
 
+    progress(0.1, desc="Initializing AudioCraft")
     if not model_name:
         gr.Info("Please, select an AudioCraft model!")
 
@@ -7915,9 +8024,11 @@ def generate_audio_audiocraft(prompt, input_audio=None, model_name=None, model_t
         gr.Info("Multiband Diffusion is not supported with 'audiogen' or 'magnet' model types. Please select 'musicgen' or disable Multiband Diffusion")
 
     if not audiocraft_model_path:
+        progress(0.2, desc="Loading AudioCraft model")
         audiocraft_model_path = load_audiocraft_model(model_name)
 
     if not multiband_diffusion_path:
+        progress(0.3, desc="Loading Multiband Diffusion model")
         multiband_diffusion_path = load_multiband_diffusion_model()
 
     today = datetime.now().date()
@@ -7925,6 +8036,7 @@ def generate_audio_audiocraft(prompt, input_audio=None, model_name=None, model_t
     os.makedirs(audio_dir, exist_ok=True)
 
     try:
+        progress(0.4, desc="Initializing model")
         if model_type == "musicgen":
             model = MusicGen().MusicGen.get_pretrained(audiocraft_model_path)
         elif model_type == "audiogen":
@@ -7933,16 +8045,14 @@ def generate_audio_audiocraft(prompt, input_audio=None, model_name=None, model_t
             model = MAGNeT().MAGNeT.get_pretrained(audiocraft_model_path)
         else:
             gr.Info("Invalid model type!")
-    except (ValueError, AssertionError):
-        gr.Error("The selected model is not compatible with the chosen model type")
 
-    mbd = None
+        mbd = None
 
-    if enable_multiband:
-        mbd = MultiBandDiffusion().MultiBandDiffusion.get_mbd_musicgen()
+        if enable_multiband:
+            progress(0.5, desc="Loading Multiband Diffusion")
+            mbd = MultiBandDiffusion().MultiBandDiffusion.get_mbd_musicgen()
 
-    try:
-        progress_bar = tqdm(total=duration, desc="Generating audio")
+        progress(0.6, desc="Generating audio")
         if model_type == "musicgen" and input_audio:
             audio_path = input_audio
             melody, sr = torchaudio.load(audio_path)
@@ -7968,14 +8078,12 @@ def generate_audio_audiocraft(prompt, input_audio=None, model_name=None, model_t
         else:
             gr.Info(f"Unsupported model type: {model_type}")
 
-        progress_bar.update(duration)
-
+        progress(0.7, desc="Processing generated audio")
         if wav.ndim > 2:
             wav = wav.squeeze()
 
-        progress_bar.close()
-
         if mbd:
+            progress(0.8, desc="Applying Multiband Diffusion")
             tokens = rearrange(tokens, "b n d -> n b d")
             wav_diffusion = mbd.tokens_to_wav(tokens)
             wav_diffusion = wav_diffusion.squeeze()
@@ -7988,6 +8096,7 @@ def generate_audio_audiocraft(prompt, input_audio=None, model_name=None, model_t
             audio_path_diffusion = os.path.join(audio_dir, audio_filename_diffusion)
             torchaudio.save(audio_path_diffusion, wav_diffusion.cpu().detach(), model.sample_rate)
 
+        progress(0.9, desc="Saving generated audio")
         audio_filename = f"audio_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
         audio_path = os.path.join(audio_dir, audio_filename)
 
@@ -8016,6 +8125,7 @@ def generate_audio_audiocraft(prompt, input_audio=None, model_name=None, model_t
 
         add_metadata_to_file(audio_path, metadata)
 
+        progress(1.0, desc="Audio generation complete")
         if output_format == "mp3":
             spectrogram_path = generate_mel_spectrogram(audio_path + ".mp3")
             return audio_path + ".mp3", spectrogram_path, None
@@ -8109,34 +8219,41 @@ def generate_audio_audioldm2(prompt, negative_prompt, model_name, seed, num_infe
         flush()
 
 
-def generate_bark_audio(text, voice_preset, max_length, fine_temperature, coarse_temperature, output_format):
+def generate_bark_audio(text, voice_preset, max_length, fine_temperature, coarse_temperature, output_format, progress=gr.Progress()):
 
+    progress(0.1, desc="Initializing Bark")
     if not text:
         gr.Info("Please enter text for the request!")
 
     bark_model_path = os.path.join("inputs", "audio", "bark")
 
     if not os.path.exists(bark_model_path):
+        progress(0.2, desc="Downloading Bark model")
         gr.Info("Downloading Bark model...")
         os.makedirs(bark_model_path, exist_ok=True)
         Repo.clone_from("https://huggingface.co/suno/bark", bark_model_path)
         gr.Info("Bark model downloaded")
 
     try:
+        progress(0.3, desc="Setting up device")
         device = "cuda" if torch.cuda.is_available() else "cpu"
         torch.set_default_tensor_type(torch.cuda.FloatTensor if device == "cuda" else torch.FloatTensor)
 
+        progress(0.4, desc="Loading Bark model")
         processor = AutoProcessor().AutoProcessor.from_pretrained(bark_model_path)
         model = BarkModel().BarkModel.from_pretrained(bark_model_path, torch_dtype=torch.float32)
 
+        progress(0.5, desc="Processing input")
         if voice_preset:
             inputs = processor(text, voice_preset=voice_preset, return_tensors="pt")
         else:
             inputs = processor(text, return_tensors="pt")
 
+        progress(0.6, desc="Generating audio")
         audio_array = model.generate(**inputs, max_length=max_length, do_sample=True, fine_temperature=fine_temperature, coarse_temperature=coarse_temperature)
         model.enable_cpu_offload()
 
+        progress(0.7, desc="Preparing output")
         today = datetime.now().date()
         audio_dir = os.path.join('outputs', f"Bark_{today.strftime('%Y%m%d')}")
         os.makedirs(audio_dir, exist_ok=True)
@@ -8155,6 +8272,7 @@ def generate_bark_audio(text, voice_preset, max_length, fine_temperature, coarse
             "model": "SunoBark"
         }
 
+        progress(0.8, desc="Saving audio file")
         if output_format == "mp3":
             sf.write(audio_path, audio_array, 24000)
         elif output_format == "ogg":
@@ -8164,8 +8282,10 @@ def generate_bark_audio(text, voice_preset, max_length, fine_temperature, coarse
 
         add_metadata_to_file(audio_path, metadata)
 
+        progress(0.9, desc="Generating spectrogram")
         spectrogram_path = generate_mel_spectrogram(audio_path)
 
+        progress(1.0, desc="Audio generation complete")
         return audio_path, spectrogram_path, None
 
     except Exception as e:
@@ -8177,7 +8297,8 @@ def generate_bark_audio(text, voice_preset, max_length, fine_temperature, coarse
         flush()
 
 
-def process_rvc(input_audio, model_folder, f0method, f0up_key, index_rate, filter_radius, resample_sr, rms_mix_rate, protect, output_format):
+def process_rvc(input_audio, model_folder, f0method, f0up_key, index_rate, filter_radius, resample_sr, rms_mix_rate, protect, output_format, progress=gr.Progress()):
+    progress(0.1, desc="Initializing RVC")
     if not input_audio:
         gr.Info("Please upload an audio file!")
 
@@ -8186,6 +8307,7 @@ def process_rvc(input_audio, model_folder, f0method, f0up_key, index_rate, filte
     model_path = os.path.join("inputs", "audio", "rvc_models", model_folder)
 
     try:
+        progress(0.2, desc="Loading RVC model")
         pth_files = [f for f in os.listdir(model_path) if f.endswith('.pth')]
         if not pth_files:
             gr.Info(f"No .pth file found in the selected model folder: {model_folder}")
@@ -8196,6 +8318,7 @@ def process_rvc(input_audio, model_folder, f0method, f0up_key, index_rate, filte
         rvc.load_model(model_file)
         rvc.set_params(f0method=f0method, f0up_key=f0up_key, index_rate=index_rate, filter_radius=filter_radius, resample_sr=resample_sr, rms_mix_rate=rms_mix_rate, protect=protect)
 
+        progress(0.3, desc="Preparing output directory")
         today = datetime.now().date()
         output_dir = os.path.join('outputs', f"RVC_{today.strftime('%Y%m%d')}")
         os.makedirs(output_dir, exist_ok=True)
@@ -8203,10 +8326,13 @@ def process_rvc(input_audio, model_folder, f0method, f0up_key, index_rate, filte
         output_filename = f"rvc_output_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
         output_path = os.path.join(output_dir, output_filename)
 
+        progress(0.4, desc="Processing audio")
         rvc.infer_file(input_audio, output_path)
 
+        progress(0.9, desc="Unloading model")
         rvc.unload_model()
 
+        progress(1.0, desc="RVC processing complete")
         return output_path, None
 
     except Exception as e:
@@ -8217,25 +8343,30 @@ def process_rvc(input_audio, model_folder, f0method, f0up_key, index_rate, filte
         flush()
 
 
-def separate_audio_uvr(audio_file, output_format, normalization_threshold, sample_rate):
+def separate_audio_uvr(audio_file, output_format, normalization_threshold, sample_rate, progress=gr.Progress()):
 
+    progress(0.1, desc="Initializing UVR")
     if not audio_file:
         gr.Info("Please upload an audio file!")
 
     try:
+        progress(0.2, desc="Preparing output directory")
         today = datetime.now().date()
         output_dir = os.path.join('outputs', f"UVR_{today.strftime('%Y%m%d')}")
         os.makedirs(output_dir, exist_ok=True)
 
+        progress(0.3, desc="Loading UVR model")
         separator = Separator().Separator(output_format=output_format, normalization_threshold=normalization_threshold,
                               sample_rate=sample_rate, output_dir=output_dir)
         separator.load_model(model_filename='UVR-MDX-NET-Inst_HQ_3.onnx')
 
+        progress(0.4, desc="Separating audio")
         output_files = separator.separate(audio_file)
 
         if len(output_files) != 2:
             gr.Info(f"Unexpected number of output files: {len(output_files)}")
 
+        progress(1.0, desc="UVR separation complete")
         return output_files[0], output_files[1], f"Separation complete! Output files: {' '.join(output_files)}"
 
     except Exception as e:
@@ -8246,8 +8377,8 @@ def separate_audio_uvr(audio_file, output_format, normalization_threshold, sampl
         flush()
 
 
-def demucs_separate(audio_file, output_format):
-
+def demucs_separate(audio_file, output_format, progress=gr.Progress()):
+    progress(0.1, desc="Initializing Demucs")
     if not audio_file:
         gr.Info("Please upload an audio file!")
 
@@ -8260,11 +8391,17 @@ def demucs_separate(audio_file, output_format):
     os.makedirs(separate_dir, exist_ok=True)
 
     try:
+        progress(0.2, desc="Preparing separation command")
         command = f"demucs --two-stems=vocals {audio_file} -o {separate_dir}"
+
+        progress(0.3, desc="Running Demucs separation")
         subprocess.run(command, shell=True, check=True)
 
-        temp_vocal_file = os.path.join(separate_dir, "htdemucs", os.path.splitext(os.path.basename(audio_file))[0], "vocals.wav")
-        temp_instrumental_file = os.path.join(separate_dir, "htdemucs", os.path.splitext(os.path.basename(audio_file))[0], "no_vocals.wav")
+        progress(0.6, desc="Processing separated files")
+        temp_vocal_file = os.path.join(separate_dir, "htdemucs", os.path.splitext(os.path.basename(audio_file))[0],
+                                       "vocals.wav")
+        temp_instrumental_file = os.path.join(separate_dir, "htdemucs",
+                                              os.path.splitext(os.path.basename(audio_file))[0], "no_vocals.wav")
 
         vocal_file = os.path.join(separate_dir, "vocals.wav")
         instrumental_file = os.path.join(separate_dir, "instrumental.wav")
@@ -8272,6 +8409,7 @@ def demucs_separate(audio_file, output_format):
         os.rename(temp_vocal_file, vocal_file)
         os.rename(temp_instrumental_file, instrumental_file)
 
+        progress(0.8, desc="Converting to desired format")
         if output_format == "mp3":
             vocal_output = os.path.join(separate_dir, "vocal.mp3")
             instrumental_output = os.path.join(separate_dir, "instrumental.mp3")
@@ -8281,11 +8419,13 @@ def demucs_separate(audio_file, output_format):
             vocal_output = os.path.join(separate_dir, "vocal.ogg")
             instrumental_output = os.path.join(separate_dir, "instrumental.ogg")
             subprocess.run(f"ffmpeg -i {vocal_file} -c:a libvorbis -qscale:a 5 {vocal_output}", shell=True, check=True)
-            subprocess.run(f"ffmpeg -i {instrumental_file} -c:a libvorbis -qscale:a 5 {instrumental_output}", shell=True, check=True)
+            subprocess.run(f"ffmpeg -i {instrumental_file} -c:a libvorbis -qscale:a 5 {instrumental_output}",
+                           shell=True, check=True)
         else:
             vocal_output = vocal_file
             instrumental_output = instrumental_file
 
+        progress(1.0, desc="Demucs separation complete")
         return vocal_output, instrumental_output, None
 
     except Exception as e:
@@ -8296,9 +8436,12 @@ def demucs_separate(audio_file, output_format):
 
 
 def generate_image_extras(input_image, remove_background, enable_facerestore, fidelity_weight, restore_upscale,
-                          enable_pixeloe, mode, target_size, patch_size, thickness, contrast, saturation, enable_ddcolor, ddcolor_input_size,
-                          enable_downscale, downscale_factor, enable_format_changer, new_format, enable_encryption, enable_decryption, decryption_key):
+                          enable_pixeloe, mode, target_size, patch_size, thickness, contrast, saturation,
+                          enable_ddcolor, ddcolor_input_size, enable_downscale, downscale_factor,
+                          enable_format_changer, new_format, enable_encryption, enable_decryption, decryption_key,
+                          progress=gr.Progress()):
     global key
+    progress(0.1, desc="Initializing image processing")
     if not input_image:
         gr.Info("Please upload an image!")
 
@@ -8310,11 +8453,13 @@ def generate_image_extras(input_image, remove_background, enable_facerestore, fi
         output_format = os.path.splitext(input_image)[1][1:]
 
         if remove_background:
+            progress(0.2, desc="Removing background")
             output_filename = f"background_removed_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
             output_path = os.path.join(os.path.dirname(input_image), output_filename)
             remove_bg(input_image, output_path)
 
         if enable_facerestore:
+            progress(0.3, desc="Restoring face")
             codeformer_path = os.path.join("inputs", "image", "CodeFormer")
             facerestore_output_path = os.path.join(os.path.dirname(output_path), f"facerestored_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}")
             command = f"python {os.path.join(codeformer_path, 'inference_codeformer.py')} -w {fidelity_weight} --upscale {restore_upscale} --bg_upsampler realesrgan --face_upsample --input_path {output_path} --output_path {facerestore_output_path}"
@@ -8322,6 +8467,7 @@ def generate_image_extras(input_image, remove_background, enable_facerestore, fi
             output_path = facerestore_output_path
 
         if enable_pixeloe:
+            progress(0.4, desc="Applying PixelOE")
             img = cv2.imread(output_path)
             img = pixelize().pixelize(img, mode=mode, target_size=target_size, patch_size=patch_size, thickness=thickness, contrast=contrast, saturation=saturation)
             pixeloe_output_path = os.path.join(os.path.dirname(output_path), f"pixeloe_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}")
@@ -8329,6 +8475,7 @@ def generate_image_extras(input_image, remove_background, enable_facerestore, fi
             output_path = pixeloe_output_path
 
         if enable_ddcolor:
+            progress(0.5, desc="Applying DDColor")
             with tempfile.TemporaryDirectory() as temp_dir:
                 temp_input_path = os.path.join(temp_dir, os.path.basename(output_path))
                 shutil.copy(output_path, temp_input_path)
@@ -8336,11 +8483,9 @@ def generate_image_extras(input_image, remove_background, enable_facerestore, fi
                 temp_output_dir = os.path.join(temp_dir, "output")
                 os.makedirs(temp_output_dir, exist_ok=True)
 
-                ddcolor_output_path = os.path.join(os.path.dirname(output_path),
-                                                   f"ddcolor_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}")
+                ddcolor_output_path = os.path.join(os.path.dirname(output_path), f"ddcolor_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}")
                 command = f"python ThirdPartyRepository/DDColor/colorization_pipeline_hf.py --model_name ddcolor_modelscope --input {temp_input_path} --output {temp_output_dir} --input_size {ddcolor_input_size}"
                 subprocess.run(command, shell=True, check=True)
-
 
                 generated_files = os.listdir(temp_output_dir)
                 if generated_files:
@@ -8351,35 +8496,38 @@ def generate_image_extras(input_image, remove_background, enable_facerestore, fi
                     gr.Info("No DDcolor images")
 
         if enable_downscale:
+            progress(0.6, desc="Downscaling image")
             output_path = downscale_image(output_path, downscale_factor)
 
         if enable_format_changer:
+            progress(0.7, desc="Changing image format")
             output_path, message = change_image_format(output_path, new_format, enable_format_changer)
             if message.startswith("Error"):
                 return None, message
 
         if enable_encryption:
+            progress(0.8, desc="Encrypting image")
             img = Image.open(output_path)
             key = generate_key()
             encrypted_img, _ = encrypt_image(img, key)
-            encrypted_output_path = os.path.join(os.path.dirname(output_path),
-                                                 f"encrypted_{os.path.basename(output_path)}")
+            encrypted_output_path = os.path.join(os.path.dirname(output_path), f"encrypted_{os.path.basename(output_path)}")
             encrypted_img.save(encrypted_output_path)
             output_path = encrypted_output_path
 
         if enable_decryption:
+            progress(0.9, desc="Decrypting image")
             if not decryption_key:
                 gr.Info("Please provide a decryption key!")
             img = Image.open(output_path)
             try:
                 decrypted_img = decrypt_image(img, decryption_key)
-                decrypted_output_path = os.path.join(os.path.dirname(output_path),
-                                                     f"decrypted_{os.path.basename(output_path)}")
+                decrypted_output_path = os.path.join(os.path.dirname(output_path), f"decrypted_{os.path.basename(output_path)}")
                 decrypted_img.save(decrypted_output_path)
                 output_path = decrypted_output_path
             except Exception as e:
                 gr.Error(f"Decryption failed. Please check your key. Error: {str(e)}")
 
+        progress(1.0, desc="Image processing complete")
         if enable_encryption:
             return output_path, f"Image encrypted successfully. Decryption key: {key}"
         else:
@@ -8392,7 +8540,8 @@ def generate_image_extras(input_image, remove_background, enable_facerestore, fi
         flush()
 
 
-def generate_video_extras(input_video, enable_downscale, downscale_factor, enable_format_changer, new_format):
+def generate_video_extras(input_video, enable_downscale, downscale_factor, enable_format_changer, new_format, progress=gr.Progress()):
+    progress(0.1, desc="Initializing video processing")
     if not input_video:
         gr.Info("Please upload a video!")
 
@@ -8403,13 +8552,16 @@ def generate_video_extras(input_video, enable_downscale, downscale_factor, enabl
         output_path = input_video
 
         if enable_downscale:
+            progress(0.3, desc="Downscaling video")
             output_path = downscale_video(output_path, downscale_factor)
 
         if enable_format_changer:
+            progress(0.6, desc="Changing video format")
             output_path, message = change_video_format(output_path, new_format, enable_format_changer)
             if message.startswith("Error"):
                 return None, message
 
+        progress(1.0, desc="Video processing complete")
         return output_path, "Video processing completed successfully."
 
     except Exception as e:
@@ -8419,9 +8571,10 @@ def generate_video_extras(input_video, enable_downscale, downscale_factor, enabl
         flush()
 
 
-def generate_audio_extras(input_audio, enable_format_changer, new_format, enable_audiosr, steps, guidance_scale, enable_downscale, downscale_factor):
+def generate_audio_extras(input_audio, enable_format_changer, new_format, enable_audiosr, steps, guidance_scale, enable_downscale, downscale_factor, progress=gr.Progress()):
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
+    progress(0.1, desc="Initializing audio processing")
     if not input_audio:
         gr.Info("Please upload an audio file!")
 
@@ -8432,11 +8585,13 @@ def generate_audio_extras(input_audio, enable_format_changer, new_format, enable
         output_path = input_audio
 
         if enable_format_changer:
+            progress(0.3, desc="Changing audio format")
             output_path, message = change_audio_format(output_path, new_format, enable_format_changer)
             if message.startswith("Error"):
                 return None, message
 
         if enable_audiosr:
+            progress(0.5, desc="Enhancing audio with AudioSR")
             today = datetime.now().date()
             audio_dir = os.path.join('outputs', f"AudioSR_{today.strftime('%Y%m%d')}")
             os.makedirs(audio_dir, exist_ok=True)
@@ -8458,6 +8613,7 @@ def generate_audio_extras(input_audio, enable_format_changer, new_format, enable
                 gr.Info("AudioSR did not create any output folders.")
 
         if enable_downscale:
+            progress(0.8, desc="Downscaling audio")
             today = datetime.now().date()
             audio_dir = os.path.join('outputs', f"AudioDownscale_{today.strftime('%Y%m%d')}")
             os.makedirs(audio_dir, exist_ok=True)
@@ -8468,6 +8624,7 @@ def generate_audio_extras(input_audio, enable_format_changer, new_format, enable
 
             output_path = downscale_output_path
 
+        progress(1.0, desc="Audio processing complete")
         return output_path, "Audio processing completed successfully."
 
     except Exception as e:
@@ -8477,8 +8634,8 @@ def generate_audio_extras(input_audio, enable_format_changer, new_format, enable
         flush()
 
 
-def generate_upscale_realesrgan(input_image, input_video, model_name, outscale, face_enhance, tile, tile_pad, pre_pad, denoise_strength, output_format):
-
+def generate_upscale_realesrgan(input_image, input_video, model_name, outscale, face_enhance, tile, tile_pad, pre_pad, denoise_strength, output_format, progress=gr.Progress()):
+    progress(0.1, desc="Initializing Real-ESRGAN")
     realesrgan_path = os.path.join("inputs", "image", "Real-ESRGAN")
 
     if not input_image and not input_video:
@@ -8499,6 +8656,7 @@ def generate_upscale_realesrgan(input_image, input_video, model_name, outscale, 
         input_filename = os.path.basename(input_file)
         input_name, input_ext = os.path.splitext(input_filename)
 
+        progress(0.2, desc="Preparing input")
         if is_video:
             cap = cv2.VideoCapture(input_file)
             fps = cap.get(cv2.CAP_PROP_FPS)
@@ -8510,6 +8668,10 @@ def generate_upscale_realesrgan(input_image, input_video, model_name, outscale, 
 
             fourcc = cv2.VideoWriter_fourcc(*'mp4v')
             out = cv2.VideoWriter(output_path, fourcc, fps, (width * outscale, height * outscale))
+
+            progress(0.3, desc="Processing video frames")
+            total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+            processed_frames = 0
 
             while True:
                 ret, frame = cap.read()
@@ -8531,15 +8693,20 @@ def generate_upscale_realesrgan(input_image, input_video, model_name, outscale, 
                 os.remove(frame_path)
                 os.remove(os.path.join(output_dir, "temp_frame_out.png"))
 
+                processed_frames += 1
+                progress(0.3 + (0.6 * processed_frames / total_frames), desc=f"Processing frame {processed_frames}/{total_frames}")
+
             cap.release()
             out.release()
         else:
+            progress(0.4, desc="Upscaling image")
             command = f"python {os.path.join(realesrgan_path, 'inference_realesrgan.py')} -i {input_file} -o {output_dir} -n {model_name} -s {outscale} --tile {tile} --tile_pad {tile_pad} --pre_pad {pre_pad} --denoise_strength {denoise_strength}"
             if face_enhance:
                 command += " --face_enhance"
 
-        subprocess.run(command, shell=True, check=True)
+            subprocess.run(command, shell=True, check=True)
 
+        progress(0.9, desc="Finalizing output")
         expected_output_filename = f"{input_name}_out{input_ext}"
         output_path = os.path.join(output_dir, expected_output_filename)
 
@@ -8550,6 +8717,7 @@ def generate_upscale_realesrgan(input_image, input_video, model_name, outscale, 
                 Image.open(output_path).save(new_output_path)
                 output_path = new_output_path
 
+            progress(1.0, desc="Upscaling complete")
             if is_video:
                 return None, output_path, None
             else:
@@ -8565,7 +8733,8 @@ def generate_upscale_realesrgan(input_image, input_video, model_name, outscale, 
 
 
 def generate_faceswap(source_image, target_image, target_video, enable_many_faces, reference_face,
-                      reference_frame, enable_facerestore, fidelity_weight, restore_upscale):
+                      reference_frame, enable_facerestore, fidelity_weight, restore_upscale, progress=gr.Progress()):
+    progress(0.1, desc="Initializing face swap")
     if not source_image or (not target_image and not target_video):
         gr.Info("Please upload source image and either target image or target video!")
 
@@ -8578,6 +8747,7 @@ def generate_faceswap(source_image, target_image, target_video, enable_many_face
 
         is_video = bool(target_video)
 
+        progress(0.2, desc="Preparing output files")
         if is_video:
             faceswap_output_filename = f"faceswapped_{datetime.now().strftime('%Y%m%d_%H%M%S')}.mp4"
         else:
@@ -8585,6 +8755,7 @@ def generate_faceswap(source_image, target_image, target_video, enable_many_face
 
         faceswap_output_path = os.path.join(output_dir, faceswap_output_filename)
 
+        progress(0.3, desc="Constructing face swap command")
         command = f"python {os.path.join(roop_path, 'run.py')} --source {source_image} --output {faceswap_output_path}"
 
         if is_video:
@@ -8597,9 +8768,11 @@ def generate_faceswap(source_image, target_image, target_video, enable_many_face
             command += f" --reference-face-position {reference_face}"
             command += f" --reference-frame-number {reference_frame}"
 
+        progress(0.4, desc="Running face swap")
         subprocess.run(command, shell=True, check=True)
 
         if enable_facerestore:
+            progress(0.6, desc="Applying face restoration")
             codeformer_path = os.path.join("inputs", "image", "CodeFormer")
 
             if is_video:
@@ -8618,6 +8791,7 @@ def generate_faceswap(source_image, target_image, target_video, enable_many_face
         else:
             output_path = faceswap_output_path
 
+        progress(1.0, desc="Face swap complete")
         if is_video:
             return None, output_path, None
         else:
@@ -8630,14 +8804,17 @@ def generate_faceswap(source_image, target_image, target_video, enable_many_face
         flush()
 
 
-def display_metadata(file):
+def display_metadata(file, progress=gr.Progress()):
+    progress(0.1, desc="Initializing metadata display")
     if file is None:
         gr.Info("Please upload a file.")
 
     try:
+        progress(0.3, desc="Reading file")
         file_extension = os.path.splitext(file.name)[1].lower()
         metadata = None
 
+        progress(0.5, desc="Extracting metadata")
         if file_extension in ['.png', '.jpeg', '.gif']:
             img = Image.open(file.name)
             metadata_str = img.info.get("COMMENT")
@@ -8654,6 +8831,7 @@ def display_metadata(file):
                 if metadata_str:
                     metadata = json.loads(metadata_str[0])
 
+        progress(1.0, desc="Metadata extraction complete")
         if metadata:
             return f"COMMENT:\n{json.dumps(metadata, indent=2)}"
         else:
@@ -8662,28 +8840,44 @@ def display_metadata(file):
         gr.Error(f"An error occurred: {str(e)}")
 
 
-def get_wiki_content(url, local_file="Wikies/WikiEN.md"):
+def get_wiki_content(url, local_file="Wikies/WikiEN.md", progress=gr.Progress()):
+    progress(0.1, desc="Initializing wiki content retrieval")
     try:
+        progress(0.3, desc="Attempting to fetch online content")
         response = requests.get(url)
         if response.status_code == 200:
+            progress(1.0, desc="Online content retrieved successfully")
             return response.text
     except:
         pass
 
     try:
+        progress(0.6, desc="Fetching local content")
         with open(local_file, 'r', encoding='utf-8') as file:
             content = file.read()
-            return markdown.markdown(content)
+            progress(0.9, desc="Converting Markdown to HTML")
+            html_content = markdown.markdown(content)
+            progress(1.0, desc="Local content processed successfully")
+            return html_content
     except:
+        progress(1.0, desc="Content retrieval failed")
         gr.Error("<p>Wiki content is not available.</p>")
 
 
-def get_output_files():
+def get_output_files(progress=gr.Progress()):
+    progress(0.1, desc="Initializing file search")
     output_dir = "outputs"
     files = []
+    total_dirs = sum([len(dirs) for _, dirs, _ in os.walk(output_dir)])
+    processed_dirs = 0
+
     for root, dirs, filenames in os.walk(output_dir):
         for filename in filenames:
             files.append(os.path.join(root, filename))
+        processed_dirs += 1
+        progress(0.1 + (0.9 * processed_dirs / total_dirs), desc=f"Searching directory {processed_dirs}/{total_dirs}")
+
+    progress(1.0, desc="File search complete")
     return files
 
 
@@ -8709,7 +8903,8 @@ def display_output_file(file_path):
         return None, None, None, None, None
 
 
-def download_model(llm_model_url, sd_model_url):
+def download_model(llm_model_url, sd_model_url, progress=gr.Progress()):
+    progress(0.1, desc="Initializing model download")
     if not llm_model_url and not sd_model_url:
         gr.Info("Please enter at least one model URL to download")
 
@@ -8717,6 +8912,7 @@ def download_model(llm_model_url, sd_model_url):
 
     if llm_model_url:
         try:
+            progress(0.2, desc="Downloading LLM model")
             if "/" in llm_model_url and "blob/main" not in llm_model_url:
                 repo_name = llm_model_url.split("/")[-1]
                 model_path = os.path.join("inputs", "text", "llm_models", repo_name)
@@ -8730,28 +8926,34 @@ def download_model(llm_model_url, sd_model_url):
                 with open(model_path, "wb") as file:
                     file.write(response.content)
                 messages.append(f"LLM model file {file_name} downloaded successfully!")
+            progress(0.5, desc="LLM model download complete")
         except Exception as e:
             gr.Error(f"Error downloading LLM model: {str(e)}")
 
     if sd_model_url:
         try:
+            progress(0.6, desc="Downloading StableDiffusion model")
             file_name = sd_model_url.split("/")[-1]
             model_path = os.path.join("inputs", "image", "sd_models", file_name)
             response = requests.get(sd_model_url, allow_redirects=True)
             with open(model_path, "wb") as file:
                 file.write(response.content)
             messages.append(f"StableDiffusion model file {file_name} downloaded successfully!")
+            progress(0.9, desc="StableDiffusion model download complete")
         except Exception as e:
             gr.Info(f"Error downloading StableDiffusion model: {str(e)}")
 
+    progress(1.0, desc="Model download process complete")
     return "\n".join(messages)
 
 
 def settings_interface(language, share_value, debug_value, monitoring_value, auto_launch, api_status, open_api, queue_max_size, status_update_rate, max_file_size, gradio_auth, server_name, server_port, hf_token, share_server_address, theme,
                        enable_custom_theme, primary_hue, secondary_hue, neutral_hue,
-                       spacing_size, radius_size, text_size, font, font_mono):
+                       spacing_size, radius_size, text_size, font, font_mono, progress=gr.Progress()):
+    progress(0.1, desc="Initializing settings update")
     settings = load_settings()
 
+    progress(0.2, desc="Updating general settings")
     settings['language'] = language
     settings['share_mode'] = share_value == "True"
     settings['debug_mode'] = debug_value == "True"
@@ -8762,13 +8964,19 @@ def settings_interface(language, share_value, debug_value, monitoring_value, aut
     settings['queue_max_size'] = int(queue_max_size) if queue_max_size else 10
     settings['status_update_rate'] = status_update_rate
     settings['max_file_size'] = int(max_file_size) if max_file_size else 1000
+
+    progress(0.4, desc="Updating authentication settings")
     if gradio_auth:
         username, password = gradio_auth.split(':')
         settings['auth'] = {"username": username, "password": password}
+
+    progress(0.6, desc="Updating server settings")
     settings['server_name'] = server_name
     settings['server_port'] = int(server_port) if server_port else 7860
     settings['hf_token'] = hf_token
     settings['share_server_address'] = share_server_address
+
+    progress(0.8, desc="Updating theme settings")
     settings['theme'] = theme
     settings['custom_theme']['enabled'] = enable_custom_theme
     settings['custom_theme']['primary_hue'] = primary_hue
@@ -8780,7 +8988,10 @@ def settings_interface(language, share_value, debug_value, monitoring_value, aut
     settings['custom_theme']['font'] = font
     settings['custom_theme']['font_mono'] = font_mono
 
+    progress(0.9, desc="Saving settings")
     save_settings(settings)
+
+    progress(1.0, desc="Settings update complete")
 
     message = "Settings updated successfully!"
     message += f"\nLanguage set to {settings['language']}"
@@ -8803,33 +9014,42 @@ def settings_interface(language, share_value, debug_value, monitoring_value, aut
     return message
 
 
-def get_system_info():
+def get_system_info(progress=gr.Progress()):
+    progress(0.1, desc="Initializing system info retrieval")
+
+    progress(0.2, desc="Getting GPU information")
     gpu = GPUtil.getGPUs()[0]
     gpu_total_memory = f"{gpu.memoryTotal} MB"
     gpu_used_memory = f"{gpu.memoryUsed} MB"
     gpu_free_memory = f"{gpu.memoryFree} MB"
 
+    progress(0.3, desc="Getting GPU temperature")
     nvmlInit()
     handle = nvmlDeviceGetHandleByIndex(0)
     gpu_temp = nvmlDeviceGetTemperature(handle, NVML_TEMPERATURE_GPU)
 
+    progress(0.4, desc="Getting CPU temperature")
     cpu_temp = (WinTmp.CPU_Temp())
 
+    progress(0.5, desc="Getting RAM information")
     ram = psutil.virtual_memory()
     ram_total = f"{ram.total // (1024 ** 3)} GB"
     ram_used = f"{ram.used // (1024 ** 3)} GB"
     ram_free = f"{ram.available // (1024 ** 3)} GB"
 
+    progress(0.6, desc="Getting disk information")
     disk = psutil.disk_usage('/')
     disk_total = f"{disk.total // (1024 ** 3)} GB"
     disk_free = f"{disk.free // (1024 ** 3)} GB"
 
+    progress(0.8, desc="Calculating application folder size")
     app_folder = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
     app_size = sum(os.path.getsize(os.path.join(dirpath, filename))
                    for dirpath, dirnames, filenames in os.walk(app_folder)
                    for filename in filenames)
     app_size = f"{app_size // (1024 ** 3):.2f} GB"
 
+    progress(1.0, desc="System info retrieval complete")
     return (gpu_total_memory, gpu_used_memory, gpu_free_memory, gpu_temp, cpu_temp,
             ram_total, ram_used, ram_free, disk_total, disk_free, app_size)
 
