@@ -5154,8 +5154,11 @@ def generate_image_sd3_inpaint(prompt, negative_prompt, init_image, mask_image, 
         flush()
 
 
-def generate_image_cascade(prompt, negative_prompt, seed, width, height, prior_steps, prior_guidance_scale,
-                           decoder_steps, decoder_guidance_scale, num_images_per_prompt, output_format):
+def generate_image_cascade(prompt, negative_prompt, seed, stop_button, width, height, prior_steps, prior_guidance_scale,
+                           decoder_steps, decoder_guidance_scale, num_images_per_prompt, output_format, progress=gr.Progress()):
+    global stop_signal
+    stop_signal = False
+    stop_idx = None
 
     stable_cascade_model_path = os.path.join("inputs", "image", "sd_models", "cascade")
 
@@ -5183,6 +5186,24 @@ def generate_image_cascade(prompt, negative_prompt, seed, width, height, prior_s
         seed = int(seed)
     generator = torch.Generator(device).manual_seed(seed)
 
+    def combined_callback_prior(i, t, callback_kwargs):
+        nonlocal stop_idx
+        if stop_signal and stop_idx is None:
+            stop_idx = i
+        if i == stop_idx:
+            prior._interrupt = True
+        progress((i + 1) / prior_steps, f"Step {i + 1}/{prior_steps}")
+        return callback_kwargs
+
+    def combined_callback_decoder(i, t, callback_kwargs):
+        nonlocal stop_idx
+        if stop_signal and stop_idx is None:
+            stop_idx = i
+        if i == stop_idx:
+            decoder._interrupt = True
+        progress((i + 1) / decoder_steps, f"Step {i + 1}/{decoder_steps}")
+        return callback_kwargs
+
     try:
         prior.enable_model_cpu_offload()
 
@@ -5195,6 +5216,7 @@ def generate_image_cascade(prompt, negative_prompt, seed, width, height, prior_s
             num_images_per_prompt=num_images_per_prompt,
             num_inference_steps=prior_steps,
             generator=generator,
+            callback_on_step_end=combined_callback_prior
         )
 
         decoder.enable_model_cpu_offload()
@@ -5205,7 +5227,9 @@ def generate_image_cascade(prompt, negative_prompt, seed, width, height, prior_s
             negative_prompt=negative_prompt,
             guidance_scale=decoder_guidance_scale,
             output_type="pil",
-            num_inference_steps=decoder_steps
+            num_inference_steps=decoder_steps,
+            generator=generator,
+            callback_on_step_end = combined_callback_decoder
         ).images
 
         image_paths = []
@@ -5446,7 +5470,10 @@ def generate_image_ip_adapter_faceid(prompt, negative_prompt, face_image, s_scal
         flush()
 
 
-def generate_riffusion_text2image(prompt, negative_prompt, seed, num_inference_steps, guidance_scale, height, width, output_format):
+def generate_riffusion_text2image(prompt, negative_prompt, seed, stop_button, num_inference_steps, guidance_scale, height, width, output_format, progress=gr.Progress()):
+    global stop_signal
+    stop_signal = False
+    stop_idx = None
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -5468,6 +5495,15 @@ def generate_riffusion_text2image(prompt, negative_prompt, seed, num_inference_s
         pipe = StableDiffusionPipeline().StableDiffusionPipeline.from_pretrained(riffusion_model_path, torch_dtype=torch.float16)
         pipe = pipe.to(device)
 
+        def combined_callback(i, t, callback_kwargs):
+            nonlocal stop_idx
+            if stop_signal and stop_idx is None:
+                stop_idx = i
+            if i == stop_idx:
+                pipe._interrupt = True
+            progress((i + 1) / num_inference_steps, f"Step {i + 1}/{num_inference_steps}")
+            return callback_kwargs
+
         image = pipe(
             prompt=prompt,
             negative_prompt=negative_prompt,
@@ -5475,7 +5511,8 @@ def generate_riffusion_text2image(prompt, negative_prompt, seed, num_inference_s
             guidance_scale=guidance_scale,
             height=height,
             width=width,
-            generator=generator
+            generator=generator,
+            callback_on_step_end=combined_callback
         ).images[0]
 
         today = datetime.now().date()
@@ -5495,7 +5532,8 @@ def generate_riffusion_text2image(prompt, negative_prompt, seed, num_inference_s
         flush()
 
 
-def generate_riffusion_image2audio(image_path, output_format):
+def generate_riffusion_image2audio(image_path, output_format, progress=gr.Progress()):
+    progress(0.1, desc="Initializing riffusion")
     if not image_path:
         gr.Info("Please upload an image file!")
 
@@ -5506,8 +5544,13 @@ def generate_riffusion_image2audio(image_path, output_format):
         audio_filename = f"riffusion_audio_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
         audio_path = os.path.join(audio_dir, audio_filename)
 
+        progress(0.4, desc="Preparing riffusion command")
         command = f"python -m ThirdPartyRepository/riffusion.cli image-to-audio {image_path} {audio_path}"
+
+        progress(0.7, desc="Running riffusion image2audio")
         subprocess.run(command, shell=True, check=True)
+
+        progress(1.0, desc="Riffusion image2audio complete")
 
         return audio_path, None
 
@@ -5518,7 +5561,8 @@ def generate_riffusion_image2audio(image_path, output_format):
         flush()
 
 
-def generate_riffusion_audio2image(audio_path, output_format):
+def generate_riffusion_audio2image(audio_path, output_format, progress=gr.Progress()):
+    progress(0.1, desc="Initializing riffusion")
     if not audio_path:
         gr.Info("Please upload an audio file!")
 
@@ -5529,8 +5573,13 @@ def generate_riffusion_audio2image(audio_path, output_format):
         image_filename = f"riffusion_image_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
         image_path = os.path.join(image_dir, image_filename)
 
+        progress(0.4, desc="Preparing riffusion command")
         command = f"python -m ThirdPartyRepository/riffusion.cli audio-to-image {audio_path} {image_path}"
+
+        progress(0.7, desc="Running riffusion audio2image")
         subprocess.run(command, shell=True, check=True)
+
+        progress(1.0, desc="Riffusion audio2image complete")
 
         return image_path, None
 
@@ -10554,7 +10603,8 @@ cascade_interface = gr.Interface(
     inputs=[
         gr.Textbox(label=_("Enter your prompt", lang)),
         gr.Textbox(label=_("Enter your negative prompt", lang), value=""),
-        gr.Textbox(label=_("Seed (optional)", lang), value="")
+        gr.Textbox(label=_("Seed (optional)", lang), value=""),
+        gr.Button(value=_("Stop generation", lang), interactive=True, variant="stop")
     ],
     additional_inputs=[
         gr.Slider(minimum=256, maximum=4096, value=1024, step=64, label=_("Width", lang)),
@@ -10650,7 +10700,8 @@ riffusion_text2image_interface = gr.Interface(
     inputs=[
         gr.Textbox(label=_("Enter your prompt", lang)),
         gr.Textbox(label=_("Enter your negative prompt", lang), value=""),
-        gr.Textbox(label=_("Seed (optional)", lang), value="")
+        gr.Textbox(label=_("Seed (optional)", lang), value=""),
+        gr.Button(value=_("Stop generation", lang), interactive=True, variant="stop")
     ],
     additional_inputs=[
         gr.Slider(minimum=1, maximum=100, value=50, step=1, label=_("Steps", lang)),
@@ -12259,6 +12310,8 @@ with gr.TabbedInterface(
     img2img_interface.input_components[12].click(stop_generation, [], [], queue=False)
     controlnet_interface.input_components[8].click(stop_generation, [], [], queue=False)
     inpaint_interface.input_components[10].click(stop_generation, [], [], queue=False)
+    cascade_interface.input_components[3].click(stop_generation, [], [], queue=False)
+    riffusion_text2image_interface.input_components[3].click(stop_generation, [], [], queue=False)
     sd3_txt2img_interface.input_components[6].click(stop_generation, [], [], queue=False)
     sd3_img2img_interface.input_components[8].click(stop_generation, [], [], queue=False)
     sd3_controlnet_interface.input_components[5].click(stop_generation, [], [], queue=False)
