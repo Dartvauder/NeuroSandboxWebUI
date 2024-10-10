@@ -5154,8 +5154,11 @@ def generate_image_sd3_inpaint(prompt, negative_prompt, init_image, mask_image, 
         flush()
 
 
-def generate_image_cascade(prompt, negative_prompt, seed, width, height, prior_steps, prior_guidance_scale,
-                           decoder_steps, decoder_guidance_scale, num_images_per_prompt, output_format):
+def generate_image_cascade(prompt, negative_prompt, seed, stop_button, width, height, prior_steps, prior_guidance_scale,
+                           decoder_steps, decoder_guidance_scale, num_images_per_prompt, output_format, progress=gr.Progress()):
+    global stop_signal
+    stop_signal = False
+    stop_idx = None
 
     stable_cascade_model_path = os.path.join("inputs", "image", "sd_models", "cascade")
 
@@ -5183,6 +5186,24 @@ def generate_image_cascade(prompt, negative_prompt, seed, width, height, prior_s
         seed = int(seed)
     generator = torch.Generator(device).manual_seed(seed)
 
+    def combined_callback_prior(i, t, callback_kwargs):
+        nonlocal stop_idx
+        if stop_signal and stop_idx is None:
+            stop_idx = i
+        if i == stop_idx:
+            prior._interrupt = True
+        progress((i + 1) / prior_steps, f"Step {i + 1}/{prior_steps}")
+        return callback_kwargs
+
+    def combined_callback_decoder(i, t, callback_kwargs):
+        nonlocal stop_idx
+        if stop_signal and stop_idx is None:
+            stop_idx = i
+        if i == stop_idx:
+            decoder._interrupt = True
+        progress((i + 1) / decoder_steps, f"Step {i + 1}/{decoder_steps}")
+        return callback_kwargs
+
     try:
         prior.enable_model_cpu_offload()
 
@@ -5195,6 +5216,7 @@ def generate_image_cascade(prompt, negative_prompt, seed, width, height, prior_s
             num_images_per_prompt=num_images_per_prompt,
             num_inference_steps=prior_steps,
             generator=generator,
+            callback_on_step_end=combined_callback_prior
         )
 
         decoder.enable_model_cpu_offload()
@@ -5205,7 +5227,9 @@ def generate_image_cascade(prompt, negative_prompt, seed, width, height, prior_s
             negative_prompt=negative_prompt,
             guidance_scale=decoder_guidance_scale,
             output_type="pil",
-            num_inference_steps=decoder_steps
+            num_inference_steps=decoder_steps,
+            generator=generator,
+            callback_on_step_end = combined_callback_decoder
         ).images
 
         image_paths = []
@@ -5446,7 +5470,10 @@ def generate_image_ip_adapter_faceid(prompt, negative_prompt, face_image, s_scal
         flush()
 
 
-def generate_riffusion_text2image(prompt, negative_prompt, seed, num_inference_steps, guidance_scale, height, width, output_format):
+def generate_riffusion_text2image(prompt, negative_prompt, seed, stop_button, num_inference_steps, guidance_scale, height, width, output_format, progress=gr.Progress()):
+    global stop_signal
+    stop_signal = False
+    stop_idx = None
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -5468,6 +5495,15 @@ def generate_riffusion_text2image(prompt, negative_prompt, seed, num_inference_s
         pipe = StableDiffusionPipeline().StableDiffusionPipeline.from_pretrained(riffusion_model_path, torch_dtype=torch.float16)
         pipe = pipe.to(device)
 
+        def combined_callback(i, t, callback_kwargs):
+            nonlocal stop_idx
+            if stop_signal and stop_idx is None:
+                stop_idx = i
+            if i == stop_idx:
+                pipe._interrupt = True
+            progress((i + 1) / num_inference_steps, f"Step {i + 1}/{num_inference_steps}")
+            return callback_kwargs
+
         image = pipe(
             prompt=prompt,
             negative_prompt=negative_prompt,
@@ -5475,7 +5511,8 @@ def generate_riffusion_text2image(prompt, negative_prompt, seed, num_inference_s
             guidance_scale=guidance_scale,
             height=height,
             width=width,
-            generator=generator
+            generator=generator,
+            callback_on_step_end=combined_callback
         ).images[0]
 
         today = datetime.now().date()
@@ -5495,7 +5532,8 @@ def generate_riffusion_text2image(prompt, negative_prompt, seed, num_inference_s
         flush()
 
 
-def generate_riffusion_image2audio(image_path, output_format):
+def generate_riffusion_image2audio(image_path, output_format, progress=gr.Progress()):
+    progress(0.1, desc="Initializing riffusion")
     if not image_path:
         gr.Info("Please upload an image file!")
 
@@ -5506,8 +5544,13 @@ def generate_riffusion_image2audio(image_path, output_format):
         audio_filename = f"riffusion_audio_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
         audio_path = os.path.join(audio_dir, audio_filename)
 
+        progress(0.4, desc="Preparing riffusion command")
         command = f"python -m ThirdPartyRepository/riffusion.cli image-to-audio {image_path} {audio_path}"
+
+        progress(0.7, desc="Running riffusion image2audio")
         subprocess.run(command, shell=True, check=True)
+
+        progress(1.0, desc="Riffusion image2audio complete")
 
         return audio_path, None
 
@@ -5518,7 +5561,8 @@ def generate_riffusion_image2audio(image_path, output_format):
         flush()
 
 
-def generate_riffusion_audio2image(audio_path, output_format):
+def generate_riffusion_audio2image(audio_path, output_format, progress=gr.Progress()):
+    progress(0.1, desc="Initializing riffusion")
     if not audio_path:
         gr.Info("Please upload an audio file!")
 
@@ -5529,8 +5573,13 @@ def generate_riffusion_audio2image(audio_path, output_format):
         image_filename = f"riffusion_image_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
         image_path = os.path.join(image_dir, image_filename)
 
+        progress(0.4, desc="Preparing riffusion command")
         command = f"python -m ThirdPartyRepository/riffusion.cli audio-to-image {audio_path} {image_path}"
+
+        progress(0.7, desc="Running riffusion audio2image")
         subprocess.run(command, shell=True, check=True)
+
+        progress(1.0, desc="Riffusion audio2image complete")
 
         return image_path, None
 
@@ -5541,7 +5590,10 @@ def generate_riffusion_audio2image(audio_path, output_format):
         flush()
 
 
-def generate_image_kandinsky_txt2img(prompt, negative_prompt, version, seed, num_inference_steps, guidance_scale, height, width, output_format):
+def generate_image_kandinsky_txt2img(prompt, negative_prompt, version, seed, stop_button, num_inference_steps, guidance_scale, height, width, output_format, progress=gr.Progress()):
+    global stop_signal
+    stop_signal = False
+    stop_idx = None
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -5584,6 +5636,15 @@ def generate_image_kandinsky_txt2img(prompt, negative_prompt, version, seed, num
             pipe = KandinskyPipeline().KandinskyPipeline.from_pretrained(os.path.join(kandinsky_model_path, "2-1"))
             pipe.to(device)
 
+            def combined_callback_2_1(i, t, callback_kwargs):
+                nonlocal stop_idx
+                if stop_signal and stop_idx is None:
+                    stop_idx = i
+                if i == stop_idx:
+                    pipe._interrupt = True
+                progress((i + 1) / num_inference_steps, f"Step {i + 1}/{num_inference_steps}")
+                return callback_kwargs
+
             image = pipe(
                 prompt,
                 negative_prompt=negative_prompt,
@@ -5594,6 +5655,8 @@ def generate_image_kandinsky_txt2img(prompt, negative_prompt, version, seed, num
                 num_inference_steps=num_inference_steps,
                 guidance_scale=guidance_scale,
                 generator=generator,
+                callback=combined_callback_2_1,
+                callback_steps=1
             ).images[0]
 
         elif version == "2.2":
@@ -5606,6 +5669,15 @@ def generate_image_kandinsky_txt2img(prompt, negative_prompt, version, seed, num
             pipe = KandinskyV22Pipeline().KandinskyV22Pipeline.from_pretrained(os.path.join(kandinsky_model_path, "2-2-decoder"))
             pipe.to(device)
 
+            def combined_callback_2_2(i, t, callback_kwargs):
+                nonlocal stop_idx
+                if stop_signal and stop_idx is None:
+                    stop_idx = i
+                if i == stop_idx:
+                    pipe._interrupt = True
+                progress((i + 1) / num_inference_steps, f"Step {i + 1}/{num_inference_steps}")
+                return callback_kwargs
+
             image = pipe(
                 prompt=prompt,
                 negative_prompt=negative_prompt,
@@ -5616,6 +5688,7 @@ def generate_image_kandinsky_txt2img(prompt, negative_prompt, version, seed, num
                 num_inference_steps=num_inference_steps,
                 guidance_scale=guidance_scale,
                 generator=generator,
+                callback_on_step_end=combined_callback_2_2
             ).images[0]
 
         elif version == "3":
@@ -5626,6 +5699,15 @@ def generate_image_kandinsky_txt2img(prompt, negative_prompt, version, seed, num
             pipe.to(device)
             pipe.enable_model_cpu_offload()
 
+            def combined_callback_3_0(i, t, callback_kwargs):
+                nonlocal stop_idx
+                if stop_signal and stop_idx is None:
+                    stop_idx = i
+                if i == stop_idx:
+                    pipe._interrupt = True
+                progress((i + 1) / num_inference_steps, f"Step {i + 1}/{num_inference_steps}")
+                return callback_kwargs
+
             image = pipe(
                 prompt,
                 negative_prompt=negative_prompt,
@@ -5634,6 +5716,8 @@ def generate_image_kandinsky_txt2img(prompt, negative_prompt, version, seed, num
                 width=width,
                 guidance_scale=guidance_scale,
                 generator=generator,
+                callback=combined_callback_3_0,
+                callback_steps=1
             ).images[0]
 
         today = datetime.now().date()
@@ -5669,7 +5753,10 @@ def generate_image_kandinsky_txt2img(prompt, negative_prompt, version, seed, num
         flush()
 
 
-def generate_image_kandinsky_img2img(prompt, negative_prompt, init_image, version, seed, num_inference_steps, guidance_scale, strength, height, width, output_format):
+def generate_image_kandinsky_img2img(prompt, negative_prompt, init_image, version, seed, stop_button, num_inference_steps, guidance_scale, strength, height, width, output_format, progress=gr.Progress()):
+    global stop_signal
+    stop_signal = False
+    stop_idx = None
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -5717,6 +5804,15 @@ def generate_image_kandinsky_img2img(prompt, negative_prompt, init_image, versio
             init_image = Image.open(init_image).convert("RGB")
             init_image = init_image.resize((width, height))
 
+            def combined_callback_2_1(i, t, callback_kwargs):
+                nonlocal stop_idx
+                if stop_signal and stop_idx is None:
+                    stop_idx = i
+                if i == stop_idx:
+                    pipe._interrupt = True
+                progress((i + 1) / num_inference_steps, f"Step {i + 1}/{num_inference_steps}")
+                return callback_kwargs
+
             image = pipe(
                 prompt,
                 image=init_image,
@@ -5728,6 +5824,8 @@ def generate_image_kandinsky_img2img(prompt, negative_prompt, init_image, versio
                 guidance_scale=guidance_scale,
                 strength=strength,
                 generator=generator,
+                callback=combined_callback_2_1,
+                callback_steps=1
             ).images[0]
 
         elif version == "2.2":
@@ -5740,6 +5838,15 @@ def generate_image_kandinsky_img2img(prompt, negative_prompt, init_image, versio
             init_image = Image.open(init_image).convert("RGB")
             init_image = init_image.resize((width, height))
 
+            def combined_callback_2_2(i, t, callback_kwargs):
+                nonlocal stop_idx
+                if stop_signal and stop_idx is None:
+                    stop_idx = i
+                if i == stop_idx:
+                    pipe._interrupt = True
+                progress((i + 1) / num_inference_steps, f"Step {i + 1}/{num_inference_steps}")
+                return callback_kwargs
+
             image = pipe(
                 prompt=prompt,
                 negative_prompt=negative_prompt,
@@ -5748,6 +5855,8 @@ def generate_image_kandinsky_img2img(prompt, negative_prompt, init_image, versio
                 guidance_scale=guidance_scale,
                 strength=strength,
                 generator=generator,
+                callback=combined_callback_2_2,
+                callback_steps=1
             ).images[0]
 
         elif version == "3":
@@ -5760,6 +5869,15 @@ def generate_image_kandinsky_img2img(prompt, negative_prompt, init_image, versio
             init_image = Image.open(init_image).convert("RGB")
             init_image = init_image.resize((width, height))
 
+            def combined_callback_3_0(i, t, callback_kwargs):
+                nonlocal stop_idx
+                if stop_signal and stop_idx is None:
+                    stop_idx = i
+                if i == stop_idx:
+                    pipe._interrupt = True
+                progress((i + 1) / num_inference_steps, f"Step {i + 1}/{num_inference_steps}")
+                return callback_kwargs
+
             image = pipe(
                 prompt,
                 negative_prompt=negative_prompt,
@@ -5768,6 +5886,8 @@ def generate_image_kandinsky_img2img(prompt, negative_prompt, init_image, versio
                 guidance_scale=guidance_scale,
                 strength=strength,
                 generator=generator,
+                callback=combined_callback_3_0,
+                callback_steps=1
             ).images[0]
 
         today = datetime.now().date()
@@ -5791,7 +5911,10 @@ def generate_image_kandinsky_img2img(prompt, negative_prompt, init_image, versio
         flush()
 
 
-def generate_image_kandinsky_inpaint(prompt, negative_prompt, init_image, mask_image, version, num_inference_steps, guidance_scale, strength, height, width, output_format):
+def generate_image_kandinsky_inpaint(prompt, negative_prompt, init_image, mask_image, version, stop_button, num_inference_steps, guidance_scale, strength, height, width, output_format, progress=gr.Progress()):
+    global stop_signal
+    stop_signal = False
+    stop_idx = None
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -5834,6 +5957,15 @@ def generate_image_kandinsky_inpaint(prompt, negative_prompt, init_image, mask_i
         mask_image = Image.open(mask_image).convert("L")
         mask_image = mask_image.resize((width, height))
 
+        def combined_callback_2_1_and_2_2(i, t, callback_kwargs):
+            nonlocal stop_idx
+            if stop_signal and stop_idx is None:
+                stop_idx = i
+            if i == stop_idx:
+                pipe._interrupt = True
+            progress((i + 1) / num_inference_steps, f"Step {i + 1}/{num_inference_steps}")
+            return callback_kwargs
+
         image = pipe(
             prompt=prompt,
             negative_prompt=negative_prompt,
@@ -5842,6 +5974,8 @@ def generate_image_kandinsky_inpaint(prompt, negative_prompt, init_image, mask_i
             num_inference_steps=num_inference_steps,
             guidance_scale=guidance_scale,
             strength=strength,
+            callback=combined_callback_2_1_and_2_2,
+            callback_steps=1
         ).images[0]
 
         today = datetime.now().date()
@@ -6318,7 +6452,10 @@ def generate_image_flux_controlnet(prompt, init_image, base_model_name, seed, st
         flush()
 
 
-def generate_image_hunyuandit_txt2img(prompt, negative_prompt, seed, num_inference_steps, guidance_scale, height, width, output_format):
+def generate_image_hunyuandit_txt2img(prompt, negative_prompt, seed, stop_button, num_inference_steps, guidance_scale, height, width, output_format, progress=gr.Progress()):
+    global stop_signal
+    stop_signal = False
+    stop_idx = None
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -6341,6 +6478,15 @@ def generate_image_hunyuandit_txt2img(prompt, negative_prompt, seed, num_inferen
         pipe.to(device)
         pipe.transformer.enable_forward_chunking(chunk_size=1, dim=1)
 
+        def combined_callback(i, t, callback_kwargs):
+            nonlocal stop_idx
+            if stop_signal and stop_idx is None:
+                stop_idx = i
+            if i == stop_idx:
+                pipe._interrupt = True
+            progress((i + 1) / num_inference_steps, f"Step {i + 1}/{num_inference_steps}")
+            return callback_kwargs
+
         image = pipe(
             prompt=prompt,
             negative_prompt=negative_prompt,
@@ -6348,7 +6494,8 @@ def generate_image_hunyuandit_txt2img(prompt, negative_prompt, seed, num_inferen
             guidance_scale=guidance_scale,
             height=height,
             width=width,
-            generator=generator
+            generator=generator,
+            callback_on_step_end=combined_callback
         ).images[0]
 
         today = datetime.now().date()
@@ -6380,7 +6527,10 @@ def generate_image_hunyuandit_txt2img(prompt, negative_prompt, seed, num_inferen
         flush()
 
 
-def generate_image_hunyuandit_controlnet(prompt, negative_prompt, init_image, controlnet_model, seed, num_inference_steps, guidance_scale, height, width, output_format):
+def generate_image_hunyuandit_controlnet(prompt, negative_prompt, init_image, controlnet_model, seed, stop_button, num_inference_steps, guidance_scale, height, width, output_format, progress=gr.Progress()):
+    global stop_signal
+    stop_signal = False
+    stop_idx = None
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -6416,6 +6566,15 @@ def generate_image_hunyuandit_controlnet(prompt, negative_prompt, init_image, co
         init_image = Image.open(init_image).convert("RGB")
         init_image = init_image.resize((width, height))
 
+        def combined_callback(i, t, callback_kwargs):
+            nonlocal stop_idx
+            if stop_signal and stop_idx is None:
+                stop_idx = i
+            if i == stop_idx:
+                pipe._interrupt = True
+            progress((i + 1) / num_inference_steps, f"Step {i + 1}/{num_inference_steps}")
+            return callback_kwargs
+
         image = pipe(
             prompt=prompt,
             negative_prompt=negative_prompt,
@@ -6424,7 +6583,8 @@ def generate_image_hunyuandit_controlnet(prompt, negative_prompt, init_image, co
             guidance_scale=guidance_scale,
             control_image=init_image,
             num_inference_steps=num_inference_steps,
-            generator=generator
+            generator=generator,
+            callback_on_step_end=combined_callback
         ).images[0]
 
         today = datetime.now().date()
@@ -6838,7 +6998,10 @@ def generate_image_auraflow(prompt, negative_prompt, seed, lora_model_names, lor
         flush()
 
 
-def generate_image_wurstchen(prompt, negative_prompt, seed, width, height, prior_steps, prior_guidance_scale, decoder_steps, decoder_guidance_scale, output_format):
+def generate_image_wurstchen(prompt, negative_prompt, seed, stop_button, width, height, prior_steps, prior_guidance_scale, decoder_steps, decoder_guidance_scale, output_format, progress=gr.Progress()):
+    global stop_signal
+    stop_signal = False
+    stop_idx = None
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -6873,6 +7036,24 @@ def generate_image_wurstchen(prompt, negative_prompt, seed, width, height, prior
         prior_pipeline.prior = torch.compile(prior_pipeline.prior, mode="reduce-overhead", fullgraph=True)
         decoder_pipeline.decoder = torch.compile(decoder_pipeline.decoder, mode="reduce-overhead", fullgraph=True)
 
+        def combined_callback_prior(i, t, callback_kwargs):
+            nonlocal stop_idx
+            if stop_signal and stop_idx is None:
+                stop_idx = i
+            if i == stop_idx:
+                prior_pipeline._interrupt = True
+            progress((i + 1) / prior_steps, f"Step {i + 1}/{prior_steps}")
+            return callback_kwargs
+
+        def combined_callback_decoder(i, t, callback_kwargs):
+            nonlocal stop_idx
+            if stop_signal and stop_idx is None:
+                stop_idx = i
+            if i == stop_idx:
+                decoder_pipeline._interrupt = True
+            progress((i + 1) / decoder_steps, f"Step {i + 1}/{decoder_steps}")
+            return callback_kwargs
+
         prior_output = prior_pipeline(
             prompt=prompt,
             height=height,
@@ -6881,7 +7062,8 @@ def generate_image_wurstchen(prompt, negative_prompt, seed, width, height, prior
             negative_prompt=negative_prompt,
             guidance_scale=prior_guidance_scale,
             num_inference_steps=prior_steps,
-            generator=generator
+            generator=generator,
+            callback_on_step_end=combined_callback_prior
         )
 
         decoder_output = decoder_pipeline(
@@ -6891,6 +7073,8 @@ def generate_image_wurstchen(prompt, negative_prompt, seed, width, height, prior
             guidance_scale=decoder_guidance_scale,
             num_inference_steps=decoder_steps,
             output_type="pil",
+            generator=generator,
+            callback_on_step_end=combined_callback_decoder
         ).images[0]
 
         today = datetime.now().date()
@@ -6925,7 +7109,10 @@ def generate_image_wurstchen(prompt, negative_prompt, seed, width, height, prior
         flush()
 
 
-def generate_image_deepfloyd_txt2img(prompt, negative_prompt, seed, num_inference_steps, guidance_scale, width, height, output_format):
+def generate_image_deepfloyd_txt2img(prompt, negative_prompt, seed, stop_button, num_inference_steps, guidance_scale, width, height, output_format, progress=gr.Progress()):
+    global stop_signal
+    stop_signal = False
+    stop_idx = None
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -6969,6 +7156,15 @@ def generate_image_deepfloyd_txt2img(prompt, negative_prompt, seed, num_inferenc
         pipe_i.text_encoder = torch.compile(pipe_i.text_encoder, mode="reduce-overhead", fullgraph=True)
         pipe_i.unet = torch.compile(pipe_i.unet, mode="reduce-overhead", fullgraph=True)
 
+        def combined_callback_pipe_i(i, t, callback_kwargs):
+            nonlocal stop_idx
+            if stop_signal and stop_idx is None:
+                stop_idx = i
+            if i == stop_idx:
+                pipe_i._interrupt = True
+            progress((i + 1) / num_inference_steps, f"Step {i + 1}/{num_inference_steps}")
+            return callback_kwargs
+
         image = pipe_i(
             prompt=prompt,
             negative_prompt=negative_prompt,
@@ -6978,7 +7174,9 @@ def generate_image_deepfloyd_txt2img(prompt, negative_prompt, seed, num_inferenc
             height=height,
             output_type="pt",
             text_encoder=text_encoder,
-            generator=generator
+            generator=generator,
+            callback=combined_callback_pipe_i,
+            callback_steps=1
         ).images
 
         pipe_ii = IFSuperResolutionPipeline().IFSuperResolutionPipeline.from_pretrained(
@@ -6988,13 +7186,25 @@ def generate_image_deepfloyd_txt2img(prompt, negative_prompt, seed, num_inferenc
         pipe_ii.enable_model_cpu_offload()
         pipe_ii.enable_sequential_cpu_offload()
 
+        def combined_callback_pipe_ii(i, t, callback_kwargs):
+            nonlocal stop_idx
+            if stop_signal and stop_idx is None:
+                stop_idx = i
+            if i == stop_idx:
+                pipe_ii._interrupt = True
+            progress((i + 1) / num_inference_steps, f"Step {i + 1}/{num_inference_steps}")
+            return callback_kwargs
+
         image = pipe_ii(
             image=image,
             prompt=prompt,
             negative_prompt=negative_prompt,
             num_inference_steps=num_inference_steps,
             guidance_scale=guidance_scale,
-            output_type="pt"
+            output_type="pt",
+            generator=generator,
+            callback=combined_callback_pipe_ii,
+            callback_steps=1
         ).images
 
         safety_modules = {
@@ -7060,7 +7270,10 @@ def generate_image_deepfloyd_txt2img(prompt, negative_prompt, seed, num_inferenc
         flush()
 
 
-def generate_image_deepfloyd_img2img(prompt, negative_prompt, init_image, seed, num_inference_steps, guidance_scale, width, height, output_format):
+def generate_image_deepfloyd_img2img(prompt, negative_prompt, init_image, seed, stop_button, num_inference_steps, guidance_scale, width, height, output_format, progress=gr.Progress()):
+    global stop_signal
+    stop_signal = False
+    stop_idx = None
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -7130,6 +7343,24 @@ def generate_image_deepfloyd_img2img(prompt, negative_prompt, init_image, seed, 
         original_image = Image.open(init_image).convert("RGB")
         original_image = original_image.resize((width, height))
 
+        def combined_callback_stage_1(i, t, callback_kwargs):
+            nonlocal stop_idx
+            if stop_signal and stop_idx is None:
+                stop_idx = i
+            if i == stop_idx:
+                stage_1._interrupt = True
+            progress((i + 1) / num_inference_steps, f"Step {i + 1}/{num_inference_steps}")
+            return callback_kwargs
+
+        def combined_callback_stage_2(i, t, callback_kwargs):
+            nonlocal stop_idx
+            if stop_signal and stop_idx is None:
+                stop_idx = i
+            if i == stop_idx:
+                stage_2._interrupt = True
+            progress((i + 1) / num_inference_steps, f"Step {i + 1}/{num_inference_steps}")
+            return callback_kwargs
+
         stage_1_output = stage_1(
             image=original_image,
             prompt=prompt,
@@ -7138,7 +7369,9 @@ def generate_image_deepfloyd_img2img(prompt, negative_prompt, init_image, seed, 
             guidance_scale=guidance_scale,
             output_type="pt",
             text_encoder=text_encoder,
-            generator=generator
+            generator=generator,
+            callback=combined_callback_stage_1,
+            callback_steps=1
         ).images
 
         stage_2_output = stage_2(
@@ -7149,6 +7382,9 @@ def generate_image_deepfloyd_img2img(prompt, negative_prompt, init_image, seed, 
             num_inference_steps=num_inference_steps,
             guidance_scale=guidance_scale,
             output_type="pt",
+            generator=generator,
+            callback=combined_callback_stage_2,
+            callback_steps=1
         ).images
 
         stage_3_output = stage_3(
@@ -7191,9 +7427,18 @@ def generate_image_deepfloyd_img2img(prompt, negative_prompt, init_image, seed, 
         flush()
 
 
-def generate_image_deepfloyd_inpaint(prompt, negative_prompt, init_image, mask_image, num_inference_steps, guidance_scale, output_format):
+def generate_image_deepfloyd_inpaint(prompt, negative_prompt, init_image, mask_image, seed, stop_button, num_inference_steps, guidance_scale, output_format, progress=gr.Progress()):
+    global stop_signal
+    stop_signal = False
+    stop_idx = None
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
+
+    if seed == "" or seed is None:
+        seed = random.randint(0, 2 ** 32 - 1)
+    else:
+        seed = int(seed)
+    generator = torch.Generator(device).manual_seed(seed)
 
     if not init_image or not mask_image:
         gr.Info("Please upload an initial image and provide a mask image!")
@@ -7255,6 +7500,24 @@ def generate_image_deepfloyd_inpaint(prompt, negative_prompt, init_image, mask_i
         original_image = Image.open(init_image).convert("RGB")
         mask_image = Image.open(mask_image).convert("RGB")
 
+        def combined_callback_stage_1(i, t, callback_kwargs):
+            nonlocal stop_idx
+            if stop_signal and stop_idx is None:
+                stop_idx = i
+            if i == stop_idx:
+                stage_1._interrupt = True
+            progress((i + 1) / num_inference_steps, f"Step {i + 1}/{num_inference_steps}")
+            return callback_kwargs
+
+        def combined_callback_stage_2(i, t, callback_kwargs):
+            nonlocal stop_idx
+            if stop_signal and stop_idx is None:
+                stop_idx = i
+            if i == stop_idx:
+                stage_2._interrupt = True
+            progress((i + 1) / num_inference_steps, f"Step {i + 1}/{num_inference_steps}")
+            return callback_kwargs
+
         stage_1_output = stage_1(
             image=original_image,
             mask_image=mask_image,
@@ -7263,7 +7526,10 @@ def generate_image_deepfloyd_inpaint(prompt, negative_prompt, init_image, mask_i
             num_inference_steps=num_inference_steps,
             guidance_scale=guidance_scale,
             output_type="pt",
-            text_encoder=text_encoder
+            text_encoder=text_encoder,
+            generator=generator,
+            callback=combined_callback_stage_1,
+            callback_steps=1
         ).images
 
         stage_2_output = stage_2(
@@ -7275,6 +7541,9 @@ def generate_image_deepfloyd_inpaint(prompt, negative_prompt, init_image, mask_i
             num_inference_steps=num_inference_steps,
             guidance_scale=guidance_scale,
             output_type="pt",
+            generator=generator,
+            callback=combined_callback_stage_2,
+            callback_steps=1
         ).images
 
         stage_3_output = stage_3(
@@ -7317,8 +7586,11 @@ def generate_image_deepfloyd_inpaint(prompt, negative_prompt, init_image, mask_i
         flush()
 
 
-def generate_image_pixart(prompt, negative_prompt, version, seed, num_inference_steps, guidance_scale, height, width,
-                          max_sequence_length, output_format):
+def generate_image_pixart(prompt, negative_prompt, version, seed, stop_button, num_inference_steps, guidance_scale, height, width,
+                          max_sequence_length, output_format, progress=gr.Progress()):
+    global stop_signal
+    stop_signal = False
+    stop_idx = None
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -7371,6 +7643,15 @@ def generate_image_pixart(prompt, negative_prompt, version, seed, num_inference_
 
         pipe.enable_model_cpu_offload()
 
+        def combined_callback(i, t, callback_kwargs):
+            nonlocal stop_idx
+            if stop_signal and stop_idx is None:
+                stop_idx = i
+            if i == stop_idx:
+                pipe._interrupt = True
+            progress((i + 1) / num_inference_steps, f"Step {i + 1}/{num_inference_steps}")
+            return callback_kwargs
+
         image = pipe(
             prompt=prompt,
             negative_prompt=negative_prompt,
@@ -7379,7 +7660,9 @@ def generate_image_pixart(prompt, negative_prompt, version, seed, num_inference_
             height=height,
             width=width,
             max_sequence_length=max_sequence_length,
-            generator=generator
+            generator=generator,
+            callback=combined_callback,
+            callback_steps=1
         ).images[0]
 
         today = datetime.now().date()
@@ -10554,7 +10837,8 @@ cascade_interface = gr.Interface(
     inputs=[
         gr.Textbox(label=_("Enter your prompt", lang)),
         gr.Textbox(label=_("Enter your negative prompt", lang), value=""),
-        gr.Textbox(label=_("Seed (optional)", lang), value="")
+        gr.Textbox(label=_("Seed (optional)", lang), value=""),
+        gr.Button(value=_("Stop generation", lang), interactive=True, variant="stop")
     ],
     additional_inputs=[
         gr.Slider(minimum=256, maximum=4096, value=1024, step=64, label=_("Width", lang)),
@@ -10650,7 +10934,8 @@ riffusion_text2image_interface = gr.Interface(
     inputs=[
         gr.Textbox(label=_("Enter your prompt", lang)),
         gr.Textbox(label=_("Enter your negative prompt", lang), value=""),
-        gr.Textbox(label=_("Seed (optional)", lang), value="")
+        gr.Textbox(label=_("Seed (optional)", lang), value=""),
+        gr.Button(value=_("Stop generation", lang), interactive=True, variant="stop")
     ],
     additional_inputs=[
         gr.Slider(minimum=1, maximum=100, value=50, step=1, label=_("Steps", lang)),
@@ -10719,7 +11004,8 @@ kandinsky_txt2img_interface = gr.Interface(
         gr.Textbox(label=_("Enter your prompt", lang)),
         gr.Textbox(label=_("Enter your negative prompt", lang), value=""),
         gr.Radio(choices=["2.1", "2.2", "3"], label=_("Kandinsky Version", lang), value="2.2"),
-        gr.Textbox(label=_("Seed (optional)", lang), value="")
+        gr.Textbox(label=_("Seed (optional)", lang), value=""),
+        gr.Button(value=_("Stop generation", lang), interactive=True, variant="stop")
     ],
     additional_inputs=[
         gr.Slider(minimum=1, maximum=100, value=50, step=1, label=_("Steps", lang)),
@@ -10750,7 +11036,8 @@ kandinsky_img2img_interface = gr.Interface(
         gr.Textbox(label=_("Enter your negative prompt", lang), value=""),
         gr.Image(label=_("Initial image", lang), type="filepath"),
         gr.Radio(choices=["2.1", "2.2", "3"], label=_("Kandinsky Version", lang), value="2.2"),
-        gr.Textbox(label=_("Seed (optional)", lang), value="")
+        gr.Textbox(label=_("Seed (optional)", lang), value=""),
+        gr.Button(value=_("Stop generation", lang), interactive=True, variant="stop")
     ],
     additional_inputs=[
         gr.Slider(minimum=1, maximum=100, value=50, step=1, label=_("Steps", lang)),
@@ -10783,6 +11070,7 @@ kandinsky_inpaint_interface = gr.Interface(
         gr.Image(label=_("Initial image", lang), type="filepath"),
         gr.ImageEditor(label=_("Mask image", lang), type="filepath"),
         gr.Radio(choices=["2.1", "2.2"], label=_("Kandinsky Version", lang), value="2.2"),
+        gr.Button(value=_("Stop generation", lang), interactive=True, variant="stop")
     ],
     additional_inputs=[
         gr.Slider(minimum=1, maximum=100, value=50, step=1, label=_("Steps", lang)),
@@ -10962,7 +11250,8 @@ hunyuandit_txt2img_interface = gr.Interface(
     inputs=[
         gr.Textbox(label=_("Enter your prompt", lang)),
         gr.Textbox(label=_("Enter your negative prompt", lang), value=""),
-        gr.Textbox(label=_("Seed (optional)", lang), value="")
+        gr.Textbox(label=_("Seed (optional)", lang), value=""),
+        gr.Button(value=_("Stop generation", lang), interactive=True, variant="stop")
     ],
     additional_inputs=[
         gr.Slider(minimum=1, maximum=100, value=50, step=1, label=_("Steps", lang)),
@@ -10993,7 +11282,8 @@ hunyuandit_controlnet_interface = gr.Interface(
         gr.Textbox(label=_("Enter your negative prompt", lang), value=""),
         gr.Image(label=_("Input image", lang), type="filepath"),
         gr.Dropdown(choices=["Depth", "Canny", "Pose"], label=_("Select ControlNet model", lang), value="Depth"),
-        gr.Textbox(label=_("Seed (optional)", lang), value="")
+        gr.Textbox(label=_("Seed (optional)", lang), value=""),
+        gr.Button(value=_("Stop generation", lang), interactive=True, variant="stop")
     ],
     additional_inputs=[
         gr.Slider(minimum=1, maximum=100, value=50, step=1, label=_("Steps", lang)),
@@ -11185,7 +11475,8 @@ wurstchen_interface = gr.Interface(
     inputs=[
         gr.Textbox(label=_("Enter your prompt", lang)),
         gr.Textbox(label=_("Enter your negative prompt", lang), value=""),
-        gr.Textbox(label=_("Seed (optional)", lang), value="")
+        gr.Textbox(label=_("Seed (optional)", lang), value=""),
+        gr.Button(value=_("Stop generation", lang), interactive=True, variant="stop")
     ],
     additional_inputs=[
         gr.Slider(minimum=256, maximum=2048, value=1536, step=64, label=_("Width", lang)),
@@ -11216,7 +11507,8 @@ deepfloyd_if_txt2img_interface = gr.Interface(
     inputs=[
         gr.Textbox(label=_("Enter your prompt", lang)),
         gr.Textbox(label=_("Enter your negative prompt", lang), value=""),
-        gr.Textbox(label=_("Seed (optional)", lang), value="")
+        gr.Textbox(label=_("Seed (optional)", lang), value=""),
+        gr.Button(value=_("Stop generation", lang), interactive=True, variant="stop")
     ],
     additional_inputs=[
         gr.Slider(minimum=1, maximum=100, value=50, step=1, label=_("Steps", lang)),
@@ -11249,7 +11541,8 @@ deepfloyd_if_img2img_interface = gr.Interface(
         gr.Textbox(label=_("Enter your prompt", lang)),
         gr.Textbox(label=_("Enter your negative prompt", lang), value=""),
         gr.Image(label=_("Initial image", lang), type="filepath"),
-        gr.Textbox(label=_("Seed (optional)", lang), value="")
+        gr.Textbox(label=_("Seed (optional)", lang), value=""),
+        gr.Button(value=_("Stop generation", lang), interactive=True, variant="stop")
     ],
     additional_inputs=[
         gr.Slider(minimum=1, maximum=100, value=50, step=1, label=_("Steps", lang)),
@@ -11282,7 +11575,9 @@ deepfloyd_if_inpaint_interface = gr.Interface(
         gr.Textbox(label=_("Enter your prompt", lang)),
         gr.Textbox(label=_("Enter your negative prompt", lang), value=""),
         gr.Image(label=_("Initial image", lang), type="filepath"),
-        gr.ImageEditor(label=_("Mask image", lang), type="filepath")
+        gr.ImageEditor(label=_("Mask image", lang), type="filepath"),
+        gr.Textbox(label=_("Seed (optional)", lang), value=""),
+        gr.Button(value=_("Stop generation", lang), interactive=True, variant="stop")
     ],
     additional_inputs=[
         gr.Slider(minimum=1, maximum=100, value=50, step=1, label=_("Steps", lang)),
@@ -11318,7 +11613,8 @@ pixart_interface = gr.Interface(
         gr.Textbox(label=_("Enter your prompt", lang)),
         gr.Textbox(label=_("Enter your negative prompt", lang), value=""),
         gr.Radio(choices=["Alpha-512", "Alpha-1024", "Sigma-512", "Sigma-1024"], label=_("PixArt Version", lang), value="Alpha-512"),
-        gr.Textbox(label=_("Seed (optional)", lang), value="")
+        gr.Textbox(label=_("Seed (optional)", lang), value=""),
+        gr.Button(value=_("Stop generation", lang), interactive=True, variant="stop")
     ],
     additional_inputs=[
         gr.Slider(minimum=1, maximum=100, value=30, step=1, label=_("Steps", lang)),
@@ -12259,14 +12555,26 @@ with gr.TabbedInterface(
     img2img_interface.input_components[12].click(stop_generation, [], [], queue=False)
     controlnet_interface.input_components[8].click(stop_generation, [], [], queue=False)
     inpaint_interface.input_components[10].click(stop_generation, [], [], queue=False)
+    cascade_interface.input_components[3].click(stop_generation, [], [], queue=False)
+    riffusion_text2image_interface.input_components[3].click(stop_generation, [], [], queue=False)
     sd3_txt2img_interface.input_components[6].click(stop_generation, [], [], queue=False)
     sd3_img2img_interface.input_components[8].click(stop_generation, [], [], queue=False)
     sd3_controlnet_interface.input_components[5].click(stop_generation, [], [], queue=False)
     sd3_inpaint_interface.input_components[5].click(stop_generation, [], [], queue=False)
+    kandinsky_txt2img_interface.input_components[4].click(stop_generation, [], [], queue=False)
+    kandinsky_img2img_interface.input_components[5].click(stop_generation, [], [], queue=False)
+    kandinsky_inpaint_interface.input_components[5].click(stop_generation, [], [], queue=False)
     flux_txt2img_interface.input_components[5].click(stop_generation, [], [], queue=False)
     flux_img2img_interface.input_components[6].click(stop_generation, [], [], queue=False)
     flux_inpaint_interface.input_components[5].click(stop_generation, [], [], queue=False)
     flux_controlnet_interface.input_components[4].click(stop_generation, [], [], queue=False)
+    hunyuandit_txt2img_interface.input_components[3].click(stop_generation, [], [], queue=False)
+    hunyuandit_controlnet_interface.input_components[5].click(stop_generation, [], [], queue=False)
+    wurstchen_interface.input_components[3].click(stop_generation, [], [], queue=False)
+    deepfloyd_if_txt2img_interface.input_components[3].click(stop_generation, [], [], queue=False)
+    deepfloyd_if_img2img_interface.input_components[4].click(stop_generation, [], [], queue=False)
+    deepfloyd_if_inpaint_interface.input_components[5].click(stop_generation, [], [], queue=False)
+    pixart_interface.input_components[4].click(stop_generation, [], [], queue=False)
     modelscope_interface.input_components[3].click(stop_generation, [], [], queue=False)
     zeroscope2_interface.input_components[3].click(stop_generation, [], [], queue=False)
     cogvideox_text2video_interface.input_components[4].click(stop_generation, [], [], queue=False)
