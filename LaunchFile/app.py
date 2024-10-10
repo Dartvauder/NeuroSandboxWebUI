@@ -8678,47 +8678,33 @@ def get_wiki_content(url, local_file="Wikies/WikiEN.md"):
 
 def get_output_files():
     output_dir = "outputs"
-    text_files = []
-    image_files = []
-    video_files = []
-    audio_files = []
-    model3d_files = []
+    files = []
+    for root, dirs, filenames in os.walk(output_dir):
+        for filename in filenames:
+            files.append(os.path.join(root, filename))
+    return files
 
-    for root, dirs, files in os.walk(output_dir):
-        for file in files:
-            if file.endswith(".txt") or file.endswith(".json"):
-                text_files.append(os.path.join(root, file))
-            elif file.endswith(".png") or file.endswith(".jpeg") or file.endswith(".gif"):
-                image_files.append(os.path.join(root, file))
-            elif file.endswith(".mp4"):
-                video_files.append(os.path.join(root, file))
-            elif file.endswith(".wav") or file.endswith(".mp3") or file.endswith(".ogg"):
-                audio_files.append(os.path.join(root, file))
-            elif file.endswith(".obj") or file.endswith(".ply") or file.endswith(".glb"):
-                model3d_files.append(os.path.join(root, file))
 
-    def display_output_file(text_file, image_file, video_file, audio_file, model3d_file):
-        results = [None, None, None, None, None]
+def display_output_file(file_path):
+    if file_path is None:
+        return None, None, None, None, None
 
-        if text_file:
-            with open(text_file, "r") as f:
-                results[0] = f.read()
+    file_extension = os.path.splitext(file_path)[1].lower()
 
-        if image_file:
-            results[1] = image_file
-
-        if video_file:
-            results[2] = video_file
-
-        if audio_file:
-            results[3] = audio_file
-
-        if model3d_file:
-            results[4] = model3d_file
-
-        return tuple(results)
-
-    return text_files, image_files, video_files, audio_files, model3d_files, display_output_file
+    if file_extension in ['.txt', '.json']:
+        with open(file_path, "r") as f:
+            content = f.read()
+        return content, None, None, None, None
+    elif file_extension in ['.png', '.jpeg', '.jpg', '.gif']:
+        return None, file_path, None, None, None
+    elif file_extension == '.mp4':
+        return None, None, file_path, None, None
+    elif file_extension in ['.wav', '.mp3', '.ogg']:
+        return None, None, None, file_path, None
+    elif file_extension in ['.obj', '.ply', '.glb']:
+        return None, None, None, None, file_path
+    else:
+        return None, None, None, None, None
 
 
 def download_model(llm_model_url, sd_model_url):
@@ -8924,15 +8910,15 @@ def reload_model_lists():
                        and any(
             file.endswith('.pth') for file in os.listdir(os.path.join("inputs/audio/rvc_models", model_folder)))]
 
-    text_files, image_files, video_files, audio_files, model3d_files, _ = get_output_files()
+    chat_files = get_existing_chats()
 
-    chat_files, _ = get_existing_chats()
+    gallery_files = get_output_files()
 
-    return [llm_models_list, llm_lora_models_list, speaker_wavs_list, stable_diffusion_models_list, vae_models_list, lora_models_list, quantized_flux_models_list, flux_lora_models_list, auraflow_lora_models_list, kolors_lora_models_list, textual_inversion_models_list, inpaint_models_list, rvc_models_list, text_files, image_files, video_files, audio_files, model3d_files, chat_files]
+    return [llm_models_list, llm_lora_models_list, speaker_wavs_list, stable_diffusion_models_list, vae_models_list, lora_models_list, quantized_flux_models_list, flux_lora_models_list, auraflow_lora_models_list, kolors_lora_models_list, textual_inversion_models_list, inpaint_models_list, rvc_models_list, chat_files, gallery_files]
 
 
 def reload_interface():
-    updated_lists = reload_model_lists()[:18]
+    updated_lists = reload_model_lists()[:15]
     return [gr.Dropdown(choices=list) for list in updated_lists]
 
 
@@ -11424,13 +11410,9 @@ wiki_interface = gr.Interface(
 )
 
 gallery_interface = gr.Interface(
-    fn=lambda *args: get_output_files()[-1](*args),
+    fn=display_output_file,
     inputs=[
-        gr.Dropdown(label=_("Text Files", lang), choices=get_output_files()[0], interactive=True),
-        gr.Dropdown(label=_("Image Files", lang), choices=get_output_files()[1], interactive=True),
-        gr.Dropdown(label=_("Video Files", lang), choices=get_output_files()[2], interactive=True),
-        gr.Dropdown(label=_("Audio Files", lang), choices=get_output_files()[3], interactive=True),
-        gr.Dropdown(label=_("3D Model Files", lang), choices=get_output_files()[4], interactive=True),
+        gr.FileExplorer(label=_("Output Files", lang), root_dir="outputs", file_count="single", value=get_output_files())
     ],
     outputs=[
         gr.Textbox(label=_("Text", lang)),
@@ -11623,14 +11605,10 @@ with gr.TabbedInterface(
         auraflow_interface.input_components[3],
         kolors_txt2img_interface.input_components[3],
         rvc_interface.input_components[1],
-        gallery_interface.input_components[0],
-        gallery_interface.input_components[1],
-        gallery_interface.input_components[2],
-        gallery_interface.input_components[3],
-        gallery_interface.input_components[4]
+        gallery_interface.input_components[0]
     ]
 
-    reload_button.click(reload_interface, outputs=dropdowns_to_update[:18])
+    reload_button.click(reload_interface, outputs=dropdowns_to_update[:15])
     close_button.click(close_terminal, [], [], queue=False)
     folder_button.click(open_outputs_folder, [], [], queue=False)
 
