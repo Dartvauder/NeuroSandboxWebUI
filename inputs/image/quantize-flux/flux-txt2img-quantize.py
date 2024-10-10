@@ -28,6 +28,7 @@ def generate_image(params):
         width=params['width'],
         sample_steps=params['num_inference_steps'],
         seed=params['seed'],
+        progress_callback=params['progress_callback'],
         sample_method="euler"
     )
 

@@ -1935,6 +1935,10 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
             seed = int(seed)
 
         try:
+            def progress_callback(i, t, callback_kwargs):
+                progress((i + 1) / stable_diffusion_steps, f"Step {i + 1}/{stable_diffusion_steps}")
+                return callback_kwargs
+
             params = {
                 'model_name': stable_diffusion_model_name,
                 'prompt': prompt,
@@ -1943,7 +1947,8 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
                 'height': stable_diffusion_height,
                 'width': stable_diffusion_width,
                 'sample_steps': stable_diffusion_steps,
-                'seed': seed
+                'seed': seed,
+                'progress_callback': progress_callback
             }
 
             env = os.environ.copy()
@@ -2386,11 +2391,14 @@ def generate_image_img2img(prompt, negative_prompt, init_image, strength, stable
 
     if enable_quantize:
         try:
-
             if seed == "" or seed is None:
                 seed = random.randint(0, 2 ** 32 - 1)
             else:
                 seed = int(seed)
+
+            def progress_callback(i, t, callback_kwargs):
+                progress((i + 1) / stable_diffusion_steps, f"Step {i + 1}/{stable_diffusion_steps}")
+                return callback_kwargs
 
             params = {
                 'model_name': stable_diffusion_model_name,
@@ -2400,7 +2408,8 @@ def generate_image_img2img(prompt, negative_prompt, init_image, strength, stable
                 'sample_steps': stable_diffusion_steps,
                 'image': init_image,
                 'strength': strength,
-                'seed': seed
+                'seed': seed,
+                'progress_callback': progress_callback
             }
 
             env = os.environ.copy()
@@ -2946,8 +2955,11 @@ def generate_image_pix2pix(prompt, negative_prompt, init_image, seed, num_infere
         flush()
 
 
-def generate_image_controlnet(prompt, negative_prompt, init_image, sd_version, stable_diffusion_model_name, controlnet_model_name, seed,
-                              num_inference_steps, guidance_scale, width, height, controlnet_conditioning_scale, clip_skip, num_images_per_prompt, output_format):
+def generate_image_controlnet(prompt, negative_prompt, init_image, sd_version, stable_diffusion_scheduler, stable_diffusion_model_name, controlnet_model_name, seed, stop_button,
+                              num_inference_steps, guidance_scale, width, height, controlnet_conditioning_scale, clip_skip, num_images_per_prompt, output_format, progress=gr.Progress()):
+    global stop_signal
+    stop_signal = False
+    stop_idx = None
 
     if not init_image:
         gr.Info("Please, upload an initial image!")
@@ -3015,6 +3027,64 @@ def generate_image_controlnet(prompt, negative_prompt, init_image, sd_version, s
             pipe.vae.to(device)
             pipe.unet.to(device)
 
+            try:
+                if stable_diffusion_scheduler == "EulerDiscreteScheduler":
+                    pipe.scheduler = EulerDiscreteScheduler().EulerDiscreteScheduler.from_config(
+                        pipe.scheduler.config)
+                elif stable_diffusion_scheduler == "DPMSolverSinglestepScheduler":
+                    pipe.scheduler = DPMSolverSinglestepScheduler().DPMSolverSinglestepScheduler.from_config(
+                        pipe.scheduler.config)
+                elif stable_diffusion_scheduler == "DPMSolverMultistepScheduler":
+                    pipe.scheduler = DPMSolverMultistepScheduler().DPMSolverMultistepScheduler.from_config(
+                        pipe.scheduler.config)
+                elif stable_diffusion_scheduler == "EDMDPMSolverMultistepScheduler":
+                    pipe.scheduler = EDMDPMSolverMultistepScheduler().EDMDPMSolverMultistepScheduler.from_config(
+                        pipe.scheduler.config)
+                elif stable_diffusion_scheduler == "EDMEulerScheduler":
+                    pipe.scheduler = EDMEulerScheduler().EDMEulerScheduler.from_config(
+                        pipe.scheduler.config)
+                elif stable_diffusion_scheduler == "KDPM2DiscreteScheduler":
+                    pipe.scheduler = KDPM2DiscreteScheduler().KDPM2DiscreteScheduler.from_config(
+                        pipe.scheduler.config)
+                elif stable_diffusion_scheduler == "KDPM2AncestralDiscreteScheduler":
+                    pipe.scheduler = KDPM2AncestralDiscreteScheduler().KDPM2AncestralDiscreteScheduler.from_config(
+                        pipe.scheduler.config)
+                elif stable_diffusion_scheduler == "EulerAncestralDiscreteScheduler":
+                    pipe.scheduler = EulerAncestralDiscreteScheduler().EulerAncestralDiscreteScheduler.from_config(
+                        pipe.scheduler.config)
+                elif stable_diffusion_scheduler == "HeunDiscreteScheduler":
+                    pipe.scheduler = HeunDiscreteScheduler().HeunDiscreteScheduler.from_config(
+                        pipe.scheduler.config)
+                elif stable_diffusion_scheduler == "LMSDiscreteScheduler":
+                    pipe.scheduler = LMSDiscreteScheduler().LMSDiscreteScheduler.from_config(
+                        pipe.scheduler.config)
+                elif stable_diffusion_scheduler == "DEISMultistepScheduler":
+                    pipe.scheduler = DEISMultistepScheduler().DEISMultistepScheduler.from_config(
+                        pipe.scheduler.config)
+                elif stable_diffusion_scheduler == "UniPCMultistepScheduler":
+                    pipe.scheduler = UniPCMultistepScheduler().UniPCMultistepScheduler.from_config(
+                        pipe.scheduler.config)
+                elif stable_diffusion_scheduler == "LCMScheduler":
+                    pipe.scheduler = LCMScheduler().LCMScheduler.from_config(
+                        pipe.scheduler.config)
+                elif stable_diffusion_scheduler == "DPMSolverSDEScheduler":
+                    pipe.scheduler = DPMSolverSDEScheduler().DPMSolverSDEScheduler.from_config(
+                        pipe.scheduler.config)
+                elif stable_diffusion_scheduler == "TCDScheduler":
+                    pipe.scheduler = TCDScheduler().TCDScheduler.from_config(
+                        pipe.scheduler.config)
+                elif stable_diffusion_scheduler == "DDIMScheduler":
+                    pipe.scheduler = DDIMScheduler().DDIMScheduler.from_config(
+                        pipe.scheduler.config)
+                elif stable_diffusion_scheduler == "DDPMScheduler":
+                    pipe.scheduler = DDPMScheduler().DDPMScheduler.from_config(
+                        pipe.scheduler.config)
+
+                gr.Info(f"Scheduler successfully set to {stable_diffusion_scheduler}")
+            except Exception as e:
+                gr.Error(f"Error initializing scheduler: {e}")
+                gr.Info("Using default scheduler")
+
             pipe.enable_vae_slicing()
             pipe.enable_vae_tiling()
             pipe.enable_model_cpu_offload()
@@ -3055,9 +3125,18 @@ def generate_image_controlnet(prompt, negative_prompt, init_image, sd_version, s
             prompt_embeds = compel_proc(prompt)
             negative_prompt_embeds = compel_proc(negative_prompt)
 
+            def combined_callback_sd(i, t, callback_kwargs):
+                nonlocal stop_idx
+                if stop_signal and stop_idx is None:
+                    stop_idx = i
+                if i == stop_idx:
+                    pipe._interrupt = True
+                progress((i + 1) / num_inference_steps, f"Step {i + 1}/{num_inference_steps}")
+                return callback_kwargs
+
             images = pipe(prompt_embeds=prompt_embeds, negative_prompt_embeds=negative_prompt_embeds,
-                         num_inference_steps=num_inference_steps, guidance_scale=guidance_scale, width=width,
-                         height=height, clip_skip=clip_skip, generator=generator, image=control_image, num_images_per_prompt=num_images_per_prompt).images
+                          num_inference_steps=num_inference_steps, guidance_scale=guidance_scale, width=width,
+                          height=height, clip_skip=clip_skip, generator=generator, image=control_image, num_images_per_prompt=num_images_per_prompt, callback_on_step_end=combined_callback_sd).images
 
         else:
             controlnet = ControlNetModel().ControlNetModel.from_pretrained(
@@ -3081,6 +3160,64 @@ def generate_image_controlnet(prompt, negative_prompt, init_image, sd_version, s
             pipe.text_encoder.to(device)
             pipe.vae.to(device)
             pipe.unet.to(device)
+
+            try:
+                if stable_diffusion_scheduler == "EulerDiscreteScheduler":
+                    pipe.scheduler = EulerDiscreteScheduler().EulerDiscreteScheduler.from_config(
+                        pipe.scheduler.config)
+                elif stable_diffusion_scheduler == "DPMSolverSinglestepScheduler":
+                    pipe.scheduler = DPMSolverSinglestepScheduler().DPMSolverSinglestepScheduler.from_config(
+                        pipe.scheduler.config)
+                elif stable_diffusion_scheduler == "DPMSolverMultistepScheduler":
+                    pipe.scheduler = DPMSolverMultistepScheduler().DPMSolverMultistepScheduler.from_config(
+                        pipe.scheduler.config)
+                elif stable_diffusion_scheduler == "EDMDPMSolverMultistepScheduler":
+                    pipe.scheduler = EDMDPMSolverMultistepScheduler().EDMDPMSolverMultistepScheduler.from_config(
+                        pipe.scheduler.config)
+                elif stable_diffusion_scheduler == "EDMEulerScheduler":
+                    pipe.scheduler = EDMEulerScheduler().EDMEulerScheduler.from_config(
+                        pipe.scheduler.config)
+                elif stable_diffusion_scheduler == "KDPM2DiscreteScheduler":
+                    pipe.scheduler = KDPM2DiscreteScheduler().KDPM2DiscreteScheduler.from_config(
+                        pipe.scheduler.config)
+                elif stable_diffusion_scheduler == "KDPM2AncestralDiscreteScheduler":
+                    pipe.scheduler = KDPM2AncestralDiscreteScheduler().KDPM2AncestralDiscreteScheduler.from_config(
+                        pipe.scheduler.config)
+                elif stable_diffusion_scheduler == "EulerAncestralDiscreteScheduler":
+                    pipe.scheduler = EulerAncestralDiscreteScheduler().EulerAncestralDiscreteScheduler.from_config(
+                        pipe.scheduler.config)
+                elif stable_diffusion_scheduler == "HeunDiscreteScheduler":
+                    pipe.scheduler = HeunDiscreteScheduler().HeunDiscreteScheduler.from_config(
+                        pipe.scheduler.config)
+                elif stable_diffusion_scheduler == "LMSDiscreteScheduler":
+                    pipe.scheduler = LMSDiscreteScheduler().LMSDiscreteScheduler.from_config(
+                        pipe.scheduler.config)
+                elif stable_diffusion_scheduler == "DEISMultistepScheduler":
+                    pipe.scheduler = DEISMultistepScheduler().DEISMultistepScheduler.from_config(
+                        pipe.scheduler.config)
+                elif stable_diffusion_scheduler == "UniPCMultistepScheduler":
+                    pipe.scheduler = UniPCMultistepScheduler().UniPCMultistepScheduler.from_config(
+                        pipe.scheduler.config)
+                elif stable_diffusion_scheduler == "LCMScheduler":
+                    pipe.scheduler = LCMScheduler().LCMScheduler.from_config(
+                        pipe.scheduler.config)
+                elif stable_diffusion_scheduler == "DPMSolverSDEScheduler":
+                    pipe.scheduler = DPMSolverSDEScheduler().DPMSolverSDEScheduler.from_config(
+                        pipe.scheduler.config)
+                elif stable_diffusion_scheduler == "TCDScheduler":
+                    pipe.scheduler = TCDScheduler().TCDScheduler.from_config(
+                        pipe.scheduler.config)
+                elif stable_diffusion_scheduler == "DDIMScheduler":
+                    pipe.scheduler = DDIMScheduler().DDIMScheduler.from_config(
+                        pipe.scheduler.config)
+                elif stable_diffusion_scheduler == "DDPMScheduler":
+                    pipe.scheduler = DDPMScheduler().DDPMScheduler.from_config(
+                        pipe.scheduler.config)
+
+                gr.Info(f"Scheduler successfully set to {stable_diffusion_scheduler}")
+            except Exception as e:
+                gr.Error(f"Error initializing scheduler: {e}")
+                gr.Info("Using default scheduler")
 
             pipe.enable_vae_slicing()
             pipe.enable_vae_tiling()
@@ -3132,11 +3269,20 @@ def generate_image_controlnet(prompt, negative_prompt, init_image, sd_version, s
             )
             prompt_embeds, pooled_prompt_embeds = compel(prompt)
 
+            def combined_callback_sdxl(i, t, callback_kwargs):
+                nonlocal stop_idx
+                if stop_signal and stop_idx is None:
+                    stop_idx = i
+                if i == stop_idx:
+                    pipe._interrupt = True
+                progress((i + 1) / num_inference_steps, f"Step {i + 1}/{num_inference_steps}")
+                return callback_kwargs
+
             images = pipe(
                 prompt_embeds=prompt_embeds, pooled_prompt_embeds=pooled_prompt_embeds, negative_prompt=negative_prompt, image=control_image,
                 controlnet_conditioning_scale=controlnet_conditioning_scale, generator=generator,
                 num_inference_steps=num_inference_steps, guidance_scale=guidance_scale, clip_skip=clip_skip,
-                width=width, height=height, num_images_per_prompt=num_images_per_prompt).images
+                width=width, height=height, num_images_per_prompt=num_images_per_prompt, callback_on_step_end=combined_callback_sdxl).images
 
         image_paths = []
         control_image_paths = []
@@ -3382,8 +3528,11 @@ def generate_image_sdxl_refiner(prompt, init_image, output_format):
         flush()
 
 
-def generate_image_inpaint(prompt, negative_prompt, init_image, mask_image, blur_factor, stable_diffusion_model_type, stable_diffusion_model_name, vae_model_name, seed,
-                           stable_diffusion_steps, stable_diffusion_cfg, width, height, clip_skip, num_images_per_prompt, output_format):
+def generate_image_inpaint(prompt, negative_prompt, init_image, mask_image, blur_factor, stable_diffusion_model_type, stable_diffusion_scheduler, stable_diffusion_model_name, vae_model_name, seed, stop_button,
+                           stable_diffusion_steps, stable_diffusion_cfg, width, height, clip_skip, num_images_per_prompt, output_format, progress=gr.Progress()):
+    global stop_signal
+    stop_signal = False
+    stop_idx = None
 
     if not stable_diffusion_model_name:
         gr.Info("Please, select a StableDiffusion model!")
@@ -3430,6 +3579,64 @@ def generate_image_inpaint(prompt, negative_prompt, init_image, mask_image, blur
     stable_diffusion_model.vae.to(device)
     stable_diffusion_model.unet.to(device)
 
+    try:
+        if stable_diffusion_scheduler == "EulerDiscreteScheduler":
+            stable_diffusion_model.scheduler = EulerDiscreteScheduler().EulerDiscreteScheduler.from_config(
+                stable_diffusion_model.scheduler.config)
+        elif stable_diffusion_scheduler == "DPMSolverSinglestepScheduler":
+            stable_diffusion_model.scheduler = DPMSolverSinglestepScheduler().DPMSolverSinglestepScheduler.from_config(
+                stable_diffusion_model.scheduler.config)
+        elif stable_diffusion_scheduler == "DPMSolverMultistepScheduler":
+            stable_diffusion_model.scheduler = DPMSolverMultistepScheduler().DPMSolverMultistepScheduler.from_config(
+                stable_diffusion_model.scheduler.config)
+        elif stable_diffusion_scheduler == "EDMDPMSolverMultistepScheduler":
+            stable_diffusion_model.scheduler = EDMDPMSolverMultistepScheduler().EDMDPMSolverMultistepScheduler.from_config(
+                stable_diffusion_model.scheduler.config)
+        elif stable_diffusion_scheduler == "EDMEulerScheduler":
+            stable_diffusion_model.scheduler = EDMEulerScheduler().EDMEulerScheduler.from_config(
+                stable_diffusion_model.scheduler.config)
+        elif stable_diffusion_scheduler == "KDPM2DiscreteScheduler":
+            stable_diffusion_model.scheduler = KDPM2DiscreteScheduler().KDPM2DiscreteScheduler.from_config(
+                stable_diffusion_model.scheduler.config)
+        elif stable_diffusion_scheduler == "KDPM2AncestralDiscreteScheduler":
+            stable_diffusion_model.scheduler = KDPM2AncestralDiscreteScheduler().KDPM2AncestralDiscreteScheduler.from_config(
+                stable_diffusion_model.scheduler.config)
+        elif stable_diffusion_scheduler == "EulerAncestralDiscreteScheduler":
+            stable_diffusion_model.scheduler = EulerAncestralDiscreteScheduler().EulerAncestralDiscreteScheduler.from_config(
+                stable_diffusion_model.scheduler.config)
+        elif stable_diffusion_scheduler == "HeunDiscreteScheduler":
+            stable_diffusion_model.scheduler = HeunDiscreteScheduler().HeunDiscreteScheduler.from_config(
+                stable_diffusion_model.scheduler.config)
+        elif stable_diffusion_scheduler == "LMSDiscreteScheduler":
+            stable_diffusion_model.scheduler = LMSDiscreteScheduler().LMSDiscreteScheduler.from_config(
+                stable_diffusion_model.scheduler.config)
+        elif stable_diffusion_scheduler == "DEISMultistepScheduler":
+            stable_diffusion_model.scheduler = DEISMultistepScheduler().DEISMultistepScheduler.from_config(
+                stable_diffusion_model.scheduler.config)
+        elif stable_diffusion_scheduler == "UniPCMultistepScheduler":
+            stable_diffusion_model.scheduler = UniPCMultistepScheduler().UniPCMultistepScheduler.from_config(
+                stable_diffusion_model.scheduler.config)
+        elif stable_diffusion_scheduler == "LCMScheduler":
+            stable_diffusion_model.scheduler = LCMScheduler().LCMScheduler.from_config(
+                stable_diffusion_model.scheduler.config)
+        elif stable_diffusion_scheduler == "DPMSolverSDEScheduler":
+            stable_diffusion_model.scheduler = DPMSolverSDEScheduler().DPMSolverSDEScheduler.from_config(
+                stable_diffusion_model.scheduler.config)
+        elif stable_diffusion_scheduler == "TCDScheduler":
+            stable_diffusion_model.scheduler = TCDScheduler().TCDScheduler.from_config(
+                stable_diffusion_model.scheduler.config)
+        elif stable_diffusion_scheduler == "DDIMScheduler":
+            stable_diffusion_model.scheduler = DDIMScheduler().DDIMScheduler.from_config(
+                stable_diffusion_model.scheduler.config)
+        elif stable_diffusion_scheduler == "DDPMScheduler":
+            stable_diffusion_model.scheduler = DDPMScheduler().DDPMScheduler.from_config(
+                stable_diffusion_model.scheduler.config)
+
+        gr.Info(f"Scheduler successfully set to {stable_diffusion_scheduler}")
+    except Exception as e:
+        gr.Error(f"Error initializing scheduler: {e}")
+        gr.Info("Using default scheduler")
+
     stable_diffusion_model.enable_vae_slicing()
     stable_diffusion_model.enable_vae_tiling()
     stable_diffusion_model.enable_model_cpu_offload()
@@ -3474,6 +3681,15 @@ def generate_image_inpaint(prompt, negative_prompt, init_image, mask_image, blur
             seed = int(seed)
         generator = torch.Generator(device).manual_seed(seed)
 
+        def combined_callback(i, t, callback_kwargs):
+            nonlocal stop_idx
+            if stop_signal and stop_idx is None:
+                stop_idx = i
+            if i == stop_idx:
+                stable_diffusion_model._interrupt = True
+            progress((i + 1) / stable_diffusion_steps, f"Step {i + 1}/{stable_diffusion_steps}")
+            return callback_kwargs
+
         if stable_diffusion_model_type == "SDXL":
             compel = Compel(
                 tokenizer=[stable_diffusion_model.tokenizer, stable_diffusion_model.tokenizer_2],
@@ -3487,7 +3703,7 @@ def generate_image_inpaint(prompt, negative_prompt, init_image, mask_image, blur
                                             image=init_image, generator=generator, clip_skip=clip_skip,
                                             mask_image=blurred_mask, width=width, height=height,
                                             num_inference_steps=stable_diffusion_steps,
-                                            guidance_scale=stable_diffusion_cfg, num_images_per_prompt=num_images_per_prompt).images
+                                            guidance_scale=stable_diffusion_cfg, num_images_per_prompt=num_images_per_prompt, callback_on_step_end=combined_callback).images
         else:
             compel_proc = Compel(tokenizer=stable_diffusion_model.tokenizer,
                                  text_encoder=stable_diffusion_model.text_encoder)
@@ -3498,7 +3714,7 @@ def generate_image_inpaint(prompt, negative_prompt, init_image, mask_image, blur
                                             image=init_image, generator=generator, clip_skip=clip_skip,
                                             mask_image=blurred_mask, width=width, height=height,
                                             num_inference_steps=stable_diffusion_steps,
-                                            guidance_scale=stable_diffusion_cfg, num_images_per_prompt=num_images_per_prompt).images
+                                            guidance_scale=stable_diffusion_cfg, num_images_per_prompt=num_images_per_prompt, callback_on_step_end=combined_callback).images
 
         image_paths = []
         for i, image in enumerate(images):
@@ -4409,7 +4625,11 @@ def generate_image_ldm3d(prompt, negative_prompt, seed, width, height, num_infer
         flush()
 
 
-def generate_image_sd3_txt2img(prompt, negative_prompt, model_type, quantize_sd3_model_name, enable_quantize, seed, lora_model_names, lora_scales, num_inference_steps, guidance_scale, width, height, max_sequence_length, clip_skip, num_images_per_prompt, output_format):
+def generate_image_sd3_txt2img(prompt, negative_prompt, model_type, quantize_sd3_model_name, enable_quantize, seed, stop_button, lora_model_names, lora_scales, num_inference_steps, guidance_scale, width, height, max_sequence_length, clip_skip, num_images_per_prompt, output_format, progress=gr.Progress()):
+    global stop_signal
+    stop_signal = False
+    stop_idx = None
+
     if enable_quantize:
         try:
             if not quantize_sd3_model_name:
@@ -4420,6 +4640,10 @@ def generate_image_sd3_txt2img(prompt, negative_prompt, model_type, quantize_sd3
             else:
                 seed = int(seed)
 
+            def progress_callback(i, t, callback_kwargs):
+                progress((i + 1) / num_inference_steps, f"Step {i + 1}/{num_inference_steps}")
+                return callback_kwargs
+
             params = {
                 'model_name': quantize_sd3_model_name,
                 'prompt': prompt,
@@ -4428,7 +4652,8 @@ def generate_image_sd3_txt2img(prompt, negative_prompt, model_type, quantize_sd3
                 'height': height,
                 'width': width,
                 'sample_steps': num_inference_steps,
-                'seed': seed
+                'seed': seed,
+                'progress_callback': progress_callback
             }
 
             env = os.environ.copy()
@@ -4522,6 +4747,15 @@ def generate_image_sd3_txt2img(prompt, negative_prompt, model_type, quantize_sd3
                         except Exception as e:
                             gr.Error(f"Error loading LoRA {lora_model_name}: {str(e)}")
 
+            def combined_callback(i, t, callback_kwargs):
+                nonlocal stop_idx
+                if stop_signal and stop_idx is None:
+                    stop_idx = i
+                if i == stop_idx:
+                    pipe._interrupt = True
+                progress((i + 1) / num_inference_steps, f"Step {i + 1}/{num_inference_steps}")
+                return callback_kwargs
+
             images = pipe(
                 prompt=prompt,
                 negative_prompt=negative_prompt,
@@ -4533,6 +4767,7 @@ def generate_image_sd3_txt2img(prompt, negative_prompt, model_type, quantize_sd3
                 num_images_per_prompt=num_images_per_prompt,
                 clip_skip=clip_skip,
                 generator=generator,
+                callback_on_step_end=combined_callback
             ).images
 
             image_paths = []
@@ -4572,7 +4807,11 @@ def generate_image_sd3_txt2img(prompt, negative_prompt, model_type, quantize_sd3
             flush()
 
 
-def generate_image_sd3_img2img(prompt, negative_prompt, init_image, strength, model_type, quantize_sd3_model_name, enable_quantize, seed, num_inference_steps, guidance_scale, width, height, max_sequence_length, clip_skip, num_images_per_prompt, output_format):
+def generate_image_sd3_img2img(prompt, negative_prompt, init_image, strength, model_type, quantize_sd3_model_name, enable_quantize, seed, stop_button, num_inference_steps, guidance_scale, width, height, max_sequence_length, clip_skip, num_images_per_prompt, output_format, progress=gr.Progress()):
+    global stop_signal
+    stop_signal = False
+    stop_idx = None
+
     if not init_image:
         gr.Info("Please upload an initial image!")
 
@@ -4586,6 +4825,10 @@ def generate_image_sd3_img2img(prompt, negative_prompt, init_image, strength, mo
             else:
                 seed = int(seed)
 
+            def progress_callback(i, t, callback_kwargs):
+                progress((i + 1) / num_inference_steps, f"Step {i + 1}/{num_inference_steps}")
+                return callback_kwargs
+
             params = {
                 'model_name': quantize_sd3_model_name,
                 'prompt': prompt,
@@ -4596,7 +4839,8 @@ def generate_image_sd3_img2img(prompt, negative_prompt, init_image, strength, mo
                 'sample_steps': num_inference_steps,
                 'image': init_image,
                 'strength': strength,
-                'seed': seed
+                'seed': seed,
+                'progress_callback': progress_callback
             }
 
             env = os.environ.copy()
@@ -4664,6 +4908,15 @@ def generate_image_sd3_img2img(prompt, negative_prompt, init_image, strength, mo
                 seed = int(seed)
             generator = torch.Generator(device).manual_seed(seed)
 
+            def combined_callback(i, t, callback_kwargs):
+                nonlocal stop_idx
+                if stop_signal and stop_idx is None:
+                    stop_idx = i
+                if i == stop_idx:
+                    pipe._interrupt = True
+                progress((i + 1) / num_inference_steps, f"Step {i + 1}/{num_inference_steps}")
+                return callback_kwargs
+
             images = pipe(
                 prompt=prompt,
                 negative_prompt=negative_prompt,
@@ -4675,6 +4928,7 @@ def generate_image_sd3_img2img(prompt, negative_prompt, init_image, strength, mo
                 num_images_per_prompt=num_images_per_prompt,
                 clip_skip=clip_skip,
                 generator=generator,
+                callback_on_step_end=combined_callback
             ).images
 
             image_paths = []
@@ -4698,7 +4952,10 @@ def generate_image_sd3_img2img(prompt, negative_prompt, init_image, strength, mo
             flush()
 
 
-def generate_image_sd3_controlnet(prompt, negative_prompt, init_image, controlnet_model, seed, num_inference_steps, guidance_scale, controlnet_conditioning_scale, width, height, max_sequence_length, clip_skip, num_images_per_prompt, output_format):
+def generate_image_sd3_controlnet(prompt, negative_prompt, init_image, controlnet_model, seed, stop_button, num_inference_steps, guidance_scale, controlnet_conditioning_scale, width, height, max_sequence_length, clip_skip, num_images_per_prompt, output_format, progress=gr.Progress()):
+    global stop_signal
+    stop_signal = False
+    stop_idx = None
 
     if not init_image:
         gr.Info("Please upload an initial image!")
@@ -4758,6 +5015,15 @@ def generate_image_sd3_controlnet(prompt, negative_prompt, init_image, controlne
             seed = int(seed)
         generator = torch.Generator(device).manual_seed(seed)
 
+        def combined_callback(i, t, callback_kwargs):
+            nonlocal stop_idx
+            if stop_signal and stop_idx is None:
+                stop_idx = i
+            if i == stop_idx:
+                pipe._interrupt = True
+            progress((i + 1) / num_inference_steps, f"Step {i + 1}/{num_inference_steps}")
+            return callback_kwargs
+
         images = pipe(
             prompt=prompt,
             negative_prompt=negative_prompt,
@@ -4770,6 +5036,7 @@ def generate_image_sd3_controlnet(prompt, negative_prompt, init_image, controlne
             num_images_per_prompt=num_images_per_prompt,
             clip_skip=clip_skip,
             generator=generator,
+            callback_on_step_end=combined_callback
         ).images
 
         image_paths = []
@@ -4801,7 +5068,10 @@ def generate_image_sd3_controlnet(prompt, negative_prompt, init_image, controlne
         flush()
 
 
-def generate_image_sd3_inpaint(prompt, negative_prompt, init_image, mask_image, seed, num_inference_steps, guidance_scale, width, height, max_sequence_length, clip_skip, num_images_per_prompt, output_format):
+def generate_image_sd3_inpaint(prompt, negative_prompt, init_image, mask_image, seed, stop_button, num_inference_steps, guidance_scale, width, height, max_sequence_length, clip_skip, num_images_per_prompt, output_format, progress=gr.Progress()):
+    global stop_signal
+    stop_signal = False
+    stop_idx = None
 
     sd3_model_path = os.path.join("inputs", "image", "sd_models", "sd3")
 
@@ -4840,6 +5110,15 @@ def generate_image_sd3_inpaint(prompt, negative_prompt, init_image, mask_image, 
             seed = int(seed)
         generator = torch.Generator(device).manual_seed(seed)
 
+        def combined_callback(i, t, callback_kwargs):
+            nonlocal stop_idx
+            if stop_signal and stop_idx is None:
+                stop_idx = i
+            if i == stop_idx:
+                pipe._interrupt = True
+            progress((i + 1) / num_inference_steps, f"Step {i + 1}/{num_inference_steps}")
+            return callback_kwargs
+
         images = pipe(
             prompt=prompt,
             negative_prompt=negative_prompt,
@@ -4851,6 +5130,7 @@ def generate_image_sd3_inpaint(prompt, negative_prompt, init_image, mask_image, 
             num_images_per_prompt=num_images_per_prompt,
             clip_skip=clip_skip,
             generator=generator,
+            callback_on_step_end=combined_callback
         ).images
 
         image_paths = []
@@ -5581,7 +5861,10 @@ def generate_image_kandinsky_inpaint(prompt, negative_prompt, init_image, mask_i
         flush()
 
 
-def generate_image_flux_txt2img(prompt, model_name, quantize_model_name, enable_quantize, seed, lora_model_names, lora_scales, guidance_scale, height, width, num_inference_steps, max_sequence_length, output_format):
+def generate_image_flux_txt2img(prompt, model_name, quantize_model_name, enable_quantize, seed, stop_button, lora_model_names, lora_scales, guidance_scale, height, width, num_inference_steps, max_sequence_length, output_format, progress=gr.Progress()):
+    global stop_signal
+    stop_signal = False
+    stop_idx = None
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -5598,6 +5881,10 @@ def generate_image_flux_txt2img(prompt, model_name, quantize_model_name, enable_
             if not quantize_model_name:
                 gr.Info("Please select a GGUF model!")
 
+            def progress_callback(i, t, callback_kwargs):
+                progress((i + 1) / num_inference_steps, f"Step {i + 1}/{num_inference_steps}")
+                return callback_kwargs
+
             params = {
                 'prompt': prompt,
                 'guidance_scale': guidance_scale,
@@ -5605,6 +5892,7 @@ def generate_image_flux_txt2img(prompt, model_name, quantize_model_name, enable_
                 'width': width,
                 'num_inference_steps': num_inference_steps,
                 'seed': seed,
+                'progress_callback': progress_callback,
                 'quantize_flux_model_path': f"{quantize_model_name}"
             }
 
@@ -5672,6 +5960,15 @@ def generate_image_flux_txt2img(prompt, model_name, quantize_model_name, enable_
                         except Exception as e:
                             gr.Error(f"Error loading LoRA {lora_model_name}: {str(e)}")
 
+            def combined_callback(i, t, callback_kwargs):
+                nonlocal stop_idx
+                if stop_signal and stop_idx is None:
+                    stop_idx = i
+                if i == stop_idx:
+                    pipe._interrupt = True
+                progress((i + 1) / num_inference_steps, f"Step {i + 1}/{num_inference_steps}")
+                return callback_kwargs
+
             output = pipe(
                 prompt=prompt,
                 guidance_scale=guidance_scale,
@@ -5679,7 +5976,8 @@ def generate_image_flux_txt2img(prompt, model_name, quantize_model_name, enable_
                 width=width,
                 num_inference_steps=num_inference_steps,
                 max_sequence_length=max_sequence_length,
-                generator=generator
+                generator=generator,
+                callback_on_step_end=combined_callback
             ).images[0]
 
             today = datetime.now().date()
@@ -5717,7 +6015,11 @@ def generate_image_flux_txt2img(prompt, model_name, quantize_model_name, enable_
         flush()
 
 
-def generate_image_flux_img2img(prompt, init_image, model_name, quantize_model_name, enable_quantize, seed, num_inference_steps, strength, guidance_scale, width, height, max_sequence_length, output_format):
+def generate_image_flux_img2img(prompt, init_image, model_name, quantize_model_name, enable_quantize, seed, stop_button, num_inference_steps, strength, guidance_scale, width, height, max_sequence_length, output_format, progress=gr.Progress()):
+    global stop_signal
+    stop_signal = False
+    stop_idx = None
+
     if not init_image:
         gr.Info("Please upload an initial image!")
 
@@ -5735,6 +6037,10 @@ def generate_image_flux_img2img(prompt, init_image, model_name, quantize_model_n
         if not quantize_model_name:
             gr.Info("Please select a GGUF model!")
 
+        def progress_callback(i, t, callback_kwargs):
+            progress((i + 1) / num_inference_steps, f"Step {i + 1}/{num_inference_steps}")
+            return callback_kwargs
+
         params = {
             'prompt': prompt,
             'guidance_scale': guidance_scale,
@@ -5744,7 +6050,8 @@ def generate_image_flux_img2img(prompt, init_image, model_name, quantize_model_n
             'seed': seed,
             'quantize_flux_model_path': f"{quantize_model_name}",
             'image': init_image,
-            'strength': strength
+            'strength': strength,
+            'progress_callback': progress_callback
         }
 
         env = os.environ.copy()
@@ -5783,6 +6090,15 @@ def generate_image_flux_img2img(prompt, init_image, model_name, quantize_model_n
             init_image = Image.open(init_image).convert("RGB")
             init_image = init_image.resize((width, height))
 
+            def combined_callback(i, t, callback_kwargs):
+                nonlocal stop_idx
+                if stop_signal and stop_idx is None:
+                    stop_idx = i
+                if i == stop_idx:
+                    pipe._interrupt = True
+                progress((i + 1) / num_inference_steps, f"Step {i + 1}/{num_inference_steps}")
+                return callback_kwargs
+
             image = pipe(
                 prompt=prompt,
                 image=init_image,
@@ -5791,6 +6107,7 @@ def generate_image_flux_img2img(prompt, init_image, model_name, quantize_model_n
                 guidance_scale=guidance_scale,
                 generator=generator,
                 max_sequence_length=max_sequence_length,
+                callback_on_step_end=combined_callback
             ).images[0]
 
             today = datetime.now().date()
@@ -5823,8 +6140,12 @@ def generate_image_flux_img2img(prompt, init_image, model_name, quantize_model_n
             flush()
 
 
-def generate_image_flux_inpaint(prompt, init_image, mask_image, model_name, seed, num_inference_steps, strength, guidance_scale,
-                                max_sequence_length, output_format):
+def generate_image_flux_inpaint(prompt, init_image, mask_image, model_name, seed, stop_button, num_inference_steps, strength, guidance_scale,
+                                max_sequence_length, output_format, progress=gr.Progress()):
+    global stop_signal
+    stop_signal = False
+    stop_idx = None
+
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
     if not init_image or not mask_image:
@@ -5851,6 +6172,15 @@ def generate_image_flux_inpaint(prompt, init_image, mask_image, model_name, seed
         init_image = Image.open(init_image).convert("RGB")
         mask_image = Image.open(mask_image).convert("L")
 
+        def combined_callback(i, t, callback_kwargs):
+            nonlocal stop_idx
+            if stop_signal and stop_idx is None:
+                stop_idx = i
+            if i == stop_idx:
+                pipe._interrupt = True
+            progress((i + 1) / num_inference_steps, f"Step {i + 1}/{num_inference_steps}")
+            return callback_kwargs
+
         image = pipe(
             prompt=prompt,
             image=init_image,
@@ -5860,6 +6190,7 @@ def generate_image_flux_inpaint(prompt, init_image, mask_image, model_name, seed
             guidance_scale=guidance_scale,
             generator=generator,
             max_sequence_length=max_sequence_length,
+            callback_on_step_end=combined_callback
         ).images[0]
 
         today = datetime.now().date()
@@ -5892,8 +6223,12 @@ def generate_image_flux_inpaint(prompt, init_image, mask_image, model_name, seed
         flush()
 
 
-def generate_image_flux_controlnet(prompt, init_image, base_model_name, seed, control_mode, controlnet_conditioning_scale, num_inference_steps,
-                                   guidance_scale, width, height, max_sequence_length, output_format):
+def generate_image_flux_controlnet(prompt, init_image, base_model_name, seed, stop_button, control_mode, controlnet_conditioning_scale, num_inference_steps,
+                                   guidance_scale, width, height, max_sequence_length, output_format, progress=gr.Progress()):
+    global stop_signal
+    stop_signal = False
+    stop_idx = None
+
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
     if not init_image:
@@ -5928,6 +6263,15 @@ def generate_image_flux_controlnet(prompt, init_image, base_model_name, seed, co
 
         init_image = Image.open(init_image).convert("RGB")
 
+        def combined_callback(i, t, callback_kwargs):
+            nonlocal stop_idx
+            if stop_signal and stop_idx is None:
+                stop_idx = i
+            if i == stop_idx:
+                pipe._interrupt = True
+            progress((i + 1) / num_inference_steps, f"Step {i + 1}/{num_inference_steps}")
+            return callback_kwargs
+
         image = pipe(
             prompt=prompt,
             control_image=init_image,
@@ -5939,6 +6283,7 @@ def generate_image_flux_controlnet(prompt, init_image, base_model_name, seed, co
             guidance_scale=guidance_scale,
             generator=generator,
             max_sequence_length=max_sequence_length,
+            callback_on_step_end=combined_callback
         ).images[0]
 
         today = datetime.now().date()
@@ -9641,9 +9986,18 @@ controlnet_interface = gr.Interface(
         gr.Textbox(label=_("Enter your negative prompt", lang), value=""),
         gr.Image(label=_("Initial image", lang), type="filepath"),
         gr.Radio(choices=["SD", "SDXL"], label=_("Select model type", lang), value="SD"),
+        gr.Dropdown(choices=[
+            "EulerDiscreteScheduler", "DPMSolverSinglestepScheduler", "DPMSolverMultistepScheduler",
+            "EDMDPMSolverMultistepScheduler", "EDMEulerScheduler", "KDPM2DiscreteScheduler",
+            "KDPM2AncestralDiscreteScheduler", "EulerAncestralDiscreteScheduler",
+            "HeunDiscreteScheduler", "LMSDiscreteScheduler", "DEISMultistepScheduler",
+            "UniPCMultistepScheduler", "LCMScheduler", "DPMSolverSDEScheduler",
+            "TCDScheduler", "DDIMScheduler", "DDPMScheduler"
+        ], label=_("Select scheduler", lang), value="EulerDiscreteScheduler"),
         gr.Dropdown(choices=stable_diffusion_models_list, label=_("Select StableDiffusion model", lang), value=None),
         gr.Dropdown(choices=controlnet_models_list, label=_("Select ControlNet model", lang), value=None),
-        gr.Textbox(label=_("Seed (optional)", lang), value="")
+        gr.Textbox(label=_("Seed (optional)", lang), value=""),
+        gr.Button(value=_("Stop generation", lang), interactive=True, variant="stop")
     ],
     additional_inputs=[
         gr.Slider(minimum=1, maximum=100, value=30, step=1, label=_("Steps", lang)),
@@ -9761,9 +10115,18 @@ inpaint_interface = gr.Interface(
         gr.ImageEditor(label=_("Mask image", lang), type="filepath"),
         gr.Slider(minimum=0, maximum=100, value=0, step=1, label=_("Mask Blur Factor", lang)),
         gr.Radio(choices=["SD", "SD2", "SDXL"], label=_("Select model type", lang), value="SD"),
+        gr.Dropdown(choices=[
+            "EulerDiscreteScheduler", "DPMSolverSinglestepScheduler", "DPMSolverMultistepScheduler",
+            "EDMDPMSolverMultistepScheduler", "EDMEulerScheduler", "KDPM2DiscreteScheduler",
+            "KDPM2AncestralDiscreteScheduler", "EulerAncestralDiscreteScheduler",
+            "HeunDiscreteScheduler", "LMSDiscreteScheduler", "DEISMultistepScheduler",
+            "UniPCMultistepScheduler", "LCMScheduler", "DPMSolverSDEScheduler",
+            "TCDScheduler", "DDIMScheduler", "DDPMScheduler"
+        ], label=_("Select scheduler", lang), value="EulerDiscreteScheduler"),
         gr.Dropdown(choices=inpaint_models_list, label=_("Select Inpaint model", lang), value=None),
         gr.Dropdown(choices=vae_models_list, label=_("Select VAE model (optional)", lang), value=None),
-        gr.Textbox(label=_("Seed (optional)", lang), value="")
+        gr.Textbox(label=_("Seed (optional)", lang), value=""),
+        gr.Button(value=_("Stop generation", lang), interactive=True, variant="stop")
     ],
     additional_inputs=[
         gr.Slider(minimum=1, maximum=100, value=30, step=1, label=_("Steps", lang)),
@@ -10050,7 +10413,8 @@ sd3_txt2img_interface = gr.Interface(
         gr.Radio(choices=["Diffusers", "Safetensors"], label=_("Select model type", lang), value="Diffusers"),
         gr.Dropdown(choices=stable_diffusion_models_list, label=_("Select StableDiffusion model", lang), value=None),
         gr.Checkbox(label=_("Enable Quantize", lang), value=False),
-        gr.Textbox(label=_("Seed (optional)", lang), value="")
+        gr.Textbox(label=_("Seed (optional)", lang), value=""),
+        gr.Button(value=_("Stop generation", lang), interactive=True, variant="stop")
     ],
     additional_inputs=[
         gr.Dropdown(choices=lora_models_list, label=_("Select LORA models (optional)", lang), value=None, multiselect=True),
@@ -10089,7 +10453,8 @@ sd3_img2img_interface = gr.Interface(
         gr.Radio(choices=["Diffusers", "Safetensors"], label=_("Select model type", lang), value="Diffusers"),
         gr.Dropdown(choices=stable_diffusion_models_list, label=_("Select StableDiffusion model", lang), value=None),
         gr.Checkbox(label=_("Enable Quantize", lang), value=False),
-        gr.Textbox(label=_("Seed (optional)", lang), value="")
+        gr.Textbox(label=_("Seed (optional)", lang), value=""),
+        gr.Button(value=_("Stop generation", lang), interactive=True, variant="stop")
     ],
     additional_inputs=[
         gr.Slider(minimum=1, maximum=100, value=40, step=1, label=_("Steps", lang)),
@@ -10123,7 +10488,8 @@ sd3_controlnet_interface = gr.Interface(
         gr.Textbox(label=_("Enter your negative prompt", lang), value=""),
         gr.Image(label=_("Initial image", lang), type="filepath"),
         gr.Dropdown(choices=["Pose", "Canny"], label=_("Select ControlNet model", lang), value="Pose"),
-        gr.Textbox(label=_("Seed (optional)", lang), value="")
+        gr.Textbox(label=_("Seed (optional)", lang), value=""),
+        gr.Button(value=_("Stop generation", lang), interactive=True, variant="stop")
     ],
     additional_inputs=[
         gr.Slider(minimum=1, maximum=100, value=40, step=1, label=_("Steps", lang)),
@@ -10159,7 +10525,8 @@ sd3_inpaint_interface = gr.Interface(
         gr.Textbox(label=_("Enter your negative prompt", lang), value=""),
         gr.Image(label=_("Initial image", lang), type="filepath"),
         gr.ImageEditor(label=_("Mask image", lang), type="filepath"),
-        gr.Textbox(label=_("Seed (optional)", lang), value="")
+        gr.Textbox(label=_("Seed (optional)", lang), value=""),
+        gr.Button(value=_("Stop generation", lang), interactive=True, variant="stop")
     ],
     additional_inputs=[
         gr.Slider(minimum=1, maximum=100, value=40, step=1, label=_("Steps", lang)),
@@ -10456,7 +10823,8 @@ flux_txt2img_interface = gr.Interface(
         gr.Dropdown(choices=["FLUX.1-schnell", "FLUX.1-dev"], label=_("Select Flux model", lang), value="FLUX.1-schnell"),
         gr.Dropdown(choices=quantized_flux_models_list, label=_("Select quantized Flux model (optional if enabled quantize)", lang), value=None),
         gr.Checkbox(label=_("Enable Quantize", lang), value=False),
-        gr.Textbox(label=_("Seed (optional)", lang), value="")
+        gr.Textbox(label=_("Seed (optional)", lang), value=""),
+        gr.Button(value=_("Stop generation", lang), interactive=True, variant="stop")
     ],
     additional_inputs=[
         gr.Dropdown(choices=flux_lora_models_list, label=_("Select LORA models (optional)", lang), value=None, multiselect=True),
@@ -10493,7 +10861,8 @@ flux_img2img_interface = gr.Interface(
         gr.Dropdown(choices=quantized_flux_models_list,
                     label=_("Select quantized Flux model (optional if enabled quantize)", lang), value=None),
         gr.Checkbox(label=_("Enable Quantize", lang), value=False),
-        gr.Textbox(label=_("Seed (optional)", lang), value="")
+        gr.Textbox(label=_("Seed (optional)", lang), value=""),
+        gr.Button(value=_("Stop generation", lang), interactive=True, variant="stop")
     ],
     additional_inputs=[
         gr.Slider(minimum=1, maximum=100, value=4, step=1, label=_("Steps", lang)),
@@ -10527,7 +10896,8 @@ flux_inpaint_interface = gr.Interface(
         gr.ImageEditor(label=_("Mask image", lang), type="filepath"),
         gr.Dropdown(choices=["FLUX.1-schnell", "FLUX.1-dev"], label=_("Select Flux model", lang),
                     value="FLUX.1-schnell"),
-        gr.Textbox(label=_("Seed (optional)", lang), value="")
+        gr.Textbox(label=_("Seed (optional)", lang), value=""),
+        gr.Button(value=_("Stop generation", lang), interactive=True, variant="stop")
     ],
     additional_inputs=[
         gr.Slider(minimum=1, maximum=100, value=4, step=1, label=_("Steps", lang)),
@@ -10558,7 +10928,8 @@ flux_controlnet_interface = gr.Interface(
         gr.Image(label=_("Control image", lang), type="filepath"),
         gr.Dropdown(choices=["FLUX.1-schnell", "FLUX.1-dev"], label=_("Select Flux base model", lang),
                     value="FLUX.1-dev"),
-        gr.Textbox(label=_("Seed (optional)", lang), value="")
+        gr.Textbox(label=_("Seed (optional)", lang), value=""),
+        gr.Button(value=_("Stop generation", lang), interactive=True, variant="stop")
     ],
     additional_inputs=[
         gr.Slider(minimum=0, maximum=6, value=0, step=1, label=_("Control Mode", lang)),
@@ -11890,6 +12261,16 @@ with gr.TabbedInterface(
 ) as app:
     txt2img_interface.input_components[18].click(stop_generation, [], [], queue=False)
     img2img_interface.input_components[12].click(stop_generation, [], [], queue=False)
+    controlnet_interface.input_components[7].click(stop_generation, [], [], queue=False)
+    inpaint_interface.input_components[9].click(stop_generation, [], [], queue=False)
+    sd3_txt2img_interface.input_components[6].click(stop_generation, [], [], queue=False)
+    sd3_img2img_interface.input_components[8].click(stop_generation, [], [], queue=False)
+    sd3_controlnet_interface.input_components[5].click(stop_generation, [], [], queue=False)
+    sd3_inpaint_interface.input_components[5].click(stop_generation, [], [], queue=False)
+    flux_txt2img_interface.input_components[5].click(stop_generation, [], [], queue=False)
+    flux_img2img_interface.input_components[6].click(stop_generation, [], [], queue=False)
+    flux_inpaint_interface.input_components[5].click(stop_generation, [], [], queue=False)
+    flux_controlnet_interface.input_components[4].click(stop_generation, [], [], queue=False)
     modelscope_interface.input_components[3].click(stop_generation, [], [], queue=False)
     zeroscope2_interface.input_components[3].click(stop_generation, [], [], queue=False)
     cogvideox_text2video_interface.input_components[4].click(stop_generation, [], [], queue=False)
