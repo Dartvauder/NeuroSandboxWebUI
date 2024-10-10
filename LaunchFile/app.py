@@ -5590,7 +5590,10 @@ def generate_riffusion_audio2image(audio_path, output_format, progress=gr.Progre
         flush()
 
 
-def generate_image_kandinsky_txt2img(prompt, negative_prompt, version, seed, num_inference_steps, guidance_scale, height, width, output_format):
+def generate_image_kandinsky_txt2img(prompt, negative_prompt, version, seed, stop_button, num_inference_steps, guidance_scale, height, width, output_format, progress=gr.Progress()):
+    global stop_signal
+    stop_signal = False
+    stop_idx = None
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -5633,6 +5636,15 @@ def generate_image_kandinsky_txt2img(prompt, negative_prompt, version, seed, num
             pipe = KandinskyPipeline().KandinskyPipeline.from_pretrained(os.path.join(kandinsky_model_path, "2-1"))
             pipe.to(device)
 
+            def combined_callback_2_1(i, t, callback_kwargs):
+                nonlocal stop_idx
+                if stop_signal and stop_idx is None:
+                    stop_idx = i
+                if i == stop_idx:
+                    pipe._interrupt = True
+                progress((i + 1) / num_inference_steps, f"Step {i + 1}/{num_inference_steps}")
+                return callback_kwargs
+
             image = pipe(
                 prompt,
                 negative_prompt=negative_prompt,
@@ -5643,6 +5655,8 @@ def generate_image_kandinsky_txt2img(prompt, negative_prompt, version, seed, num
                 num_inference_steps=num_inference_steps,
                 guidance_scale=guidance_scale,
                 generator=generator,
+                callback=combined_callback_2_1,
+                callback_steps=1
             ).images[0]
 
         elif version == "2.2":
@@ -5655,6 +5669,15 @@ def generate_image_kandinsky_txt2img(prompt, negative_prompt, version, seed, num
             pipe = KandinskyV22Pipeline().KandinskyV22Pipeline.from_pretrained(os.path.join(kandinsky_model_path, "2-2-decoder"))
             pipe.to(device)
 
+            def combined_callback_2_2(i, t, callback_kwargs):
+                nonlocal stop_idx
+                if stop_signal and stop_idx is None:
+                    stop_idx = i
+                if i == stop_idx:
+                    pipe._interrupt = True
+                progress((i + 1) / num_inference_steps, f"Step {i + 1}/{num_inference_steps}")
+                return callback_kwargs
+
             image = pipe(
                 prompt=prompt,
                 negative_prompt=negative_prompt,
@@ -5665,6 +5688,7 @@ def generate_image_kandinsky_txt2img(prompt, negative_prompt, version, seed, num
                 num_inference_steps=num_inference_steps,
                 guidance_scale=guidance_scale,
                 generator=generator,
+                callback_on_step_end=combined_callback_2_2
             ).images[0]
 
         elif version == "3":
@@ -5675,6 +5699,15 @@ def generate_image_kandinsky_txt2img(prompt, negative_prompt, version, seed, num
             pipe.to(device)
             pipe.enable_model_cpu_offload()
 
+            def combined_callback_3_0(i, t, callback_kwargs):
+                nonlocal stop_idx
+                if stop_signal and stop_idx is None:
+                    stop_idx = i
+                if i == stop_idx:
+                    pipe._interrupt = True
+                progress((i + 1) / num_inference_steps, f"Step {i + 1}/{num_inference_steps}")
+                return callback_kwargs
+
             image = pipe(
                 prompt,
                 negative_prompt=negative_prompt,
@@ -5683,6 +5716,8 @@ def generate_image_kandinsky_txt2img(prompt, negative_prompt, version, seed, num
                 width=width,
                 guidance_scale=guidance_scale,
                 generator=generator,
+                callback=combined_callback_3_0,
+                callback_steps=1
             ).images[0]
 
         today = datetime.now().date()
@@ -5718,7 +5753,10 @@ def generate_image_kandinsky_txt2img(prompt, negative_prompt, version, seed, num
         flush()
 
 
-def generate_image_kandinsky_img2img(prompt, negative_prompt, init_image, version, seed, num_inference_steps, guidance_scale, strength, height, width, output_format):
+def generate_image_kandinsky_img2img(prompt, negative_prompt, init_image, version, seed, stop_button, num_inference_steps, guidance_scale, strength, height, width, output_format, progress=gr.Progress()):
+    global stop_signal
+    stop_signal = False
+    stop_idx = None
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -5766,6 +5804,15 @@ def generate_image_kandinsky_img2img(prompt, negative_prompt, init_image, versio
             init_image = Image.open(init_image).convert("RGB")
             init_image = init_image.resize((width, height))
 
+            def combined_callback_2_1(i, t, callback_kwargs):
+                nonlocal stop_idx
+                if stop_signal and stop_idx is None:
+                    stop_idx = i
+                if i == stop_idx:
+                    pipe._interrupt = True
+                progress((i + 1) / num_inference_steps, f"Step {i + 1}/{num_inference_steps}")
+                return callback_kwargs
+
             image = pipe(
                 prompt,
                 image=init_image,
@@ -5777,6 +5824,8 @@ def generate_image_kandinsky_img2img(prompt, negative_prompt, init_image, versio
                 guidance_scale=guidance_scale,
                 strength=strength,
                 generator=generator,
+                callback=combined_callback_2_1,
+                callback_steps=1
             ).images[0]
 
         elif version == "2.2":
@@ -5789,6 +5838,15 @@ def generate_image_kandinsky_img2img(prompt, negative_prompt, init_image, versio
             init_image = Image.open(init_image).convert("RGB")
             init_image = init_image.resize((width, height))
 
+            def combined_callback_2_2(i, t, callback_kwargs):
+                nonlocal stop_idx
+                if stop_signal and stop_idx is None:
+                    stop_idx = i
+                if i == stop_idx:
+                    pipe._interrupt = True
+                progress((i + 1) / num_inference_steps, f"Step {i + 1}/{num_inference_steps}")
+                return callback_kwargs
+
             image = pipe(
                 prompt=prompt,
                 negative_prompt=negative_prompt,
@@ -5797,6 +5855,8 @@ def generate_image_kandinsky_img2img(prompt, negative_prompt, init_image, versio
                 guidance_scale=guidance_scale,
                 strength=strength,
                 generator=generator,
+                callback=combined_callback_2_2,
+                callback_steps=1
             ).images[0]
 
         elif version == "3":
@@ -5809,6 +5869,15 @@ def generate_image_kandinsky_img2img(prompt, negative_prompt, init_image, versio
             init_image = Image.open(init_image).convert("RGB")
             init_image = init_image.resize((width, height))
 
+            def combined_callback_3_0(i, t, callback_kwargs):
+                nonlocal stop_idx
+                if stop_signal and stop_idx is None:
+                    stop_idx = i
+                if i == stop_idx:
+                    pipe._interrupt = True
+                progress((i + 1) / num_inference_steps, f"Step {i + 1}/{num_inference_steps}")
+                return callback_kwargs
+
             image = pipe(
                 prompt,
                 negative_prompt=negative_prompt,
@@ -5817,6 +5886,8 @@ def generate_image_kandinsky_img2img(prompt, negative_prompt, init_image, versio
                 guidance_scale=guidance_scale,
                 strength=strength,
                 generator=generator,
+                callback=combined_callback_3_0,
+                callback_steps=1
             ).images[0]
 
         today = datetime.now().date()
@@ -5840,7 +5911,10 @@ def generate_image_kandinsky_img2img(prompt, negative_prompt, init_image, versio
         flush()
 
 
-def generate_image_kandinsky_inpaint(prompt, negative_prompt, init_image, mask_image, version, num_inference_steps, guidance_scale, strength, height, width, output_format):
+def generate_image_kandinsky_inpaint(prompt, negative_prompt, init_image, mask_image, version, stop_button, num_inference_steps, guidance_scale, strength, height, width, output_format, progress=gr.Progress()):
+    global stop_signal
+    stop_signal = False
+    stop_idx = None
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -5883,6 +5957,15 @@ def generate_image_kandinsky_inpaint(prompt, negative_prompt, init_image, mask_i
         mask_image = Image.open(mask_image).convert("L")
         mask_image = mask_image.resize((width, height))
 
+        def combined_callback_2_1_and_2_2(i, t, callback_kwargs):
+            nonlocal stop_idx
+            if stop_signal and stop_idx is None:
+                stop_idx = i
+            if i == stop_idx:
+                pipe._interrupt = True
+            progress((i + 1) / num_inference_steps, f"Step {i + 1}/{num_inference_steps}")
+            return callback_kwargs
+
         image = pipe(
             prompt=prompt,
             negative_prompt=negative_prompt,
@@ -5891,6 +5974,8 @@ def generate_image_kandinsky_inpaint(prompt, negative_prompt, init_image, mask_i
             num_inference_steps=num_inference_steps,
             guidance_scale=guidance_scale,
             strength=strength,
+            callback=combined_callback_2_1_and_2_2,
+            callback_steps=1
         ).images[0]
 
         today = datetime.now().date()
@@ -10770,7 +10855,8 @@ kandinsky_txt2img_interface = gr.Interface(
         gr.Textbox(label=_("Enter your prompt", lang)),
         gr.Textbox(label=_("Enter your negative prompt", lang), value=""),
         gr.Radio(choices=["2.1", "2.2", "3"], label=_("Kandinsky Version", lang), value="2.2"),
-        gr.Textbox(label=_("Seed (optional)", lang), value="")
+        gr.Textbox(label=_("Seed (optional)", lang), value=""),
+        gr.Button(value=_("Stop generation", lang), interactive=True, variant="stop")
     ],
     additional_inputs=[
         gr.Slider(minimum=1, maximum=100, value=50, step=1, label=_("Steps", lang)),
@@ -10801,7 +10887,8 @@ kandinsky_img2img_interface = gr.Interface(
         gr.Textbox(label=_("Enter your negative prompt", lang), value=""),
         gr.Image(label=_("Initial image", lang), type="filepath"),
         gr.Radio(choices=["2.1", "2.2", "3"], label=_("Kandinsky Version", lang), value="2.2"),
-        gr.Textbox(label=_("Seed (optional)", lang), value="")
+        gr.Textbox(label=_("Seed (optional)", lang), value=""),
+        gr.Button(value=_("Stop generation", lang), interactive=True, variant="stop")
     ],
     additional_inputs=[
         gr.Slider(minimum=1, maximum=100, value=50, step=1, label=_("Steps", lang)),
@@ -10834,6 +10921,7 @@ kandinsky_inpaint_interface = gr.Interface(
         gr.Image(label=_("Initial image", lang), type="filepath"),
         gr.ImageEditor(label=_("Mask image", lang), type="filepath"),
         gr.Radio(choices=["2.1", "2.2"], label=_("Kandinsky Version", lang), value="2.2"),
+        gr.Button(value=_("Stop generation", lang), interactive=True, variant="stop")
     ],
     additional_inputs=[
         gr.Slider(minimum=1, maximum=100, value=50, step=1, label=_("Steps", lang)),
@@ -12316,6 +12404,9 @@ with gr.TabbedInterface(
     sd3_img2img_interface.input_components[8].click(stop_generation, [], [], queue=False)
     sd3_controlnet_interface.input_components[5].click(stop_generation, [], [], queue=False)
     sd3_inpaint_interface.input_components[5].click(stop_generation, [], [], queue=False)
+    kandinsky_txt2img_interface.input_components[4].click(stop_generation, [], [], queue=False)
+    kandinsky_img2img_interface.input_components[5].click(stop_generation, [], [], queue=False)
+    kandinsky_inpaint_interface.input_components[5].click(stop_generation, [], [], queue=False)
     flux_txt2img_interface.input_components[5].click(stop_generation, [], [], queue=False)
     flux_img2img_interface.input_components[6].click(stop_generation, [], [], queue=False)
     flux_inpaint_interface.input_components[5].click(stop_generation, [], [], queue=False)
