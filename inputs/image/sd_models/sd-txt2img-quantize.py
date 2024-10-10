@@ -22,6 +22,7 @@ def generate_images(params):
         width=params['width'],
         sample_steps=params['sample_steps'],
         seed=params['seed'],
+        progress_callback=params['progress_callback'],
         sample_method="euler"
     )
 
