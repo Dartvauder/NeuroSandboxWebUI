@@ -1055,8 +1055,10 @@ def get_languages():
 
 def generate_text_and_speech(input_text, system_prompt, input_audio, llm_model_type, llm_model_name, llm_lora_model_name, selected_chat_file, enable_web_search, enable_libretranslate, target_lang, enable_openparse, pdf_file, enable_multimodal, input_image, input_video, input_audio_mm, enable_tts,
                              llm_settings_html, max_new_tokens, max_length, min_length, n_ctx, n_batch, n_ubatch, freq_base, freq_scale, temperature, top_p, min_p, typical_p, top_k,
-                             do_sample, early_stopping, stopping, repetition_penalty, frequency_penalty, presence_penalty, length_penalty, no_repeat_ngram_size, num_beams, num_return_sequences, chat_history_format, tts_settings_html, speaker_wav, language, tts_temperature, tts_top_p, tts_top_k, tts_speed, tts_repetition_penalty, tts_length_penalty, output_format):
-    global chat_history, chat_dir, tts_model, whisper_model
+                             do_sample, early_stopping, stopping, repetition_penalty, frequency_penalty, presence_penalty, length_penalty, no_repeat_ngram_size, num_beams, num_return_sequences, chat_history_format, tts_settings_html, speaker_wav, language, tts_temperature, tts_top_p, tts_top_k, tts_speed, tts_repetition_penalty, tts_length_penalty, output_format, chat_history_state):
+    global chat_dir, tts_model, whisper_model
+
+    chat_history = chat_history_state
 
     if selected_chat_file:
         chat_dir = os.path.dirname(selected_chat_file)
@@ -1091,7 +1093,7 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, llm_model_t
         else:
             gr.Info(f"Unsupported file format: {file_extension}")
 
-        yield chat_history, None, chat_dir
+        yield chat_history_state, None, chat_dir
     elif 'chat_history' not in globals() or chat_history is None:
         chat_history = []
 
@@ -1173,7 +1175,7 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, llm_model_t
 
                 for token in llm.create_chat_completion(messages=messages):
                     chat_history[-1][1] += token
-                    yield chat_history, None, None
+                    yield chat_history_state, None, None
 
             except Exception as e:
                 gr.Error(f"An error occurred: {str(e)}")
@@ -1209,7 +1211,7 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, llm_model_t
 
                 for token in model.answer_question(enc_image, prompt_with_context, tokenizer):
                     chat_history[-1][1] += token
-                    yield chat_history, None, None
+                    yield chat_history_state, None, None
 
             except Exception as e:
                 gr.Error(f"An error occurred: {str(e)}")
@@ -1264,7 +1266,7 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, llm_model_t
 
                 response = processor.decode(output[0][2:], skip_special_tokens=True)
                 chat_history[-1][1] = response
-                yield chat_history, None, None
+                yield chat_history_state, None, None
 
             except Exception as e:
                 gr.Error(f"An error occurred: {str(e)}")
@@ -1286,7 +1288,7 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, llm_model_t
                 if not chat_history or chat_history[-1][1] is not None:
                     chat_history.append([prompt, ""])
                 chat_history[-1][1] = response
-                yield chat_history, None, None
+                yield chat_history_state, None, None
             except Exception as e:
                 gr.Error(f"An error occurred: {str(e)}")
             finally:
@@ -1378,7 +1380,7 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, llm_model_t
                     for new_text in streamer:
                         text += new_text
                         chat_history[-1][1] = text
-                        yield chat_history, None, None
+                        yield chat_history_state, None, None
 
                     thread.join()
 
@@ -1411,7 +1413,7 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, llm_model_t
 
                         chat_history[-1][1] = text
 
-                        yield chat_history, None, None
+                        yield chat_history_state, None, None
 
                 elif llm_model_type == "ExLlamaV2":
                     text = ""
@@ -1436,7 +1438,7 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, llm_model_t
                     for token in generator.generate_simple(full_prompt, settings, max_new_tokens):
                         text += token['choices'][0]['text']
                         chat_history[-1][1] = text
-                        yield chat_history, None, None
+                        yield chat_history_state, None, None
 
                 if enable_libretranslate:
                     try:
@@ -1501,7 +1503,7 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, llm_model_t
         else:
             chat_history.append([prompt, text])
 
-        yield chat_history, audio_path, chat_dir
+        yield chat_history_state, audio_path, chat_dir
 
 
 def generate_tts_stt(text, audio, tts_settings_html, speaker_wav, language, tts_temperature, tts_top_p, tts_top_k, tts_speed, tts_repetition_penalty, tts_length_penalty, tts_output_format, stt_output_format):
@@ -8984,11 +8986,12 @@ chat_interface = gr.Interface(
         gr.Slider(minimum=0.5, maximum=2.0, value=1.0, step=0.1, label=_("TTS Speed", lang), interactive=True),
         gr.Slider(minimum=0.1, maximum=2.0, value=2.0, step=0.1, label=_("TTS Repetition penalty", lang), interactive=True),
         gr.Slider(minimum=0.1, maximum=2.0, value=1.0, step=0.1, label=_("TTS Length penalty", lang), interactive=True),
-        gr.Radio(choices=["wav", "mp3", "ogg"], label=_("Select output format", lang), value="wav", interactive=True)
+        gr.Radio(choices=["wav", "mp3", "ogg"], label=_("Select output format", lang), value="wav", interactive=True),
+        gr.State([])
     ],
     additional_inputs_accordion=gr.Accordion(label=_("LLM and TTS Settings", lang), open=False),
     outputs=[
-        gr.Chatbot(label=_("LLM text response", lang), value=[], avatar_images=[avatar_user, avatar_ai], show_copy_button=True),
+        gr.Chatbot(label=_("LLM text response", lang), avatar_images=[avatar_user, avatar_ai], show_copy_button=True),
         gr.Audio(label=_("LLM audio response", lang), type="filepath"),
         gr.Textbox(label=_("Message", lang))
     ],
