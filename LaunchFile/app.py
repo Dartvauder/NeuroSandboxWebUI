@@ -2955,7 +2955,7 @@ def generate_image_pix2pix(prompt, negative_prompt, init_image, seed, num_infere
         flush()
 
 
-def generate_image_controlnet(prompt, negative_prompt, init_image, sd_version, stable_diffusion_model_name, controlnet_model_name, seed, stop_button,
+def generate_image_controlnet(prompt, negative_prompt, init_image, sd_version, stable_diffusion_scheduler, stable_diffusion_model_name, controlnet_model_name, seed, stop_button,
                               num_inference_steps, guidance_scale, width, height, controlnet_conditioning_scale, clip_skip, num_images_per_prompt, output_format, progress=gr.Progress()):
     global stop_signal
     stop_signal = False
@@ -3026,6 +3026,64 @@ def generate_image_controlnet(prompt, negative_prompt, init_image, sd_version, s
             pipe.text_encoder.to(device)
             pipe.vae.to(device)
             pipe.unet.to(device)
+
+            try:
+                if stable_diffusion_scheduler == "EulerDiscreteScheduler":
+                    pipe.scheduler = EulerDiscreteScheduler().EulerDiscreteScheduler.from_config(
+                        pipe.scheduler.config)
+                elif stable_diffusion_scheduler == "DPMSolverSinglestepScheduler":
+                    pipe.scheduler = DPMSolverSinglestepScheduler().DPMSolverSinglestepScheduler.from_config(
+                        pipe.scheduler.config)
+                elif stable_diffusion_scheduler == "DPMSolverMultistepScheduler":
+                    pipe.scheduler = DPMSolverMultistepScheduler().DPMSolverMultistepScheduler.from_config(
+                        pipe.scheduler.config)
+                elif stable_diffusion_scheduler == "EDMDPMSolverMultistepScheduler":
+                    pipe.scheduler = EDMDPMSolverMultistepScheduler().EDMDPMSolverMultistepScheduler.from_config(
+                        pipe.scheduler.config)
+                elif stable_diffusion_scheduler == "EDMEulerScheduler":
+                    pipe.scheduler = EDMEulerScheduler().EDMEulerScheduler.from_config(
+                        pipe.scheduler.config)
+                elif stable_diffusion_scheduler == "KDPM2DiscreteScheduler":
+                    pipe.scheduler = KDPM2DiscreteScheduler().KDPM2DiscreteScheduler.from_config(
+                        pipe.scheduler.config)
+                elif stable_diffusion_scheduler == "KDPM2AncestralDiscreteScheduler":
+                    pipe.scheduler = KDPM2AncestralDiscreteScheduler().KDPM2AncestralDiscreteScheduler.from_config(
+                        pipe.scheduler.config)
+                elif stable_diffusion_scheduler == "EulerAncestralDiscreteScheduler":
+                    pipe.scheduler = EulerAncestralDiscreteScheduler().EulerAncestralDiscreteScheduler.from_config(
+                        pipe.scheduler.config)
+                elif stable_diffusion_scheduler == "HeunDiscreteScheduler":
+                    pipe.scheduler = HeunDiscreteScheduler().HeunDiscreteScheduler.from_config(
+                        pipe.scheduler.config)
+                elif stable_diffusion_scheduler == "LMSDiscreteScheduler":
+                    pipe.scheduler = LMSDiscreteScheduler().LMSDiscreteScheduler.from_config(
+                        pipe.scheduler.config)
+                elif stable_diffusion_scheduler == "DEISMultistepScheduler":
+                    pipe.scheduler = DEISMultistepScheduler().DEISMultistepScheduler.from_config(
+                        pipe.scheduler.config)
+                elif stable_diffusion_scheduler == "UniPCMultistepScheduler":
+                    pipe.scheduler = UniPCMultistepScheduler().UniPCMultistepScheduler.from_config(
+                        pipe.scheduler.config)
+                elif stable_diffusion_scheduler == "LCMScheduler":
+                    pipe.scheduler = LCMScheduler().LCMScheduler.from_config(
+                        pipe.scheduler.config)
+                elif stable_diffusion_scheduler == "DPMSolverSDEScheduler":
+                    pipe.scheduler = DPMSolverSDEScheduler().DPMSolverSDEScheduler.from_config(
+                        pipe.scheduler.config)
+                elif stable_diffusion_scheduler == "TCDScheduler":
+                    pipe.scheduler = TCDScheduler().TCDScheduler.from_config(
+                        pipe.scheduler.config)
+                elif stable_diffusion_scheduler == "DDIMScheduler":
+                    pipe.scheduler = DDIMScheduler().DDIMScheduler.from_config(
+                        pipe.scheduler.config)
+                elif stable_diffusion_scheduler == "DDPMScheduler":
+                    pipe.scheduler = DDPMScheduler().DDPMScheduler.from_config(
+                        pipe.scheduler.config)
+
+                gr.Info(f"Scheduler successfully set to {stable_diffusion_scheduler}")
+            except Exception as e:
+                gr.Error(f"Error initializing scheduler: {e}")
+                gr.Info("Using default scheduler")
 
             pipe.enable_vae_slicing()
             pipe.enable_vae_tiling()
@@ -3102,6 +3160,64 @@ def generate_image_controlnet(prompt, negative_prompt, init_image, sd_version, s
             pipe.text_encoder.to(device)
             pipe.vae.to(device)
             pipe.unet.to(device)
+
+            try:
+                if stable_diffusion_scheduler == "EulerDiscreteScheduler":
+                    pipe.scheduler = EulerDiscreteScheduler().EulerDiscreteScheduler.from_config(
+                        pipe.scheduler.config)
+                elif stable_diffusion_scheduler == "DPMSolverSinglestepScheduler":
+                    pipe.scheduler = DPMSolverSinglestepScheduler().DPMSolverSinglestepScheduler.from_config(
+                        pipe.scheduler.config)
+                elif stable_diffusion_scheduler == "DPMSolverMultistepScheduler":
+                    pipe.scheduler = DPMSolverMultistepScheduler().DPMSolverMultistepScheduler.from_config(
+                        pipe.scheduler.config)
+                elif stable_diffusion_scheduler == "EDMDPMSolverMultistepScheduler":
+                    pipe.scheduler = EDMDPMSolverMultistepScheduler().EDMDPMSolverMultistepScheduler.from_config(
+                        pipe.scheduler.config)
+                elif stable_diffusion_scheduler == "EDMEulerScheduler":
+                    pipe.scheduler = EDMEulerScheduler().EDMEulerScheduler.from_config(
+                        pipe.scheduler.config)
+                elif stable_diffusion_scheduler == "KDPM2DiscreteScheduler":
+                    pipe.scheduler = KDPM2DiscreteScheduler().KDPM2DiscreteScheduler.from_config(
+                        pipe.scheduler.config)
+                elif stable_diffusion_scheduler == "KDPM2AncestralDiscreteScheduler":
+                    pipe.scheduler = KDPM2AncestralDiscreteScheduler().KDPM2AncestralDiscreteScheduler.from_config(
+                        pipe.scheduler.config)
+                elif stable_diffusion_scheduler == "EulerAncestralDiscreteScheduler":
+                    pipe.scheduler = EulerAncestralDiscreteScheduler().EulerAncestralDiscreteScheduler.from_config(
+                        pipe.scheduler.config)
+                elif stable_diffusion_scheduler == "HeunDiscreteScheduler":
+                    pipe.scheduler = HeunDiscreteScheduler().HeunDiscreteScheduler.from_config(
+                        pipe.scheduler.config)
+                elif stable_diffusion_scheduler == "LMSDiscreteScheduler":
+                    pipe.scheduler = LMSDiscreteScheduler().LMSDiscreteScheduler.from_config(
+                        pipe.scheduler.config)
+                elif stable_diffusion_scheduler == "DEISMultistepScheduler":
+                    pipe.scheduler = DEISMultistepScheduler().DEISMultistepScheduler.from_config(
+                        pipe.scheduler.config)
+                elif stable_diffusion_scheduler == "UniPCMultistepScheduler":
+                    pipe.scheduler = UniPCMultistepScheduler().UniPCMultistepScheduler.from_config(
+                        pipe.scheduler.config)
+                elif stable_diffusion_scheduler == "LCMScheduler":
+                    pipe.scheduler = LCMScheduler().LCMScheduler.from_config(
+                        pipe.scheduler.config)
+                elif stable_diffusion_scheduler == "DPMSolverSDEScheduler":
+                    pipe.scheduler = DPMSolverSDEScheduler().DPMSolverSDEScheduler.from_config(
+                        pipe.scheduler.config)
+                elif stable_diffusion_scheduler == "TCDScheduler":
+                    pipe.scheduler = TCDScheduler().TCDScheduler.from_config(
+                        pipe.scheduler.config)
+                elif stable_diffusion_scheduler == "DDIMScheduler":
+                    pipe.scheduler = DDIMScheduler().DDIMScheduler.from_config(
+                        pipe.scheduler.config)
+                elif stable_diffusion_scheduler == "DDPMScheduler":
+                    pipe.scheduler = DDPMScheduler().DDPMScheduler.from_config(
+                        pipe.scheduler.config)
+
+                gr.Info(f"Scheduler successfully set to {stable_diffusion_scheduler}")
+            except Exception as e:
+                gr.Error(f"Error initializing scheduler: {e}")
+                gr.Info("Using default scheduler")
 
             pipe.enable_vae_slicing()
             pipe.enable_vae_tiling()
@@ -9870,6 +9986,14 @@ controlnet_interface = gr.Interface(
         gr.Textbox(label=_("Enter your negative prompt", lang), value=""),
         gr.Image(label=_("Initial image", lang), type="filepath"),
         gr.Radio(choices=["SD", "SDXL"], label=_("Select model type", lang), value="SD"),
+        gr.Dropdown(choices=[
+            "EulerDiscreteScheduler", "DPMSolverSinglestepScheduler", "DPMSolverMultistepScheduler",
+            "EDMDPMSolverMultistepScheduler", "EDMEulerScheduler", "KDPM2DiscreteScheduler",
+            "KDPM2AncestralDiscreteScheduler", "EulerAncestralDiscreteScheduler",
+            "HeunDiscreteScheduler", "LMSDiscreteScheduler", "DEISMultistepScheduler",
+            "UniPCMultistepScheduler", "LCMScheduler", "DPMSolverSDEScheduler",
+            "TCDScheduler", "DDIMScheduler", "DDPMScheduler"
+        ], label=_("Select scheduler", lang), value="EulerDiscreteScheduler"),
         gr.Dropdown(choices=stable_diffusion_models_list, label=_("Select StableDiffusion model", lang), value=None),
         gr.Dropdown(choices=controlnet_models_list, label=_("Select ControlNet model", lang), value=None),
         gr.Textbox(label=_("Seed (optional)", lang), value=""),
