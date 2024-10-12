@@ -7935,6 +7935,7 @@ def generate_wav2lip(image_path, audio_path, fps, pads, face_det_batch_size, wav
 
     if not image_path or not audio_path:
         gr.Info("Please upload an image and an audio file!")
+        return None, None
 
     try:
         progress(0.1, desc="Initializing Wav2Lip")
@@ -7973,6 +7974,7 @@ def generate_wav2lip(image_path, audio_path, fps, pads, face_det_batch_size, wav
 
     except Exception as e:
         gr.Error(f"An error occurred: {str(e)}")
+        return None, None
 
     finally:
         flush()
@@ -7981,6 +7983,7 @@ def generate_wav2lip(image_path, audio_path, fps, pads, face_det_batch_size, wav
 def generate_liveportrait(source_image, driving_video, output_format, progress=gr.Progress()):
     if not source_image or not driving_video:
         gr.Info("Please upload both a source image and a driving video!")
+        return None, None
 
     liveportrait_model_path = os.path.join("ThirdPartyRepository", "LivePortrait", "pretrained_weights")
 
@@ -8013,12 +8016,14 @@ def generate_liveportrait(source_image, driving_video, output_format, progress=g
                          f.startswith(output_filename) and os.path.isdir(os.path.join(output_dir, f))]
         if not result_folder:
             gr.Info("Output folder not found")
+            return None, None
 
         result_folder = os.path.join(output_dir, result_folder[0])
 
         video_files = [f for f in os.listdir(result_folder) if f.endswith(f'.{output_format}') and 'concat' not in f]
         if not video_files:
             gr.Info("Output video not found")
+            return None, None
 
         output_video = os.path.join(result_folder, video_files[0])
 
@@ -8027,6 +8032,7 @@ def generate_liveportrait(source_image, driving_video, output_format, progress=g
 
     except Exception as e:
         gr.Error(f"An error occurred: {str(e)}")
+        return None, None
 
     finally:
         flush()
@@ -8108,6 +8114,7 @@ def generate_video_modelscope(prompt, negative_prompt, seed, stop_button, num_in
 
     except Exception as e:
         gr.Error(f"An error occurred: {str(e)}")
+        return None, None
 
     finally:
         del pipe
@@ -8149,6 +8156,7 @@ def generate_video_zeroscope2(prompt, video_to_enhance, seed, stop_button, stren
     if enable_video_enhance:
         if not video_to_enhance:
             gr.Info("Please upload a video to enhance.")
+            return None, None
 
         try:
             enhance_pipe = DiffusionPipeline().DiffusionPipeline.from_pretrained(enhance_model_path, torch_dtype=torch.float16)
@@ -8215,6 +8223,7 @@ def generate_video_zeroscope2(prompt, video_to_enhance, seed, stop_button, stren
 
         except Exception as e:
             gr.Error(f"An error occurred: {str(e)}")
+            return None, None
 
         finally:
             try:
@@ -8261,6 +8270,7 @@ def generate_video_zeroscope2(prompt, video_to_enhance, seed, stop_button, stren
 
         except Exception as e:
             gr.Error(f"An error occurred: {str(e)}")
+            return None, None
 
         finally:
             try:
@@ -8345,6 +8355,7 @@ def generate_video_cogvideox_text2video(prompt, negative_prompt, cogvideox_versi
 
     except Exception as e:
         gr.Error(f"An error occurred: {str(e)}")
+        return None, None
 
     finally:
         del pipe
@@ -8360,6 +8371,7 @@ def generate_video_cogvideox_image2video(prompt, negative_prompt, init_image, se
 
     if not init_image:
         gr.Info("Please, upload an initial image!")
+        return None, None
 
     if seed == "" or seed is None:
         seed = random.randint(0, 2 ** 32 - 1)
@@ -8405,6 +8417,7 @@ def generate_video_cogvideox_image2video(prompt, negative_prompt, init_image, se
 
     except Exception as e:
         gr.Error(f"An error occurred: {str(e)}")
+        return None, None
 
     finally:
         del pipe
@@ -8420,6 +8433,7 @@ def generate_video_cogvideox_video2video(prompt, negative_prompt, init_video, co
 
     if not init_video:
         gr.Info("Please, upload an initial video!")
+        return None, None
 
     if seed == "" or seed is None:
         seed = random.randint(0, 2 ** 32 - 1)
@@ -8474,6 +8488,7 @@ def generate_video_cogvideox_video2video(prompt, negative_prompt, init_video, co
 
     except Exception as e:
         gr.Error(f"An error occurred: {str(e)}")
+        return None, None
 
     finally:
         del pipe
@@ -8551,6 +8566,7 @@ def generate_video_latte(prompt, negative_prompt, seed, stop_button, num_inferen
 
     except Exception as e:
         gr.Error(f"An error occurred: {str(e)}")
+        return None, None
 
     finally:
         del pipe
@@ -8561,6 +8577,7 @@ def generate_3d_stablefast3d(image, texture_resolution, foreground_ratio, remesh
 
     if not image:
         gr.Info("Please upload an image!")
+        return None, None
 
     try:
         progress(0.1, desc="Preparing output directory")
@@ -8581,6 +8598,7 @@ def generate_3d_stablefast3d(image, texture_resolution, foreground_ratio, remesh
 
     except Exception as e:
         gr.Error(f"An error occurred: {str(e)}")
+        return None, None
 
     finally:
         flush()
@@ -8667,6 +8685,7 @@ def generate_3d_shap_e(prompt, init_image, seed, num_inference_steps, guidance_s
 
     except Exception as e:
         gr.Error(f"An error occurred: {str(e)}")
+        return None, None
 
     finally:
         del pipe
@@ -8676,6 +8695,7 @@ def generate_3d_shap_e(prompt, init_image, seed, num_inference_steps, guidance_s
 def generate_sv34d(input_file, version, elevation_deg, progress=gr.Progress()):
     if not input_file:
         gr.Info("Please upload an input file!")
+        return None, None
 
     model_files = {
         "3D-U": "https://huggingface.co/stabilityai/sv3d/resolve/main/sv3d_u.safetensors",
@@ -8699,6 +8719,7 @@ def generate_sv34d(input_file, version, elevation_deg, progress=gr.Progress()):
             gr.Info(f"SV34D {version} model downloaded")
         except Exception as e:
             gr.Error(f"An error occurred: {str(e)}")
+            return None, None
 
     progress(0.3, desc="Preparing output directory")
     today = datetime.now().date()
@@ -8712,19 +8733,23 @@ def generate_sv34d(input_file, version, elevation_deg, progress=gr.Progress()):
     if version in ["3D-U", "3D-P"]:
         if not input_file.lower().endswith(('.png', '.jpg', '.jpeg')):
             gr.Info("Please upload an image file for 3D-U or 3D-P version!")
+            return None, None
 
         if version == "3D-U":
             command = f"python ThirdPartyRepository/generative-models/scripts/sampling/simple_video_sample.py --input_path {input_file} --version sv3d_u --output_folder {output_dir}"
         else:
             if elevation_deg is None:
                 gr.Info("Please provide elevation degree for 3D-P version!")
+                return None, None
             command = f"python ThirdPartyRepository/generative-models/scripts/sampling/simple_video_sample.py --input_path {input_file} --version sv3d_p --elevations_deg {elevation_deg} --output_folder {output_dir}"
     elif version == "4D":
         if not input_file.lower().endswith('.mp4'):
             gr.Info("Please upload an MP4 video file for 4D version!")
+            return None, None
         command = f"python ThirdPartyRepository/generative-models/scripts/sampling/simple_video_sample_4d.py --input_path {input_file} --output_folder {output_dir}"
     else:
         gr.Info("Invalid version selected!")
+        return None, None
 
     try:
         progress(0.5, desc="Running SV34D")
@@ -8738,9 +8763,11 @@ def generate_sv34d(input_file, version, elevation_deg, progress=gr.Progress()):
 
     except subprocess.CalledProcessError as ee:
         gr.Error(f"An error occurred: {str(ee)}")
+        return None, None
 
     except Exception as e:
         gr.Error(f"An error occurred: {str(e)}")
+        return None, None
 
     finally:
         flush()
@@ -8749,6 +8776,7 @@ def generate_sv34d(input_file, version, elevation_deg, progress=gr.Progress()):
 def generate_3d_zero123plus(input_image, num_inference_steps, output_format, progress=gr.Progress()):
     if not input_image:
         gr.Info("Please upload an input image!")
+        return None, None
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -8790,6 +8818,7 @@ def generate_3d_zero123plus(input_image, num_inference_steps, output_format, pro
 
     except Exception as e:
         gr.Error(f"An error occurred: {str(e)}")
+        return None, None
 
     finally:
         del pipe
@@ -8878,6 +8907,7 @@ def generate_stableaudio(prompt, negative_prompt, seed, stop_button, num_inferen
 
     except Exception as e:
         gr.Error(f"An error occurred: {str(e)}")
+        return None, None, None
 
     finally:
         del pipe
@@ -8892,9 +8922,11 @@ def generate_audio_audiocraft(prompt, input_audio=None, model_name=None, model_t
     progress(0.1, desc="Initializing AudioCraft")
     if not model_name:
         gr.Info("Please, select an AudioCraft model!")
+        return None, None, None
 
     if enable_multiband and model_type in ["audiogen", "magnet"]:
         gr.Info("Multiband Diffusion is not supported with 'audiogen' or 'magnet' model types. Please select 'musicgen' or disable Multiband Diffusion")
+        return None, None, None
 
     if not audiocraft_model_path:
         progress(0.2, desc="Loading AudioCraft model")
@@ -8918,6 +8950,7 @@ def generate_audio_audiocraft(prompt, input_audio=None, model_name=None, model_t
             model = MAGNeT().MAGNeT.get_pretrained(audiocraft_model_path)
         else:
             gr.Info("Invalid model type!")
+            return None, None, None
 
         mbd = None
 
@@ -8950,6 +8983,7 @@ def generate_audio_audiocraft(prompt, input_audio=None, model_name=None, model_t
             wav = model.generate(descriptions)
         else:
             gr.Info(f"Unsupported model type: {model_type}")
+            return None, None, None
 
         progress(0.7, desc="Processing generated audio")
         if wav.ndim > 2:
@@ -9011,6 +9045,7 @@ def generate_audio_audiocraft(prompt, input_audio=None, model_name=None, model_t
 
     except Exception as e:
         gr.Error(f"An error occurred: {str(e)}")
+        return None, None, None
 
     finally:
         del model
@@ -9035,6 +9070,7 @@ def generate_audio_audioldm2(prompt, negative_prompt, model_name, seed, stop_but
 
     if not model_name:
         gr.Info("Please, select an AudioLDM 2 model!")
+        return None, None, None
 
     model_path = os.path.join("inputs", "audio", "audioldm2", model_name)
 
@@ -9100,6 +9136,7 @@ def generate_audio_audioldm2(prompt, negative_prompt, model_name, seed, stop_but
 
     except Exception as e:
         gr.Error(f"An error occurred: {str(e)}")
+        return None, None, None
 
     finally:
         del pipe
@@ -9111,6 +9148,7 @@ def generate_bark_audio(text, voice_preset, max_length, fine_temperature, coarse
     progress(0.1, desc="Initializing Bark")
     if not text:
         gr.Info("Please enter text for the request!")
+        return None, None, None
 
     bark_model_path = os.path.join("inputs", "audio", "bark")
 
@@ -9177,6 +9215,7 @@ def generate_bark_audio(text, voice_preset, max_length, fine_temperature, coarse
 
     except Exception as e:
         gr.Error(f"An error occurred: {str(e)}")
+        return None, None, None
 
     finally:
         del model
@@ -9188,6 +9227,7 @@ def process_rvc(input_audio, model_folder, f0method, f0up_key, index_rate, filte
     progress(0.1, desc="Initializing RVC")
     if not input_audio:
         gr.Info("Please upload an audio file!")
+        return None, None
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -9198,6 +9238,7 @@ def process_rvc(input_audio, model_folder, f0method, f0up_key, index_rate, filte
         pth_files = [f for f in os.listdir(model_path) if f.endswith('.pth')]
         if not pth_files:
             gr.Info(f"No .pth file found in the selected model folder: {model_folder}")
+            return None, None
 
         model_file = os.path.join(model_path, pth_files[0])
 
@@ -9224,6 +9265,7 @@ def process_rvc(input_audio, model_folder, f0method, f0up_key, index_rate, filte
 
     except Exception as e:
         gr.Error(f"An error occurred: {str(e)}")
+        return None, None
 
     finally:
         del rvc
@@ -9235,6 +9277,7 @@ def separate_audio_uvr(audio_file, output_format, normalization_threshold, sampl
     progress(0.1, desc="Initializing UVR")
     if not audio_file:
         gr.Info("Please upload an audio file!")
+        return None, None, None
 
     try:
         progress(0.2, desc="Preparing output directory")
@@ -9252,12 +9295,14 @@ def separate_audio_uvr(audio_file, output_format, normalization_threshold, sampl
 
         if len(output_files) != 2:
             gr.Info(f"Unexpected number of output files: {len(output_files)}")
+            return None, None, None
 
         progress(1.0, desc="UVR separation complete")
         return output_files[0], output_files[1], f"Separation complete! Output files: {' '.join(output_files)}"
 
     except Exception as e:
         gr.Error(f"An error occurred: {str(e)}")
+        return None, None, None
 
     finally:
         del separator
@@ -9268,6 +9313,7 @@ def demucs_separate(audio_file, output_format, progress=gr.Progress()):
     progress(0.1, desc="Initializing Demucs")
     if not audio_file:
         gr.Info("Please upload an audio file!")
+        return None, None, None
 
     today = datetime.now().date()
     demucs_dir = os.path.join("outputs", f"Demucs_{today.strftime('%Y%m%d')}")
@@ -9317,6 +9363,7 @@ def demucs_separate(audio_file, output_format, progress=gr.Progress()):
 
     except Exception as e:
         gr.Error(f"An error occurred: {str(e)}")
+        return None, None, None
 
     finally:
         flush()
