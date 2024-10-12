@@ -5876,6 +5876,7 @@ def generate_image_kandinsky_txt2img(prompt, negative_prompt, version, seed, sto
 
     except Exception as e:
         gr.Error(f"An error occurred: {str(e)}")
+        return None, None
 
     finally:
         try:
@@ -5901,6 +5902,7 @@ def generate_image_kandinsky_img2img(prompt, negative_prompt, init_image, versio
 
     if not init_image:
         gr.Info("Please upload an initial image!")
+        return None, None
 
     kandinsky_model_path = os.path.join("inputs", "image", "kandinsky")
 
@@ -6034,6 +6036,7 @@ def generate_image_kandinsky_img2img(prompt, negative_prompt, init_image, versio
 
     except Exception as e:
         gr.Error(f"An error occurred: {str(e)}")
+        return None, None
 
     finally:
         try:
@@ -6053,6 +6056,7 @@ def generate_image_kandinsky_inpaint(prompt, negative_prompt, init_image, mask_i
 
     if not init_image or not mask_image:
         gr.Info("Please upload an initial image and provide a mask image!")
+        return None, None
 
     kandinsky_model_path = os.path.join("inputs", "image", "kandinsky")
 
@@ -6122,6 +6126,7 @@ def generate_image_kandinsky_inpaint(prompt, negative_prompt, init_image, mask_i
 
     except Exception as e:
         gr.Error(f"An error occurred: {str(e)}")
+        return None, None
 
     finally:
         del pipe
@@ -6147,6 +6152,7 @@ def generate_image_flux_txt2img(prompt, model_name, quantize_model_name, enable_
         if enable_quantize:
             if not quantize_model_name:
                 gr.Info("Please select a GGUF model!")
+                return None, None
 
             def progress_callback(i, t, callback_kwargs):
                 progress((i + 1) / num_inference_steps, f"Step {i + 1}/{num_inference_steps}")
@@ -6171,6 +6177,7 @@ def generate_image_flux_txt2img(prompt, model_name, quantize_model_name, enable_
 
             if result.returncode != 0:
                 gr.Info(f"Error in flux-txt2img-quantize.py: {result.stderr}")
+                return None, None
 
             image_path = None
             output = result.stdout.strip()
@@ -6179,9 +6186,11 @@ def generate_image_flux_txt2img(prompt, model_name, quantize_model_name, enable_
 
             if not image_path:
                 gr.Info("Image path not found in the output")
+                return None, None
 
             if not os.path.exists(image_path):
                 gr.Info(f"Generated image not found at {image_path}")
+                return None, None
 
             return image_path, f"Image generated successfully. Seed used: {seed}"
         else:
@@ -6273,6 +6282,7 @@ def generate_image_flux_txt2img(prompt, model_name, quantize_model_name, enable_
 
     except Exception as e:
         gr.Error(f"An error occurred: {str(e)}")
+        return None, None
 
     finally:
         if enable_quantize:
@@ -6289,6 +6299,7 @@ def generate_image_flux_img2img(prompt, init_image, model_name, quantize_model_n
 
     if not init_image:
         gr.Info("Please upload an initial image!")
+        return None, None
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -6303,6 +6314,7 @@ def generate_image_flux_img2img(prompt, init_image, model_name, quantize_model_n
     if enable_quantize:
         if not quantize_model_name:
             gr.Info("Please select a GGUF model!")
+            return None, None
 
         def progress_callback(i, t, callback_kwargs):
             progress((i + 1) / num_inference_steps, f"Step {i + 1}/{num_inference_steps}")
@@ -6329,6 +6341,7 @@ def generate_image_flux_img2img(prompt, init_image, model_name, quantize_model_n
 
         if result.returncode != 0:
             gr.Info(f"Error in flux-img2img-quantize.py: {result.stderr}")
+            return None, None
 
         image_path = None
         output = result.stdout.strip()
@@ -6337,9 +6350,11 @@ def generate_image_flux_img2img(prompt, init_image, model_name, quantize_model_n
 
         if not image_path:
             gr.Info("Image path not found in the output")
+            return None, None
 
         if not os.path.exists(image_path):
             gr.Info(f"Generated image not found at {image_path}")
+            return None, None
 
         return image_path, f"Image generated successfully. Seed used: {seed}"
     else:
@@ -6401,6 +6416,7 @@ def generate_image_flux_img2img(prompt, init_image, model_name, quantize_model_n
 
         except Exception as e:
             gr.Error(f"An error occurred: {str(e)}")
+            return None, None
 
         finally:
             del pipe
@@ -6417,6 +6433,7 @@ def generate_image_flux_inpaint(prompt, init_image, mask_image, model_name, seed
 
     if not init_image or not mask_image:
         gr.Info("Please upload an initial image and provide a mask image!")
+        return None, None
 
     if seed == "" or seed is None:
         seed = random.randint(0, 2 ** 32 - 1)
@@ -6484,6 +6501,7 @@ def generate_image_flux_inpaint(prompt, init_image, mask_image, model_name, seed
 
     except Exception as e:
         gr.Error(f"An error occurred: {str(e)}")
+        return None, None
 
     finally:
         del pipe
@@ -6500,6 +6518,7 @@ def generate_image_flux_controlnet(prompt, init_image, base_model_name, seed, st
 
     if not init_image:
         gr.Info("Please upload an initial image!")
+        return None, None
 
     if seed == "" or seed is None:
         seed = random.randint(0, 2 ** 32 - 1)
@@ -6578,6 +6597,7 @@ def generate_image_flux_controlnet(prompt, init_image, base_model_name, seed, st
 
     except Exception as e:
         gr.Error(f"An error occurred: {str(e)}")
+        return None, None
 
     finally:
         del pipe
@@ -6654,6 +6674,7 @@ def generate_image_hunyuandit_txt2img(prompt, negative_prompt, seed, stop_button
 
     except Exception as e:
         gr.Error(f"An error occurred: {str(e)}")
+        return None, None
 
     finally:
         del pipe
@@ -6669,6 +6690,7 @@ def generate_image_hunyuandit_controlnet(prompt, negative_prompt, init_image, co
 
     if not init_image:
         gr.Info("Please upload an initial image!")
+        return None, None
 
     if seed == "" or seed is None:
         seed = random.randint(0, 2 ** 32 - 1)
@@ -6731,6 +6753,7 @@ def generate_image_hunyuandit_controlnet(prompt, negative_prompt, init_image, co
 
     except Exception as e:
         gr.Error(f"An error occurred: {str(e)}")
+        return None, None
 
     finally:
         del pipe
@@ -6797,6 +6820,7 @@ def generate_image_lumina(prompt, negative_prompt, seed, num_inference_steps, gu
 
     except Exception as e:
         gr.Error(f"An error occurred: {str(e)}")
+        return None, None
 
     finally:
         del pipe
@@ -6887,6 +6911,7 @@ def generate_image_kolors_txt2img(prompt, negative_prompt, seed, lora_model_name
 
     except Exception as e:
         gr.Error(f"An error occurred: {str(e)}")
+        return None, None
 
     finally:
         del pipe
@@ -6898,6 +6923,7 @@ def generate_image_kolors_img2img(prompt, negative_prompt, init_image, seed, gui
 
     if not init_image:
         gr.Info("Please upload an initial image!")
+        return None, None
 
     if seed == "" or seed is None:
         seed = random.randint(0, 2 ** 32 - 1)
@@ -6942,6 +6968,7 @@ def generate_image_kolors_img2img(prompt, negative_prompt, init_image, seed, gui
 
     except Exception as e:
         gr.Error(f"An error occurred: {str(e)}")
+        return None, None
 
     finally:
         del pipe
@@ -6953,6 +6980,7 @@ def generate_image_kolors_ip_adapter_plus(prompt, negative_prompt, ip_adapter_im
 
     if not ip_adapter_image:
         gr.Info("Please upload an initial image!")
+        return None, None
 
     if seed == "" or seed is None:
         seed = random.randint(0, 2 ** 32 - 1)
@@ -7016,6 +7044,7 @@ def generate_image_kolors_ip_adapter_plus(prompt, negative_prompt, ip_adapter_im
 
     except Exception as e:
         gr.Error(f"An error occurred: {str(e)}")
+        return None, None
 
     finally:
         del pipe
@@ -7123,6 +7152,7 @@ def generate_image_auraflow(prompt, negative_prompt, seed, lora_model_names, lor
 
     except Exception as e:
         gr.Error(f"An error occurred: {str(e)}")
+        return None, None
 
     finally:
         del pipe
@@ -7235,6 +7265,7 @@ def generate_image_wurstchen(prompt, negative_prompt, seed, stop_button, width, 
 
     except Exception as e:
         gr.Error(f"An error occurred: {str(e)}")
+        return None, None
 
     finally:
         del prior_pipeline
@@ -7391,6 +7422,7 @@ def generate_image_deepfloyd_txt2img(prompt, negative_prompt, seed, stop_button,
 
     except Exception as e:
         gr.Error(f"An error occurred: {str(e)}")
+        return None, None, None, None
 
     finally:
         try:
@@ -7418,6 +7450,7 @@ def generate_image_deepfloyd_img2img(prompt, negative_prompt, init_image, seed, 
 
     if not init_image:
         gr.Info("Please upload an initial image!")
+        return None, None, None, None
 
     deepfloydI_model_path = os.path.join("inputs", "image", "deepfloydI")
     deepfloydII_model_path = os.path.join("inputs", "image", "deepfloydII")
@@ -7548,6 +7581,7 @@ def generate_image_deepfloyd_img2img(prompt, negative_prompt, init_image, seed, 
 
     except Exception as e:
         gr.Error(f"An error occurred: {str(e)}")
+        return None, None, None, None
 
     finally:
         try:
@@ -7575,6 +7609,7 @@ def generate_image_deepfloyd_inpaint(prompt, negative_prompt, init_image, mask_i
 
     if not init_image or not mask_image:
         gr.Info("Please upload an initial image and provide a mask image!")
+        return None, None, None, None
 
     deepfloydI_model_path = os.path.join("inputs", "image", "deepfloydI")
     deepfloydII_model_path = os.path.join("inputs", "image", "deepfloydII")
@@ -7703,10 +7738,11 @@ def generate_image_deepfloyd_inpaint(prompt, negative_prompt, init_image, mask_i
         pt_to_pil(stage_2_output)[0].save(stage_2_path)
         stage_3_output.save(stage_3_path)
 
-        return stage_1_path, stage_2_path, stage_3_path, None
+        return stage_1_path, stage_2_path, stage_3_path, f"Image generated successfully. Seed used: {seed}"
 
     except Exception as e:
         gr.Error(f"An error occurred: {str(e)}")
+        return None, None, None, None
 
     finally:
         try:
@@ -7822,6 +7858,7 @@ def generate_image_pixart(prompt, negative_prompt, version, seed, stop_button, n
 
     except Exception as e:
         gr.Error(f"An error occurred: {str(e)}")
+        return None, None
 
     finally:
         del pipe
@@ -7887,6 +7924,7 @@ def generate_image_playgroundv2(prompt, negative_prompt, seed, height, width, nu
 
     except Exception as e:
         gr.Error(f"An error occurred: {str(e)}")
+        return None, None
 
     finally:
         del pipe
