@@ -10067,6 +10067,19 @@ def reload_interface():
     return [gr.Dropdown(choices=list) for list in updated_lists]
 
 
+def create_footer():
+    footer_html = """
+    <div style="text-align: center; background-color: #f0f0f0; padding: 10px; border-radius: 5px; margin-top: 20px;">
+        <span style="margin-right: 15px;">🔥 diffusers: 0.30.3</span>
+        <span style="margin-right: 15px;">📄 transformers: 4.45.2</span>
+        <span style="margin-right: 15px;">🦙 llama-cpp-python: 0.1.8</span>
+        <span style="margin-right: 15px;">🖼️ stable-diffusion-cpp-python: 0.3.1</span>
+        <span>ℹ️ gradio: 5.0.2</span>
+    </div>
+    """
+    return gr.Markdown(footer_html)
+
+
 avatar_user = "avatars/user.png"
 avatar_ai = "avatars/ai.png"
 settings = load_settings()
@@ -12842,11 +12855,15 @@ with gr.TabbedInterface(
         '<a href="https://github.com/Dartvauder/NeuroSandboxWebUI" target="_blank" style="color: blue; text-decoration: none; font-size: 16px; margin-right: 20px;">'
         'GitHub'
         '</a>'
-        '<a href="https://huggingface.co/Dartvauder007" target="_blank" style="color: blue; text-decoration: none; font-size: 16px;">'
+        '<a href="https://huggingface.co/Dartvauder007" target="_blank" style="color: blue; text-decoration: none; font-size: 16px; margin-right: 20px;">'
         'Hugging Face'
+        '</a>'
+        '<a href="https://civitai.com/user/Dartvauder057" target="_blank" style="color: blue; text-decoration: none; font-size: 16px;">'
+        'CivitAI'
         '</a>'
         '</div>'
     )
+    create_footer()
 
     app.queue(api_open=settings['api_open'], max_size=settings['queue_max_size'], status_update_rate=settings['status_update_rate'])
     app.launch(
