@@ -9378,9 +9378,11 @@ def generate_image_extras(input_image, remove_background, enable_facerestore, fi
     progress(0.1, desc="Initializing image processing")
     if not input_image:
         gr.Info("Please upload an image!")
+        return None, None
 
     if not remove_background and not enable_facerestore and not enable_pixeloe and not enable_ddcolor and not enable_downscale and not enable_format_changer and not enable_encryption and not enable_decryption:
         gr.Info("Please choose an option to modify the image")
+        return None, None
 
     try:
         output_path = input_image
@@ -9452,6 +9454,7 @@ def generate_image_extras(input_image, remove_background, enable_facerestore, fi
             progress(0.9, desc="Decrypting image")
             if not decryption_key:
                 gr.Info("Please provide a decryption key!")
+                return None, None
             img = Image.open(output_path)
             try:
                 decrypted_img = decrypt_image(img, decryption_key)
@@ -9460,6 +9463,7 @@ def generate_image_extras(input_image, remove_background, enable_facerestore, fi
                 output_path = decrypted_output_path
             except Exception as e:
                 gr.Error(f"Decryption failed. Please check your key. Error: {str(e)}")
+                return None, None
 
         progress(1.0, desc="Image processing complete")
         if enable_encryption:
@@ -9469,6 +9473,7 @@ def generate_image_extras(input_image, remove_background, enable_facerestore, fi
 
     except Exception as e:
         gr.Error(f"An error occurred: {str(e)}")
+        return None, None
 
     finally:
         flush()
@@ -9478,9 +9483,11 @@ def generate_video_extras(input_video, enable_downscale, downscale_factor, enabl
     progress(0.1, desc="Initializing video processing")
     if not input_video:
         gr.Info("Please upload a video!")
+        return None, None
 
     if not enable_downscale and not enable_format_changer:
         gr.Info("Please choose an option to modify the video")
+        return None, None
 
     try:
         output_path = input_video
@@ -9500,6 +9507,7 @@ def generate_video_extras(input_video, enable_downscale, downscale_factor, enabl
 
     except Exception as e:
         gr.Error(f"An error occurred: {str(e)}")
+        return None, None
 
     finally:
         flush()
@@ -9511,9 +9519,11 @@ def generate_audio_extras(input_audio, enable_format_changer, new_format, enable
     progress(0.1, desc="Initializing audio processing")
     if not input_audio:
         gr.Info("Please upload an audio file!")
+        return None, None
 
     if not enable_format_changer and not enable_audiosr and not enable_downscale:
         gr.Info("Please choose an option to modify the audio")
+        return None, None
 
     try:
         output_path = input_audio
@@ -9543,8 +9553,10 @@ def generate_audio_extras(input_audio, enable_format_changer, new_format, enable
                     output_path = os.path.join(subfolder_path, wav_files[0])
                 else:
                     gr.Info("AudioSR processed the file, but no output WAV file was found.")
+                    return None, None
             else:
                 gr.Info("AudioSR did not create any output folders.")
+                return None, None
 
         if enable_downscale:
             progress(0.8, desc="Downscaling audio")
@@ -9563,6 +9575,7 @@ def generate_audio_extras(input_audio, enable_format_changer, new_format, enable
 
     except Exception as e:
         gr.Error(f"An error occurred: {str(e)}")
+        return None, None
 
     finally:
         flush()
@@ -9574,6 +9587,7 @@ def generate_upscale_realesrgan(input_image, input_video, model_name, outscale, 
 
     if not input_image and not input_video:
         gr.Info("Please, upload an initial image or video!")
+        return None, None, None
 
     today = datetime.now().date()
     output_dir = os.path.join('outputs', f"RealESRGAN_{today.strftime('%Y%m%d')}")
@@ -9658,9 +9672,11 @@ def generate_upscale_realesrgan(input_image, input_video, model_name, outscale, 
                 return output_path, None, None
         else:
             gr.Info("Output file not found")
+            return None, None, None
 
     except Exception as e:
         gr.Error(f"An error occurred: {str(e)}")
+        return None, None, None
 
     finally:
         flush()
@@ -9671,6 +9687,7 @@ def generate_faceswap(source_image, target_image, target_video, enable_many_face
     progress(0.1, desc="Initializing face swap")
     if not source_image or (not target_image and not target_video):
         gr.Info("Please upload source image and either target image or target video!")
+        return None, None, None
 
     try:
         roop_path = os.path.join("inputs", "image", "roop")
@@ -9733,6 +9750,7 @@ def generate_faceswap(source_image, target_image, target_video, enable_many_face
 
     except Exception as e:
         gr.Error(f"An error occurred: {str(e)}")
+        return None, None, None
 
     finally:
         flush()
@@ -9742,6 +9760,7 @@ def display_metadata(file, progress=gr.Progress()):
     progress(0.1, desc="Initializing metadata display")
     if file is None:
         gr.Info("Please upload a file.")
+        return None
 
     try:
         progress(0.3, desc="Reading file")
@@ -9769,9 +9788,10 @@ def display_metadata(file, progress=gr.Progress()):
         if metadata:
             return f"COMMENT:\n{json.dumps(metadata, indent=2)}"
         else:
-            gr.Info("No COMMENT metadata found in the file.")
+            return "No COMMENT metadata found in the file."
     except Exception as e:
         gr.Error(f"An error occurred: {str(e)}")
+        return None
 
 
 def get_wiki_content(url, local_file="Wikies/WikiEN.md", progress=gr.Progress()):
@@ -9795,7 +9815,7 @@ def get_wiki_content(url, local_file="Wikies/WikiEN.md", progress=gr.Progress())
             return html_content
     except:
         progress(1.0, desc="Content retrieval failed")
-        gr.Error("<p>Wiki content is not available.</p>")
+        return "<p>Wiki content is not available.</p>"
 
 
 def get_output_files(progress=gr.Progress()):
@@ -9837,6 +9857,7 @@ def download_model(llm_model_url, sd_model_url, progress=gr.Progress()):
     progress(0.1, desc="Initializing model download")
     if not llm_model_url and not sd_model_url:
         gr.Info("Please enter at least one model URL to download")
+        return None
 
     messages = []
 
@@ -9859,6 +9880,7 @@ def download_model(llm_model_url, sd_model_url, progress=gr.Progress()):
             progress(0.5, desc="LLM model download complete")
         except Exception as e:
             gr.Error(f"Error downloading LLM model: {str(e)}")
+            return None
 
     if sd_model_url:
         try:
@@ -9871,7 +9893,8 @@ def download_model(llm_model_url, sd_model_url, progress=gr.Progress()):
             messages.append(f"StableDiffusion model file {file_name} downloaded successfully!")
             progress(0.9, desc="StableDiffusion model download complete")
         except Exception as e:
-            gr.Info(f"Error downloading StableDiffusion model: {str(e)}")
+            gr.Error(f"Error downloading StableDiffusion model: {str(e)}")
+            return None
 
     progress(1.0, desc="Model download process complete")
     return "\n".join(messages)
