@@ -1969,6 +1969,7 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
 
     if not stable_diffusion_model_name:
         gr.Info("Please, select a StableDiffusion model!")
+        return None, None, None
 
     if enable_quantize:
 
@@ -2004,6 +2005,7 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
 
             if result.returncode != 0:
                 gr.Info(f"Error in sd-txt2img-quantize.py: {result.stderr}")
+                return None, None, None
 
             image_paths = []
             output = result.stdout.strip()
@@ -2017,6 +2019,7 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
 
         except Exception as e:
             gr.Error(f"An error occurred: {str(e)}")
+            return None, None, None
 
     else:
         try:
@@ -2025,6 +2028,7 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
 
             if not os.path.exists(stable_diffusion_model_path):
                 gr.Info(f"StableDiffusion model not found: {stable_diffusion_model_path}")
+                return None, None, None
 
             if enable_sag:
                 stable_diffusion_model = StableDiffusionSAGPipeline().StableDiffusionSAGPipeline.from_single_file(
@@ -2051,8 +2055,10 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
                         torch_dtype=torch.float16, variant="fp16")
                 else:
                     gr.Info("Invalid StableDiffusion model type!")
+                    return None, None, None
         except (ValueError, KeyError):
             gr.Error("The selected model is not compatible with the chosen model type")
+            return None, None, None
 
         device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -2412,6 +2418,7 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
 
         except Exception as e:
             gr.Error(f"An error occurred: {str(e)}")
+            return None, None, None
 
         finally:
             del stable_diffusion_model
@@ -2428,9 +2435,11 @@ def generate_image_img2img(prompt, negative_prompt, init_image, strength, stable
 
     if not stable_diffusion_model_name:
         gr.Info("Please, select a StableDiffusion model!")
+        return None, None, None
 
     if not init_image:
         gr.Info("Please, upload an initial image!")
+        return None, None, None
 
     if enable_quantize:
         try:
@@ -2465,6 +2474,7 @@ def generate_image_img2img(prompt, negative_prompt, init_image, strength, stable
 
             if result.returncode != 0:
                 gr.Info(f"Error in sd-img2img-quantize.py: {result.stderr}")
+                return None, None, None
 
             image_paths = []
             output = result.stdout.strip()
@@ -2478,6 +2488,7 @@ def generate_image_img2img(prompt, negative_prompt, init_image, strength, stable
 
         except Exception as e:
             gr.Error(f"An error occurred: {str(e)}")
+            return None, None, None
 
     else:
         try:
@@ -2486,6 +2497,7 @@ def generate_image_img2img(prompt, negative_prompt, init_image, strength, stable
 
             if not os.path.exists(stable_diffusion_model_path):
                 gr.Info(f"StableDiffusion model not found: {stable_diffusion_model_path}")
+                return None, None, None
 
             if stable_diffusion_model_type == "SD":
                 stable_diffusion_model = StableDiffusionImg2ImgPipeline().StableDiffusionImg2ImgPipeline.from_single_file(
@@ -2503,6 +2515,7 @@ def generate_image_img2img(prompt, negative_prompt, init_image, strength, stable
                 return None, None, "Invalid StableDiffusion model type!"
         except (ValueError, KeyError):
             gr.Error("The selected model is not compatible with the chosen model type")
+            return None, None, None
 
         device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -2782,6 +2795,7 @@ def generate_image_img2img(prompt, negative_prompt, init_image, strength, stable
 
         except Exception as e:
             gr.Error(f"An error occurred: {str(e)}")
+            return None, None, None
 
         finally:
             del stable_diffusion_model
@@ -2793,6 +2807,7 @@ def generate_image_depth2img(prompt, negative_prompt, init_image, seed, strength
 
     if not init_image:
         gr.Info("Please, upload an initial image!")
+        return None, None
 
     stable_diffusion_model_path = os.path.join("inputs", "image", "sd_models", "depth")
 
@@ -2809,6 +2824,7 @@ def generate_image_depth2img(prompt, negative_prompt, init_image, seed, strength
         )
     except Exception as e:
         gr.Error(f"An error occurred: {str(e)}")
+        return None, None
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -2858,6 +2874,7 @@ def generate_image_depth2img(prompt, negative_prompt, init_image, seed, strength
 
     except Exception as e:
         gr.Error(f"An error occurred: {str(e)}")
+        return None, None
 
     finally:
         del stable_diffusion_model
@@ -2867,6 +2884,7 @@ def generate_image_depth2img(prompt, negative_prompt, init_image, seed, strength
 def generate_image_marigold(input_image, num_inference_steps, ensemble_size):
     if not input_image:
         gr.Info("Please upload an image!")
+        return None, None, None
 
     depth_model_path = os.path.join("inputs", "image", "marigold", "depth")
     normals_model_path = os.path.join("inputs", "image", "marigold", "normals")
@@ -2919,6 +2937,7 @@ def generate_image_marigold(input_image, num_inference_steps, ensemble_size):
 
     except Exception as e:
         gr.Error(f"An error occurred: {str(e)}")
+        return None, None, None
 
     finally:
         del depth_pipe
@@ -2931,6 +2950,7 @@ def generate_image_pix2pix(prompt, negative_prompt, init_image, seed, num_infere
 
     if not init_image:
         gr.Info("Please, upload an initial image!")
+        return None, None
 
     pix2pix_model_path = os.path.join("inputs", "image", "sd_models", "pix2pix")
 
@@ -2992,6 +3012,7 @@ def generate_image_pix2pix(prompt, negative_prompt, init_image, seed, num_infere
 
     except Exception as e:
         gr.Error(f"An error occurred: {str(e)}")
+        return None, None
 
     finally:
         del pipe
@@ -3006,18 +3027,22 @@ def generate_image_controlnet(prompt, negative_prompt, init_image, sd_version, s
 
     if not init_image:
         gr.Info("Please, upload an initial image!")
+        return None, None, None
 
     if not stable_diffusion_model_name:
         gr.Info("Please, select a StableDiffusion model!")
+        return None, None, None
 
     if not controlnet_model_name:
         gr.Info("Please, select a ControlNet model!")
+        return None, None, None
 
     stable_diffusion_model_path = os.path.join("inputs", "image", "sd_models",
                                                f"{stable_diffusion_model_name}")
 
     if not os.path.exists(stable_diffusion_model_path):
         gr.Info(f"StableDiffusion model not found: {stable_diffusion_model_path}")
+        return None, None, None
 
     controlnet_model_path = os.path.join("inputs", "image", "sd_models", "controlnet", controlnet_model_name)
     if not os.path.exists(controlnet_model_path):
@@ -3301,8 +3326,6 @@ def generate_image_controlnet(prompt, negative_prompt, init_image, sd_version, s
                 control_image = control_image[:, :, None]
                 control_image = np.concatenate([control_image, control_image, control_image], axis=2)
                 control_image = Image.fromarray(control_image)
-            else:
-                gr.Info(f"ControlNet model {controlnet_model_name} is not supported for SDXL")
 
             compel = Compel(
                 tokenizer=[pipe.tokenizer, pipe.tokenizer_2],
@@ -3348,6 +3371,7 @@ def generate_image_controlnet(prompt, negative_prompt, init_image, sd_version, s
 
     except Exception as e:
         gr.Error(f"An error occurred: {str(e)}")
+        return None, None, None
 
     finally:
         try:
@@ -3366,6 +3390,7 @@ def generate_image_upscale_latent(prompt, image_path, upscale_factor, seed, num_
 
     if not image_path:
         gr.Info("Please, upload an initial image!")
+        return None, None
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -3466,6 +3491,7 @@ def generate_image_upscale_latent(prompt, image_path, upscale_factor, seed, num_
 
     except Exception as e:
         gr.Error(f"An error occurred: {str(e)}")
+        return None, None
 
     finally:
         del upscaler
@@ -3475,6 +3501,7 @@ def generate_image_upscale_latent(prompt, image_path, upscale_factor, seed, num_
 def generate_image_upscale_supir(input_image, model, upscale, min_size, edm_steps, s_stage1, s_churn, s_noise, s_cfg, s_stage2, a_prompt, n_prompt, color_fix_type, enable_linearly, linear_CFG, linear_s_stage2, spt_linear_CFG, spt_linear_s_stage2, output_format):
     if not input_image:
         gr.Info("Please upload an image to upscale!")
+        return None, None
 
     try:
         today = datetime.now().date()
@@ -3518,9 +3545,11 @@ def generate_image_upscale_supir(input_image, model, upscale, min_size, edm_step
             return os.path.join(output_dir, latest_file), "Image upscaled successfully using SUPIR!"
         else:
             gr.Info("No output image found. SUPIR may have failed to generate an image.")
+            return None, None
 
     except Exception as e:
         gr.Error(f"An error occurred: {str(e)}")
+        return None, None
 
     finally:
         flush()
@@ -3530,6 +3559,7 @@ def generate_image_sdxl_refiner(prompt, init_image, output_format):
 
     if not init_image:
         gr.Info("Please upload an initial image!")
+        return None, None
 
     sdxl_refiner_path = os.path.join("inputs", "image", "sd_models", "sdxl-refiner-1.0")
 
@@ -3565,6 +3595,7 @@ def generate_image_sdxl_refiner(prompt, init_image, output_format):
 
     except Exception as e:
         gr.Error(f"An error occurred: {str(e)}")
+        return None, None
 
     finally:
         del pipe
@@ -3579,15 +3610,18 @@ def generate_image_inpaint(prompt, negative_prompt, init_image, mask_image, blur
 
     if not stable_diffusion_model_name:
         gr.Info("Please, select a StableDiffusion model!")
+        return None, None
 
     if not init_image or not mask_image:
         gr.Info("Please, upload an initial image and a mask image!")
+        return None, None
 
     stable_diffusion_model_path = os.path.join("inputs", "image", "sd_models", "inpaint",
                                                f"{stable_diffusion_model_name}")
 
     if not os.path.exists(stable_diffusion_model_path):
         gr.Info(f"StableDiffusion model not found: {stable_diffusion_model_path}")
+        return None, None
 
     try:
         if stable_diffusion_model_type == "SD":
@@ -3606,9 +3640,11 @@ def generate_image_inpaint(prompt, negative_prompt, init_image, mask_image, blur
                 torch_dtype=torch.float16, variant="fp16"
             )
         else:
-            return None, "Invalid StableDiffusion model type!"
+            gr.Info("Invalid StableDiffusion model type!")
+            return None, None
     except (ValueError, KeyError):
         gr.Error("The selected model is not compatible with the chosen model type")
+        return None, None
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -3773,6 +3809,7 @@ def generate_image_inpaint(prompt, negative_prompt, init_image, mask_image, blur
 
     except Exception as e:
         gr.Error(f"An error occurred: {str(e)}")
+        return None, None
 
     finally:
         del stable_diffusion_model
@@ -3784,15 +3821,18 @@ def generate_image_outpaint(prompt, negative_prompt, init_image, stable_diffusio
 
     if not init_image:
         gr.Info("Please upload an initial image!")
+        return None, None
 
     if not stable_diffusion_model_name:
         gr.Info("Please select a StableDiffusion model!")
+        return None, None
 
     stable_diffusion_model_path = os.path.join("inputs", "image", "sd_models", "inpaint",
                                                f"{stable_diffusion_model_name}")
 
     if not os.path.exists(stable_diffusion_model_path):
         gr.Info(f"StableDiffusion model not found: {stable_diffusion_model_path}")
+        return None, None
 
     try:
         if stable_diffusion_model_type == "SD":
@@ -3812,6 +3852,7 @@ def generate_image_outpaint(prompt, negative_prompt, init_image, stable_diffusio
             )
         else:
             gr.Info("Invalid StableDiffusion model type!")
+            return None, None
 
         device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -3928,6 +3969,7 @@ def generate_image_outpaint(prompt, negative_prompt, init_image, stable_diffusio
 
     except Exception as e:
         gr.Error(f"An error occurred: {str(e)}")
+        return None, None
 
     finally:
         del pipe
@@ -3940,12 +3982,14 @@ def generate_image_gligen(prompt, negative_prompt, gligen_phrases, gligen_boxes,
 
     if not stable_diffusion_model_name:
         gr.Info("Please, select a StableDiffusion model!")
+        return None, None
 
     stable_diffusion_model_path = os.path.join("inputs", "image", "sd_models",
                                                f"{stable_diffusion_model_name}")
 
     if not os.path.exists(stable_diffusion_model_path):
         gr.Info(f"StableDiffusion model not found: {stable_diffusion_model_path}")
+        return None, None
 
     try:
         if stable_diffusion_model_type == "SD":
@@ -3965,8 +4009,10 @@ def generate_image_gligen(prompt, negative_prompt, gligen_phrases, gligen_boxes,
             )
         else:
             gr.Info("Invalid StableDiffusion model type!")
+            return None, None
     except (ValueError, KeyError):
         gr.Error("The selected model is not compatible with the chosen model type")
+        return None, None
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -4070,6 +4116,7 @@ def generate_image_gligen(prompt, negative_prompt, gligen_phrases, gligen_boxes,
 
     except Exception as e:
         gr.Error(f"An error occurred: {str(e)}")
+        return None, None
 
     finally:
         del stable_diffusion_model
@@ -4080,6 +4127,7 @@ def generate_image_gligen(prompt, negative_prompt, gligen_phrases, gligen_boxes,
 def generate_image_diffedit(source_prompt, source_negative_prompt, target_prompt, target_negative_prompt, init_image, seed, num_inference_steps, guidance_scale, output_format):
     if not init_image:
         gr.Info("Please upload an initial image!")
+        return None, None
 
     sd2_1_model_path = os.path.join("inputs", "image", "sd_models", "sd2-1")
 
@@ -4157,6 +4205,7 @@ def generate_image_diffedit(source_prompt, source_negative_prompt, target_prompt
 
     except Exception as e:
         gr.Error(f"An error occurred: {str(e)}")
+        return None, None
 
     finally:
         del pipe
@@ -4169,6 +4218,7 @@ def generate_image_blip_diffusion(text_prompt_input, negative_prompt, cond_image
 
     if not cond_image:
         gr.Info("Please upload an conditional image!")
+        return None, None
 
     if not os.path.exists(blip_diffusion_path):
         gr.Info("Downloading BlipDiffusion model...")
@@ -4208,6 +4258,7 @@ def generate_image_blip_diffusion(text_prompt_input, negative_prompt, cond_image
 
     except Exception as e:
         gr.Error(f"An error occurred: {str(e)}")
+        return None, None
 
     finally:
         del blip_diffusion_pipe
@@ -4219,11 +4270,13 @@ def generate_image_animatediff(prompt, negative_prompt, input_video, strength, m
 
     if not stable_diffusion_model_name:
         gr.Info("Please, select a StableDiffusion model!")
+        return None, None
 
     stable_diffusion_model_path = os.path.join("inputs", "image", "sd_models", f"{stable_diffusion_model_name}")
 
     if not os.path.exists(stable_diffusion_model_path):
         gr.Info(f"StableDiffusion model not found: {stable_diffusion_model_path}")
+        return None, None
 
     motion_adapter_path = os.path.join("inputs", "image", "sd_models", "motion_adapter")
     if not os.path.exists(motion_adapter_path):
@@ -4438,6 +4491,7 @@ def generate_image_animatediff(prompt, negative_prompt, input_video, strength, m
 
     except Exception as e:
         gr.Error(f"An error occurred: {str(e)}")
+        return None, None
 
     finally:
         try:
@@ -4491,6 +4545,7 @@ def generate_hotshotxl(prompt, negative_prompt, steps, width, height, video_leng
 
     except Exception as e:
         gr.Error(f"An error occurred: {str(e)}")
+        return None, None
 
     finally:
         flush()
@@ -4501,6 +4556,7 @@ def generate_video(init_image, output_format, seed, video_settings_html, motion_
 
     if not init_image:
         gr.Info("Please upload an initial image!")
+        return None, None, None
 
     today = datetime.now().date()
     video_dir = os.path.join('outputs', f"StableDiffusion_{today.strftime('%Y%m%d')}")
@@ -4545,6 +4601,7 @@ def generate_video(init_image, output_format, seed, video_settings_html, motion_
 
         except Exception as e:
             gr.Error(f"An error occurred: {str(e)}")
+            return None, None, None
 
         finally:
             try:
@@ -4593,6 +4650,7 @@ def generate_video(init_image, output_format, seed, video_settings_html, motion_
 
         except Exception as e:
             gr.Error(f"An error occurred: {str(e)}")
+            return None, None, None
 
         finally:
             try:
@@ -4662,6 +4720,7 @@ def generate_image_ldm3d(prompt, negative_prompt, seed, width, height, num_infer
 
     except Exception as e:
         gr.Error(f"An error occurred: {str(e)}")
+        return None, None, None
 
     finally:
         del pipe
@@ -4677,6 +4736,7 @@ def generate_image_sd3_txt2img(prompt, negative_prompt, model_type, quantize_sd3
         try:
             if not quantize_sd3_model_name:
                 gr.Info("Please select a GGUF model!")
+                return None, None
 
             if seed == "" or seed is None:
                 seed = random.randint(0, 2 ** 32 - 1)
@@ -4709,6 +4769,7 @@ def generate_image_sd3_txt2img(prompt, negative_prompt, model_type, quantize_sd3
 
             if result.returncode != 0:
                 gr.Info(f"Error in sd-txt2img-quantize.py: {result.stderr}")
+                return None, None
 
             image_paths = []
             output = result.stdout.strip()
@@ -4722,6 +4783,7 @@ def generate_image_sd3_txt2img(prompt, negative_prompt, model_type, quantize_sd3
 
         except Exception as e:
             gr.Error(f"An error occurred: {str(e)}")
+            return None, None
 
     else:
         try:
@@ -4746,6 +4808,7 @@ def generate_image_sd3_txt2img(prompt, negative_prompt, model_type, quantize_sd3
             else:
                 if not quantize_sd3_model_name:
                     gr.Info("Please select a model!")
+                    return None, None
 
                 stable_diffusion_model_path = os.path.join("inputs", "image", "sd_models",
                                                            f"{quantize_sd3_model_name}")
@@ -4843,6 +4906,7 @@ def generate_image_sd3_txt2img(prompt, negative_prompt, model_type, quantize_sd3
 
         except Exception as e:
             gr.Error(f"An error occurred: {str(e)}")
+            return None, None
 
         finally:
             del pipe
@@ -4857,11 +4921,13 @@ def generate_image_sd3_img2img(prompt, negative_prompt, init_image, strength, mo
 
     if not init_image:
         gr.Info("Please upload an initial image!")
+        return None, None
 
     if enable_quantize:
         try:
             if not quantize_sd3_model_name:
                 gr.Info("Please select a GGUF model!")
+                return None, None
 
             if seed == "" or seed is None:
                 seed = random.randint(0, 2 ** 32 - 1)
@@ -4896,6 +4962,7 @@ def generate_image_sd3_img2img(prompt, negative_prompt, init_image, strength, mo
 
             if result.returncode != 0:
                 gr.Info(f"Error in sd-img2img-quantize.py: {result.stderr}")
+                return None, None
 
             image_paths = []
             output = result.stdout.strip()
@@ -4909,6 +4976,7 @@ def generate_image_sd3_img2img(prompt, negative_prompt, init_image, strength, mo
 
         except Exception as e:
             gr.Error(f"An error occurred: {str(e)}")
+            return None, None
 
     else:
         try:
@@ -4933,6 +5001,7 @@ def generate_image_sd3_img2img(prompt, negative_prompt, init_image, strength, mo
             else:
                 if not quantize_sd3_model_name:
                     gr.Info("Please select a model!")
+                    return None, None
                 stable_diffusion_model_path = os.path.join("inputs", "image", "sd_models",
                                                            f"{quantize_sd3_model_name}")
                 pipe = StableDiffusion3Img2ImgPipeline().StableDiffusion3Img2ImgPipeline.from_single_file(stable_diffusion_model_path, device_map="balanced",
@@ -4988,6 +5057,7 @@ def generate_image_sd3_img2img(prompt, negative_prompt, init_image, strength, mo
 
         except Exception as e:
             gr.Error(f"An error occurred: {str(e)}")
+            return None, None
 
         finally:
             del pipe
@@ -5002,9 +5072,11 @@ def generate_image_sd3_controlnet(prompt, negative_prompt, init_image, controlne
 
     if not init_image:
         gr.Info("Please upload an initial image!")
+        return None, None, None
 
     if not controlnet_model:
         gr.Info("Please select a controlnet model!")
+        return None, None, None
 
     sd3_model_path = os.path.join("inputs", "image", "sd_models", "sd3")
     controlnet_path = os.path.join("inputs", "image", "sd_models", "sd3", "controlnet", f"sd3_{controlnet_model}")
@@ -5049,8 +5121,6 @@ def generate_image_sd3_controlnet(prompt, negative_prompt, init_image, controlne
             control_image = init_image
         elif controlnet_model.lower() == "pose":
             control_image = init_image
-        else:
-            gr.Info(f"Unsupported ControlNet model: {controlnet_model}")
 
         if seed == "" or seed is None:
             seed = random.randint(0, 2 ** 32 - 1)
@@ -5103,6 +5173,7 @@ def generate_image_sd3_controlnet(prompt, negative_prompt, init_image, controlne
 
     except Exception as e:
         gr.Error(f"An error occurred: {str(e)}")
+        return None, None, None
 
     finally:
         del pipe
@@ -5120,6 +5191,7 @@ def generate_image_sd3_inpaint(prompt, negative_prompt, init_image, mask_image, 
 
     if not init_image or not mask_image:
         gr.Info("Please, upload an initial image and a mask image!")
+        return None, None
 
     if not os.path.exists(sd3_model_path):
         gr.Info("Downloading Stable Diffusion 3 model...")
@@ -5190,6 +5262,7 @@ def generate_image_sd3_inpaint(prompt, negative_prompt, init_image, mask_image, 
 
     except Exception as e:
         gr.Error(f"An error occurred: {str(e)}")
+        return None, None
 
     finally:
         del pipe
@@ -5222,6 +5295,7 @@ def generate_image_cascade(prompt, negative_prompt, seed, stop_button, width, he
                                                                variant="bf16", torch_dtype=torch.float16).to(device)
     except (ValueError, OSError):
         gr.Error("Failed to load the Stable Cascade models")
+        return None, None
 
     if seed == "" or seed is None:
         seed = random.randint(0, 2 ** 32 - 1)
@@ -5305,6 +5379,7 @@ def generate_image_cascade(prompt, negative_prompt, seed, stop_button, width, he
 
     except Exception as e:
         gr.Error(f"An error occurred: {str(e)}")
+        return None, None
 
     finally:
         del prior
@@ -5324,14 +5399,17 @@ def generate_image_t2i_ip_adapter(prompt, negative_prompt, ip_adapter_image, sta
 
     if not ip_adapter_image:
         gr.Info("Please upload an image!")
+        return None, None
 
     if not stable_diffusion_model_name:
         gr.Info("Please select a StableDiffusion model!")
+        return None, None
 
     stable_diffusion_model_path = os.path.join("inputs", "image", "sd_models", f"{stable_diffusion_model_name}")
 
     if not os.path.exists(stable_diffusion_model_path):
         gr.Info(f"StableDiffusion model not found: {stable_diffusion_model_path}")
+        return None, None
 
     t2i_ip_adapter_path = os.path.join("inputs", "image", "sd_models", "t2i-ip-adapter")
     if not os.path.exists(t2i_ip_adapter_path):
@@ -5400,6 +5478,7 @@ def generate_image_t2i_ip_adapter(prompt, negative_prompt, ip_adapter_image, sta
 
     except Exception as e:
         gr.Error(f"An error occurred: {str(e)}")
+        return None, None
 
     finally:
         del pipe
@@ -5411,14 +5490,17 @@ def generate_image_ip_adapter_faceid(prompt, negative_prompt, face_image, s_scal
 
     if not face_image:
         gr.Info("Please upload a face image!")
+        return None, None
 
     if not stable_diffusion_model_name:
         gr.Info("Please select a StableDiffusion model!")
+        return None, None
 
     stable_diffusion_model_path = os.path.join("inputs", "image", "sd_models", f"{stable_diffusion_model_name}")
 
     if not os.path.exists(stable_diffusion_model_path):
         gr.Info(f"StableDiffusion model not found: {stable_diffusion_model_path}")
+        return None, None
 
     image_encoder_path = os.path.join("inputs", "image", "sd_models", "image_encoder")
     if not os.path.exists(image_encoder_path):
@@ -5450,6 +5532,7 @@ def generate_image_ip_adapter_faceid(prompt, negative_prompt, face_image, s_scal
 
         if not faces:
             gr.Info("No face detected in the image.")
+            return None, None
 
         faceid_embeds = torch.from_numpy(faces[0].normed_embedding).unsqueeze(0)
         face_image = face_align.norm_crop(image, landmark=faces[0].kps, image_size=224)
@@ -5474,6 +5557,7 @@ def generate_image_ip_adapter_faceid(prompt, negative_prompt, face_image, s_scal
                 torch_dtype=torch.float16, variant="fp16")
         else:
             gr.Info("Invalid StableDiffusion model type!")
+            return None, None
 
         ip_model = IPAdapterFaceIDPlus().IPAdapterFaceIDPlus(pipe, image_encoder_path, ip_ckpt, device)
 
@@ -5506,6 +5590,7 @@ def generate_image_ip_adapter_faceid(prompt, negative_prompt, face_image, s_scal
 
     except Exception as e:
         gr.Error(f"An error occurred: {str(e)}")
+        return None, None
 
     finally:
         del pipe
@@ -5569,6 +5654,7 @@ def generate_riffusion_text2image(prompt, negative_prompt, seed, stop_button, nu
 
     except Exception as e:
         gr.Error(f"An error occurred: {str(e)}")
+        return None, None
 
     finally:
         del pipe
@@ -5579,6 +5665,7 @@ def generate_riffusion_image2audio(image_path, output_format, progress=gr.Progre
     progress(0.1, desc="Initializing riffusion")
     if not image_path:
         gr.Info("Please upload an image file!")
+        return None, None
 
     try:
         today = datetime.now().date()
@@ -5599,6 +5686,7 @@ def generate_riffusion_image2audio(image_path, output_format, progress=gr.Progre
 
     except Exception as e:
         gr.Error(f"An error occurred: {str(e)}")
+        return None, None
 
     finally:
         flush()
@@ -5608,6 +5696,7 @@ def generate_riffusion_audio2image(audio_path, output_format, progress=gr.Progre
     progress(0.1, desc="Initializing riffusion")
     if not audio_path:
         gr.Info("Please upload an audio file!")
+        return None, None
 
     try:
         today = datetime.now().date()
@@ -5628,6 +5717,7 @@ def generate_riffusion_audio2image(audio_path, output_format, progress=gr.Progre
 
     except Exception as e:
         gr.Error(f"An error occurred: {str(e)}")
+        return None, None
 
     finally:
         flush()
@@ -5786,6 +5876,7 @@ def generate_image_kandinsky_txt2img(prompt, negative_prompt, version, seed, sto
 
     except Exception as e:
         gr.Error(f"An error occurred: {str(e)}")
+        return None, None
 
     finally:
         try:
@@ -5811,6 +5902,7 @@ def generate_image_kandinsky_img2img(prompt, negative_prompt, init_image, versio
 
     if not init_image:
         gr.Info("Please upload an initial image!")
+        return None, None
 
     kandinsky_model_path = os.path.join("inputs", "image", "kandinsky")
 
@@ -5944,6 +6036,7 @@ def generate_image_kandinsky_img2img(prompt, negative_prompt, init_image, versio
 
     except Exception as e:
         gr.Error(f"An error occurred: {str(e)}")
+        return None, None
 
     finally:
         try:
@@ -5963,6 +6056,7 @@ def generate_image_kandinsky_inpaint(prompt, negative_prompt, init_image, mask_i
 
     if not init_image or not mask_image:
         gr.Info("Please upload an initial image and provide a mask image!")
+        return None, None
 
     kandinsky_model_path = os.path.join("inputs", "image", "kandinsky")
 
@@ -6032,6 +6126,7 @@ def generate_image_kandinsky_inpaint(prompt, negative_prompt, init_image, mask_i
 
     except Exception as e:
         gr.Error(f"An error occurred: {str(e)}")
+        return None, None
 
     finally:
         del pipe
@@ -6057,6 +6152,7 @@ def generate_image_flux_txt2img(prompt, model_name, quantize_model_name, enable_
         if enable_quantize:
             if not quantize_model_name:
                 gr.Info("Please select a GGUF model!")
+                return None, None
 
             def progress_callback(i, t, callback_kwargs):
                 progress((i + 1) / num_inference_steps, f"Step {i + 1}/{num_inference_steps}")
@@ -6081,6 +6177,7 @@ def generate_image_flux_txt2img(prompt, model_name, quantize_model_name, enable_
 
             if result.returncode != 0:
                 gr.Info(f"Error in flux-txt2img-quantize.py: {result.stderr}")
+                return None, None
 
             image_path = None
             output = result.stdout.strip()
@@ -6089,9 +6186,11 @@ def generate_image_flux_txt2img(prompt, model_name, quantize_model_name, enable_
 
             if not image_path:
                 gr.Info("Image path not found in the output")
+                return None, None
 
             if not os.path.exists(image_path):
                 gr.Info(f"Generated image not found at {image_path}")
+                return None, None
 
             return image_path, f"Image generated successfully. Seed used: {seed}"
         else:
@@ -6183,6 +6282,7 @@ def generate_image_flux_txt2img(prompt, model_name, quantize_model_name, enable_
 
     except Exception as e:
         gr.Error(f"An error occurred: {str(e)}")
+        return None, None
 
     finally:
         if enable_quantize:
@@ -6199,6 +6299,7 @@ def generate_image_flux_img2img(prompt, init_image, model_name, quantize_model_n
 
     if not init_image:
         gr.Info("Please upload an initial image!")
+        return None, None
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -6213,6 +6314,7 @@ def generate_image_flux_img2img(prompt, init_image, model_name, quantize_model_n
     if enable_quantize:
         if not quantize_model_name:
             gr.Info("Please select a GGUF model!")
+            return None, None
 
         def progress_callback(i, t, callback_kwargs):
             progress((i + 1) / num_inference_steps, f"Step {i + 1}/{num_inference_steps}")
@@ -6239,6 +6341,7 @@ def generate_image_flux_img2img(prompt, init_image, model_name, quantize_model_n
 
         if result.returncode != 0:
             gr.Info(f"Error in flux-img2img-quantize.py: {result.stderr}")
+            return None, None
 
         image_path = None
         output = result.stdout.strip()
@@ -6247,9 +6350,11 @@ def generate_image_flux_img2img(prompt, init_image, model_name, quantize_model_n
 
         if not image_path:
             gr.Info("Image path not found in the output")
+            return None, None
 
         if not os.path.exists(image_path):
             gr.Info(f"Generated image not found at {image_path}")
+            return None, None
 
         return image_path, f"Image generated successfully. Seed used: {seed}"
     else:
@@ -6311,6 +6416,7 @@ def generate_image_flux_img2img(prompt, init_image, model_name, quantize_model_n
 
         except Exception as e:
             gr.Error(f"An error occurred: {str(e)}")
+            return None, None
 
         finally:
             del pipe
@@ -6327,6 +6433,7 @@ def generate_image_flux_inpaint(prompt, init_image, mask_image, model_name, seed
 
     if not init_image or not mask_image:
         gr.Info("Please upload an initial image and provide a mask image!")
+        return None, None
 
     if seed == "" or seed is None:
         seed = random.randint(0, 2 ** 32 - 1)
@@ -6394,6 +6501,7 @@ def generate_image_flux_inpaint(prompt, init_image, mask_image, model_name, seed
 
     except Exception as e:
         gr.Error(f"An error occurred: {str(e)}")
+        return None, None
 
     finally:
         del pipe
@@ -6410,6 +6518,7 @@ def generate_image_flux_controlnet(prompt, init_image, base_model_name, seed, st
 
     if not init_image:
         gr.Info("Please upload an initial image!")
+        return None, None
 
     if seed == "" or seed is None:
         seed = random.randint(0, 2 ** 32 - 1)
@@ -6488,6 +6597,7 @@ def generate_image_flux_controlnet(prompt, init_image, base_model_name, seed, st
 
     except Exception as e:
         gr.Error(f"An error occurred: {str(e)}")
+        return None, None
 
     finally:
         del pipe
@@ -6564,6 +6674,7 @@ def generate_image_hunyuandit_txt2img(prompt, negative_prompt, seed, stop_button
 
     except Exception as e:
         gr.Error(f"An error occurred: {str(e)}")
+        return None, None
 
     finally:
         del pipe
@@ -6579,6 +6690,7 @@ def generate_image_hunyuandit_controlnet(prompt, negative_prompt, init_image, co
 
     if not init_image:
         gr.Info("Please upload an initial image!")
+        return None, None
 
     if seed == "" or seed is None:
         seed = random.randint(0, 2 ** 32 - 1)
@@ -6641,6 +6753,7 @@ def generate_image_hunyuandit_controlnet(prompt, negative_prompt, init_image, co
 
     except Exception as e:
         gr.Error(f"An error occurred: {str(e)}")
+        return None, None
 
     finally:
         del pipe
@@ -6707,6 +6820,7 @@ def generate_image_lumina(prompt, negative_prompt, seed, num_inference_steps, gu
 
     except Exception as e:
         gr.Error(f"An error occurred: {str(e)}")
+        return None, None
 
     finally:
         del pipe
@@ -6797,6 +6911,7 @@ def generate_image_kolors_txt2img(prompt, negative_prompt, seed, lora_model_name
 
     except Exception as e:
         gr.Error(f"An error occurred: {str(e)}")
+        return None, None
 
     finally:
         del pipe
@@ -6808,6 +6923,7 @@ def generate_image_kolors_img2img(prompt, negative_prompt, init_image, seed, gui
 
     if not init_image:
         gr.Info("Please upload an initial image!")
+        return None, None
 
     if seed == "" or seed is None:
         seed = random.randint(0, 2 ** 32 - 1)
@@ -6852,6 +6968,7 @@ def generate_image_kolors_img2img(prompt, negative_prompt, init_image, seed, gui
 
     except Exception as e:
         gr.Error(f"An error occurred: {str(e)}")
+        return None, None
 
     finally:
         del pipe
@@ -6863,6 +6980,7 @@ def generate_image_kolors_ip_adapter_plus(prompt, negative_prompt, ip_adapter_im
 
     if not ip_adapter_image:
         gr.Info("Please upload an initial image!")
+        return None, None
 
     if seed == "" or seed is None:
         seed = random.randint(0, 2 ** 32 - 1)
@@ -6926,6 +7044,7 @@ def generate_image_kolors_ip_adapter_plus(prompt, negative_prompt, ip_adapter_im
 
     except Exception as e:
         gr.Error(f"An error occurred: {str(e)}")
+        return None, None
 
     finally:
         del pipe
@@ -7033,6 +7152,7 @@ def generate_image_auraflow(prompt, negative_prompt, seed, lora_model_names, lor
 
     except Exception as e:
         gr.Error(f"An error occurred: {str(e)}")
+        return None, None
 
     finally:
         del pipe
@@ -7145,6 +7265,7 @@ def generate_image_wurstchen(prompt, negative_prompt, seed, stop_button, width, 
 
     except Exception as e:
         gr.Error(f"An error occurred: {str(e)}")
+        return None, None
 
     finally:
         del prior_pipeline
@@ -7301,6 +7422,7 @@ def generate_image_deepfloyd_txt2img(prompt, negative_prompt, seed, stop_button,
 
     except Exception as e:
         gr.Error(f"An error occurred: {str(e)}")
+        return None, None, None, None
 
     finally:
         try:
@@ -7328,6 +7450,7 @@ def generate_image_deepfloyd_img2img(prompt, negative_prompt, init_image, seed, 
 
     if not init_image:
         gr.Info("Please upload an initial image!")
+        return None, None, None, None
 
     deepfloydI_model_path = os.path.join("inputs", "image", "deepfloydI")
     deepfloydII_model_path = os.path.join("inputs", "image", "deepfloydII")
@@ -7458,6 +7581,7 @@ def generate_image_deepfloyd_img2img(prompt, negative_prompt, init_image, seed, 
 
     except Exception as e:
         gr.Error(f"An error occurred: {str(e)}")
+        return None, None, None, None
 
     finally:
         try:
@@ -7485,6 +7609,7 @@ def generate_image_deepfloyd_inpaint(prompt, negative_prompt, init_image, mask_i
 
     if not init_image or not mask_image:
         gr.Info("Please upload an initial image and provide a mask image!")
+        return None, None, None, None
 
     deepfloydI_model_path = os.path.join("inputs", "image", "deepfloydI")
     deepfloydII_model_path = os.path.join("inputs", "image", "deepfloydII")
@@ -7613,10 +7738,11 @@ def generate_image_deepfloyd_inpaint(prompt, negative_prompt, init_image, mask_i
         pt_to_pil(stage_2_output)[0].save(stage_2_path)
         stage_3_output.save(stage_3_path)
 
-        return stage_1_path, stage_2_path, stage_3_path, None
+        return stage_1_path, stage_2_path, stage_3_path, f"Image generated successfully. Seed used: {seed}"
 
     except Exception as e:
         gr.Error(f"An error occurred: {str(e)}")
+        return None, None, None, None
 
     finally:
         try:
@@ -7732,6 +7858,7 @@ def generate_image_pixart(prompt, negative_prompt, version, seed, stop_button, n
 
     except Exception as e:
         gr.Error(f"An error occurred: {str(e)}")
+        return None, None
 
     finally:
         del pipe
@@ -7797,6 +7924,7 @@ def generate_image_playgroundv2(prompt, negative_prompt, seed, height, width, nu
 
     except Exception as e:
         gr.Error(f"An error occurred: {str(e)}")
+        return None, None
 
     finally:
         del pipe
