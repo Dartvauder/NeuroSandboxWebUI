@@ -1979,10 +1979,6 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
             seed = int(seed)
 
         try:
-            def progress_callback(i, t, callback_kwargs):
-                progress((i + 1) / stable_diffusion_steps, f"Step {i + 1}/{stable_diffusion_steps}")
-                return callback_kwargs
-
             params = {
                 'model_name': stable_diffusion_model_name,
                 'prompt': prompt,
@@ -1991,8 +1987,7 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
                 'height': stable_diffusion_height,
                 'width': stable_diffusion_width,
                 'sample_steps': stable_diffusion_steps,
-                'seed': seed,
-                'progress_callback': progress_callback
+                'seed': seed
             }
 
             env = os.environ.copy()
@@ -2448,10 +2443,6 @@ def generate_image_img2img(prompt, negative_prompt, init_image, strength, stable
             else:
                 seed = int(seed)
 
-            def progress_callback(i, t, callback_kwargs):
-                progress((i + 1) / stable_diffusion_steps, f"Step {i + 1}/{stable_diffusion_steps}")
-                return callback_kwargs
-
             params = {
                 'model_name': stable_diffusion_model_name,
                 'prompt': prompt,
@@ -2460,8 +2451,7 @@ def generate_image_img2img(prompt, negative_prompt, init_image, strength, stable
                 'sample_steps': stable_diffusion_steps,
                 'image': init_image,
                 'strength': strength,
-                'seed': seed,
-                'progress_callback': progress_callback
+                'seed': seed
             }
 
             env = os.environ.copy()
@@ -4743,10 +4733,6 @@ def generate_image_sd3_txt2img(prompt, negative_prompt, model_type, quantize_sd3
             else:
                 seed = int(seed)
 
-            def progress_callback(i, t, callback_kwargs):
-                progress((i + 1) / num_inference_steps, f"Step {i + 1}/{num_inference_steps}")
-                return callback_kwargs
-
             params = {
                 'model_name': quantize_sd3_model_name,
                 'prompt': prompt,
@@ -4755,8 +4741,7 @@ def generate_image_sd3_txt2img(prompt, negative_prompt, model_type, quantize_sd3
                 'height': height,
                 'width': width,
                 'sample_steps': num_inference_steps,
-                'seed': seed,
-                'progress_callback': progress_callback
+                'seed': seed
             }
 
             env = os.environ.copy()
@@ -4934,10 +4919,6 @@ def generate_image_sd3_img2img(prompt, negative_prompt, init_image, strength, mo
             else:
                 seed = int(seed)
 
-            def progress_callback(i, t, callback_kwargs):
-                progress((i + 1) / num_inference_steps, f"Step {i + 1}/{num_inference_steps}")
-                return callback_kwargs
-
             params = {
                 'model_name': quantize_sd3_model_name,
                 'prompt': prompt,
@@ -4948,8 +4929,7 @@ def generate_image_sd3_img2img(prompt, negative_prompt, init_image, strength, mo
                 'sample_steps': num_inference_steps,
                 'image': init_image,
                 'strength': strength,
-                'seed': seed,
-                'progress_callback': progress_callback
+                'seed': seed
             }
 
             env = os.environ.copy()
@@ -6154,10 +6134,6 @@ def generate_image_flux_txt2img(prompt, model_name, quantize_model_name, enable_
                 gr.Info("Please select a GGUF model!")
                 return None, None
 
-            def progress_callback(i, t, callback_kwargs):
-                progress((i + 1) / num_inference_steps, f"Step {i + 1}/{num_inference_steps}")
-                return callback_kwargs
-
             params = {
                 'prompt': prompt,
                 'guidance_scale': guidance_scale,
@@ -6165,7 +6141,6 @@ def generate_image_flux_txt2img(prompt, model_name, quantize_model_name, enable_
                 'width': width,
                 'num_inference_steps': num_inference_steps,
                 'seed': seed,
-                'progress_callback': progress_callback,
                 'quantize_flux_model_path': f"{quantize_model_name}"
             }
 
@@ -6316,10 +6291,6 @@ def generate_image_flux_img2img(prompt, init_image, model_name, quantize_model_n
             gr.Info("Please select a GGUF model!")
             return None, None
 
-        def progress_callback(i, t, callback_kwargs):
-            progress((i + 1) / num_inference_steps, f"Step {i + 1}/{num_inference_steps}")
-            return callback_kwargs
-
         params = {
             'prompt': prompt,
             'guidance_scale': guidance_scale,
@@ -6329,8 +6300,7 @@ def generate_image_flux_img2img(prompt, init_image, model_name, quantize_model_n
             'seed': seed,
             'quantize_flux_model_path': f"{quantize_model_name}",
             'image': init_image,
-            'strength': strength,
-            'progress_callback': progress_callback
+            'strength': strength
         }
 
         env = os.environ.copy()
