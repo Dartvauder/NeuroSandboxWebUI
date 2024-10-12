@@ -10,19 +10,19 @@ A simple and convenient interface for using various neural network models. You c
 
 The goal of the project - to create the easiest possible application to use neural network models
 
-### Text: <img width="1112" alt="1" src="https://github.com/user-attachments/assets/68d290f4-87e7-4f09-b669-e95590cbcce7">
+### Text: <img width="1118" alt="1" src="https://github.com/user-attachments/assets/4eb61c69-4368-40a4-bf91-a37f8126043c">
 
-### Image: <img width="1112" alt="2" src="https://github.com/user-attachments/assets/02085575-1ae3-4e71-93eb-499c3103623a">
+### Image: <img width="1109" alt="2" src="https://github.com/user-attachments/assets/309a7e7b-a54e-4b5c-837b-1d295d3960db">
 
-### Video: <img width="1115" alt="3" src="https://github.com/user-attachments/assets/032b248e-1ea8-4661-8a96-267e4a9ef01c">
+### Video: <img width="1117" alt="3" src="https://github.com/user-attachments/assets/5745c785-fede-4e11-aa46-73fd6696d032">
 
-### 3D: <img width="1120" alt="4" src="https://github.com/user-attachments/assets/9ab4d3ec-f726-44b7-af3b-700a33e069c7">
+### 3D: <img width="1114" alt="4" src="https://github.com/user-attachments/assets/db10b012-e9b8-40b9-95fa-150200ce0f11">
 
-### Audio: <img width="1118" alt="5" src="https://github.com/user-attachments/assets/a941dc22-f365-4108-ba0f-df56057b63b8">
+### Audio: <img width="1109" alt="5" src="https://github.com/user-attachments/assets/fac227ec-eb97-498f-8c67-e5304d1e0496">
 
-### Extras: <img width="1118" alt="6" src="https://github.com/user-attachments/assets/c2f3fbb0-a07b-446f-a166-e995c7722463">
+### Extras: <img width="1111" alt="6" src="https://github.com/user-attachments/assets/ca3d451f-ca52-47c9-9ee4-e9d1aed0e4cb">
 
-### Interface: <img width="1117" alt="7" src="https://github.com/user-attachments/assets/b3b85000-5dba-4d16-a96b-479c561b1485">
+### Interface: <img width="1116" alt="7" src="https://github.com/user-attachments/assets/2adf0118-560f-4040-821f-417fae40645b">
 
 ## Features:
 

@@ -10,19 +10,19 @@
 
 Цель проекта - создать максимально простое в использовании приложение для работы с моделями нейронных сетей.
 
-### Текст: <img width="1115" alt="1ru" src="https://github.com/user-attachments/assets/c928df15-51e3-4047-97fb-9b736dded88d">
+### Текст: <img width="1114" alt="1ru" src="https://github.com/user-attachments/assets/fa2425e2-2528-44ae-90e0-d22bc9e4960e">
 
-### Изображение: <img width="1116" alt="2ru" src="https://github.com/user-attachments/assets/96e85712-858f-4672-8827-5a1e31a1a816">
+### Изображение: <img width="1115" alt="2ru" src="https://github.com/user-attachments/assets/739ee1e9-a5e6-46d5-b57e-1494bc52433b">
 
-### Видео: <img width="1120" alt="3ru" src="https://github.com/user-attachments/assets/48e0796b-0f5d-47b8-8f7a-55c6a59bc8bd">
+### Видео: <img width="1115" alt="3ru" src="https://github.com/user-attachments/assets/3557c766-1dec-47dd-b56d-2d8c24dd6aa2">
 
-### 3D: <img width="1121" alt="4ru" src="https://github.com/user-attachments/assets/70f31534-9673-4185-8a8d-2343bdb8eca5">
+### 3D: <img width="1112" alt="4ru" src="https://github.com/user-attachments/assets/09f4ecc8-5098-45ce-8dd4-35ecf410ca35">
 
-### Аудио: <img width="1117" alt="5ru" src="https://github.com/user-attachments/assets/094441c8-7f66-4902-a325-3b6e0f2998aa">
+### Аудио: <img width="1111" alt="5ru" src="https://github.com/user-attachments/assets/73144d26-65fe-4a81-8d37-fdcf40757bac">
 
-### Дополнительно: <img width="1117" alt="6ru" src="https://github.com/user-attachments/assets/177703f5-6984-44b7-a95f-42dd33ed8f64">
+### Дополнительно: <img width="1112" alt="6ru" src="https://github.com/user-attachments/assets/5250b26e-67b4-4d6a-a2e9-ce6920459e4f">
 
-### Интерфейс: <img width="1120" alt="7ru" src="https://github.com/user-attachments/assets/ab1be248-b269-481a-b994-e760ff2ab1fb">
+### Интерфейс: <img width="1115" alt="7ru" src="https://github.com/user-attachments/assets/48d4a4a7-6ce6-494d-a17d-368ff4bcf368">
 
 ## Функции:
 
