@@ -982,6 +982,19 @@ def load_tts_model():
     return TTS().TTS(model_path=tts_model_path, config_path=f"{tts_model_path}/config.json")
 
 
+def load_freevc_model():
+    model_path = "inputs/audio/FREEvc24"
+    if not os.path.exists(model_path):
+        gr.Info("Downloading FreeVC...")
+        os.makedirs(model_path, exist_ok=True)
+        url = "https://huggingface.co/spaces/OlaWod/FreeVC/resolve/main/checkpoints/freevc.pth"
+        r = requests.get(url, allow_redirects=True)
+        with open(os.path.join(model_path, "freevc.pth"), "wb") as f:
+            f.write(r.content)
+        gr.Info("FreeVC model downloaded")
+    return model_path
+
+
 def load_whisper_model():
     whisper_model_path = "inputs/text/whisper-medium"
     if not os.path.exists(whisper_model_path):
@@ -1529,7 +1542,7 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, llm_model_t
         yield chat_history_state, audio_path, chat_dir
 
 
-def generate_tts_stt(text, audio, tts_settings_html, speaker_wav, language, tts_temperature, tts_top_p, tts_top_k, tts_speed, tts_repetition_penalty, tts_length_penalty, tts_output_format, stt_output_format, progress=gr.Progress()):
+def generate_tts_stt(text, audio, tts_settings_html, speaker_wav, language, tts_temperature, tts_top_p, tts_top_k, tts_speed, tts_repetition_penalty, tts_length_penalty, enable_conversion, source_wav, target_wav, tts_output_format, stt_output_format, progress=gr.Progress()):
     global tts_model, whisper_model
 
     tts_output = None
@@ -1540,6 +1553,24 @@ def generate_tts_stt(text, audio, tts_settings_html, speaker_wav, language, tts_
         return None, None
 
     try:
+        if enable_conversion:
+            device = "cuda" if torch.cuda.is_available() else "cpu"
+            progress(0.5, desc="Performing voice conversion")
+            freevc_model_path = load_freevc_model()
+            tts = TTS().TTS(model_name=freevc_model_path, progress_bar=False).to(device)
+
+            today = datetime.now().date()
+            conversion_dir = os.path.join('outputs', f"VoiceConversion_{today.strftime('%Y%m%d')}")
+            os.makedirs(conversion_dir, exist_ok=True)
+            conversion_filename = f"converted_{datetime.now().strftime('%Y%m%d_%H%M%S')}.wav"
+            conversion_output = os.path.join(conversion_dir, conversion_filename)
+
+            tts.voice_conversion_to_file(source_wav=source_wav, target_wav=target_wav, file_path=conversion_output)
+
+            progress(1.0, desc="Voice conversion complete")
+
+            return conversion_output, None
+
         if text:
             progress(0, desc="Processing TTS")
             if not tts_model:
@@ -10176,6 +10207,9 @@ tts_stt_interface = gr.Interface(
         gr.Slider(minimum=0.1, maximum=2.0, value=2.0, step=0.1, label=_("TTS Repetition penalty", lang),
                   interactive=True),
         gr.Slider(minimum=0.1, maximum=2.0, value=1.0, step=0.1, label=_("TTS Length penalty", lang), interactive=True),
+        gr.Checkbox(label=_("Enable Voice Conversion", lang), value=False),
+        gr.Audio(label=_("Source wav", lang), type="filepath"),
+        gr.Audio(label=_("Target wav", lang), type="filepath"),
         gr.Radio(choices=["wav", "mp3", "ogg"], label=_("Select TTS output format", lang), value="wav", interactive=True),
         gr.Dropdown(choices=["txt", "json"], label=_("Select STT output format", lang), value="txt", interactive=True)
     ],
