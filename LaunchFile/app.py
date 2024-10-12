@@ -49,7 +49,6 @@ import imageio
 from PIL import Image, ImageDraw
 from PIL.PngImagePlugin import PngInfo
 import taglib
-from tqdm import tqdm
 import requests
 import markdown
 import urllib.parse
@@ -340,8 +339,7 @@ def add_metadata_to_file(file_path, metadata):
             with taglib.File(file_path, save_on_exit=True) as audio:
                 audio.tags["COMMENT"] = [metadata_str]
         else:
-            gr.Info(f"Unsupported file type: {file_extension}")
-            return
+            print(f"Unsupported file type: {file_extension}")
 
         gr.Info(f"Metadata successfully added to {file_path}")
     except Exception as e:
@@ -468,10 +466,8 @@ def perform_web_search(query):
 
         return result
 
-    except Exception as e:
-        error_message = f"An error occurred: {str(e)}"
-        gr.Error(error_message)
-        return error_message
+    finally:
+        flush()
 
 
 def parse_pdf(pdf_path):
@@ -593,6 +589,7 @@ def downscale_audio(input_path, output_path, downscale_factor):
 def change_image_format(input_image, new_format, enable_format_changer):
     if not input_image or not enable_format_changer:
         gr.Info("Please upload an image and enable format changer!")
+        return None, None
 
     try:
         input_format = os.path.splitext(input_image)[1][1:]
@@ -609,11 +606,13 @@ def change_image_format(input_image, new_format, enable_format_changer):
 
     except Exception as e:
         gr.Error(f"An error occurred: {str(e)}")
+        return None, None
 
 
 def change_video_format(input_video, new_format, enable_format_changer):
     if not input_video or not enable_format_changer:
         gr.Info("Please upload a video and enable format changer!")
+        return None, None
 
     try:
         input_format = os.path.splitext(input_video)[1][1:]
@@ -630,11 +629,13 @@ def change_video_format(input_video, new_format, enable_format_changer):
 
     except Exception as e:
         gr.Error(f"An error occurred: {str(e)}")
+        return None, None
 
 
 def change_audio_format(input_audio, new_format, enable_format_changer):
     if not input_audio or not enable_format_changer:
         gr.Info("Please upload an audio file and enable format changer!")
+        return None, None
 
     try:
         input_format = os.path.splitext(input_audio)[1][1:]
@@ -651,6 +652,7 @@ def change_audio_format(input_audio, new_format, enable_format_changer):
 
     except Exception as e:
         gr.Error(f"An error occurred: {str(e)}")
+        return None, None
 
 
 def load_magicprompt_model():
@@ -706,7 +708,6 @@ def load_model(model_name, model_type, n_ctx, n_batch, n_ubatch, freq_base, freq
                 model = AutoModelForCausalLM().AutoModelForCausalLM.from_pretrained(
                     model_path,
                     device_map=device,
-                    load_in_8bit=True,
                     low_cpu_mem_usage=True,
                     torch_dtype=torch.float16,
                     trust_remote_code=True
@@ -714,6 +715,7 @@ def load_model(model_name, model_type, n_ctx, n_batch, n_ubatch, freq_base, freq
                 return tokenizer, model, None
             except Exception as e:
                 gr.Error(f"An error occurred: {str(e)}")
+                return None, None, None
         elif model_type == "Llama":
             try:
                 model = Llama().Llama(model_path, n_gpu_layers=-1 if device == "cuda" else 0, n_ctx=n_ctx, n_batch=n_batch, n_ubatch=n_ubatch, freq_base=freq_base, freq_scale=freq_scale)
@@ -721,6 +723,7 @@ def load_model(model_name, model_type, n_ctx, n_batch, n_ubatch, freq_base, freq
                 return tokenizer, model, None
             except Exception as e:
                 gr.Error(f"An error occurred: {str(e)}")
+                return None, None, None
         elif model_type == "GPTQ":
             try:
                 tokenizer = AutoTokenizer().AutoTokenizer.from_pretrained(model_path)
@@ -734,6 +737,7 @@ def load_model(model_name, model_type, n_ctx, n_batch, n_ubatch, freq_base, freq
                 return tokenizer, model, None
             except Exception as e:
                 gr.Error(f"An error occurred: {str(e)}")
+                return None, None, None
         elif model_type == "AWQ":
             try:
                 tokenizer = AutoTokenizer().AutoTokenizer.from_pretrained(model_path)
@@ -747,6 +751,7 @@ def load_model(model_name, model_type, n_ctx, n_batch, n_ubatch, freq_base, freq
                 return tokenizer, model, None
             except Exception as e:
                 gr.Error(f"An error occurred: {str(e)}")
+                return None, None, None
         elif model_type == "BNB":
             try:
                 tokenizer = AutoTokenizer().AutoTokenizer.from_pretrained(model_path)
@@ -760,6 +765,7 @@ def load_model(model_name, model_type, n_ctx, n_batch, n_ubatch, freq_base, freq
                 return tokenizer, model, None
             except Exception as e:
                 gr.Error(f"An error occurred: {str(e)}")
+                return None, None, None
         elif model_type == "ExLlamaV2":
             try:
                 config = ExLlamaV2Config().ExLlamaV2Config()
@@ -773,7 +779,7 @@ def load_model(model_name, model_type, n_ctx, n_batch, n_ubatch, freq_base, freq
                 return cache, tokenizer, model
             except Exception as e:
                 gr.Error(f"An error occurred: {str(e)}")
-    return None, None, None
+                return None, None, None
 
 
 def load_lora_model(base_model_name, lora_model_name, model_type):
@@ -835,9 +841,10 @@ def load_lora_model(base_model_name, lora_model_name, model_type):
             model.load_autosplit(cache)
             tokenizer = ExLlamaV2Tokenizer().ExLlamaV2Tokenizer(config)
             ExLlamaV2Lora().ExLlamaV2Lora.from_directory(base_model_path, lora_model_path)
-            return tokenizer, model, None
+            return cache, tokenizer, model
     except Exception as e:
         gr.Error(f"An error occurred: {str(e)}")
+        return None, None, None
     finally:
         if 'tokenizer' in locals():
             del tokenizer
@@ -867,6 +874,7 @@ def load_moondream2_model(model_id, revision):
 
     except Exception as e:
         gr.Error(f"An error occurred: {str(e)}")
+        return None, None, None
     finally:
         del tokenizer
         del model
@@ -899,6 +907,7 @@ def load_llava_next_video_model():
 
     except Exception as e:
         gr.Error(f"An error occurred: {str(e)}")
+        return None, None, None
     finally:
         del processor
         del model
@@ -1092,6 +1101,7 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, llm_model_t
                     gr.Info(f"Skipping invalid entry in JSON: {entry}")
         else:
             gr.Info(f"Unsupported file format: {file_extension}")
+            return None, None, None
 
         yield chat_history_state, None, chat_dir
     elif 'chat_history' not in globals() or chat_history is None:
@@ -1099,10 +1109,12 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, llm_model_t
 
     if not input_text and not input_audio:
         gr.Info("Please, enter your request!")
+        return None, None, None
     prompt = transcribe_audio(input_audio) if input_audio else input_text
 
     if not llm_model_name:
         gr.Info("Please, select a LLM model!")
+        return None, None, None
 
     if not system_prompt:
         system_prompt = "You are a helpful assistant."
@@ -1154,6 +1166,7 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, llm_model_t
                     data_uri = image_to_base64_data_uri(image_path)
                 else:
                     gr.Info("Please upload an image for multimodal input.")
+                    return None, None, None
 
                 context = ""
                 for human_text, ai_text in chat_history[-5:]:
@@ -1179,6 +1192,7 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, llm_model_t
 
             except Exception as e:
                 gr.Error(f"An error occurred: {str(e)}")
+                return None, None, None
 
             finally:
                 del llm
@@ -1196,6 +1210,7 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, llm_model_t
                     enc_image = model.encode_image(image)
                 else:
                     gr.Info("Please upload an image for multimodal input.")
+                    return None, None, None
 
                 context = ""
                 for human_text, ai_text in chat_history[-5:]:
@@ -1215,6 +1230,7 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, llm_model_t
 
             except Exception as e:
                 gr.Error(f"An error occurred: {str(e)}")
+                return None, None, None
 
             finally:
                 del model
@@ -1225,6 +1241,7 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, llm_model_t
         device = "cuda" if torch.cuda.is_available() else "cpu"
         if llm_model_type == "Llama":
             gr.Info("LLaVA-NeXT-Video is not supported with llama model type.")
+            return None, None, None
         else:
 
             model, processor = load_llava_next_video_model()
@@ -1237,6 +1254,7 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, llm_model_t
                     clip = read_video_pyav(container, indices)
                 else:
                     gr.Info("Please upload a video for LLaVA-NeXT-Video input.")
+                    return None, None, None
 
                 context = ""
                 for human_text, ai_text in chat_history[-5:]:
@@ -1270,6 +1288,7 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, llm_model_t
 
             except Exception as e:
                 gr.Error(f"An error occurred: {str(e)}")
+                return None, None, None
 
             finally:
                 del model
@@ -1279,9 +1298,11 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, llm_model_t
     elif enable_multimodal and llm_model_name == "Qwen2-Audio":
         if not input_audio_mm:
             gr.Info("Please upload a audio for Qwen2-Audio input.")
+            return None, None, None
         processor, model = load_qwen2_audio_model()
         if llm_model_type == "Llama":
             gr.Info("Qwen2-Audio is not supported with llama model type.")
+            return None, None, None
         else:
             try:
                 response = process_qwen2_audio(processor, model, input_audio_mm, prompt)
@@ -1291,6 +1312,7 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, llm_model_t
                 yield chat_history_state, None, None
             except Exception as e:
                 gr.Error(f"An error occurred: {str(e)}")
+                return None, None, None
             finally:
                 del processor
                 del model
@@ -1298,16 +1320,14 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, llm_model_t
 
     else:
         if llm_model_type == "Llama":
-            tokenizer, llm_model, error_message = load_model(llm_model_name, llm_model_type, n_ctx, n_batch, n_ubatch, freq_base, freq_scale)
+            tokenizer, llm_model = load_model(llm_model_name, llm_model_type, n_ctx, n_batch, n_ubatch, freq_base, freq_scale)
         elif llm_model_type == "ExLlamaV2":
-            cache, tokenizer, llm_model, error_message = load_model(llm_model_name, llm_model_type, n_ctx=None, n_batch=None, n_ubatch=None, freq_base=None, freq_scale=None)
+            cache, tokenizer, llm_model = load_model(llm_model_name, llm_model_type, n_ctx=None, n_batch=None, n_ubatch=None, freq_base=None, freq_scale=None)
         else:
-            tokenizer, llm_model, error_message = load_model(llm_model_name, llm_model_type, n_ctx=None, n_batch=None, n_ubatch=None, freq_base=None, freq_scale=None)
+            tokenizer, llm_model = load_model(llm_model_name, llm_model_type, n_ctx=None, n_batch=None, n_ubatch=None, freq_base=None, freq_scale=None)
 
         if llm_lora_model_name:
-            tokenizer, llm_model, error_message = load_lora_model(llm_model_name, llm_lora_model_name, llm_model_type)
-        if error_message:
-            gr.Info(error_message)
+            tokenizer, llm_model = load_lora_model(llm_model_name, llm_lora_model_name, llm_model_type)
         tts_model = None
         whisper_model = None
         text = None
@@ -1319,6 +1339,7 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, llm_model_t
                     tts_model = load_tts_model()
                 if not speaker_wav or not language:
                     gr.Info("Please, select a voice and language for TTS!")
+                    return None, None, None
                 device = "cuda" if torch.cuda.is_available() else "cpu"
                 tts_model = tts_model.to(device)
             if input_audio:
@@ -1448,6 +1469,7 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, llm_model_t
                         text = translation
                     except urllib.error.URLError:
                         gr.Info("LibreTranslate is not running. Please start the LibreTranslate server.")
+                        return None, None, None
 
                 if not chat_dir:
                     now = datetime.now()
@@ -1486,6 +1508,7 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, llm_model_t
 
         except Exception as e:
             gr.Error(f"An error occurred: {str(e)}")
+            return None, None, None
 
         finally:
             if tokenizer is not None:
@@ -1514,6 +1537,7 @@ def generate_tts_stt(text, audio, tts_settings_html, speaker_wav, language, tts_
 
     if not text and not audio:
         gr.Info("Please enter text for TTS or record audio for STT!")
+        return None, None
 
     try:
         if text:
@@ -1523,6 +1547,7 @@ def generate_tts_stt(text, audio, tts_settings_html, speaker_wav, language, tts_
                 tts_model = load_tts_model()
             if not speaker_wav or not language:
                 gr.Info("Please select a voice and language for TTS!")
+                return None, None
             device = "cuda" if torch.cuda.is_available() else "cpu"
             tts_model = tts_model.to(device)
 
@@ -1586,6 +1611,7 @@ def generate_tts_stt(text, audio, tts_settings_html, speaker_wav, language, tts_
 
     except Exception as e:
         gr.Error(f"An error occurred: {str(e)}")
+        return None, None
 
     finally:
         if tts_model is not None:
@@ -1621,9 +1647,11 @@ def generate_mms_tts(text, language, output_format, progress=gr.Progress()):
 
     if not text:
         gr.Info("Please enter your request!")
+        return None, None
 
     if not language:
         gr.Info("Please select a language!")
+        return None, None
 
     try:
         progress(0.4, desc="Loading model")
@@ -1649,12 +1677,14 @@ def generate_mms_tts(text, language, output_format, progress=gr.Progress()):
             sf.write(output_file, waveform.numpy(), model.config.sampling_rate, format='ogg')
         else:
             gr.Info(f"Unsupported output format: {output_format}")
+            return None, None
 
         progress(1.0, desc="Speech generation complete")
         return output_file, None
 
     except Exception as e:
         gr.Error(f"An error occurred: {str(e)}")
+        return None, None
 
     finally:
         del model
@@ -1676,9 +1706,11 @@ def transcribe_mms_stt(audio_file, language, output_format, progress=gr.Progress
 
     if not audio_file:
         gr.Info("Please record your request!")
+        return None, None
 
     if not language:
         gr.Info("Please select a language!")
+        return None, None
 
     try:
         progress(0.4, desc="Loading model")
@@ -1713,12 +1745,14 @@ def transcribe_mms_stt(audio_file, language, output_format, progress=gr.Progress
                 json.dump({"transcription": transcription}, f, ensure_ascii=False, indent=4)
         else:
             gr.Info(f"Unsupported output format: {output_format}")
+            return None, None
 
         progress(1.0, desc="Transcription complete")
         return transcription, None
 
     except Exception as e:
         gr.Error(f"An error occurred: {str(e)}")
+        return None, None
 
     finally:
         del model
@@ -1745,15 +1779,19 @@ def seamless_m4tv2_process(input_type, input_text, input_audio, src_lang, tgt_la
 
     if not input_text and not input_audio:
         gr.Info("Please enter your request!")
+        return None, None
 
     if not src_lang:
         gr.Info("Please select your source language!")
+        return None, None
 
     if not tgt_lang:
         gr.Info("Please select your target language!")
+        return None, None
 
     if not dataset_lang:
         gr.Info("Please select your dataset language!")
+        return None, None
 
     try:
         progress(0.3, desc="Loading model")
@@ -1813,7 +1851,7 @@ def seamless_m4tv2_process(input_type, input_text, input_audio, src_lang, tgt_la
                 sf.write(audio_path, audio_output, 16000, format='ogg')
             else:
                 gr.Info(f"Unsupported audio format: {audio_output_format}")
-                audio_path = None
+                return None, None
         else:
             audio_path = None
 
@@ -1831,7 +1869,7 @@ def seamless_m4tv2_process(input_type, input_text, input_audio, src_lang, tgt_la
                     json.dump({"text": text_output}, f, ensure_ascii=False, indent=4)
             else:
                 gr.Info(f"Unsupported text format: {text_output_format}")
-                text_output = None
+                return None, None
         else:
             text_output = None
 
@@ -1840,6 +1878,7 @@ def seamless_m4tv2_process(input_type, input_text, input_audio, src_lang, tgt_la
 
     except Exception as e:
         gr.Error(f"An error occurred: {str(e)}")
+        return None, None
 
     finally:
         del model
@@ -1851,12 +1890,15 @@ def translate_text(text, source_lang, target_lang, enable_translate_history, tra
                    progress=gr.Progress()):
     if not text:
         gr.Info("Please enter your request!")
+        return None
 
     if not source_lang:
         gr.Info("Please select your source language!")
+        return None
 
     if not target_lang:
         gr.Info("Please select your target language!")
+        return None
 
     try:
         progress(0.1, desc="Initializing translation")
@@ -1901,12 +1943,13 @@ def translate_text(text, source_lang, target_lang, enable_translate_history, tra
         progress(1.0, desc="Translation complete")
         return translation
 
-    except urllib.error.URLError as e:
-        error_message = "LibreTranslate is not running. Please start the LibreTranslate server."
-        gr.Info(error_message)
+    except urllib.error.URLError:
+        gr.Info("LibreTranslate is not running. Please start the LibreTranslate server.")
+        return None
 
     except Exception as e:
         gr.Error(f"An error occurred: {str(e)}")
+        return None
 
     finally:
         flush()
