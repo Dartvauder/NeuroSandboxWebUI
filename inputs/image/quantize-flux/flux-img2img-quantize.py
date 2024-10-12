@@ -30,7 +30,6 @@ def generate_image(params):
         seed=params['seed'],
         image=params['init_image'],
         strength=params['strength'],
-        progress_callback=params['progress_callback'],
         sample_method="euler"
     )
 
