@@ -1554,6 +1554,10 @@ def generate_tts_stt(text, audio, tts_settings_html, speaker_wav, language, tts_
 
     try:
         if enable_conversion:
+            if not source_wav and target_wav:
+                gr.Info("Please upload source and target files for voice conversion!")
+                return None, None
+
             device = "cuda" if torch.cuda.is_available() else "cpu"
             progress(0.5, desc="Performing voice conversion")
             freevc_model_path = load_freevc_model()
