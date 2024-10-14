@@ -199,6 +199,8 @@ DDIMScheduler = lazy_import('diffusers', 'DDIMScheduler')
 DDPMScheduler = lazy_import('diffusers', 'DDPMScheduler')
 DDIMInverseScheduler = lazy_import('diffusers', 'DDIMInverseScheduler')
 DEFAULT_STAGE_C_TIMESTEPS = lazy_import('diffusers.pipelines.wuerstchen', 'DEFAULT_STAGE_C_TIMESTEPS')
+AutoencoderTiny = lazy_import('diffusers', 'AutoencoderTiny')
+ConsistencyDecoderVAE = lazy_import('diffusers', 'ConsistencyDecoderVAE')
 
 # Another imports
 AutoGPTQForCausalLM = lazy_import('auto_gptq', 'AutoGPTQForCausalLM')
@@ -343,7 +345,7 @@ def add_metadata_to_file(file_path, metadata):
 
         gr.Info(f"Metadata successfully added to {file_path}")
     except Exception as e:
-        gr.Error(f"Error adding metadata to {file_path}: {str(e)}")
+        gr.Warning(f"Error adding metadata to {file_path}: {str(e)}", duration=5)
 
 
 def load_translation(lang):
@@ -1997,7 +1999,7 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
                            enable_freeu, freeu_s1, freeu_s2, freeu_b1, freeu_b2,
                            enable_sag, sag_scale, enable_pag, pag_scale, enable_token_merging, ratio,
                            enable_deepcache, cache_interval, cache_branch_id, enable_tgate, gate_step,
-                           enable_magicprompt, magicprompt_max_new_tokens, output_format, progress=gr.Progress()):
+                           enable_magicprompt, magicprompt_max_new_tokens, enable_cdvae, enable_taesd, output_format, progress=gr.Progress()):
     global stop_signal
     stop_signal = False
     stop_idx = None
@@ -2069,6 +2071,18 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
                 stable_diffusion_model = AutoPipelineForText2Image().AutoPipelineForText2Image.from_single_file(
                     stable_diffusion_model_path, use_safetensors=True, device_map="auto",
                     torch_dtype=torch.float16, variant="fp16", enable_pag=True
+                )
+            elif enable_cdvae:
+                vae = ConsistencyDecoderVAE().ConsistencyDecoderVAE.from_pretrained("openai/consistency-decoder", torch_dtype=torch.float16)
+                stable_diffusion_model = StableDiffusionPipeline().StableDiffusionPipeline.from_single_file(
+                    stable_diffusion_model_path, vae=vae, use_safetensors=True, device_map="auto",
+                    torch_dtype=torch.float16, variant="fp16"
+                )
+            elif enable_taesd:
+                vae = AutoencoderTiny().AutoencoderTiny.from_pretrained("madebyollin/taesd", torch_dtype=torch.float16)
+                stable_diffusion_model = StableDiffusionPipeline().StableDiffusionPipeline.from_single_file(
+                    stable_diffusion_model_path, vae=vae, use_safetensors=True, device_map="auto",
+                    torch_dtype=torch.float16, variant="fp16"
                 )
             else:
                 if stable_diffusion_model_type == "SD":
@@ -2158,7 +2172,7 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
             gr.Info(f"Scheduler successfully set to {stable_diffusion_scheduler}")
         except Exception as e:
             gr.Error(f"Error initializing scheduler: {e}")
-            gr.Info("Using default scheduler")
+            gr.Warning("Using default scheduler", duration=5)
 
         stable_diffusion_model.safety_checker = None
 
@@ -2188,8 +2202,8 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
         lora_loaded = False
         if lora_model_names and lora_scales:
             if len(lora_model_names) != len(lora_scales):
-                gr.Info(
-                    f"Warning: Number of LoRA models ({len(lora_model_names)}) does not match number of scales ({len(lora_scales)}). Using available scales.")
+                gr.Warning(
+                    f"Number of LoRA models ({len(lora_model_names)}) does not match number of scales ({len(lora_scales)}). Using available scales.", duration=5)
 
             for i, lora_model_name in enumerate(lora_model_names):
                 if i < len(lora_scales):
@@ -2206,7 +2220,7 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
                         lora_loaded = True
                         gr.Info(f"Loaded LoRA {lora_model_name} with scale {lora_scale}")
                     except Exception as e:
-                        gr.Error(f"Error loading LoRA {lora_model_name}: {str(e)}")
+                        gr.Warning(f"Error loading LoRA {lora_model_name}: {str(e)}", duration=5)
 
         ti_loaded = False
         if textual_inversion_model_names:
@@ -2220,7 +2234,7 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
                         ti_loaded = True
                         gr.Info(f"Loaded textual inversion: {token}")
                     except Exception as e:
-                        gr.Error(f"Error loading Textual Inversion {textual_inversion_model_name}: {str(e)}")
+                        gr.Warning(f"Error loading Textual Inversion {textual_inversion_model_name}: {str(e)}", duration=5)
 
         def process_prompt_with_ti(input_prompt, textual_inversion_model_names):
             if not textual_inversion_model_names:
@@ -2610,7 +2624,7 @@ def generate_image_img2img(prompt, negative_prompt, init_image, strength, stable
             gr.Info(f"Scheduler successfully set to {stable_diffusion_scheduler}")
         except Exception as e:
             gr.Error(f"Error initializing scheduler: {e}")
-            gr.Info("Using default scheduler")
+            gr.Warning("Using default scheduler", duration=5)
 
         stable_diffusion_model.safety_checker = None
 
@@ -2634,8 +2648,8 @@ def generate_image_img2img(prompt, negative_prompt, init_image, strength, stable
         lora_loaded = False
         if lora_model_names and lora_scales:
             if len(lora_model_names) != len(lora_scales):
-                gr.Info(
-                    f"Warning: Number of LoRA models ({len(lora_model_names)}) does not match number of scales ({len(lora_scales)}). Using available scales.")
+                gr.Warning(
+                    f"Number of LoRA models ({len(lora_model_names)}) does not match number of scales ({len(lora_scales)}). Using available scales.", duration=5)
 
             for i, lora_model_name in enumerate(lora_model_names):
                 if i < len(lora_scales):
@@ -2652,7 +2666,7 @@ def generate_image_img2img(prompt, negative_prompt, init_image, strength, stable
                         lora_loaded = True
                         gr.Info(f"Loaded LoRA {lora_model_name} with scale {lora_scale}")
                     except Exception as e:
-                        gr.Error(f"Error loading LoRA {lora_model_name}: {str(e)}")
+                        gr.Warning(f"Error loading LoRA {lora_model_name}: {str(e)}", duration=5)
 
         ti_loaded = False
         if textual_inversion_model_names:
@@ -2666,7 +2680,7 @@ def generate_image_img2img(prompt, negative_prompt, init_image, strength, stable
                         ti_loaded = True
                         gr.Info(f"Loaded textual inversion: {token}")
                     except Exception as e:
-                        gr.Error(f"Error loading Textual Inversion {textual_inversion_model_name}: {str(e)}")
+                        gr.Warning(f"Error loading Textual Inversion {textual_inversion_model_name}: {str(e)}", duration=5)
 
         def process_prompt_with_ti(input_prompt, textual_inversion_model_names):
             if not textual_inversion_model_names:
@@ -3176,7 +3190,7 @@ def generate_image_controlnet(prompt, negative_prompt, init_image, sd_version, s
                 gr.Info(f"Scheduler successfully set to {stable_diffusion_scheduler}")
             except Exception as e:
                 gr.Error(f"Error initializing scheduler: {e}")
-                gr.Info("Using default scheduler")
+                gr.Warning("Using default scheduler", duration=5)
 
             pipe.enable_vae_slicing()
             pipe.enable_vae_tiling()
@@ -3310,7 +3324,7 @@ def generate_image_controlnet(prompt, negative_prompt, init_image, sd_version, s
                 gr.Info(f"Scheduler successfully set to {stable_diffusion_scheduler}")
             except Exception as e:
                 gr.Error(f"Error initializing scheduler: {e}")
-                gr.Info("Using default scheduler")
+                gr.Warning("Using default scheduler", duration=5)
 
             pipe.enable_vae_slicing()
             pipe.enable_vae_tiling()
@@ -3739,7 +3753,7 @@ def generate_image_inpaint(prompt, negative_prompt, init_image, mask_image, blur
         gr.Info(f"Scheduler successfully set to {stable_diffusion_scheduler}")
     except Exception as e:
         gr.Error(f"Error initializing scheduler: {e}")
-        gr.Info("Using default scheduler")
+        gr.Warning("Using default scheduler", duration=5)
 
     stable_diffusion_model.enable_vae_slicing()
     stable_diffusion_model.enable_vae_tiling()
@@ -4853,8 +4867,8 @@ def generate_image_sd3_txt2img(prompt, negative_prompt, model_type, quantize_sd3
             lora_loaded = False
             if lora_model_names and lora_scales:
                 if len(lora_model_names) != len(lora_scales):
-                    gr.Info(
-                        f"Warning: Number of LoRA models ({len(lora_model_names)}) does not match number of scales ({len(lora_scales)}). Using available scales.")
+                    gr.Warning(
+                        f"Number of LoRA models ({len(lora_model_names)}) does not match number of scales ({len(lora_scales)}). Using available scales.", duration=5)
 
                 for i, lora_model_name in enumerate(lora_model_names):
                     if i < len(lora_scales):
@@ -4871,7 +4885,7 @@ def generate_image_sd3_txt2img(prompt, negative_prompt, model_type, quantize_sd3
                             lora_loaded = True
                             gr.Info(f"Loaded LoRA {lora_model_name} with scale {lora_scale}")
                         except Exception as e:
-                            gr.Error(f"Error loading LoRA {lora_model_name}: {str(e)}")
+                            gr.Warning(f"Error loading LoRA {lora_model_name}: {str(e)}", duration=5)
 
             def combined_callback(i, t, callback_kwargs):
                 nonlocal stop_idx
@@ -6226,8 +6240,8 @@ def generate_image_flux_txt2img(prompt, model_name, quantize_model_name, enable_
             lora_loaded = False
             if lora_model_names and lora_scales:
                 if len(lora_model_names) != len(lora_scales):
-                    gr.Info(
-                        f"Warning: Number of LoRA models ({len(lora_model_names)}) does not match number of scales ({len(lora_scales)}). Using available scales.")
+                    gr.Warning(
+                        f"Number of LoRA models ({len(lora_model_names)}) does not match number of scales ({len(lora_scales)}). Using available scales.", duration=5)
 
                 for i, lora_model_name in enumerate(lora_model_names):
                     if i < len(lora_scales):
@@ -6244,7 +6258,7 @@ def generate_image_flux_txt2img(prompt, model_name, quantize_model_name, enable_
                             lora_loaded = True
                             gr.Info(f"Loaded LoRA {lora_model_name} with scale {lora_scale}")
                         except Exception as e:
-                            gr.Error(f"Error loading LoRA {lora_model_name}: {str(e)}")
+                            gr.Warning(f"Error loading LoRA {lora_model_name}: {str(e)}", duration=5)
 
             def combined_callback(i, t, callback_kwargs):
                 nonlocal stop_idx
@@ -6863,8 +6877,8 @@ def generate_image_kolors_txt2img(prompt, negative_prompt, seed, lora_model_name
         lora_loaded = False
         if lora_model_names and lora_scales:
             if len(lora_model_names) != len(lora_scales):
-                gr.Info(
-                    f"Warning: Number of LoRA models ({len(lora_model_names)}) does not match number of scales ({len(lora_scales)}). Using available scales.")
+                gr.Warning(
+                    f"Number of LoRA models ({len(lora_model_names)}) does not match number of scales ({len(lora_scales)}). Using available scales.", duration=5)
 
             for i, lora_model_name in enumerate(lora_model_names):
                 if i < len(lora_scales):
@@ -6881,7 +6895,7 @@ def generate_image_kolors_txt2img(prompt, negative_prompt, seed, lora_model_name
                         lora_loaded = True
                         gr.Info(f"Loaded LoRA {lora_model_name} with scale {lora_scale}")
                     except Exception as e:
-                        gr.Error(f"Error loading LoRA {lora_model_name}: {str(e)}")
+                        gr.Warning(f"Error loading LoRA {lora_model_name}: {str(e)}", duration=5)
 
         image = pipe(
             prompt=prompt,
@@ -7094,8 +7108,8 @@ def generate_image_auraflow(prompt, negative_prompt, seed, lora_model_names, lor
         lora_loaded = False
         if lora_model_names and lora_scales:
             if len(lora_model_names) != len(lora_scales):
-                gr.Info(
-                    f"Warning: Number of LoRA models ({len(lora_model_names)}) does not match number of scales ({len(lora_scales)}). Using available scales.")
+                gr.Warning(
+                    f"Number of LoRA models ({len(lora_model_names)}) does not match number of scales ({len(lora_scales)}). Using available scales.", duration=5)
 
             for i, lora_model_name in enumerate(lora_model_names):
                 if i < len(lora_scales):
@@ -7112,7 +7126,7 @@ def generate_image_auraflow(prompt, negative_prompt, seed, lora_model_names, lor
                         lora_loaded = True
                         gr.Info(f"Loaded LoRA {lora_model_name} with scale {lora_scale}")
                     except Exception as e:
-                        gr.Error(f"Error loading LoRA {lora_model_name}: {str(e)}")
+                        gr.Warning(f"Error loading LoRA {lora_model_name}: {str(e)}", duration=5)
 
         image = pipe(
             prompt=prompt,
@@ -10383,6 +10397,8 @@ txt2img_interface = gr.Interface(
         gr.Slider(minimum=1, maximum=50, value=10, step=1, label=_("T-GATE steps", lang)),
         gr.Checkbox(label=_("Enable MagicPrompt", lang), value=False),
         gr.Slider(minimum=32, maximum=256, value=50, step=1, label=_("MagicPrompt Max New Tokens", lang)),
+        gr.Checkbox(label=_("Enable CDVAE", lang), value=False),
+        gr.Checkbox(label=_("Enable TAESD", lang), value=False),
         gr.Radio(choices=["png", "jpeg"], label=_("Select output format", lang), value="png", interactive=True)
     ],
     additional_inputs_accordion=gr.Accordion(label=_("Additional StableDiffusion Settings", lang), open=False),
@@ -12682,7 +12698,7 @@ model_downloader_interface = gr.Interface(
         gr.Textbox(label=_("Download StableDiffusion model", lang), placeholder="https://huggingface.co/.../model.safetensors"),
     ],
     outputs=[
-        gr.Textbox(label=_("Message", lang), type="text"),
+        gr.Textbox(label=_("Message", lang), type="text")
     ],
     title=_("NeuroSandboxWebUI - ModelDownloader", lang),
     description=_("This user interface allows you to download LLM and StableDiffusion models", lang),
