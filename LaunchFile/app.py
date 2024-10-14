@@ -66,6 +66,7 @@ import tomesd
 import openparse
 import string
 import hashlib
+from ThirdPartyRepository.taesd import taesd
 
 
 def lazy_import(module_name, fromlist):
@@ -2078,12 +2079,16 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
                     stable_diffusion_model_path, vae=vae, use_safetensors=True, device_map="auto",
                     torch_dtype=torch.float16, variant="fp16"
                 )
-            elif enable_taesd:
-                vae = AutoencoderTiny().AutoencoderTiny.from_pretrained("madebyollin/taesd", torch_dtype=torch.float16)
+            elif enable_taesd and stable_diffusion_model_type == "SD" and stable_diffusion_model_type == "SD2":
+                vae_sd = AutoencoderTiny().AutoencoderTiny.from_pretrained("madebyollin/taesd", torch_dtype=torch.float16)
                 stable_diffusion_model = StableDiffusionPipeline().StableDiffusionPipeline.from_single_file(
-                    stable_diffusion_model_path, vae=vae, use_safetensors=True, device_map="auto",
-                    torch_dtype=torch.float16, variant="fp16"
-                )
+                    stable_diffusion_model_path, use_safetensors=True, device_map="auto",
+                    torch_dtype=torch.float16, variant="fp16", vae=vae_sd)
+            elif enable_taesd and stable_diffusion_model_type == "SDXL":
+                vae_xl = AutoencoderTiny().AutoencoderTiny.from_pretrained("madebyollin/taesdxl", torch_dtype=torch.float16)
+                stable_diffusion_model = StableDiffusionXLPipeline().StableDiffusionXLPipeline.from_single_file(
+                    stable_diffusion_model_path, use_safetensors=True, device_map="auto", attention_slice=1,
+                    torch_dtype=torch.float16, variant="fp16", vae=vae_xl)
             else:
                 if stable_diffusion_model_type == "SD":
                     stable_diffusion_model = StableDiffusionPipeline().StableDiffusionPipeline.from_single_file(
@@ -2275,27 +2280,23 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
                 helper.set_params(cache_interval=cache_interval, cache_branch_id=cache_branch_id)
                 helper.enable()
 
-            def latents_to_rgb(latents):
-                weights = (
-                    (60, -60, 25, -70),
-                    (60, -5, 15, -50),
-                    (60, 10, -5, -35)
-                )
+            if stable_diffusion_model_type == "SD" and stable_diffusion_model_type == "SD2":
+                taesd_dec = taesd.Decoder().to(device).requires_grad_(False)
+                taesd_dec.load_state_dict(
+                    torch.load("ThirdPartyRepository/taesd/taesd_decoder.pth", map_location=device))
+            elif stable_diffusion_model_type == "SDXL":
+                taesd_dec = taesd.Decoder().to(device).requires_grad_(False)
+                taesd_dec.load_state_dict(
+                    torch.load("ThirdPartyRepository/taesd/taesdxl_decoder.pth", map_location=device))
 
-                weights_tensor = torch.t(torch.tensor(weights, dtype=latents.dtype).to(latents.device))
-                biases_tensor = torch.tensor((150, 140, 130), dtype=latents.dtype).to(latents.device)
-                rgb_tensor = torch.einsum("...lxy,lr -> ...rxy", latents, weights_tensor) + biases_tensor.unsqueeze(
-                    -1).unsqueeze(-1)
-                image_array = rgb_tensor.clamp(0, 255)[0].byte().cpu().numpy()
-                image_array = image_array.transpose(1, 2, 0)
 
-                return Image.fromarray(image_array)
+            def get_pred_original_sample(sched, model_output, timestep, sample):
+                device = model_output.device
+                timestep = timestep.to(device)
+                alpha_prod_t = sched.alphas_cumprod.to(device)[timestep.long()]
+                return (sample - (1 - alpha_prod_t) ** 0.5 * model_output) / alpha_prod_t ** 0.5
 
-            def decode_tensors(stable_diffusion_model, i, t, callback_kwargs):
-                latents = callback_kwargs["latents"]
-                image = latents_to_rgb(latents)
-                image.save(f"temp/{i}.png")
-                return callback_kwargs
+            preview_images = []
 
             def combined_callback(stable_diffusion_model, i, t, callback_kwargs):
                 nonlocal stop_idx
@@ -2303,7 +2304,14 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
                     stop_idx = i
                 if i == stop_idx:
                     stable_diffusion_model._interrupt = True
-                callback_kwargs = decode_tensors(stable_diffusion_model, i, t, callback_kwargs)
+
+                device = callback_kwargs["latents"].device
+                t = torch.tensor(t).to(device)
+                latents = get_pred_original_sample(stable_diffusion_model.scheduler, callback_kwargs["latents"], t,
+                                                   callback_kwargs["latents"])
+                decoded = \
+                stable_diffusion_model.image_processor.postprocess(taesd_dec(latents.float()).mul_(2).sub_(1))[0]
+                preview_images.append(decoded)
 
                 progress((i + 1) / stable_diffusion_steps, f"Step {i + 1}/{stable_diffusion_steps}")
 
@@ -2412,7 +2420,6 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
                                                 callback_on_step_end_tensor_inputs=["latents"]).images
 
             image_paths = []
-            gif_images = []
             for i, image in enumerate(images):
                 today = datetime.now().date()
                 image_dir = os.path.join('outputs', f"StableDiffusion_{today.strftime('%Y%m%d')}")
@@ -2443,20 +2450,9 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
                 add_metadata_to_file(image_path, metadata)
                 image_paths.append(image_path)
 
-            for i in range(stable_diffusion_steps):
-                if os.path.exists(f"temp/{i}.png"):
-                    gif_images.append(imageio.imread(f"temp/{i}.png"))
-
-            if gif_images:
-                gif_filename = f"txt2img_process_{datetime.now().strftime('%Y%m%d_%H%M%S')}.gif"
-                gif_path = os.path.join(image_dir, gif_filename)
-                imageio.mimsave(gif_path, gif_images, duration=0.1)
-            else:
-                gif_path = None
-
-            for i in range(stable_diffusion_steps):
-                if os.path.exists(f"temp/{i}.png"):
-                    os.remove(f"temp/{i}.png")
+            gif_filename = f"txt2img_process_{datetime.now().strftime('%Y%m%d_%H%M%S')}.gif"
+            gif_path = os.path.join(image_dir, gif_filename)
+            preview_images[0].save(gif_path, save_all=True, append_images=preview_images[1:], duration=100, loop=0)
 
             return image_paths, [gif_path] if gif_path else [], f"Images generated successfully. Seed used: {seed}"
 
@@ -4766,16 +4762,18 @@ def generate_image_ldm3d(prompt, negative_prompt, seed, width, height, num_infer
         flush()
 
 
-def generate_image_sd3_txt2img(prompt, negative_prompt, model_type, quantize_sd3_model_name, enable_quantize, seed, stop_button, lora_model_names, lora_scales, num_inference_steps, guidance_scale, width, height, max_sequence_length, clip_skip, num_images_per_prompt, output_format, progress=gr.Progress()):
+def generate_image_sd3_txt2img(prompt, negative_prompt, model_type, quantize_sd3_model_name, enable_quantize, seed, stop_button, lora_model_names, lora_scales, num_inference_steps, guidance_scale, width, height, max_sequence_length, clip_skip, num_images_per_prompt, enable_taesd, output_format, progress=gr.Progress()):
     global stop_signal
     stop_signal = False
     stop_idx = None
+
+    device = "cuda" if torch.cuda.is_available() else "cpu"
 
     if enable_quantize:
         try:
             if not quantize_sd3_model_name:
                 gr.Info("Please select a GGUF model!")
-                return None, None
+                return None, None, None
 
             if seed == "" or seed is None:
                 seed = random.randint(0, 2 ** 32 - 1)
@@ -4803,7 +4801,7 @@ def generate_image_sd3_txt2img(prompt, negative_prompt, model_type, quantize_sd3
 
             if result.returncode != 0:
                 gr.Info(f"Error in sd-txt2img-quantize.py: {result.stderr}")
-                return None, None
+                return None, None, None
 
             image_paths = []
             output = result.stdout.strip()
@@ -4813,11 +4811,11 @@ def generate_image_sd3_txt2img(prompt, negative_prompt, model_type, quantize_sd3
                     if os.path.exists(image_path):
                         image_paths.append(image_path)
 
-            return image_paths, f"Images generated successfully using quantized model. Seed used: {seed}"
+            return image_paths, None, f"Images generated successfully using quantized model. Seed used: {seed}"
 
         except Exception as e:
             gr.Error(f"An error occurred: {str(e)}")
-            return None, None
+            return None, None, None
 
     else:
         try:
@@ -4836,22 +4834,27 @@ def generate_image_sd3_txt2img(prompt, negative_prompt, model_type, quantize_sd3
                     subfolder="text_encoder_3",
                     quantization_config=quantization_config,
                 )
-                pipe = StableDiffusion3Pipeline().StableDiffusion3Pipeline.from_pretrained(sd3_model_path, device_map="balanced",
+                pipe = StableDiffusion3Pipeline().StableDiffusion3Pipeline.from_pretrained(sd3_model_path, device_map=device,
                                                                   text_encoder_3=text_encoder,
                                                                   torch_dtype=torch.float16)
+                if enable_taesd:
+                    pipe.vae = AutoencoderTiny().AutoencoderTiny.from_pretrained("madebyollin/taesd3", torch_dtype=torch.float16)
+                    pipe.vae.config.shift_factor = 0.0
+
             else:
                 if not quantize_sd3_model_name:
                     gr.Info("Please select a model!")
-                    return None, None
+                    return None, None, None
 
                 stable_diffusion_model_path = os.path.join("inputs", "image", "sd_models",
                                                            f"{quantize_sd3_model_name}")
-                pipe = StableDiffusion3Pipeline().StableDiffusion3Pipeline.from_single_file(stable_diffusion_model_path, device_map="balanced",
-                                                                                              torch_dtype=torch.float16)
+                pipe = StableDiffusion3Pipeline().StableDiffusion3Pipeline.from_single_file(stable_diffusion_model_path, device_map=device, torch_dtype=torch.float16)
+
+                if enable_taesd:
+                    pipe.vae = AutoencoderTiny().AutoencoderTiny.from_pretrained("madebyollin/taesd3", torch_dtype=torch.float16)
+                    pipe.vae.config.shift_factor = 0.0
 
             pipe.enable_model_cpu_offload()
-
-            device = "cuda" if torch.cuda.is_available() else "cpu"
 
             if seed == "" or seed is None:
                 seed = random.randint(0, 2 ** 32 - 1)
@@ -4887,13 +4890,34 @@ def generate_image_sd3_txt2img(prompt, negative_prompt, model_type, quantize_sd3
                         except Exception as e:
                             gr.Warning(f"Error loading LoRA {lora_model_name}: {str(e)}", duration=5)
 
-            def combined_callback(i, t, callback_kwargs):
+            taesd_dec = taesd.Decoder().to(device).requires_grad_(False)
+            taesd_dec.load_state_dict(torch.load("ThirdPartyRepository/taesd/taesd3_decoder.pth", map_location=device))
+
+            def get_pred_original_sample(sched, model_output, timestep, sample):
+                device = model_output.device
+                timestep = timestep.to(device)
+                alpha_prod_t = sched.alphas_cumprod.to(device)[timestep.long()]
+                return (sample - (1 - alpha_prod_t) ** 0.5 * model_output) / alpha_prod_t ** 0.5
+
+            preview_images = []
+
+            def combined_callback(pipe, i, t, callback_kwargs):
                 nonlocal stop_idx
                 if stop_signal and stop_idx is None:
                     stop_idx = i
                 if i == stop_idx:
                     pipe._interrupt = True
+
+                device = callback_kwargs["latents"].device
+                t = torch.tensor(t).to(device)
+                latents = get_pred_original_sample(pipe.scheduler, callback_kwargs["latents"], t,
+                                                   callback_kwargs["latents"])
+                decoded = \
+                    pipe.image_processor.postprocess(taesd_dec(latents.float()).mul_(2).sub_(1))[0]
+                preview_images.append(decoded)
+
                 progress((i + 1) / num_inference_steps, f"Step {i + 1}/{num_inference_steps}")
+
                 return callback_kwargs
 
             images = pipe(
@@ -4907,7 +4931,8 @@ def generate_image_sd3_txt2img(prompt, negative_prompt, model_type, quantize_sd3
                 num_images_per_prompt=num_images_per_prompt,
                 clip_skip=clip_skip,
                 generator=generator,
-                callback_on_step_end=combined_callback
+                callback_on_step_end=combined_callback,
+                callback_on_step_end_tensor_inputs=["latents"]
             ).images
 
             image_paths = []
@@ -4936,11 +4961,15 @@ def generate_image_sd3_txt2img(prompt, negative_prompt, model_type, quantize_sd3
                 add_metadata_to_file(image_path, metadata)
                 image_paths.append(image_path)
 
-            return image_paths, f"Images generated successfully. Seed used: {seed}"
+            gif_filename = f"sd3_txt2img_process_{datetime.now().strftime('%Y%m%d_%H%M%S')}.gif"
+            gif_path = os.path.join(image_dir, gif_filename)
+            preview_images[0].save(gif_path, save_all=True, append_images=preview_images[1:], duration=100, loop=0)
+
+            return image_paths, [gif_path] if gif_path else [], f"Images generated successfully. Seed used: {seed}"
 
         except Exception as e:
             gr.Error(f"An error occurred: {str(e)}")
-            return None, None
+            return None, None, None
 
         finally:
             del pipe
@@ -6162,7 +6191,7 @@ def generate_image_kandinsky_inpaint(prompt, negative_prompt, init_image, mask_i
         flush()
 
 
-def generate_image_flux_txt2img(prompt, model_name, quantize_model_name, enable_quantize, seed, stop_button, lora_model_names, lora_scales, guidance_scale, height, width, num_inference_steps, max_sequence_length, output_format, progress=gr.Progress()):
+def generate_image_flux_txt2img(prompt, model_name, quantize_model_name, enable_quantize, seed, stop_button, lora_model_names, lora_scales, guidance_scale, height, width, num_inference_steps, max_sequence_length, enable_taesd, output_format, progress=gr.Progress()):
     global stop_signal
     stop_signal = False
     stop_idx = None
@@ -6181,7 +6210,7 @@ def generate_image_flux_txt2img(prompt, model_name, quantize_model_name, enable_
         if enable_quantize:
             if not quantize_model_name:
                 gr.Info("Please select a GGUF model!")
-                return None, None
+                return None, None, None
 
             params = {
                 'prompt': prompt,
@@ -6201,7 +6230,7 @@ def generate_image_flux_txt2img(prompt, model_name, quantize_model_name, enable_
 
             if result.returncode != 0:
                 gr.Info(f"Error in flux-txt2img-quantize.py: {result.stderr}")
-                return None, None
+                return None, None, None
 
             image_path = None
             output = result.stdout.strip()
@@ -6210,11 +6239,11 @@ def generate_image_flux_txt2img(prompt, model_name, quantize_model_name, enable_
 
             if not image_path:
                 gr.Info("Image path not found in the output")
-                return None, None
+                return None, None, None
 
             if not os.path.exists(image_path):
                 gr.Info(f"Generated image not found at {image_path}")
-                return None, None
+                return None, None, None
 
             return image_path, f"Image generated successfully. Seed used: {seed}"
         else:
@@ -6225,6 +6254,8 @@ def generate_image_flux_txt2img(prompt, model_name, quantize_model_name, enable_
                 gr.Info(f"Flux {model_name} model downloaded")
 
             pipe = FluxPipeline().FluxPipeline.from_pretrained(flux_model_path, torch_dtype=torch.bfloat16)
+            if enable_taesd:
+                pipe.vae = AutoencoderTiny().AutoencoderTiny.from_pretrained("madebyollin/taef1", torch_dtype=torch.bfloat16)
             pipe.to(device)
             pipe.enable_model_cpu_offload()
             pipe.enable_sequential_cpu_offload()
@@ -6260,13 +6291,34 @@ def generate_image_flux_txt2img(prompt, model_name, quantize_model_name, enable_
                         except Exception as e:
                             gr.Warning(f"Error loading LoRA {lora_model_name}: {str(e)}", duration=5)
 
-            def combined_callback(i, t, callback_kwargs):
+            taesd_dec = taesd.Decoder().to(device).requires_grad_(False)
+            taesd_dec.load_state_dict(torch.load("ThirdPartyRepository/taesd/taef1_decoder.pth", map_location=device))
+
+            def get_pred_original_sample(sched, model_output, timestep, sample):
+                device = model_output.device
+                timestep = timestep.to(device)
+                alpha_prod_t = sched.alphas_cumprod.to(device)[timestep.long()]
+                return (sample - (1 - alpha_prod_t) ** 0.5 * model_output) / alpha_prod_t ** 0.5
+
+            preview_images = []
+
+            def combined_callback(pipe, i, t, callback_kwargs):
                 nonlocal stop_idx
                 if stop_signal and stop_idx is None:
                     stop_idx = i
                 if i == stop_idx:
                     pipe._interrupt = True
+
+                device = callback_kwargs["latents"].device
+                t = torch.tensor(t).to(device)
+                latents = get_pred_original_sample(pipe.scheduler, callback_kwargs["latents"], t,
+                                                   callback_kwargs["latents"])
+                decoded = \
+                    pipe.image_processor.postprocess(taesd_dec(latents.float()).mul_(2).sub_(1))[0]
+                preview_images.append(decoded)
+
                 progress((i + 1) / num_inference_steps, f"Step {i + 1}/{num_inference_steps}")
+
                 return callback_kwargs
 
             output = pipe(
@@ -6277,7 +6329,8 @@ def generate_image_flux_txt2img(prompt, model_name, quantize_model_name, enable_
                 num_inference_steps=num_inference_steps,
                 max_sequence_length=max_sequence_length,
                 generator=generator,
-                callback_on_step_end=combined_callback
+                callback_on_step_end=combined_callback,
+                callback_on_step_end_tensor_inputs=["latents"]
             ).images[0]
 
             today = datetime.now().date()
@@ -6302,11 +6355,15 @@ def generate_image_flux_txt2img(prompt, model_name, quantize_model_name, enable_
             output.save(image_path, format=output_format.upper())
             add_metadata_to_file(image_path, metadata)
 
-            return image_path, f"Image generated successfully. Seed used: {seed}"
+            gif_filename = f"flux_txt2img_process_{datetime.now().strftime('%Y%m%d_%H%M%S')}.gif"
+            gif_path = os.path.join(image_dir, gif_filename)
+            preview_images[0].save(gif_path, save_all=True, append_images=preview_images[1:], duration=100, loop=0)
+
+            return image_path, gif_path, f"Image generated successfully. Seed used: {seed}"
 
     except Exception as e:
         gr.Error(f"An error occurred: {str(e)}")
-        return None, None
+        return None, None, None
 
     finally:
         if enable_quantize:
@@ -10983,11 +11040,13 @@ sd3_txt2img_interface = gr.Interface(
         gr.Slider(minimum=64, maximum=2048, value=256, label=_("Max Length", lang)),
         gr.Slider(minimum=1, maximum=4, value=1, step=1, label=_("Clip skip", lang)),
         gr.Slider(minimum=1, maximum=4, value=1, step=1, label=_("Number of images to generate", lang)),
+        gr.Checkbox(label=_("Enable TAESD", lang), value=False),
         gr.Radio(choices=["png", "jpeg"], label=_("Select output format", lang), value="png", interactive=True)
     ],
     additional_inputs_accordion=gr.Accordion(label=_("StableDiffusion3 Settings", lang), open=False),
     outputs=[
         gr.Gallery(label=_("Generated images", lang), elem_id="gallery", columns=[2], rows=[2], object_fit="contain", height="auto"),
+        gr.Gallery(label=_("Generation process", lang), elem_id="process_gallery", columns=[2], rows=[2], object_fit="contain", height="auto"),
         gr.Textbox(label=_("Message", lang), type="text")
     ],
     title=_("NeuroSandboxWebUI - StableDiffusion 3 (txt2img)", lang),
@@ -11396,11 +11455,13 @@ flux_txt2img_interface = gr.Interface(
         gr.Slider(minimum=256, maximum=2048, value=1024, step=64, label=_("Width", lang)),
         gr.Slider(minimum=1, maximum=100, value=10, step=1, label=_("Steps", lang)),
         gr.Slider(minimum=1, maximum=1024, value=256, step=1, label=_("Max Sequence Length", lang)),
+        gr.Checkbox(label=_("Enable TAESD", lang), value=False),
         gr.Radio(choices=["png", "jpeg"], label=_("Select output format", lang), value="png", interactive=True)
     ],
     additional_inputs_accordion=gr.Accordion(label=_("Flux txt2img Settings", lang), open=False),
     outputs=[
         gr.Image(type="filepath", label=_("Generated image", lang)),
+        gr.Image(type="filepath", label=_("Generation process", lang)),
         gr.Textbox(label=_("Message", lang), type="text")
     ],
     title=_("NeuroSandboxWebUI - Flux (txt2img)", lang),
