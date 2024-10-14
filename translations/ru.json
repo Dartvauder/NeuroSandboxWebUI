@@ -437,6 +437,8 @@
   "Melody audio (optional)": "Мелодия (необязательно)",
   "Select AudioCraft model": "Выберите модель AudioCraft",
   "Select model type": "Выберите тип модели",
+  "Enable CDVAE": "Включить CDVAE",
+  "Enable TAESD": "Включить TAESD",
   "Duration (seconds)": "Продолжительность (секунды)",
   "Top K": "Top K",
   "Enable Voice Conversion": "Включить преобразование голоса",
