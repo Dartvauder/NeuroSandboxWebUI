@@ -2406,6 +2406,37 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
                     callback_on_step_end=combined_callback,
                     callback_on_step_end_tensor_inputs=["latents"]
                 ).images
+            elif enable_taesd or enable_cdvae and stable_diffusion_model_type in ["SD", "SD2"]:
+                compel_proc = Compel(tokenizer=stable_diffusion_model.tokenizer,
+                                     text_encoder=stable_diffusion_model.text_encoder)
+                prompt_embeds = compel_proc(processed_prompt)
+                negative_prompt_embeds = compel_proc(processed_negative_prompt)
+
+                images = stable_diffusion_model(prompt_embeds=prompt_embeds,
+                                                negative_prompt_embeds=negative_prompt_embeds,
+                                                num_inference_steps=stable_diffusion_steps,
+                                                guidance_scale=stable_diffusion_cfg, height=stable_diffusion_height,
+                                                width=stable_diffusion_width, clip_skip=stable_diffusion_clip_skip,
+                                                num_images_per_prompt=num_images_per_prompt,
+                                                generator=generator, callback_on_step_end=combined_callback,
+                                                callback_on_step_end_tensor_inputs=["latents"]).images
+            elif enable_taesd and stable_diffusion_model_type == "SDXL":
+                compel = Compel(
+                    tokenizer=[stable_diffusion_model.tokenizer, stable_diffusion_model.tokenizer_2],
+                    text_encoder=[stable_diffusion_model.text_encoder, stable_diffusion_model.text_encoder_2],
+                    returned_embeddings_type=ReturnedEmbeddingsType.PENULTIMATE_HIDDEN_STATES_NON_NORMALIZED,
+                    requires_pooled=[False, True]
+                )
+                prompt_embeds, pooled_prompt_embeds = compel(processed_prompt)
+                negative_prompt = processed_negative_prompt
+                images = stable_diffusion_model(prompt_embeds=prompt_embeds, pooled_prompt_embeds=pooled_prompt_embeds,
+                                                negative_prompt=negative_prompt,
+                                                num_inference_steps=stable_diffusion_steps,
+                                                guidance_scale=stable_diffusion_cfg, height=stable_diffusion_height,
+                                                width=stable_diffusion_width, clip_skip=stable_diffusion_clip_skip,
+                                                num_images_per_prompt=num_images_per_prompt,
+                                                generator=generator, callback_on_step_end=combined_callback,
+                                                callback_on_step_end_tensor_inputs=["latents"]).images
             else:
                 compel_proc = Compel(tokenizer=stable_diffusion_model.tokenizer,
                                      text_encoder=stable_diffusion_model.text_encoder)
