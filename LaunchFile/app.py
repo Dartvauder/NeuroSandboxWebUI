@@ -2079,7 +2079,7 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
                     stable_diffusion_model_path, vae=vae, use_safetensors=True, device_map="auto",
                     torch_dtype=torch.float16, variant="fp16"
                 )
-            elif enable_taesd and stable_diffusion_model_type == "SD" and stable_diffusion_model_type == "SD2":
+            elif enable_taesd and stable_diffusion_model_type in ["SD", "SD2"]:
                 vae_sd = AutoencoderTiny().AutoencoderTiny.from_pretrained("madebyollin/taesd", torch_dtype=torch.float16)
                 stable_diffusion_model = StableDiffusionPipeline().StableDiffusionPipeline.from_single_file(
                     stable_diffusion_model_path, use_safetensors=True, device_map="auto",
@@ -2280,15 +2280,17 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
                 helper.set_params(cache_interval=cache_interval, cache_branch_id=cache_branch_id)
                 helper.enable()
 
-            if stable_diffusion_model_type == "SD" and stable_diffusion_model_type == "SD2":
-                taesd_dec = taesd.Decoder().to(device).requires_grad_(False)
-                taesd_dec.load_state_dict(
-                    torch.load("ThirdPartyRepository/taesd/taesd_decoder.pth", map_location=device))
-            elif stable_diffusion_model_type == "SDXL":
-                taesd_dec = taesd.Decoder().to(device).requires_grad_(False)
-                taesd_dec.load_state_dict(
-                    torch.load("ThirdPartyRepository/taesd/taesdxl_decoder.pth", map_location=device))
+            taesd_dec = taesd.Decoder().to(device).requires_grad_(False)
 
+            if stable_diffusion_model_type in ["SD", "SD2"]:
+                taesd_weights_path = "ThirdPartyRepository/taesd/taesd_decoder.pth"
+            elif stable_diffusion_model_type == "SDXL":
+                taesd_weights_path = "ThirdPartyRepository/taesd/taesdxl_decoder.pth"
+            else:
+                gr.Error(f"Unsupported model type: {stable_diffusion_model_type}")
+                return None, None, None
+
+            taesd_dec.load_state_dict(torch.load(taesd_weights_path, map_location=device))
 
             def get_pred_original_sample(sched, model_output, timestep, sample):
                 device = model_output.device
