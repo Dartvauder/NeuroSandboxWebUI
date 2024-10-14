@@ -238,6 +238,7 @@ First of all, I want to thank the developers of [PyCharm](https://www.jetbrains.
 * [DDColor for extras](https://github.com/piddnad/DDColor)
 * [LivePortrait for video](https://github.com/KwaiVGI/LivePortrait)
 * [SUPIR for StableDiffusion](https://github.com/Fanghua-Yu/SUPIR)
+* [TAESD for StableDiffusion and Flux](https://github.com/madebyollin/taesd)
 
 ## Donation
 
