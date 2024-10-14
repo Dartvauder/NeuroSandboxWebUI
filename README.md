@@ -223,6 +223,8 @@ First of all, I want to thank the developers of [PyCharm](https://www.jetbrains.
 * [MagicPrompt](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/mit.md)
 * [Marigold](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/apache-2.0.md)
 * [BLIP-Diffusion](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/apache-2.0.md)
+* [Consistency-Decoder](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/mit.md)
+* [Tiny-AutoEncoder](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/mit.md)
 
 #### These third-party repository codes are also used in my project:
 
