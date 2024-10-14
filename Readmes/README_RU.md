@@ -238,6 +238,7 @@
 * [DDColor для extras](https://github.com/piddnad/DDColor)
 * [LivePortrait для видео](https://github.com/KwaiVGI/LivePortrait)
 * [SUPIR для StableDiffusion](https://github.com/Fanghua-Yu/SUPIR)
+* [TAESD для StableDiffusion и Flux](https://github.com/madebyollin/taesd)
 
 ## Пожертвование
 
