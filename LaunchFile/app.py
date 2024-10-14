@@ -66,6 +66,7 @@ import tomesd
 import openparse
 import string
 import hashlib
+from ThirdPartyRepository.taesd import taesd
 
 
 def lazy_import(module_name, fromlist):
@@ -2078,12 +2079,16 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
                     stable_diffusion_model_path, vae=vae, use_safetensors=True, device_map="auto",
                     torch_dtype=torch.float16, variant="fp16"
                 )
-            elif enable_taesd:
-                vae = AutoencoderTiny().AutoencoderTiny.from_pretrained("madebyollin/taesd", torch_dtype=torch.float16)
+            elif enable_taesd and stable_diffusion_model_type == "SD" and stable_diffusion_model_type == "SD2":
+                vae_sd = AutoencoderTiny().AutoencoderTiny.from_pretrained("madebyollin/taesd", torch_dtype=torch.float16)
                 stable_diffusion_model = StableDiffusionPipeline().StableDiffusionPipeline.from_single_file(
-                    stable_diffusion_model_path, vae=vae, use_safetensors=True, device_map="auto",
-                    torch_dtype=torch.float16, variant="fp16"
-                )
+                    stable_diffusion_model_path, use_safetensors=True, device_map="auto",
+                    torch_dtype=torch.float16, variant="fp16", vae=vae_sd)
+            elif enable_taesd and stable_diffusion_model_type == "SDXL":
+                vae_xl = AutoencoderTiny().AutoencoderTiny.from_pretrained("madebyollin/taesd", torch_dtype=torch.float16)
+                stable_diffusion_model = StableDiffusionXLPipeline().StableDiffusionXLPipeline.from_single_file(
+                    stable_diffusion_model_path, use_safetensors=True, device_map="auto", attention_slice=1,
+                    torch_dtype=torch.float16, variant="fp16", vae=vae_xl)
             else:
                 if stable_diffusion_model_type == "SD":
                     stable_diffusion_model = StableDiffusionPipeline().StableDiffusionPipeline.from_single_file(
@@ -2275,27 +2280,23 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
                 helper.set_params(cache_interval=cache_interval, cache_branch_id=cache_branch_id)
                 helper.enable()
 
-            def latents_to_rgb(latents):
-                weights = (
-                    (60, -60, 25, -70),
-                    (60, -5, 15, -50),
-                    (60, 10, -5, -35)
-                )
+            if stable_diffusion_model_type == "SD" and stable_diffusion_model_type == "SD2":
+                taesd_dec = taesd.Decoder().to(device).requires_grad_(False)
+                taesd_dec.load_state_dict(
+                    torch.load("ThirdPartyRepository/taesd/taesd_decoder.pth", map_location=device))
+            elif stable_diffusion_model_type == "SDXL":
+                taesd_dec = taesd.Decoder().to(device).requires_grad_(False)
+                taesd_dec.load_state_dict(
+                    torch.load("ThirdPartyRepository/taesd/taesdxl_decoder.pth", map_location=device))
 
-                weights_tensor = torch.t(torch.tensor(weights, dtype=latents.dtype).to(latents.device))
-                biases_tensor = torch.tensor((150, 140, 130), dtype=latents.dtype).to(latents.device)
-                rgb_tensor = torch.einsum("...lxy,lr -> ...rxy", latents, weights_tensor) + biases_tensor.unsqueeze(
-                    -1).unsqueeze(-1)
-                image_array = rgb_tensor.clamp(0, 255)[0].byte().cpu().numpy()
-                image_array = image_array.transpose(1, 2, 0)
 
-                return Image.fromarray(image_array)
+            def get_pred_original_sample(sched, model_output, timestep, sample):
+                device = model_output.device
+                timestep = timestep.to(device)
+                alpha_prod_t = sched.alphas_cumprod.to(device)[timestep.long()]
+                return (sample - (1 - alpha_prod_t) ** 0.5 * model_output) / alpha_prod_t ** 0.5
 
-            def decode_tensors(stable_diffusion_model, i, t, callback_kwargs):
-                latents = callback_kwargs["latents"]
-                image = latents_to_rgb(latents)
-                image.save(f"temp/{i}.png")
-                return callback_kwargs
+            preview_images = []
 
             def combined_callback(stable_diffusion_model, i, t, callback_kwargs):
                 nonlocal stop_idx
@@ -2303,7 +2304,14 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
                     stop_idx = i
                 if i == stop_idx:
                     stable_diffusion_model._interrupt = True
-                callback_kwargs = decode_tensors(stable_diffusion_model, i, t, callback_kwargs)
+
+                device = callback_kwargs["latents"].device
+                t = torch.tensor(t).to(device)
+                latents = get_pred_original_sample(stable_diffusion_model.scheduler, callback_kwargs["latents"], t,
+                                                   callback_kwargs["latents"])
+                decoded = \
+                stable_diffusion_model.image_processor.postprocess(taesd_dec(latents.float()).mul_(2).sub_(1))[0]
+                preview_images.append(decoded)
 
                 progress((i + 1) / stable_diffusion_steps, f"Step {i + 1}/{stable_diffusion_steps}")
 
@@ -2412,7 +2420,6 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
                                                 callback_on_step_end_tensor_inputs=["latents"]).images
 
             image_paths = []
-            gif_images = []
             for i, image in enumerate(images):
                 today = datetime.now().date()
                 image_dir = os.path.join('outputs', f"StableDiffusion_{today.strftime('%Y%m%d')}")
@@ -2443,20 +2450,9 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
                 add_metadata_to_file(image_path, metadata)
                 image_paths.append(image_path)
 
-            for i in range(stable_diffusion_steps):
-                if os.path.exists(f"temp/{i}.png"):
-                    gif_images.append(imageio.imread(f"temp/{i}.png"))
-
-            if gif_images:
-                gif_filename = f"txt2img_process_{datetime.now().strftime('%Y%m%d_%H%M%S')}.gif"
-                gif_path = os.path.join(image_dir, gif_filename)
-                imageio.mimsave(gif_path, gif_images, duration=0.1)
-            else:
-                gif_path = None
-
-            for i in range(stable_diffusion_steps):
-                if os.path.exists(f"temp/{i}.png"):
-                    os.remove(f"temp/{i}.png")
+            gif_filename = f"txt2img_process_{datetime.now().strftime('%Y%m%d_%H%M%S')}.gif"
+            gif_path = os.path.join(image_dir, gif_filename)
+            preview_images[0].save(gif_path, save_all=True, append_images=preview_images[1:], duration=100, loop=0)
 
             return image_paths, [gif_path] if gif_path else [], f"Images generated successfully. Seed used: {seed}"
 
