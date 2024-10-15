@@ -6278,7 +6278,7 @@ def generate_image_flux_txt2img(prompt, model_name, quantize_model_name, enable_
                 gr.Info(f"Generated image not found at {image_path}")
                 return None, None, None
 
-            return image_path, f"Image generated successfully. Seed used: {seed}"
+            return image_path, None, f"Image generated successfully. Seed used: {seed}"
         else:
             if not os.path.exists(flux_model_path):
                 gr.Info(f"Downloading Flux {model_name} model...")
@@ -7183,7 +7183,7 @@ def generate_image_auraflow(prompt, negative_prompt, seed, lora_model_names, lor
     if not os.path.exists(aurasr_model_path):
         gr.Info("Downloading AuraSR model...")
         os.makedirs(aurasr_model_path, exist_ok=True)
-        Repo.clone_from("https://huggingface.co/fal/AuraSR", aurasr_model_path)
+        Repo.clone_from("https://huggingface.co/fal/AuraSR-v2", aurasr_model_path)
         gr.Info("AuraSR model downloaded")
 
     try:
