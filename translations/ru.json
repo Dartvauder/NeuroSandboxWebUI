@@ -319,7 +319,7 @@
   "NeuroSandboxWebUI - Kandinsky (inpaint)": "NeuroSandboxWebUI - Kandinsky (инпаинтинг)",
   "This user interface allows you to perform inpainting using Kandinsky models. You can select between versions 2.1 and 2.2, and customize the generation settings. Try it and see what happens!": "Этот пользовательский интерфейс позволяет выполнять инпаинтинг с помощью моделей Kandinsky. Вы можете выбрать между версиями 2.1 и 2.2, а также настроить параметры генерации. Попробуйте и посмотрите, что получится!",
   "Select Flux model": "Выберите модель Flux",
-  "Select quantized Flux model (optional if enabled quantize)": "Выберите квантованную модель Flux (необязательно, если включено квантование)",
+  "Select safetensors Flux model (GGUF if enabled quantize)": "Выберите модель Flux safetensors (GGUF, если включено квантование)",
   "Enable Quantize": "Включить квантование",
   "Flux txt2img Settings": "Настройки txt2img Flux",
   "Flux img2img Settings": "Настройки img2img Flux",

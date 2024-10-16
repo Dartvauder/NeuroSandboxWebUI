@@ -319,7 +319,7 @@
   "NeuroSandboxWebUI - Kandinsky (inpaint)": "NeuroSandboxWebUI - Kandinsky（修复）",
   "This user interface allows you to perform inpainting using Kandinsky models. You can select between versions 2.1 and 2.2, and customize the generation settings. Try it and see what happens!": "此用户界面允许您使用Kandinsky模型进行图像修复。您可以在2.1和2.2版本之间选择，并自定义生成设置。试试看会发生什么！",
   "Select Flux model": "选择Flux模型",
-  "Select quantized Flux model (optional if enabled quantize)": "选择量化Flux模型（如果启用量化则可选）",
+  "Select safetensors Flux model (GGUF if enabled quantize)": "选择 safetensors Flux 模型（如果启用量化则选择 GGUF）",
   "Enable Quantize": "启用量化",
   "Flux txt2img Settings": "Flux txt2img设置",
   "Flux img2img Settings": "Flux img2img设置",
