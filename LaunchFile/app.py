@@ -92,6 +92,7 @@ Qwen2AudioForConditionalGeneration = lazy_import('transformers', 'Qwen2AudioForC
 BarkModel = lazy_import('transformers', 'BarkModel')
 pipeline = lazy_import('transformers', 'pipeline')
 T5EncoderModel = lazy_import('transformers', 'T5EncoderModel')
+CLIPTextModel = lazy_import('transformers', 'CLIPTextModel')
 BitsAndBytesConfig = lazy_import('transformers', 'BitsAndBytesConfig')
 DPTForDepthEstimation = lazy_import('transformers', 'DPTForDepthEstimation')
 DPTFeatureExtractor = lazy_import('transformers', 'DPTFeatureExtractor')
@@ -147,6 +148,7 @@ AudioLDM2Pipeline = lazy_import('diffusers', 'AudioLDM2Pipeline')
 StableDiffusionInstructPix2PixPipeline = lazy_import('diffusers', 'StableDiffusionInstructPix2PixPipeline')
 StableDiffusionLDM3DPipeline = lazy_import('diffusers', 'StableDiffusionLDM3DPipeline')
 FluxPipeline = lazy_import('diffusers', 'FluxPipeline')
+FluxTransformer2DModel = lazy_import('diffusers', 'FluxTransformer2DModel')
 FluxImg2ImgPipeline = lazy_import('diffusers', 'FluxImg2ImgPipeline')
 FluxInpaintPipeline = lazy_import('diffusers', 'FluxInpaintPipeline')
 FluxControlNetPipeline = lazy_import('diffusers', 'FluxControlNetPipeline')
@@ -4795,7 +4797,7 @@ def generate_image_ldm3d(prompt, negative_prompt, seed, width, height, num_infer
         flush()
 
 
-def generate_image_sd3_txt2img(prompt, negative_prompt, model_type, quantize_sd3_model_name, enable_quantize, seed, stop_button, lora_model_names, lora_scales, num_inference_steps, guidance_scale, width, height, max_sequence_length, clip_skip, num_images_per_prompt, enable_taesd, output_format, progress=gr.Progress()):
+def generate_image_sd3_txt2img(prompt, negative_prompt, model_type, quantize_sd3_model_name, enable_quantize, seed, stop_button, vae_model_name, lora_model_names, lora_scales, num_inference_steps, guidance_scale, width, height, max_sequence_length, clip_skip, num_images_per_prompt, enable_taesd, output_format, progress=gr.Progress()):
     global stop_signal
     stop_signal = False
     stop_idx = None
@@ -4870,6 +4872,12 @@ def generate_image_sd3_txt2img(prompt, negative_prompt, model_type, quantize_sd3
                 pipe = StableDiffusion3Pipeline().StableDiffusion3Pipeline.from_pretrained(sd3_model_path, device_map=device,
                                                                   text_encoder_3=text_encoder,
                                                                   torch_dtype=torch.float16)
+                if vae_model_name is not None:
+                    vae_model_path = os.path.join("inputs", "image", "sd_models", "vae", f"{vae_model_name}")
+                    if os.path.exists(vae_model_path):
+                        vae = AutoencoderKL().AutoencoderKL.from_single_file(vae_model_path, torch_dtype=torch.bfloat16)
+                        pipe.vae = vae.to(device)
+
                 if enable_taesd:
                     pipe.vae = AutoencoderTiny().AutoencoderTiny.from_pretrained("madebyollin/taesd3", torch_dtype=torch.float16)
                     pipe.vae.config.shift_factor = 0.0
@@ -4879,9 +4887,14 @@ def generate_image_sd3_txt2img(prompt, negative_prompt, model_type, quantize_sd3
                     gr.Info("Please select a model!")
                     return None, None, None
 
-                stable_diffusion_model_path = os.path.join("inputs", "image", "sd_models",
-                                                           f"{quantize_sd3_model_name}")
+                stable_diffusion_model_path = os.path.join("inputs", "image", "sd_models", quantize_sd3_model_name)
                 pipe = StableDiffusion3Pipeline().StableDiffusion3Pipeline.from_single_file(stable_diffusion_model_path, device_map=device, torch_dtype=torch.float16)
+
+                if vae_model_name is not None:
+                    vae_model_path = os.path.join("inputs", "image", "sd_models", "vae", f"{vae_model_name}")
+                    if os.path.exists(vae_model_path):
+                        vae = AutoencoderKL().AutoencoderKL.from_single_file(vae_model_path, torch_dtype=torch.bfloat16)
+                        pipe.vae = vae.to(device)
 
                 if enable_taesd:
                     pipe.vae = AutoencoderTiny().AutoencoderTiny.from_pretrained("madebyollin/taesd3", torch_dtype=torch.float16)
@@ -6224,7 +6237,7 @@ def generate_image_kandinsky_inpaint(prompt, negative_prompt, init_image, mask_i
         flush()
 
 
-def generate_image_flux_txt2img(prompt, model_name, quantize_model_name, enable_quantize, seed, stop_button, lora_model_names, lora_scales, guidance_scale, height, width, num_inference_steps, max_sequence_length, enable_taesd, output_format, progress=gr.Progress()):
+def generate_image_flux_txt2img(prompt, model_name, quantize_model_name, enable_quantize, seed, stop_button, vae_model_name, lora_model_names, lora_scales, guidance_scale, height, width, num_inference_steps, max_sequence_length, enable_taesd, output_format, progress=gr.Progress()):
     global stop_signal
     stop_signal = False
     stop_idx = None
@@ -6238,13 +6251,14 @@ def generate_image_flux_txt2img(prompt, model_name, quantize_model_name, enable_
     generator = torch.Generator(device).manual_seed(seed)
 
     flux_model_path = os.path.join("inputs", "image", "flux", model_name)
+    quantize_model_path = os.path.join("inputs", "image", "flux", "quantize-flux", quantize_model_name)
+
+    if not quantize_model_name:
+        gr.Info("Please select a Flux safetensors/GGUF model!")
+        return None, None
 
     try:
         if enable_quantize:
-            if not quantize_model_name:
-                gr.Info("Please select a GGUF model!")
-                return None, None, None
-
             params = {
                 'prompt': prompt,
                 'guidance_scale': guidance_scale,
@@ -6252,18 +6266,18 @@ def generate_image_flux_txt2img(prompt, model_name, quantize_model_name, enable_
                 'width': width,
                 'num_inference_steps': num_inference_steps,
                 'seed': seed,
-                'quantize_flux_model_path': f"{quantize_model_name}"
+                'quantize_flux_model_path': quantize_model_path
             }
 
             env = os.environ.copy()
             env['PYTHONPATH'] = os.pathsep.join(sys.path)
 
-            result = subprocess.run([sys.executable, 'inputs/image/quantize-flux/flux-txt2img-quantize.py', json.dumps(params)],
+            result = subprocess.run([sys.executable, 'inputs/image/flux/quantize-flux/flux-txt2img-quantize.py', json.dumps(params)],
                                     capture_output=True, text=True)
 
             if result.returncode != 0:
                 gr.Info(f"Error in flux-txt2img-quantize.py: {result.stderr}")
-                return None, None, None
+                return None, None
 
             image_path = None
             output = result.stdout.strip()
@@ -6272,13 +6286,13 @@ def generate_image_flux_txt2img(prompt, model_name, quantize_model_name, enable_
 
             if not image_path:
                 gr.Info("Image path not found in the output")
-                return None, None, None
+                return None, None
 
             if not os.path.exists(image_path):
                 gr.Info(f"Generated image not found at {image_path}")
-                return None, None, None
+                return None, None
 
-            return image_path, None, f"Image generated successfully. Seed used: {seed}"
+            return image_path, f"Image generated successfully. Seed used: {seed}"
         else:
             if not os.path.exists(flux_model_path):
                 gr.Info(f"Downloading Flux {model_name} model...")
@@ -6286,10 +6300,21 @@ def generate_image_flux_txt2img(prompt, model_name, quantize_model_name, enable_
                 Repo.clone_from(f"https://huggingface.co/black-forest-labs/{model_name}", flux_model_path)
                 gr.Info(f"Flux {model_name} model downloaded")
 
-            pipe = FluxPipeline().FluxPipeline.from_pretrained(flux_model_path, torch_dtype=torch.bfloat16)
+            transformer = FluxTransformer2DModel().FluxTransformer2DModel.from_single_file(quantize_model_path, torch_dtype=torch.bfloat16)
+
+            text_encoder_2 = T5EncoderModel().T5EncoderModel.from_pretrained(flux_model_path, subfolder="text_encoder_2", torch_dtype=torch.bfloat16)
+
+            pipe = FluxPipeline().FluxPipeline.from_pretrained(flux_model_path, transformer=None, text_encoder_2=None, torch_dtype=torch.bfloat16).to(device)
+            pipe.transformer = transformer
+            pipe.text_encoder_2 = text_encoder_2
             if enable_taesd:
                 pipe.vae = AutoencoderTiny().AutoencoderTiny.from_pretrained("madebyollin/taef1", torch_dtype=torch.bfloat16)
-            pipe.to(device)
+            if vae_model_name is not None:
+                vae_model_path = os.path.join("inputs", "image", "flux", "flux-vae", f"{vae_model_name}")
+                if os.path.exists(vae_model_path):
+                    vae = AutoencoderKL().AutoencoderKL.from_single_file(vae_model_path, torch_dtype=torch.bfloat16)
+                    pipe.vae = vae.to(device)
+
             pipe.enable_model_cpu_offload()
             pipe.enable_sequential_cpu_offload()
             pipe.vae.enable_slicing()
@@ -6313,7 +6338,7 @@ def generate_image_flux_txt2img(prompt, model_name, quantize_model_name, enable_
                     else:
                         lora_scale = 1.0
 
-                    lora_model_path = os.path.join("inputs", "image", "flux-lora", lora_model_name)
+                    lora_model_path = os.path.join("inputs", "image", "flux", "flux-lora", lora_model_name)
                     if os.path.exists(lora_model_path):
                         adapter_name = os.path.splitext(os.path.basename(lora_model_name))[0]
                         try:
@@ -6324,31 +6349,12 @@ def generate_image_flux_txt2img(prompt, model_name, quantize_model_name, enable_
                         except Exception as e:
                             gr.Warning(f"Error loading LoRA {lora_model_name}: {str(e)}", duration=5)
 
-            taesd_dec = taesd.Decoder().to(device).requires_grad_(False)
-            taesd_dec.load_state_dict(torch.load("ThirdPartyRepository/taesd/taef1_decoder.pth", map_location=device))
-
-            def get_pred_original_sample(sched, model_output, timestep, sample):
-                device = model_output.device
-                timestep = timestep.to(device)
-                alpha_prod_t = sched.alphas_cumprod.to(device)[timestep.long()]
-                return (sample - (1 - alpha_prod_t) ** 0.5 * model_output) / alpha_prod_t ** 0.5
-
-            preview_images = []
-
             def combined_callback(pipe, i, t, callback_kwargs):
                 nonlocal stop_idx
                 if stop_signal and stop_idx is None:
                     stop_idx = i
                 if i == stop_idx:
                     pipe._interrupt = True
-
-                device = callback_kwargs["latents"].device
-                t = torch.tensor(t).to(device)
-                latents = get_pred_original_sample(pipe.scheduler, callback_kwargs["latents"], t,
-                                                   callback_kwargs["latents"])
-                decoded = \
-                    pipe.image_processor.postprocess(taesd_dec(latents.float()).mul_(2).sub_(1))[0]
-                preview_images.append(decoded)
 
                 progress((i + 1) / num_inference_steps, f"Step {i + 1}/{num_inference_steps}")
 
@@ -6388,15 +6394,11 @@ def generate_image_flux_txt2img(prompt, model_name, quantize_model_name, enable_
             output.save(image_path, format=output_format.upper())
             add_metadata_to_file(image_path, metadata)
 
-            gif_filename = f"flux_txt2img_process_{datetime.now().strftime('%Y%m%d_%H%M%S')}.gif"
-            gif_path = os.path.join(image_dir, gif_filename)
-            preview_images[0].save(gif_path, save_all=True, append_images=preview_images[1:], duration=100, loop=0)
-
-            return image_path, gif_path, f"Image generated successfully. Seed used: {seed}"
+            return image_path, f"Image generated successfully. Seed used: {seed}"
 
     except Exception as e:
         gr.Error(f"An error occurred: {str(e)}")
-        return None, None, None
+        return None, None
 
     finally:
         if enable_quantize:
@@ -6424,6 +6426,7 @@ def generate_image_flux_img2img(prompt, init_image, model_name, quantize_model_n
     generator = torch.Generator(device).manual_seed(seed)
 
     flux_model_path = os.path.join("inputs", "image", "flux", model_name)
+    quantize_model_path = os.path.join("inputs", "image", "flux", "quantize-flux", quantize_model_name)
 
     if enable_quantize:
         if not quantize_model_name:
@@ -6437,7 +6440,7 @@ def generate_image_flux_img2img(prompt, init_image, model_name, quantize_model_n
             'width': width,
             'num_inference_steps': num_inference_steps,
             'seed': seed,
-            'quantize_flux_model_path': f"{quantize_model_name}",
+            'quantize_flux_model_path': quantize_model_path,
             'image': init_image,
             'strength': strength
         }
@@ -6445,7 +6448,7 @@ def generate_image_flux_img2img(prompt, init_image, model_name, quantize_model_n
         env = os.environ.copy()
         env['PYTHONPATH'] = os.pathsep.join(sys.path)
 
-        result = subprocess.run([sys.executable, 'inputs/image/quantize-flux/flux-img2img-quantize.py', json.dumps(params)],
+        result = subprocess.run([sys.executable, 'inputs/image/quantize-flux/flux/flux-img2img-quantize.py', json.dumps(params)],
                                 capture_output=True, text=True)
 
         if result.returncode != 0:
@@ -10138,11 +10141,13 @@ audiocraft_models_list = [None] + ["musicgen-stereo-medium", "audiogen-medium", 
                                    "hybrid-magnet-medium", "magnet-medium-30sec", "magnet-medium-10sec", "audio-magnet-medium"]
 vae_models_list = [None] + [model for model in os.listdir("inputs/image/sd_models/vae") if
                             model.endswith(".safetensors") or not model.endswith(".txt")]
+flux_vae_models_list = [None] + [model for model in os.listdir("inputs/image/flux/flux-vae") if
+                                model.endswith(".safetensors") or not model.endswith(".txt")]
 lora_models_list = [None] + [model for model in os.listdir("inputs/image/sd_models/lora") if
                              model.endswith(".safetensors") or model.endswith(".pt")]
-quantized_flux_models_list = [None] + [model for model in os.listdir("inputs/image/quantize-flux") if
-                            model.endswith(".gguf") or not model.endswith(".txt") and not model.endswith(".safetensors") and not model.endswith(".py")]
-flux_lora_models_list = [None] + [model for model in os.listdir("inputs/image/flux-lora") if
+quantized_flux_models_list = [None] + [model for model in os.listdir("inputs/image/flux/quantize-flux") if
+                            model.endswith(".gguf") or model.endswith(".safetensors") or not model.endswith(".txt") and not model.endswith(".safetensors") and not model.endswith(".py")]
+flux_lora_models_list = [None] + [model for model in os.listdir("inputs/image/flux/flux-lora") if
                              model.endswith(".safetensors")]
 auraflow_lora_models_list = [None] + [model for model in os.listdir("inputs/image/auraflow-lora") if
                              model.endswith(".safetensors")]
@@ -10172,12 +10177,14 @@ def reload_model_lists():
             ".py") and not os.path.isdir(os.path.join("inputs/image/sd_models")))]
     vae_models_list = [None] + [model for model in os.listdir("inputs/image/sd_models/vae") if
                                 model.endswith(".safetensors") or not model.endswith(".txt")]
+    flux_vae_models_list = [None] + [model for model in os.listdir("inputs/image/flux/flux-vae") if
+                                model.endswith(".safetensors") or not model.endswith(".txt")]
     lora_models_list = [None] + [model for model in os.listdir("inputs/image/sd_models/lora") if
                                  model.endswith(".safetensors") or model.endswith(".pt")]
-    quantized_flux_models_list = [None] + [model for model in os.listdir("inputs/image/quantize-flux") if
-                                           model.endswith(".gguf") or not model.endswith(".txt") and not model.endswith(
+    quantized_flux_models_list = [None] + [model for model in os.listdir("inputs/image/flux/quantize-flux") if
+                                           model.endswith(".gguf") or model.endswith(".safetensors") or not model.endswith(".txt") and not model.endswith(
                                                ".safetensors") and not model.endswith(".py")]
-    flux_lora_models_list = [None] + [model for model in os.listdir("inputs/image/flux-lora") if
+    flux_lora_models_list = [None] + [model for model in os.listdir("inputs/image/flux/flux-lora") if
                                       model.endswith(".safetensors")]
     auraflow_lora_models_list = [None] + [model for model in os.listdir("inputs/image/auraflow-lora") if
                                           model.endswith(".safetensors")]
@@ -10198,7 +10205,7 @@ def reload_model_lists():
 
     gallery_files = get_output_files()
 
-    return [llm_models_list, llm_lora_models_list, speaker_wavs_list, stable_diffusion_models_list, vae_models_list, lora_models_list, quantized_flux_models_list, flux_lora_models_list, auraflow_lora_models_list, kolors_lora_models_list, textual_inversion_models_list, inpaint_models_list, rvc_models_list, chat_files, gallery_files]
+    return [llm_models_list, llm_lora_models_list, speaker_wavs_list, stable_diffusion_models_list, vae_models_list, flux_vae_models_list, lora_models_list, quantized_flux_models_list, flux_lora_models_list, auraflow_lora_models_list, kolors_lora_models_list, textual_inversion_models_list, inpaint_models_list, rvc_models_list, chat_files, gallery_files]
 
 
 def reload_interface():
@@ -11064,6 +11071,7 @@ sd3_txt2img_interface = gr.Interface(
         gr.Button(value=_("Stop generation", lang), interactive=True, variant="stop")
     ],
     additional_inputs=[
+        gr.Dropdown(choices=vae_models_list, label=_("Select VAE model (optional)", lang), value=None),
         gr.Dropdown(choices=lora_models_list, label=_("Select LORA models (optional)", lang), value=None, multiselect=True),
         gr.Textbox(label=_("LoRA Scales", lang)),
         gr.Slider(minimum=1, maximum=100, value=40, step=1, label=_("Steps", lang)),
@@ -11475,12 +11483,13 @@ flux_txt2img_interface = gr.Interface(
     inputs=[
         gr.Textbox(label=_("Enter your prompt", lang)),
         gr.Dropdown(choices=["FLUX.1-schnell", "FLUX.1-dev"], label=_("Select Flux model", lang), value="FLUX.1-schnell"),
-        gr.Dropdown(choices=quantized_flux_models_list, label=_("Select quantized Flux model (optional if enabled quantize)", lang), value=None),
+        gr.Dropdown(choices=quantized_flux_models_list, label=_("Select safetensors Flux model (GGUF if enabled quantize)", lang), value=None),
         gr.Checkbox(label=_("Enable Quantize", lang), value=False),
         gr.Textbox(label=_("Seed (optional)", lang), value=""),
         gr.Button(value=_("Stop generation", lang), interactive=True, variant="stop")
     ],
     additional_inputs=[
+        gr.Dropdown(choices=flux_vae_models_list, label=_("Select VAE model (optional)", lang), value=None),
         gr.Dropdown(choices=flux_lora_models_list, label=_("Select LORA models (optional)", lang), value=None, multiselect=True),
         gr.Textbox(label=_("LoRA Scales", lang)),
         gr.Slider(minimum=0.0, maximum=10.0, value=0.0, step=0.1, label=_("Guidance Scale", lang)),
@@ -11494,7 +11503,6 @@ flux_txt2img_interface = gr.Interface(
     additional_inputs_accordion=gr.Accordion(label=_("Flux txt2img Settings", lang), open=False),
     outputs=[
         gr.Image(type="filepath", label=_("Generated image", lang)),
-        gr.Image(type="filepath", label=_("Generation process", lang)),
         gr.Textbox(label=_("Message", lang), type="text")
     ],
     title=_("NeuroSandboxWebUI - Flux (txt2img)", lang),
@@ -12981,13 +12989,15 @@ with gr.TabbedInterface(
         gligen_interface.input_components[5],
         animatediff_interface.input_components[5],
         sd3_txt2img_interface.input_components[3],
-        sd3_txt2img_interface.input_components[6],
+        sd3_txt2img_interface.input_components[7],
+        sd3_txt2img_interface.input_components[8],
         sd3_img2img_interface.input_components[5],
         flux_img2img_interface.input_components[3],
         t2i_ip_adapter_interface.input_components[4],
         ip_adapter_faceid_interface.input_components[5],
         flux_txt2img_interface.input_components[2],
-        flux_txt2img_interface.input_components[5],
+        flux_txt2img_interface.input_components[6],
+        flux_txt2img_interface.input_components[7],
         auraflow_interface.input_components[3],
         kolors_txt2img_interface.input_components[3],
         rvc_interface.input_components[1],
