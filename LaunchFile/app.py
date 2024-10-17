@@ -1340,9 +1340,9 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, llm_model_t
         if llm_model_type == "Llama":
             tokenizer, llm_model = load_model(llm_model_name, llm_model_type, n_ctx, n_batch, n_ubatch, freq_base, freq_scale)
         elif llm_model_type == "ExLlamaV2":
-            cache, tokenizer, llm_model = load_model(llm_model_name, llm_model_type, n_ctx=None, n_batch=None, n_ubatch=None, freq_base=None, freq_scale=None)
+            cache, tokenizer, llm_model, * _ = load_model(llm_model_name, llm_model_type, n_ctx=None, n_batch=None, n_ubatch=None, freq_base=None, freq_scale=None)
         else:
-            tokenizer, llm_model = load_model(llm_model_name, llm_model_type, n_ctx=None, n_batch=None, n_ubatch=None, freq_base=None, freq_scale=None)
+            tokenizer, llm_model, * _ = load_model(llm_model_name, llm_model_type, n_ctx=None, n_batch=None, n_ubatch=None, freq_base=None, freq_scale=None)
 
         if llm_lora_model_name:
             tokenizer, llm_model = load_lora_model(llm_model_name, llm_lora_model_name, llm_model_type)
@@ -6251,7 +6251,6 @@ def generate_image_flux_txt2img(prompt, model_name, quantize_model_name, enable_
     generator = torch.Generator(device).manual_seed(seed)
 
     flux_model_path = os.path.join("inputs", "image", "flux", model_name)
-    quantize_model_path = os.path.join("inputs", "image", "flux", "quantize-flux", quantize_model_name)
 
     if not quantize_model_name:
         gr.Info("Please select a Flux safetensors/GGUF model!")
@@ -6266,7 +6265,7 @@ def generate_image_flux_txt2img(prompt, model_name, quantize_model_name, enable_
                 'width': width,
                 'num_inference_steps': num_inference_steps,
                 'seed': seed,
-                'quantize_flux_model_path': quantize_model_path
+                'quantize_flux_model_path': f"{quantize_model_name}"
             }
 
             env = os.environ.copy()
@@ -6299,6 +6298,8 @@ def generate_image_flux_txt2img(prompt, model_name, quantize_model_name, enable_
                 os.makedirs(flux_model_path, exist_ok=True)
                 Repo.clone_from(f"https://huggingface.co/black-forest-labs/{model_name}", flux_model_path)
                 gr.Info(f"Flux {model_name} model downloaded")
+
+            quantize_model_path = os.path.join("inputs", "image", "flux", "quantize-flux", quantize_model_name)
 
             transformer = FluxTransformer2DModel().FluxTransformer2DModel.from_single_file(quantize_model_path, torch_dtype=torch.bfloat16)
 
