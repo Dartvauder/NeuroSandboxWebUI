@@ -34,6 +34,7 @@ pip install --no-build-isolation -e git+https://github.com/turboderp/exllamav2.g
 pip install git+https://github.com/tencent-ailab/IP-Adapter.git 2>> %ERROR_LOG%
 pip install git+https://github.com/vork/PyNanoInstantMeshes.git 2>> %ERROR_LOG%
 pip install git+https://github.com/openai/CLIP.git 2>> %ERROR_LOG%
+pip install git+https://github.com/xhinker/sd_embed.git@main 2>> %ERROR_LOG%
 timeout /t 3 /nobreak >nul
 cls
 
