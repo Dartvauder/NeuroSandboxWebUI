@@ -41,6 +41,7 @@ import shutil
 from datetime import datetime
 from diffusers.utils import load_image, load_video, export_to_video, export_to_gif, export_to_ply, pt_to_pil
 from compel import Compel, ReturnedEmbeddingsType
+from sd_embed.embedding_funcs import get_weighted_text_embeddings_sd3, get_weighted_text_embeddings_flux1
 import trimesh
 from git import Repo
 import numpy as np
@@ -1350,7 +1351,7 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, llm_model_t
 
     else:
         if llm_model_type == "Llama":
-            tokenizer, llm_model = load_model(llm_model_name, llm_model_type, n_ctx, n_batch, n_ubatch, freq_base, freq_scale)
+            tokenizer, llm_model, * _ = load_model(llm_model_name, llm_model_type, n_ctx, n_batch, n_ubatch, freq_base, freq_scale)
         elif llm_model_type == "ExLlamaV2":
             cache, tokenizer, llm_model, * _ = load_model(llm_model_name, llm_model_type, n_ctx=None, n_batch=None, n_ubatch=None, freq_base=None, freq_scale=None)
         else:
@@ -2529,11 +2530,11 @@ def generate_image_img2img(prompt, negative_prompt, init_image, strength, stable
 
     if not stable_diffusion_model_name:
         gr.Info("Please, select a StableDiffusion model!")
-        return None, None, None
+        return None, None
 
     if not init_image:
         gr.Info("Please, upload an initial image!")
-        return None, None, None
+        return None, None
 
     if enable_quantize:
         try:
@@ -2563,7 +2564,7 @@ def generate_image_img2img(prompt, negative_prompt, init_image, strength, stable
 
             if result.returncode != 0:
                 gr.Info(f"Error in sd-img2img-quantize.py: {result.stderr}")
-                return None, None, None
+                return None, None
 
             image_paths = []
             output = result.stdout.strip()
@@ -2573,11 +2574,11 @@ def generate_image_img2img(prompt, negative_prompt, init_image, strength, stable
                     if os.path.exists(image_path):
                         image_paths.append(image_path)
 
-            return image_paths, None, f"Images generated successfully using quantized model. Seed used: {seed}"
+            return image_paths, f"Images generated successfully using quantized model. Seed used: {seed}"
 
         except Exception as e:
             gr.Error(f"An error occurred: {str(e)}")
-            return None, None, None
+            return None, None
 
     else:
         try:
@@ -2586,7 +2587,7 @@ def generate_image_img2img(prompt, negative_prompt, init_image, strength, stable
 
             if not os.path.exists(stable_diffusion_model_path):
                 gr.Info(f"StableDiffusion model not found: {stable_diffusion_model_path}")
-                return None, None, None
+                return None, None
 
             if stable_diffusion_model_type == "SD":
                 stable_diffusion_model = StableDiffusionImg2ImgPipeline().StableDiffusionImg2ImgPipeline.from_single_file(
@@ -2601,10 +2602,10 @@ def generate_image_img2img(prompt, negative_prompt, init_image, strength, stable
                     stable_diffusion_model_path, use_safetensors=True, device_map="auto", attention_slice=1,
                     torch_dtype=torch.float16, variant="fp16")
             else:
-                return None, None, "Invalid StableDiffusion model type!"
+                return None, "Invalid StableDiffusion model type!"
         except (ValueError, KeyError):
             gr.Error("The selected model is not compatible with the chosen model type")
-            return None, None, None
+            return None, None
 
         device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -2766,35 +2767,12 @@ def generate_image_img2img(prompt, negative_prompt, init_image, strength, stable
             processed_prompt = process_prompt_with_ti(prompt, textual_inversion_model_names)
             processed_negative_prompt = process_prompt_with_ti(negative_prompt, textual_inversion_model_names)
 
-            def latents_to_rgb(latents):
-                weights = (
-                    (60, -60, 25, -70),
-                    (60, -5, 15, -50),
-                    (60, 10, -5, -35)
-                )
-
-                weights_tensor = torch.t(torch.tensor(weights, dtype=latents.dtype).to(latents.device))
-                biases_tensor = torch.tensor((150, 140, 130), dtype=latents.dtype).to(latents.device)
-                rgb_tensor = torch.einsum("...lxy,lr -> ...rxy", latents, weights_tensor) + biases_tensor.unsqueeze(
-                    -1).unsqueeze(-1)
-                image_array = rgb_tensor.clamp(0, 255)[0].byte().cpu().numpy()
-                image_array = image_array.transpose(1, 2, 0)
-
-                return Image.fromarray(image_array)
-
-            def decode_tensors(stable_diffusion_model, i, t, callback_kwargs):
-                latents = callback_kwargs["latents"]
-                image = latents_to_rgb(latents)
-                image.save(f"temp/{i}.png")
-                return callback_kwargs
-
             def combined_callback(stable_diffusion_model, i, t, callback_kwargs):
                 nonlocal stop_idx
                 if stop_signal and stop_idx is None:
                     stop_idx = i
                 if i == stop_idx:
                     stable_diffusion_model._interrupt = True
-                callback_kwargs = decode_tensors(stable_diffusion_model, i, t, callback_kwargs)
 
                 progress((i + 1) / stable_diffusion_steps, f"Step {i + 1}/{stable_diffusion_steps}")
 
@@ -2836,7 +2814,6 @@ def generate_image_img2img(prompt, negative_prompt, init_image, strength, stable
                                                 callback_on_step_end_tensor_inputs=["latents"]).images
 
             image_paths = []
-            gif_images = []
             for i, image in enumerate(images):
                 today = datetime.now().date()
                 image_dir = os.path.join('outputs', f"StableDiffusion_{today.strftime('%Y%m%d')}")
@@ -2865,26 +2842,11 @@ def generate_image_img2img(prompt, negative_prompt, init_image, strength, stable
                 add_metadata_to_file(image_path, metadata)
                 image_paths.append(image_path)
 
-            for i in range(stable_diffusion_steps):
-                if os.path.exists(f"temp/{i}.png"):
-                    gif_images.append(imageio.imread(f"temp/{i}.png"))
-
-            if gif_images:
-                gif_filename = f"img2img_process_{datetime.now().strftime('%Y%m%d_%H%M%S')}.gif"
-                gif_path = os.path.join(image_dir, gif_filename)
-                imageio.mimsave(gif_path, gif_images, duration=0.1)
-            else:
-                gif_path = None
-
-            for i in range(stable_diffusion_steps):
-                if os.path.exists(f"temp/{i}.png"):
-                    os.remove(f"temp/{i}.png")
-
-            return image_paths, [gif_path] if gif_path else [], f"Images generated successfully. Seed used: {seed}"
+            return image_paths, f"Images generated successfully. Seed used: {seed}"
 
         except Exception as e:
             gr.Error(f"An error occurred: {str(e)}")
-            return None, None, None
+            return None, None
 
         finally:
             if 'stable_diffusion_model' in locals():
@@ -3287,7 +3249,7 @@ def generate_image_controlnet(prompt, negative_prompt, init_image, sd_version, s
             prompt_embeds = compel_proc(prompt)
             negative_prompt_embeds = compel_proc(negative_prompt)
 
-            def combined_callback_sd(i, t, callback_kwargs):
+            def combined_callback_sd(pipe, i, t, callback_kwargs):
                 nonlocal stop_idx
                 if stop_signal and stop_idx is None:
                     stop_idx = i
@@ -3429,7 +3391,7 @@ def generate_image_controlnet(prompt, negative_prompt, init_image, sd_version, s
             )
             prompt_embeds, pooled_prompt_embeds = compel(prompt)
 
-            def combined_callback_sdxl(i, t, callback_kwargs):
+            def combined_callback_sdxl(pipe, i, t, callback_kwargs):
                 nonlocal stop_idx
                 if stop_signal and stop_idx is None:
                     stop_idx = i
@@ -3858,7 +3820,7 @@ def generate_image_inpaint(prompt, negative_prompt, init_image, mask_image, blur
             seed = int(seed)
         generator = torch.Generator(device).manual_seed(seed)
 
-        def combined_callback(i, t, callback_kwargs):
+        def combined_callback(stable_diffusion_model, i, t, callback_kwargs):
             nonlocal stop_idx
             if stop_signal and stop_idx is None:
                 stop_idx = i
@@ -4837,7 +4799,7 @@ def generate_image_ldm3d(prompt, negative_prompt, seed, width, height, num_infer
         flush()
 
 
-def generate_image_sd3_txt2img(prompt, negative_prompt, quantize_sd3_model_name, enable_quantize, seed, stop_button, vae_model_name, lora_model_names, lora_scales, num_inference_steps, guidance_scale, width, height, max_sequence_length, clip_skip, num_images_per_prompt, enable_taesd, output_format, progress=gr.Progress()):
+def generate_image_sd3_txt2img(prompt, negative_prompt, model_type, quantize_sd3_model_name, enable_quantize, seed, stop_button, vae_model_name, lora_model_names, lora_scales, num_inference_steps, guidance_scale, width, height, max_sequence_length, clip_skip, num_images_per_prompt, enable_taesd, output_format, progress=gr.Progress()):
     global stop_signal
     stop_signal = False
     stop_idx = None
@@ -4899,9 +4861,31 @@ def generate_image_sd3_txt2img(prompt, negative_prompt, quantize_sd3_model_name,
                 return None, None
 
             stable_diffusion_model_path = os.path.join("inputs", "image", "sd_models", quantize_sd3_model_name)
-            pipe = StableDiffusion3Pipeline().StableDiffusion3Pipeline.from_single_file(stable_diffusion_model_path,
-                                                                                        device_map=device,
-                                                                                        torch_dtype=torch.float16)
+
+            sd3_model_path = os.path.join("inputs", "image", "sd_models", "sd3")
+            if not os.path.exists(sd3_model_path):
+                gr.Info("Downloading Stable Diffusion 3 model...")
+                os.makedirs(sd3_model_path, exist_ok=True)
+                Repo.clone_from("https://huggingface.co/stabilityai/stable-diffusion-3-medium-diffusers",
+                                sd3_model_path)
+                gr.Info("Stable Diffusion 3 model downloaded")
+
+            if model_type == "Diffusers":
+                quantization_config = BitsAndBytesConfig().BitsAndBytesConfig(load_in_8bit=True)
+
+                text_encoder = T5EncoderModel().T5EncoderModel.from_pretrained(
+                    sd3_model_path,
+                    subfolder="text_encoder_3",
+                    quantization_config=quantization_config,
+                )
+                pipe = StableDiffusion3Pipeline().StableDiffusion3Pipeline.from_pretrained(sd3_model_path,
+                                                                                           device_map="balanced",
+                                                                                           text_encoder_3=text_encoder,
+                                                                                           torch_dtype=torch.float16)
+            else:
+                pipe = StableDiffusion3Pipeline().StableDiffusion3Pipeline.from_single_file(stable_diffusion_model_path,
+                                                                                            device_map=device,
+                                                                                            torch_dtype=torch.float16)
 
             if vae_model_name is not None:
                 vae_model_path = os.path.join("inputs", "image", "sd_models", "vae", f"{vae_model_name}")
@@ -4961,9 +4945,13 @@ def generate_image_sd3_txt2img(prompt, negative_prompt, quantize_sd3_model_name,
 
                 return callback_kwargs
 
+            prompt_embeds, prompt_neg_embeds, pooled_prompt_embeds, negative_pooled_prompt_embeds = get_weighted_text_embeddings_sd3(pipe=pipe, prompt=prompt, neg_prompt=negative_prompt)
+
             images = pipe(
-                prompt=prompt,
-                negative_prompt=negative_prompt,
+                prompt_embeds=prompt_embeds,
+                negative_prompt_embeds=prompt_neg_embeds,
+                pooled_prompt_embeds=pooled_prompt_embeds,
+                negative_pooled_prompt_embeds=negative_pooled_prompt_embeds,
                 num_inference_steps=num_inference_steps,
                 guidance_scale=guidance_scale,
                 width=width,
@@ -5011,6 +4999,10 @@ def generate_image_sd3_txt2img(prompt, negative_prompt, quantize_sd3_model_name,
         finally:
             if 'pipe' in locals():
                 del pipe
+            if 'text_encoder' in locals():
+                del text_encoder
+            if 'get_weighted_text_embeddings_sd3' in locals():
+                del get_weighted_text_embeddings_sd3
             flush()
 
 
@@ -5107,7 +5099,7 @@ def generate_image_sd3_img2img(prompt, negative_prompt, init_image, strength, qu
                 seed = int(seed)
             generator = torch.Generator(device).manual_seed(seed)
 
-            def combined_callback(i, t, callback_kwargs):
+            def combined_callback(pipe, i, t, callback_kwargs):
                 nonlocal stop_idx
                 if stop_signal and stop_idx is None:
                     stop_idx = i
@@ -5217,7 +5209,7 @@ def generate_image_sd3_controlnet(prompt, negative_prompt, init_image, controlne
             seed = int(seed)
         generator = torch.Generator(device).manual_seed(seed)
 
-        def combined_callback(i, t, callback_kwargs):
+        def combined_callback(pipe, i, t, callback_kwargs):
             nonlocal stop_idx
             if stop_signal and stop_idx is None:
                 stop_idx = i
@@ -5317,7 +5309,7 @@ def generate_image_sd3_inpaint(prompt, negative_prompt, init_image, mask_image, 
             seed = int(seed)
         generator = torch.Generator(device).manual_seed(seed)
 
-        def combined_callback(i, t, callback_kwargs):
+        def combined_callback(pipe, i, t, callback_kwargs):
             nonlocal stop_idx
             if stop_signal and stop_idx is None:
                 stop_idx = i
@@ -5397,7 +5389,7 @@ def generate_image_cascade(prompt, negative_prompt, seed, stop_button, width, he
         seed = int(seed)
     generator = torch.Generator(device).manual_seed(seed)
 
-    def combined_callback_prior(i, t, callback_kwargs):
+    def combined_callback_prior(prior, i, t, callback_kwargs):
         nonlocal stop_idx
         if stop_signal and stop_idx is None:
             stop_idx = i
@@ -5406,7 +5398,7 @@ def generate_image_cascade(prompt, negative_prompt, seed, stop_button, width, he
         progress((i + 1) / prior_steps, f"Step {i + 1}/{prior_steps}")
         return callback_kwargs
 
-    def combined_callback_decoder(i, t, callback_kwargs):
+    def combined_callback_decoder(decoder, i, t, callback_kwargs):
         nonlocal stop_idx
         if stop_signal and stop_idx is None:
             stop_idx = i
@@ -5723,7 +5715,7 @@ def generate_riffusion_text2image(prompt, negative_prompt, seed, stop_button, nu
         pipe = StableDiffusionPipeline().StableDiffusionPipeline.from_pretrained(riffusion_model_path, torch_dtype=torch.float16)
         pipe = pipe.to(device)
 
-        def combined_callback(i, t, callback_kwargs):
+        def combined_callback(pipe, i, t, callback_kwargs):
             nonlocal stop_idx
             if stop_signal and stop_idx is None:
                 stop_idx = i
@@ -5870,7 +5862,7 @@ def generate_image_kandinsky_txt2img(prompt, negative_prompt, version, seed, sto
             pipe = KandinskyPipeline().KandinskyPipeline.from_pretrained(os.path.join(kandinsky_model_path, "2-1"))
             pipe.to(device)
 
-            def combined_callback_2_1(i, t, callback_kwargs):
+            def combined_callback_2_1(pipe, i, t, callback_kwargs):
                 nonlocal stop_idx
                 if stop_signal and stop_idx is None:
                     stop_idx = i
@@ -5903,7 +5895,7 @@ def generate_image_kandinsky_txt2img(prompt, negative_prompt, version, seed, sto
             pipe = KandinskyV22Pipeline().KandinskyV22Pipeline.from_pretrained(os.path.join(kandinsky_model_path, "2-2-decoder"))
             pipe.to(device)
 
-            def combined_callback_2_2(i, t, callback_kwargs):
+            def combined_callback_2_2(pipe, i, t, callback_kwargs):
                 nonlocal stop_idx
                 if stop_signal and stop_idx is None:
                     stop_idx = i
@@ -5933,7 +5925,7 @@ def generate_image_kandinsky_txt2img(prompt, negative_prompt, version, seed, sto
             pipe.to(device)
             pipe.enable_model_cpu_offload()
 
-            def combined_callback_3_0(i, t, callback_kwargs):
+            def combined_callback_3_0(pipe, i, t, callback_kwargs):
                 nonlocal stop_idx
                 if stop_signal and stop_idx is None:
                     stop_idx = i
@@ -6042,7 +6034,7 @@ def generate_image_kandinsky_img2img(prompt, negative_prompt, init_image, versio
             init_image = Image.open(init_image).convert("RGB")
             init_image = init_image.resize((width, height))
 
-            def combined_callback_2_1(i, t, callback_kwargs):
+            def combined_callback_2_1(pipe, i, t, callback_kwargs):
                 nonlocal stop_idx
                 if stop_signal and stop_idx is None:
                     stop_idx = i
@@ -6076,7 +6068,7 @@ def generate_image_kandinsky_img2img(prompt, negative_prompt, init_image, versio
             init_image = Image.open(init_image).convert("RGB")
             init_image = init_image.resize((width, height))
 
-            def combined_callback_2_2(i, t, callback_kwargs):
+            def combined_callback_2_2(pipe, i, t, callback_kwargs):
                 nonlocal stop_idx
                 if stop_signal and stop_idx is None:
                     stop_idx = i
@@ -6107,7 +6099,7 @@ def generate_image_kandinsky_img2img(prompt, negative_prompt, init_image, versio
             init_image = Image.open(init_image).convert("RGB")
             init_image = init_image.resize((width, height))
 
-            def combined_callback_3_0(i, t, callback_kwargs):
+            def combined_callback_3_0(pipe, i, t, callback_kwargs):
                 nonlocal stop_idx
                 if stop_signal and stop_idx is None:
                     stop_idx = i
@@ -6199,7 +6191,7 @@ def generate_image_kandinsky_inpaint(prompt, negative_prompt, init_image, mask_i
         mask_image = Image.open(mask_image).convert("L")
         mask_image = mask_image.resize((width, height))
 
-        def combined_callback_2_1_and_2_2(i, t, callback_kwargs):
+        def combined_callback_2_1_and_2_2(pipe, i, t, callback_kwargs):
             nonlocal stop_idx
             if stop_signal and stop_idx is None:
                 stop_idx = i
@@ -6319,7 +6311,6 @@ def generate_image_flux_txt2img(prompt, model_name, quantize_model_name, enable_
                     pipe.vae = vae.to(device)
 
             pipe.enable_model_cpu_offload()
-            pipe.enable_sequential_cpu_offload()
             pipe.vae.enable_slicing()
             pipe.vae.enable_tiling()
             pipe.to(torch.float16)
@@ -6363,8 +6354,11 @@ def generate_image_flux_txt2img(prompt, model_name, quantize_model_name, enable_
 
                 return callback_kwargs
 
+            prompt_embeds, pooled_prompt_embeds = get_weighted_text_embeddings_flux1(pipe=pipe, prompt=prompt)
+
             output = pipe(
-                prompt=prompt,
+                prompt_embeds=prompt_embeds,
+                pooled_prompt_embeds=pooled_prompt_embeds,
                 guidance_scale=guidance_scale,
                 height=height,
                 width=width,
@@ -6409,10 +6403,12 @@ def generate_image_flux_txt2img(prompt, model_name, quantize_model_name, enable_
         else:
             if 'pipe' in locals():
                 del pipe
+            if 'get_weighted_text_embeddings_flux1' in locals():
+                del get_weighted_text_embeddings_flux1
         flush()
 
 
-def generate_image_flux_img2img(prompt, init_image, model_name, quantize_model_name, enable_quantize, seed, stop_button, num_inference_steps, strength, guidance_scale, width, height, max_sequence_length, output_format, progress=gr.Progress()):
+def generate_image_flux_img2img(prompt, init_image, model_name, quantize_model_name, enable_quantize, seed, stop_button, vae_model_name, lora_model_names, lora_scales, num_inference_steps, strength, guidance_scale, width, height, max_sequence_length, output_format, progress=gr.Progress()):
     global stop_signal
     stop_signal = False
     stop_idx = None
@@ -6432,11 +6428,11 @@ def generate_image_flux_img2img(prompt, init_image, model_name, quantize_model_n
     flux_model_path = os.path.join("inputs", "image", "flux", model_name)
     quantize_model_path = os.path.join("inputs", "image", "flux", "quantize-flux", quantize_model_name)
 
-    if enable_quantize:
-        if not quantize_model_name:
-            gr.Info("Please select a GGUF model!")
-            return None, None
+    if not quantize_model_name:
+        gr.Info("Please select a Flux safetensors/GGUF model!")
+        return None, None
 
+    if enable_quantize:
         params = {
             'prompt': prompt,
             'guidance_scale': guidance_scale,
@@ -6452,7 +6448,7 @@ def generate_image_flux_img2img(prompt, init_image, model_name, quantize_model_n
         env = os.environ.copy()
         env['PYTHONPATH'] = os.pathsep.join(sys.path)
 
-        result = subprocess.run([sys.executable, 'inputs/image/quantize-flux/flux/flux-img2img-quantize.py', json.dumps(params)],
+        result = subprocess.run([sys.executable, 'inputs/image/flux/quantize-flux/flux-img2img-quantize.py', json.dumps(params)],
                                 capture_output=True, text=True)
 
         if result.returncode != 0:
@@ -6481,14 +6477,46 @@ def generate_image_flux_img2img(prompt, init_image, model_name, quantize_model_n
             gr.Info(f"Flux {model_name} model downloaded")
 
         try:
-            pipe = FluxImg2ImgPipeline().FluxImg2ImgPipeline.from_pretrained(flux_model_path,
-                                                                             torch_dtype=torch.bfloat16)
-            pipe = pipe.to(device)
+            pipe = FluxImg2ImgPipeline().FluxImg2ImgPipeline.from_pretrained(flux_model_path, torch_dtype=torch.bfloat16)
+
+            if vae_model_name is not None:
+                vae_model_path = os.path.join("inputs", "image", "flux", "flux-vae", f"{vae_model_name}")
+                if os.path.exists(vae_model_path):
+                    vae = AutoencoderKL().AutoencoderKL.from_single_file(vae_model_path, torch_dtype=torch.bfloat16)
+                    pipe.vae = vae.to(device)
 
             init_image = Image.open(init_image).convert("RGB")
             init_image = init_image.resize((width, height))
 
-            def combined_callback(i, t, callback_kwargs):
+            if isinstance(lora_scales, str):
+                lora_scales = [float(scale.strip()) for scale in lora_scales.split(',') if scale.strip()]
+            elif isinstance(lora_scales, (int, float)):
+                lora_scales = [float(lora_scales)]
+
+            lora_loaded = False
+            if lora_model_names and lora_scales:
+                if len(lora_model_names) != len(lora_scales):
+                    gr.Warning(
+                        f"Number of LoRA models ({len(lora_model_names)}) does not match number of scales ({len(lora_scales)}). Using available scales.", duration=5)
+
+                for i, lora_model_name in enumerate(lora_model_names):
+                    if i < len(lora_scales):
+                        lora_scale = lora_scales[i]
+                    else:
+                        lora_scale = 1.0
+
+                    lora_model_path = os.path.join("inputs", "image", "flux", "flux-lora", lora_model_name)
+                    if os.path.exists(lora_model_path):
+                        adapter_name = os.path.splitext(os.path.basename(lora_model_name))[0]
+                        try:
+                            pipe.load_lora_weights(lora_model_path, adapter_name=adapter_name)
+                            pipe.fuse_lora(lora_scale=lora_scale)
+                            lora_loaded = True
+                            gr.Info(f"Loaded LoRA {lora_model_name} with scale {lora_scale}")
+                        except Exception as e:
+                            gr.Warning(f"Error loading LoRA {lora_model_name}: {str(e)}", duration=5)
+
+            def combined_callback(pipe, i, t, callback_kwargs):
                 nonlocal stop_idx
                 if stop_signal and stop_idx is None:
                     stop_idx = i
@@ -6573,7 +6601,7 @@ def generate_image_flux_inpaint(prompt, init_image, mask_image, model_name, seed
         init_image = Image.open(init_image).convert("RGB")
         mask_image = Image.open(mask_image).convert("L")
 
-        def combined_callback(i, t, callback_kwargs):
+        def combined_callback(pipe, i, t, callback_kwargs):
             nonlocal stop_idx
             if stop_signal and stop_idx is None:
                 stop_idx = i
@@ -6667,7 +6695,7 @@ def generate_image_flux_controlnet(prompt, init_image, base_model_name, seed, st
 
         init_image = Image.open(init_image).convert("RGB")
 
-        def combined_callback(i, t, callback_kwargs):
+        def combined_callback(pipe, i, t, callback_kwargs):
             nonlocal stop_idx
             if stop_signal and stop_idx is None:
                 stop_idx = i
@@ -6751,7 +6779,7 @@ def generate_image_hunyuandit_txt2img(prompt, negative_prompt, seed, stop_button
         pipe.to(device)
         pipe.transformer.enable_forward_chunking(chunk_size=1, dim=1)
 
-        def combined_callback(i, t, callback_kwargs):
+        def combined_callback(pipe, i, t, callback_kwargs):
             nonlocal stop_idx
             if stop_signal and stop_idx is None:
                 stop_idx = i
@@ -6842,7 +6870,7 @@ def generate_image_hunyuandit_controlnet(prompt, negative_prompt, init_image, co
         init_image = Image.open(init_image).convert("RGB")
         init_image = init_image.resize((width, height))
 
-        def combined_callback(i, t, callback_kwargs):
+        def combined_callback(pipe, i, t, callback_kwargs):
             nonlocal stop_idx
             if stop_signal and stop_idx is None:
                 stop_idx = i
@@ -7328,7 +7356,7 @@ def generate_image_wurstchen(prompt, negative_prompt, seed, stop_button, width, 
         prior_pipeline.prior = torch.compile(prior_pipeline.prior, mode="reduce-overhead", fullgraph=True)
         decoder_pipeline.decoder = torch.compile(decoder_pipeline.decoder, mode="reduce-overhead", fullgraph=True)
 
-        def combined_callback_prior(i, t, callback_kwargs):
+        def combined_callback_prior(prior_pipeline, i, t, callback_kwargs):
             nonlocal stop_idx
             if stop_signal and stop_idx is None:
                 stop_idx = i
@@ -7337,7 +7365,7 @@ def generate_image_wurstchen(prompt, negative_prompt, seed, stop_button, width, 
             progress((i + 1) / prior_steps, f"Step {i + 1}/{prior_steps}")
             return callback_kwargs
 
-        def combined_callback_decoder(i, t, callback_kwargs):
+        def combined_callback_decoder(decoder_pipeline, i, t, callback_kwargs):
             nonlocal stop_idx
             if stop_signal and stop_idx is None:
                 stop_idx = i
@@ -7451,7 +7479,7 @@ def generate_image_deepfloyd_txt2img(prompt, negative_prompt, seed, stop_button,
         pipe_i.text_encoder = torch.compile(pipe_i.text_encoder, mode="reduce-overhead", fullgraph=True)
         pipe_i.unet = torch.compile(pipe_i.unet, mode="reduce-overhead", fullgraph=True)
 
-        def combined_callback_pipe_i(i, t, callback_kwargs):
+        def combined_callback_pipe_i(pipe_i, i, t, callback_kwargs):
             nonlocal stop_idx
             if stop_signal and stop_idx is None:
                 stop_idx = i
@@ -7481,7 +7509,7 @@ def generate_image_deepfloyd_txt2img(prompt, negative_prompt, seed, stop_button,
         pipe_ii.enable_model_cpu_offload()
         pipe_ii.enable_sequential_cpu_offload()
 
-        def combined_callback_pipe_ii(i, t, callback_kwargs):
+        def combined_callback_pipe_ii(pipe_ii, i, t, callback_kwargs):
             nonlocal stop_idx
             if stop_signal and stop_idx is None:
                 stop_idx = i
@@ -7644,7 +7672,7 @@ def generate_image_deepfloyd_img2img(prompt, negative_prompt, init_image, seed, 
         original_image = Image.open(init_image).convert("RGB")
         original_image = original_image.resize((width, height))
 
-        def combined_callback_stage_1(i, t, callback_kwargs):
+        def combined_callback_stage_1(stage_1, i, t, callback_kwargs):
             nonlocal stop_idx
             if stop_signal and stop_idx is None:
                 stop_idx = i
@@ -7653,7 +7681,7 @@ def generate_image_deepfloyd_img2img(prompt, negative_prompt, init_image, seed, 
             progress((i + 1) / num_inference_steps, f"Step {i + 1}/{num_inference_steps}")
             return callback_kwargs
 
-        def combined_callback_stage_2(i, t, callback_kwargs):
+        def combined_callback_stage_2(stage_2, i, t, callback_kwargs):
             nonlocal stop_idx
             if stop_signal and stop_idx is None:
                 stop_idx = i
@@ -7807,7 +7835,7 @@ def generate_image_deepfloyd_inpaint(prompt, negative_prompt, init_image, mask_i
         original_image = Image.open(init_image).convert("RGB")
         mask_image = Image.open(mask_image).convert("RGB")
 
-        def combined_callback_stage_1(i, t, callback_kwargs):
+        def combined_callback_stage_1(stage_1, i, t, callback_kwargs):
             nonlocal stop_idx
             if stop_signal and stop_idx is None:
                 stop_idx = i
@@ -7816,7 +7844,7 @@ def generate_image_deepfloyd_inpaint(prompt, negative_prompt, init_image, mask_i
             progress((i + 1) / num_inference_steps, f"Step {i + 1}/{num_inference_steps}")
             return callback_kwargs
 
-        def combined_callback_stage_2(i, t, callback_kwargs):
+        def combined_callback_stage_2(stage_2, i, t, callback_kwargs):
             nonlocal stop_idx
             if stop_signal and stop_idx is None:
                 stop_idx = i
@@ -7955,7 +7983,7 @@ def generate_image_pixart(prompt, negative_prompt, version, seed, stop_button, n
 
         pipe.enable_model_cpu_offload()
 
-        def combined_callback(i, t, callback_kwargs):
+        def combined_callback(pipe, i, t, callback_kwargs):
             nonlocal stop_idx
             if stop_signal and stop_idx is None:
                 stop_idx = i
@@ -8212,7 +8240,7 @@ def generate_video_modelscope(prompt, negative_prompt, seed, stop_button, num_in
         pipe.enable_model_cpu_offload()
         pipe.enable_vae_slicing()
 
-        def combined_callback(i, t, callback_kwargs):
+        def combined_callback(pipe, i, t, callback_kwargs):
             nonlocal stop_idx
             if stop_signal and stop_idx is None:
                 stop_idx = i
@@ -8322,7 +8350,7 @@ def generate_video_zeroscope2(prompt, video_to_enhance, seed, stop_button, stren
                 frames.append(frame)
             cap.release()
 
-            def combined_callback_enhance(i, t, callback_kwargs):
+            def combined_callback_enhance(enhance_pipe, i, t, callback_kwargs):
                 nonlocal stop_idx
                 if stop_signal and stop_idx is None:
                     stop_idx = i
@@ -8388,7 +8416,7 @@ def generate_video_zeroscope2(prompt, video_to_enhance, seed, stop_button, stren
             base_pipe.enable_vae_slicing()
             base_pipe.unet.enable_forward_chunking(chunk_size=1, dim=1)
 
-            def combined_callback_base(i, t, callback_kwargs):
+            def combined_callback_base(base_pipe, i, t, callback_kwargs):
                 nonlocal stop_idx
                 if stop_signal and stop_idx is None:
                     stop_idx = i
@@ -8457,7 +8485,7 @@ def generate_video_cogvideox_text2video(prompt, negative_prompt, cogvideox_versi
         pipe.vae.enable_slicing()
         pipe.vae.enable_tiling()
 
-        def combined_callback(i, t, callback_kwargs):
+        def combined_callback(pipe, i, t, callback_kwargs):
             nonlocal stop_idx
             if stop_signal and stop_idx is None:
                 stop_idx = i
@@ -8543,7 +8571,7 @@ def generate_video_cogvideox_image2video(prompt, negative_prompt, init_image, se
 
         image = load_image(init_image)
 
-        def combined_callback(i, t, callback_kwargs):
+        def combined_callback(pipe, i, t, callback_kwargs):
             nonlocal stop_idx
             if stop_signal and stop_idx is None:
                 stop_idx = i
@@ -8607,7 +8635,7 @@ def generate_video_cogvideox_video2video(prompt, negative_prompt, init_video, co
 
         input_video = load_video(init_video)
 
-        def combined_callback(i, t, callback_kwargs):
+        def combined_callback(pipe, i, t, callback_kwargs):
             nonlocal stop_idx
             if stop_signal and stop_idx is None:
                 stop_idx = i
@@ -8672,7 +8700,7 @@ def generate_video_latte(prompt, negative_prompt, seed, stop_button, num_inferen
         pipe = LattePipeline().LattePipeline.from_pretrained(latte_model_path, torch_dtype=torch.float16).to(device)
         pipe.enable_model_cpu_offload()
 
-        def combined_callback(i, t, callback_kwargs):
+        def combined_callback(pipe, i, t, callback_kwargs):
             nonlocal stop_idx
             if stop_signal and stop_idx is None:
                 stop_idx = i
@@ -9004,7 +9032,7 @@ def generate_stableaudio(prompt, negative_prompt, seed, stop_button, num_inferen
     pipe = StableAudioPipeline().StableAudioPipeline.from_pretrained(sa_model_path, torch_dtype=torch.float16)
     pipe = pipe.to(device)
 
-    def combined_callback(i, t, callback_kwargs):
+    def combined_callback(pipe, i, t, callback_kwargs):
         nonlocal stop_idx
         if stop_signal and stop_idx is None:
             stop_idx = i
@@ -9240,7 +9268,7 @@ def generate_audio_audioldm2(prompt, negative_prompt, model_name, seed, stop_but
     pipe = AudioLDM2Pipeline().AudioLDM2Pipeline.from_pretrained(model_path, torch_dtype=torch.float16)
     pipe = pipe.to(device)
 
-    def combined_callback(i, t, callback_kwargs):
+    def combined_callback(pipe, i, t, callback_kwargs):
         nonlocal stop_idx
         if stop_signal and stop_idx is None:
             stop_idx = i
@@ -10597,7 +10625,6 @@ img2img_interface = gr.Interface(
     additional_inputs_accordion=gr.Accordion(label=_("StableDiffusion Settings", lang), open=False),
     outputs=[
         gr.Gallery(label=_("Generated images", lang), elem_id="gallery", columns=[2], rows=[2], object_fit="contain", height="auto"),
-        gr.Gallery(label=_("Generation process", lang), elem_id="process_gallery", columns=[2], rows=[2], object_fit="contain", height="auto"),
         gr.Textbox(label=_("Message", lang), type="text")
     ],
     title=_("NeuroSandboxWebUI - StableDiffusion (img2img)", lang),
@@ -11114,6 +11141,7 @@ sd3_txt2img_interface = gr.Interface(
     inputs=[
         gr.Textbox(label=_("Enter your prompt", lang)),
         gr.Textbox(label=_("Enter your negative prompt", lang), value=""),
+        gr.Radio(choices=["Diffusers", "Safetensors"], label=_("Select model type", lang), value="Diffusers"),
         gr.Dropdown(choices=stable_diffusion_models_list, label=_("Select StableDiffusion model", lang), value=None),
         gr.Checkbox(label=_("Enable Quantize", lang), value=False),
         gr.Textbox(label=_("Seed (optional)", lang), value=""),
@@ -11529,7 +11557,7 @@ flux_txt2img_interface = gr.Interface(
     fn=generate_image_flux_txt2img,
     inputs=[
         gr.Textbox(label=_("Enter your prompt", lang)),
-        gr.Dropdown(choices=["FLUX.1-schnell", "FLUX.1-dev"], label=_("Select Flux model", lang), value="FLUX.1-schnell"),
+        gr.Radio(choices=["FLUX.1-schnell", "FLUX.1-dev"], label=_("Select model type", lang), value="FLUX.1-schnell"),
         gr.Dropdown(choices=quantized_flux_models_list, label=_("Select safetensors Flux model (GGUF if enabled quantize)", lang), value=None),
         gr.Checkbox(label=_("Enable Quantize", lang), value=False),
         gr.Textbox(label=_("Seed (optional)", lang), value=""),
@@ -11576,6 +11604,10 @@ flux_img2img_interface = gr.Interface(
         gr.Button(value=_("Stop generation", lang), interactive=True, variant="stop")
     ],
     additional_inputs=[
+        gr.Dropdown(choices=vae_models_list, label=_("Select VAE model (optional)", lang), value=None),
+        gr.Dropdown(choices=flux_lora_models_list, label=_("Select LORA models (optional)", lang), value=None,
+                    multiselect=True),
+        gr.Textbox(label=_("LoRA Scales", lang)),
         gr.Slider(minimum=1, maximum=100, value=4, step=1, label=_("Steps", lang)),
         gr.Slider(minimum=0.0, maximum=1.0, value=0.95, step=0.01, label=_("Strength", lang)),
         gr.Slider(minimum=0.0, maximum=10.0, value=0.0, step=0.1, label=_("Guidance Scale", lang)),
@@ -12984,7 +13016,7 @@ with gr.TabbedInterface(
     inpaint_interface.input_components[10].click(stop_generation, [], [], queue=False)
     cascade_interface.input_components[3].click(stop_generation, [], [], queue=False)
     riffusion_text2image_interface.input_components[3].click(stop_generation, [], [], queue=False)
-    sd3_txt2img_interface.input_components[5].click(stop_generation, [], [], queue=False)
+    sd3_txt2img_interface.input_components[6].click(stop_generation, [], [], queue=False)
     sd3_img2img_interface.input_components[7].click(stop_generation, [], [], queue=False)
     sd3_controlnet_interface.input_components[5].click(stop_generation, [], [], queue=False)
     sd3_inpaint_interface.input_components[5].click(stop_generation, [], [], queue=False)
@@ -13039,12 +13071,14 @@ with gr.TabbedInterface(
         sd3_txt2img_interface.input_components[7],
         sd3_txt2img_interface.input_components[8],
         sd3_img2img_interface.input_components[5],
-        flux_img2img_interface.input_components[3],
         t2i_ip_adapter_interface.input_components[4],
         ip_adapter_faceid_interface.input_components[5],
         flux_txt2img_interface.input_components[2],
         flux_txt2img_interface.input_components[6],
         flux_txt2img_interface.input_components[7],
+        flux_img2img_interface.input_components[3],
+        flux_img2img_interface.input_components[7],
+        flux_img2img_interface.input_components[8],
         auraflow_interface.input_components[3],
         kolors_txt2img_interface.input_components[3],
         rvc_interface.input_components[1],
