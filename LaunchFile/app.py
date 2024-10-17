@@ -244,8 +244,8 @@ try:
 
     XFORMERS_AVAILABLE = True
 except ImportError:
-    pass
     print("Xformers is not installed. Proceeding without it")
+    pass
 
 chat_history = None
 chat_dir = None
@@ -881,8 +881,10 @@ def load_moondream2_model(model_id, revision):
         gr.Error(f"An error occurred: {str(e)}")
         return None, None, None
     finally:
-        del tokenizer
-        del model
+        if 'tokenizer' in locals():
+            del tokenizer
+        if 'model' in locals():
+            del model
         flush()
 
 
@@ -914,8 +916,10 @@ def load_llava_next_video_model():
         gr.Error(f"An error occurred: {str(e)}")
         return None, None, None
     finally:
-        del processor
-        del model
+        if 'processor' in locals():
+            del processor
+        if 'model' in locals():
+            del model
         flush()
 
 
@@ -1213,8 +1217,10 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, llm_model_t
                 return None, None, None
 
             finally:
-                del llm
-                del chat_handler
+                if 'llm' in locals():
+                    del llm
+                if 'chat_handler' in locals():
+                    del chat_handler
                 flush()
 
         else:
@@ -1251,8 +1257,10 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, llm_model_t
                 return None, None, None
 
             finally:
-                del model
-                del tokenizer
+                if 'tokenizer' in locals():
+                    del tokenizer
+                if 'model' in locals():
+                    del model
                 flush()
 
     elif enable_multimodal and llm_model_name == "LLaVA-NeXT-Video":
@@ -1309,8 +1317,10 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, llm_model_t
                 return None, None, None
 
             finally:
-                del model
-                del processor
+                if 'processor' in locals():
+                    del processor
+                if 'model' in locals():
+                    del model
                 flush()
 
     elif enable_multimodal and llm_model_name == "Qwen2-Audio":
@@ -1332,8 +1342,10 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, llm_model_t
                 gr.Error(f"An error occurred: {str(e)}")
                 return None, None, None
             finally:
-                del processor
-                del model
+                if 'processor' in locals():
+                    del processor
+                if 'model' in locals():
+                    del model
                 flush()
 
     else:
@@ -1529,13 +1541,13 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, llm_model_t
             return None, None, None
 
         finally:
-            if tokenizer is not None:
+            if 'tokenizer' in locals():
                 del tokenizer
-            if llm_model is not None:
+            if 'llm_model' in locals():
                 del llm_model
-            if tts_model is not None:
+            if 'tts_model' in locals():
                 del tts_model
-            if whisper_model is not None:
+            if 'whisper_model' in locals():
                 del whisper_model
             flush()
 
@@ -1654,9 +1666,9 @@ def generate_tts_stt(text, audio, tts_settings_html, speaker_wav, language, tts_
         return None, None
 
     finally:
-        if tts_model is not None:
+        if 'tts_model' in locals():
             del tts_model
-        if whisper_model is not None:
+        if 'whisper_model' in locals():
             del whisper_model
         flush()
 
@@ -1727,8 +1739,10 @@ def generate_mms_tts(text, language, output_format, progress=gr.Progress()):
         return None, None
 
     finally:
-        del model
-        del tokenizer
+        if 'tokenizer' in locals():
+            del tokenizer
+        if 'model' in locals():
+            del model
         flush()
 
 
@@ -1795,8 +1809,10 @@ def transcribe_mms_stt(audio_file, language, output_format, progress=gr.Progress
         return None, None
 
     finally:
-        del model
-        del processor
+        if 'processor' in locals():
+            del processor
+        if 'model' in locals():
+            del model
         flush()
 
 
@@ -1921,8 +1937,10 @@ def seamless_m4tv2_process(input_type, input_text, input_audio, src_lang, tgt_la
         return None, None
 
     finally:
-        del model
-        del processor
+        if 'processor' in locals():
+            del processor
+        if 'model' in locals():
+            del model
         flush()
 
 
@@ -2496,7 +2514,8 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
             return None, None, None
 
         finally:
-            del stable_diffusion_model
+            if 'stable_diffusion_model' in locals():
+                del stable_diffusion_model
             flush()
 
 
@@ -2868,7 +2887,8 @@ def generate_image_img2img(prompt, negative_prompt, init_image, strength, stable
             return None, None, None
 
         finally:
-            del stable_diffusion_model
+            if 'stable_diffusion_model' in locals():
+                del stable_diffusion_model
             flush()
 
 
@@ -2947,7 +2967,8 @@ def generate_image_depth2img(prompt, negative_prompt, init_image, seed, strength
         return None, None
 
     finally:
-        del stable_diffusion_model
+        if 'stable_diffusion_model' in locals():
+            del stable_diffusion_model
         flush()
 
 
@@ -3010,8 +3031,10 @@ def generate_image_marigold(input_image, num_inference_steps, ensemble_size):
         return None, None, None
 
     finally:
-        del depth_pipe
-        del normals_pipe
+        if 'depth_pipe' in locals():
+            del depth_pipe
+        if 'normals_pipe' in locals():
+            del normals_pipe
         flush()
 
 
@@ -3085,7 +3108,8 @@ def generate_image_pix2pix(prompt, negative_prompt, init_image, seed, num_infere
         return None, None
 
     finally:
-        del pipe
+        if 'pipe' in locals():
+            del pipe
         flush()
 
 
@@ -3440,19 +3464,21 @@ def generate_image_controlnet(prompt, negative_prompt, init_image, sd_version, s
         return image_paths, control_image_paths, f"Images generated successfully. Seed used: {seed}"
 
     except Exception as e:
-        gr.Error(f"An error occurred: {str(e)}")
+        if UnboundLocalError:
+            pass
+        else:
+            gr.Error(f"An error occurred: {str(e)}")
         return None, None, None
 
     finally:
-        try:
+        if 'controlnet' in locals():
             del controlnet
+        if 'pipe' in locals():
             del pipe
-            if 'depth_estimator' in locals():
-                del depth_estimator
-            if 'feature_extractor' in locals():
-                del feature_extractor
-        except UnboundLocalError:
-            pass
+        if 'depth_estimator' in locals():
+            del depth_estimator
+        if 'feature_extractor' in locals():
+            del feature_extractor
         flush()
 
 
@@ -3564,7 +3590,8 @@ def generate_image_upscale_latent(prompt, image_path, upscale_factor, seed, num_
         return None, None
 
     finally:
-        del upscaler
+        if 'upscaler' in locals():
+            del upscaler
         flush()
 
 
@@ -3668,7 +3695,8 @@ def generate_image_sdxl_refiner(prompt, init_image, output_format):
         return None, None
 
     finally:
-        del pipe
+        if 'pipe' in locals():
+            del pipe
         flush()
 
 
@@ -3882,7 +3910,8 @@ def generate_image_inpaint(prompt, negative_prompt, init_image, mask_image, blur
         return None, None
 
     finally:
-        del stable_diffusion_model
+        if 'stable_diffusion_model' in locals():
+            del stable_diffusion_model
         flush()
 
 
@@ -4042,7 +4071,8 @@ def generate_image_outpaint(prompt, negative_prompt, init_image, stable_diffusio
         return None, None
 
     finally:
-        del pipe
+        if 'pipe' in locals():
+            del pipe
         flush()
 
 
@@ -4189,8 +4219,10 @@ def generate_image_gligen(prompt, negative_prompt, gligen_phrases, gligen_boxes,
         return None, None
 
     finally:
-        del stable_diffusion_model
-        del pipe
+        if 'stable_diffusion_model' in locals():
+            del stable_diffusion_model
+        if 'pipe' in locals():
+            del pipe
         flush()
 
 
@@ -4278,7 +4310,8 @@ def generate_image_diffedit(source_prompt, source_negative_prompt, target_prompt
         return None, None
 
     finally:
-        del pipe
+        if 'pipe' in locals():
+            del pipe
         flush()
 
 
@@ -4331,7 +4364,8 @@ def generate_image_blip_diffusion(text_prompt_input, negative_prompt, cond_image
         return None, None
 
     finally:
-        del blip_diffusion_pipe
+        if 'blip_diffusion_pipe' in locals():
+            del blip_diffusion_pipe
         flush()
 
 
@@ -4560,16 +4594,19 @@ def generate_image_animatediff(prompt, negative_prompt, input_video, strength, m
         return gif_path, f"GIF generated successfully. Seed used: {seed}"
 
     except Exception as e:
-        gr.Error(f"An error occurred: {str(e)}")
+        if UnboundLocalError:
+            pass
+        else:
+            gr.Error(f"An error occurred: {str(e)}")
         return None, None
 
     finally:
-        try:
+        if 'pipe' in locals():
             del pipe
+        if 'stable_diffusion_model' in locals():
             del stable_diffusion_model
+        if 'adapter' in locals():
             del adapter
-        except UnboundLocalError:
-            pass
         flush()
 
 
@@ -4670,14 +4707,15 @@ def generate_video(init_image, output_format, seed, video_settings_html, motion_
             return video_path, None, f"MP4 generated successfully. Seed used: {seed}"
 
         except Exception as e:
-            gr.Error(f"An error occurred: {str(e)}")
+            if UnboundLocalError:
+                pass
+            else:
+                gr.Error(f"An error occurred: {str(e)}")
             return None, None, None
 
         finally:
-            try:
+            if 'pipe' in locals():
                 del pipe
-            except UnboundLocalError:
-                pass
             flush()
 
     elif output_format == "gif":
@@ -4719,14 +4757,15 @@ def generate_video(init_image, output_format, seed, video_settings_html, motion_
             return None, video_path, f"GIF generated successfully. Seed used: {seed}"
 
         except Exception as e:
-            gr.Error(f"An error occurred: {str(e)}")
+            if UnboundLocalError:
+                pass
+            else:
+                gr.Error(f"An error occurred: {str(e)}")
             return None, None, None
 
         finally:
-            try:
+            if 'pipe' in locals():
                 del pipe
-            except UnboundLocalError:
-                pass
             flush()
 
 
@@ -4793,11 +4832,12 @@ def generate_image_ldm3d(prompt, negative_prompt, seed, width, height, num_infer
         return None, None, None
 
     finally:
-        del pipe
+        if 'pipe' in locals():
+            del pipe
         flush()
 
 
-def generate_image_sd3_txt2img(prompt, negative_prompt, model_type, quantize_sd3_model_name, enable_quantize, seed, stop_button, vae_model_name, lora_model_names, lora_scales, num_inference_steps, guidance_scale, width, height, max_sequence_length, clip_skip, num_images_per_prompt, enable_taesd, output_format, progress=gr.Progress()):
+def generate_image_sd3_txt2img(prompt, negative_prompt, quantize_sd3_model_name, enable_quantize, seed, stop_button, vae_model_name, lora_model_names, lora_scales, num_inference_steps, guidance_scale, width, height, max_sequence_length, clip_skip, num_images_per_prompt, enable_taesd, output_format, progress=gr.Progress()):
     global stop_signal
     stop_signal = False
     stop_idx = None
@@ -4808,7 +4848,7 @@ def generate_image_sd3_txt2img(prompt, negative_prompt, model_type, quantize_sd3
         try:
             if not quantize_sd3_model_name:
                 gr.Info("Please select a GGUF model!")
-                return None, None, None
+                return None, None
 
             if seed == "" or seed is None:
                 seed = random.randint(0, 2 ** 32 - 1)
@@ -4836,7 +4876,7 @@ def generate_image_sd3_txt2img(prompt, negative_prompt, model_type, quantize_sd3
 
             if result.returncode != 0:
                 gr.Info(f"Error in sd-txt2img-quantize.py: {result.stderr}")
-                return None, None, None
+                return None, None
 
             image_paths = []
             output = result.stdout.strip()
@@ -4846,59 +4886,33 @@ def generate_image_sd3_txt2img(prompt, negative_prompt, model_type, quantize_sd3
                     if os.path.exists(image_path):
                         image_paths.append(image_path)
 
-            return image_paths, None, f"Images generated successfully using quantized model. Seed used: {seed}"
+            return image_paths, f"Images generated successfully using quantized model. Seed used: {seed}"
 
         except Exception as e:
             gr.Error(f"An error occurred: {str(e)}")
-            return None, None, None
+            return None, None
 
     else:
         try:
-            if model_type == "Diffusers":
-                sd3_model_path = os.path.join("inputs", "image", "sd_models", "sd3")
-                if not os.path.exists(sd3_model_path):
-                    gr.Info("Downloading Stable Diffusion 3 model...")
-                    os.makedirs(sd3_model_path, exist_ok=True)
-                    Repo.clone_from("https://huggingface.co/stabilityai/stable-diffusion-3-medium-diffusers",
-                                    sd3_model_path)
-                    gr.Info("Stable Diffusion 3 model downloaded")
-                quantization_config = BitsAndBytesConfig().BitsAndBytesConfig(load_in_8bit=True)
+            if not quantize_sd3_model_name:
+                gr.Info("Please select a model!")
+                return None, None
 
-                text_encoder = T5EncoderModel().T5EncoderModel.from_pretrained(
-                    sd3_model_path,
-                    subfolder="text_encoder_3",
-                    quantization_config=quantization_config,
-                )
-                pipe = StableDiffusion3Pipeline().StableDiffusion3Pipeline.from_pretrained(sd3_model_path, device_map=device,
-                                                                  text_encoder_3=text_encoder,
-                                                                  torch_dtype=torch.float16)
-                if vae_model_name is not None:
-                    vae_model_path = os.path.join("inputs", "image", "sd_models", "vae", f"{vae_model_name}")
-                    if os.path.exists(vae_model_path):
-                        vae = AutoencoderKL().AutoencoderKL.from_single_file(vae_model_path, torch_dtype=torch.bfloat16)
-                        pipe.vae = vae.to(device)
+            stable_diffusion_model_path = os.path.join("inputs", "image", "sd_models", quantize_sd3_model_name)
+            pipe = StableDiffusion3Pipeline().StableDiffusion3Pipeline.from_single_file(stable_diffusion_model_path,
+                                                                                        device_map=device,
+                                                                                        torch_dtype=torch.float16)
 
-                if enable_taesd:
-                    pipe.vae = AutoencoderTiny().AutoencoderTiny.from_pretrained("madebyollin/taesd3", torch_dtype=torch.float16)
-                    pipe.vae.config.shift_factor = 0.0
+            if vae_model_name is not None:
+                vae_model_path = os.path.join("inputs", "image", "sd_models", "vae", f"{vae_model_name}")
+                if os.path.exists(vae_model_path):
+                    vae = AutoencoderKL().AutoencoderKL.from_single_file(vae_model_path, torch_dtype=torch.bfloat16)
+                    pipe.vae = vae.to(device)
 
-            else:
-                if not quantize_sd3_model_name:
-                    gr.Info("Please select a model!")
-                    return None, None, None
-
-                stable_diffusion_model_path = os.path.join("inputs", "image", "sd_models", quantize_sd3_model_name)
-                pipe = StableDiffusion3Pipeline().StableDiffusion3Pipeline.from_single_file(stable_diffusion_model_path, device_map=device, torch_dtype=torch.float16)
-
-                if vae_model_name is not None:
-                    vae_model_path = os.path.join("inputs", "image", "sd_models", "vae", f"{vae_model_name}")
-                    if os.path.exists(vae_model_path):
-                        vae = AutoencoderKL().AutoencoderKL.from_single_file(vae_model_path, torch_dtype=torch.bfloat16)
-                        pipe.vae = vae.to(device)
-
-                if enable_taesd:
-                    pipe.vae = AutoencoderTiny().AutoencoderTiny.from_pretrained("madebyollin/taesd3", torch_dtype=torch.float16)
-                    pipe.vae.config.shift_factor = 0.0
+            if enable_taesd:
+                pipe.vae = AutoencoderTiny().AutoencoderTiny.from_pretrained("madebyollin/taesd3",
+                                                                             torch_dtype=torch.float16)
+                pipe.vae.config.shift_factor = 0.0
 
             pipe.enable_model_cpu_offload()
 
@@ -4936,31 +4950,12 @@ def generate_image_sd3_txt2img(prompt, negative_prompt, model_type, quantize_sd3
                         except Exception as e:
                             gr.Warning(f"Error loading LoRA {lora_model_name}: {str(e)}", duration=5)
 
-            taesd_dec = taesd.Decoder().to(device).requires_grad_(False)
-            taesd_dec.load_state_dict(torch.load("ThirdPartyRepository/taesd/taesd3_decoder.pth", map_location=device))
-
-            def get_pred_original_sample(sched, model_output, timestep, sample):
-                device = model_output.device
-                timestep = timestep.to(device)
-                alpha_prod_t = sched.alphas_cumprod.to(device)[timestep.long()]
-                return (sample - (1 - alpha_prod_t) ** 0.5 * model_output) / alpha_prod_t ** 0.5
-
-            preview_images = []
-
             def combined_callback(pipe, i, t, callback_kwargs):
                 nonlocal stop_idx
                 if stop_signal and stop_idx is None:
                     stop_idx = i
                 if i == stop_idx:
                     pipe._interrupt = True
-
-                device = callback_kwargs["latents"].device
-                t = torch.tensor(t).to(device)
-                latents = get_pred_original_sample(pipe.scheduler, callback_kwargs["latents"], t,
-                                                   callback_kwargs["latents"])
-                decoded = \
-                    pipe.image_processor.postprocess(taesd_dec(latents.float()).mul_(2).sub_(1))[0]
-                preview_images.append(decoded)
 
                 progress((i + 1) / num_inference_steps, f"Step {i + 1}/{num_inference_steps}")
 
@@ -5007,23 +5002,19 @@ def generate_image_sd3_txt2img(prompt, negative_prompt, model_type, quantize_sd3
                 add_metadata_to_file(image_path, metadata)
                 image_paths.append(image_path)
 
-            gif_filename = f"sd3_txt2img_process_{datetime.now().strftime('%Y%m%d_%H%M%S')}.gif"
-            gif_path = os.path.join(image_dir, gif_filename)
-            preview_images[0].save(gif_path, save_all=True, append_images=preview_images[1:], duration=100, loop=0)
-
-            return image_paths, [gif_path] if gif_path else [], f"Images generated successfully. Seed used: {seed}"
+            return image_paths, f"Images generated successfully. Seed used: {seed}"
 
         except Exception as e:
             gr.Error(f"An error occurred: {str(e)}")
             return None, None, None
 
         finally:
-            del pipe
-            del text_encoder
+            if 'pipe' in locals():
+                del pipe
             flush()
 
 
-def generate_image_sd3_img2img(prompt, negative_prompt, init_image, strength, model_type, quantize_sd3_model_name, enable_quantize, seed, stop_button, num_inference_steps, guidance_scale, width, height, max_sequence_length, clip_skip, num_images_per_prompt, output_format, progress=gr.Progress()):
+def generate_image_sd3_img2img(prompt, negative_prompt, init_image, strength, quantize_sd3_model_name, enable_quantize, seed, stop_button, num_inference_steps, guidance_scale, width, height, max_sequence_length, clip_skip, num_images_per_prompt, output_format, progress=gr.Progress()):
     global stop_signal
     stop_signal = False
     stop_idx = None
@@ -5084,32 +5075,24 @@ def generate_image_sd3_img2img(prompt, negative_prompt, init_image, strength, mo
 
     else:
         try:
-            if model_type == "Diffusers":
-                sd3_model_path = os.path.join("inputs", "image", "sd_models", "sd3")
-                if not os.path.exists(sd3_model_path):
-                    gr.Info("Downloading Stable Diffusion 3 model...")
-                    os.makedirs(sd3_model_path, exist_ok=True)
-                    Repo.clone_from("https://huggingface.co/stabilityai/stable-diffusion-3-medium-diffusers",
-                                    sd3_model_path)
-                    gr.Info("Stable Diffusion 3 model downloaded")
-                quantization_config = BitsAndBytesConfig().BitsAndBytesConfig(load_in_8bit=True)
+            sd3_model_path = os.path.join("inputs", "image", "sd_models", "sd3")
+            if not os.path.exists(sd3_model_path):
+                gr.Info("Downloading Stable Diffusion 3 model...")
+                os.makedirs(sd3_model_path, exist_ok=True)
+                Repo.clone_from("https://huggingface.co/stabilityai/stable-diffusion-3-medium-diffusers",
+                                sd3_model_path)
+                gr.Info("Stable Diffusion 3 model downloaded")
+            quantization_config = BitsAndBytesConfig().BitsAndBytesConfig(load_in_8bit=True)
 
-                text_encoder = T5EncoderModel().T5EncoderModel.from_pretrained(
-                    sd3_model_path,
-                    subfolder="text_encoder_3",
-                    quantization_config=quantization_config,
-                )
-                pipe = StableDiffusion3Img2ImgPipeline().StableDiffusion3Img2ImgPipeline.from_pretrained(sd3_model_path, device_map="balanced",
-                                                                  text_encoder_3=text_encoder,
-                                                                  torch_dtype=torch.float16)
-            else:
-                if not quantize_sd3_model_name:
-                    gr.Info("Please select a model!")
-                    return None, None
-                stable_diffusion_model_path = os.path.join("inputs", "image", "sd_models",
-                                                           f"{quantize_sd3_model_name}")
-                pipe = StableDiffusion3Img2ImgPipeline().StableDiffusion3Img2ImgPipeline.from_single_file(stable_diffusion_model_path, device_map="balanced",
-                                                                                            torch_dtype=torch.float16)
+            text_encoder = T5EncoderModel().T5EncoderModel.from_pretrained(
+                sd3_model_path,
+                subfolder="text_encoder_3",
+                quantization_config=quantization_config,
+            )
+            pipe = StableDiffusion3Img2ImgPipeline().StableDiffusion3Img2ImgPipeline.from_pretrained(sd3_model_path,
+                                                                                                     device_map="balanced",
+                                                                                                     text_encoder_3=text_encoder,
+                                                                                                     torch_dtype=torch.float16)
 
             pipe.enable_model_cpu_offload()
 
@@ -5164,8 +5147,10 @@ def generate_image_sd3_img2img(prompt, negative_prompt, init_image, strength, mo
             return None, None
 
         finally:
-            del pipe
-            del text_encoder
+            if 'pipe' in locals():
+                del pipe
+            if 'text_encoder' in locals():
+                del text_encoder
             flush()
 
 
@@ -5280,9 +5265,12 @@ def generate_image_sd3_controlnet(prompt, negative_prompt, init_image, controlne
         return None, None, None
 
     finally:
-        del pipe
-        del controlnet
-        del text_encoder
+        if 'pipe' in locals():
+            del pipe
+        if 'controlnet' in locals():
+            del controlnet
+        if 'text_encoder' in locals():
+            del text_encoder
         flush()
 
 
@@ -5369,8 +5357,10 @@ def generate_image_sd3_inpaint(prompt, negative_prompt, init_image, mask_image, 
         return None, None
 
     finally:
-        del pipe
-        del text_encoder
+        if 'pipe' in locals():
+            del pipe
+        if 'text_encoder' in locals():
+            del text_encoder
         flush()
 
 
@@ -5486,8 +5476,10 @@ def generate_image_cascade(prompt, negative_prompt, seed, stop_button, width, he
         return None, None
 
     finally:
-        del prior
-        del decoder
+        if 'prior' in locals():
+            del prior
+        if 'decoder' in locals():
+            del decoder
         flush()
 
 
@@ -5585,8 +5577,10 @@ def generate_image_t2i_ip_adapter(prompt, negative_prompt, ip_adapter_image, sta
         return None, None
 
     finally:
-        del pipe
-        del image_encoder
+        if 'pipe' in locals():
+            del pipe
+        if 'image_encoder' in locals():
+            del image_encoder
         flush()
 
 
@@ -5697,8 +5691,10 @@ def generate_image_ip_adapter_faceid(prompt, negative_prompt, face_image, s_scal
         return None, None
 
     finally:
-        del pipe
-        del ip_model
+        if 'pipe' in locals():
+            del pipe
+        if 'ip_model' in locals():
+            del ip_model
         flush()
 
 
@@ -5761,7 +5757,8 @@ def generate_riffusion_text2image(prompt, negative_prompt, seed, stop_button, nu
         return None, None
 
     finally:
-        del pipe
+        if 'pipe' in locals():
+            del pipe
         flush()
 
 
@@ -5979,15 +5976,17 @@ def generate_image_kandinsky_txt2img(prompt, negative_prompt, version, seed, sto
         return image_path, f"Image generated successfully. Seed used: {seed}"
 
     except Exception as e:
-        gr.Error(f"An error occurred: {str(e)}")
+        if UnboundLocalError:
+            pass
+        else:
+            gr.Error(f"An error occurred: {str(e)}")
         return None, None
 
     finally:
-        try:
+        if 'pipe_prior' in locals():
             del pipe_prior
+        if 'pipe' in locals():
             del pipe
-        except:
-            pass
         flush()
 
 
@@ -6139,15 +6138,17 @@ def generate_image_kandinsky_img2img(prompt, negative_prompt, init_image, versio
         return image_path, f"Image generated successfully. Seed used: {seed}"
 
     except Exception as e:
-        gr.Error(f"An error occurred: {str(e)}")
+        if UnboundLocalError:
+            pass
+        else:
+            gr.Error(f"An error occurred: {str(e)}")
         return None, None
 
     finally:
-        try:
+        if 'pipe_prior' in locals():
             del pipe_prior
+        if 'pipe' in locals():
             del pipe
-        except:
-            pass
         flush()
 
 
@@ -6233,7 +6234,8 @@ def generate_image_kandinsky_inpaint(prompt, negative_prompt, init_image, mask_i
         return None, None
 
     finally:
-        del pipe
+        if 'pipe' in locals():
+            del pipe
         flush()
 
 
@@ -6405,7 +6407,8 @@ def generate_image_flux_txt2img(prompt, model_name, quantize_model_name, enable_
         if enable_quantize:
             flush()
         else:
-            del pipe
+            if 'pipe' in locals():
+                del pipe
         flush()
 
 
@@ -6532,7 +6535,8 @@ def generate_image_flux_img2img(prompt, init_image, model_name, quantize_model_n
             return None, None
 
         finally:
-            del pipe
+            if 'pipe' in locals():
+                del pipe
             flush()
 
 
@@ -6617,7 +6621,8 @@ def generate_image_flux_inpaint(prompt, init_image, mask_image, model_name, seed
         return None, None
 
     finally:
-        del pipe
+        if 'pipe' in locals():
+            del pipe
         flush()
 
 
@@ -6713,8 +6718,10 @@ def generate_image_flux_controlnet(prompt, init_image, base_model_name, seed, st
         return None, None
 
     finally:
-        del pipe
-        del controlnet
+        if 'pipe' in locals():
+            del pipe
+        if 'controlnet' in locals():
+            del controlnet
         flush()
 
 
@@ -6790,7 +6797,8 @@ def generate_image_hunyuandit_txt2img(prompt, negative_prompt, seed, stop_button
         return None, None
 
     finally:
-        del pipe
+        if 'pipe' in locals():
+            del pipe
         flush()
 
 
@@ -6869,8 +6877,10 @@ def generate_image_hunyuandit_controlnet(prompt, negative_prompt, init_image, co
         return None, None
 
     finally:
-        del pipe
-        del controlnet
+        if 'pipe' in locals():
+            del pipe
+        if 'controlnet' in locals():
+            del controlnet
         flush()
 
 
@@ -6936,7 +6946,8 @@ def generate_image_lumina(prompt, negative_prompt, seed, num_inference_steps, gu
         return None, None
 
     finally:
-        del pipe
+        if 'pipe' in locals():
+            del pipe
         flush()
 
 
@@ -7027,7 +7038,8 @@ def generate_image_kolors_txt2img(prompt, negative_prompt, seed, lora_model_name
         return None, None
 
     finally:
-        del pipe
+        if 'pipe' in locals():
+            del pipe
         flush()
 
 
@@ -7084,7 +7096,8 @@ def generate_image_kolors_img2img(prompt, negative_prompt, init_image, seed, gui
         return None, None
 
     finally:
-        del pipe
+        if 'pipe' in locals():
+            del pipe
         flush()
 
 
@@ -7160,8 +7173,10 @@ def generate_image_kolors_ip_adapter_plus(prompt, negative_prompt, ip_adapter_im
         return None, None
 
     finally:
-        del pipe
-        del image_encoder
+        if 'pipe' in locals():
+            del pipe
+        if 'image_encoder' in locals():
+            del image_encoder
         flush()
 
 
@@ -7268,8 +7283,9 @@ def generate_image_auraflow(prompt, negative_prompt, seed, lora_model_names, lor
         return None, None
 
     finally:
-        del pipe
-        if enable_aurasr:
+        if 'pipe' in locals():
+            del pipe
+        if 'aura_sr' in locals():
             del aura_sr
         flush()
 
@@ -7381,8 +7397,10 @@ def generate_image_wurstchen(prompt, negative_prompt, seed, stop_button, width, 
         return None, None
 
     finally:
-        del prior_pipeline
-        del decoder_pipeline
+        if 'prior_pipeline' in locals():
+            del prior_pipeline
+        if 'decoder_pipeline' in locals():
+            del decoder_pipeline
         flush()
 
 
@@ -7534,17 +7552,21 @@ def generate_image_deepfloyd_txt2img(prompt, negative_prompt, seed, stop_button,
         return stage_i_path, stage_ii_path, stage_iii_path, f"Image generated successfully. Seed used: {seed}"
 
     except Exception as e:
-        gr.Error(f"An error occurred: {str(e)}")
+        if UnboundLocalError:
+            pass
+        else:
+            gr.Error(f"An error occurred: {str(e)}")
         return None, None, None, None
 
     finally:
-        try:
+        if 'pipe_i' in locals():
             del pipe_i
+        if 'pipe_ii' in locals():
             del pipe_ii
+        if 'pipe_iii' in locals():
             del pipe_iii
+        if 'text_encoder' in locals():
             del text_encoder
-        except:
-            pass
         flush()
 
 
@@ -7693,17 +7715,21 @@ def generate_image_deepfloyd_img2img(prompt, negative_prompt, init_image, seed, 
         return stage_1_path, stage_2_path, stage_3_path, f"Image generated successfully. Seed used: {seed}"
 
     except Exception as e:
-        gr.Error(f"An error occurred: {str(e)}")
+        if UnboundLocalError:
+            pass
+        else:
+            gr.Error(f"An error occurred: {str(e)}")
         return None, None, None, None
 
     finally:
-        try:
+        if 'stage_1' in locals():
             del stage_1
+        if 'stage_2' in locals():
             del stage_2
+        if 'stage_3' in locals():
             del stage_3
+        if 'text_encoder' in locals():
             del text_encoder
-        except:
-            pass
         flush()
 
 
@@ -7854,17 +7880,21 @@ def generate_image_deepfloyd_inpaint(prompt, negative_prompt, init_image, mask_i
         return stage_1_path, stage_2_path, stage_3_path, f"Image generated successfully. Seed used: {seed}"
 
     except Exception as e:
-        gr.Error(f"An error occurred: {str(e)}")
+        if UnboundLocalError:
+            pass
+        else:
+            gr.Error(f"An error occurred: {str(e)}")
         return None, None, None, None
 
     finally:
-        try:
+        if 'stage_1' in locals():
             del stage_1
+        if 'stage_2' in locals():
             del stage_2
+        if 'stage_3' in locals():
             del stage_3
+        if 'text_encoder' in locals():
             del text_encoder
-        except:
-            pass
         flush()
 
 
@@ -7974,8 +8004,10 @@ def generate_image_pixart(prompt, negative_prompt, version, seed, stop_button, n
         return None, None
 
     finally:
-        del pipe
-        del text_encoder
+        if 'pipe' in locals():
+            del pipe
+        if 'text_encoder' in locals():
+            del text_encoder
         flush()
 
 
@@ -8040,7 +8072,8 @@ def generate_image_playgroundv2(prompt, negative_prompt, seed, height, width, nu
         return None, None
 
     finally:
-        del pipe
+        if 'pipe' in locals():
+            del pipe
         flush()
 
 
@@ -8230,7 +8263,8 @@ def generate_video_modelscope(prompt, negative_prompt, seed, stop_button, num_in
         return None, None
 
     finally:
-        del pipe
+        if 'pipe' in locals():
+            del pipe
         flush()
 
 
@@ -8335,14 +8369,15 @@ def generate_video_zeroscope2(prompt, video_to_enhance, seed, stop_button, stren
             return video_path, f"Video generated successfully. Seed used: {seed}"
 
         except Exception as e:
-            gr.Error(f"An error occurred: {str(e)}")
+            if UnboundLocalError:
+                pass
+            else:
+                gr.Error(f"An error occurred: {str(e)}")
             return None, None
 
         finally:
-            try:
+            if 'enhance_pipe' in locals():
                 del enhance_pipe
-            except UnboundLocalError:
-                pass
             flush()
 
     else:
@@ -8382,14 +8417,15 @@ def generate_video_zeroscope2(prompt, video_to_enhance, seed, stop_button, stren
             return video_path, f"Video generated successfully. Seed used: {seed}"
 
         except Exception as e:
-            gr.Error(f"An error occurred: {str(e)}")
+            if UnboundLocalError:
+                pass
+            else:
+                gr.Error(f"An error occurred: {str(e)}")
             return None, None
 
         finally:
-            try:
+            if 'base_pipe' in locals():
                 del base_pipe
-            except UnboundLocalError:
-                pass
             flush()
 
 
@@ -8471,7 +8507,8 @@ def generate_video_cogvideox_text2video(prompt, negative_prompt, cogvideox_versi
         return None, None
 
     finally:
-        del pipe
+        if 'pipe' in locals():
+            del pipe
         flush()
 
 
@@ -8533,7 +8570,8 @@ def generate_video_cogvideox_image2video(prompt, negative_prompt, init_image, se
         return None, None
 
     finally:
-        del pipe
+        if 'pipe' in locals():
+            del pipe
         flush()
 
 
@@ -8604,7 +8642,8 @@ def generate_video_cogvideox_video2video(prompt, negative_prompt, init_video, co
         return None, None
 
     finally:
-        del pipe
+        if 'pipe' in locals():
+            del pipe
         flush()
 
 
@@ -8682,7 +8721,8 @@ def generate_video_latte(prompt, negative_prompt, seed, stop_button, num_inferen
         return None, None
 
     finally:
-        del pipe
+        if 'pipe' in locals():
+            del pipe
         flush()
 
 
@@ -8801,7 +8841,8 @@ def generate_3d_shap_e(prompt, init_image, seed, num_inference_steps, guidance_s
         return None, None
 
     finally:
-        del pipe
+        if 'pipe' in locals():
+            del pipe
         flush()
 
 
@@ -8934,7 +8975,8 @@ def generate_3d_zero123plus(input_image, num_inference_steps, output_format, pro
         return None, None
 
     finally:
-        del pipe
+        if 'pipe' in locals():
+            del pipe
         flush()
 
 
@@ -9023,7 +9065,8 @@ def generate_stableaudio(prompt, negative_prompt, seed, stop_button, num_inferen
         return None, None, None
 
     finally:
-        del pipe
+        if 'pipe' in locals():
+            del pipe
         flush()
 
 
@@ -9161,8 +9204,9 @@ def generate_audio_audiocraft(prompt, input_audio=None, model_name=None, model_t
         return None, None, None
 
     finally:
-        del model
-        if mbd:
+        if 'model' in locals():
+            del model
+        if 'mbd' in locals():
             del mbd
         flush()
 
@@ -9252,7 +9296,8 @@ def generate_audio_audioldm2(prompt, negative_prompt, model_name, seed, stop_but
         return None, None, None
 
     finally:
-        del pipe
+        if 'pipe' in locals():
+            del pipe
         flush()
 
 
@@ -9331,8 +9376,10 @@ def generate_bark_audio(text, voice_preset, max_length, fine_temperature, coarse
         return None, None, None
 
     finally:
-        del model
-        del processor
+        if 'model' in locals():
+            del model
+        if 'processor' in locals():
+            del processor
         flush()
 
 
@@ -9381,7 +9428,8 @@ def process_rvc(input_audio, model_folder, f0method, f0up_key, index_rate, filte
         return None, None
 
     finally:
-        del rvc
+        if 'rvc' in locals():
+            del rvc
         flush()
 
 
@@ -9418,7 +9466,8 @@ def separate_audio_uvr(audio_file, output_format, normalization_threshold, sampl
         return None, None, None
 
     finally:
-        del separator
+        if 'separator' in locals():
+            del separator
         flush()
 
 
@@ -10210,7 +10259,7 @@ def reload_model_lists():
 
 
 def reload_interface():
-    updated_lists = reload_model_lists()[:15]
+    updated_lists = reload_model_lists()[:16]
     return [gr.Dropdown(choices=list) for list in updated_lists]
 
 
@@ -11065,7 +11114,6 @@ sd3_txt2img_interface = gr.Interface(
     inputs=[
         gr.Textbox(label=_("Enter your prompt", lang)),
         gr.Textbox(label=_("Enter your negative prompt", lang), value=""),
-        gr.Radio(choices=["Diffusers", "Safetensors"], label=_("Select model type", lang), value="Diffusers"),
         gr.Dropdown(choices=stable_diffusion_models_list, label=_("Select StableDiffusion model", lang), value=None),
         gr.Checkbox(label=_("Enable Quantize", lang), value=False),
         gr.Textbox(label=_("Seed (optional)", lang), value=""),
@@ -11088,7 +11136,6 @@ sd3_txt2img_interface = gr.Interface(
     additional_inputs_accordion=gr.Accordion(label=_("StableDiffusion3 Settings", lang), open=False),
     outputs=[
         gr.Gallery(label=_("Generated images", lang), elem_id="gallery", columns=[2], rows=[2], object_fit="contain", height="auto"),
-        gr.Gallery(label=_("Generation process", lang), elem_id="process_gallery", columns=[2], rows=[2], object_fit="contain", height="auto"),
         gr.Textbox(label=_("Message", lang), type="text")
     ],
     title=_("NeuroSandboxWebUI - StableDiffusion 3 (txt2img)", lang),
@@ -11108,7 +11155,6 @@ sd3_img2img_interface = gr.Interface(
         gr.Textbox(label=_("Enter your negative prompt", lang), value=""),
         gr.Image(label=_("Initial image", lang), type="filepath"),
         gr.Slider(minimum=0.0, maximum=1.0, value=0.8, step=0.01, label=_("Strength (Initial image)", lang)),
-        gr.Radio(choices=["Diffusers", "Safetensors"], label=_("Select model type", lang), value="Diffusers"),
         gr.Dropdown(choices=stable_diffusion_models_list, label=_("Select StableDiffusion model", lang), value=None),
         gr.Checkbox(label=_("Enable Quantize", lang), value=False),
         gr.Textbox(label=_("Seed (optional)", lang), value=""),
@@ -12938,8 +12984,8 @@ with gr.TabbedInterface(
     inpaint_interface.input_components[10].click(stop_generation, [], [], queue=False)
     cascade_interface.input_components[3].click(stop_generation, [], [], queue=False)
     riffusion_text2image_interface.input_components[3].click(stop_generation, [], [], queue=False)
-    sd3_txt2img_interface.input_components[6].click(stop_generation, [], [], queue=False)
-    sd3_img2img_interface.input_components[8].click(stop_generation, [], [], queue=False)
+    sd3_txt2img_interface.input_components[5].click(stop_generation, [], [], queue=False)
+    sd3_img2img_interface.input_components[7].click(stop_generation, [], [], queue=False)
     sd3_controlnet_interface.input_components[5].click(stop_generation, [], [], queue=False)
     sd3_inpaint_interface.input_components[5].click(stop_generation, [], [], queue=False)
     kandinsky_txt2img_interface.input_components[4].click(stop_generation, [], [], queue=False)
@@ -13005,7 +13051,7 @@ with gr.TabbedInterface(
         gallery_interface.input_components[0]
     ]
 
-    reload_button.click(reload_interface, outputs=dropdowns_to_update[:15])
+    reload_button.click(reload_interface, outputs=dropdowns_to_update[:16])
     close_button.click(close_terminal, [], [], queue=False)
     folder_button.click(open_outputs_folder, [], [], queue=False)
 
