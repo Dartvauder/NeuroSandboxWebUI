@@ -1351,7 +1351,7 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, llm_model_t
 
     else:
         if llm_model_type == "Llama":
-            tokenizer, llm_model = load_model(llm_model_name, llm_model_type, n_ctx, n_batch, n_ubatch, freq_base, freq_scale)
+            tokenizer, llm_model, * _ = load_model(llm_model_name, llm_model_type, n_ctx, n_batch, n_ubatch, freq_base, freq_scale)
         elif llm_model_type == "ExLlamaV2":
             cache, tokenizer, llm_model, * _ = load_model(llm_model_name, llm_model_type, n_ctx=None, n_batch=None, n_ubatch=None, freq_base=None, freq_scale=None)
         else:
