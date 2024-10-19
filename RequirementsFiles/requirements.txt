@@ -287,7 +287,8 @@ trimesh==4.4.7
 trio==0.25.0
 trio-websocket==0.11.1
 trove-classifiers==2024.7.2
-TTS==0.22.0
+coqui-tts==0.24.2
+coqui-tts-trainer==0.1.4
 typeguard==4.2.1
 typer==0.12.3
 typing_extensions==4.11.0
