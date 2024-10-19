@@ -3260,7 +3260,7 @@ def generate_image_controlnet(prompt, negative_prompt, init_image, sd_version, s
 
             images = pipe(prompt_embeds=prompt_embeds, negative_prompt_embeds=negative_prompt_embeds,
                           num_inference_steps=num_inference_steps, guidance_scale=guidance_scale, width=width,
-                          height=height, clip_skip=clip_skip, generator=generator, image=control_image, num_images_per_prompt=num_images_per_prompt, callback_on_step_end=combined_callback_sd).images
+                          height=height, clip_skip=clip_skip, generator=generator, image=control_image, num_images_per_prompt=num_images_per_prompt, callback_on_step_end=combined_callback_sd, callback_on_step_end_tensor_inputs=["latents"]).images
 
         else:
             controlnet = ControlNetModel().ControlNetModel.from_pretrained(
@@ -3404,7 +3404,7 @@ def generate_image_controlnet(prompt, negative_prompt, init_image, sd_version, s
                 prompt_embeds=prompt_embeds, pooled_prompt_embeds=pooled_prompt_embeds, negative_prompt=negative_prompt, image=control_image,
                 controlnet_conditioning_scale=controlnet_conditioning_scale, generator=generator,
                 num_inference_steps=num_inference_steps, guidance_scale=guidance_scale, clip_skip=clip_skip,
-                width=width, height=height, num_images_per_prompt=num_images_per_prompt, callback_on_step_end=combined_callback_sdxl).images
+                width=width, height=height, num_images_per_prompt=num_images_per_prompt, callback_on_step_end=combined_callback_sdxl, callback_on_step_end_tensor_inputs=["latents"]).images
 
         image_paths = []
         control_image_paths = []
@@ -3842,7 +3842,7 @@ def generate_image_inpaint(prompt, negative_prompt, init_image, mask_image, blur
                                             image=init_image, generator=generator, clip_skip=clip_skip,
                                             mask_image=blurred_mask, width=width, height=height,
                                             num_inference_steps=stable_diffusion_steps,
-                                            guidance_scale=stable_diffusion_cfg, num_images_per_prompt=num_images_per_prompt, callback_on_step_end=combined_callback).images
+                                            guidance_scale=stable_diffusion_cfg, num_images_per_prompt=num_images_per_prompt, callback_on_step_end=combined_callback, callback_on_step_end_tensor_inputs=["latents"]).images
         else:
             compel_proc = Compel(tokenizer=stable_diffusion_model.tokenizer,
                                  text_encoder=stable_diffusion_model.text_encoder)
@@ -3853,7 +3853,7 @@ def generate_image_inpaint(prompt, negative_prompt, init_image, mask_image, blur
                                             image=init_image, generator=generator, clip_skip=clip_skip,
                                             mask_image=blurred_mask, width=width, height=height,
                                             num_inference_steps=stable_diffusion_steps,
-                                            guidance_scale=stable_diffusion_cfg, num_images_per_prompt=num_images_per_prompt, callback_on_step_end=combined_callback).images
+                                            guidance_scale=stable_diffusion_cfg, num_images_per_prompt=num_images_per_prompt, callback_on_step_end=combined_callback, callback_on_step_end_tensor_inputs=["latents"]).images
 
         image_paths = []
         for i, image in enumerate(images):
@@ -5001,8 +5001,6 @@ def generate_image_sd3_txt2img(prompt, negative_prompt, model_type, quantize_sd3
                 del pipe
             if 'text_encoder' in locals():
                 del text_encoder
-            if 'get_weighted_text_embeddings_sd3' in locals():
-                del get_weighted_text_embeddings_sd3
             flush()
 
 
@@ -5119,7 +5117,8 @@ def generate_image_sd3_img2img(prompt, negative_prompt, init_image, strength, qu
                 num_images_per_prompt=num_images_per_prompt,
                 clip_skip=clip_skip,
                 generator=generator,
-                callback_on_step_end=combined_callback
+                callback_on_step_end=combined_callback,
+                callback_on_step_end_tensor_inputs=["latents"]
             ).images
 
             image_paths = []
@@ -5230,7 +5229,8 @@ def generate_image_sd3_controlnet(prompt, negative_prompt, init_image, controlne
             num_images_per_prompt=num_images_per_prompt,
             clip_skip=clip_skip,
             generator=generator,
-            callback_on_step_end=combined_callback
+            callback_on_step_end=combined_callback,
+            callback_on_step_end_tensor_inputs=["latents"]
         ).images
 
         image_paths = []
@@ -5329,7 +5329,8 @@ def generate_image_sd3_inpaint(prompt, negative_prompt, init_image, mask_image, 
             num_images_per_prompt=num_images_per_prompt,
             clip_skip=clip_skip,
             generator=generator,
-            callback_on_step_end=combined_callback
+            callback_on_step_end=combined_callback,
+            callback_on_step_end_tensor_inputs=["latents"]
         ).images
 
         image_paths = []
@@ -5419,7 +5420,8 @@ def generate_image_cascade(prompt, negative_prompt, seed, stop_button, width, he
             num_images_per_prompt=num_images_per_prompt,
             num_inference_steps=prior_steps,
             generator=generator,
-            callback_on_step_end=combined_callback_prior
+            callback_on_step_end=combined_callback_prior,
+            callback_on_step_end_tensor_inputs=["latents"]
         )
 
         decoder.enable_model_cpu_offload()
@@ -5432,7 +5434,8 @@ def generate_image_cascade(prompt, negative_prompt, seed, stop_button, width, he
             output_type="pil",
             num_inference_steps=decoder_steps,
             generator=generator,
-            callback_on_step_end = combined_callback_decoder
+            callback_on_step_end=combined_callback_decoder,
+            callback_on_step_end_tensor_inputs=["latents"]
         ).images
 
         image_paths = []
@@ -5732,7 +5735,8 @@ def generate_riffusion_text2image(prompt, negative_prompt, seed, stop_button, nu
             height=height,
             width=width,
             generator=generator,
-            callback_on_step_end=combined_callback
+            callback_on_step_end=combined_callback,
+            callback_on_step_end_tensor_inputs=["latents"]
         ).images[0]
 
         today = datetime.now().date()
@@ -5862,14 +5866,13 @@ def generate_image_kandinsky_txt2img(prompt, negative_prompt, version, seed, sto
             pipe = KandinskyPipeline().KandinskyPipeline.from_pretrained(os.path.join(kandinsky_model_path, "2-1"))
             pipe.to(device)
 
-            def combined_callback_2_1(pipe, i, t, callback_kwargs):
+            def combined_callback_2_1(pipe, i, t):
                 nonlocal stop_idx
                 if stop_signal and stop_idx is None:
                     stop_idx = i
                 if i == stop_idx:
                     pipe._interrupt = True
                 progress((i + 1) / num_inference_steps, f"Step {i + 1}/{num_inference_steps}")
-                return callback_kwargs
 
             image = pipe(
                 prompt,
@@ -5914,7 +5917,8 @@ def generate_image_kandinsky_txt2img(prompt, negative_prompt, version, seed, sto
                 num_inference_steps=num_inference_steps,
                 guidance_scale=guidance_scale,
                 generator=generator,
-                callback_on_step_end=combined_callback_2_2
+                callback_on_step_end=combined_callback_2_2,
+                callback_on_step_end_tensor_inputs=["latents"]
             ).images[0]
 
         elif version == "3":
@@ -5925,14 +5929,13 @@ def generate_image_kandinsky_txt2img(prompt, negative_prompt, version, seed, sto
             pipe.to(device)
             pipe.enable_model_cpu_offload()
 
-            def combined_callback_3_0(pipe, i, t, callback_kwargs):
+            def combined_callback_3_0(pipe, i, t):
                 nonlocal stop_idx
                 if stop_signal and stop_idx is None:
                     stop_idx = i
                 if i == stop_idx:
                     pipe._interrupt = True
                 progress((i + 1) / num_inference_steps, f"Step {i + 1}/{num_inference_steps}")
-                return callback_kwargs
 
             image = pipe(
                 prompt,
@@ -6034,14 +6037,13 @@ def generate_image_kandinsky_img2img(prompt, negative_prompt, init_image, versio
             init_image = Image.open(init_image).convert("RGB")
             init_image = init_image.resize((width, height))
 
-            def combined_callback_2_1(pipe, i, t, callback_kwargs):
+            def combined_callback_2_1(pipe, i, t):
                 nonlocal stop_idx
                 if stop_signal and stop_idx is None:
                     stop_idx = i
                 if i == stop_idx:
                     pipe._interrupt = True
                 progress((i + 1) / num_inference_steps, f"Step {i + 1}/{num_inference_steps}")
-                return callback_kwargs
 
             image = pipe(
                 prompt,
@@ -6068,14 +6070,13 @@ def generate_image_kandinsky_img2img(prompt, negative_prompt, init_image, versio
             init_image = Image.open(init_image).convert("RGB")
             init_image = init_image.resize((width, height))
 
-            def combined_callback_2_2(pipe, i, t, callback_kwargs):
+            def combined_callback_2_2(pipe, i, t):
                 nonlocal stop_idx
                 if stop_signal and stop_idx is None:
                     stop_idx = i
                 if i == stop_idx:
                     pipe._interrupt = True
                 progress((i + 1) / num_inference_steps, f"Step {i + 1}/{num_inference_steps}")
-                return callback_kwargs
 
             image = pipe(
                 prompt=prompt,
@@ -6099,14 +6100,13 @@ def generate_image_kandinsky_img2img(prompt, negative_prompt, init_image, versio
             init_image = Image.open(init_image).convert("RGB")
             init_image = init_image.resize((width, height))
 
-            def combined_callback_3_0(pipe, i, t, callback_kwargs):
+            def combined_callback_3_0(pipe, i, t):
                 nonlocal stop_idx
                 if stop_signal and stop_idx is None:
                     stop_idx = i
                 if i == stop_idx:
                     pipe._interrupt = True
                 progress((i + 1) / num_inference_steps, f"Step {i + 1}/{num_inference_steps}")
-                return callback_kwargs
 
             image = pipe(
                 prompt,
@@ -6191,14 +6191,13 @@ def generate_image_kandinsky_inpaint(prompt, negative_prompt, init_image, mask_i
         mask_image = Image.open(mask_image).convert("L")
         mask_image = mask_image.resize((width, height))
 
-        def combined_callback_2_1_and_2_2(pipe, i, t, callback_kwargs):
+        def combined_callback_2_1_and_2_2(pipe, i, t):
             nonlocal stop_idx
             if stop_signal and stop_idx is None:
                 stop_idx = i
             if i == stop_idx:
                 pipe._interrupt = True
             progress((i + 1) / num_inference_steps, f"Step {i + 1}/{num_inference_steps}")
-            return callback_kwargs
 
         image = pipe(
             prompt=prompt,
@@ -6403,8 +6402,6 @@ def generate_image_flux_txt2img(prompt, model_name, quantize_model_name, enable_
         else:
             if 'pipe' in locals():
                 del pipe
-            if 'get_weighted_text_embeddings_flux1' in locals():
-                del get_weighted_text_embeddings_flux1
         flush()
 
 
@@ -6533,7 +6530,8 @@ def generate_image_flux_img2img(prompt, init_image, model_name, quantize_model_n
                 guidance_scale=guidance_scale,
                 generator=generator,
                 max_sequence_length=max_sequence_length,
-                callback_on_step_end=combined_callback
+                callback_on_step_end=combined_callback,
+                callback_on_step_end_tensor_inputs=["latents"]
             ).images[0]
 
             today = datetime.now().date()
@@ -6619,7 +6617,8 @@ def generate_image_flux_inpaint(prompt, init_image, mask_image, model_name, seed
             guidance_scale=guidance_scale,
             generator=generator,
             max_sequence_length=max_sequence_length,
-            callback_on_step_end=combined_callback
+            callback_on_step_end=combined_callback,
+            callback_on_step_end_tensor_inputs=["latents"]
         ).images[0]
 
         today = datetime.now().date()
@@ -6715,7 +6714,8 @@ def generate_image_flux_controlnet(prompt, init_image, base_model_name, seed, st
             guidance_scale=guidance_scale,
             generator=generator,
             max_sequence_length=max_sequence_length,
-            callback_on_step_end=combined_callback
+            callback_on_step_end=combined_callback,
+            callback_on_step_end_tensor_inputs=["latents"]
         ).images[0]
 
         today = datetime.now().date()
@@ -6796,7 +6796,8 @@ def generate_image_hunyuandit_txt2img(prompt, negative_prompt, seed, stop_button
             height=height,
             width=width,
             generator=generator,
-            callback_on_step_end=combined_callback
+            callback_on_step_end=combined_callback,
+            callback_on_step_end_tensor_inputs=["latents"]
         ).images[0]
 
         today = datetime.now().date()
@@ -6888,7 +6889,8 @@ def generate_image_hunyuandit_controlnet(prompt, negative_prompt, init_image, co
             control_image=init_image,
             num_inference_steps=num_inference_steps,
             generator=generator,
-            callback_on_step_end=combined_callback
+            callback_on_step_end=combined_callback,
+            callback_on_step_end_tensor_inputs=["latents"]
         ).images[0]
 
         today = datetime.now().date()
@@ -7383,7 +7385,8 @@ def generate_image_wurstchen(prompt, negative_prompt, seed, stop_button, width, 
             guidance_scale=prior_guidance_scale,
             num_inference_steps=prior_steps,
             generator=generator,
-            callback_on_step_end=combined_callback_prior
+            callback_on_step_end=combined_callback_prior,
+            callback_on_step_end_tensor_inputs=["latents"]
         )
 
         decoder_output = decoder_pipeline(
@@ -7394,7 +7397,8 @@ def generate_image_wurstchen(prompt, negative_prompt, seed, stop_button, width, 
             num_inference_steps=decoder_steps,
             output_type="pil",
             generator=generator,
-            callback_on_step_end=combined_callback_decoder
+            callback_on_step_end=combined_callback_decoder,
+            callback_on_step_end_tensor_inputs=["latents"]
         ).images[0]
 
         today = datetime.now().date()
@@ -7479,14 +7483,13 @@ def generate_image_deepfloyd_txt2img(prompt, negative_prompt, seed, stop_button,
         pipe_i.text_encoder = torch.compile(pipe_i.text_encoder, mode="reduce-overhead", fullgraph=True)
         pipe_i.unet = torch.compile(pipe_i.unet, mode="reduce-overhead", fullgraph=True)
 
-        def combined_callback_pipe_i(pipe_i, i, t, callback_kwargs):
+        def combined_callback_pipe_i(pipe_i, i, t):
             nonlocal stop_idx
             if stop_signal and stop_idx is None:
                 stop_idx = i
             if i == stop_idx:
                 pipe_i._interrupt = True
             progress((i + 1) / num_inference_steps, f"Step {i + 1}/{num_inference_steps}")
-            return callback_kwargs
 
         image = pipe_i(
             prompt=prompt,
@@ -7509,14 +7512,13 @@ def generate_image_deepfloyd_txt2img(prompt, negative_prompt, seed, stop_button,
         pipe_ii.enable_model_cpu_offload()
         pipe_ii.enable_sequential_cpu_offload()
 
-        def combined_callback_pipe_ii(pipe_ii, i, t, callback_kwargs):
+        def combined_callback_pipe_ii(pipe_ii, i, t):
             nonlocal stop_idx
             if stop_signal and stop_idx is None:
                 stop_idx = i
             if i == stop_idx:
                 pipe_ii._interrupt = True
             progress((i + 1) / num_inference_steps, f"Step {i + 1}/{num_inference_steps}")
-            return callback_kwargs
 
         image = pipe_ii(
             image=image,
@@ -7672,23 +7674,21 @@ def generate_image_deepfloyd_img2img(prompt, negative_prompt, init_image, seed, 
         original_image = Image.open(init_image).convert("RGB")
         original_image = original_image.resize((width, height))
 
-        def combined_callback_stage_1(stage_1, i, t, callback_kwargs):
+        def combined_callback_stage_1(stage_1, i, t):
             nonlocal stop_idx
             if stop_signal and stop_idx is None:
                 stop_idx = i
             if i == stop_idx:
                 stage_1._interrupt = True
             progress((i + 1) / num_inference_steps, f"Step {i + 1}/{num_inference_steps}")
-            return callback_kwargs
 
-        def combined_callback_stage_2(stage_2, i, t, callback_kwargs):
+        def combined_callback_stage_2(stage_2, i, t):
             nonlocal stop_idx
             if stop_signal and stop_idx is None:
                 stop_idx = i
             if i == stop_idx:
                 stage_2._interrupt = True
             progress((i + 1) / num_inference_steps, f"Step {i + 1}/{num_inference_steps}")
-            return callback_kwargs
 
         stage_1_output = stage_1(
             image=original_image,
@@ -7835,23 +7835,21 @@ def generate_image_deepfloyd_inpaint(prompt, negative_prompt, init_image, mask_i
         original_image = Image.open(init_image).convert("RGB")
         mask_image = Image.open(mask_image).convert("RGB")
 
-        def combined_callback_stage_1(stage_1, i, t, callback_kwargs):
+        def combined_callback_stage_1(stage_1, i, t):
             nonlocal stop_idx
             if stop_signal and stop_idx is None:
                 stop_idx = i
             if i == stop_idx:
                 stage_1._interrupt = True
             progress((i + 1) / num_inference_steps, f"Step {i + 1}/{num_inference_steps}")
-            return callback_kwargs
 
-        def combined_callback_stage_2(stage_2, i, t, callback_kwargs):
+        def combined_callback_stage_2(stage_2, i, t):
             nonlocal stop_idx
             if stop_signal and stop_idx is None:
                 stop_idx = i
             if i == stop_idx:
                 stage_2._interrupt = True
             progress((i + 1) / num_inference_steps, f"Step {i + 1}/{num_inference_steps}")
-            return callback_kwargs
 
         stage_1_output = stage_1(
             image=original_image,
@@ -7983,14 +7981,13 @@ def generate_image_pixart(prompt, negative_prompt, version, seed, stop_button, n
 
         pipe.enable_model_cpu_offload()
 
-        def combined_callback(pipe, i, t, callback_kwargs):
+        def combined_callback(pipe, i, t):
             nonlocal stop_idx
             if stop_signal and stop_idx is None:
                 stop_idx = i
             if i == stop_idx:
                 pipe._interrupt = True
             progress((i + 1) / num_inference_steps, f"Step {i + 1}/{num_inference_steps}")
-            return callback_kwargs
 
         image = pipe(
             prompt=prompt,
@@ -8240,14 +8237,13 @@ def generate_video_modelscope(prompt, negative_prompt, seed, stop_button, num_in
         pipe.enable_model_cpu_offload()
         pipe.enable_vae_slicing()
 
-        def combined_callback(pipe, i, t, callback_kwargs):
+        def combined_callback(pipe, i, t):
             nonlocal stop_idx
             if stop_signal and stop_idx is None:
                 stop_idx = i
             if i == stop_idx:
                 pipe._interrupt = True
             progress((i + 1) / num_inference_steps, f"Step {i + 1}/{num_inference_steps}")
-            return callback_kwargs
 
         video_frames = pipe(
             prompt,
@@ -8350,14 +8346,13 @@ def generate_video_zeroscope2(prompt, video_to_enhance, seed, stop_button, stren
                 frames.append(frame)
             cap.release()
 
-            def combined_callback_enhance(enhance_pipe, i, t, callback_kwargs):
+            def combined_callback_enhance(enhance_pipe, i, t):
                 nonlocal stop_idx
                 if stop_signal and stop_idx is None:
                     stop_idx = i
                 if i == stop_idx:
                     enhance_pipe._interrupt = True
                 progress((i + 1) / num_inference_steps, f"Step {i + 1}/{num_inference_steps}")
-                return callback_kwargs
 
             video_frames = enhance_pipe(prompt, video=frames, strength=strength, generator=generator, callback=combined_callback_enhance, callback_steps=1).frames
 
@@ -8416,14 +8411,13 @@ def generate_video_zeroscope2(prompt, video_to_enhance, seed, stop_button, stren
             base_pipe.enable_vae_slicing()
             base_pipe.unet.enable_forward_chunking(chunk_size=1, dim=1)
 
-            def combined_callback_base(base_pipe, i, t, callback_kwargs):
+            def combined_callback_base(base_pipe, i, t):
                 nonlocal stop_idx
                 if stop_signal and stop_idx is None:
                     stop_idx = i
                 if i == stop_idx:
                     base_pipe._interrupt = True
                 progress((i + 1) / num_inference_steps, f"Step {i + 1}/{num_inference_steps}")
-                return callback_kwargs
 
             video_frames = base_pipe(prompt, num_inference_steps=num_inference_steps, width=width, height=height, num_frames=num_frames, generator=generator, callback=combined_callback_base, callback_steps=1).frames[0]
 
@@ -8503,7 +8497,8 @@ def generate_video_cogvideox_text2video(prompt, negative_prompt, cogvideox_versi
             width=width,
             num_frames=num_frames,
             generator=generator,
-            callback_on_step_end=combined_callback
+            callback_on_step_end=combined_callback,
+            callback_on_step_end_tensor_inputs=["latents"]
         ).frames[0]
 
         today = datetime.now().date()
@@ -8581,7 +8576,7 @@ def generate_video_cogvideox_image2video(prompt, negative_prompt, init_image, se
             return callback_kwargs
 
         video = pipe(image=image, prompt=prompt, negative_prompt=negative_prompt, generator=generator,
-                     guidance_scale=guidance_scale, num_inference_steps=num_inference_steps, callback_on_step_end=combined_callback, use_dynamic_cfg=True)
+                     guidance_scale=guidance_scale, num_inference_steps=num_inference_steps, callback_on_step_end=combined_callback, callback_on_step_end_tensor_inputs=["latents"], use_dynamic_cfg=True)
 
         today = datetime.now().date()
         video_dir = os.path.join('outputs', f"CogVideoX_{today.strftime('%Y%m%d')}")
@@ -8652,7 +8647,8 @@ def generate_video_cogvideox_video2video(prompt, negative_prompt, init_video, co
             guidance_scale=guidance_scale,
             num_inference_steps=num_inference_steps,
             generator=generator,
-            callback_on_step_end=combined_callback
+            callback_on_step_end=combined_callback,
+            callback_on_step_end_tensor_inputs=["latents"]
         ).frames[0]
 
         today = datetime.now().date()
@@ -8718,7 +8714,8 @@ def generate_video_latte(prompt, negative_prompt, seed, stop_button, num_inferen
             width=width,
             video_length=video_length,
             generator=generator,
-            callback_on_step_end=combined_callback
+            callback_on_step_end=combined_callback,
+            callback_on_step_end_tensor_inputs=["latents"]
         ).frames[0]
 
         today = datetime.now().date()
@@ -9032,14 +9029,13 @@ def generate_stableaudio(prompt, negative_prompt, seed, stop_button, num_inferen
     pipe = StableAudioPipeline().StableAudioPipeline.from_pretrained(sa_model_path, torch_dtype=torch.float16)
     pipe = pipe.to(device)
 
-    def combined_callback(pipe, i, t, callback_kwargs):
+    def combined_callback(pipe, i, t):
         nonlocal stop_idx
         if stop_signal and stop_idx is None:
             stop_idx = i
         if i == stop_idx:
             pipe._interrupt = True
         progress((i + 1) / num_inference_steps, f"Step {i + 1}/{num_inference_steps}")
-        return callback_kwargs
 
     try:
         audio = pipe(
@@ -9268,14 +9264,13 @@ def generate_audio_audioldm2(prompt, negative_prompt, model_name, seed, stop_but
     pipe = AudioLDM2Pipeline().AudioLDM2Pipeline.from_pretrained(model_path, torch_dtype=torch.float16)
     pipe = pipe.to(device)
 
-    def combined_callback(pipe, i, t, callback_kwargs):
+    def combined_callback(pipe, i, t):
         nonlocal stop_idx
         if stop_signal and stop_idx is None:
             stop_idx = i
         if i == stop_idx:
             pipe._interrupt = True
         progress((i + 1) / num_inference_steps, f"Step {i + 1}/{num_inference_steps}")
-        return callback_kwargs
 
     try:
         audio = pipe(
