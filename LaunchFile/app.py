@@ -41,7 +41,7 @@ import shutil
 from datetime import datetime
 from diffusers.utils import load_image, load_video, export_to_video, export_to_gif, export_to_ply, pt_to_pil
 from compel import Compel, ReturnedEmbeddingsType
-from sd_embed.embedding_funcs import get_weighted_text_embeddings_sd3, get_weighted_text_embeddings_flux1
+from sd_embed.embedding_funcs import get_weighted_text_embeddings_sd3
 import trimesh
 from git import Repo
 import numpy as np
@@ -6310,6 +6310,7 @@ def generate_image_flux_txt2img(prompt, model_name, quantize_model_name, enable_
                     pipe.vae = vae.to(device)
 
             pipe.enable_model_cpu_offload()
+            pipe.enable_sequential_cpu_offload()
             pipe.vae.enable_slicing()
             pipe.vae.enable_tiling()
             pipe.to(torch.float16)
@@ -6353,11 +6354,8 @@ def generate_image_flux_txt2img(prompt, model_name, quantize_model_name, enable_
 
                 return callback_kwargs
 
-            prompt_embeds, pooled_prompt_embeds = get_weighted_text_embeddings_flux1(pipe=pipe, prompt=prompt)
-
             output = pipe(
-                prompt_embeds=prompt_embeds,
-                pooled_prompt_embeds=pooled_prompt_embeds,
+                prompt=prompt,
                 guidance_scale=guidance_scale,
                 height=height,
                 width=width,
@@ -6474,7 +6472,12 @@ def generate_image_flux_img2img(prompt, init_image, model_name, quantize_model_n
             gr.Info(f"Flux {model_name} model downloaded")
 
         try:
-            pipe = FluxImg2ImgPipeline().FluxImg2ImgPipeline.from_pretrained(flux_model_path, torch_dtype=torch.bfloat16)
+            pipe = FluxImg2ImgPipeline().FluxImg2ImgPipeline.from_pretrained(flux_model_path, torch_dtype=torch.bfloat16).to(device)
+            pipe.enable_model_cpu_offload()
+            pipe.enable_sequential_cpu_offload()
+            pipe.vae.enable_slicing()
+            pipe.vae.enable_tiling()
+            pipe.to(torch.float16)
 
             if vae_model_name is not None:
                 vae_model_path = os.path.join("inputs", "image", "flux", "flux-vae", f"{vae_model_name}")
@@ -6593,8 +6596,12 @@ def generate_image_flux_inpaint(prompt, init_image, mask_image, model_name, seed
         gr.Info(f"Flux {model_name} model downloaded")
 
     try:
-        pipe = FluxInpaintPipeline().FluxInpaintPipeline.from_pretrained(flux_model_path, torch_dtype=torch.bfloat16)
-        pipe = pipe.to(device)
+        pipe = FluxInpaintPipeline().FluxInpaintPipeline.from_pretrained(flux_model_path, torch_dtype=torch.bfloat16).to(device)
+        pipe.enable_model_cpu_offload()
+        pipe.enable_sequential_cpu_offload()
+        pipe.vae.enable_slicing()
+        pipe.vae.enable_tiling()
+        pipe.to(torch.float16)
 
         init_image = Image.open(init_image).convert("RGB")
         mask_image = Image.open(mask_image).convert("L")
@@ -6688,9 +6695,12 @@ def generate_image_flux_controlnet(prompt, init_image, base_model_name, seed, st
 
     try:
         controlnet = FluxControlNetModel().FluxControlNetModel.from_pretrained(controlnet_model_path, torch_dtype=torch.bfloat16)
-        pipe = FluxControlNetPipeline().FluxControlNetPipeline.from_pretrained(base_model_path, controlnet=controlnet,
-                                                      torch_dtype=torch.bfloat16)
-        pipe = pipe.to(device)
+        pipe = FluxControlNetPipeline().FluxControlNetPipeline.from_pretrained(base_model_path, controlnet=controlnet, torch_dtype=torch.bfloat16).to(device)
+        pipe.enable_model_cpu_offload()
+        pipe.enable_sequential_cpu_offload()
+        pipe.vae.enable_slicing()
+        pipe.vae.enable_tiling()
+        pipe.to(torch.float16)
 
         init_image = Image.open(init_image).convert("RGB")
 
@@ -8701,6 +8711,9 @@ def generate_video_latte(prompt, negative_prompt, seed, stop_button, num_inferen
     try:
         pipe = LattePipeline().LattePipeline.from_pretrained(latte_model_path, torch_dtype=torch.float16).to(device)
         pipe.enable_model_cpu_offload()
+        pipe.enable_sequential_cpu_offload()
+        pipe.vae.enable_slicing()
+        pipe.vae.enable_tiling()
 
         def combined_callback(pipe, i, t, callback_kwargs):
             nonlocal stop_idx
@@ -11557,7 +11570,7 @@ kandinsky_interface = gr.TabbedInterface(
 flux_txt2img_interface = gr.Interface(
     fn=generate_image_flux_txt2img,
     inputs=[
-        gr.Textbox(label=_("Enter your prompt", lang), placeholder=_("(prompt:x.x) for Weighting", lang)),
+        gr.Textbox(label=_("Enter your prompt", lang)),
         gr.Radio(choices=["FLUX.1-schnell", "FLUX.1-dev"], label=_("Select model type", lang), value="FLUX.1-schnell"),
         gr.Dropdown(choices=quantized_flux_models_list, label=_("Select safetensors Flux model (GGUF if enabled quantize)", lang), value=None),
         gr.Checkbox(label=_("Enable Quantize", lang), value=False),
