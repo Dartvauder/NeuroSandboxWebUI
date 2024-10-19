@@ -8562,7 +8562,10 @@ def generate_video_cogvideox_image2video(prompt, negative_prompt, init_image, se
 
     try:
         pipe = CogVideoXImageToVideoPipeline().CogVideoXImageToVideoPipeline.from_pretrained(cogvideox_i2v_model_path, torch_dtype=torch.bfloat16)
-        pipe.to(device)
+        pipe.enable_model_cpu_offload()
+        pipe.enable_sequential_cpu_offload()
+        pipe.vae.enable_slicing()
+        pipe.vae.enable_tiling()
 
         image = load_image(init_image)
 
@@ -8625,7 +8628,10 @@ def generate_video_cogvideox_video2video(prompt, negative_prompt, init_video, co
 
     try:
         pipe = CogVideoXVideoToVideoPipeline().CogVideoXVideoToVideoPipeline.from_pretrained(cogvideox_model_path, torch_dtype=torch.bfloat16)
-        pipe.to(device)
+        pipe.enable_model_cpu_offload()
+        pipe.enable_sequential_cpu_offload()
+        pipe.vae.enable_slicing()
+        pipe.vae.enable_tiling()
         pipe.scheduler = CogVideoXDPMScheduler().CogVideoXDPMScheduler.from_config(pipe.scheduler.config)
 
         input_video = load_video(init_video)
