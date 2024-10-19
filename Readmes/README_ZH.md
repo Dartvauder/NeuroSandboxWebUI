@@ -122,20 +122,16 @@
 * `tts` - https://github.com/coqui-ai/TTS
 * `openai-whisper` - https://github.com/openai/whisper
 * `torch` - https://github.com/pytorch/pytorch
-* `soundfile` - https://github.com/bastibe/python-soundfile
 * `cuda-python` - https://github.com/NVIDIA/cuda-python
 * `gitpython` - https://github.com/gitpython-developers/GitPython
 * `diffusers` - https://github.com/huggingface/diffusers
 * `llama.cpp-python` - https://github.com/abetlen/llama-cpp-python
 * `stable-diffusion-cpp-python` - https://github.com/william-murray1204/stable-diffusion-cpp-python
 * `audiocraft` - https://github.com/facebookresearch/audiocraft
-* `AudioLDM2` - https://github.com/haoheliu/AudioLDM2
 * `xformers` - https://github.com/facebookresearch/xformers
 * `demucs` - https://github.com/facebookresearch/demucs
-* `libretranslate` - https://github.com/LibreTranslate/LibreTranslate
 * `libretranslatepy` - https://github.com/argosopentech/LibreTranslate-py
 * `rembg` - https://github.com/danielgatis/rembg
-* `trimesh` - https://github.com/mikedh/trimesh
 * `suno-bark` - https://github.com/suno-ai/bark
 * `IP-Adapter` - https://github.com/tencent-ailab/IP-Adapter
 * `PyNanoInstantMeshes` - https://github.com/vork/PyNanoInstantMeshes
@@ -146,6 +142,8 @@
 * `k-diffusion` - https://github.com/crowsonkb/k-diffusion
 * `open-parse` - https://github.com/Filimoa/open-parse
 * `AudioSR` - https://github.com/haoheliu/versatile_audio_super_resolution
+* `sd_embed` - https://github.com/xhinker/sd_embed
+* `triton` - https://github.com/triton-lang/triton/
 
 ## 第三方许可证：
 
