@@ -119,7 +119,7 @@ First of all, I want to thank the developers of [PyCharm](https://www.jetbrains.
 * `auto-gptq` - https://github.com/AutoGPTQ/AutoGPTQ
 * `autoawq` - https://github.com/casper-hansen/AutoAWQ
 * `exllamav2` - https://github.com/turboderp/exllamav2
-* `tts` - https://github.com/coqui-ai/TTS
+* `coqui-tts` - https://github.com/idiap/coqui-ai-TTS
 * `openai-whisper` - https://github.com/openai/whisper
 * `torch` - https://github.com/pytorch/pytorch
 * `cuda-python` - https://github.com/NVIDIA/cuda-python
