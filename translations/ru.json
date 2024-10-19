@@ -65,6 +65,7 @@
   "Record audio for STT": "Запишите аудио для STT",
   "TTS Audio": "Аудио TTS",
   "STT Text": "Текст STT",
+  "(prompt:x.x) for Weighting": "(prompt:x.x) для взвешивания",
   "NeuroSandboxWebUI - TTS-STT": "NeuroSandboxWebUI - TTS-STT",
   "This user interface allows you to enter text for Text-to-Speech(CoquiTTS) and record audio for Speech-to-Text(OpenAIWhisper). For TTS, you can select the voice and language, and customize the generation settings from the sliders. For STT, simply record your audio and the spoken text will be displayed. Try it and see what happens!": "Этот пользовательский интерфейс позволяет вам вводить текст для преобразования текста в речь (CoquiTTS) и записывать аудио для преобразования речи в текст (OpenAIWhisper). Для TTS вы можете выбрать голос и язык, а также настроить параметры генерации с помощью ползунков. Для STT просто запишите аудио, и произнесенный текст будет отображен. Попробуйте и посмотрите, что получится!",
   "Enter text to synthesize": "Введите текст для синтеза",

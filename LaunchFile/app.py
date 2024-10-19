@@ -11134,8 +11134,8 @@ ldm3d_interface = gr.Interface(
 sd3_txt2img_interface = gr.Interface(
     fn=generate_image_sd3_txt2img,
     inputs=[
-        gr.Textbox(label=_("Enter your prompt", lang)),
-        gr.Textbox(label=_("Enter your negative prompt", lang), value=""),
+        gr.Textbox(label=_("Enter your prompt", lang), placeholder=_("(prompt:x.x) for Weighting", lang)),
+        gr.Textbox(label=_("Enter your negative prompt", lang), placeholder=_("(prompt:x.x) for Weighting", lang), value=""),
         gr.Radio(choices=["Diffusers", "Safetensors"], label=_("Select model type", lang), value="Diffusers"),
         gr.Dropdown(choices=stable_diffusion_models_list, label=_("Select StableDiffusion model", lang), value=None),
         gr.Checkbox(label=_("Enable Quantize", lang), value=False),
@@ -11551,7 +11551,7 @@ kandinsky_interface = gr.TabbedInterface(
 flux_txt2img_interface = gr.Interface(
     fn=generate_image_flux_txt2img,
     inputs=[
-        gr.Textbox(label=_("Enter your prompt", lang)),
+        gr.Textbox(label=_("Enter your prompt", lang), placeholder=_("(prompt:x.x) for Weighting", lang)),
         gr.Radio(choices=["FLUX.1-schnell", "FLUX.1-dev"], label=_("Select model type", lang), value="FLUX.1-schnell"),
         gr.Dropdown(choices=quantized_flux_models_list, label=_("Select safetensors Flux model (GGUF if enabled quantize)", lang), value=None),
         gr.Checkbox(label=_("Enable Quantize", lang), value=False),
