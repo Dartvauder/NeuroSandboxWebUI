@@ -10179,51 +10179,64 @@ def display_output_file(file_path):
         return None, None, None, None, None
 
 
-def download_model(llm_model_url, sd_model_url, progress=gr.Progress()):
+DOWNLOADER_MODEL_TYPES = [
+    "LLM-Model", "LLM-LoRA", "SD-Model", "SD-Inpaint", "SD-VAE", "SD-LoRA",
+    "SD-Embedding", "FLUX-Model", "FLUX-VAE", "FLUX-LoRA", "AuraFlow-LoRA", "Kolors-LoRA", "RVC-Model"
+]
+
+DOWNLOADER_MODEL_PATHS = {
+    "LLM-Model": "inputs/text/llm_models",
+    "LLM-LoRA": "inputs/text/llm_models/lora",
+    "SD-Model": "inputs/image/sd_models",
+    "SD-Inpaint": "inputs/image/sd_models/inpaint",
+    "SD-VAE": "inputs/image/sd_models/vae",
+    "SD-LoRA": "inputs/image/sd_models/lora",
+    "SD-Embedding": "inputs/image/sd_models/embedding",
+    "FLUX-Model": "inputs/image/flux/quantize-flux",
+    "FLUX-VAE": "inputs/image/flux/flux-vae",
+    "FLUX-LoRA": "inputs/image/flux/flux-lora",
+    "AuraFlow-LoRA": "inputs/image/auraflow-lora",
+    "Kolors-LoRA": "inputs/image/kolors-lora",
+    "RVC-Model": "inputs/audio/rvc_models"
+}
+
+
+def download_model(model_url, model_type, progress=gr.Progress()):
     progress(0.1, desc="Initializing model download")
-    if not llm_model_url and not sd_model_url:
-        gr.Info("Please enter at least one model URL to download")
+    if not model_url:
+        gr.Info("Please enter a model URL to download")
         return None
 
-    messages = []
-
-    if llm_model_url:
-        try:
-            progress(0.2, desc="Downloading LLM model")
-            if "/" in llm_model_url and "blob/main" not in llm_model_url:
-                repo_name = llm_model_url.split("/")[-1]
-                model_path = os.path.join("inputs", "text", "llm_models", repo_name)
-                os.makedirs(model_path, exist_ok=True)
-                Repo.clone_from(f"https://huggingface.co/{llm_model_url}", model_path)
-                messages.append(f"LLM model repository {repo_name} downloaded successfully!")
-            else:
-                file_name = llm_model_url.split("/")[-1]
-                model_path = os.path.join("inputs", "text", "llm_models", file_name)
-                response = requests.get(llm_model_url, allow_redirects=True)
-                with open(model_path, "wb") as file:
-                    file.write(response.content)
-                messages.append(f"LLM model file {file_name} downloaded successfully!")
-            progress(0.5, desc="LLM model download complete")
-        except Exception as e:
-            gr.Error(f"Error downloading LLM model: {str(e)}")
+    try:
+        model_path = DOWNLOADER_MODEL_PATHS.get(model_type)
+        if not model_path:
+            gr.Error(f"Invalid model type: {model_type}")
             return None
 
-    if sd_model_url:
-        try:
-            progress(0.6, desc="Downloading StableDiffusion model")
-            file_name = sd_model_url.split("/")[-1]
-            model_path = os.path.join("inputs", "image", "sd_models", file_name)
-            response = requests.get(sd_model_url, allow_redirects=True)
-            with open(model_path, "wb") as file:
+        os.makedirs(model_path, exist_ok=True)
+
+        if "/" in model_url and "blob/main" not in model_url and not model_url.startswith("http"):
+            progress(0.3, desc="Cloning repository")
+            repo_name = model_url.split("/")[-1]
+            repo_path = os.path.join(model_path, repo_name)
+            Repo.clone_from(f"https://huggingface.co/{model_url}", repo_path)
+            progress(0.9, desc="Repository cloned successfully")
+            return f"{model_type} repository {repo_name} downloaded successfully!"
+        else:
+            progress(0.3, desc="Downloading file")
+            file_name = model_url.split("/")[-1]
+            file_path = os.path.join(model_path, file_name)
+            response = requests.get(model_url, allow_redirects=True)
+            with open(file_path, "wb") as file:
                 file.write(response.content)
-            messages.append(f"StableDiffusion model file {file_name} downloaded successfully!")
-            progress(0.9, desc="StableDiffusion model download complete")
-        except Exception as e:
-            gr.Error(f"Error downloading StableDiffusion model: {str(e)}")
-            return None
+            progress(0.9, desc="File downloaded successfully")
+            return f"{model_type} file {file_name} downloaded successfully!"
 
-    progress(1.0, desc="Model download process complete")
-    return "\n".join(messages)
+    except Exception as e:
+        gr.Error(f"Error downloading model: {str(e)}")
+        return None
+    finally:
+        progress(1.0, desc="Download process complete")
 
 
 def settings_interface(language, share_value, debug_value, monitoring_value, auto_launch, api_status, open_api, queue_max_size, status_update_rate, max_file_size, gradio_auth, server_name, server_port, hf_token, share_server_address, theme,
@@ -13014,14 +13027,14 @@ gallery_interface = gr.Interface(
 model_downloader_interface = gr.Interface(
     fn=download_model,
     inputs=[
-        gr.Textbox(label=_("Download LLM model", lang), placeholder="repo-author/repo-name or https://huggingface.co/.../model.gguf"),
-        gr.Textbox(label=_("Download StableDiffusion model", lang), placeholder="https://huggingface.co/.../model.safetensors"),
+        gr.Textbox(label=_("Model URL", lang), placeholder="repo-author/repo-name or https://huggingface.co/.../model.file"),
+        gr.Radio(choices=DOWNLOADER_MODEL_TYPES, label=_("Model Type", lang))
     ],
     outputs=[
         gr.Textbox(label=_("Message", lang), type="text")
     ],
     title=_("NeuroSandboxWebUI - ModelDownloader", lang),
-    description=_("This user interface allows you to download LLM and StableDiffusion models", lang),
+    description=_("This interface allows you to download various types of models", lang),
     allow_flagging="never",
     clear_btn=None,
     stop_btn=_("Stop", lang),
