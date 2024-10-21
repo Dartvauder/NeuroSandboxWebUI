@@ -663,17 +663,19 @@ def change_audio_format(input_audio, new_format, enable_format_changer):
 
 def load_magicprompt_model():
     model_path = os.path.join("inputs", "image", "sd_models", "MagicPrompt")
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    torch_dtype = torch.float16 if device == "cuda" else torch.float32
     if not os.path.exists(model_path):
         gr.Info("Downloading MagicPrompt model...")
         os.makedirs(model_path, exist_ok=True)
         tokenizer = GPT2Tokenizer().GPT2Tokenizer.from_pretrained("Gustavosta/MagicPrompt-Stable-Diffusion")
-        model = GPT2LMHeadModel().GPT2LMHeadModel.from_pretrained("Gustavosta/MagicPrompt-Stable-Diffusion", torch_dtype=torch.float16)
+        model = GPT2LMHeadModel().GPT2LMHeadModel.from_pretrained("Gustavosta/MagicPrompt-Stable-Diffusion", torch_dtype=torch_dtype)
         tokenizer.save_pretrained(model_path)
         model.save_pretrained(model_path)
         gr.Info("MagicPrompt model downloaded")
     else:
         tokenizer = GPT2Tokenizer().GPT2Tokenizer.from_pretrained(model_path)
-        model = GPT2LMHeadModel().GPT2LMHeadModel.from_pretrained(model_path, torch_dtype=torch.float16)
+        model = GPT2LMHeadModel().GPT2LMHeadModel.from_pretrained(model_path, torch_dtype=torch_dtype)
     return tokenizer, model
 
 
@@ -706,6 +708,7 @@ def generate_magicprompt(prompt, max_new_tokens):
 
 def load_model(model_name, model_type, n_ctx, n_batch, n_ubatch, freq_base, freq_scale):
     device = "cuda" if torch.cuda.is_available() else "cpu"
+    torch_dtype = torch.float16 if device == "cuda" else torch.float32
     if model_name:
         model_path = f"inputs/text/llm_models/{model_name}"
         if model_type == "Transformers":
@@ -715,7 +718,7 @@ def load_model(model_name, model_type, n_ctx, n_batch, n_ubatch, freq_base, freq
                     model_path,
                     device_map=device,
                     low_cpu_mem_usage=True,
-                    torch_dtype=torch.float16,
+                    torch_dtype=torch_dtype,
                     trust_remote_code=True
                 )
                 return tokenizer, model, None
@@ -735,7 +738,7 @@ def load_model(model_name, model_type, n_ctx, n_batch, n_ubatch, freq_base, freq
                 tokenizer = AutoTokenizer().AutoTokenizer.from_pretrained(model_path)
                 model = AutoGPTQForCausalLM().AutoGPTQForCausalLM.from_quantized(
                     model_path,
-                    torch_dtype=torch.float16,
+                    torch_dtype=torch_dtype,
                     low_cpu_mem_usage=True,
                     device_map="auto",
                     trust_remote_code=True
@@ -749,7 +752,7 @@ def load_model(model_name, model_type, n_ctx, n_batch, n_ubatch, freq_base, freq
                 tokenizer = AutoTokenizer().AutoTokenizer.from_pretrained(model_path)
                 model = AutoAWQForCausalLM().AutoAWQForCausalLM.from_quantized(
                     model_path,
-                    torch_dtype=torch.float16,
+                    torch_dtype=torch_dtype,
                     low_cpu_mem_usage=True,
                     device_map="auto",
                     trust_remote_code=True
@@ -765,7 +768,7 @@ def load_model(model_name, model_type, n_ctx, n_batch, n_ubatch, freq_base, freq
                     model_path,
                     device_map=device,
                     low_cpu_mem_usage=True,
-                    torch_dtype=torch.float16,
+                    torch_dtype=torch_dtype,
                     trust_remote_code=True
                 )
                 return tokenizer, model, None
@@ -794,6 +797,7 @@ def load_lora_model(base_model_name, lora_model_name, model_type):
 
     try:
         device = "cuda" if torch.cuda.is_available() else "cpu"
+        torch_dtype = torch.float16 if device == "cuda" else torch.float32
         if model_type == "Llama":
             model = Llama().Llama(base_model_path, n_gpu_layers=-1 if device == "cuda" else 0,
                                   lora_path=lora_model_path)
@@ -806,13 +810,13 @@ def load_lora_model(base_model_name, lora_model_name, model_type):
                     device_map=device,
                     load_in_8bit=True,
                     low_cpu_mem_usage=True,
-                    torch_dtype=torch.float16,
+                    torch_dtype=torch_dtype,
                     trust_remote_code=True
                 )
             elif model_type == "GPTQ":
                 base_model = AutoGPTQForCausalLM().AutoGPTQForCausalLM.from_quantized(
                     base_model_path,
-                    torch_dtype=torch.float16,
+                    torch_dtype=torch_dtype,
                     low_cpu_mem_usage=True,
                     device_map="auto",
                     trust_remote_code=True
@@ -820,7 +824,7 @@ def load_lora_model(base_model_name, lora_model_name, model_type):
             elif model_type == "AWQ":
                 base_model = AutoAWQForCausalLM().AutoAWQForCausalLM.from_quantized(
                     base_model_path,
-                    torch_dtype=torch.float16,
+                    torch_dtype=torch_dtype,
                     low_cpu_mem_usage=True,
                     device_map="auto",
                     trust_remote_code=True
@@ -830,7 +834,7 @@ def load_lora_model(base_model_name, lora_model_name, model_type):
                     base_model_path,
                     device_map=device,
                     low_cpu_mem_usage=True,
-                    torch_dtype=torch.float16,
+                    torch_dtype=torch_dtype,
                     trust_remote_code=True
                 )
             model = PeftModel().PeftModel.from_pretrained(base_model, lora_model_path).to(device)
@@ -892,13 +896,14 @@ def load_moondream2_model(model_id, revision):
 def load_llava_next_video_model():
     model_path = os.path.join("inputs", "text", "LLaVA-NeXT-Video")
     device = "cuda" if torch.cuda.is_available() else "cpu"
+    torch_dtype = torch.float16 if device == "cuda" else torch.float32
     try:
         if not os.path.exists(model_path):
             gr.Info("Downloading LLaVA-NeXT-Video model...")
             os.makedirs(model_path, exist_ok=True)
             model = LlavaNextVideoForConditionalGeneration().LlavaNextVideoForConditionalGeneration.from_pretrained(
                 "llava-hf/LLaVA-NeXT-Video-7B-hf",
-                torch_dtype=torch.float16,
+                torch_dtype=torch_dtype,
                 low_cpu_mem_usage=True,
                 trust_remote_code=True
             ).to(device)
@@ -909,7 +914,7 @@ def load_llava_next_video_model():
             gr.Info("LLaVA-NeXT-Video model downloaded")
         else:
             model = LlavaNextVideoForConditionalGeneration().LlavaNextVideoForConditionalGeneration.from_pretrained(
-                model_path, torch_dtype=torch.float16, low_cpu_mem_usage=True, trust_remote_code=True).to(device)
+                model_path, torch_dtype=torch_dtype, low_cpu_mem_usage=True, trust_remote_code=True).to(device)
             processor = LlavaNextVideoProcessor().LlavaNextVideoProcessor.from_pretrained(model_path)
         return model, processor, None
 
@@ -1931,7 +1936,7 @@ def seamless_m4tv2_process(input_type, input_text, input_audio, src_lang, tgt_la
             text_output = None
 
         progress(1.0, desc="Process complete")
-        return text_output, audio_path, None
+        return text_output, audio_path
 
     except Exception as e:
         gr.Error(f"An error occurred: {str(e)}")
@@ -2077,6 +2082,9 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
 
     else:
         try:
+            device = "cuda" if torch.cuda.is_available() else "cpu"
+            torch_dtype = torch.float16 if device == "cuda" else torch.float32
+            variant = "fp16" if torch_dtype == torch.float16 else "fp32"
             stable_diffusion_model_path = os.path.join("inputs", "image", "sd_models",
                                                        f"{stable_diffusion_model_name}")
 
@@ -2087,50 +2095,48 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
             if enable_sag:
                 stable_diffusion_model = StableDiffusionSAGPipeline().StableDiffusionSAGPipeline.from_single_file(
                     stable_diffusion_model_path, use_safetensors=True, device_map="auto",
-                    torch_dtype=torch.float16, variant="fp16"
+                    torch_dtype=torch_dtype, variant=variant
                 )
             elif enable_pag:
                 stable_diffusion_model = AutoPipelineForText2Image().AutoPipelineForText2Image.from_single_file(
                     stable_diffusion_model_path, use_safetensors=True, device_map="auto",
-                    torch_dtype=torch.float16, variant="fp16", enable_pag=True
+                    torch_dtype=torch_dtype, variant=variant, enable_pag=True
                 )
             elif enable_cdvae:
-                vae = ConsistencyDecoderVAE().ConsistencyDecoderVAE.from_pretrained("openai/consistency-decoder", torch_dtype=torch.float16)
+                vae = ConsistencyDecoderVAE().ConsistencyDecoderVAE.from_pretrained("openai/consistency-decoder", torch_dtype=torch_dtype)
                 stable_diffusion_model = StableDiffusionPipeline().StableDiffusionPipeline.from_single_file(
                     stable_diffusion_model_path, vae=vae, use_safetensors=True, device_map="auto",
-                    torch_dtype=torch.float16, variant="fp16"
+                    torch_dtype=torch_dtype, variant=variant
                 )
             elif enable_taesd and stable_diffusion_model_type in ["SD", "SD2"]:
-                vae_sd = AutoencoderTiny().AutoencoderTiny.from_pretrained("madebyollin/taesd", torch_dtype=torch.float16)
+                vae_sd = AutoencoderTiny().AutoencoderTiny.from_pretrained("madebyollin/taesd", torch_dtype=torch_dtype)
                 stable_diffusion_model = StableDiffusionPipeline().StableDiffusionPipeline.from_single_file(
                     stable_diffusion_model_path, use_safetensors=True, device_map="auto",
-                    torch_dtype=torch.float16, variant="fp16", vae=vae_sd)
+                    torch_dtype=torch_dtype, variant=variant, vae=vae_sd)
             elif enable_taesd and stable_diffusion_model_type == "SDXL":
-                vae_xl = AutoencoderTiny().AutoencoderTiny.from_pretrained("madebyollin/taesdxl", torch_dtype=torch.float16)
+                vae_xl = AutoencoderTiny().AutoencoderTiny.from_pretrained("madebyollin/taesdxl", torch_dtype=torch_dtype)
                 stable_diffusion_model = StableDiffusionXLPipeline().StableDiffusionXLPipeline.from_single_file(
                     stable_diffusion_model_path, use_safetensors=True, device_map="auto", attention_slice=1,
-                    torch_dtype=torch.float16, variant="fp16", vae=vae_xl)
+                    torch_dtype=torch_dtype, variant=variant, vae=vae_xl)
             else:
                 if stable_diffusion_model_type == "SD":
                     stable_diffusion_model = StableDiffusionPipeline().StableDiffusionPipeline.from_single_file(
                         stable_diffusion_model_path, use_safetensors=True, device_map="auto",
-                        torch_dtype=torch.float16, variant="fp16")
+                        torch_dtype=torch_dtype, variant=variant)
                 elif stable_diffusion_model_type == "SD2":
                     stable_diffusion_model = StableDiffusionPipeline().StableDiffusionPipeline.from_single_file(
                         stable_diffusion_model_path, use_safetensors=True, device_map="auto",
-                        torch_dtype=torch.float16, variant="fp16")
+                        torch_dtype=torch_dtype, variant=variant)
                 elif stable_diffusion_model_type == "SDXL":
                     stable_diffusion_model = StableDiffusionXLPipeline().StableDiffusionXLPipeline.from_single_file(
                         stable_diffusion_model_path, use_safetensors=True, device_map="auto", attention_slice=1,
-                        torch_dtype=torch.float16, variant="fp16")
+                        torch_dtype=torch_dtype, variant=variant)
                 else:
                     gr.Info("Invalid StableDiffusion model type!")
                     return None, None, None
         except (ValueError, KeyError):
             gr.Error("The selected model is not compatible with the chosen model type")
             return None, None, None
-
-        device = "cuda" if torch.cuda.is_available() else "cpu"
 
         if XFORMERS_AVAILABLE:
             stable_diffusion_model.enable_xformers_memory_efficient_attention(attention_op=None)
@@ -2216,8 +2222,8 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
             vae_model_path = os.path.join("inputs", "image", "sd_models", "vae", f"{vae_model_name}")
             if os.path.exists(vae_model_path):
                 vae = AutoencoderKL().AutoencoderKL.from_single_file(vae_model_path, device_map="auto",
-                                                                     torch_dtype=torch.float16,
-                                                                     variant="fp16")
+                                                                     torch_dtype=torch_dtype,
+                                                                     variant=variant)
                 stable_diffusion_model.vae = vae.to(device)
 
         if isinstance(lora_scales, str):
@@ -2582,6 +2588,9 @@ def generate_image_img2img(prompt, negative_prompt, init_image, strength, stable
 
     else:
         try:
+            device = "cuda" if torch.cuda.is_available() else "cpu"
+            torch_dtype = torch.float16 if device == "cuda" else torch.float32
+            variant = "fp16" if torch_dtype == torch.float16 else "fp32"
             stable_diffusion_model_path = os.path.join("inputs", "image", "sd_models",
                                                        f"{stable_diffusion_model_name}")
 
@@ -2592,22 +2601,20 @@ def generate_image_img2img(prompt, negative_prompt, init_image, strength, stable
             if stable_diffusion_model_type == "SD":
                 stable_diffusion_model = StableDiffusionImg2ImgPipeline().StableDiffusionImg2ImgPipeline.from_single_file(
                     stable_diffusion_model_path, use_safetensors=True, device_map="auto",
-                    torch_dtype=torch.float16, variant="fp16")
+                    torch_dtype=torch_dtype, variant=variant)
             elif stable_diffusion_model_type == "SD2":
                 stable_diffusion_model = StableDiffusionImg2ImgPipeline().StableDiffusionImg2ImgPipeline.from_single_file(
                     stable_diffusion_model_path, use_safetensors=True, device_map="auto",
-                    torch_dtype=torch.float16, variant="fp16")
+                    torch_dtype=torch_dtype, variant=variant)
             elif stable_diffusion_model_type == "SDXL":
                 stable_diffusion_model = StableDiffusionXLImg2ImgPipeline().StableDiffusionXLImg2ImgPipeline.from_single_file(
                     stable_diffusion_model_path, use_safetensors=True, device_map="auto", attention_slice=1,
-                    torch_dtype=torch.float16, variant="fp16")
+                    torch_dtype=torch_dtype, variant=variant)
             else:
                 return None, "Invalid StableDiffusion model type!"
         except (ValueError, KeyError):
             gr.Error("The selected model is not compatible with the chosen model type")
             return None, None
-
-        device = "cuda" if torch.cuda.is_available() else "cpu"
 
         if XFORMERS_AVAILABLE:
             stable_diffusion_model.enable_xformers_memory_efficient_attention(attention_op=None)
@@ -2687,8 +2694,8 @@ def generate_image_img2img(prompt, negative_prompt, init_image, strength, stable
             vae_model_path = os.path.join("inputs", "image", "sd_models", "vae", f"{vae_model_name}")
             if os.path.exists(vae_model_path):
                 vae = AutoencoderKL().AutoencoderKL.from_single_file(vae_model_path, device_map=device,
-                                                                     torch_dtype=torch.float16,
-                                                                     variant="fp16")
+                                                                     torch_dtype=torch_dtype,
+                                                                     variant=variant)
                 stable_diffusion_model.vae = vae.to(device)
 
         if isinstance(lora_scales, str):
@@ -2862,6 +2869,9 @@ def generate_image_depth2img(prompt, negative_prompt, init_image, seed, strength
         return None, None
 
     stable_diffusion_model_path = os.path.join("inputs", "image", "sd_models", "depth")
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    torch_dtype = torch.float16 if device == "cuda" else torch.float32
+    variant = "fp16" if torch_dtype == torch.float16 else "fp32"
 
     if not os.path.exists(stable_diffusion_model_path):
         gr.Info("Downloading depth2img model...")
@@ -2872,13 +2882,11 @@ def generate_image_depth2img(prompt, negative_prompt, init_image, seed, strength
     try:
         stable_diffusion_model = StableDiffusionDepth2ImgPipeline().StableDiffusionDepth2ImgPipeline.from_pretrained(
             stable_diffusion_model_path, use_safetensors=True,
-            torch_dtype=torch.float16, variant="fp16",
+            torch_dtype=torch_dtype, variant=variant,
         )
     except Exception as e:
         gr.Error(f"An error occurred: {str(e)}")
         return None, None
-
-    device = "cuda" if torch.cuda.is_available() else "cpu"
 
     if XFORMERS_AVAILABLE:
         stable_diffusion_model.enable_xformers_memory_efficient_attention(attention_op=None)
@@ -2956,13 +2964,15 @@ def generate_image_marigold(input_image, num_inference_steps, ensemble_size):
 
     try:
         device = "cuda" if torch.cuda.is_available() else "cpu"
+        torch_dtype = torch.float16 if device == "cuda" else torch.float32
+        variant = "fp16" if torch_dtype == torch.float16 else "fp32"
 
         depth_pipe = diffusers().diffusers.MarigoldDepthPipeline.from_pretrained(
-            depth_model_path, variant="fp16", torch_dtype=torch.float16
+            depth_model_path, variant=variant, torch_dtype=torch_dtype
         ).to(device)
 
         normals_pipe = diffusers().diffusers.MarigoldNormalsPipeline.from_pretrained(
-            normals_model_path, variant="fp16", torch_dtype=torch.float16
+            normals_model_path, variant=variant, torch_dtype=torch_dtype
         ).to(device)
 
         image = load_image(input_image)
@@ -3017,8 +3027,8 @@ def generate_image_pix2pix(prompt, negative_prompt, init_image, seed, num_infere
 
     try:
         device = "cuda" if torch.cuda.is_available() else "cpu"
-        pipe = StableDiffusionInstructPix2PixPipeline().StableDiffusionInstructPix2PixPipeline.from_pretrained(pix2pix_model_path, torch_dtype=torch.float16,
-                                                                      safety_checker=None)
+        torch_dtype = torch.float16 if device == "cuda" else torch.float32
+        pipe = StableDiffusionInstructPix2PixPipeline().StableDiffusionInstructPix2PixPipeline.from_pretrained(pix2pix_model_path, torch_dtype=torch_dtype, safety_checker=None)
         pipe.to(device)
 
         image = Image.open(init_image).convert("RGB")
@@ -3095,6 +3105,8 @@ def generate_image_controlnet(prompt, negative_prompt, init_image, sd_version, s
 
     stable_diffusion_model_path = os.path.join("inputs", "image", "sd_models",
                                                f"{stable_diffusion_model_name}")
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    torch_dtype = torch.float16 if device == "cuda" else torch.float32
 
     if not os.path.exists(stable_diffusion_model_path):
         gr.Info(f"StableDiffusion model not found: {stable_diffusion_model_path}")
@@ -3123,7 +3135,6 @@ def generate_image_controlnet(prompt, negative_prompt, init_image, sd_version, s
         gr.Info(f"ControlNet {controlnet_model_name} model downloaded")
 
     try:
-        device = "cuda" if torch.cuda.is_available() else "cpu"
 
         if seed == "" or seed is None:
             seed = random.randint(0, 2 ** 32 - 1)
@@ -3132,11 +3143,11 @@ def generate_image_controlnet(prompt, negative_prompt, init_image, sd_version, s
         generator = torch.Generator(device).manual_seed(seed)
 
         if sd_version == "SD":
-            controlnet = ControlNetModel().ControlNetModel.from_pretrained(controlnet_model_path, torch_dtype=torch.float16)
+            controlnet = ControlNetModel().ControlNetModel.from_pretrained(controlnet_model_path, torch_dtype=torch_dtype)
             pipe = StableDiffusionControlNetPipeline().StableDiffusionControlNetPipeline.from_single_file(
                 stable_diffusion_model_path,
                 controlnet=controlnet,
-                torch_dtype=torch.float16,
+                torch_dtype=torch_dtype,
                 device_map="auto",
                 use_safetensors=True,
             )
@@ -3265,13 +3276,13 @@ def generate_image_controlnet(prompt, negative_prompt, init_image, sd_version, s
         else:
             controlnet = ControlNetModel().ControlNetModel.from_pretrained(
                 controlnet_model_path,
-                torch_dtype=torch.float16,
+                torch_dtype=torch_dtype,
                 use_safetensors=True
             )
             pipe = StableDiffusionXLControlNetPipeline().StableDiffusionXLControlNetPipeline.from_single_file(
                 stable_diffusion_model_path,
                 controlnet=controlnet,
-                torch_dtype=torch.float16,
+                torch_dtype=torch_dtype,
                 use_safetensors=True,
             )
 
@@ -3451,6 +3462,7 @@ def generate_image_upscale_latent(prompt, image_path, upscale_factor, seed, num_
         return None, None
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
+    torch_dtype = torch.float16 if device == "cuda" else torch.float32
 
     if seed == "" or seed is None:
         seed = random.randint(0, 2 ** 32 - 1)
@@ -3470,7 +3482,7 @@ def generate_image_upscale_latent(prompt, image_path, upscale_factor, seed, num_
 
             upscaler = StableDiffusionLatentUpscalePipeline().StableDiffusionLatentUpscalePipeline.from_pretrained(
                 model_path,
-                torch_dtype=torch.float16
+                torch_dtype=torch_dtype
             )
             if XFORMERS_AVAILABLE:
                 upscaler.enable_xformers_memory_efficient_attention(attention_op=None)
@@ -3513,7 +3525,7 @@ def generate_image_upscale_latent(prompt, image_path, upscale_factor, seed, num_
 
             upscaler = StableDiffusionUpscalePipeline().StableDiffusionUpscalePipeline.from_pretrained(
                 model_path,
-                torch_dtype=torch.float16
+                torch_dtype=torch_dtype
             )
             if XFORMERS_AVAILABLE:
                 upscaler.enable_xformers_memory_efficient_attention(attention_op=None)
@@ -3630,9 +3642,11 @@ def generate_image_sdxl_refiner(prompt, init_image, output_format):
 
     try:
         device = "cuda" if torch.cuda.is_available() else "cpu"
+        torch_dtype = torch.float16 if device == "cuda" else torch.float32
+        variant = "fp16" if torch_dtype == torch.float16 else "fp32"
 
         pipe = StableDiffusionXLImg2ImgPipeline().StableDiffusionXLImg2ImgPipeline.from_pretrained(
-            sdxl_refiner_path, torch_dtype=torch.float16, variant="fp16", use_safetensors=True
+            sdxl_refiner_path, torch_dtype=torch_dtype, variant=variant, use_safetensors=True
         )
         pipe = pipe.to(device)
 
@@ -3679,6 +3693,10 @@ def generate_image_inpaint(prompt, negative_prompt, init_image, mask_image, blur
     stable_diffusion_model_path = os.path.join("inputs", "image", "sd_models", "inpaint",
                                                f"{stable_diffusion_model_name}")
 
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    torch_dtype = torch.float16 if device == "cuda" else torch.float32
+    variant = "fp16" if torch_dtype == torch.float16 else "fp32"
+
     if not os.path.exists(stable_diffusion_model_path):
         gr.Info(f"StableDiffusion model not found: {stable_diffusion_model_path}")
         return None, None
@@ -3687,17 +3705,17 @@ def generate_image_inpaint(prompt, negative_prompt, init_image, mask_image, blur
         if stable_diffusion_model_type == "SD":
             stable_diffusion_model = StableDiffusionInpaintPipeline().StableDiffusionInpaintPipeline.from_single_file(
                 stable_diffusion_model_path, use_safetensors=True, device_map="auto",
-                torch_dtype=torch.float16, variant="fp16"
+                torch_dtype=torch_dtype, variant=variant
             )
         elif stable_diffusion_model_type == "SD2":
             stable_diffusion_model = StableDiffusionInpaintPipeline().StableDiffusionInpaintPipeline.from_single_file(
                 stable_diffusion_model_path, use_safetensors=True, device_map="auto",
-                torch_dtype=torch.float16, variant="fp16"
+                torch_dtype=torch_dtype, variant=variant
             )
         elif stable_diffusion_model_type == "SDXL":
             stable_diffusion_model = StableDiffusionXLInpaintPipeline().StableDiffusionXLInpaintPipeline.from_single_file(
                 stable_diffusion_model_path, use_safetensors=True, device_map="auto", attention_slice=1,
-                torch_dtype=torch.float16, variant="fp16"
+                torch_dtype=torch_dtype, variant=variant
             )
         else:
             gr.Info("Invalid StableDiffusion model type!")
@@ -3705,8 +3723,6 @@ def generate_image_inpaint(prompt, negative_prompt, init_image, mask_image, blur
     except (ValueError, KeyError):
         gr.Error("The selected model is not compatible with the chosen model type")
         return None, None
-
-    device = "cuda" if torch.cuda.is_available() else "cpu"
 
     if XFORMERS_AVAILABLE:
         stable_diffusion_model.enable_xformers_memory_efficient_attention(attention_op=None)
@@ -3786,8 +3802,8 @@ def generate_image_inpaint(prompt, negative_prompt, init_image, mask_image, blur
         vae_model_path = os.path.join("inputs", "image", "sd_models", "vae", f"{vae_model_name}")
         if os.path.exists(vae_model_path):
             vae = AutoencoderKL().AutoencoderKL.from_single_file(vae_model_path, device_map="auto",
-                                                 torch_dtype=torch.float16,
-                                                 variant="fp16")
+                                                 torch_dtype=torch_dtype,
+                                                 variant=variant)
             stable_diffusion_model.vae = vae.to(device)
 
     try:
@@ -3891,6 +3907,10 @@ def generate_image_outpaint(prompt, negative_prompt, init_image, stable_diffusio
     stable_diffusion_model_path = os.path.join("inputs", "image", "sd_models", "inpaint",
                                                f"{stable_diffusion_model_name}")
 
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    torch_dtype = torch.float16 if device == "cuda" else torch.float32
+    variant = "fp16" if torch_dtype == torch.float16 else "fp32"
+
     if not os.path.exists(stable_diffusion_model_path):
         gr.Info(f"StableDiffusion model not found: {stable_diffusion_model_path}")
         return None, None
@@ -3899,23 +3919,21 @@ def generate_image_outpaint(prompt, negative_prompt, init_image, stable_diffusio
         if stable_diffusion_model_type == "SD":
             pipe = StableDiffusionInpaintPipeline().StableDiffusionInpaintPipeline.from_single_file(
                 stable_diffusion_model_path, use_safetensors=True, device_map="auto",
-                torch_dtype=torch.float16, variant="fp16"
+                torch_dtype=torch_dtype, variant=variant
             )
         elif stable_diffusion_model_type == "SD2":
             pipe = StableDiffusionInpaintPipeline().StableDiffusionInpaintPipeline.from_single_file(
                 stable_diffusion_model_path, use_safetensors=True, device_map="auto",
-                torch_dtype=torch.float16, variant="fp16"
+                torch_dtype=torch_dtype, variant=variant
             )
         elif stable_diffusion_model_type == "SDXL":
             pipe = StableDiffusionXLInpaintPipeline().StableDiffusionXLInpaintPipeline.from_single_file(
                 stable_diffusion_model_path, use_safetensors=True, device_map="auto", attention_slice=1,
-                torch_dtype=torch.float16, variant="fp16"
+                torch_dtype=torch_dtype, variant=variant
             )
         else:
             gr.Info("Invalid StableDiffusion model type!")
             return None, None
-
-        device = "cuda" if torch.cuda.is_available() else "cpu"
 
         if XFORMERS_AVAILABLE:
             pipe.enable_xformers_memory_efficient_attention(attention_op=None)
@@ -4049,6 +4067,10 @@ def generate_image_gligen(prompt, negative_prompt, gligen_phrases, gligen_boxes,
     stable_diffusion_model_path = os.path.join("inputs", "image", "sd_models",
                                                f"{stable_diffusion_model_name}")
 
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    torch_dtype = torch.float16 if device == "cuda" else torch.float32
+    variant = "fp16" if torch_dtype == torch.float16 else "fp32"
+
     if not os.path.exists(stable_diffusion_model_path):
         gr.Info(f"StableDiffusion model not found: {stable_diffusion_model_path}")
         return None, None
@@ -4057,17 +4079,17 @@ def generate_image_gligen(prompt, negative_prompt, gligen_phrases, gligen_boxes,
         if stable_diffusion_model_type == "SD":
             stable_diffusion_model = StableDiffusionPipeline().StableDiffusionPipeline.from_single_file(
                 stable_diffusion_model_path, use_safetensors=True, device_map="auto",
-                torch_dtype=torch.float16, variant="fp16"
+                torch_dtype=torch_dtype, variant=variant
             )
         elif stable_diffusion_model_type == "SD2":
             stable_diffusion_model = StableDiffusionPipeline().StableDiffusionPipeline.from_single_file(
                 stable_diffusion_model_path, use_safetensors=True, device_map="auto",
-                torch_dtype=torch.float16, variant="fp16"
+                torch_dtype=torch_dtype, variant=variant
             )
         elif stable_diffusion_model_type == "SDXL":
             stable_diffusion_model = StableDiffusionXLPipeline().StableDiffusionXLPipeline.from_single_file(
                 stable_diffusion_model_path, use_safetensors=True, device_map="auto", attention_slice=1,
-                torch_dtype=torch.float16, variant="fp16"
+                torch_dtype=torch_dtype, variant=variant
             )
         else:
             gr.Info("Invalid StableDiffusion model type!")
@@ -4075,8 +4097,6 @@ def generate_image_gligen(prompt, negative_prompt, gligen_phrases, gligen_boxes,
     except (ValueError, KeyError):
         gr.Error("The selected model is not compatible with the chosen model type")
         return None, None
-
-    device = "cuda" if torch.cuda.is_available() else "cpu"
 
     if XFORMERS_AVAILABLE:
         stable_diffusion_model.enable_xformers_memory_efficient_attention(attention_op=None)
@@ -4138,7 +4158,7 @@ def generate_image_gligen(prompt, negative_prompt, gligen_phrases, gligen_boxes,
         gligen_boxes = json.loads(gligen_boxes)
 
         pipe = StableDiffusionGLIGENPipeline().StableDiffusionGLIGENPipeline.from_pretrained(
-            os.path.join(gligen_model_path, "inpainting"), variant="fp16", torch_dtype=torch.float16
+            os.path.join(gligen_model_path, "inpainting"), variant=variant, torch_dtype=torch_dtype
         )
 
         pipe.to(device)
@@ -4195,6 +4215,9 @@ def generate_image_diffedit(source_prompt, source_negative_prompt, target_prompt
 
     sd2_1_model_path = os.path.join("inputs", "image", "sd_models", "sd2-1")
 
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    torch_dtype = torch.float16 if device == "cuda" else torch.float32
+
     if not os.path.exists(sd2_1_model_path):
         gr.Info("Downloading Stable Diffusion 2.1 model...")
         os.makedirs(sd2_1_model_path, exist_ok=True)
@@ -4206,7 +4229,7 @@ def generate_image_diffedit(source_prompt, source_negative_prompt, target_prompt
     try:
         pipe = StableDiffusionDiffEditPipeline().StableDiffusionDiffEditPipeline.from_pretrained(
             sd2_1_model_path,
-            torch_dtype=torch.float16,
+            torch_dtype=torch_dtype,
             safety_checker=None,
             use_safetensors=True,
         ).to(device)
@@ -4293,8 +4316,9 @@ def generate_image_blip_diffusion(text_prompt_input, negative_prompt, cond_image
 
     try:
         device = "cuda" if torch.cuda.is_available() else "cpu"
+        torch_dtype = torch.float16 if device == "cuda" else torch.float32
         blip_diffusion_pipe = BlipDiffusionPipeline().BlipDiffusionPipeline.from_pretrained(
-            blip_diffusion_path, torch_dtype=torch.float16
+            blip_diffusion_path, torch_dtype=torch_dtype
         ).to(device)
 
         cond_image = Image.open(cond_image).convert("RGB")
@@ -4340,6 +4364,10 @@ def generate_image_animatediff(prompt, negative_prompt, input_video, strength, m
 
     stable_diffusion_model_path = os.path.join("inputs", "image", "sd_models", f"{stable_diffusion_model_name}")
 
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    torch_dtype = torch.float16 if device == "cuda" else torch.float32
+    variant = "fp16" if torch_dtype == torch.float16 else "fp32"
+
     if not os.path.exists(stable_diffusion_model_path):
         gr.Info(f"StableDiffusion model not found: {stable_diffusion_model_path}")
         return None, None
@@ -4352,7 +4380,6 @@ def generate_image_animatediff(prompt, negative_prompt, input_video, strength, m
         gr.Info("Motion adapter downloaded")
 
     try:
-        device = "cuda" if torch.cuda.is_available() else "cpu"
 
         if seed == "" or seed is None:
             seed = random.randint(0, 2 ** 32 - 1)
@@ -4374,11 +4401,11 @@ def generate_image_animatediff(prompt, negative_prompt, input_video, strength, m
 
                 video = load_video(input_video)
 
-                adapter = MotionAdapter().MotionAdapter.from_pretrained(motion_adapter_path, torch_dtype=torch.float16)
+                adapter = MotionAdapter().MotionAdapter.from_pretrained(motion_adapter_path, torch_dtype=torch_dtype)
                 stable_diffusion_model = StableDiffusionPipeline().StableDiffusionPipeline.from_single_file(
                     stable_diffusion_model_path,
-                    torch_dtype=torch.float16,
-                    variant="fp16",
+                    torch_dtype=torch_dtype,
+                    variant=variant,
                 ).to(device)
 
                 stable_diffusion_model.enable_vae_slicing()
@@ -4414,11 +4441,11 @@ def generate_image_animatediff(prompt, negative_prompt, input_video, strength, m
                 )
 
             else:
-                adapter = MotionAdapter().MotionAdapter.from_pretrained(motion_adapter_path, torch_dtype=torch.float16)
+                adapter = MotionAdapter().MotionAdapter.from_pretrained(motion_adapter_path, torch_dtype=torch_dtype)
                 stable_diffusion_model = StableDiffusionPipeline().StableDiffusionPipeline.from_single_file(
                     stable_diffusion_model_path,
-                    torch_dtype=torch.float16,
-                    variant="fp16",
+                    torch_dtype=torch_dtype,
+                    variant=variant,
                 ).to(device)
 
                 stable_diffusion_model.enable_vae_slicing()
@@ -4492,11 +4519,11 @@ def generate_image_animatediff(prompt, negative_prompt, input_video, strength, m
                 Repo.clone_from("https://huggingface.co/guoyww/animatediff-motion-adapter-sdxl-beta", sdxl_adapter_path)
                 gr.Info("SDXL motion adapter downloaded")
 
-            adapter = MotionAdapter().MotionAdapter.from_pretrained(sdxl_adapter_path, torch_dtype=torch.float16)
+            adapter = MotionAdapter().MotionAdapter.from_pretrained(sdxl_adapter_path, torch_dtype=torch_dtype)
             stable_diffusion_model = StableDiffusionXLPipeline().StableDiffusionXLPipeline.from_single_file(
                 stable_diffusion_model_path,
-                torch_dtype=torch.float16,
-                variant="fp16",
+                torch_dtype=torch_dtype,
+                variant=variant,
             ).to(device)
 
             stable_diffusion_model.enable_vae_slicing()
@@ -4643,10 +4670,12 @@ def generate_video(init_image, output_format, seed, video_settings_html, motion_
 
         try:
             device = "cuda" if torch.cuda.is_available() else "cpu"
+            torch_dtype = torch.float16 if device == "cuda" else torch.float32
+            variant = "fp16" if torch_dtype == torch.float16 else "fp32"
             pipe = StableVideoDiffusionPipeline().StableVideoDiffusionPipeline.from_pretrained(
                 pretrained_model_name_or_path=video_model_path,
-                torch_dtype=torch.float16,
-                variant="fp16"
+                torch_dtype=torch_dtype,
+                variant=variant
             ).to(device)
             pipe.enable_model_cpu_offload()
             pipe.unet.enable_forward_chunking()
@@ -4692,7 +4721,9 @@ def generate_video(init_image, output_format, seed, video_settings_html, motion_
 
         try:
             device = "cuda" if torch.cuda.is_available() else "cpu"
-            pipe = I2VGenXLPipeline().I2VGenXLPipeline.from_pretrained(video_model_path, torch_dtype=torch.float16, variant="fp16").to(device)
+            torch_dtype = torch.float16 if device == "cuda" else torch.float32
+            variant = "fp16" if torch_dtype == torch.float16 else "fp32"
+            pipe = I2VGenXLPipeline().I2VGenXLPipeline.from_pretrained(video_model_path, torch_dtype=torch_dtype, variant=variant).to(device)
             pipe.enable_model_cpu_offload()
 
             image = load_image(init_image).convert("RGB")
@@ -4743,7 +4774,8 @@ def generate_image_ldm3d(prompt, negative_prompt, seed, width, height, num_infer
 
     try:
         device = "cuda" if torch.cuda.is_available() else "cpu"
-        pipe = StableDiffusionLDM3DPipeline().StableDiffusionLDM3DPipeline.from_pretrained(ldm3d_model_path, torch_dtype=torch.float16).to(device)
+        torch_dtype = torch.float16 if device == "cuda" else torch.float32
+        pipe = StableDiffusionLDM3DPipeline().StableDiffusionLDM3DPipeline.from_pretrained(ldm3d_model_path, torch_dtype=torch_dtype).to(device)
 
         if seed == "" or seed is None:
             seed = random.randint(0, 2 ** 32 - 1)
@@ -4805,6 +4837,7 @@ def generate_image_sd3_txt2img(prompt, negative_prompt, model_type, quantize_sd3
     stop_idx = None
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
+    torch_dtype = torch.float16 if device == "cuda" else torch.float32
 
     if enable_quantize:
         try:
@@ -4881,21 +4914,21 @@ def generate_image_sd3_txt2img(prompt, negative_prompt, model_type, quantize_sd3
                 pipe = StableDiffusion3Pipeline().StableDiffusion3Pipeline.from_pretrained(sd3_model_path,
                                                                                            device_map="balanced",
                                                                                            text_encoder_3=text_encoder,
-                                                                                           torch_dtype=torch.float16)
+                                                                                           torch_dtype=torch_dtype)
             else:
                 pipe = StableDiffusion3Pipeline().StableDiffusion3Pipeline.from_single_file(stable_diffusion_model_path,
                                                                                             device_map=device,
-                                                                                            torch_dtype=torch.float16)
+                                                                                            torch_dtype=torch_dtype)
 
             if vae_model_name is not None:
                 vae_model_path = os.path.join("inputs", "image", "sd_models", "vae", f"{vae_model_name}")
                 if os.path.exists(vae_model_path):
-                    vae = AutoencoderKL().AutoencoderKL.from_single_file(vae_model_path, torch_dtype=torch.bfloat16)
+                    vae = AutoencoderKL().AutoencoderKL.from_single_file(vae_model_path, torch_dtype=torch_dtype)
                     pipe.vae = vae.to(device)
 
             if enable_taesd:
                 pipe.vae = AutoencoderTiny().AutoencoderTiny.from_pretrained("madebyollin/taesd3",
-                                                                             torch_dtype=torch.float16)
+                                                                             torch_dtype=torch_dtype)
                 pipe.vae.config.shift_factor = 0.0
 
             pipe.enable_model_cpu_offload()
@@ -5066,6 +5099,10 @@ def generate_image_sd3_img2img(prompt, negative_prompt, init_image, strength, qu
     else:
         try:
             sd3_model_path = os.path.join("inputs", "image", "sd_models", "sd3")
+
+            device = "cuda" if torch.cuda.is_available() else "cpu"
+            torch_dtype = torch.float16 if device == "cuda" else torch.float32
+
             if not os.path.exists(sd3_model_path):
                 gr.Info("Downloading Stable Diffusion 3 model...")
                 os.makedirs(sd3_model_path, exist_ok=True)
@@ -5082,14 +5119,12 @@ def generate_image_sd3_img2img(prompt, negative_prompt, init_image, strength, qu
             pipe = StableDiffusion3Img2ImgPipeline().StableDiffusion3Img2ImgPipeline.from_pretrained(sd3_model_path,
                                                                                                      device_map="balanced",
                                                                                                      text_encoder_3=text_encoder,
-                                                                                                     torch_dtype=torch.float16)
+                                                                                                     torch_dtype=torch_dtype)
 
             pipe.enable_model_cpu_offload()
 
             init_image = Image.open(init_image).convert("RGB")
             init_image = init_image.resize((width, height))
-
-            device = "cuda" if torch.cuda.is_available() else "cpu"
 
             if seed == "" or seed is None:
                 seed = random.randint(0, 2 ** 32 - 1)
@@ -5175,7 +5210,8 @@ def generate_image_sd3_controlnet(prompt, negative_prompt, init_image, controlne
 
     try:
         device = "cuda" if torch.cuda.is_available() else "cpu"
-        controlnet = SD3ControlNetModel().SD3ControlNetModel.from_pretrained(controlnet_path, torch_dtype=torch.float16)
+        torch_dtype = torch.float16 if device == "cuda" else torch.float32
+        controlnet = SD3ControlNetModel().SD3ControlNetModel.from_pretrained(controlnet_path, torch_dtype=torch_dtype)
 
         quantization_config = BitsAndBytesConfig().BitsAndBytesConfig(load_in_8bit=True)
 
@@ -5188,7 +5224,7 @@ def generate_image_sd3_controlnet(prompt, negative_prompt, init_image, controlne
             sd3_model_path,
             text_encoder_3=text_encoder,
             controlnet=controlnet,
-            torch_dtype=torch.float16,
+            torch_dtype=torch_dtype,
             device_map="balanced",
         )
 
@@ -5284,6 +5320,9 @@ def generate_image_sd3_inpaint(prompt, negative_prompt, init_image, mask_image, 
         gr.Info("Stable Diffusion 3 model downloaded")
 
     try:
+        device = "cuda" if torch.cuda.is_available() else "cpu"
+        torch_dtype = torch.float16 if device == "cuda" else torch.float32
+
         quantization_config = BitsAndBytesConfig().BitsAndBytesConfig(load_in_8bit=True)
 
         text_encoder = T5EncoderModel().T5EncoderModel.from_pretrained(
@@ -5291,7 +5330,7 @@ def generate_image_sd3_inpaint(prompt, negative_prompt, init_image, mask_image, 
             subfolder="text_encoder_3",
             quantization_config=quantization_config,
         )
-        pipe = StableDiffusion3InpaintPipeline().StableDiffusion3InpaintPipeline.from_pretrained(sd3_model_path, device_map="balanced", text_encoder_3=text_encoder, torch_dtype=torch.float16)
+        pipe = StableDiffusion3InpaintPipeline().StableDiffusion3InpaintPipeline.from_pretrained(sd3_model_path, device_map="balanced", text_encoder_3=text_encoder, torch_dtype=torch_dtype)
 
         pipe.enable_model_cpu_offload()
 
@@ -5300,8 +5339,6 @@ def generate_image_sd3_inpaint(prompt, negative_prompt, init_image, mask_image, 
 
         mask_image = Image.open(mask_image).convert("L")
         mask_image = mask_image.resize((width, height))
-
-        device = "cuda" if torch.cuda.is_available() else "cpu"
 
         if seed == "" or seed is None:
             seed = random.randint(0, 2 ** 32 - 1)
@@ -5376,10 +5413,12 @@ def generate_image_cascade(prompt, negative_prompt, seed, stop_button, width, he
 
     try:
         device = "cuda" if torch.cuda.is_available() else "cpu"
+        torch_dtype = torch.bfloat16 if device == "cuda" else torch.bfloat32
+        variant = "bf16" if torch_dtype == torch.float16 else "bf32"
         prior = StableCascadePriorPipeline().StableCascadePriorPipeline.from_pretrained(os.path.join(stable_cascade_model_path, "prior"),
-                                                           variant="bf16", torch_dtype=torch.bfloat16).to(device)
+                                                           variant=variant, torch_dtype=torch_dtype).to(device)
         decoder = StableCascadeDecoderPipeline().StableCascadeDecoderPipeline.from_pretrained(os.path.join(stable_cascade_model_path, "decoder"),
-                                                               variant="bf16", torch_dtype=torch.float16).to(device)
+                                                               variant=variant, torch_dtype=torch_dtype).to(device)
     except (ValueError, OSError):
         gr.Error("Failed to load the Stable Cascade models")
         return None, None
@@ -5427,7 +5466,7 @@ def generate_image_cascade(prompt, negative_prompt, seed, stop_button, width, he
         decoder.enable_model_cpu_offload()
 
         decoder_output = decoder(
-            image_embeddings=prior_output.image_embeddings.to(torch.float16),
+            image_embeddings=prior_output.image_embeddings.to(torch_dtype),
             prompt=prompt,
             negative_prompt=negative_prompt,
             guidance_scale=decoder_guidance_scale,
@@ -5479,8 +5518,8 @@ def generate_image_cascade(prompt, negative_prompt, seed, stop_button, width, he
 
 
 def generate_image_t2i_ip_adapter(prompt, negative_prompt, ip_adapter_image, stable_diffusion_model_type, stable_diffusion_model_name, seed, num_inference_steps, guidance_scale, width, height, output_format):
-
     device = "cuda" if torch.cuda.is_available() else "cpu"
+    torch_dtype = torch.float16 if device == "cuda" else torch.float32
 
     if seed == "" or seed is None:
         seed = random.randint(0, 2 ** 32 - 1)
@@ -5515,13 +5554,13 @@ def generate_image_t2i_ip_adapter(prompt, negative_prompt, ip_adapter_image, sta
             image_encoder = CLIPVisionModelWithProjection().CLIPVisionModelWithProjection.from_pretrained(
                 t2i_ip_adapter_path,
                 subfolder="models/image_encoder",
-                torch_dtype=torch.float16
+                torch_dtype=torch_dtype
             ).to(device)
 
             pipe = StableDiffusionPipeline().StableDiffusionPipeline.from_single_file(
                 stable_diffusion_model_path,
                 image_encoder=image_encoder,
-                torch_dtype=torch.float16
+                torch_dtype=torch_dtype
             ).to(device)
 
             pipe.load_ip_adapter(t2i_ip_adapter_path, subfolder="models",
@@ -5530,13 +5569,13 @@ def generate_image_t2i_ip_adapter(prompt, negative_prompt, ip_adapter_image, sta
             image_encoder = CLIPVisionModelWithProjection().CLIPVisionModelWithProjection.from_pretrained(
                 t2i_ip_adapter_path,
                 subfolder="sdxl_models/image_encoder",
-                torch_dtype=torch.float16
+                torch_dtype=torch_dtype
             ).to(device)
 
             pipe = StableDiffusionXLPipeline().StableDiffusionXLPipeline.from_single_file(
                 stable_diffusion_model_path,
                 image_encoder=image_encoder,
-                torch_dtype=torch.float16
+                torch_dtype=torch_dtype
             ).to(device)
 
             pipe.load_ip_adapter(t2i_ip_adapter_path, subfolder="sdxl_models",
@@ -5616,6 +5655,8 @@ def generate_image_ip_adapter_faceid(prompt, negative_prompt, face_image, s_scal
 
     try:
         device = "cuda" if torch.cuda.is_available() else "cpu"
+        torch_dtype = torch.float16 if device == "cuda" else torch.float32
+        variant = "fp16" if torch_dtype == torch.float16 else "fp32"
 
         app = FaceAnalysis(name="buffalo_l", providers=['CUDAExecutionProvider', 'CPUExecutionProvider'])
         app.prepare(ctx_id=0, det_size=(640, 640))
@@ -5643,11 +5684,11 @@ def generate_image_ip_adapter_faceid(prompt, negative_prompt, face_image, s_scal
         if stable_diffusion_model_type == "SD":
             pipe = StableDiffusionPipeline().StableDiffusionPipeline.from_single_file(
                 stable_diffusion_model_path, scheduler=noise_scheduler, use_safetensors=True, device_map="auto",
-                torch_dtype=torch.float16, variant="fp16")
+                torch_dtype=torch_dtype, variant=variant)
         elif stable_diffusion_model_type == "SDXL":
             pipe = StableDiffusionXLPipeline().StableDiffusionXLPipeline.from_single_file(
                 stable_diffusion_model_path, scheduler=noise_scheduler, use_safetensors=True, device_map="auto", attention_slice=1,
-                torch_dtype=torch.float16, variant="fp16")
+                torch_dtype=torch_dtype, variant=variant)
         else:
             gr.Info("Invalid StableDiffusion model type!")
             return None, None
@@ -5699,6 +5740,7 @@ def generate_riffusion_text2image(prompt, negative_prompt, seed, stop_button, nu
     stop_idx = None
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
+    torch_dtype = torch.float16 if device == "cuda" else torch.float32
 
     if seed == "" or seed is None:
         seed = random.randint(0, 2 ** 32 - 1)
@@ -5715,7 +5757,7 @@ def generate_riffusion_text2image(prompt, negative_prompt, seed, stop_button, nu
         gr.Info("Riffusion model downloaded")
 
     try:
-        pipe = StableDiffusionPipeline().StableDiffusionPipeline.from_pretrained(riffusion_model_path, torch_dtype=torch.float16)
+        pipe = StableDiffusionPipeline().StableDiffusionPipeline.from_pretrained(riffusion_model_path, torch_dtype=torch_dtype)
         pipe = pipe.to(device)
 
         def combined_callback(pipe, i, t, callback_kwargs):
@@ -5826,6 +5868,8 @@ def generate_image_kandinsky_txt2img(prompt, negative_prompt, version, seed, sto
     stop_idx = None
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
+    torch_dtype = torch.float16 if device == "cuda" else torch.float32
+    variant = "fp16" if torch_dtype == torch.float16 else "fp32"
 
     if seed == "" or seed is None:
         seed = random.randint(0, 2 ** 32 - 1)
@@ -5924,7 +5968,7 @@ def generate_image_kandinsky_txt2img(prompt, negative_prompt, version, seed, sto
         elif version == "3":
 
             pipe = AutoPipelineForText2Image().AutoPipelineForText2Image.from_pretrained(
-                os.path.join(kandinsky_model_path, "3"), variant="fp16", torch_dtype=torch.float16
+                os.path.join(kandinsky_model_path, "3"), variant=variant, torch_dtype=torch_dtype
             )
             pipe.to(device)
             pipe.enable_model_cpu_offload()
@@ -5991,6 +6035,8 @@ def generate_image_kandinsky_img2img(prompt, negative_prompt, init_image, versio
     stop_idx = None
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
+    torch_dtype = torch.float16 if device == "cuda" else torch.float32
+    variant = "fp16" if torch_dtype == torch.float16 else "fp32"
 
     if seed == "" or seed is None:
         seed = random.randint(0, 2 ** 32 - 1)
@@ -6023,14 +6069,14 @@ def generate_image_kandinsky_img2img(prompt, negative_prompt, init_image, versio
     try:
         if version == "2.1":
             pipe_prior = KandinskyPriorPipeline().KandinskyPriorPipeline.from_pretrained(
-                os.path.join(kandinsky_model_path, "2-1-prior"), torch_dtype=torch.float16
+                os.path.join(kandinsky_model_path, "2-1-prior"), torch_dtype=torch_dtype
             )
             pipe_prior.to(device)
 
             image_emb, zero_image_emb = pipe_prior(prompt, negative_prompt=negative_prompt, return_dict=False)
 
             pipe = KandinskyImg2ImgPipeline().KandinskyImg2ImgPipeline.from_pretrained(
-                os.path.join(kandinsky_model_path, "2-1"), torch_dtype=torch.float16
+                os.path.join(kandinsky_model_path, "2-1"), torch_dtype=torch_dtype
             )
             pipe.to(device)
 
@@ -6062,7 +6108,7 @@ def generate_image_kandinsky_img2img(prompt, negative_prompt, init_image, versio
 
         elif version == "2.2":
             pipe = AutoPipelineForImage2Image().AutoPipelineForImage2Image.from_pretrained(
-                os.path.join(kandinsky_model_path, "2-2-decoder"), torch_dtype=torch.float16
+                os.path.join(kandinsky_model_path, "2-2-decoder"), torch_dtype=torch_dtype
             )
             pipe.to(device)
             pipe.enable_model_cpu_offload()
@@ -6092,7 +6138,7 @@ def generate_image_kandinsky_img2img(prompt, negative_prompt, init_image, versio
 
         elif version == "3":
             pipe = AutoPipelineForImage2Image().AutoPipelineForImage2Image.from_pretrained(
-                os.path.join(kandinsky_model_path, "3"), variant="fp16", torch_dtype=torch.float16
+                os.path.join(kandinsky_model_path, "3"), variant=variant, torch_dtype=torch_dtype
             )
             pipe.to(device)
             pipe.enable_model_cpu_offload()
@@ -6150,6 +6196,8 @@ def generate_image_kandinsky_inpaint(prompt, negative_prompt, init_image, mask_i
     stop_idx = None
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
+    torch_dtype = torch.float16 if device == "cuda" else torch.float32
+    variant = "fp16" if torch_dtype == torch.float16 else "fp32"
 
     if not init_image or not mask_image:
         gr.Info("Please upload an initial image and provide a mask image!")
@@ -6173,13 +6221,13 @@ def generate_image_kandinsky_inpaint(prompt, negative_prompt, init_image, mask_i
         if version == "2.1":
             pipe = AutoPipelineForInpainting().AutoPipelineForInpainting.from_pretrained(
                 os.path.join(kandinsky_model_path, "2-1-inpainter"),
-                torch_dtype=torch.float16,
-                variant="fp16"
+                torch_dtype=torch_dtype,
+                variant=variant
             )
         else:
             pipe = AutoPipelineForInpainting().AutoPipelineForInpainting.from_pretrained(
                 os.path.join(kandinsky_model_path, "2-2-decoder-inpaint"),
-                torch_dtype=torch.float16
+                torch_dtype=torch_dtype
             )
 
         pipe.to(device)
@@ -6236,6 +6284,7 @@ def generate_image_flux_txt2img(prompt, model_name, quantize_model_name, enable_
     stop_idx = None
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
+    torch_dtype = torch.bfloat16 if device == "cuda" else torch.bfloat32
 
     if seed == "" or seed is None:
         seed = random.randint(0, 2 ** 32 - 1)
@@ -6294,26 +6343,26 @@ def generate_image_flux_txt2img(prompt, model_name, quantize_model_name, enable_
 
             quantize_model_path = os.path.join("inputs", "image", "flux", "quantize-flux", quantize_model_name)
 
-            transformer = FluxTransformer2DModel().FluxTransformer2DModel.from_single_file(quantize_model_path, torch_dtype=torch.bfloat16)
+            transformer = FluxTransformer2DModel().FluxTransformer2DModel.from_single_file(quantize_model_path, torch_dtype=torch_dtype)
 
-            text_encoder_2 = T5EncoderModel().T5EncoderModel.from_pretrained(flux_model_path, subfolder="text_encoder_2", torch_dtype=torch.bfloat16)
+            text_encoder_2 = T5EncoderModel().T5EncoderModel.from_pretrained(flux_model_path, subfolder="text_encoder_2", torch_dtype=torch_dtype)
 
-            pipe = FluxPipeline().FluxPipeline.from_pretrained(flux_model_path, transformer=None, text_encoder_2=None, torch_dtype=torch.bfloat16).to(device)
+            pipe = FluxPipeline().FluxPipeline.from_pretrained(flux_model_path, transformer=None, text_encoder_2=None, torch_dtype=torch_dtype).to(device)
             pipe.transformer = transformer
             pipe.text_encoder_2 = text_encoder_2
             if enable_taesd:
-                pipe.vae = AutoencoderTiny().AutoencoderTiny.from_pretrained("madebyollin/taef1", torch_dtype=torch.bfloat16)
+                pipe.vae = AutoencoderTiny().AutoencoderTiny.from_pretrained("madebyollin/taef1", torch_dtype=torch_dtype)
             if vae_model_name is not None:
                 vae_model_path = os.path.join("inputs", "image", "flux", "flux-vae", f"{vae_model_name}")
                 if os.path.exists(vae_model_path):
-                    vae = AutoencoderKL().AutoencoderKL.from_single_file(vae_model_path, torch_dtype=torch.bfloat16)
+                    vae = AutoencoderKL().AutoencoderKL.from_single_file(vae_model_path, torch_dtype=torch_dtype)
                     pipe.vae = vae.to(device)
 
             pipe.enable_model_cpu_offload()
             pipe.enable_sequential_cpu_offload()
             pipe.vae.enable_slicing()
             pipe.vae.enable_tiling()
-            pipe.to(torch.float16)
+            pipe.to(torch_dtype)
 
             if isinstance(lora_scales, str):
                 lora_scales = [float(scale.strip()) for scale in lora_scales.split(',') if scale.strip()]
@@ -6413,6 +6462,7 @@ def generate_image_flux_img2img(prompt, init_image, model_name, quantize_model_n
         return None, None
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
+    torch_dtype = torch.bfloat16 if device == "cuda" else torch.bfloat32
 
     if seed == "" or seed is None:
         seed = random.randint(0, 2 ** 32 - 1)
@@ -6472,17 +6522,17 @@ def generate_image_flux_img2img(prompt, init_image, model_name, quantize_model_n
             gr.Info(f"Flux {model_name} model downloaded")
 
         try:
-            pipe = FluxImg2ImgPipeline().FluxImg2ImgPipeline.from_pretrained(flux_model_path, torch_dtype=torch.bfloat16).to(device)
+            pipe = FluxImg2ImgPipeline().FluxImg2ImgPipeline.from_pretrained(flux_model_path, torch_dtype=torch_dtype).to(device)
             pipe.enable_model_cpu_offload()
             pipe.enable_sequential_cpu_offload()
             pipe.vae.enable_slicing()
             pipe.vae.enable_tiling()
-            pipe.to(torch.float16)
+            pipe.to(torch_dtype)
 
             if vae_model_name is not None:
                 vae_model_path = os.path.join("inputs", "image", "flux", "flux-vae", f"{vae_model_name}")
                 if os.path.exists(vae_model_path):
-                    vae = AutoencoderKL().AutoencoderKL.from_single_file(vae_model_path, torch_dtype=torch.bfloat16)
+                    vae = AutoencoderKL().AutoencoderKL.from_single_file(vae_model_path, torch_dtype=torch_dtype)
                     pipe.vae = vae.to(device)
 
             init_image = Image.open(init_image).convert("RGB")
@@ -6576,6 +6626,7 @@ def generate_image_flux_inpaint(prompt, init_image, mask_image, model_name, seed
     stop_idx = None
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
+    torch_dtype = torch.bfloat16 if device == "cuda" else torch.bfloat32
 
     if not init_image or not mask_image:
         gr.Info("Please upload an initial image and provide a mask image!")
@@ -6596,12 +6647,12 @@ def generate_image_flux_inpaint(prompt, init_image, mask_image, model_name, seed
         gr.Info(f"Flux {model_name} model downloaded")
 
     try:
-        pipe = FluxInpaintPipeline().FluxInpaintPipeline.from_pretrained(flux_model_path, torch_dtype=torch.bfloat16).to(device)
+        pipe = FluxInpaintPipeline().FluxInpaintPipeline.from_pretrained(flux_model_path, torch_dtype=torch_dtype).to(device)
         pipe.enable_model_cpu_offload()
         pipe.enable_sequential_cpu_offload()
         pipe.vae.enable_slicing()
         pipe.vae.enable_tiling()
-        pipe.to(torch.float16)
+        pipe.to(torch_dtype)
 
         init_image = Image.open(init_image).convert("RGB")
         mask_image = Image.open(mask_image).convert("L")
@@ -6667,6 +6718,7 @@ def generate_image_flux_controlnet(prompt, init_image, base_model_name, seed, st
     stop_idx = None
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
+    torch_dtype = torch.bfloat16 if device == "cuda" else torch.bfloat32
 
     if not init_image:
         gr.Info("Please upload an initial image!")
@@ -6694,13 +6746,13 @@ def generate_image_flux_controlnet(prompt, init_image, base_model_name, seed, st
         gr.Info("Flux ControlNet model downloaded")
 
     try:
-        controlnet = FluxControlNetModel().FluxControlNetModel.from_pretrained(controlnet_model_path, torch_dtype=torch.bfloat16)
-        pipe = FluxControlNetPipeline().FluxControlNetPipeline.from_pretrained(base_model_path, controlnet=controlnet, torch_dtype=torch.bfloat16).to(device)
+        controlnet = FluxControlNetModel().FluxControlNetModel.from_pretrained(controlnet_model_path, torch_dtype=torch_dtype)
+        pipe = FluxControlNetPipeline().FluxControlNetPipeline.from_pretrained(base_model_path, controlnet=controlnet, torch_dtype=torch_dtype).to(device)
         pipe.enable_model_cpu_offload()
         pipe.enable_sequential_cpu_offload()
         pipe.vae.enable_slicing()
         pipe.vae.enable_tiling()
-        pipe.to(torch.float16)
+        pipe.to(torch_dtype)
 
         init_image = Image.open(init_image).convert("RGB")
 
@@ -6769,6 +6821,7 @@ def generate_image_hunyuandit_txt2img(prompt, negative_prompt, seed, stop_button
     stop_idx = None
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
+    torch_dtype = torch.float16 if device == "cuda" else torch.float32
 
     if seed == "" or seed is None:
         seed = random.randint(0, 2 ** 32 - 1)
@@ -6785,7 +6838,7 @@ def generate_image_hunyuandit_txt2img(prompt, negative_prompt, seed, stop_button
         gr.Info("HunyuanDiT model downloaded")
 
     try:
-        pipe = HunyuanDiTPipeline().HunyuanDiTPipeline.from_pretrained(hunyuandit_model_path, torch_dtype=torch.float16)
+        pipe = HunyuanDiTPipeline().HunyuanDiTPipeline.from_pretrained(hunyuandit_model_path, torch_dtype=torch_dtype)
         pipe.to(device)
         pipe.transformer.enable_forward_chunking(chunk_size=1, dim=1)
 
@@ -6847,6 +6900,7 @@ def generate_image_hunyuandit_controlnet(prompt, negative_prompt, init_image, co
     stop_idx = None
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
+    torch_dtype = torch.float16 if device == "cuda" else torch.float32
 
     if not init_image:
         gr.Info("Please upload an initial image!")
@@ -6874,8 +6928,8 @@ def generate_image_hunyuandit_controlnet(prompt, negative_prompt, init_image, co
         gr.Info(f"HunyuanDiT ControlNet {controlnet_model} model downloaded")
 
     try:
-        controlnet = HunyuanDiT2DControlNetModel().HunyuanDiT2DControlNetModel.from_pretrained(controlnet_model_path, torch_dtype=torch.float16)
-        pipe = HunyuanDiTControlNetPipeline().HunyuanDiTControlNetPipeline.from_pretrained(hunyuandit_model_path, controlnet=controlnet, torch_dtype=torch.float16)
+        controlnet = HunyuanDiT2DControlNetModel().HunyuanDiT2DControlNetModel.from_pretrained(controlnet_model_path, torch_dtype=torch_dtype)
+        pipe = HunyuanDiTControlNetPipeline().HunyuanDiTControlNetPipeline.from_pretrained(hunyuandit_model_path, controlnet=controlnet, torch_dtype=torch_dtype)
         pipe.to(device)
 
         init_image = Image.open(init_image).convert("RGB")
@@ -6925,8 +6979,8 @@ def generate_image_hunyuandit_controlnet(prompt, negative_prompt, init_image, co
 
 
 def generate_image_lumina(prompt, negative_prompt, seed, num_inference_steps, guidance_scale, height, width, max_sequence_length, output_format):
-
     device = "cuda" if torch.cuda.is_available() else "cpu"
+    torch_dtype = torch.bfloat16 if device == "cuda" else torch.bfloat32
 
     if seed == "" or seed is None:
         seed = random.randint(0, 2 ** 32 - 1)
@@ -6944,7 +6998,7 @@ def generate_image_lumina(prompt, negative_prompt, seed, num_inference_steps, gu
 
     try:
         pipe = LuminaText2ImgPipeline().LuminaText2ImgPipeline.from_pretrained(
-            lumina_model_path, torch_dtype=torch.bfloat16
+            lumina_model_path, torch_dtype=torch_dtype
         ).to(device)
         pipe.enable_model_cpu_offload()
 
@@ -6992,8 +7046,9 @@ def generate_image_lumina(prompt, negative_prompt, seed, num_inference_steps, gu
 
 
 def generate_image_kolors_txt2img(prompt, negative_prompt, seed, lora_model_names, lora_scales, guidance_scale, num_inference_steps, max_sequence_length, output_format):
-
     device = "cuda" if torch.cuda.is_available() else "cpu"
+    torch_dtype = torch.float16 if device == "cuda" else torch.float32
+    variant = "fp16" if torch_dtype == torch.float16 else "fp32"
 
     if seed == "" or seed is None:
         seed = random.randint(0, 2 ** 32 - 1)
@@ -7010,7 +7065,7 @@ def generate_image_kolors_txt2img(prompt, negative_prompt, seed, lora_model_name
         gr.Info("Kolors model downloaded")
 
     try:
-        pipe = KolorsPipeline().KolorsPipeline.from_pretrained(kolors_model_path, torch_dtype=torch.float16, variant="fp16")
+        pipe = KolorsPipeline().KolorsPipeline.from_pretrained(kolors_model_path, torch_dtype=torch_dtype, variant=variant)
         pipe.to(device)
         pipe.enable_model_cpu_offload()
 
@@ -7085,6 +7140,8 @@ def generate_image_kolors_txt2img(prompt, negative_prompt, seed, lora_model_name
 
 def generate_image_kolors_img2img(prompt, negative_prompt, init_image, seed, guidance_scale, num_inference_steps, max_sequence_length, output_format):
     device = "cuda" if torch.cuda.is_available() else "cpu"
+    torch_dtype = torch.float16 if device == "cuda" else torch.float32
+    variant = "fp16" if torch_dtype == torch.float16 else "fp32"
 
     if not init_image:
         gr.Info("Please upload an initial image!")
@@ -7105,7 +7162,7 @@ def generate_image_kolors_img2img(prompt, negative_prompt, init_image, seed, gui
         gr.Info("Kolors model downloaded")
 
     try:
-        pipe = KolorsPipeline().KolorsPipeline.from_pretrained(kolors_model_path, torch_dtype=torch.float16, variant="fp16")
+        pipe = KolorsPipeline().KolorsPipeline.from_pretrained(kolors_model_path, torch_dtype=torch_dtype, variant=variant)
         pipe.to(device)
         pipe.enable_model_cpu_offload()
 
@@ -7143,6 +7200,8 @@ def generate_image_kolors_img2img(prompt, negative_prompt, init_image, seed, gui
 
 def generate_image_kolors_ip_adapter_plus(prompt, negative_prompt, ip_adapter_image, seed, guidance_scale, num_inference_steps, output_format):
     device = "cuda" if torch.cuda.is_available() else "cpu"
+    torch_dtype = torch.float16 if device == "cuda" else torch.float32
+    variant = "fp16" if torch_dtype == torch.float16 else "fp32"
 
     if not ip_adapter_image:
         gr.Info("Please upload an initial image!")
@@ -7174,10 +7233,10 @@ def generate_image_kolors_ip_adapter_plus(prompt, negative_prompt, ip_adapter_im
             ip_adapter_path,
             subfolder="image_encoder",
             low_cpu_mem_usage=True,
-            torch_dtype=torch.float16,
+            torch_dtype=torch_dtype,
         )
         pipe = KolorsPipeline().KolorsPipeline.from_pretrained(
-            kolors_model_path, image_encoder=image_encoder, torch_dtype=torch.float16, variant="fp16"
+            kolors_model_path, image_encoder=image_encoder, torch_dtype=torch_dtype, variant=variant
         )
         pipe.scheduler = DPMSolverMultistepScheduler().DPMSolverMultistepScheduler.from_config(pipe.scheduler.config, use_karras_sigmas=True)
         pipe.load_ip_adapter(
@@ -7221,8 +7280,8 @@ def generate_image_kolors_ip_adapter_plus(prompt, negative_prompt, ip_adapter_im
 
 
 def generate_image_auraflow(prompt, negative_prompt, seed, lora_model_names, lora_scales, num_inference_steps, guidance_scale, height, width, max_sequence_length, enable_aurasr, output_format):
-
     device = "cuda" if torch.cuda.is_available() else "cpu"
+    torch_dtype = torch.float16 if device == "cuda" else torch.float32
 
     if seed == "" or seed is None:
         seed = random.randint(0, 2 ** 32 - 1)
@@ -7246,7 +7305,7 @@ def generate_image_auraflow(prompt, negative_prompt, seed, lora_model_names, lor
         gr.Info("AuraSR model downloaded")
 
     try:
-        pipe = AuraFlowPipeline().AuraFlowPipeline.from_pretrained(auraflow_model_path, torch_dtype=torch.float16)
+        pipe = AuraFlowPipeline().AuraFlowPipeline.from_pretrained(auraflow_model_path, torch_dtype=torch_dtype)
         pipe = pipe.to(device)
 
         if isinstance(lora_scales, str):
@@ -7336,6 +7395,7 @@ def generate_image_wurstchen(prompt, negative_prompt, seed, stop_button, width, 
     stop_idx = None
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
+    torch_dtype = torch.float16 if device == "cuda" else torch.float32
 
     if seed == "" or seed is None:
         seed = random.randint(0, 2 ** 32 - 1)
@@ -7353,16 +7413,15 @@ def generate_image_wurstchen(prompt, negative_prompt, seed, stop_button, width, 
         gr.Info("Würstchen models downloaded")
 
     try:
-        dtype = torch.float16 if device == "cuda" else torch.float32
 
         prior_pipeline = WuerstchenPriorPipeline().WuerstchenPriorPipeline.from_pretrained(
             os.path.join(wurstchen_model_path, "prior"),
-            torch_dtype=dtype
+            torch_dtype=torch_dtype
         ).to(device)
 
         decoder_pipeline = WuerstchenDecoderPipeline().WuerstchenDecoderPipeline.from_pretrained(
             os.path.join(wurstchen_model_path, "decoder"),
-            torch_dtype=dtype
+            torch_dtype=torch_dtype
         ).to(device)
 
         prior_pipeline.prior = torch.compile(prior_pipeline.prior, mode="reduce-overhead", fullgraph=True)
@@ -7452,6 +7511,8 @@ def generate_image_deepfloyd_txt2img(prompt, negative_prompt, seed, stop_button,
     stop_idx = None
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
+    torch_dtype = torch.float16 if device == "cuda" else torch.float32
+    variant = "fp16" if torch_dtype == torch.float16 else "fp32"
 
     if seed == "" or seed is None:
         seed = random.randint(0, 2 ** 32 - 1)
@@ -7483,7 +7544,7 @@ def generate_image_deepfloyd_txt2img(prompt, negative_prompt, seed, stop_button,
 
     try:
 
-        pipe_i = IFPipeline().IFPipeline.from_pretrained(deepfloydI_model_path, variant="fp16", torch_dtype=torch.float16)
+        pipe_i = IFPipeline().IFPipeline.from_pretrained(deepfloydI_model_path, variant=variant, torch_dtype=torch_dtype)
         text_encoder = T5EncoderModel().T5EncoderModel.from_pretrained(
             deepfloydI_model_path, subfolder="text_encoder", device_map="auto", load_in_8bit=True, variant="8bit"
         )
@@ -7516,7 +7577,7 @@ def generate_image_deepfloyd_txt2img(prompt, negative_prompt, seed, stop_button,
         ).images
 
         pipe_ii = IFSuperResolutionPipeline().IFSuperResolutionPipeline.from_pretrained(
-            deepfloydII_model_path, text_encoder=None, variant="fp16", torch_dtype=torch.float16
+            deepfloydII_model_path, text_encoder=None, variant=variant, torch_dtype=torch_dtype
         )
         pipe_ii.to(device)
         pipe_ii.enable_model_cpu_offload()
@@ -7548,7 +7609,7 @@ def generate_image_deepfloyd_txt2img(prompt, negative_prompt, seed, stop_button,
             "watermarker": pipe_i.watermarker,
         }
         pipe_iii = DiffusionPipeline().DiffusionPipeline.from_pretrained(
-            upscale_model_path, **safety_modules, torch_dtype=torch.float16
+            upscale_model_path, **safety_modules, torch_dtype=torch_dtype
         )
         pipe_iii.to(device)
         pipe_iii.enable_model_cpu_offload()
@@ -7616,6 +7677,8 @@ def generate_image_deepfloyd_img2img(prompt, negative_prompt, init_image, seed, 
     stop_idx = None
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
+    torch_dtype = torch.float16 if device == "cuda" else torch.float32
+    variant = "fp16" if torch_dtype == torch.float16 else "fp32"
 
     if seed == "" or seed is None:
         seed = random.randint(0, 2 ** 32 - 1)
@@ -7652,7 +7715,7 @@ def generate_image_deepfloyd_img2img(prompt, negative_prompt, init_image, seed, 
 
     try:
 
-        stage_1 = IFImg2ImgPipeline().IFImg2ImgPipeline.from_pretrained(deepfloydI_model_path, variant="fp16", torch_dtype=torch.float16)
+        stage_1 = IFImg2ImgPipeline().IFImg2ImgPipeline.from_pretrained(deepfloydI_model_path, variant=variant, torch_dtype=torch_dtype)
         text_encoder = T5EncoderModel().T5EncoderModel.from_pretrained(
             deepfloydI_model_path, subfolder="text_encoder", device_map="auto", load_in_8bit=True, variant="8bit"
         )
@@ -7663,7 +7726,7 @@ def generate_image_deepfloyd_img2img(prompt, negative_prompt, init_image, seed, 
         stage_1.unet = torch.compile(stage_1.unet, mode="reduce-overhead", fullgraph=True)
 
         stage_2 = IFImg2ImgSuperResolutionPipeline().IFImg2ImgSuperResolutionPipeline.from_pretrained(
-            deepfloydII_model_path, text_encoder=None, variant="fp16", torch_dtype=torch.float16
+            deepfloydII_model_path, text_encoder=None, variant=variant, torch_dtype=torch_dtype
         )
         stage_2.to(device)
         stage_2.enable_model_cpu_offload()
@@ -7675,7 +7738,7 @@ def generate_image_deepfloyd_img2img(prompt, negative_prompt, init_image, seed, 
             "watermarker": stage_1.watermarker,
         }
         stage_3 = DiffusionPipeline().DiffusionPipeline.from_pretrained(
-            upscale_model_path, **safety_modules, torch_dtype=torch.float16
+            upscale_model_path, **safety_modules, torch_dtype=torch_dtype
         )
         stage_3.to(device)
         stage_3.enable_model_cpu_offload()
@@ -7777,6 +7840,8 @@ def generate_image_deepfloyd_inpaint(prompt, negative_prompt, init_image, mask_i
     stop_idx = None
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
+    torch_dtype = torch.float16 if device == "cuda" else torch.float32
+    variant = "fp16" if torch_dtype == torch.float16 else "fp32"
 
     if seed == "" or seed is None:
         seed = random.randint(0, 2 ** 32 - 1)
@@ -7813,7 +7878,7 @@ def generate_image_deepfloyd_inpaint(prompt, negative_prompt, init_image, mask_i
 
     try:
 
-        stage_1 = IFInpaintingPipeline().IFInpaintingPipeline.from_pretrained(deepfloydI_model_path, variant="fp16", torch_dtype=torch.float16)
+        stage_1 = IFInpaintingPipeline().IFInpaintingPipeline.from_pretrained(deepfloydI_model_path, variant=variant, torch_dtype=torch_dtype)
         text_encoder = T5EncoderModel().T5EncoderModel.from_pretrained(
             deepfloydI_model_path, subfolder="text_encoder", device_map="auto", load_in_8bit=True, variant="8bit"
         )
@@ -7824,7 +7889,7 @@ def generate_image_deepfloyd_inpaint(prompt, negative_prompt, init_image, mask_i
         stage_1.unet = torch.compile(stage_1.unet, mode="reduce-overhead", fullgraph=True)
 
         stage_2 = IFInpaintingSuperResolutionPipeline().IFInpaintingSuperResolutionPipeline.from_pretrained(
-            deepfloydII_model_path, text_encoder=None, variant="fp16", torch_dtype=torch.float16
+            deepfloydII_model_path, text_encoder=None, variant=variant, torch_dtype=torch_dtype
         )
         stage_2.to(device)
         stage_2.enable_model_cpu_offload()
@@ -7836,7 +7901,7 @@ def generate_image_deepfloyd_inpaint(prompt, negative_prompt, init_image, mask_i
             "watermarker": stage_1.watermarker,
         }
         stage_3 = DiffusionPipeline().DiffusionPipeline.from_pretrained(
-            upscale_model_path, **safety_modules, torch_dtype=torch.float16
+            upscale_model_path, **safety_modules, torch_dtype=torch_dtype
         )
         stage_3.to(device)
         stage_3.enable_model_cpu_offload()
@@ -7941,6 +8006,7 @@ def generate_image_pixart(prompt, negative_prompt, version, seed, stop_button, n
     stop_idx = None
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
+    torch_dtype = torch.float16 if device == "cuda" else torch.float32
 
     if seed == "" or seed is None:
         seed = random.randint(0, 2 ** 32 - 1)
@@ -7977,7 +8043,7 @@ def generate_image_pixart(prompt, negative_prompt, version, seed, stop_button, n
 
             )
             pipe = PixArtAlphaPipeline().PixArtAlphaPipeline.from_pretrained(os.path.join(pixart_model_path, version),
-                                                       torch_dtype=torch.float16, text_encoder=text_encoder).to(device)
+                                                       torch_dtype=torch_dtype, text_encoder=text_encoder).to(device)
         else:
             text_encoder = T5EncoderModel().T5EncoderModel.from_pretrained(
                 pixart_model_path,
@@ -7987,7 +8053,7 @@ def generate_image_pixart(prompt, negative_prompt, version, seed, stop_button, n
 
             )
             pipe = PixArtSigmaPipeline().PixArtSigmaPipeline.from_pretrained(os.path.join(pixart_model_path, version),
-                                                       torch_dtype=torch.float16, text_encoder=text_encoder).to(device)
+                                                       torch_dtype=torch_dtype, text_encoder=text_encoder).to(device)
 
         pipe.enable_model_cpu_offload()
 
@@ -8047,8 +8113,9 @@ def generate_image_pixart(prompt, negative_prompt, version, seed, stop_button, n
 
 
 def generate_image_playgroundv2(prompt, negative_prompt, seed, height, width, num_inference_steps, guidance_scale, output_format):
-
     device = "cuda" if torch.cuda.is_available() else "cpu"
+    torch_dtype = torch.float16 if device == "cuda" else torch.float32
+    variant = "fp16" if torch_dtype == torch.float16 else "fp32"
 
     if seed == "" or seed is None:
         seed = random.randint(0, 2 ** 32 - 1)
@@ -8067,8 +8134,8 @@ def generate_image_playgroundv2(prompt, negative_prompt, seed, height, width, nu
     try:
         pipe = DiffusionPipeline().DiffusionPipeline.from_pretrained(
             playgroundv2_model_path,
-            torch_dtype=torch.float16,
-            variant="fp16"
+            torch_dtype=torch_dtype,
+            variant=variant
         ).to(device)
 
         image = pipe(
@@ -8226,6 +8293,8 @@ def generate_video_modelscope(prompt, negative_prompt, seed, stop_button, num_in
     stop_idx = None
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
+    torch_dtype = torch.float16 if device == "cuda" else torch.float32
+    variant = "fp16" if torch_dtype == torch.float16 else "fp32"
 
     if seed == "" or seed is None:
         seed = random.randint(0, 2 ** 32 - 1)
@@ -8242,7 +8311,7 @@ def generate_video_modelscope(prompt, negative_prompt, seed, stop_button, num_in
         gr.Info("ModelScope model downloaded")
 
     try:
-        pipe = DiffusionPipeline().DiffusionPipeline.from_pretrained(modelscope_model_path, torch_dtype=torch.float16, variant="fp16")
+        pipe = DiffusionPipeline().DiffusionPipeline.from_pretrained(modelscope_model_path, torch_dtype=torch_dtype, variant=variant)
         pipe = pipe.to(device)
         pipe.enable_model_cpu_offload()
         pipe.enable_vae_slicing()
@@ -8309,6 +8378,7 @@ def generate_video_zeroscope2(prompt, video_to_enhance, seed, stop_button, stren
     stop_idx = None
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
+    torch_dtype = torch.float16 if device == "cuda" else torch.float32
 
     if seed == "" or seed is None:
         seed = random.randint(0, 2 ** 32 - 1)
@@ -8340,7 +8410,7 @@ def generate_video_zeroscope2(prompt, video_to_enhance, seed, stop_button, stren
             return None, None
 
         try:
-            enhance_pipe = DiffusionPipeline().DiffusionPipeline.from_pretrained(enhance_model_path, torch_dtype=torch.float16)
+            enhance_pipe = DiffusionPipeline().DiffusionPipeline.from_pretrained(enhance_model_path, torch_dtype=torch_dtype)
             enhance_pipe.to(device)
             enhance_pipe.enable_model_cpu_offload()
             enhance_pipe.enable_vae_slicing()
@@ -8415,7 +8485,7 @@ def generate_video_zeroscope2(prompt, video_to_enhance, seed, stop_button, stren
 
     else:
         try:
-            base_pipe = DiffusionPipeline().DiffusionPipeline.from_pretrained(base_model_path, torch_dtype=torch.float16)
+            base_pipe = DiffusionPipeline().DiffusionPipeline.from_pretrained(base_model_path, torch_dtype=torch_dtype)
             base_pipe.to(device)
             base_pipe.enable_model_cpu_offload()
             base_pipe.enable_vae_slicing()
@@ -8467,6 +8537,7 @@ def generate_video_cogvideox_text2video(prompt, negative_prompt, cogvideox_versi
     stop_idx = None
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
+    torch_dtype = torch.float16 if device == "cuda" else torch.float32
 
     if seed == "" or seed is None:
         seed = random.randint(0, 2 ** 32 - 1)
@@ -8483,7 +8554,7 @@ def generate_video_cogvideox_text2video(prompt, negative_prompt, cogvideox_versi
         gr.Info(f"{cogvideox_version} model downloaded")
 
     try:
-        pipe = CogVideoXPipeline().CogVideoXPipeline.from_pretrained(cogvideox_model_path, torch_dtype=torch.float16).to(device)
+        pipe = CogVideoXPipeline().CogVideoXPipeline.from_pretrained(cogvideox_model_path, torch_dtype=torch_dtype).to(device)
         pipe.enable_model_cpu_offload()
         pipe.enable_sequential_cpu_offload()
         pipe.vae.enable_slicing()
@@ -8551,6 +8622,7 @@ def generate_video_cogvideox_image2video(prompt, negative_prompt, init_image, se
     stop_idx = None
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
+    torch_dtype = torch.bfloat16 if device == "cuda" else torch.bfloat32
 
     if not init_image:
         gr.Info("Please, upload an initial image!")
@@ -8571,7 +8643,7 @@ def generate_video_cogvideox_image2video(prompt, negative_prompt, init_image, se
         gr.Info(f"CogVideoX I2V model downloaded")
 
     try:
-        pipe = CogVideoXImageToVideoPipeline().CogVideoXImageToVideoPipeline.from_pretrained(cogvideox_i2v_model_path, torch_dtype=torch.bfloat16)
+        pipe = CogVideoXImageToVideoPipeline().CogVideoXImageToVideoPipeline.from_pretrained(cogvideox_i2v_model_path, torch_dtype=torch_dtype)
         pipe.enable_model_cpu_offload()
         pipe.enable_sequential_cpu_offload()
         pipe.vae.enable_slicing()
@@ -8617,6 +8689,7 @@ def generate_video_cogvideox_video2video(prompt, negative_prompt, init_video, co
     stop_idx = None
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
+    torch_dtype = torch.bfloat16 if device == "cuda" else torch.bfloat32
 
     if not init_video:
         gr.Info("Please, upload an initial video!")
@@ -8637,7 +8710,7 @@ def generate_video_cogvideox_video2video(prompt, negative_prompt, init_video, co
         gr.Info(f"{cogvideox_version} model downloaded")
 
     try:
-        pipe = CogVideoXVideoToVideoPipeline().CogVideoXVideoToVideoPipeline.from_pretrained(cogvideox_model_path, torch_dtype=torch.bfloat16)
+        pipe = CogVideoXVideoToVideoPipeline().CogVideoXVideoToVideoPipeline.from_pretrained(cogvideox_model_path, torch_dtype=torch_dtype)
         pipe.enable_model_cpu_offload()
         pipe.enable_sequential_cpu_offload()
         pipe.vae.enable_slicing()
@@ -8693,6 +8766,7 @@ def generate_video_latte(prompt, negative_prompt, seed, stop_button, num_inferen
     stop_idx = None
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
+    torch_dtype = torch.float16 if device == "cuda" else torch.float32
 
     if seed == "" or seed is None:
         seed = random.randint(0, 2 ** 32 - 1)
@@ -8709,7 +8783,7 @@ def generate_video_latte(prompt, negative_prompt, seed, stop_button, num_inferen
         gr.Info("Latte model downloaded")
 
     try:
-        pipe = LattePipeline().LattePipeline.from_pretrained(latte_model_path, torch_dtype=torch.float16).to(device)
+        pipe = LattePipeline().LattePipeline.from_pretrained(latte_model_path, torch_dtype=torch_dtype).to(device)
         pipe.enable_model_cpu_offload()
         pipe.enable_sequential_cpu_offload()
         pipe.vae.enable_slicing()
@@ -8802,8 +8876,9 @@ def generate_3d_stablefast3d(image, texture_resolution, foreground_ratio, remesh
 
 
 def generate_3d_shap_e(prompt, init_image, seed, num_inference_steps, guidance_scale, frame_size, progress=gr.Progress()):
-
     device = "cuda" if torch.cuda.is_available() else "cpu"
+    torch_dtype = torch.float16 if device == "cuda" else torch.float32
+    variant = "fp16" if torch_dtype == torch.float16 else "fp32"
 
     if seed == "" or seed is None:
         seed = random.randint(0, 2 ** 32 - 1)
@@ -8823,7 +8898,7 @@ def generate_3d_shap_e(prompt, init_image, seed, num_inference_steps, guidance_s
             gr.Info("Shap-E img2img model downloaded")
 
         progress(0.3, desc="Loading img2img pipeline")
-        pipe = ShapEImg2ImgPipeline().ShapEImg2ImgPipeline.from_pretrained(model_path, torch_dtype=torch.float16, variant="fp16").to(device)
+        pipe = ShapEImg2ImgPipeline().ShapEImg2ImgPipeline.from_pretrained(model_path, torch_dtype=torch_dtype, variant=variant).to(device)
         image = Image.open(init_image).resize((256, 256))
     else:
         model_name = "openai/shap-e"
@@ -8836,7 +8911,7 @@ def generate_3d_shap_e(prompt, init_image, seed, num_inference_steps, guidance_s
             gr.Info("Shap-E text2img model downloaded")
 
         progress(0.3, desc="Loading text2img pipeline")
-        pipe = ShapEPipeline().ShapEPipeline.from_pretrained(model_path, torch_dtype=torch.float16, variant="fp16").to(device)
+        pipe = ShapEPipeline().ShapEPipeline.from_pretrained(model_path, torch_dtype=torch_dtype, variant=variant).to(device)
 
     progress(0.4, desc="Generating 3D object")
     if init_image:
@@ -8977,6 +9052,7 @@ def generate_3d_zero123plus(input_image, num_inference_steps, output_format, pro
         return None, None
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
+    torch_dtype = torch.float16 if device == "cuda" else torch.float32
 
     progress(0.1, desc="Initializing Zero123Plus")
     zero123plus_model_path = os.path.join("inputs", "3D", "zero123plus")
@@ -8993,7 +9069,7 @@ def generate_3d_zero123plus(input_image, num_inference_steps, output_format, pro
         pipe = DiffusionPipeline().DiffusionPipeline.from_pretrained(
             zero123plus_model_path,
             custom_pipeline="sudo-ai/zero123plus-pipeline",
-            torch_dtype=torch.float16
+            torch_dtype=torch_dtype
         )
         pipe.to(device)
 
@@ -9030,6 +9106,7 @@ def generate_stableaudio(prompt, negative_prompt, seed, stop_button, num_inferen
     stop_idx = None
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
+    torch_dtype = torch.float16 if device == "cuda" else torch.float32
 
     if seed == "" or seed is None:
         seed = random.randint(0, 2 ** 32 - 1)
@@ -9045,7 +9122,7 @@ def generate_stableaudio(prompt, negative_prompt, seed, stop_button, num_inferen
         Repo.clone_from("https://huggingface.co/stabilityai/stable-audio-open-1.0", sa_model_path)
         gr.Info("Stable Audio Open model downloaded")
 
-    pipe = StableAudioPipeline().StableAudioPipeline.from_pretrained(sa_model_path, torch_dtype=torch.float16)
+    pipe = StableAudioPipeline().StableAudioPipeline.from_pretrained(sa_model_path, torch_dtype=torch_dtype)
     pipe = pipe.to(device)
 
     def combined_callback(pipe, i, t):
@@ -9261,6 +9338,7 @@ def generate_audio_audioldm2(prompt, negative_prompt, model_name, seed, stop_but
     stop_idx = None
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
+    torch_dtype = torch.float16 if device == "cuda" else torch.float32
 
     if seed == "" or seed is None:
         seed = random.randint(0, 2 ** 32 - 1)
@@ -9280,7 +9358,7 @@ def generate_audio_audioldm2(prompt, negative_prompt, model_name, seed, stop_but
         Repo.clone_from(f"https://huggingface.co/{model_name}", model_path)
         gr.Info(f"AudioLDM 2 model {model_name} downloaded")
 
-    pipe = AudioLDM2Pipeline().AudioLDM2Pipeline.from_pretrained(model_path, torch_dtype=torch.float16)
+    pipe = AudioLDM2Pipeline().AudioLDM2Pipeline.from_pretrained(model_path, torch_dtype=torch_dtype)
     pipe = pipe.to(device)
 
     def combined_callback(pipe, i, t):
@@ -9362,11 +9440,11 @@ def generate_bark_audio(text, voice_preset, max_length, fine_temperature, coarse
     try:
         progress(0.3, desc="Setting up device")
         device = "cuda" if torch.cuda.is_available() else "cpu"
-        torch.set_default_tensor_type(torch.cuda.FloatTensor if device == "cuda" else torch.FloatTensor)
+        torch_dtype = torch.float16 if device == "cuda" else torch.float32
 
         progress(0.4, desc="Loading Bark model")
         processor = AutoProcessor().AutoProcessor.from_pretrained(bark_model_path)
-        model = BarkModel().BarkModel.from_pretrained(bark_model_path, torch_dtype=torch.float32)
+        model = BarkModel().BarkModel.from_pretrained(bark_model_path, torch_dtype=torch_dtype)
 
         progress(0.5, desc="Processing input")
         if voice_preset:
