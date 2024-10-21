@@ -205,6 +205,7 @@ DDIMInverseScheduler = lazy_import('diffusers', 'DDIMInverseScheduler')
 PNDMScheduler = lazy_import('diffusers', 'PNDMScheduler')
 FlowMatchEulerDiscreteScheduler = lazy_import('diffusers', 'FlowMatchEulerDiscreteScheduler')
 FlowMatchHeunDiscreteScheduler = lazy_import('diffusers', 'FlowMatchHeunDiscreteScheduler')
+CosineDPMSolverMultistepScheduler = lazy_import('diffusers', 'CosineDPMSolverMultistepScheduler')
 DEFAULT_STAGE_C_TIMESTEPS = lazy_import('diffusers.pipelines.wuerstchen', 'DEFAULT_STAGE_C_TIMESTEPS')
 AutoencoderTiny = lazy_import('diffusers', 'AutoencoderTiny')
 ConsistencyDecoderVAE = lazy_import('diffusers', 'ConsistencyDecoderVAE')
@@ -9164,6 +9165,7 @@ def generate_stableaudio(prompt, negative_prompt, seed, stop_button, num_inferen
         gr.Info("Stable Audio Open model downloaded")
 
     pipe = StableAudioPipeline().StableAudioPipeline.from_pretrained(sa_model_path, torch_dtype=torch_dtype)
+    pipe.scheduler = CosineDPMSolverMultistepScheduler().CosineDPMSolverMultistepScheduler.from_config(pipe.scheduler.config)
     pipe = pipe.to(device)
 
     def combined_callback(pipe, i, t):
