@@ -12,8 +12,8 @@ if not exist "%CURRENT_DIR%pip_cache" mkdir "%CURRENT_DIR%pip_cache"
 set PIP_CACHE_DIR=%CURRENT_DIR%pip_cache
 
 echo Upgrading pip, setuptools and wheel...
-python -m pip install --upgrade pip
-pip install wheel setuptools
+python -m pip install --upgrade pip setuptools
+pip install wheel
 timeout /t 3 /nobreak >nul
 cls
 

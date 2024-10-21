@@ -12,8 +12,8 @@ mkdir -p "$CURRENT_DIR/pip_cache"
 export PIP_CACHE_DIR="$CURRENT_DIR/pip_cache"
 
 echo "Upgrading pip, setuptools and wheel..."
-python3 -m pip install --upgrade pip
-pip install wheel setuptools
+python3 -m pip install --upgrade pip setuptools
+pip install wheel
 sleep 3
 clear
 
