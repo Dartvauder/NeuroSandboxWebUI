@@ -202,6 +202,9 @@ TCDScheduler = lazy_import('diffusers', 'TCDScheduler')
 DDIMScheduler = lazy_import('diffusers', 'DDIMScheduler')
 DDPMScheduler = lazy_import('diffusers', 'DDPMScheduler')
 DDIMInverseScheduler = lazy_import('diffusers', 'DDIMInverseScheduler')
+PNDMScheduler = lazy_import('diffusers', 'PNDMScheduler')
+FlowMatchEulerDiscreteScheduler = lazy_import('diffusers', 'FlowMatchEulerDiscreteScheduler')
+FlowMatchHeunDiscreteScheduler = lazy_import('diffusers', 'FlowMatchHeunDiscreteScheduler')
 DEFAULT_STAGE_C_TIMESTEPS = lazy_import('diffusers.pipelines.wuerstchen', 'DEFAULT_STAGE_C_TIMESTEPS')
 AutoencoderTiny = lazy_import('diffusers', 'AutoencoderTiny')
 ConsistencyDecoderVAE = lazy_import('diffusers', 'ConsistencyDecoderVAE')
@@ -976,12 +979,11 @@ def transcribe_audio(audio_file_path):
     if not os.path.exists(whisper_model_path):
         gr.Info("Downloading Whisper...")
         os.makedirs(whisper_model_path, exist_ok=True)
-        url = ("https://openaipublic.azureedge.net/main/whisper/models"
-               "/345ae4da62f9b3d59415adc60127b97c714f32e89e936602e85993674d08dcb1/medium.pt")
+        url = ("https://openaipublic.azureedge.net/main/whisper/models/aff26ae408abcba5fbf8813c21e62b0941638c5f6eebfb145be0c9839262a19a/large-v3-turbo.pt")
         r = requests.get(url, allow_redirects=True)
-        open(os.path.join(whisper_model_path, "medium.pt"), "wb").write(r.content)
+        open(os.path.join(whisper_model_path, "large-v3-turbo.pt"), "wb").write(r.content)
         gr.Info("Whisper model downloaded")
-    model_file = os.path.join(whisper_model_path, "medium.pt")
+    model_file = os.path.join(whisper_model_path, "large-v3-turbo.pt")
     model = whisper().whisper.load_model(model_file, device=device)
     result = model.transcribe(audio_file_path)
     return result["text"]
@@ -1015,17 +1017,13 @@ def load_whisper_model():
     if not os.path.exists(whisper_model_path):
         gr.Info("Downloading Whisper...")
         os.makedirs(whisper_model_path, exist_ok=True)
-        url = ("https://openaipublic.azureedge.net/main/whisper/models"
-               "/345ae4da62f9b3d59415adc60127b97c714f32e89e936602e85993674d08dcb1/medium.pt")
+        url = (
+            "https://openaipublic.azureedge.net/main/whisper/models/aff26ae408abcba5fbf8813c21e62b0941638c5f6eebfb145be0c9839262a19a/large-v3-turbo.pt")
         r = requests.get(url, allow_redirects=True)
-        open(os.path.join(whisper_model_path, "medium.pt"), "wb").write(r.content)
-        gr.Info("Whisper downloaded")
-    model_file = os.path.join(whisper_model_path, "medium.pt")
+        open(os.path.join(whisper_model_path, "large-v3-turbo.pt"), "wb").write(r.content)
+        gr.Info("Whisper model downloaded")
+    model_file = os.path.join(whisper_model_path, "large-v3-turbo.pt")
     return whisper().whisper.load_model(model_file)
-
-
-def supports_chat_template(tokenizer):
-    return hasattr(tokenizer, 'apply_chat_template')
 
 
 def load_audiocraft_model(model_name):
@@ -1129,20 +1127,20 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, llm_model_t
                     gr.Info(f"Skipping invalid entry in JSON: {entry}")
         else:
             gr.Info(f"Unsupported file format: {file_extension}")
-            return None, None, None
+            return None, None
 
-        yield chat_history_state, None, chat_dir
+        yield chat_history_state, None
     elif 'chat_history' not in globals() or chat_history is None:
         chat_history = []
 
     if not input_text and not input_audio:
         gr.Info("Please, enter your request!")
-        return None, None, None
+        return None, None
     prompt = transcribe_audio(input_audio) if input_audio else input_text
 
     if not llm_model_name:
         gr.Info("Please, select a LLM model!")
-        return None, None, None
+        return None, None
 
     if not system_prompt:
         system_prompt = "You are a helpful assistant."
@@ -1194,7 +1192,7 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, llm_model_t
                     data_uri = image_to_base64_data_uri(image_path)
                 else:
                     gr.Info("Please upload an image for multimodal input.")
-                    return None, None, None
+                    return None, None
 
                 context = ""
                 for human_text, ai_text in chat_history[-5:]:
@@ -1216,11 +1214,11 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, llm_model_t
 
                 for token in llm.create_chat_completion(messages=messages):
                     chat_history[-1][1] += token
-                    yield chat_history_state, None, None
+                    yield chat_history_state, None
 
             except Exception as e:
                 gr.Error(f"An error occurred: {str(e)}")
-                return None, None, None
+                return None, None
 
             finally:
                 if 'llm' in locals():
@@ -1240,7 +1238,7 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, llm_model_t
                     enc_image = model.encode_image(image)
                 else:
                     gr.Info("Please upload an image for multimodal input.")
-                    return None, None, None
+                    return None, None
 
                 context = ""
                 for human_text, ai_text in chat_history[-5:]:
@@ -1256,11 +1254,11 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, llm_model_t
 
                 for token in model.answer_question(enc_image, prompt_with_context, tokenizer):
                     chat_history[-1][1] += token
-                    yield chat_history_state, None, None
+                    yield chat_history_state, None
 
             except Exception as e:
                 gr.Error(f"An error occurred: {str(e)}")
-                return None, None, None
+                return None, None
 
             finally:
                 if 'tokenizer' in locals():
@@ -1273,7 +1271,7 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, llm_model_t
         device = "cuda" if torch.cuda.is_available() else "cpu"
         if llm_model_type == "Llama":
             gr.Info("LLaVA-NeXT-Video is not supported with llama model type.")
-            return None, None, None
+            return None, None
         else:
 
             model, processor = load_llava_next_video_model()
@@ -1286,7 +1284,7 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, llm_model_t
                     clip = read_video_pyav(container, indices)
                 else:
                     gr.Info("Please upload a video for LLaVA-NeXT-Video input.")
-                    return None, None, None
+                    return None, None
 
                 context = ""
                 for human_text, ai_text in chat_history[-5:]:
@@ -1316,11 +1314,11 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, llm_model_t
 
                 response = processor.decode(output[0][2:], skip_special_tokens=True)
                 chat_history[-1][1] = response
-                yield chat_history_state, None, None
+                yield chat_history_state, None
 
             except Exception as e:
                 gr.Error(f"An error occurred: {str(e)}")
-                return None, None, None
+                return None, None
 
             finally:
                 if 'processor' in locals():
@@ -1332,21 +1330,21 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, llm_model_t
     elif enable_multimodal and llm_model_name == "Qwen2-Audio":
         if not input_audio_mm:
             gr.Info("Please upload a audio for Qwen2-Audio input.")
-            return None, None, None
+            return None, None
         processor, model = load_qwen2_audio_model()
         if llm_model_type == "Llama":
             gr.Info("Qwen2-Audio is not supported with llama model type.")
-            return None, None, None
+            return None, None
         else:
             try:
                 response = process_qwen2_audio(processor, model, input_audio_mm, prompt)
                 if not chat_history or chat_history[-1][1] is not None:
                     chat_history.append([prompt, ""])
                 chat_history[-1][1] = response
-                yield chat_history_state, None, None
+                yield chat_history_state, None
             except Exception as e:
                 gr.Error(f"An error occurred: {str(e)}")
-                return None, None, None
+                return None, None
             finally:
                 if 'processor' in locals():
                     del processor
@@ -1375,7 +1373,7 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, llm_model_t
                     tts_model = load_tts_model()
                 if not speaker_wav or not language:
                     gr.Info("Please, select a voice and language for TTS!")
-                    return None, None, None
+                    return None, None
                 device = "cuda" if torch.cuda.is_available() else "cpu"
                 tts_model = tts_model.to(device)
             if input_audio:
@@ -1437,7 +1435,7 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, llm_model_t
                     for new_text in streamer:
                         text += new_text
                         chat_history[-1][1] = text
-                        yield chat_history_state, None, None
+                        yield chat_history_state, None
 
                     thread.join()
 
@@ -1470,7 +1468,7 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, llm_model_t
 
                         chat_history[-1][1] = text
 
-                        yield chat_history_state, None, None
+                        yield chat_history_state, None
 
                 elif llm_model_type == "ExLlamaV2":
                     text = ""
@@ -1495,7 +1493,7 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, llm_model_t
                     for token in generator.generate_simple(full_prompt, settings, max_new_tokens):
                         text += token['choices'][0]['text']
                         chat_history[-1][1] = text
-                        yield chat_history_state, None, None
+                        yield chat_history_state, None
 
                 if enable_libretranslate:
                     try:
@@ -1505,7 +1503,7 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, llm_model_t
                         text = translation
                     except urllib.error.URLError:
                         gr.Info("LibreTranslate is not running. Please start the LibreTranslate server.")
-                        return None, None, None
+                        return None, None
 
                 if not chat_dir:
                     now = datetime.now()
@@ -1544,7 +1542,7 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, llm_model_t
 
         except Exception as e:
             gr.Error(f"An error occurred: {str(e)}")
-            return None, None, None
+            return None, None
 
         finally:
             if 'tokenizer' in locals():
@@ -1562,7 +1560,7 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, llm_model_t
         else:
             chat_history.append([prompt, text])
 
-        yield chat_history_state, audio_path, chat_dir
+        yield chat_history_state, audio_path
 
 
 def generate_tts_stt(text, audio, tts_settings_html, speaker_wav, language, tts_temperature, tts_top_p, tts_top_k, tts_speed, tts_repetition_penalty, tts_length_penalty, enable_conversion, source_wav, target_wav, tts_output_format, stt_output_format, progress=gr.Progress()):
@@ -1705,11 +1703,11 @@ def generate_mms_tts(text, language, output_format, progress=gr.Progress()):
 
     if not text:
         gr.Info("Please enter your request!")
-        return None, None
+        return None
 
     if not language:
         gr.Info("Please select a language!")
-        return None, None
+        return None
 
     try:
         progress(0.4, desc="Loading model")
@@ -1735,14 +1733,14 @@ def generate_mms_tts(text, language, output_format, progress=gr.Progress()):
             sf.write(output_file, waveform.numpy(), model.config.sampling_rate, format='ogg')
         else:
             gr.Info(f"Unsupported output format: {output_format}")
-            return None, None
+            return None
 
         progress(1.0, desc="Speech generation complete")
-        return output_file, None
+        return output_file
 
     except Exception as e:
         gr.Error(f"An error occurred: {str(e)}")
-        return None, None
+        return None
 
     finally:
         if 'tokenizer' in locals():
@@ -1766,11 +1764,11 @@ def transcribe_mms_stt(audio_file, language, output_format, progress=gr.Progress
 
     if not audio_file:
         gr.Info("Please record your request!")
-        return None, None
+        return None
 
     if not language:
         gr.Info("Please select a language!")
-        return None, None
+        return None
 
     try:
         progress(0.4, desc="Loading model")
@@ -1805,14 +1803,14 @@ def transcribe_mms_stt(audio_file, language, output_format, progress=gr.Progress
                 json.dump({"transcription": transcription}, f, ensure_ascii=False, indent=4)
         else:
             gr.Info(f"Unsupported output format: {output_format}")
-            return None, None
+            return None
 
         progress(1.0, desc="Transcription complete")
-        return transcription, None
+        return transcription
 
     except Exception as e:
         gr.Error(f"An error occurred: {str(e)}")
-        return None, None
+        return None
 
     finally:
         if 'processor' in locals():
@@ -2196,6 +2194,9 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
                     stable_diffusion_model.scheduler.config)
             elif stable_diffusion_scheduler == "DDIMScheduler":
                 stable_diffusion_model.scheduler = DDIMScheduler().DDIMScheduler.from_config(
+                    stable_diffusion_model.scheduler.config)
+            elif stable_diffusion_scheduler == "PNDMScheduler":
+                stable_diffusion_model.scheduler = PNDMScheduler().PNDMScheduler.from_config(
                     stable_diffusion_model.scheduler.config)
             elif stable_diffusion_scheduler == "DDPMScheduler":
                 stable_diffusion_model.scheduler = DDPMScheduler().DDPMScheduler.from_config(
@@ -2674,6 +2675,9 @@ def generate_image_img2img(prompt, negative_prompt, init_image, strength, stable
                     stable_diffusion_model.scheduler.config)
             elif stable_diffusion_scheduler == "DDIMScheduler":
                 stable_diffusion_model.scheduler = DDIMScheduler().DDIMScheduler.from_config(
+                    stable_diffusion_model.scheduler.config)
+            elif stable_diffusion_scheduler == "PNDMScheduler":
+                stable_diffusion_model.scheduler = PNDMScheduler().PNDMScheduler.from_config(
                     stable_diffusion_model.scheduler.config)
             elif stable_diffusion_scheduler == "DDPMScheduler":
                 stable_diffusion_model.scheduler = DDPMScheduler().DDPMScheduler.from_config(
@@ -3211,6 +3215,9 @@ def generate_image_controlnet(prompt, negative_prompt, init_image, sd_version, s
                 elif stable_diffusion_scheduler == "DDIMScheduler":
                     pipe.scheduler = DDIMScheduler().DDIMScheduler.from_config(
                         pipe.scheduler.config)
+                elif stable_diffusion_scheduler == "PNDMScheduler":
+                    pipe.scheduler = PNDMScheduler().PNDMScheduler.from_config(
+                        pipe.scheduler.config)
                 elif stable_diffusion_scheduler == "DDPMScheduler":
                     pipe.scheduler = DDPMScheduler().DDPMScheduler.from_config(
                         pipe.scheduler.config)
@@ -3344,6 +3351,9 @@ def generate_image_controlnet(prompt, negative_prompt, init_image, sd_version, s
                         pipe.scheduler.config)
                 elif stable_diffusion_scheduler == "DDIMScheduler":
                     pipe.scheduler = DDIMScheduler().DDIMScheduler.from_config(
+                        pipe.scheduler.config)
+                elif stable_diffusion_scheduler == "PNDMScheduler":
+                    pipe.scheduler = PNDMScheduler().PNDMScheduler.from_config(
                         pipe.scheduler.config)
                 elif stable_diffusion_scheduler == "DDPMScheduler":
                     pipe.scheduler = DDPMScheduler().DDPMScheduler.from_config(
@@ -3782,6 +3792,9 @@ def generate_image_inpaint(prompt, negative_prompt, init_image, mask_image, blur
                 stable_diffusion_model.scheduler.config)
         elif stable_diffusion_scheduler == "DDIMScheduler":
             stable_diffusion_model.scheduler = DDIMScheduler().DDIMScheduler.from_config(
+                stable_diffusion_model.scheduler.config)
+        elif stable_diffusion_scheduler == "PNDMScheduler":
+            stable_diffusion_model.scheduler = PNDMScheduler().PNDMScheduler.from_config(
                 stable_diffusion_model.scheduler.config)
         elif stable_diffusion_scheduler == "DDPMScheduler":
             stable_diffusion_model.scheduler = DDPMScheduler().DDPMScheduler.from_config(
@@ -4831,7 +4844,7 @@ def generate_image_ldm3d(prompt, negative_prompt, seed, width, height, num_infer
         flush()
 
 
-def generate_image_sd3_txt2img(prompt, negative_prompt, model_type, quantize_sd3_model_name, enable_quantize, seed, stop_button, vae_model_name, lora_model_names, lora_scales, num_inference_steps, guidance_scale, width, height, max_sequence_length, clip_skip, num_images_per_prompt, enable_taesd, output_format, progress=gr.Progress()):
+def generate_image_sd3_txt2img(prompt, negative_prompt, model_type, quantize_sd3_model_name, enable_quantize, seed, stop_button, vae_model_name, lora_model_names, lora_scales, scheduler, num_inference_steps, guidance_scale, width, height, max_sequence_length, clip_skip, num_images_per_prompt, enable_taesd, output_format, progress=gr.Progress()):
     global stop_signal
     stop_signal = False
     stop_idx = None
@@ -4919,6 +4932,13 @@ def generate_image_sd3_txt2img(prompt, negative_prompt, model_type, quantize_sd3
                 pipe = StableDiffusion3Pipeline().StableDiffusion3Pipeline.from_single_file(stable_diffusion_model_path,
                                                                                             device_map=device,
                                                                                             torch_dtype=torch_dtype)
+
+            if scheduler == "FlowMatchEulerDiscreteScheduler":
+                pipe.scheduler = FlowMatchEulerDiscreteScheduler().FlowMatchEulerDiscreteScheduler.from_config(
+                    pipe.scheduler.config)
+            elif scheduler == "FlowMatchHeunDiscreteScheduler":
+                pipe.scheduler = FlowMatchHeunDiscreteScheduler().FlowMatchHeunDiscreteScheduler.from_config(
+                    pipe.scheduler.config)
 
             if vae_model_name is not None:
                 vae_model_path = os.path.join("inputs", "image", "sd_models", "vae", f"{vae_model_name}")
@@ -5037,7 +5057,7 @@ def generate_image_sd3_txt2img(prompt, negative_prompt, model_type, quantize_sd3
             flush()
 
 
-def generate_image_sd3_img2img(prompt, negative_prompt, init_image, strength, quantize_sd3_model_name, enable_quantize, seed, stop_button, num_inference_steps, guidance_scale, width, height, max_sequence_length, clip_skip, num_images_per_prompt, output_format, progress=gr.Progress()):
+def generate_image_sd3_img2img(prompt, negative_prompt, init_image, strength, quantize_sd3_model_name, enable_quantize, seed, stop_button, scheduler, num_inference_steps, guidance_scale, width, height, max_sequence_length, clip_skip, num_images_per_prompt, output_format, progress=gr.Progress()):
     global stop_signal
     stop_signal = False
     stop_idx = None
@@ -5121,6 +5141,13 @@ def generate_image_sd3_img2img(prompt, negative_prompt, init_image, strength, qu
                                                                                                      text_encoder_3=text_encoder,
                                                                                                      torch_dtype=torch_dtype)
 
+            if scheduler == "FlowMatchEulerDiscreteScheduler":
+                pipe.scheduler = FlowMatchEulerDiscreteScheduler().FlowMatchEulerDiscreteScheduler.from_config(
+                    pipe.scheduler.config)
+            elif scheduler == "FlowMatchHeunDiscreteScheduler":
+                pipe.scheduler = FlowMatchHeunDiscreteScheduler().FlowMatchHeunDiscreteScheduler.from_config(
+                    pipe.scheduler.config)
+
             pipe.enable_model_cpu_offload()
 
             init_image = Image.open(init_image).convert("RGB")
@@ -5180,7 +5207,7 @@ def generate_image_sd3_img2img(prompt, negative_prompt, init_image, strength, qu
             flush()
 
 
-def generate_image_sd3_controlnet(prompt, negative_prompt, init_image, controlnet_model, seed, stop_button, num_inference_steps, guidance_scale, controlnet_conditioning_scale, width, height, max_sequence_length, clip_skip, num_images_per_prompt, output_format, progress=gr.Progress()):
+def generate_image_sd3_controlnet(prompt, negative_prompt, init_image, controlnet_model, seed, stop_button, scheduler, num_inference_steps, guidance_scale, controlnet_conditioning_scale, width, height, max_sequence_length, clip_skip, num_images_per_prompt, output_format, progress=gr.Progress()):
     global stop_signal
     stop_signal = False
     stop_idx = None
@@ -5227,6 +5254,13 @@ def generate_image_sd3_controlnet(prompt, negative_prompt, init_image, controlne
             torch_dtype=torch_dtype,
             device_map="balanced",
         )
+
+        if scheduler == "FlowMatchEulerDiscreteScheduler":
+            pipe.scheduler = FlowMatchEulerDiscreteScheduler().FlowMatchEulerDiscreteScheduler.from_config(
+                pipe.scheduler.config)
+        elif scheduler == "FlowMatchHeunDiscreteScheduler":
+            pipe.scheduler = FlowMatchHeunDiscreteScheduler().FlowMatchHeunDiscreteScheduler.from_config(
+                pipe.scheduler.config)
 
         pipe.enable_model_cpu_offload()
 
@@ -5302,7 +5336,7 @@ def generate_image_sd3_controlnet(prompt, negative_prompt, init_image, controlne
         flush()
 
 
-def generate_image_sd3_inpaint(prompt, negative_prompt, init_image, mask_image, seed, stop_button, num_inference_steps, guidance_scale, width, height, max_sequence_length, clip_skip, num_images_per_prompt, output_format, progress=gr.Progress()):
+def generate_image_sd3_inpaint(prompt, negative_prompt, init_image, mask_image, seed, stop_button, scheduler, num_inference_steps, guidance_scale, width, height, max_sequence_length, clip_skip, num_images_per_prompt, output_format, progress=gr.Progress()):
     global stop_signal
     stop_signal = False
     stop_idx = None
@@ -5331,6 +5365,13 @@ def generate_image_sd3_inpaint(prompt, negative_prompt, init_image, mask_image, 
             quantization_config=quantization_config,
         )
         pipe = StableDiffusion3InpaintPipeline().StableDiffusion3InpaintPipeline.from_pretrained(sd3_model_path, device_map="balanced", text_encoder_3=text_encoder, torch_dtype=torch_dtype)
+
+        if scheduler == "FlowMatchEulerDiscreteScheduler":
+            pipe.scheduler = FlowMatchEulerDiscreteScheduler().FlowMatchEulerDiscreteScheduler.from_config(
+                pipe.scheduler.config)
+        elif scheduler == "FlowMatchHeunDiscreteScheduler":
+            pipe.scheduler = FlowMatchHeunDiscreteScheduler().FlowMatchHeunDiscreteScheduler.from_config(
+                pipe.scheduler.config)
 
         pipe.enable_model_cpu_offload()
 
@@ -9445,6 +9486,8 @@ def generate_bark_audio(text, voice_preset, max_length, fine_temperature, coarse
         progress(0.4, desc="Loading Bark model")
         processor = AutoProcessor().AutoProcessor.from_pretrained(bark_model_path)
         model = BarkModel().BarkModel.from_pretrained(bark_model_path, torch_dtype=torch_dtype)
+        model.enable_cpu_offload()
+        model = model.to_bettertransformer()
 
         progress(0.5, desc="Processing input")
         if voice_preset:
@@ -9454,7 +9497,6 @@ def generate_bark_audio(text, voice_preset, max_length, fine_temperature, coarse
 
         progress(0.6, desc="Generating audio")
         audio_array = model.generate(**inputs, max_length=max_length, do_sample=True, fine_temperature=fine_temperature, coarse_temperature=coarse_temperature)
-        model.enable_cpu_offload()
 
         progress(0.7, desc="Preparing output")
         today = datetime.now().date()
@@ -10464,8 +10506,7 @@ chat_interface = gr.Interface(
     additional_inputs_accordion=gr.Accordion(label=_("LLM and TTS Settings", lang), open=False),
     outputs=[
         gr.Chatbot(label=_("LLM text response", lang), avatar_images=[avatar_user, avatar_ai], show_copy_button=True),
-        gr.Audio(label=_("LLM audio response", lang), type="filepath"),
-        gr.Textbox(label=_("Message", lang))
+        gr.Audio(label=_("LLM audio response", lang), type="filepath")
     ],
     title=_("NeuroSandboxWebUI - LLM", lang),
     description=_("This user interface allows you to enter any text or audio and receive generated response. You can select the LLM model, avatar, voice and language for tts from the drop-down lists. You can also customize the model settings from the sliders. Try it and see what happens!", lang),
@@ -10519,8 +10560,7 @@ mms_tts_interface = gr.Interface(
         gr.Radio(choices=["wav", "mp3", "ogg"], label=_("Select output format", lang), value="wav")
     ],
     outputs=[
-        gr.Audio(label=_("Synthesized speech", lang), type="filepath"),
-        gr.Textbox(label=_("Message", lang))
+        gr.Audio(label=_("Synthesized speech", lang), type="filepath")
     ],
     title=_("NeuroSandboxWebUI - MMS Text-to-Speech", lang),
     description=_("Generate speech from text using MMS TTS models.", lang),
@@ -10538,8 +10578,7 @@ mms_stt_interface = gr.Interface(
         gr.Radio(choices=["txt", "json"], label=_("Select output format", lang), value="txt")
     ],
     outputs=[
-        gr.Textbox(label=_("Transcription", lang)),
-        gr.Textbox(label=_("Message", lang))
+        gr.Textbox(label=_("Transcription", lang))
     ],
     title=_("NeuroSandboxWebUI - MMS Speech-to-Text", lang),
     description=_("Transcribe speech to text using MMS STT model.", lang),
@@ -10580,8 +10619,7 @@ seamless_m4tv2_interface = gr.Interface(
     additional_inputs_accordion=gr.Accordion(label=_("SeamlessM4T Settings", lang), open=False),
     outputs=[
         gr.Textbox(label=_("Generated Text", lang)),
-        gr.Audio(label=_("Generated Audio", lang), type="filepath"),
-        gr.Textbox(label=_("Message", lang))
+        gr.Audio(label=_("Generated Audio", lang), type="filepath")
     ],
     title=_("NeuroSandboxWebUI - SeamlessM4Tv2", lang),
     description=_("This interface allows you to use the SeamlessM4Tv2 model for various translation and speech tasks.", lang),
@@ -10634,7 +10672,7 @@ txt2img_interface = gr.Interface(
             "KDPM2AncestralDiscreteScheduler", "EulerAncestralDiscreteScheduler",
             "HeunDiscreteScheduler", "LMSDiscreteScheduler", "DEISMultistepScheduler",
             "UniPCMultistepScheduler", "LCMScheduler", "DPMSolverSDEScheduler",
-            "TCDScheduler", "DDIMScheduler", "DDPMScheduler"
+            "TCDScheduler", "DDIMScheduler", "PNDMScheduler", "DDPMScheduler"
         ], label=_("Select scheduler", lang), value="EulerDiscreteScheduler"),
         gr.Slider(minimum=1, maximum=100, value=30, step=1, label=_("Steps", lang)),
         gr.Slider(minimum=1.0, maximum=30.0, value=8, step=0.1, label=_("CFG", lang)),
@@ -10706,7 +10744,7 @@ img2img_interface = gr.Interface(
             "KDPM2AncestralDiscreteScheduler", "EulerAncestralDiscreteScheduler",
             "HeunDiscreteScheduler", "LMSDiscreteScheduler", "DEISMultistepScheduler",
             "UniPCMultistepScheduler", "LCMScheduler", "DPMSolverSDEScheduler",
-            "TCDScheduler", "DDIMScheduler", "DDPMScheduler"
+            "TCDScheduler", "DDIMScheduler", "PNDMScheduler", "DDPMScheduler"
         ], label=_("Select scheduler", lang), value="EulerDiscreteScheduler"),
         gr.Slider(minimum=1, maximum=100, value=30, step=1, label=_("Steps", lang)),
         gr.Slider(minimum=1.0, maximum=30.0, value=8, step=0.1, label=_("CFG", lang)),
@@ -10815,7 +10853,7 @@ controlnet_interface = gr.Interface(
             "KDPM2AncestralDiscreteScheduler", "EulerAncestralDiscreteScheduler",
             "HeunDiscreteScheduler", "LMSDiscreteScheduler", "DEISMultistepScheduler",
             "UniPCMultistepScheduler", "LCMScheduler", "DPMSolverSDEScheduler",
-            "TCDScheduler", "DDIMScheduler", "DDPMScheduler"
+            "TCDScheduler", "DDIMScheduler", "PNDMScheduler", "DDPMScheduler"
         ], label=_("Select scheduler", lang), value="EulerDiscreteScheduler"),
         gr.Dropdown(choices=stable_diffusion_models_list, label=_("Select StableDiffusion model", lang), value=None),
         gr.Dropdown(choices=controlnet_models_list, label=_("Select ControlNet model", lang), value=None),
@@ -10944,7 +10982,7 @@ inpaint_interface = gr.Interface(
             "KDPM2AncestralDiscreteScheduler", "EulerAncestralDiscreteScheduler",
             "HeunDiscreteScheduler", "LMSDiscreteScheduler", "DEISMultistepScheduler",
             "UniPCMultistepScheduler", "LCMScheduler", "DPMSolverSDEScheduler",
-            "TCDScheduler", "DDIMScheduler", "DDPMScheduler"
+            "TCDScheduler", "DDIMScheduler", "PNDMScheduler", "DDPMScheduler"
         ], label=_("Select scheduler", lang), value="EulerDiscreteScheduler"),
         gr.Dropdown(choices=inpaint_models_list, label=_("Select Inpaint model", lang), value=None),
         gr.Dropdown(choices=vae_models_list, label=_("Select VAE model (optional)", lang), value=None),
@@ -11243,6 +11281,7 @@ sd3_txt2img_interface = gr.Interface(
         gr.Dropdown(choices=vae_models_list, label=_("Select VAE model (optional)", lang), value=None),
         gr.Dropdown(choices=lora_models_list, label=_("Select LORA models (optional)", lang), value=None, multiselect=True),
         gr.Textbox(label=_("LoRA Scales", lang)),
+        gr.Dropdown(choices=["FlowMatchEulerDiscreteScheduler", "FlowMatchHeunDiscreteScheduler"], label=_("Select scheduler", lang), value="FlowMatchEulerDiscreteScheduler"),
         gr.Slider(minimum=1, maximum=100, value=40, step=1, label=_("Steps", lang)),
         gr.Slider(minimum=1.0, maximum=30.0, value=8.0, step=0.1, label=_("CFG", lang)),
         gr.Slider(minimum=256, maximum=2048, value=1024, step=64, label=_("Width", lang)),
@@ -11281,6 +11320,8 @@ sd3_img2img_interface = gr.Interface(
         gr.Button(value=_("Stop generation", lang), interactive=True, variant="stop")
     ],
     additional_inputs=[
+        gr.Dropdown(choices=["FlowMatchEulerDiscreteScheduler", "FlowMatchHeunDiscreteScheduler"],
+                    label=_("Select scheduler", lang), value="FlowMatchEulerDiscreteScheduler"),
         gr.Slider(minimum=1, maximum=100, value=40, step=1, label=_("Steps", lang)),
         gr.Slider(minimum=1.0, maximum=30.0, value=8.0, step=0.1, label=_("CFG", lang)),
         gr.Slider(minimum=256, maximum=2048, value=1024, step=64, label=_("Width", lang)),
@@ -11316,6 +11357,8 @@ sd3_controlnet_interface = gr.Interface(
         gr.Button(value=_("Stop generation", lang), interactive=True, variant="stop")
     ],
     additional_inputs=[
+        gr.Dropdown(choices=["FlowMatchEulerDiscreteScheduler", "FlowMatchHeunDiscreteScheduler"],
+                    label=_("Select scheduler", lang), value="FlowMatchEulerDiscreteScheduler"),
         gr.Slider(minimum=1, maximum=100, value=40, step=1, label=_("Steps", lang)),
         gr.Slider(minimum=1.0, maximum=30.0, value=8.0, step=0.1, label=_("CFG", lang)),
         gr.Slider(minimum=0.1, maximum=1.0, value=0.5, step=0.1, label=_("ControlNet conditioning scale", lang)),
@@ -11353,6 +11396,8 @@ sd3_inpaint_interface = gr.Interface(
         gr.Button(value=_("Stop generation", lang), interactive=True, variant="stop")
     ],
     additional_inputs=[
+        gr.Dropdown(choices=["FlowMatchEulerDiscreteScheduler", "FlowMatchHeunDiscreteScheduler"],
+                    label=_("Select scheduler", lang), value="FlowMatchEulerDiscreteScheduler"),
         gr.Slider(minimum=1, maximum=100, value=40, step=1, label=_("Steps", lang)),
         gr.Slider(minimum=1.0, maximum=30.0, value=8.0, step=0.1, label=_("CFG", lang)),
         gr.Slider(minimum=256, maximum=2048, value=1024, step=64, label=_("Width", lang)),

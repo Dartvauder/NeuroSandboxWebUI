@@ -1,5 +1,5 @@
 ﻿absl-py==2.1.0
-accelerate==0.32.1
+accelerate==0.34.2
 addict==2.4.0
 aiofiles==23.2.1
 aiohttp==3.9.5
@@ -21,7 +21,7 @@ Babel==2.14.0
 bangla==0.0.2
 basicsr==1.4.2
 beautifulsoup4==4.12.3
-bitsandbytes==0.43.3
+bitsandbytes==0.44.1
 blinker==1.7.0
 blis==0.7.11
 bnnumerizer==0.0.2
@@ -50,7 +50,7 @@ cymem==2.0.8
 Cython==3.0.10
 darkdetect==0.8.0
 dateparser==1.1.8
-datasets==2.21.0
+datasets==3.0.1
 decorator==5.1.1
 demucs==4.0.1
 diffusers==0.30.3
@@ -103,7 +103,7 @@ hsh==1.1.0
 html2text==2024.2.26
 httpcore==1.0.5
 httpx==0.27.0
-huggingface-hub==0.25.2
+huggingface-hub==0.26.1
 humanfriendly==10.0
 hydra-colorlog==1.2.0
 hydra-core==1.3.2
@@ -174,7 +174,7 @@ onnx==1.16.1
 onnxruntime==1.17.3
 onnxruntime-gpu==1.17.1
 open_clip_torch==2.26.1
-openai-whisper==20231117
+openai-whisper==20240930
 opencv-contrib-python==4.10.0.82
 opencv-python==4.10.0.82
 opencv-python-headless==4.10.0.82
@@ -187,7 +187,7 @@ outcome==1.3.0.post0
 packaging==24.1
 pandas==1.5.3
 pathspec==0.12.1
-peft==0.12.0
+peft==0.13.2
 pillow==10.3.0
 platformdirs==4.2.1
 pluggy==1.5.0
@@ -268,10 +268,10 @@ termcolor==2.4.0
 thinc==8.2.3
 threadpoolctl==3.4.0
 tifffile==2024.4.24
-tiktoken==0.6.0
+tiktoken==0.8.0
 timm==0.6.7
 tkinterdnd2==0.3.0
-tokenizers==0.20.0
+tokenizers==0.20.1
 tomli==2.0.1
 tomlkit==0.12.0
 toolz==0.12.1
@@ -323,7 +323,7 @@ stopit==1.1.2
 pyworld==0.3.4
 resampy==0.4.3
 torchcrepe==0.0.23
-audio-separator==0.21.0
+audio-separator==0.21.2
 beartype==0.18.5
 contextlib2==21.6.0
 diffq==0.2.4
@@ -363,7 +363,7 @@ PyMuPDFb==1.24.10
 cryptography==43.0.1
 distro==1.9.0
 jiter==0.5.0
-openai==1.45.0
+openai==1.52.0
 openparse==0.5.7
 pdfminer.six==20240706
 pypdf==4.3.1
@@ -390,7 +390,7 @@ gekko==1.2.1
 rouge==1.0.1
 cramjam==2.8.4
 fastparquet==2024.5.0
-optimum==1.22.0
+optimum==1.23.1
 asttokens==2.4.1
 comm==0.2.2
 debugpy==1.8.7
