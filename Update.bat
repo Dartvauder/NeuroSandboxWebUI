@@ -21,8 +21,8 @@ type nul > %ERROR_LOG%
 set BUILD_CUDA_EXT=1
 set INSTALL_KERNELS=1
 
-python -m pip install --upgrade pip
-pip install wheel setuptools
+python -m pip install --upgrade pip setuptools
+pip install wheel
 pip install --no-deps -r "%CURRENT_DIR%RequirementsFiles\requirements.txt" 2>> %ERROR_LOG%
 pip install --no-deps -r "%CURRENT_DIR%RequirementsFiles\requirements-cuda.txt" 2>> %ERROR_LOG%
 pip install --no-deps -r "%CURRENT_DIR%RequirementsFiles\requirements-llama-cpp.txt" 2>> %ERROR_LOG%
