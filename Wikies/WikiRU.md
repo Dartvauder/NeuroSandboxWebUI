@@ -1,6 +1,6 @@
 # Как пользоваться:
 
-#### Интерфейс имеет сорок один подраздел (некоторые с собственными подразделами) в семи основных разделах (Текст, Изображение, Видео, 3D, Аудио, Дополнительно и Интерфейс): LLM, TTS-STT, MMS, SeamlessM4Tv2, LibreTranslate, StableDiffusion, Kandinsky, Flux, HunyuanDiT, Lumina-T2X, Kolors, AuraFlow, Würstchen, DeepFloydIF, PixArt, PlaygroundV2.5, Wav2Lip, LivePortrait, ModelScope, ZeroScope 2, CogVideoX, Latte, StableFast3D, Shap-E, SV34D, Zero123Plus, StableAudio, AudioCraft, AudioLDM 2, SunoBark, RVC, UVR, Demucs, Upscale (Real-ESRGAN), FaceSwap, MetaData-Info, Wiki, Gallery, ModelDownloader, Settings и System. Выберите нужный и следуйте инструкциям ниже
+#### Интерфейс имеет сорок два подраздела (некоторые с собственными подразделами) в семи основных разделах (Текст, Изображение, Видео, 3D, Аудио, Дополнительно и Интерфейс): LLM, TTS-STT, MMS, SeamlessM4Tv2, LibreTranslate, StableDiffusion, Kandinsky, Flux, HunyuanDiT, Lumina-T2X, Kolors, AuraFlow, Würstchen, DeepFloydIF, PixArt, CogView3-Plus, PlaygroundV2.5, Wav2Lip, LivePortrait, ModelScope, ZeroScope 2, CogVideoX, Latte, StableFast3D, Shap-E, SV34D, Zero123Plus, StableAudio, AudioCraft, AudioLDM 2, SunoBark, RVC, UVR, Demucs, Upscale (Real-ESRGAN), FaceSwap, MetaData-Info, Wiki, Gallery, ModelDownloader, Settings и System. Выберите нужный и следуйте инструкциям ниже
 
 # Текст:
 
@@ -306,6 +306,12 @@
 3) Настройте модель согласно нужным вам параметрам
 4) Нажмите `Submit`, чтобы получить сгенерированное изображение
 
+### CogView3-Plus:
+
+1) Введите ваш промпт
+2) Настройте модель согласно нужным вам параметрам
+3) Нажмите `Submit`, чтобы получить сгенерированное изображение
+
 ### PlaygroundV2.5:
 
 1) Введите ваш промпт
@@ -464,9 +470,7 @@
 
 ### ModelDownloader:
 
-* Здесь вы можете скачать модели `LLM` и `StableDiffusion`. Просто выберите модель из выпадающего списка и нажмите кнопку `Submit`
-#### Модели `LLM` загружаются сюда: *inputs/text/llm_models*
-#### Модели `StableDiffusion` загружаются сюда: *inputs/image/sd_models*
+* Здесь вы можете скачать модели `LLM` и `StableDiffusion`
 
 ### Settings: 
 
@@ -486,5 +490,9 @@
 * Модели LLM можно взять с [HuggingFace](https://huggingface.co/models) или из ModelDownloader внутри интерфейса
 * Модели StableDiffusion, vae, inpaint, embedding и lora можно взять с [CivitAI](https://civitai.com/models) или из ModelDownloader внутри интерфейса
 * Модели RVC можно взять с [VoiceModels](https://voice-models.com)
-* Модели StableAudio, AudioCraft, AudioLDM 2, TTS, Whisper, MMS, SeamlessM4Tv2, Wav2Lip, LivePortrait, SunoBark, MoonDream2, Upscalers (Latent и Real-ESRGAN), Refiner, GLIGEN, DiffEdit, BLIP-Diffusion, Depth, Marigold, Pix2Pix, Controlnet, AnimateDiff, HotShot-XL, Videos, LDM3D, SD3, Cascade, T2I-IP-ADAPTER, IP-Adapter-FaceID, Riffusion, Rembg, Roop, CodeFormer, DDColor, PixelOE, Real-ESRGAN, StableFast3D, Shap-E, SV34D, Zero123Plus, UVR, Demucs, Kandinsky, Flux, HunyuanDiT, Lumina-T2X, Kolors, AuraFlow, AuraSR, Würstchen, DeepFloydIF, PixArt, PlaygroundV2.5, ModelScope, ZeroScope 2, CogVideoX, MagicPrompt, Latte и Multiband diffusion загружаются автоматически в папку *inputs* при их использовании
+* Модели StableAudio, AudioCraft, AudioLDM 2, TTS, Whisper, MMS, SeamlessM4Tv2, Wav2Lip, LivePortrait, SunoBark, MoonDream2, Upscalers (Latent и Real-ESRGAN), Refiner, GLIGEN, DiffEdit, BLIP-Diffusion, Depth, Marigold, Pix2Pix, Controlnet, AnimateDiff, HotShot-XL, Videos, LDM3D, SD3, Cascade, T2I-IP-ADAPTER, IP-Adapter-FaceID, Riffusion, Rembg, Roop, CodeFormer, DDColor, PixelOE, Real-ESRGAN, StableFast3D, Shap-E, SV34D, Zero123Plus, UVR, Demucs, Kandinsky, Flux, HunyuanDiT, Lumina-T2X, Kolors, AuraFlow, AuraSR, Würstchen, DeepFloydIF, PixArt, CogView3-Plus, PlaygroundV2.5, ModelScope, ZeroScope 2, CogVideoX, MagicPrompt, Latte и Multiband diffusion загружаются автоматически в папку *inputs* при их использовании
 * Голоса вы можете взять где угодно. Запишите свой или возьмите запись из Интернета. Или просто используйте те, которые уже есть в проекте. Главное, чтобы они были предварительно обработаны!
+
+## Дорожная карта и багтрекер:
+
+https://github.com/Dartvauder/NeuroSandboxWebUI/discussions/248

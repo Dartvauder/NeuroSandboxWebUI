@@ -6,13 +6,13 @@
 
 ## Description:
 
-A simple and convenient interface for using various neural network models. You can communicate with LLM using text, voice and image input; use StableDiffusion, Kandinsky, Flux, HunyuanDiT, Lumina-T2X, Kolors, AuraFlow, Würstchen, DeepFloydIF, PixArt and PlaygroundV2.5, to generate images; ModelScope, ZeroScope 2, CogVideoX and Latte to generate videos; StableFast3D, Shap-E, SV34D and Zero123Plus to generate 3D objects; StableAudioOpen, AudioCraft and AudioLDM 2 to generate music and audio; CoquiTTS, MMS and SunoBark for text-to-speech; OpenAI-Whisper and MMS for speech-to-text; Wav2Lip for lip-sync; LivePortrait for animate an image; Roop to faceswap; Rembg to remove background; CodeFormer for face restore; PixelOE for image pixelization; DDColor for image colorization; LibreTranslate and SeamlessM4Tv2 for text translation; Demucs and UVR for audio file separation; RVC for voice conversion. You can also view files from the outputs directory in gallery, download the LLM and StableDiffusion models, change the application settings inside the interface and check system sensors
+A simple and convenient interface for using various neural network models. You can communicate with LLM using text, voice and image input; use StableDiffusion, Kandinsky, Flux, HunyuanDiT, Lumina-T2X, Kolors, AuraFlow, Würstchen, DeepFloydIF, PixArt, CogView3-Plus and PlaygroundV2.5, to generate images; ModelScope, ZeroScope 2, CogVideoX and Latte to generate videos; StableFast3D, Shap-E, SV34D and Zero123Plus to generate 3D objects; StableAudioOpen, AudioCraft and AudioLDM 2 to generate music and audio; CoquiTTS, MMS and SunoBark for text-to-speech; OpenAI-Whisper and MMS for speech-to-text; Wav2Lip for lip-sync; LivePortrait for animate an image; Roop to faceswap; Rembg to remove background; CodeFormer for face restore; PixelOE for image pixelization; DDColor for image colorization; LibreTranslate and SeamlessM4Tv2 for text translation; Demucs and UVR for audio file separation; RVC for voice conversion. You can also view files from the outputs directory in gallery, download the LLM and StableDiffusion models, change the application settings inside the interface and check system sensors
 
 The goal of the project - to create the easiest possible application to use neural network models
 
 ### Text: <img width="1118" alt="1" src="https://github.com/user-attachments/assets/4eb61c69-4368-40a4-bf91-a37f8126043c">
 
-### Image: <img width="1109" alt="2" src="https://github.com/user-attachments/assets/309a7e7b-a54e-4b5c-837b-1d295d3960db">
+### Image: <img width="1112" alt="2" src="https://github.com/user-attachments/assets/458564bd-0ff6-4779-b7cf-4e85e24442df">
 
 ### Video: <img width="1117" alt="3" src="https://github.com/user-attachments/assets/5745c785-fede-4e11-aa46-73fd6696d032">
 
@@ -34,7 +34,7 @@ The goal of the project - to create the easiest possible application to use neur
 * Support for Transformers, BNB, GPTQ, AWQ, ExLlamaV2 and llama.cpp models (LLM)
 * Support for diffusers and safetensors models (StableDiffusion) - txt2img, img2img, depth2img, marigold, pix2pix, controlnet, upscale (latent), upscale (SUPIR), refiner, inpaint, outpaint, gligen, diffedit, blip-diffusion, animatediff, hotshot-xl, video, ldm3d, sd3, cascade, t2i-ip-adapter, ip-adapter-faceid and riffusion tabs
 * Support for stable-diffusion-cpp models for FLUX and Stable Diffusion
-* Support of additional models for image generation: Kandinsky (txt2img, img2img, inpaint), Flux (txt2img with cpp quantize and LoRA support, img2img, inpaint, controlnet), HunyuanDiT (txt2img, controlnet), Lumina-T2X, Kolors (txt2img with LoRA support, img2img, ip-adapter-plus), AuraFlow (with LoRA and AuraSR support), Würstchen, DeepFloydIF (txt2img, img2img, inpaint), PixArt and PlaygroundV2.5
+* Support of additional models for image generation: Kandinsky (txt2img, img2img, inpaint), Flux (txt2img with cpp quantize and LoRA support, img2img, inpaint, controlnet), HunyuanDiT (txt2img, controlnet), Lumina-T2X, Kolors (txt2img with LoRA support, img2img, ip-adapter-plus), AuraFlow (with LoRA and AuraSR support), Würstchen, DeepFloydIF (txt2img, img2img, inpaint), PixArt, CogView3-Plus and PlaygroundV2.5
 * Support Extras with Rembg, CodeFormer, PixelOE, DDColor, DownScale, Format changer, FaceSwap (Roop) and Upscale (Real-ESRGAN) models for image, video and audio
 * Support StableAudio
 * Support AudioCraft (Models: musicgen, audiogen and magnet)
@@ -162,6 +162,7 @@ First of all, I want to thank the developers of [PyCharm](https://www.jetbrains.
 * [StableDiffusion1.5](https://huggingface.co/spaces/CompVis/stable-diffusion-license)
 * [StableDiffusion2](https://huggingface.co/stabilityai/stable-diffusion-xl-base-1.0/blob/main/LICENSE.md)
 * [StableDiffusion3](https://huggingface.co/stabilityai/stable-diffusion-3-medium-diffusers/blob/main/LICENSE)
+* [StableDiffusion3.5](https://huggingface.co/stabilityai/stable-diffusion-3.5-large/blob/main/LICENSE.md)
 * [StableDiffusionXL](https://huggingface.co/stabilityai/stable-diffusion-xl-base-1.0/blob/main/LICENSE.md)
 * [StableCascade](https://huggingface.co/stabilityai/stable-cascade/blob/main/LICENSE)
 * [LatentDiffusionModel3D](https://huggingface.co/spaces/CompVis/stable-diffusion-license)
@@ -223,6 +224,7 @@ First of all, I want to thank the developers of [PyCharm](https://www.jetbrains.
 * [BLIP-Diffusion](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/apache-2.0.md)
 * [Consistency-Decoder](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/mit.md)
 * [Tiny-AutoEncoder](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/mit.md)
+* [CogView3-Plus](https://huggingface.co/THUDM/CogView3-Plus-3B/blob/main/LICENSE.md)
 
 #### These third-party repository codes are also used in my project:
 

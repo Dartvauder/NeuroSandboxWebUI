@@ -174,6 +174,7 @@ IFImg2ImgSuperResolutionPipeline = lazy_import('diffusers', 'IFImg2ImgSuperResol
 IFInpaintingSuperResolutionPipeline = lazy_import('diffusers', 'IFInpaintingSuperResolutionPipeline')
 PixArtAlphaPipeline = lazy_import('diffusers', 'PixArtAlphaPipeline')
 PixArtSigmaPipeline = lazy_import('diffusers', 'PixArtSigmaPipeline')
+CogView3PlusPipeline = lazy_import('diffusers', 'CogView3PlusPipeline')
 CogVideoXPipeline = lazy_import('diffusers', 'CogVideoXPipeline')
 CogVideoXDPMScheduler = lazy_import('diffusers', 'CogVideoXDPMScheduler')
 CogVideoXVideoToVideoPipeline = lazy_import('diffusers', 'CogVideoXVideoToVideoPipeline')
@@ -4845,13 +4846,13 @@ def generate_image_ldm3d(prompt, negative_prompt, seed, width, height, num_infer
         flush()
 
 
-def generate_image_sd3_txt2img(prompt, negative_prompt, model_type, quantize_sd3_model_name, enable_quantize, seed, stop_button, vae_model_name, lora_model_names, lora_scales, scheduler, num_inference_steps, guidance_scale, width, height, max_sequence_length, clip_skip, num_images_per_prompt, enable_taesd, output_format, progress=gr.Progress()):
+def generate_image_sd3_txt2img(prompt, negative_prompt, model_type, diffusers_version, quantize_sd3_model_name, enable_quantize, seed, stop_button, vae_model_name, lora_model_names, lora_scales, scheduler, num_inference_steps, guidance_scale, width, height, max_sequence_length, clip_skip, num_images_per_prompt, enable_taesd, output_format, progress=gr.Progress()):
     global stop_signal
     stop_signal = False
     stop_idx = None
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
-    torch_dtype = torch.float16 if device == "cuda" else torch.float32
+    torch_dtype = torch.bfloat16 if device == "cuda" else torch.bfloat32
 
     if enable_quantize:
         try:
@@ -4911,11 +4912,25 @@ def generate_image_sd3_txt2img(prompt, negative_prompt, model_type, quantize_sd3
 
             sd3_model_path = os.path.join("inputs", "image", "sd_models", "sd3")
             if not os.path.exists(sd3_model_path):
-                gr.Info("Downloading Stable Diffusion 3 model...")
+                gr.Info("Downloading Stable Diffusion 3 medium model...")
                 os.makedirs(sd3_model_path, exist_ok=True)
                 Repo.clone_from("https://huggingface.co/stabilityai/stable-diffusion-3-medium-diffusers",
                                 sd3_model_path)
-                gr.Info("Stable Diffusion 3 model downloaded")
+                gr.Info("Stable Diffusion 3 medium model downloaded")
+            sd3_5_model_path = os.path.join("inputs", "image", "sd_models", "sd3-5")
+            if not os.path.exists(sd3_5_model_path):
+                gr.Info("Downloading Stable Diffusion 3.5 large model...")
+                os.makedirs(sd3_5_model_path, exist_ok=True)
+                Repo.clone_from("https://huggingface.co/stabilityai/stable-diffusion-3.5-large",
+                                sd3_5_model_path)
+                gr.Info("Stable Diffusion 3.5 large model downloaded")
+            sd3_5_turbo_model_path = os.path.join("inputs", "image", "sd_models", "sd3-5-turbo")
+            if not os.path.exists(sd3_5_turbo_model_path):
+                gr.Info("Downloading Stable Diffusion 3.5 large turbo model...")
+                os.makedirs(sd3_5_turbo_model_path, exist_ok=True)
+                Repo.clone_from("https://huggingface.co/stabilityai/stable-diffusion-3.5-large-turbo",
+                                sd3_5_turbo_model_path)
+                gr.Info("Stable Diffusion 3.5 large turbo model downloaded")
 
             if model_type == "Diffusers":
                 quantization_config = BitsAndBytesConfig().BitsAndBytesConfig(load_in_8bit=True)
@@ -4925,10 +4940,21 @@ def generate_image_sd3_txt2img(prompt, negative_prompt, model_type, quantize_sd3
                     subfolder="text_encoder_3",
                     quantization_config=quantization_config,
                 )
-                pipe = StableDiffusion3Pipeline().StableDiffusion3Pipeline.from_pretrained(sd3_model_path,
-                                                                                           device_map="balanced",
-                                                                                           text_encoder_3=text_encoder,
-                                                                                           torch_dtype=torch_dtype)
+                if diffusers_version == "3-Medium":
+                    pipe = StableDiffusion3Pipeline().StableDiffusion3Pipeline.from_pretrained(sd3_model_path,
+                                                                                               device_map="balanced",
+                                                                                               text_encoder_3=text_encoder,
+                                                                                               torch_dtype=torch_dtype)
+                elif diffusers_version == "3.5-Large":
+                    pipe = StableDiffusion3Pipeline().StableDiffusion3Pipeline.from_pretrained(sd3_5_model_path,
+                                                                                               device_map="balanced",
+                                                                                               text_encoder_3=text_encoder,
+                                                                                               torch_dtype=torch_dtype)
+                elif diffusers_version == "3.5-Large-Turbo":
+                    pipe = StableDiffusion3Pipeline().StableDiffusion3Pipeline.from_pretrained(sd3_5_turbo_model_path,
+                                                                                               device_map="balanced",
+                                                                                               text_encoder_3=text_encoder,
+                                                                                               torch_dtype=torch_dtype)
             else:
                 pipe = StableDiffusion3Pipeline().StableDiffusion3Pipeline.from_single_file(stable_diffusion_model_path,
                                                                                             device_map=device,
@@ -8154,6 +8180,92 @@ def generate_image_pixart(prompt, negative_prompt, version, seed, stop_button, n
         flush()
 
 
+def generate_image_cogview3plus(prompt, negative_prompt, seed, stop_button, height, width, num_inference_steps, guidance_scale, max_sequence_length, output_format, progress=gr.Progress()):
+    global stop_signal
+    stop_signal = False
+    stop_idx = None
+
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    torch_dtype = torch.bfloat16 if device == "cuda" else torch.bfloat32
+
+    if seed == "" or seed is None:
+        seed = random.randint(0, 2 ** 32 - 1)
+    else:
+        seed = int(seed)
+    generator = torch.Generator(device).manual_seed(seed)
+
+    cogview3plus_model_path = os.path.join("inputs", "image", "cogview3plus")
+
+    if not os.path.exists(cogview3plus_model_path):
+        gr.Info("Downloading CogView3-Plus model...")
+        os.makedirs(cogview3plus_model_path, exist_ok=True)
+        Repo.clone_from("https://huggingface.co/THUDM/CogView3-Plus-3B", cogview3plus_model_path)
+        gr.Info("CogView3-Plus model downloaded")
+
+    try:
+        pipe = CogView3PlusPipeline().CogView3PlusPipeline.from_pretrained(
+            cogview3plus_model_path,
+            torch_dtype=torch_dtype
+        ).to(device)
+        pipe.enable_model_cpu_offload()
+        pipe.vae.enable_slicing()
+        pipe.vae.enable_tiling()
+
+        def combined_callback(pipe, i, t, callback_kwargs):
+            nonlocal stop_idx
+            if stop_signal and stop_idx is None:
+                stop_idx = i
+            if i == stop_idx:
+                pipe._interrupt = True
+
+            progress((i + 1) / num_inference_steps, f"Step {i + 1}/{num_inference_steps}")
+
+            return callback_kwargs
+
+        image = pipe(
+            prompt=prompt,
+            negative_prompt=negative_prompt,
+            height=height,
+            width=width,
+            num_inference_steps=num_inference_steps,
+            guidance_scale=guidance_scale,
+            max_sequence_length=max_sequence_length,
+            generator=generator,
+            callback_on_step_end=combined_callback,
+            callback_on_step_end_tensor_inputs=["latents"]
+        ).images[0]
+
+        today = datetime.now().date()
+        image_dir = os.path.join('outputs', f"Cogview3plus_{today.strftime('%Y%m%d')}")
+        os.makedirs(image_dir, exist_ok=True)
+        image_filename = f"Cogview3plus_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
+        image_path = os.path.join(image_dir, image_filename)
+        metadata = {
+            "prompt": prompt,
+            "negative_prompt": negative_prompt,
+            "model": "Cogview3plus",
+            "height": height,
+            "width": width,
+            "steps": num_inference_steps,
+            "guidance_scale": guidance_scale,
+            "seed": seed
+        }
+
+        image.save(image_path, format=output_format.upper())
+        add_metadata_to_file(image_path, metadata)
+
+        return image_path, f"Image generated successfully. Seed used: {seed}"
+
+    except Exception as e:
+        gr.Error(f"An error occurred: {str(e)}")
+        return None, None
+
+    finally:
+        if 'pipe' in locals():
+            del pipe
+        flush()
+
+
 def generate_image_playgroundv2(prompt, negative_prompt, seed, height, width, num_inference_steps, guidance_scale, output_format):
     device = "cuda" if torch.cuda.is_available() else "cpu"
     torch_dtype = torch.float16 if device == "cuda" else torch.float32
@@ -11287,6 +11399,7 @@ sd3_txt2img_interface = gr.Interface(
         gr.Textbox(label=_("Enter your prompt", lang), placeholder=_("(prompt:x.x) for Weighting", lang)),
         gr.Textbox(label=_("Enter your negative prompt", lang), placeholder=_("(prompt:x.x) for Weighting", lang), value=""),
         gr.Radio(choices=["Diffusers", "Safetensors"], label=_("Select model type", lang), value="Diffusers"),
+        gr.Radio(choices=["3-Medium", "3.5-Large", "3.5-Large-Turbo"], label=_("Select Diffusers model", lang), value="3-Medium"),
         gr.Dropdown(choices=stable_diffusion_models_list, label=_("Select StableDiffusion model", lang), value=None),
         gr.Checkbox(label=_("Enable Quantize", lang), value=False),
         gr.Textbox(label=_("Seed (optional)", lang), value=""),
@@ -12250,6 +12363,37 @@ pixart_interface = gr.Interface(
     submit_btn=_("Generate", lang)
 )
 
+cogview3plus_interface = gr.Interface(
+    fn=generate_image_cogview3plus,
+    inputs=[
+        gr.Textbox(label=_("Enter your prompt", lang)),
+        gr.Textbox(label=_("Enter your negative prompt", lang), value=""),
+        gr.Textbox(label=_("Seed (optional)", lang), value=""),
+        gr.Button(value=_("Stop generation", lang), interactive=True, variant="stop")
+    ],
+    additional_inputs=[
+        gr.Slider(minimum=256, maximum=2048, value=1024, step=64, label=_("Height", lang)),
+        gr.Slider(minimum=256, maximum=2048, value=1024, step=64, label=_("Width", lang)),
+        gr.Slider(minimum=1, maximum=100, value=40, step=1, label=_("Steps", lang)),
+        gr.Slider(minimum=1.0, maximum=30.0, value=8.0, step=0.1, label=_("CFG", lang)),
+        gr.Slider(minimum=64, maximum=2048, value=256, label=_("Max Length", lang)),
+        gr.Radio(choices=["png", "jpeg"], label=_("Select output format", lang), value="png", interactive=True)
+    ],
+    additional_inputs_accordion=gr.Accordion(label=_("Cogview3-plus Settings", lang), open=False),
+    outputs=[
+        gr.Gallery(label=_("Generated images", lang), elem_id="gallery", columns=[2], rows=[2], object_fit="contain", height="auto"),
+        gr.Textbox(label=_("Message", lang), type="text")
+    ],
+    title=_("NeuroSandboxWebUI - Cogview3-plus", lang),
+    description=_("This user interface allows you to enter any text and generate images using Cogview3-plus. "
+                "You can customize the generation settings from the sliders. "
+                "Try it and see what happens!", lang),
+    allow_flagging="never",
+    clear_btn=None,
+    stop_btn=_("Stop", lang),
+    submit_btn=_("Generate", lang)
+)
+
 playgroundv2_interface = gr.Interface(
     fn=generate_image_playgroundv2,
     inputs=[
@@ -13137,9 +13281,9 @@ with gr.TabbedInterface(
                      cascade_interface, t2i_ip_adapter_interface, ip_adapter_faceid_interface, riffusion_interface],
                     tab_names=[_("txt2img", lang), _("img2img", lang), _("depth2img", lang), _("marigold", lang), _("pix2pix", lang), _("controlnet", lang), _("upscale(latent)", lang), _("upscale(SUPIR)", lang), _("refiner", lang), _("inpaint", lang), _("outpaint", lang), _("gligen", lang), _("diffedit", lang), _("blip-diffusion", lang), _("animatediff", lang), _("hotshotxl", lang), _("video", lang), _("ldm3d", lang), _("sd3", lang), _("cascade", lang), _("t2i-ip-adapter", lang), _("ip-adapter-faceid", lang), _("riffusion", lang)]
                 ),
-                kandinsky_interface, flux_interface, hunyuandit_interface, lumina_interface, kolors_interface, auraflow_interface, wurstchen_interface, deepfloyd_if_interface, pixart_interface, playgroundv2_interface
+                kandinsky_interface, flux_interface, hunyuandit_interface, lumina_interface, kolors_interface, auraflow_interface, wurstchen_interface, deepfloyd_if_interface, pixart_interface, cogview3plus_interface, playgroundv2_interface
             ],
-            tab_names=[_("StableDiffusion", lang), _("Kandinsky", lang), _("Flux", lang), _("HunyuanDiT", lang), _("Lumina-T2X", lang), _("Kolors", lang), _("AuraFlow", lang), _("Würstchen", lang), _("DeepFloydIF", lang), _("PixArt", lang), _("PlaygroundV2.5", lang)]
+            tab_names=[_("StableDiffusion", lang), _("Kandinsky", lang), _("Flux", lang), _("HunyuanDiT", lang), _("Lumina-T2X", lang), _("Kolors", lang), _("AuraFlow", lang), _("Würstchen", lang), _("DeepFloydIF", lang), _("PixArt", lang), _("CogView3-Plus", lang), _("PlaygroundV2.5", lang)]
         ),
         gr.TabbedInterface(
             [wav2lip_interface, liveportrait_interface, modelscope_interface, zeroscope2_interface, cogvideox_interface, latte_interface],
@@ -13168,7 +13312,7 @@ with gr.TabbedInterface(
     inpaint_interface.input_components[10].click(stop_generation, [], [], queue=False)
     cascade_interface.input_components[3].click(stop_generation, [], [], queue=False)
     riffusion_text2image_interface.input_components[3].click(stop_generation, [], [], queue=False)
-    sd3_txt2img_interface.input_components[6].click(stop_generation, [], [], queue=False)
+    sd3_txt2img_interface.input_components[7].click(stop_generation, [], [], queue=False)
     sd3_img2img_interface.input_components[7].click(stop_generation, [], [], queue=False)
     sd3_controlnet_interface.input_components[5].click(stop_generation, [], [], queue=False)
     sd3_inpaint_interface.input_components[5].click(stop_generation, [], [], queue=False)
@@ -13186,6 +13330,7 @@ with gr.TabbedInterface(
     deepfloyd_if_img2img_interface.input_components[4].click(stop_generation, [], [], queue=False)
     deepfloyd_if_inpaint_interface.input_components[5].click(stop_generation, [], [], queue=False)
     pixart_interface.input_components[4].click(stop_generation, [], [], queue=False)
+    cogview3plus_interface.input_components[3].click(stop_generation, [], [], queue=False)
     modelscope_interface.input_components[3].click(stop_generation, [], [], queue=False)
     zeroscope2_interface.input_components[3].click(stop_generation, [], [], queue=False)
     cogvideox_text2video_interface.input_components[4].click(stop_generation, [], [], queue=False)
@@ -13219,9 +13364,9 @@ with gr.TabbedInterface(
         outpaint_interface.input_components[4],
         gligen_interface.input_components[5],
         animatediff_interface.input_components[5],
-        sd3_txt2img_interface.input_components[3],
-        sd3_txt2img_interface.input_components[7],
+        sd3_txt2img_interface.input_components[4],
         sd3_txt2img_interface.input_components[8],
+        sd3_txt2img_interface.input_components[9],
         sd3_img2img_interface.input_components[5],
         t2i_ip_adapter_interface.input_components[4],
         ip_adapter_faceid_interface.input_components[5],
