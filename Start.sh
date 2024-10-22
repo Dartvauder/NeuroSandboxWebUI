@@ -4,7 +4,8 @@ CURRENT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &> /dev/null && pwd)"
 
 source "$CURRENT_DIR/venv/bin/activate"
 
-# Read token from Settings.json
+python first_setup.py
+
 echo "Attempting to read Settings.json..."
 if [ ! -f Settings.json ]; then
     echo "Settings.json file not found!"
@@ -23,7 +24,6 @@ if [ -z "$HF_TOKEN" ]; then
     exit 1
 fi
 
-# Login to Hugging Face
 echo "Logging in to Hugging Face..."
 huggingface-cli login --token "$HF_TOKEN" --add-to-git-credential
 

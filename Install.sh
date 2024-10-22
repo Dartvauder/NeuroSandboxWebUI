@@ -2,6 +2,27 @@
 
 CURRENT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &> /dev/null && pwd)"
 
+echo "Select installation type:"
+echo "1. GPU"
+echo "2. CPU"
+read -n 1 -p "Enter number (1 or 2): " choice
+echo ""
+
+if [ "$choice" = "2" ]; then
+    INSTALL_TYPE="CPU"
+    export BUILD_CUDA_EXT=0
+    export INSTALL_KERNELS=0
+else
+    INSTALL_TYPE="GPU"
+    export BUILD_CUDA_EXT=1
+    export INSTALL_KERNELS=1
+fi
+
+clear
+echo "Selected version: $INSTALL_TYPE"
+sleep 2
+clear
+
 echo "Creating virtual environment..."
 python3 -m venv "$CURRENT_DIR/venv"
 source "$CURRENT_DIR/venv/bin/activate"
@@ -22,13 +43,19 @@ mkdir -p "$CURRENT_DIR/logs"
 ERROR_LOG="$CURRENT_DIR/logs/installation_errors.log"
 touch "$ERROR_LOG"
 
-export BUILD_CUDA_EXT=1
-export INSTALL_KERNELS=1
+if [ "$INSTALL_TYPE" = "CPU" ]; then
+    pip install --no-deps -r "$CURRENT_DIR/RequirementsFiles/requirements.txt" 2>> "$ERROR_LOG"
+    pip install --no-deps -r "$CURRENT_DIR/RequirementsFiles/requirements-cuda-CPU.txt" 2>> "$ERROR_LOG"
+    pip install --no-deps -r "$CURRENT_DIR/RequirementsFiles/requirements-llama-cpp-CPU.txt" 2>> "$ERROR_LOG"
+    pip install --no-deps -r "$CURRENT_DIR/RequirementsFiles/requirements-stable-diffusion-cpp-CPU.txt" 2>> "$ERROR_LOG"
+else
+    pip install --no-deps -r "$CURRENT_DIR/RequirementsFiles/requirements.txt" 2>> "$ERROR_LOG"
+    pip install --no-deps -r "$CURRENT_DIR/RequirementsFiles/requirements-cuda.txt" 2>> "$ERROR_LOG"
+    pip install --no-deps -r "$CURRENT_DIR/RequirementsFiles/requirements-llama-cpp.txt" 2>> "$ERROR_LOG"
+    pip install --no-deps -r "$CURRENT_DIR/RequirementsFiles/requirements-stable-diffusion-cpp.txt" 2>> "$ERROR_LOG"
+fi
+echo "INSTALL_TYPE=$INSTALL_TYPE" > "$CURRENT_DIR/install_config.txt"
 
-pip install --no-deps -r "$CURRENT_DIR/RequirementsFiles/requirements.txt" 2>> "$ERROR_LOG"
-pip install --no-deps -r "$CURRENT_DIR/RequirementsFiles/requirements-cuda.txt" 2>> "$ERROR_LOG"
-pip install --no-deps -r "$CURRENT_DIR/RequirementsFiles/requirements-llama-cpp.txt" 2>> "$ERROR_LOG"
-pip install --no-deps -r "$CURRENT_DIR/RequirementsFiles/requirements-stable-diffusion-cpp.txt" 2>> "$ERROR_LOG"
 pip install --no-build-isolation -e git+https://github.com/PanQiWei/AutoGPTQ.git#egg=auto_gptq@v0.7.1 2>> "$ERROR_LOG"
 pip install triton==2.1.0 2>> "$ERROR_LOG"
 pip install --no-build-isolation -e git+https://github.com/casper-hansen/AutoAWQ.git#egg=autoawq@v0.2.6 2>> "$ERROR_LOG"
