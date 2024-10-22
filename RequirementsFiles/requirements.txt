@@ -53,7 +53,7 @@ dateparser==1.1.8
 datasets==3.0.1
 decorator==5.1.1
 demucs==4.0.1
-diffusers==0.30.3
+diffusers==0.31.0
 diskcache==5.6.3
 docopt==0.6.2
 dora_search==0.1.12
@@ -62,7 +62,7 @@ einops==0.7.0
 encodec==0.1.1
 exceptiongroup==1.2.1
 facexlib==0.3.0
-fastapi==0.110.2
+fastapi==0.115.3
 ffmpeg-python==0.2.0
 ffmpy==0.3.2
 filelock==3.13.4
@@ -86,8 +86,8 @@ GitPython==3.1.43
 google-pasta==0.2.0
 GPUtil==1.4.0
 gpytoolbox==0.3.2
-gradio==5.1.0
-gradio_client==1.4.0
+gradio==5.3.0
+gradio_client==1.4.2
 grpcio==1.62.2
 gruut==2.2.3
 gruut-ipa==0.13.0
@@ -252,7 +252,7 @@ spacy==3.7.4
 spacy-legacy==3.0.12
 spacy-loggers==1.0.5
 srsly==2.4.8
-starlette==0.37.2
+starlette==0.41.0
 submitit==1.5.1
 SudachiDict-core==20240409
 SudachiPy==0.6.8
@@ -290,7 +290,7 @@ trove-classifiers==2024.7.2
 coqui-tts==0.24.2
 coqui-tts-trainer==0.1.4
 typeguard==4.2.1
-typer==0.12.3
+typer==0.12.5
 typing_extensions==4.11.0
 tzdata==2024.1
 tzlocal==5.2

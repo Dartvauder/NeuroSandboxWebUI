@@ -10443,11 +10443,11 @@ def reload_interface():
 def create_footer():
     footer_html = """
     <div style="text-align: center; background-color: #f0f0f0; padding: 10px; border-radius: 5px; margin-top: 20px;">
-        <span style="margin-right: 15px;">🔥 diffusers: 0.30.3</span>
+        <span style="margin-right: 15px;">🔥 diffusers: 0.31.0</span>
         <span style="margin-right: 15px;">📄 transformers: 4.45.2</span>
         <span style="margin-right: 15px;">🦙 llama-cpp-python: 0.3.1</span>
         <span style="margin-right: 15px;">🖼️ stable-diffusion-cpp-python: 0.1.8</span>
-        <span>ℹ️ gradio: 5.1.0</span>
+        <span>ℹ️ gradio: 5.3.0</span>
     </div>
     """
     return gr.Markdown(footer_html)
