@@ -5,6 +5,8 @@ set CURRENT_DIR=%~dp0
 
 call "%CURRENT_DIR%venv\Scripts\activate.bat"
 
+py first_setup.py
+
 echo Attempting to read Settings.json...
 if not exist Settings.json (
     echo Settings.json file not found!
