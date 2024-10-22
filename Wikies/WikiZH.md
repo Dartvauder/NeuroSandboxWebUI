@@ -492,3 +492,7 @@
 * RVC模型可以从[VoiceModels](https://voice-models.com)获取
 * StableAudio、AudioCraft、AudioLDM 2、TTS、Whisper、MMS、SeamlessM4Tv2、Wav2Lip、LivePortrait、SunoBark、MoonDream2、Upscalers（Latent和Real-ESRGAN）、Refiner、GLIGEN、DiffEdit、BLIP-Diffusion、Depth、Marigold、Pix2Pix、Controlnet、AnimateDiff、HotShot-XL、Videos、LDM3D、SD3、Cascade、T2I-IP-ADAPTER、IP-Adapter-FaceID、Riffusion、Rembg、Roop、CodeFormer、DDColor、PixelOE、Real-ESRGAN、StableFast3D、Shap-E、SV34D、Zero123Plus、UVR、Demucs、Kandinsky、Flux、HunyuanDiT、Lumina-T2X、Kolors、AuraFlow、AuraSR、Würstchen、DeepFloydIF、PixArt、CogView3-Plus, PlaygroundV2.5、ModelScope、ZeroScope 2、CogVideoX、MagicPrompt、Latte和Multiband diffusion模型在使用时会自动下载到*inputs*文件夹中
 * 您可以从任何地方获取语音。录制您自己的声音或从互联网上获取录音。或者直接使用项目中已有的语音。主要是要经过预处理！
+
+## 路线图和错误追踪器：
+
+https://github.com/Dartvauder/NeuroSandboxWebUI/discussions/248
