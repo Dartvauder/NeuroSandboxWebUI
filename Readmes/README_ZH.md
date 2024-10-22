@@ -6,13 +6,13 @@
 
 ## 描述：
 
-一个简单方便的界面，用于使用各种神经网络模型。您可以通过文本、语音和图像输入与LLM进行通信；使用StableDiffusion、Kandinsky、Flux、HunyuanDiT、Lumina-T2X、Kolors、AuraFlow、Würstchen、DeepFloydIF、PixArt和PlaygroundV2.5生成图像；使用ModelScope、ZeroScope 2、CogVideoX和Latte生成视频；使用StableFast3D、Shap-E、SV34D和Zero123Plus生成3D对象；使用StableAudioOpen、AudioCraft和AudioLDM 2生成音乐和音频；使用CoquiTTS、MMS和SunoBark进行文本到语音转换；使用OpenAI-Whisper和MMS进行语音到文本转换；使用Wav2Lip进行唇形同步；使用LivePortrait为图像添加动画；使用Roop进行换脸；使用Rembg移除背景；使用CodeFormer修复面部；使用PixelOE进行图像像素化；使用DDColor为图像上色；使用LibreTranslate和SeamlessM4Tv2进行文本翻译；使用Demucs和UVR进行音频文件分离；使用RVC进行语音转换。您还可以在图库中查看输出目录中的文件，下载LLM和StableDiffusion模型，在界面内更改应用程序设置并检查系统传感器。
+一个简单方便的界面，用于使用各种神经网络模型。您可以通过文本、语音和图像输入与LLM进行通信；使用StableDiffusion、Kandinsky、Flux、HunyuanDiT、Lumina-T2X、Kolors、AuraFlow、Würstchen、DeepFloydIF、PixArt, CogView3-Plus和PlaygroundV2.5生成图像；使用ModelScope、ZeroScope 2、CogVideoX和Latte生成视频；使用StableFast3D、Shap-E、SV34D和Zero123Plus生成3D对象；使用StableAudioOpen、AudioCraft和AudioLDM 2生成音乐和音频；使用CoquiTTS、MMS和SunoBark进行文本到语音转换；使用OpenAI-Whisper和MMS进行语音到文本转换；使用Wav2Lip进行唇形同步；使用LivePortrait为图像添加动画；使用Roop进行换脸；使用Rembg移除背景；使用CodeFormer修复面部；使用PixelOE进行图像像素化；使用DDColor为图像上色；使用LibreTranslate和SeamlessM4Tv2进行文本翻译；使用Demucs和UVR进行音频文件分离；使用RVC进行语音转换。您还可以在图库中查看输出目录中的文件，下载LLM和StableDiffusion模型，在界面内更改应用程序设置并检查系统传感器。
 
 项目目标 - 创建一个尽可能简单易用的神经网络模型应用程序
 
 ### 文本：<img width="1115" alt="1zh" src="https://github.com/user-attachments/assets/28c31659-2ce4-46dc-8cee-406cf6cb620e">
 
-### 图像：<img width="1111" alt="2zh" src="https://github.com/user-attachments/assets/bde9f42c-49c1-4d05-9dc8-41bac34c4449">
+### 图像：<img width="1103" alt="2zh" src="https://github.com/user-attachments/assets/65f7c1e6-4d29-400d-8392-1fac063a831d">
 
 ### 视频：<img width="1113" alt="3zh" src="https://github.com/user-attachments/assets/71405dba-e1e2-4a5b-bef7-e7e54eb84a86">
 
@@ -34,7 +34,7 @@
 * 支持Transformers, BNB, GPTQ, AWQ, ExLlamaV2和llama.cpp模型（LLM）
 * 支持diffusers和safetensors模型（StableDiffusion）- txt2img、img2img、depth2img、marigold、pix2pix、controlnet、upscale（latent）、upscale（SUPIR）、refiner、inpaint、outpaint、gligen、diffedit、blip-diffusion、animatediff、hotshot-xl、video、ldm3d、sd3、cascade、t2i-ip-adapter、ip-adapter-faceid和riffusion标签
 * 支持stable-diffusion-cpp模型用于FLUX和StableDiffusion
-* 支持额外的图像生成模型：Kandinsky（txt2img、img2img、inpaint）、Flux (txt2img 支持 cpp quantize 和 LoRA, img2img, inpaint, controlnet) 、HunyuanDiT（txt2img、controlnet）、Lumina-T2X、Kolors（支持LoRA的txt2img、img2img、ip-adapter-plus）、AuraFlow（支持LoRA和AuraSR）、Würstchen、DeepFloydIF（txt2img、img2img、inpaint）、PixArt和PlaygroundV2.5
+* 支持额外的图像生成模型：Kandinsky（txt2img、img2img、inpaint）、Flux (txt2img 支持 cpp quantize 和 LoRA, img2img, inpaint, controlnet) 、HunyuanDiT（txt2img、controlnet）、Lumina-T2X、Kolors（支持LoRA的txt2img、img2img、ip-adapter-plus）、AuraFlow（支持LoRA和AuraSR）、Würstchen、DeepFloydIF（txt2img、img2img、inpaint）、PixArt, CogView3-Plus和PlaygroundV2.5
 * 支持使用Rembg、CodeFormer、PixelOE、DDColor、DownScale、格式转换器、换脸（Roop）和放大（Real-ESRGAN）模型进行图像、视频和音频的额外处理
 * 支持StableAudio
 * 支持AudioCraft（模型：musicgen、audiogen和magnet）
@@ -162,6 +162,7 @@
 * [StableDiffusion1.5](https://huggingface.co/spaces/CompVis/stable-diffusion-license)
 * [StableDiffusion2](https://huggingface.co/stabilityai/stable-diffusion-xl-base-1.0/blob/main/LICENSE.md)
 * [StableDiffusion3](https://huggingface.co/stabilityai/stable-diffusion-3-medium-diffusers/blob/main/LICENSE)
+* [StableDiffusion3.5](https://huggingface.co/stabilityai/stable-diffusion-3.5-large/blob/main/LICENSE.md)
 * [StableDiffusionXL](https://huggingface.co/stabilityai/stable-diffusion-xl-base-1.0/blob/main/LICENSE.md)
 * [StableCascade](https://huggingface.co/stabilityai/stable-cascade/blob/main/LICENSE)
 * [LatentDiffusionModel3D](https://huggingface.co/spaces/CompVis/stable-diffusion-license)
@@ -223,6 +224,7 @@
 * [BLIP-Diffusion](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/apache-2.0.md)
 * [Consistency-Decoder](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/mit.md)
 * [Tiny-AutoEncoder](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/mit.md)
+* [CogView3-Plus](https://huggingface.co/THUDM/CogView3-Plus-3B/blob/main/LICENSE.md)
 
 #### 这些第三方仓库代码也在我的项目中使用：
 
