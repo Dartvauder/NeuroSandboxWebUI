@@ -31,7 +31,8 @@ if "%choice%"=="3" (
     set /p confirm="Are you sure you want to delete the application? (y/n): "
     if /i "%confirm%"=="y" (
         echo Deleting application...
-        rd /s /q "%CURRENT_DIR%"
+        cd ..
+        rd /s /q "%~dp0"
         echo Application deleted successfully.
         pause
         exit
