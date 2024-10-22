@@ -20,7 +20,7 @@ if errorlevel 2 (
 )
 cls
 
-echo Выбрана %INSTALL_TYPE% версия
+echo Selected %INSTALL_TYPE% version
 timeout /t 2 /nobreak >nul
 cls
 
