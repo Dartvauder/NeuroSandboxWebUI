@@ -1,6 +1,6 @@
 # 使用方法：
 
-#### 界面有七个主选项卡（文本、图像、视频、3D、音频、附加功能和界面），共四十一个子选项卡（部分带有自己的子选项卡）：LLM、TTS-STT、MMS、SeamlessM4Tv2、LibreTranslate、StableDiffusion、Kandinsky、Flux、HunyuanDiT、Lumina-T2X、Kolors、AuraFlow、Würstchen、DeepFloydIF、PixArt、PlaygroundV2.5、Wav2Lip、LivePortrait、ModelScope、ZeroScope 2、CogVideoX、Latte、StableFast3D、Shap-E、SV34D、Zero123Plus、StableAudio、AudioCraft、AudioLDM 2、SunoBark、RVC、UVR、Demucs、Upscale (Real-ESRGAN)、FaceSwap、MetaData-Info、Wiki、Gallery、ModelDownloader、Settings和System。选择您需要的选项卡并按照以下说明操作
+#### 界面有七个主选项卡（文本、图像、视频、3D、音频、附加功能和界面），共四十一个子选项卡（部分带有自己的子选项卡）：LLM、TTS-STT、MMS、SeamlessM4Tv2、LibreTranslate、StableDiffusion、Kandinsky、Flux、HunyuanDiT、Lumina-T2X、Kolors、AuraFlow、Würstchen、DeepFloydIF、PixArt, CogView3-Plus, PlaygroundV2.5、Wav2Lip、LivePortrait、ModelScope、ZeroScope 2、CogVideoX、Latte、StableFast3D、Shap-E、SV34D、Zero123Plus、StableAudio、AudioCraft、AudioLDM 2、SunoBark、RVC、UVR、Demucs、Upscale (Real-ESRGAN)、FaceSwap、MetaData-Info、Wiki、Gallery、ModelDownloader、Settings和System。选择您需要的选项卡并按照以下说明操作
 
 # 文本：
 
@@ -306,6 +306,12 @@
 3) 根据您需要的参数设置模型
 4) 点击`Submit`获取生成的图像
 
+### CogView3-Plus:
+
+1) 输入您的提示
+2) 根据您需要的参数设置模型
+3) 点击`Submit`获取生成的图像
+
 ### PlaygroundV2.5：
 
 1) 输入您的提示
@@ -464,9 +470,7 @@
 
 ### ModelDownloader：
 
-* 在这里您可以下载`LLM`和`StableDiffusion`模型。只需从下拉列表中选择模型，然后点击`Submit`按钮
-#### `LLM`模型下载到这里：*inputs/text/llm_models*
-#### `StableDiffusion`模型下载到这里：*inputs/image/sd_models*
+* 在这里您可以下载`LLM`和`StableDiffusion`模型
 
 ### Settings：
 
@@ -486,5 +490,5 @@
 * LLM模型可以从[HuggingFace](https://huggingface.co/models)获取，或者从界面内的ModelDownloader获取
 * StableDiffusion、vae、inpaint、embedding和lora模型可以从[CivitAI](https://civitai.com/models)获取，或者从界面内的ModelDownloader获取
 * RVC模型可以从[VoiceModels](https://voice-models.com)获取
-* StableAudio、AudioCraft、AudioLDM 2、TTS、Whisper、MMS、SeamlessM4Tv2、Wav2Lip、LivePortrait、SunoBark、MoonDream2、Upscalers（Latent和Real-ESRGAN）、Refiner、GLIGEN、DiffEdit、BLIP-Diffusion、Depth、Marigold、Pix2Pix、Controlnet、AnimateDiff、HotShot-XL、Videos、LDM3D、SD3、Cascade、T2I-IP-ADAPTER、IP-Adapter-FaceID、Riffusion、Rembg、Roop、CodeFormer、DDColor、PixelOE、Real-ESRGAN、StableFast3D、Shap-E、SV34D、Zero123Plus、UVR、Demucs、Kandinsky、Flux、HunyuanDiT、Lumina-T2X、Kolors、AuraFlow、AuraSR、Würstchen、DeepFloydIF、PixArt、PlaygroundV2.5、ModelScope、ZeroScope 2、CogVideoX、MagicPrompt、Latte和Multiband diffusion模型在使用时会自动下载到*inputs*文件夹中
+* StableAudio、AudioCraft、AudioLDM 2、TTS、Whisper、MMS、SeamlessM4Tv2、Wav2Lip、LivePortrait、SunoBark、MoonDream2、Upscalers（Latent和Real-ESRGAN）、Refiner、GLIGEN、DiffEdit、BLIP-Diffusion、Depth、Marigold、Pix2Pix、Controlnet、AnimateDiff、HotShot-XL、Videos、LDM3D、SD3、Cascade、T2I-IP-ADAPTER、IP-Adapter-FaceID、Riffusion、Rembg、Roop、CodeFormer、DDColor、PixelOE、Real-ESRGAN、StableFast3D、Shap-E、SV34D、Zero123Plus、UVR、Demucs、Kandinsky、Flux、HunyuanDiT、Lumina-T2X、Kolors、AuraFlow、AuraSR、Würstchen、DeepFloydIF、PixArt、CogView3-Plus, PlaygroundV2.5、ModelScope、ZeroScope 2、CogVideoX、MagicPrompt、Latte和Multiband diffusion模型在使用时会自动下载到*inputs*文件夹中
 * 您可以从任何地方获取语音。录制您自己的声音或从互联网上获取录音。或者直接使用项目中已有的语音。主要是要经过预处理！
