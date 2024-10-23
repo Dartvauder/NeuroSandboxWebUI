@@ -256,7 +256,7 @@ starlette==0.41.0
 submitit==1.5.1
 SudachiDict-core==20240409
 SudachiPy==0.6.8
-sympy==1.12
+sympy==1.13.1
 tb-nightly==2.17.0a20240509
 tbb==2021.11.0
 tensorboard==2.17.0
