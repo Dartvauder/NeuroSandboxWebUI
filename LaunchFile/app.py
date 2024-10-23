@@ -17,6 +17,7 @@ os.makedirs(temp_dir, exist_ok=True)
 os.environ["TMPDIR"] = temp_dir
 from threading import Thread
 import gradio as gr
+from gradio_pannellum import Pannellum
 import langdetect
 from datasets import load_dataset, Audio
 from libretranslatepy import LibreTranslateAPI
@@ -115,6 +116,7 @@ GenerationConfig = lazy_import('transformers', 'GenerationConfig')
 diffusers = lazy_import('diffusers', '')
 BlipDiffusionPipeline = lazy_import('diffusers.pipelines', 'BlipDiffusionPipeline')
 StableDiffusionPipeline = lazy_import('diffusers', 'StableDiffusionPipeline')
+StableDiffusionPanoramaPipeline = lazy_import('diffusers', 'StableDiffusionPanoramaPipeline')
 StableDiffusion3Pipeline = lazy_import('diffusers', 'StableDiffusion3Pipeline')
 StableDiffusionXLPipeline = lazy_import('diffusers', 'StableDiffusionXLPipeline')
 StableDiffusionImg2ImgPipeline = lazy_import('diffusers', 'StableDiffusionImg2ImgPipeline')
@@ -2047,7 +2049,7 @@ def generate_image_txt2img(prompt, negative_prompt, style_name, stable_diffusion
                            enable_freeu, freeu_s1, freeu_s2, freeu_b1, freeu_b2,
                            enable_sag, sag_scale, enable_pag, pag_scale, enable_token_merging, ratio,
                            enable_deepcache, cache_interval, cache_branch_id, enable_tgate, gate_step,
-                           enable_magicprompt, magicprompt_max_new_tokens, enable_cdvae, enable_taesd, output_format, progress=gr.Progress()):
+                           enable_magicprompt, magicprompt_max_new_tokens, enable_cdvae, enable_taesd, enable_multidiffusion, circular_padding, output_format, progress=gr.Progress()):
     global stop_signal
     stop_signal = False
     stop_idx = None
@@ -2145,6 +2147,10 @@ def generate_image_txt2img(prompt, negative_prompt, style_name, stable_diffusion
                 stable_diffusion_model = StableDiffusionXLPipeline().StableDiffusionXLPipeline.from_single_file(
                     stable_diffusion_model_path, use_safetensors=True, device_map="auto", attention_slice=1,
                     torch_dtype=torch_dtype, variant=variant, vae=vae_xl)
+            elif enable_multidiffusion:
+                stable_diffusion_model = StableDiffusionPanoramaPipeline().StableDiffusionPanoramaPipeline.from_single_file(
+                    stable_diffusion_model_path, use_safetensors=True, device_map="auto",
+                    torch_dtype=torch_dtype, variant=variant)
             else:
                 if stable_diffusion_model_type == "SD":
                     stable_diffusion_model = StableDiffusionPipeline().StableDiffusionPipeline.from_single_file(
@@ -2494,6 +2500,21 @@ def generate_image_txt2img(prompt, negative_prompt, style_name, stable_diffusion
                                                 num_images_per_prompt=num_images_per_prompt,
                                                 generator=generator, callback_on_step_end=combined_callback,
                                                 callback_on_step_end_tensor_inputs=["latents"]).images
+            elif enable_multidiffusion:
+                images = stable_diffusion_model(
+                    prompt=prompt,
+                    negative_prompt=negative_prompt,
+                    num_inference_steps=stable_diffusion_steps,
+                    guidance_scale=stable_diffusion_cfg,
+                    height=stable_diffusion_height,
+                    width=stable_diffusion_width,
+                    clip_skip=stable_diffusion_clip_skip,
+                    circular_padding=circular_padding,
+                    num_images_per_prompt=num_images_per_prompt,
+                    generator=generator,
+                    callback_on_step_end=combined_callback,
+                    callback_on_step_end_tensor_inputs=["latents"]
+                ).images
             else:
                 compel_proc = Compel(tokenizer=stable_diffusion_model.tokenizer,
                                      text_encoder=stable_diffusion_model.text_encoder)
@@ -10259,6 +10280,10 @@ def display_metadata(file, progress=gr.Progress()):
         return None
 
 
+def view_panorama(image):
+    return image
+
+
 def get_wiki_content(url, local_file="Wikies/WikiEN.md", progress=gr.Progress()):
     progress(0.1, desc="Initializing wiki content retrieval")
     try:
@@ -10859,6 +10884,8 @@ txt2img_interface = gr.Interface(
         gr.Slider(minimum=32, maximum=256, value=50, step=1, label=_("MagicPrompt Max New Tokens", lang)),
         gr.Checkbox(label=_("Enable CDVAE", lang), value=False),
         gr.Checkbox(label=_("Enable TAESD", lang), value=False),
+        gr.Checkbox(label=_("Enable MultiDiffusion", lang), value=False),
+        gr.Checkbox(label=_("Enable Circular padding", lang), value=False),
         gr.Radio(choices=["png", "jpeg"], label=_("Select output format", lang), value="png", interactive=True)
     ],
     additional_inputs_accordion=gr.Accordion(label=_("Additional StableDiffusion Settings", lang), open=False),
@@ -13148,9 +13175,25 @@ metadata_interface = gr.Interface(
     submit_btn=_("View", lang)
 )
 
+panorama_interface = gr.Interface(
+    fn=view_panorama,
+    inputs=[
+        gr.Image(type="filepath", label=_("Upload Panorama Image", lang)),
+    ],
+    outputs=[
+        Pannellum(type="filepath", label=_("Panorama Image", lang)),
+    ],
+    title=_("NeuroSandboxWebUI - Panorama-Viewer", lang),
+    description=_("This interface allows you to view generation of panorama image", lang),
+    allow_flagging="never",
+    clear_btn=None,
+    stop_btn=_("Stop", lang),
+    submit_btn=_("View", lang)
+)
+
 extras_interface = gr.TabbedInterface(
-    [image_extras_interface, video_extras_interface, audio_extras_interface, realesrgan_upscale_interface, faceswap_interface, metadata_interface],
-    tab_names=[_("Image", lang), _("Video", lang), _("Audio", lang), _("Upscale (Real-ESRGAN)", lang), _("FaceSwap", lang), _("Metadata-Info", lang)]
+    [image_extras_interface, video_extras_interface, audio_extras_interface, realesrgan_upscale_interface, faceswap_interface, panorama_interface, metadata_interface],
+    tab_names=[_("Image", lang), _("Video", lang), _("Audio", lang), _("Upscale (Real-ESRGAN)", lang), _("FaceSwap", lang), _("Panorama-Viewer", lang), _("Metadata-Info", lang)]
 )
 
 wiki_interface = gr.Interface(
