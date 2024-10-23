@@ -495,4 +495,4 @@
 
 ## Дорожная карта и багтрекер:
 
-https://github.com/Dartvauder/NeuroSandboxWebUI/discussions/248
+[DiscussionLink](https://github.com/Dartvauder/NeuroSandboxWebUI/discussions/248)
