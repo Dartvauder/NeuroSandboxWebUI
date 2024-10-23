@@ -12381,7 +12381,7 @@ cogview3plus_interface = gr.Interface(
     ],
     additional_inputs_accordion=gr.Accordion(label=_("Cogview3-plus Settings", lang), open=False),
     outputs=[
-        gr.Gallery(label=_("Generated images", lang), elem_id="gallery", columns=[2], rows=[2], object_fit="contain", height="auto"),
+        gr.Image(type="filepath", label=_("Generated image", lang)),
         gr.Textbox(label=_("Message", lang), type="text")
     ],
     title=_("NeuroSandboxWebUI - Cogview3-plus", lang),
