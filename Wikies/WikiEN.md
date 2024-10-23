@@ -495,4 +495,4 @@
 
 ## Roadmap & Bugtracker:
 
-https://github.com/Dartvauder/NeuroSandboxWebUI/discussions/248
+[DiscussionLink](https://github.com/Dartvauder/NeuroSandboxWebUI/discussions/248)
