@@ -1,0 +1,57 @@
+name: "🪽 Pull requests"
+description: Submit a Pull requests
+title: "🪽 [PullRequests] - <title>"
+body:
+  - type: dropdown
+    id: PRtype
+    attributes:
+      label: "PRtype"
+      description: What type of PR is this?
+      multiple: true
+      options:
+        - Refactor
+        - Feature
+        - BugFix
+        - Optimization
+        - DocumentationUpdate
+    validations:
+      required: true
+      
+  - type: dropdown
+    id: Added/updated tests
+    attributes:
+      label: "Added/updated tests"
+      description: Have you tested these changes?
+      multiple: false
+      options:
+        - Yes
+        - No
+    validations:
+      required: false
+
+  - type: textarea
+    id: Description
+    validations:
+      required: true
+    attributes:
+      label: "Description"
+      description: |
+        A clear and concise description of the Pull requests
+
+  - type: textarea
+    id: Tickets & Documents
+    validations:
+      required: false
+    attributes:
+      label: "Tickets & Documents"
+      description: |
+        Related tickets and documents for the current case
+
+  - type: textarea
+    id: QA Instructions & Screenshots
+    validations:
+      required: false
+    attributes:
+      label: "QA Instructions & Screenshots"
+      description: |
+        Please write in this line with instructions on how to test your changes, a note on the devices and browsers this has been tested on, as well as any relevant images for UI changes
