@@ -13401,6 +13401,8 @@ with gr.TabbedInterface(
     )
     create_footer()
 
+    project_root = os.getcwd()
+
     app.queue(api_open=settings['api_open'], max_size=settings['queue_max_size'], status_update_rate=settings['status_update_rate'])
     app.launch(
         share=settings['share_mode'],
@@ -13414,5 +13416,6 @@ with gr.TabbedInterface(
         max_file_size=settings['max_file_size'] * gr.FileSize.MB,
         share_server_address=settings['share_server_address'] if settings['share_server_address'] else None,
         favicon_path="project-image.png",
+        allowed_paths=[project_root],
         auth_message=_("Welcome to NeuroSandboxWebUI!", lang)
     )
