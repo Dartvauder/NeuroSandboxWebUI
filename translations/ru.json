@@ -576,6 +576,7 @@
   "Output Files": "Выходные файлы",
   "Text": "Текст",
   "3D Model": "3D-модель",
+  "Select Style (optional)": "Выберите Стиль (необязательно)",
   "NeuroSandboxWebUI - Gallery": "NeuroSandboxWebUI - Галерея",
   "This interface allows you to view files from the outputs directory": "Этот интерфейс позволяет просматривать файлы из директории выходных данных",
   "NeuroSandboxWebUI - ModelDownloader": "NeuroSandboxWebUI - Загрузчик моделей",

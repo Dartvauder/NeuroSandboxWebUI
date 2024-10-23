@@ -68,6 +68,7 @@ import openparse
 import string
 import hashlib
 from ThirdPartyRepository.taesd import taesd
+import pandas as pd
 
 
 def lazy_import(module_name, fromlist):
@@ -1090,6 +1091,26 @@ def get_languages():
     }
 
 
+styles_filepath = "styles.csv"
+
+
+def load_styles_from_csv(filepath):
+    data = pd.read_csv(filepath)
+    styles_dict = {}
+    for _, row in data.iterrows():
+        name = row['name']
+        prompt = row['prompt']
+        negative_prompt = row['negative_prompt']
+        styles_dict[name] = {
+            'prompt': prompt,
+            'negative_prompt': negative_prompt
+        }
+    return styles_dict
+
+
+styles = load_styles_from_csv(styles_filepath)
+
+
 def generate_text_and_speech(input_text, system_prompt, input_audio, llm_model_type, llm_model_name, llm_lora_model_name, selected_chat_file, enable_web_search, enable_libretranslate, target_lang, enable_openparse, pdf_file, enable_multimodal, input_image, input_video, input_audio_mm, enable_tts,
                              llm_settings_html, max_new_tokens, max_length, min_length, n_ctx, n_batch, n_ubatch, freq_base, freq_scale, temperature, top_p, min_p, typical_p, top_k,
                              do_sample, early_stopping, stopping, repetition_penalty, frequency_penalty, presence_penalty, length_penalty, no_repeat_ngram_size, num_beams, num_return_sequences, chat_history_format, tts_settings_html, speaker_wav, language, tts_temperature, tts_top_p, tts_top_k, tts_speed, tts_repetition_penalty, tts_length_penalty, output_format, chat_history_state):
@@ -2019,7 +2040,7 @@ def translate_text(text, source_lang, target_lang, enable_translate_history, tra
         flush()
 
 
-def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name, enable_quantize, vae_model_name, lora_model_names, lora_scales, textual_inversion_model_names, stable_diffusion_settings_html,
+def generate_image_txt2img(prompt, negative_prompt, style_name, stable_diffusion_model_name, enable_quantize, vae_model_name, lora_model_names, lora_scales, textual_inversion_model_names, stable_diffusion_settings_html,
                            stable_diffusion_model_type, stable_diffusion_scheduler, stable_diffusion_steps,
                            stable_diffusion_cfg, stable_diffusion_width, stable_diffusion_height,
                            stable_diffusion_clip_skip, num_images_per_prompt, seed, stop_button,
@@ -2034,6 +2055,12 @@ def generate_image_txt2img(prompt, negative_prompt, stable_diffusion_model_name,
     if not stable_diffusion_model_name:
         gr.Info("Please, select a StableDiffusion model!")
         return None, None, None
+
+    if style_name and style_name in styles:
+        style_prompt = styles[style_name]['prompt']
+        style_negative_prompt = styles[style_name]['negative_prompt']
+        prompt = f"{prompt}, {style_prompt}" if prompt else style_prompt
+        negative_prompt = f"{negative_prompt}, {style_negative_prompt}" if negative_prompt else style_negative_prompt
 
     if enable_quantize:
 
@@ -10785,6 +10812,7 @@ txt2img_interface = gr.Interface(
     inputs=[
         gr.Textbox(label=_("Enter your prompt", lang), placeholder=_("+ and - for Weighting; ('p', 'p').blend(0.x, 0.x) for Blending; ['p', 'p', 'p'].and() for Conjunction", lang)),
         gr.Textbox(label=_("Enter your negative prompt", lang), value=""),
+        gr.Dropdown(choices=list(styles.keys()), label=_("Select Style (optional)", lang), value=None),
         gr.Dropdown(choices=stable_diffusion_models_list, label=_("Select StableDiffusion model", lang), value=None),
         gr.Checkbox(label=_("Enable Quantize", lang), value=False),
         gr.Dropdown(choices=vae_models_list, label=_("Select VAE model (optional)", lang), value=None),
@@ -13306,7 +13334,7 @@ with gr.TabbedInterface(
     tab_names=[_("Text", lang), _("Image", lang), _("Video", lang), _("3D", lang), _("Audio", lang), _("Extras", lang), _("Interface", lang)],
     theme=theme
 ) as app:
-    txt2img_interface.input_components[18].click(stop_generation, [], [], queue=False)
+    txt2img_interface.input_components[19].click(stop_generation, [], [], queue=False)
     img2img_interface.input_components[12].click(stop_generation, [], [], queue=False)
     controlnet_interface.input_components[8].click(stop_generation, [], [], queue=False)
     inpaint_interface.input_components[10].click(stop_generation, [], [], queue=False)
@@ -13350,10 +13378,10 @@ with gr.TabbedInterface(
         chat_interface.input_components[6],
         chat_interface.input_components[44],
         tts_stt_interface.input_components[3],
-        txt2img_interface.input_components[2],
-        txt2img_interface.input_components[4],
+        txt2img_interface.input_components[3],
         txt2img_interface.input_components[5],
-        txt2img_interface.input_components[7],
+        txt2img_interface.input_components[6],
+        txt2img_interface.input_components[8],
         img2img_interface.input_components[5],
         img2img_interface.input_components[7],
         img2img_interface.input_components[8],
