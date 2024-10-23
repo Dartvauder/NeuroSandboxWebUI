@@ -40,6 +40,21 @@ def select_language() -> str:
         print("\nНеверный выбор! / Invalid choice! / 选择无效！")
 
 
+def select_auto_launch() -> bool:
+    while True:
+        print("\nВключить автозапуск? / Enable auto-launch? / 启用自动启动？")
+        print("1. Да / Yes / 是")
+        print("2. Нет / No / 否")
+
+        choice = input("Введите номер / Enter number / 输入数字 (1-2): ").strip()
+
+        if choice == "1":
+            return True
+        elif choice == "2":
+            return False
+        print("\nНеверный выбор! / Invalid choice! / 选择无效！")
+
+
 def input_hf_token() -> Optional[str]:
     print("\nВведите ваш Hugging Face токен (или нажмите Enter для пропуска):")
     print("Enter your Hugging Face token (or press Enter to skip):")
@@ -71,6 +86,9 @@ def main():
 
     language = select_language()
     settings['language'] = language
+
+    auto_launch = select_auto_launch()
+    settings['auto_launch'] = auto_launch
 
     token = input_hf_token()
     if token:
