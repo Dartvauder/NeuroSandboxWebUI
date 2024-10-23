@@ -12381,7 +12381,7 @@ cogview3plus_interface = gr.Interface(
     ],
     additional_inputs_accordion=gr.Accordion(label=_("Cogview3-plus Settings", lang), open=False),
     outputs=[
-        gr.Gallery(label=_("Generated images", lang), elem_id="gallery", columns=[2], rows=[2], object_fit="contain", height="auto"),
+        gr.Image(type="filepath", label=_("Generated image", lang)),
         gr.Textbox(label=_("Message", lang), type="text")
     ],
     title=_("NeuroSandboxWebUI - Cogview3-plus", lang),
@@ -13401,6 +13401,8 @@ with gr.TabbedInterface(
     )
     create_footer()
 
+    project_root = os.getcwd()
+
     app.queue(api_open=settings['api_open'], max_size=settings['queue_max_size'], status_update_rate=settings['status_update_rate'])
     app.launch(
         share=settings['share_mode'],
@@ -13414,5 +13416,6 @@ with gr.TabbedInterface(
         max_file_size=settings['max_file_size'] * gr.FileSize.MB,
         share_server_address=settings['share_server_address'] if settings['share_server_address'] else None,
         favicon_path="project-image.png",
+        allowed_paths=[project_root],
         auth_message=_("Welcome to NeuroSandboxWebUI!", lang)
     )

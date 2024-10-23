@@ -1,5 +1,4 @@
-torch==2.4.1
+torch==2.5.0
 torchtext==0.18.0
-torchaudio==2.4.1
-torchvision==0.19.1
-xformers==0.0.28.post1
+torchaudio==2.5.0
+torchvision==0.20.0
