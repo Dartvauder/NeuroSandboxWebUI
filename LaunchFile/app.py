@@ -11450,7 +11450,7 @@ sd3_txt2img_interface = gr.Interface(
         gr.Textbox(label=_("Enter your prompt", lang), placeholder=_("(prompt:x.x) for Weighting", lang)),
         gr.Textbox(label=_("Enter your negative prompt", lang), placeholder=_("(prompt:x.x) for Weighting", lang), value=""),
         gr.Radio(choices=["Diffusers", "Safetensors"], label=_("Select model type", lang), value="Diffusers"),
-        gr.Radio(choices=["3-Medium", "3.5-Large", "3.5-Large-Turbo"], label=_("Select Diffusers model", lang), value="3-Medium"),
+        gr.Radio(choices=["3-Medium", "3.5-Large", "3.5-Large-Turbo"], label=_("Select Diffusers model", lang), value=None),
         gr.Dropdown(choices=stable_diffusion_models_list, label=_("Select StableDiffusion model", lang), value=None),
         gr.Checkbox(label=_("Enable Quantize", lang), value=False),
         gr.Textbox(label=_("Seed (optional)", lang), value=""),
