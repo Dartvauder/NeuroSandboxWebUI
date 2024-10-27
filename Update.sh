@@ -37,7 +37,7 @@ python3 -m pip install --upgrade pip setuptools
 pip install wheel
 
 if [ "$INSTALL_TYPE" = "CPU" ]; then
-    pip install --no-deps -r "$CURRENT_DIR/RequirementsFiles/requirements.txt" 2>> "$ERROR_LOG"
+    pip install --no-deps -r "$CURRENT_DIR/RequirementsFiles/requirements-СPU.txt" 2>> "$ERROR_LOG"
     pip install --no-deps -r "$CURRENT_DIR/RequirementsFiles/requirements-cuda-CPU.txt" 2>> "$ERROR_LOG"
     pip install --no-deps -r "$CURRENT_DIR/RequirementsFiles/requirements-llama-cpp-CPU.txt" 2>> "$ERROR_LOG"
     pip install --no-deps -r "$CURRENT_DIR/RequirementsFiles/requirements-stable-diffusion-cpp-CPU.txt" 2>> "$ERROR_LOG"

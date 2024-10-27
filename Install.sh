@@ -44,7 +44,7 @@ ERROR_LOG="$CURRENT_DIR/logs/installation_errors.log"
 touch "$ERROR_LOG"
 
 if [ "$INSTALL_TYPE" = "CPU" ]; then
-    pip install --no-deps -r "$CURRENT_DIR/RequirementsFiles/requirements.txt" 2>> "$ERROR_LOG"
+    pip install --no-deps -r "$CURRENT_DIR/RequirementsFiles/requirements-СPU.txt" 2>> "$ERROR_LOG"
     pip install --no-deps -r "$CURRENT_DIR/RequirementsFiles/requirements-cuda-CPU.txt" 2>> "$ERROR_LOG"
     pip install --no-deps -r "$CURRENT_DIR/RequirementsFiles/requirements-llama-cpp-CPU.txt" 2>> "$ERROR_LOG"
     pip install --no-deps -r "$CURRENT_DIR/RequirementsFiles/requirements-stable-diffusion-cpp-CPU.txt" 2>> "$ERROR_LOG"
