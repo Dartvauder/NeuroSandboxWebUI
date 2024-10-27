@@ -10,8 +10,7 @@ echo.
 echo Available options:
 echo 1. Install package
 echo 2. Uninstall package
-echo 3. Delete application
-echo 4. Exit
+echo 3. Exit
 echo.
 
 :menu
@@ -28,17 +27,6 @@ if "%choice%"=="2" (
     goto menu
 )
 if "%choice%"=="3" (
-    set /p confirm="Are you sure you want to delete the application? (y/n): "
-    if /i "%confirm%"=="y" (
-        echo Deleting application...
-        cd ..
-        set DELETE_DIR=%CURRENT_DIR%
-        start cmd /c "timeout /t 1 & rd /s /q "%DELETE_DIR%" & exit"
-        exit
-    )
-    goto menu
-)
-if "%choice%"=="4" (
     deactivate
     exit
 )

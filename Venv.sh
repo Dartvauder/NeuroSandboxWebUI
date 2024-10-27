@@ -11,8 +11,7 @@ while true; do
     echo "Available options:"
     echo "1. Install package"
     echo "2. Uninstall package"
-    echo "3. Delete application"
-    echo "4. Exit"
+    echo "3. Exit"
     echo
 
     read -p "Enter your choice (1-4): " choice
@@ -27,16 +26,6 @@ while true; do
             pip uninstall $package
             ;;
         3)
-            read -p "Are you sure you want to delete the application? (y/n): " confirm
-            if [[ $confirm == [Yy]* ]]; then
-                echo "Deleting application..."
-                cd .. || exit 1
-                rm -rf "${CURRENT_DIR}"
-                echo "Application deleted successfully."
-                exit 0
-            fi
-            ;;
-        4)
             deactivate
             exit 0
             ;;
