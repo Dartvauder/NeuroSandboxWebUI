@@ -15,6 +15,7 @@ os.environ["XDG_CACHE_HOME"] = cache_dir
 temp_dir = os.path.join("temp")
 os.makedirs(temp_dir, exist_ok=True)
 os.environ["TMPDIR"] = temp_dir
+sys.modules['triton'] = None
 from threading import Thread
 import gradio as gr
 import langdetect
@@ -115,6 +116,7 @@ GenerationConfig = lazy_import('transformers', 'GenerationConfig')
 diffusers = lazy_import('diffusers', '')
 BlipDiffusionPipeline = lazy_import('diffusers.pipelines', 'BlipDiffusionPipeline')
 StableDiffusionPipeline = lazy_import('diffusers', 'StableDiffusionPipeline')
+StableDiffusionPanoramaPipeline = lazy_import('diffusers', 'StableDiffusionPanoramaPipeline')
 StableDiffusion3Pipeline = lazy_import('diffusers', 'StableDiffusion3Pipeline')
 StableDiffusionXLPipeline = lazy_import('diffusers', 'StableDiffusionXLPipeline')
 StableDiffusionImg2ImgPipeline = lazy_import('diffusers', 'StableDiffusionImg2ImgPipeline')
@@ -2047,7 +2049,7 @@ def generate_image_txt2img(prompt, negative_prompt, style_name, stable_diffusion
                            enable_freeu, freeu_s1, freeu_s2, freeu_b1, freeu_b2,
                            enable_sag, sag_scale, enable_pag, pag_scale, enable_token_merging, ratio,
                            enable_deepcache, cache_interval, cache_branch_id, enable_tgate, gate_step,
-                           enable_magicprompt, magicprompt_max_new_tokens, enable_cdvae, enable_taesd, output_format, progress=gr.Progress()):
+                           enable_magicprompt, magicprompt_max_new_tokens, enable_cdvae, enable_taesd, enable_multidiffusion, circular_padding, output_format, progress=gr.Progress()):
     global stop_signal
     stop_signal = False
     stop_idx = None
@@ -2145,6 +2147,10 @@ def generate_image_txt2img(prompt, negative_prompt, style_name, stable_diffusion
                 stable_diffusion_model = StableDiffusionXLPipeline().StableDiffusionXLPipeline.from_single_file(
                     stable_diffusion_model_path, use_safetensors=True, device_map="auto", attention_slice=1,
                     torch_dtype=torch_dtype, variant=variant, vae=vae_xl)
+            elif enable_multidiffusion:
+                stable_diffusion_model = StableDiffusionPanoramaPipeline().StableDiffusionPanoramaPipeline.from_single_file(
+                    stable_diffusion_model_path, use_safetensors=True, device_map="auto",
+                    torch_dtype=torch_dtype, variant=variant)
             else:
                 if stable_diffusion_model_type == "SD":
                     stable_diffusion_model = StableDiffusionPipeline().StableDiffusionPipeline.from_single_file(
@@ -2494,6 +2500,21 @@ def generate_image_txt2img(prompt, negative_prompt, style_name, stable_diffusion
                                                 num_images_per_prompt=num_images_per_prompt,
                                                 generator=generator, callback_on_step_end=combined_callback,
                                                 callback_on_step_end_tensor_inputs=["latents"]).images
+            elif enable_multidiffusion:
+                images = stable_diffusion_model(
+                    prompt=prompt,
+                    negative_prompt=negative_prompt,
+                    num_inference_steps=stable_diffusion_steps,
+                    guidance_scale=stable_diffusion_cfg,
+                    height=stable_diffusion_height,
+                    width=stable_diffusion_width,
+                    clip_skip=stable_diffusion_clip_skip,
+                    circular_padding=circular_padding,
+                    num_images_per_prompt=num_images_per_prompt,
+                    generator=generator,
+                    callback_on_step_end=combined_callback,
+                    callback_on_step_end_tensor_inputs=["latents"]
+                ).images
             else:
                 compel_proc = Compel(tokenizer=stable_diffusion_model.tokenizer,
                                      text_encoder=stable_diffusion_model.text_encoder)
@@ -10583,10 +10604,10 @@ def create_footer():
     footer_html = """
     <div style="text-align: center; background-color: #f0f0f0; padding: 10px; border-radius: 5px; margin-top: 20px;">
         <span style="margin-right: 15px;">🔥 diffusers: 0.31.0</span>
-        <span style="margin-right: 15px;">📄 transformers: 4.45.2</span>
+        <span style="margin-right: 15px;">📄 transformers: 4.46.0</span>
         <span style="margin-right: 15px;">🦙 llama-cpp-python: 0.3.1</span>
         <span style="margin-right: 15px;">🖼️ stable-diffusion-cpp-python: 0.1.8</span>
-        <span>ℹ️ gradio: 5.3.0</span>
+        <span>ℹ️ gradio: 5.4.0</span>
     </div>
     """
     return gr.Markdown(footer_html)
@@ -10859,6 +10880,8 @@ txt2img_interface = gr.Interface(
         gr.Slider(minimum=32, maximum=256, value=50, step=1, label=_("MagicPrompt Max New Tokens", lang)),
         gr.Checkbox(label=_("Enable CDVAE", lang), value=False),
         gr.Checkbox(label=_("Enable TAESD", lang), value=False),
+        gr.Checkbox(label=_("Enable MultiDiffusion", lang), value=False),
+        gr.Checkbox(label=_("Enable Circular padding (for MultiDiffusion)", lang), value=False),
         gr.Radio(choices=["png", "jpeg"], label=_("Select output format", lang), value="png", interactive=True)
     ],
     additional_inputs_accordion=gr.Accordion(label=_("Additional StableDiffusion Settings", lang), open=False),

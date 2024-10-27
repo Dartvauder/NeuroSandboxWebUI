@@ -18,6 +18,8 @@
   "Context batch (N_BATCH) for llama type models": "Размер пакета контекста (N_BATCH) для моделей типа llama",
   "Min P": "Минимальное P",
   "Typical P": "Типичное P",
+  "Enable MultiDiffusion": "Включить мультидиффузию",
+  "Enable Circular padding (for MultiDiffusion)": "Включить круговое заполнение (для мультидиффузии)",
   "Stop sequences (optional)": "Последовательности остановки (необязательно)",
   "TTS Repetition penalty": "TTS Штраф за повторение",
   "TTS Length penalty": "TTS Штраф за длину",

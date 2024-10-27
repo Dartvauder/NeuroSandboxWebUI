@@ -18,6 +18,8 @@
   "Context batch (N_BATCH) for llama type models": "llama类型模型的上下文批次 (N_BATCH)",
   "Min P": "最小P值",
   "Typical P": "典型P值",
+  "Enable MultiDiffusion": "启用多重扩散",
+  "Enable Circular padding (for MultiDiffusion)": "启用循环填充（用于多重扩散）",
   "Stop sequences (optional)": "停止序列（可选）",
   "TTS Repetition penalty": "TTS重复惩罚",
   "TTS Length penalty": "TTS长度惩罚",
