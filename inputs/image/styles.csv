@@ -1,8 +1,8 @@
 name,prompt,negative_prompt
 Cinematic,"cinematic lighting, depth of field, professional photography, movie still, dramatic atmosphere, color grading, high budget, 8k uhd, high production value","blurry, overexposed, underexposed, amateur, low quality, grainy, noisy, distorted, pixelated"
-Fantasy,"magical atmosphere, ethereal lighting, mystical creatures, enchanted forest, glowing particles, floating elements, magical effects, fantasy landscape, otherworldly","modern elements, urban setting, mundane objects, realistic style, contemporary, mundane"
-Fantastic,"surreal atmosphere, dreamlike quality, floating islands, impossible architecture, cosmic elements, prismatic colors, fantasy creatures, otherworldly scene","realistic, mundane, ordinary, simple composition, basic lighting"
-Action,"dynamic pose, motion blur, intense lighting, action scene, explosive effects, dramatic angle, high energy, power pose, epic moment","static pose, boring composition, flat lighting, peaceful scene, calm atmosphere"
+Fantasy,"mystical atmosphere, ethereal lighting, glowing particles, floating elements, magical effects, fantasy landscape, otherworldly","modern elements, urban setting, mundane objects, realistic style, contemporary, mundane"
+Fantastic,"surreal atmosphere, dreamlike quality, impossible architecture, cosmic elements, prismatic colors, otherworldly scene","realistic, mundane, ordinary, simple composition, basic lighting"
+Action,"dynamic and power pose, motion blur, intense lighting, action scene, explosive effects, dramatic angle, high energy, epic moment","static pose, boring composition, flat lighting, peaceful scene, calm atmosphere"
 Portrait,"professional studio lighting, bokeh background, sharp focus, perfect composition, detailed facial features, professional retouching, fashion photography","blurry, bad lighting, noisy background, overexposed, amateur look, unfocused"
 Anime,"anime art style, cel shading, vibrant colors, dramatic lighting, expressive eyes, detailed hair, clean lines, manga influence","photorealistic, western art style, 3d rendering, realistic textures, noisy"
 Vintage,"retro style, film grain, muted colors, nostalgic atmosphere, old photo effect, analog film, classic composition, aged texture","modern look, sharp digital, clean edges, vivid colors, contemporary style"
