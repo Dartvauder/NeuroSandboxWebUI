@@ -1094,7 +1094,7 @@ def get_languages():
     }
 
 
-styles_filepath = "styles.csv"
+styles_filepath = "inputs/image/styles.csv"
 
 
 def load_styles_from_csv(filepath):

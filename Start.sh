@@ -4,7 +4,7 @@ CURRENT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &> /dev/null && pwd)"
 
 source "$CURRENT_DIR/venv/bin/activate"
 
-python first_setup.py
+python "$CURRENT_DIR/RequirementsFiles/first_setup.py"
 
 echo "Attempting to read Settings.json..."
 if [ ! -f Settings.json ]; then

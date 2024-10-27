@@ -24,7 +24,7 @@ sleep 2
 clear
 
 echo "Creating virtual environment..."
-python3 -m venv "$CURRENT_DIR/venv"
+python -m venv "$CURRENT_DIR/venv"
 source "$CURRENT_DIR/venv/bin/activate"
 clear
 
@@ -33,7 +33,7 @@ mkdir -p "$CURRENT_DIR/pip_cache"
 export PIP_CACHE_DIR="$CURRENT_DIR/pip_cache"
 
 echo "Upgrading pip, setuptools and wheel..."
-python3 -m pip install --upgrade pip setuptools
+python -m pip install --upgrade pip setuptools
 pip install wheel
 sleep 3
 clear
@@ -68,7 +68,7 @@ sleep 3
 clear
 
 echo "Post-installing patches..."
-python3 "$CURRENT_DIR/RequirementsFiles/post_install.py"
+python "$CURRENT_DIR/RequirementsFiles/post_install.py"
 sleep 3
 clear
 
