@@ -1,7 +1,7 @@
 import json
 import os
 import sys
-from typing import Dict, Optional
+from typing import Dict, Optional, Tuple
 
 
 def load_settings() -> Dict:
@@ -55,6 +55,28 @@ def select_auto_launch() -> bool:
         print("\nНеверный выбор! / Invalid choice! / 选择无效！")
 
 
+def input_auth_credentials() -> Tuple[str, str]:
+    print("\nВведите логин и пароль (формат login:password) или нажмите Enter для пропуска:")
+    print("Enter login and password (format login:password) or press Enter to skip:")
+    print("输入登录名和密码（格式 login:password）或按 Enter 跳过：")
+
+    credentials = input().strip()
+
+    if not credentials:
+        return "admin", "admin"
+
+    try:
+        username, password = credentials.split(':')
+        if username and password:
+            return username.strip(), password.strip()
+        raise ValueError
+    except ValueError:
+        print("\nНеверный формат! Используется значение по умолчанию (admin:admin)")
+        print("Invalid format! Using default value (admin:admin)")
+        print("格式无效！使用默认值 (admin:admin)")
+        return "admin", "admin"
+
+
 def input_hf_token() -> Optional[str]:
     print("\nВведите ваш Hugging Face токен (или нажмите Enter для пропуска):")
     print("Enter your Hugging Face token (or press Enter to skip):")
@@ -89,6 +111,10 @@ def main():
 
     auto_launch = select_auto_launch()
     settings['auto_launch'] = auto_launch
+
+    username, password = input_auth_credentials()
+    settings['auth']['username'] = username
+    settings['auth']['password'] = password
 
     token = input_hf_token()
     if token:

@@ -32,9 +32,8 @@ if "%choice%"=="3" (
     if /i "%confirm%"=="y" (
         echo Deleting application...
         cd ..
-        rd /s /q "%~dp0"
-        echo Application deleted successfully.
-        pause
+        set DELETE_DIR=%CURRENT_DIR%
+        start cmd /c "timeout /t 1 & rd /s /q "%DELETE_DIR%" & exit"
         exit
     )
     goto menu

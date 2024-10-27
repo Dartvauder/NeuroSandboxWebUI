@@ -86,7 +86,7 @@ GitPython==3.1.43
 google-pasta==0.2.0
 GPUtil==1.4.0
 gpytoolbox==0.3.2
-gradio==5.3.0
+gradio==5.4.0
 gradio_client==1.4.2
 grpcio==1.62.2
 gruut==2.2.3
@@ -217,7 +217,7 @@ python-crfsuite==0.9.10
 python-dateutil==2.9.0.post0
 python-dotenv==1.0.1
 python-ffmpeg==2.0.12
-python-multipart==0.0.9
+python-multipart==0.0.12
 pytorch-lightning==2.4.0
 pytz==2024.1
 PyWavelets==1.6.0
@@ -232,6 +232,7 @@ rich==13.7.1
 rpds-py==0.18.0
 ruff==0.4.2
 safetensors==0.4.3
+safehttpx==0.1.1
 scikit-image==0.23.2
 scikit-learn==1.4.2
 scipy==1.11.4
@@ -281,7 +282,7 @@ torchsde==0.2.6
 tqdm==4.66.5
 trainer==0.0.36
 trampoline==0.1.2
-transformers==4.45.2
+transformers==4.46.0
 treetable==0.2.5
 trimesh==4.4.7
 trio==0.25.0

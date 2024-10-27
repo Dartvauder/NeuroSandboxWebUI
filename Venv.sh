@@ -30,7 +30,7 @@ while true; do
             read -p "Are you sure you want to delete the application? (y/n): " confirm
             if [[ $confirm == [Yy]* ]]; then
                 echo "Deleting application..."
-                cd ..
+                cd .. || exit 1
                 rm -rf "${CURRENT_DIR}"
                 echo "Application deleted successfully."
                 exit 0
