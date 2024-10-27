@@ -302,7 +302,8 @@ except Exception as e:
 
 def flush():
     gc.collect()
-    torch.cuda.empty_cache()
+    if torch.cuda.is_available():
+        torch.cuda.empty_cache()
 
 
 def stop_generation():
