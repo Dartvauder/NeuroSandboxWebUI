@@ -11,10 +11,15 @@ while true; do
     echo "Available options:"
     echo "1. Install package"
     echo "2. Uninstall package"
-    echo "3. Exit"
+    echo "3. Upgrade package"
+    echo "4. List installed packages"
+    echo "5. Show package details"
+    echo "6. Check dependencies"
+    echo "7. Debug information"
+    echo "8. Exit"
     echo
 
-    read -p "Enter your choice (1-4): " choice
+    read -p "Enter your choice (1-8): " choice
 
     case $choice in
         1)
@@ -26,6 +31,27 @@ while true; do
             pip uninstall $package
             ;;
         3)
+            read -p "Enter package name to upgrade: " package
+            pip install --upgrade $package
+            ;;
+        4)
+            pip list
+            echo
+            ;;
+        5)
+            read -p "Enter package name to show details: " package
+            pip show $package
+            echo
+            ;;
+        6)
+            pip check
+            echo
+            ;;
+        7)
+            pip debug --verbose
+            echo
+            ;;
+        8)
             deactivate
             exit 0
             ;;
