@@ -57,8 +57,6 @@ import urllib.parse
 import torchaudio
 from audiocraft.data.audio import audio_write
 import psutil
-import GPUtil
-import WinTmp
 from pynvml import nvmlInit, nvmlDeviceGetHandleByIndex, nvmlDeviceGetTemperature, NVML_TEMPERATURE_GPU
 from insightface.app import FaceAnalysis
 from insightface.utils import face_align
@@ -70,6 +68,20 @@ import string
 import hashlib
 from ThirdPartyRepository.taesd import taesd
 import pandas as pd
+
+GPUtil = None
+if torch.cuda.is_available():
+    try:
+        import GPUtil
+    except ImportError:
+        GPUtil = None
+
+WinTmp = None
+if sys.platform in ['win32', 'win64']:
+    try:
+        import WinTmp
+    except ImportError:
+        WinTmp = None
 
 
 def lazy_import(module_name, fromlist):
@@ -10471,18 +10483,27 @@ def get_system_info(progress=gr.Progress()):
     progress(0.1, desc="Initializing system info retrieval")
 
     progress(0.2, desc="Getting GPU information")
-    gpu = GPUtil.getGPUs()[0]
-    gpu_total_memory = f"{gpu.memoryTotal} MB"
-    gpu_used_memory = f"{gpu.memoryUsed} MB"
-    gpu_free_memory = f"{gpu.memoryFree} MB"
+    if torch.cuda.is_available():
+        gpu = GPUtil.getGPUs()[0]
+        gpu_total_memory = f"{gpu.memoryTotal} MB"
+        gpu_used_memory = f"{gpu.memoryUsed} MB"
+        gpu_free_memory = f"{gpu.memoryFree} MB"
+    else:
+        pass
 
     progress(0.3, desc="Getting GPU temperature")
-    nvmlInit()
-    handle = nvmlDeviceGetHandleByIndex(0)
-    gpu_temp = nvmlDeviceGetTemperature(handle, NVML_TEMPERATURE_GPU)
+    if torch.cuda.is_available():
+        nvmlInit()
+        handle = nvmlDeviceGetHandleByIndex(0)
+        gpu_temp = nvmlDeviceGetTemperature(handle, NVML_TEMPERATURE_GPU)
+    else:
+        pass
 
     progress(0.4, desc="Getting CPU temperature")
-    cpu_temp = (WinTmp.CPU_Temp())
+    if sys.platform == 'win32' or 'win64':
+        cpu_temp = (WinTmp.CPU_Temp())
+    else:
+        pass
 
     progress(0.5, desc="Getting RAM information")
     ram = psutil.virtual_memory()

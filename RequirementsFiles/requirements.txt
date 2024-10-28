@@ -310,7 +310,6 @@ wsproto==1.2.0
 yapf==0.40.2
 yarl==1.9.4
 zipp==3.18.1
-WinTmp==1.1.0
 clr-loader==0.2.6
 pythonnet==3.0.3
 wmi==1.5.1
