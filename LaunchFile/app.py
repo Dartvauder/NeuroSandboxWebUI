@@ -10397,9 +10397,11 @@ def download_model(model_url, model_type, progress=gr.Progress()):
             return f"{model_type} repository {repo_name} downloaded successfully!"
         else:
             progress(0.3, desc="Downloading file")
+            if "blob/main" in model_url:
+                model_url = model_url.replace("blob/main", "resolve/main")
             file_name = model_url.split("/")[-1]
             file_path = os.path.join(model_path, file_name)
-            response = requests.get(model_url, allow_redirects=True)
+            response = requests.get(model_url, allow_redirects=True, stream=True)
             with open(file_path, "wb") as file:
                 file.write(response.content)
             progress(0.9, desc="File downloaded successfully")
@@ -10503,7 +10505,19 @@ def get_system_info(progress=gr.Progress()):
     if sys.platform == 'win32' or 'win64':
         cpu_temp = (WinTmp.CPU_Temp())
     else:
-        pass
+        if hasattr(psutil, "sensors_temperatures"):
+            temps = psutil.sensors_temperatures()
+            if 'coretemp' in temps:
+                cpu_temp = temps['coretemp'][0].current
+            else:
+                result = subprocess.run(["sensors"], capture_output=True, text=True)
+                lines = result.stdout.splitlines()
+                for line in lines:
+                    if "Core" in line:
+                        cpu_temp = float(line.split()[1].strip('+°C'))
+                        break
+        else:
+            pass
 
     progress(0.5, desc="Getting RAM information")
     ram = psutil.virtual_memory()
