@@ -1,1 +1,1 @@
-stable-diffusion-cpp-python==0.1.8 -C cmake.args="-DSD_CUBLAS=on"
+stable-diffusion-cpp-python==0.1.9 -C cmake.args="-DSD_CUBLAS=on"

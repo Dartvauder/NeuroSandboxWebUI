@@ -4971,47 +4971,60 @@ def generate_image_sd3_txt2img(prompt, negative_prompt, model_type, diffusers_ve
 
             stable_diffusion_model_path = os.path.join("inputs", "image", "sd_models", quantize_sd3_model_name)
 
-            sd3_model_path = os.path.join("inputs", "image", "sd_models", "sd3")
-            if not os.path.exists(sd3_model_path):
-                gr.Info("Downloading Stable Diffusion 3 medium model...")
-                os.makedirs(sd3_model_path, exist_ok=True)
-                Repo.clone_from("https://huggingface.co/stabilityai/stable-diffusion-3-medium-diffusers",
-                                sd3_model_path)
-                gr.Info("Stable Diffusion 3 medium model downloaded")
-            sd3_5_model_path = os.path.join("inputs", "image", "sd_models", "sd3-5")
-            if not os.path.exists(sd3_5_model_path):
-                gr.Info("Downloading Stable Diffusion 3.5 large model...")
-                os.makedirs(sd3_5_model_path, exist_ok=True)
-                Repo.clone_from("https://huggingface.co/stabilityai/stable-diffusion-3.5-large",
-                                sd3_5_model_path)
-                gr.Info("Stable Diffusion 3.5 large model downloaded")
-            sd3_5_turbo_model_path = os.path.join("inputs", "image", "sd_models", "sd3-5-turbo")
-            if not os.path.exists(sd3_5_turbo_model_path):
-                gr.Info("Downloading Stable Diffusion 3.5 large turbo model...")
-                os.makedirs(sd3_5_turbo_model_path, exist_ok=True)
-                Repo.clone_from("https://huggingface.co/stabilityai/stable-diffusion-3.5-large-turbo",
-                                sd3_5_turbo_model_path)
-                gr.Info("Stable Diffusion 3.5 large turbo model downloaded")
-
             if model_type == "Diffusers":
-                quantization_config = BitsAndBytesConfig().BitsAndBytesConfig(load_in_8bit=True)
-
-                text_encoder = T5EncoderModel().T5EncoderModel.from_pretrained(
-                    sd3_model_path,
-                    subfolder="text_encoder_3",
-                    quantization_config=quantization_config,
-                )
                 if diffusers_version == "3-Medium":
+                    sd3_model_path = os.path.join("inputs", "image", "sd_models", "sd3")
+                    if not os.path.exists(sd3_model_path):
+                        gr.Info("Downloading Stable Diffusion 3 medium model...")
+                        os.makedirs(sd3_model_path, exist_ok=True)
+                        Repo.clone_from("https://huggingface.co/stabilityai/stable-diffusion-3-medium-diffusers",
+                                        sd3_model_path)
+                        gr.Info("Stable Diffusion 3 medium model downloaded")
+                    quantization_config = BitsAndBytesConfig().BitsAndBytesConfig(load_in_8bit=True)
+
+                    text_encoder = T5EncoderModel().T5EncoderModel.from_pretrained(
+                        sd3_model_path,
+                        subfolder="text_encoder_3",
+                        quantization_config=quantization_config,
+                    )
                     pipe = StableDiffusion3Pipeline().StableDiffusion3Pipeline.from_pretrained(sd3_model_path,
                                                                                                device_map="balanced",
                                                                                                text_encoder_3=text_encoder,
                                                                                                torch_dtype=torch_dtype)
                 elif diffusers_version == "3.5-Large":
+                    sd3_5_model_path = os.path.join("inputs", "image", "sd_models", "sd3-5")
+                    if not os.path.exists(sd3_5_model_path):
+                        gr.Info("Downloading Stable Diffusion 3.5 large model...")
+                        os.makedirs(sd3_5_model_path, exist_ok=True)
+                        Repo.clone_from("https://huggingface.co/stabilityai/stable-diffusion-3.5-large",
+                                        sd3_5_model_path)
+                        gr.Info("Stable Diffusion 3.5 large model downloaded")
+                    quantization_config = BitsAndBytesConfig().BitsAndBytesConfig(load_in_8bit=True)
+
+                    text_encoder = T5EncoderModel().T5EncoderModel.from_pretrained(
+                        sd3_5_model_path,
+                        subfolder="text_encoder_3",
+                        quantization_config=quantization_config,
+                    )
                     pipe = StableDiffusion3Pipeline().StableDiffusion3Pipeline.from_pretrained(sd3_5_model_path,
                                                                                                device_map="balanced",
                                                                                                text_encoder_3=text_encoder,
                                                                                                torch_dtype=torch_dtype)
                 elif diffusers_version == "3.5-Large-Turbo":
+                    sd3_5_turbo_model_path = os.path.join("inputs", "image", "sd_models", "sd3-5-turbo")
+                    if not os.path.exists(sd3_5_turbo_model_path):
+                        gr.Info("Downloading Stable Diffusion 3.5 large turbo model...")
+                        os.makedirs(sd3_5_turbo_model_path, exist_ok=True)
+                        Repo.clone_from("https://huggingface.co/stabilityai/stable-diffusion-3.5-large-turbo",
+                                        sd3_5_turbo_model_path)
+                        gr.Info("Stable Diffusion 3.5 large turbo model downloaded")
+                    quantization_config = BitsAndBytesConfig().BitsAndBytesConfig(load_in_8bit=True)
+
+                    text_encoder = T5EncoderModel().T5EncoderModel.from_pretrained(
+                        sd3_5_turbo_model_path,
+                        subfolder="text_encoder_3",
+                        quantization_config=quantization_config,
+                    )
                     pipe = StableDiffusion3Pipeline().StableDiffusion3Pipeline.from_pretrained(sd3_5_turbo_model_path,
                                                                                                device_map="balanced",
                                                                                                text_encoder_3=text_encoder,
@@ -10640,9 +10653,9 @@ def create_footer():
     footer_html = """
     <div style="text-align: center; background-color: #f0f0f0; padding: 10px; border-radius: 5px; margin-top: 20px;">
         <span style="margin-right: 15px;">🔥 diffusers: 0.31.0</span>
-        <span style="margin-right: 15px;">📄 transformers: 4.46.0</span>
+        <span style="margin-right: 15px;">📄 transformers: 4.46.1</span>
         <span style="margin-right: 15px;">🦙 llama-cpp-python: 0.3.1</span>
-        <span style="margin-right: 15px;">🖼️ stable-diffusion-cpp-python: 0.1.8</span>
+        <span style="margin-right: 15px;">🖼️ stable-diffusion-cpp-python: 0.1.9</span>
         <span>ℹ️ gradio: 5.4.0</span>
     </div>
     """
@@ -11486,7 +11499,7 @@ sd3_txt2img_interface = gr.Interface(
         gr.Textbox(label=_("Enter your prompt", lang), placeholder=_("(prompt:x.x) for Weighting", lang)),
         gr.Textbox(label=_("Enter your negative prompt", lang), placeholder=_("(prompt:x.x) for Weighting", lang), value=""),
         gr.Radio(choices=["Diffusers", "Safetensors"], label=_("Select model type", lang), value="Diffusers"),
-        gr.Radio(choices=["3-Medium", "3.5-Large", "3.5-Large-Turbo"], label=_("Select Diffusers model", lang), value=None),
+        gr.Radio(choices=["3-Medium", "3.5-Large", "3.5-Large-Turbo"], label=_("Select Diffusers model", lang), value="3-Medium"),
         gr.Dropdown(choices=stable_diffusion_models_list, label=_("Select StableDiffusion model", lang), value=None),
         gr.Checkbox(label=_("Enable Quantize", lang), value=False),
         gr.Textbox(label=_("Seed (optional)", lang), value=""),
