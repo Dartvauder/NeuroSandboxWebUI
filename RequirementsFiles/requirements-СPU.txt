@@ -276,7 +276,7 @@ torchsde==0.2.6
 tqdm==4.66.5
 trainer==0.0.36
 trampoline==0.1.2
-transformers==4.46.0
+transformers==4.46.1
 treetable==0.2.5
 trimesh==4.4.7
 trio==0.25.0

@@ -1,1 +1,1 @@
-stable-diffusion-cpp-python==0.1.8
+stable-diffusion-cpp-python==0.1.9
