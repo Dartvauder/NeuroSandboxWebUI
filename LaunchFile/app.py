@@ -4907,7 +4907,7 @@ def generate_image_ldm3d(prompt, negative_prompt, seed, width, height, num_infer
         flush()
 
 
-def generate_image_sd3_txt2img(prompt, negative_prompt, model_type, diffusers_version, quantize_sd3_model_name, enable_quantize, seed, stop_button, vae_model_name, lora_model_names, lora_scales, scheduler, num_inference_steps, guidance_scale, width, height, max_sequence_length, clip_skip, num_images_per_prompt, enable_taesd, output_format, progress=gr.Progress()):
+def generate_image_sd3_txt2img(prompt, negative_prompt, model_type, diffusers_version, quantize_sd3_model_name, enable_quantize, quantize_version, seed, stop_button, vae_model_name, lora_model_names, lora_scales, scheduler, num_inference_steps, guidance_scale, width, height, max_sequence_length, clip_skip, num_images_per_prompt, enable_taesd, output_format, progress=gr.Progress()):
     global stop_signal
     stop_signal = False
     stop_idx = None
@@ -4940,10 +4940,16 @@ def generate_image_sd3_txt2img(prompt, negative_prompt, model_type, diffusers_ve
             env = os.environ.copy()
             env['PYTHONPATH'] = os.pathsep.join(sys.path)
 
-            result = subprocess.run(
-                [sys.executable, 'inputs/image/sd_models/sd-txt2img-quantize.py', json.dumps(params)],
-                capture_output=True, text=True, env=env
-            )
+            if quantize_version == "SD3":
+                result = subprocess.run(
+                    [sys.executable, 'inputs/image/sd_models/sd-txt2img-quantize.py', json.dumps(params)],
+                    capture_output=True, text=True, env=env
+                )
+            else:
+                result = subprocess.run(
+                    [sys.executable, 'inputs/image/sd_models/sd3.5-txt2img-quantize.py', json.dumps(params)],
+                    capture_output=True, text=True, env=env
+                )
 
             if result.returncode != 0:
                 gr.Info(f"Error in sd-txt2img-quantize.py: {result.stderr}")
@@ -5158,7 +5164,7 @@ def generate_image_sd3_txt2img(prompt, negative_prompt, model_type, diffusers_ve
             flush()
 
 
-def generate_image_sd3_img2img(prompt, negative_prompt, init_image, strength, quantize_sd3_model_name, enable_quantize, seed, stop_button, scheduler, num_inference_steps, guidance_scale, width, height, max_sequence_length, clip_skip, num_images_per_prompt, output_format, progress=gr.Progress()):
+def generate_image_sd3_img2img(prompt, negative_prompt, init_image, strength, diffusers_version, quantize_sd3_model_name, enable_quantize, quantize_version, seed, stop_button, scheduler, num_inference_steps, guidance_scale, width, height, max_sequence_length, clip_skip, num_images_per_prompt, output_format, progress=gr.Progress()):
     global stop_signal
     stop_signal = False
     stop_idx = None
@@ -5194,10 +5200,16 @@ def generate_image_sd3_img2img(prompt, negative_prompt, init_image, strength, qu
             env = os.environ.copy()
             env['PYTHONPATH'] = os.pathsep.join(sys.path)
 
-            result = subprocess.run(
-                [sys.executable, 'inputs/image/sd_models/sd-img2img-quantize.py', json.dumps(params)],
-                capture_output=True, text=True, env=env
-            )
+            if quantize_version == "SD3":
+                result = subprocess.run(
+                    [sys.executable, 'inputs/image/sd_models/sd-img2img-quantize.py', json.dumps(params)],
+                    capture_output=True, text=True, env=env
+                )
+            else:
+                result = subprocess.run(
+                    [sys.executable, 'inputs/image/sd_models/sd3.5-img2img-quantize.py', json.dumps(params)],
+                    capture_output=True, text=True, env=env
+                )
 
             if result.returncode != 0:
                 gr.Info(f"Error in sd-img2img-quantize.py: {result.stderr}")
@@ -5219,28 +5231,66 @@ def generate_image_sd3_img2img(prompt, negative_prompt, init_image, strength, qu
 
     else:
         try:
-            sd3_model_path = os.path.join("inputs", "image", "sd_models", "sd3")
-
             device = "cuda" if torch.cuda.is_available() else "cpu"
             torch_dtype = torch.float16 if device == "cuda" else torch.float32
 
-            if not os.path.exists(sd3_model_path):
-                gr.Info("Downloading Stable Diffusion 3 model...")
-                os.makedirs(sd3_model_path, exist_ok=True)
-                Repo.clone_from("https://huggingface.co/stabilityai/stable-diffusion-3-medium-diffusers",
-                                sd3_model_path)
-                gr.Info("Stable Diffusion 3 model downloaded")
-            quantization_config = BitsAndBytesConfig().BitsAndBytesConfig(load_in_8bit=True)
+            if diffusers_version == "3-Medium":
+                sd3_model_path = os.path.join("inputs", "image", "sd_models", "sd3")
+                if not os.path.exists(sd3_model_path):
+                    gr.Info("Downloading Stable Diffusion 3 medium model...")
+                    os.makedirs(sd3_model_path, exist_ok=True)
+                    Repo.clone_from("https://huggingface.co/stabilityai/stable-diffusion-3-medium-diffusers",
+                                    sd3_model_path)
+                    gr.Info("Stable Diffusion 3 medium model downloaded")
+                quantization_config = BitsAndBytesConfig().BitsAndBytesConfig(load_in_8bit=True)
 
-            text_encoder = T5EncoderModel().T5EncoderModel.from_pretrained(
-                sd3_model_path,
-                subfolder="text_encoder_3",
-                quantization_config=quantization_config,
-            )
-            pipe = StableDiffusion3Img2ImgPipeline().StableDiffusion3Img2ImgPipeline.from_pretrained(sd3_model_path,
-                                                                                                     device_map="balanced",
-                                                                                                     text_encoder_3=text_encoder,
-                                                                                                     torch_dtype=torch_dtype)
+                text_encoder = T5EncoderModel().T5EncoderModel.from_pretrained(
+                    sd3_model_path,
+                    subfolder="text_encoder_3",
+                    quantization_config=quantization_config,
+                )
+                pipe = StableDiffusion3Img2ImgPipeline().StableDiffusion3Img2ImgPipeline.from_pretrained(sd3_model_path,
+                                                                                           device_map="balanced",
+                                                                                           text_encoder_3=text_encoder,
+                                                                                           torch_dtype=torch_dtype)
+            elif diffusers_version == "3.5-Large":
+                sd3_5_model_path = os.path.join("inputs", "image", "sd_models", "sd3-5")
+                if not os.path.exists(sd3_5_model_path):
+                    gr.Info("Downloading Stable Diffusion 3.5 large model...")
+                    os.makedirs(sd3_5_model_path, exist_ok=True)
+                    Repo.clone_from("https://huggingface.co/stabilityai/stable-diffusion-3.5-large",
+                                    sd3_5_model_path)
+                    gr.Info("Stable Diffusion 3.5 large model downloaded")
+                quantization_config = BitsAndBytesConfig().BitsAndBytesConfig(load_in_8bit=True)
+
+                text_encoder = T5EncoderModel().T5EncoderModel.from_pretrained(
+                    sd3_5_model_path,
+                    subfolder="text_encoder_3",
+                    quantization_config=quantization_config,
+                )
+                pipe = StableDiffusion3Img2ImgPipeline().StableDiffusion3Img2ImgPipeline.from_pretrained(sd3_5_model_path,
+                                                                                           device_map="balanced",
+                                                                                           text_encoder_3=text_encoder,
+                                                                                           torch_dtype=torch_dtype)
+            elif diffusers_version == "3.5-Large-Turbo":
+                sd3_5_turbo_model_path = os.path.join("inputs", "image", "sd_models", "sd3-5-turbo")
+                if not os.path.exists(sd3_5_turbo_model_path):
+                    gr.Info("Downloading Stable Diffusion 3.5 large turbo model...")
+                    os.makedirs(sd3_5_turbo_model_path, exist_ok=True)
+                    Repo.clone_from("https://huggingface.co/stabilityai/stable-diffusion-3.5-large-turbo",
+                                    sd3_5_turbo_model_path)
+                    gr.Info("Stable Diffusion 3.5 large turbo model downloaded")
+                quantization_config = BitsAndBytesConfig().BitsAndBytesConfig(load_in_8bit=True)
+
+                text_encoder = T5EncoderModel().T5EncoderModel.from_pretrained(
+                    sd3_5_turbo_model_path,
+                    subfolder="text_encoder_3",
+                    quantization_config=quantization_config,
+                )
+                pipe = StableDiffusion3Img2ImgPipeline().StableDiffusion3Img2ImgPipeline.from_pretrained(sd3_5_turbo_model_path,
+                                                                                           device_map="balanced",
+                                                                                           text_encoder_3=text_encoder,
+                                                                                           torch_dtype=torch_dtype)
 
             if scheduler == "FlowMatchEulerDiscreteScheduler":
                 pipe.scheduler = FlowMatchEulerDiscreteScheduler().FlowMatchEulerDiscreteScheduler.from_config(
@@ -5308,7 +5358,7 @@ def generate_image_sd3_img2img(prompt, negative_prompt, init_image, strength, qu
             flush()
 
 
-def generate_image_sd3_controlnet(prompt, negative_prompt, init_image, controlnet_model, seed, stop_button, scheduler, num_inference_steps, guidance_scale, controlnet_conditioning_scale, width, height, max_sequence_length, clip_skip, num_images_per_prompt, output_format, progress=gr.Progress()):
+def generate_image_sd3_controlnet(prompt, negative_prompt, init_image, diffusers_version, controlnet_model, seed, stop_button, scheduler, num_inference_steps, guidance_scale, controlnet_conditioning_scale, width, height, max_sequence_length, clip_skip, num_images_per_prompt, output_format, progress=gr.Progress()):
     global stop_signal
     stop_signal = False
     stop_idx = None
@@ -5321,14 +5371,7 @@ def generate_image_sd3_controlnet(prompt, negative_prompt, init_image, controlne
         gr.Info("Please select a controlnet model!")
         return None, None, None
 
-    sd3_model_path = os.path.join("inputs", "image", "sd_models", "sd3")
     controlnet_path = os.path.join("inputs", "image", "sd_models", "sd3", "controlnet", f"sd3_{controlnet_model}")
-
-    if not os.path.exists(sd3_model_path):
-        gr.Info("Downloading Stable Diffusion 3 model...")
-        os.makedirs(sd3_model_path, exist_ok=True)
-        Repo.clone_from("https://huggingface.co/stabilityai/stable-diffusion-3-medium-diffusers", sd3_model_path)
-        gr.Info("Stable Diffusion 3 model downloaded")
 
     if not os.path.exists(controlnet_path):
         gr.Info(f"Downloading SD3 ControlNet {controlnet_model} model...")
@@ -5341,20 +5384,67 @@ def generate_image_sd3_controlnet(prompt, negative_prompt, init_image, controlne
         torch_dtype = torch.float16 if device == "cuda" else torch.float32
         controlnet = SD3ControlNetModel().SD3ControlNetModel.from_pretrained(controlnet_path, torch_dtype=torch_dtype)
 
-        quantization_config = BitsAndBytesConfig().BitsAndBytesConfig(load_in_8bit=True)
+        if diffusers_version == "3-Medium":
+            sd3_model_path = os.path.join("inputs", "image", "sd_models", "sd3")
+            if not os.path.exists(sd3_model_path):
+                gr.Info("Downloading Stable Diffusion 3 medium model...")
+                os.makedirs(sd3_model_path, exist_ok=True)
+                Repo.clone_from("https://huggingface.co/stabilityai/stable-diffusion-3-medium-diffusers",
+                                sd3_model_path)
+                gr.Info("Stable Diffusion 3 medium model downloaded")
+            quantization_config = BitsAndBytesConfig().BitsAndBytesConfig(load_in_8bit=True)
 
-        text_encoder = T5EncoderModel().T5EncoderModel.from_pretrained(
-            sd3_model_path,
-            subfolder="text_encoder_3",
-            quantization_config=quantization_config,
-        )
-        pipe = StableDiffusion3ControlNetPipeline().StableDiffusion3ControlNetPipeline.from_pretrained(
-            sd3_model_path,
-            text_encoder_3=text_encoder,
-            controlnet=controlnet,
-            torch_dtype=torch_dtype,
-            device_map="balanced",
-        )
+            text_encoder = T5EncoderModel().T5EncoderModel.from_pretrained(
+                sd3_model_path,
+                subfolder="text_encoder_3",
+                quantization_config=quantization_config,
+            )
+            pipe = StableDiffusion3ControlNetPipeline().StableDiffusion3ControlNetPipeline.from_pretrained(sd3_model_path,
+                                                                                                     device_map="balanced",
+                                                                                                     text_encoder_3=text_encoder,
+                                                                                                     torch_dtype=torch_dtype,
+                                                                                                     controlnet=controlnet)
+        elif diffusers_version == "3.5-Large":
+            sd3_5_model_path = os.path.join("inputs", "image", "sd_models", "sd3-5")
+            if not os.path.exists(sd3_5_model_path):
+                gr.Info("Downloading Stable Diffusion 3.5 large model...")
+                os.makedirs(sd3_5_model_path, exist_ok=True)
+                Repo.clone_from("https://huggingface.co/stabilityai/stable-diffusion-3.5-large",
+                                sd3_5_model_path)
+                gr.Info("Stable Diffusion 3.5 large model downloaded")
+            quantization_config = BitsAndBytesConfig().BitsAndBytesConfig(load_in_8bit=True)
+
+            text_encoder = T5EncoderModel().T5EncoderModel.from_pretrained(
+                sd3_5_model_path,
+                subfolder="text_encoder_3",
+                quantization_config=quantization_config,
+            )
+            pipe = StableDiffusion3ControlNetPipeline().StableDiffusion3ControlNetPipeline.from_pretrained(sd3_5_model_path,
+                                                                                                     device_map="balanced",
+                                                                                                     text_encoder_3=text_encoder,
+                                                                                                     torch_dtype=torch_dtype,
+                                                                                                     controlnet=controlnet)
+        elif diffusers_version == "3.5-Large-Turbo":
+            sd3_5_turbo_model_path = os.path.join("inputs", "image", "sd_models", "sd3-5-turbo")
+            if not os.path.exists(sd3_5_turbo_model_path):
+                gr.Info("Downloading Stable Diffusion 3.5 large turbo model...")
+                os.makedirs(sd3_5_turbo_model_path, exist_ok=True)
+                Repo.clone_from("https://huggingface.co/stabilityai/stable-diffusion-3.5-large-turbo",
+                                sd3_5_turbo_model_path)
+                gr.Info("Stable Diffusion 3.5 large turbo model downloaded")
+            quantization_config = BitsAndBytesConfig().BitsAndBytesConfig(load_in_8bit=True)
+
+            text_encoder = T5EncoderModel().T5EncoderModel.from_pretrained(
+                sd3_5_turbo_model_path,
+                subfolder="text_encoder_3",
+                quantization_config=quantization_config,
+            )
+            pipe = StableDiffusion3ControlNetPipeline().StableDiffusion3ControlNetPipeline.from_pretrained(
+                sd3_5_turbo_model_path,
+                device_map="balanced",
+                text_encoder_3=text_encoder,
+                torch_dtype=torch_dtype,
+                controlnet=controlnet)
 
         if scheduler == "FlowMatchEulerDiscreteScheduler":
             pipe.scheduler = FlowMatchEulerDiscreteScheduler().FlowMatchEulerDiscreteScheduler.from_config(
@@ -5437,35 +5527,77 @@ def generate_image_sd3_controlnet(prompt, negative_prompt, init_image, controlne
         flush()
 
 
-def generate_image_sd3_inpaint(prompt, negative_prompt, init_image, mask_image, seed, stop_button, scheduler, num_inference_steps, guidance_scale, width, height, max_sequence_length, clip_skip, num_images_per_prompt, output_format, progress=gr.Progress()):
+def generate_image_sd3_inpaint(prompt, negative_prompt, diffusers_version, init_image, mask_image, seed, stop_button, scheduler, num_inference_steps, guidance_scale, width, height, max_sequence_length, clip_skip, num_images_per_prompt, output_format, progress=gr.Progress()):
     global stop_signal
     stop_signal = False
     stop_idx = None
-
-    sd3_model_path = os.path.join("inputs", "image", "sd_models", "sd3")
 
     if not init_image or not mask_image:
         gr.Info("Please, upload an initial image and a mask image!")
         return None, None
 
-    if not os.path.exists(sd3_model_path):
-        gr.Info("Downloading Stable Diffusion 3 model...")
-        os.makedirs(sd3_model_path, exist_ok=True)
-        Repo.clone_from("https://huggingface.co/stabilityai/stable-diffusion-3-medium-diffusers", sd3_model_path)
-        gr.Info("Stable Diffusion 3 model downloaded")
-
     try:
         device = "cuda" if torch.cuda.is_available() else "cpu"
         torch_dtype = torch.float16 if device == "cuda" else torch.float32
 
-        quantization_config = BitsAndBytesConfig().BitsAndBytesConfig(load_in_8bit=True)
+        if diffusers_version == "3-Medium":
+            sd3_model_path = os.path.join("inputs", "image", "sd_models", "sd3")
+            if not os.path.exists(sd3_model_path):
+                gr.Info("Downloading Stable Diffusion 3 medium model...")
+                os.makedirs(sd3_model_path, exist_ok=True)
+                Repo.clone_from("https://huggingface.co/stabilityai/stable-diffusion-3-medium-diffusers",
+                                sd3_model_path)
+                gr.Info("Stable Diffusion 3 medium model downloaded")
+            quantization_config = BitsAndBytesConfig().BitsAndBytesConfig(load_in_8bit=True)
 
-        text_encoder = T5EncoderModel().T5EncoderModel.from_pretrained(
-            sd3_model_path,
-            subfolder="text_encoder_3",
-            quantization_config=quantization_config,
-        )
-        pipe = StableDiffusion3InpaintPipeline().StableDiffusion3InpaintPipeline.from_pretrained(sd3_model_path, device_map="balanced", text_encoder_3=text_encoder, torch_dtype=torch_dtype)
+            text_encoder = T5EncoderModel().T5EncoderModel.from_pretrained(
+                sd3_model_path,
+                subfolder="text_encoder_3",
+                quantization_config=quantization_config,
+            )
+            pipe = StableDiffusion3InpaintPipeline().StableDiffusion3InpaintPipeline.from_pretrained(sd3_model_path,
+                                                                                                     device_map="balanced",
+                                                                                                     text_encoder_3=text_encoder,
+                                                                                                     torch_dtype=torch_dtype)
+        elif diffusers_version == "3.5-Large":
+            sd3_5_model_path = os.path.join("inputs", "image", "sd_models", "sd3-5")
+            if not os.path.exists(sd3_5_model_path):
+                gr.Info("Downloading Stable Diffusion 3.5 large model...")
+                os.makedirs(sd3_5_model_path, exist_ok=True)
+                Repo.clone_from("https://huggingface.co/stabilityai/stable-diffusion-3.5-large",
+                                sd3_5_model_path)
+                gr.Info("Stable Diffusion 3.5 large model downloaded")
+            quantization_config = BitsAndBytesConfig().BitsAndBytesConfig(load_in_8bit=True)
+
+            text_encoder = T5EncoderModel().T5EncoderModel.from_pretrained(
+                sd3_5_model_path,
+                subfolder="text_encoder_3",
+                quantization_config=quantization_config,
+            )
+            pipe = StableDiffusion3InpaintPipeline().StableDiffusion3InpaintPipeline.from_pretrained(sd3_5_model_path,
+                                                                                                     device_map="balanced",
+                                                                                                     text_encoder_3=text_encoder,
+                                                                                                     torch_dtype=torch_dtype)
+        elif diffusers_version == "3.5-Large-Turbo":
+            sd3_5_turbo_model_path = os.path.join("inputs", "image", "sd_models", "sd3-5-turbo")
+            if not os.path.exists(sd3_5_turbo_model_path):
+                gr.Info("Downloading Stable Diffusion 3.5 large turbo model...")
+                os.makedirs(sd3_5_turbo_model_path, exist_ok=True)
+                Repo.clone_from("https://huggingface.co/stabilityai/stable-diffusion-3.5-large-turbo",
+                                sd3_5_turbo_model_path)
+                gr.Info("Stable Diffusion 3.5 large turbo model downloaded")
+            quantization_config = BitsAndBytesConfig().BitsAndBytesConfig(load_in_8bit=True)
+
+            text_encoder = T5EncoderModel().T5EncoderModel.from_pretrained(
+                sd3_5_turbo_model_path,
+                subfolder="text_encoder_3",
+                quantization_config=quantization_config,
+            )
+            pipe = StableDiffusion3InpaintPipeline().StableDiffusion3InpaintPipeline.from_pretrained(
+                sd3_5_turbo_model_path,
+                device_map="balanced",
+                text_encoder_3=text_encoder,
+                torch_dtype=torch_dtype)
 
         if scheduler == "FlowMatchEulerDiscreteScheduler":
             pipe.scheduler = FlowMatchEulerDiscreteScheduler().FlowMatchEulerDiscreteScheduler.from_config(
@@ -10655,7 +10787,7 @@ def create_footer():
         <span style="margin-right: 15px;">🔥 diffusers: 0.31.0</span>
         <span style="margin-right: 15px;">📄 transformers: 4.46.1</span>
         <span style="margin-right: 15px;">🦙 llama-cpp-python: 0.3.1</span>
-        <span style="margin-right: 15px;">🖼️ stable-diffusion-cpp-python: 0.1.9</span>
+        <span style="margin-right: 15px;">🖼️ stable-diffusion-cpp-python: 0.2.0</span>
         <span>ℹ️ gradio: 5.4.0</span>
     </div>
     """
@@ -11502,6 +11634,7 @@ sd3_txt2img_interface = gr.Interface(
         gr.Radio(choices=["3-Medium", "3.5-Large", "3.5-Large-Turbo"], label=_("Select Diffusers model", lang), value="3-Medium"),
         gr.Dropdown(choices=stable_diffusion_models_list, label=_("Select StableDiffusion model", lang), value=None),
         gr.Checkbox(label=_("Enable Quantize", lang), value=False),
+        gr.Radio(choices=["SD3", "SD3.5"], label=_("Select quantize model type", lang), value="SD3"),
         gr.Textbox(label=_("Seed (optional)", lang), value=""),
         gr.Button(value=_("Stop generation", lang), interactive=True, variant="stop")
     ],
@@ -11542,8 +11675,10 @@ sd3_img2img_interface = gr.Interface(
         gr.Textbox(label=_("Enter your negative prompt", lang), value=""),
         gr.Image(label=_("Initial image", lang), type="filepath"),
         gr.Slider(minimum=0.0, maximum=1.0, value=0.8, step=0.01, label=_("Strength (Initial image)", lang)),
+        gr.Radio(choices=["3-Medium", "3.5-Large", "3.5-Large-Turbo"], label=_("Select Diffusers model", lang), value="3-Medium"),
         gr.Dropdown(choices=stable_diffusion_models_list, label=_("Select StableDiffusion model", lang), value=None),
         gr.Checkbox(label=_("Enable Quantize", lang), value=False),
+        gr.Radio(choices=["SD3", "SD3.5"], label=_("Select quantize model type", lang), value="SD3"),
         gr.Textbox(label=_("Seed (optional)", lang), value=""),
         gr.Button(value=_("Stop generation", lang), interactive=True, variant="stop")
     ],
@@ -11580,6 +11715,7 @@ sd3_controlnet_interface = gr.Interface(
         gr.Textbox(label=_("Enter your prompt", lang)),
         gr.Textbox(label=_("Enter your negative prompt", lang), value=""),
         gr.Image(label=_("Initial image", lang), type="filepath"),
+        gr.Radio(choices=["3-Medium", "3.5-Large", "3.5-Large-Turbo"], label=_("Select Diffusers model", lang), value="3-Medium"),
         gr.Dropdown(choices=["Pose", "Canny"], label=_("Select ControlNet model", lang), value="Pose"),
         gr.Textbox(label=_("Seed (optional)", lang), value=""),
         gr.Button(value=_("Stop generation", lang), interactive=True, variant="stop")
@@ -11618,6 +11754,7 @@ sd3_inpaint_interface = gr.Interface(
     inputs=[
         gr.Textbox(label=_("Enter your prompt", lang)),
         gr.Textbox(label=_("Enter your negative prompt", lang), value=""),
+        gr.Radio(choices=["3-Medium", "3.5-Large", "3.5-Large-Turbo"], label=_("Select Diffusers model", lang), value="3-Medium"),
         gr.Image(label=_("Initial image", lang), type="filepath"),
         gr.ImageEditor(label=_("Mask image", lang), type="filepath"),
         gr.Textbox(label=_("Seed (optional)", lang), value=""),
@@ -13412,10 +13549,10 @@ with gr.TabbedInterface(
     inpaint_interface.input_components[10].click(stop_generation, [], [], queue=False)
     cascade_interface.input_components[3].click(stop_generation, [], [], queue=False)
     riffusion_text2image_interface.input_components[3].click(stop_generation, [], [], queue=False)
-    sd3_txt2img_interface.input_components[7].click(stop_generation, [], [], queue=False)
-    sd3_img2img_interface.input_components[7].click(stop_generation, [], [], queue=False)
-    sd3_controlnet_interface.input_components[5].click(stop_generation, [], [], queue=False)
-    sd3_inpaint_interface.input_components[5].click(stop_generation, [], [], queue=False)
+    sd3_txt2img_interface.input_components[8].click(stop_generation, [], [], queue=False)
+    sd3_img2img_interface.input_components[9].click(stop_generation, [], [], queue=False)
+    sd3_controlnet_interface.input_components[6].click(stop_generation, [], [], queue=False)
+    sd3_inpaint_interface.input_components[6].click(stop_generation, [], [], queue=False)
     kandinsky_txt2img_interface.input_components[4].click(stop_generation, [], [], queue=False)
     kandinsky_img2img_interface.input_components[5].click(stop_generation, [], [], queue=False)
     kandinsky_inpaint_interface.input_components[5].click(stop_generation, [], [], queue=False)
@@ -13465,9 +13602,9 @@ with gr.TabbedInterface(
         gligen_interface.input_components[5],
         animatediff_interface.input_components[5],
         sd3_txt2img_interface.input_components[4],
-        sd3_txt2img_interface.input_components[8],
         sd3_txt2img_interface.input_components[9],
-        sd3_img2img_interface.input_components[5],
+        sd3_txt2img_interface.input_components[10],
+        sd3_img2img_interface.input_components[6],
         t2i_ip_adapter_interface.input_components[4],
         ip_adapter_faceid_interface.input_components[5],
         flux_txt2img_interface.input_components[2],
