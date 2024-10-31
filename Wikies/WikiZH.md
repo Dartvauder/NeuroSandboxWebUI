@@ -208,6 +208,9 @@
 1) 输入您的请求
 2) 根据您需要的参数设置模型
 3) 点击`Submit`按钮获取生成的图像
+#### Optional: You can select your `lora` models to improve the generation method. You can also use quantized models by clicking on the `Enable quantize` button if you have low VRAM, but you need to download the model yourself: [CLIP-L](https://huggingface.co/Comfy-Org/stable-diffusion-3.5-fp8/blob/main/text_encoders/clip_l.safetensors), [CLIP-G](https://huggingface.co/Comfy-Org/stable-diffusion-3.5-fp8/blob/main/text_encoders/clip_g.safetensors)和[T5XXL](https://huggingface.co/Comfy-Org/stable-diffusion-3.5-fp8/blob/main/text_encoders/t5xxl_fp16.safetensors)
+#### lora = *inputs/image/sd_models/lora*
+#### 量化模型 = *inputs/image/sd_models*
 
 #### cascade：
 
