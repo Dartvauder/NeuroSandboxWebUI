@@ -208,6 +208,9 @@
 1) Введите ваш запрос
 2) Настройте модель согласно нужным вам параметрам
 3) Нажмите кнопку `Submit`, чтобы получить сгенерированное изображение
+#### Опционально: Вы можете выбрать свои модели `lora` для улучшения метода генерации. Вы также можете использовать квантизированные модели, нажав кнопку `Enable quantize`, если у вас низкое количество видеопамяти. Однако вам нужно самостоятельно скачать модель: [CLIP-L](https://huggingface.co/Comfy-Org/stable-diffusion-3.5-fp8/blob/main/text_encoders/clip_l.safetensors), [CLIP-G](https://huggingface.co/Comfy-Org/stable-diffusion-3.5-fp8/blob/main/text_encoders/clip_g.safetensors) и [T5XXL](https://huggingface.co/Comfy-Org/stable-diffusion-3.5-fp8/blob/main/text_encoders/t5xxl_fp16.safetensors)
+#### lora = *inputs/image/sd_models/lora*
+#### Квантованные модели = *inputs/image/sd_models*
 
 #### cascade:
 
