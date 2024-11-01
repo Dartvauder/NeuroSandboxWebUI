@@ -12,17 +12,17 @@
 
 ### 文本：<img width="1115" alt="1zh" src="https://github.com/user-attachments/assets/28c31659-2ce4-46dc-8cee-406cf6cb620e">
 
-### 图像：<img width="1103" alt="2zh" src="https://github.com/user-attachments/assets/65f7c1e6-4d29-400d-8392-1fac063a831d">
+### 图像：<img width="1112" alt="2zh" src="https://github.com/user-attachments/assets/cd86ad42-abee-4dec-8619-c50958ea4fe3">
 
 ### 视频：<img width="1113" alt="3zh" src="https://github.com/user-attachments/assets/71405dba-e1e2-4a5b-bef7-e7e54eb84a86">
 
-### 3D：<img width="1112" alt="4zh" src="https://github.com/user-attachments/assets/0cecb2c4-76ff-4227-bbcc-aa0022bc4502">
+### 3D：<img width="1111" alt="4zh" src="https://github.com/user-attachments/assets/5c0ec1d7-5ed9-4eeb-b054-d67884d4f940">
 
 ### 音频：<img width="1114" alt="5zh" src="https://github.com/user-attachments/assets/c66c6131-61ca-4141-8c2a-3f9404e82102">
 
 ### 额外功能：<img width="1109" alt="6zh" src="https://github.com/user-attachments/assets/0f7eec1e-c60e-4c86-b273-28a872407df0">
 
-### 界面：<img width="1111" alt="7zh" src="https://github.com/user-attachments/assets/41160d6c-29ce-41fe-af07-7b868756dbdd">
+### 界面：<img width="1115" alt="7zh" src="https://github.com/user-attachments/assets/587592fe-c773-4729-825a-0b18adcf8c06">
 
 ## 功能：
 
