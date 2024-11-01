@@ -6,7 +6,7 @@
 
 ## Description:
 
-A simple and convenient interface for using various neural network models. You can communicate with LLM using text, voice and image input; use StableDiffusion, Kandinsky, Flux, HunyuanDiT, Lumina-T2X, Kolors, AuraFlow, Würstchen, DeepFloydIF, PixArt, CogView3-Plus and PlaygroundV2.5, to generate images; ModelScope, ZeroScope 2, CogVideoX and Latte to generate videos; StableFast3D, Shap-E, SV34D and Zero123Plus to generate 3D objects; StableAudioOpen, AudioCraft and AudioLDM 2 to generate music and audio; CoquiTTS, MMS and SunoBark for text-to-speech; OpenAI-Whisper and MMS for speech-to-text; Wav2Lip for lip-sync; LivePortrait for animate an image; Roop to faceswap; Rembg to remove background; CodeFormer for face restore; PixelOE for image pixelization; DDColor for image colorization; LibreTranslate and SeamlessM4Tv2 for text translation; Demucs and UVR for audio file separation; RVC for voice conversion. You can also view files from the outputs directory in gallery, download the LLM and StableDiffusion models, change the application settings inside the interface and check system sensors
+A simple and convenient interface for using various neural network models. You can communicate with LLM using text, voice and image input; use StableDiffusion, Kandinsky, Flux, HunyuanDiT, Lumina-T2X, Kolors, AuraFlow, Würstchen, DeepFloydIF, PixArt, CogView3-Plus and PlaygroundV2.5, to generate images; ModelScope, ZeroScope 2, CogVideoX and Latte to generate videos; StableFast3D, Shap-E, and Zero123Plus to generate 3D objects; StableAudioOpen, AudioCraft and AudioLDM 2 to generate music and audio; CoquiTTS, MMS and SunoBark for text-to-speech; OpenAI-Whisper and MMS for speech-to-text; Wav2Lip for lip-sync; LivePortrait for animate an image; Roop to faceswap; Rembg to remove background; CodeFormer for face restore; PixelOE for image pixelization; DDColor for image colorization; LibreTranslate and SeamlessM4Tv2 for text translation; Demucs and UVR for audio file separation; RVC for voice conversion. You can also view files from the outputs directory in gallery, download the LLM and StableDiffusion models, change the application settings inside the interface and check system sensors
 
 The goal of the project - to create the easiest possible application to use neural network models
 
@@ -48,7 +48,7 @@ The goal of the project - to create the easiest possible application to use neur
 * Support SunoBark
 * Support Demucs and UVR for audio file separation
 * Support RVC for voice conversion
-* Support StableFast3D, Shap-E, SV34D and Zero123Plus for 3D generation
+* Support StableFast3D, Shap-E and Zero123Plus for 3D generation
 * Support Wav2Lip
 * Support LivePortrait for animate an image
 * Support Multimodal (Moondream 2, LLaVA-NeXT-Video, Qwen2-Audio), PDF-Parsing (OpenParse), TTS (CoquiTTS), STT (Whisper), LORA and WebSearch (with DuckDuckGo) for LLM
@@ -228,7 +228,6 @@ First of all, I want to thank the developers of [PyCharm](https://www.jetbrains.
 
 #### These third-party repository codes are also used in my project:
 
-* [Generative-Models for SV34D](https://github.com/Stability-AI/generative-models)
 * [CodeFormer for extras](https://github.com/sczhou/CodeFormer)
 * [Real-ESRGAN for upscale](https://github.com/xinntao/Real-ESRGAN)
 * [HotShot-XL for StableDiffusion](https://github.com/hotshotco/Hotshot-XL)
@@ -237,7 +236,6 @@ First of all, I want to thank the developers of [PyCharm](https://www.jetbrains.
 * [Riffusion for StableDiffusion](https://github.com/riffusion/riffusion-hobby)
 * [DDColor for extras](https://github.com/piddnad/DDColor)
 * [LivePortrait for video](https://github.com/KwaiVGI/LivePortrait)
-* [SUPIR for StableDiffusion](https://github.com/Fanghua-Yu/SUPIR)
 * [TAESD for StableDiffusion and Flux](https://github.com/madebyollin/taesd)
 
 ## Donation
