@@ -1861,8 +1861,7 @@ def transcribe_mms_stt(audio_file, language, output_format, progress=gr.Progress
 def seamless_m4tv2_process(input_type, input_text, input_audio, src_lang, tgt_lang, dataset_lang,
                            enable_speech_generation, speaker_id, text_num_beams,
                            enable_text_do_sample, enable_speech_do_sample,
-                           speech_temperature, text_temperature,
-                           enable_both_generation, task_type,
+                           speech_temperature, text_temperature, task_type,
                            text_output_format, audio_output_format, progress=gr.Progress()):
 
     MODEL_PATH = os.path.join("inputs", "text", "seamless-m4t-v2")
@@ -1906,8 +1905,7 @@ def seamless_m4tv2_process(input_type, input_text, input_audio, src_lang, tgt_la
         generate_kwargs = {
             "tgt_lang": get_languages()[tgt_lang],
             "generate_speech": enable_speech_generation,
-            "speaker_id": speaker_id,
-            "return_intermediate_token_ids": enable_both_generation
+            "speaker_id": speaker_id
         }
 
         if enable_text_do_sample:
@@ -1935,7 +1933,7 @@ def seamless_m4tv2_process(input_type, input_text, input_audio, src_lang, tgt_la
         outputs = model.generate(**inputs, **generate_kwargs)
 
         progress(0.8, desc="Processing output")
-        if enable_speech_generation or enable_both_generation:
+        if enable_speech_generation:
             audio_output = outputs[0].cpu().numpy().squeeze()
             audio_path = os.path.join('outputs', f"SeamlessM4T_{datetime.now().strftime('%Y%m%d')}",
                                       f"audio_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{audio_output_format}")
@@ -1953,7 +1951,7 @@ def seamless_m4tv2_process(input_type, input_text, input_audio, src_lang, tgt_la
         else:
             audio_path = None
 
-        if not enable_speech_generation or enable_both_generation:
+        if not enable_speech_generation:
             text_output = processor.decode(outputs[0].tolist()[0], skip_special_tokens=True)
             text_path = os.path.join('outputs', f"SeamlessM4T_{datetime.now().strftime('%Y%m%d')}",
                                      f"text_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{text_output_format}")
@@ -10829,7 +10827,6 @@ seamless_m4tv2_interface = gr.Interface(
         gr.Checkbox(label=_("Enable Speech Sampling", lang)),
         gr.Slider(minimum=0.1, maximum=2, value=0.6, step=0.1, label=_("Speech Temperature", lang)),
         gr.Slider(minimum=0.1, maximum=2, value=0.6, step=0.1, label=_("Text Temperature", lang)),
-        gr.Checkbox(label=_("Enable Both Generation", lang), value=False),
         gr.Radio(choices=["General", "Speech to Speech", "Text to Text", "Speech to Text", "Text to Speech"], label=_("Task Type", lang), value="General", interactive=True),
         gr.Radio(choices=["txt", "json"], label=_("Text Output Format", lang), value="txt", interactive=True),
         gr.Radio(choices=["wav", "mp3", "ogg"], label=_("Audio Output Format", lang), value="wav", interactive=True)

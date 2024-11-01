@@ -96,7 +96,6 @@
   "Enable Speech Sampling": "Включить сэмплирование речи",
   "Speech Temperature": "Температура речи",
   "Text Temperature": "Температура текста",
-  "Enable Both Generation": "Включить оба типа генерации",
   "Task Type": "Тип задачи",
   "Text Output Format": "Формат вывода текста",
   "Audio Output Format": "Формат вывода аудио",

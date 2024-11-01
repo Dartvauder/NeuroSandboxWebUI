@@ -96,7 +96,6 @@
   "Enable Speech Sampling": "启用语音采样",
   "Speech Temperature": "语音温度",
   "Text Temperature": "文本温度",
-  "Enable Both Generation": "启用两种生成",
   "Task Type": "任务类型",
   "Text Output Format": "文本输出格式",
   "Audio Output Format": "音频输出格式",
