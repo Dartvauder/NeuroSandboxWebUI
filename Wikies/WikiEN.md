@@ -1,6 +1,6 @@
 # How to use:
 
-#### Interface has forty two sub-tabs (some with their own sub-tabs) in seven main tabs (Text, Image, Video, 3D, Audio, Extras and Interface): LLM, TTS-STT, MMS, SeamlessM4Tv2, LibreTranslate, StableDiffusion, Kandinsky, Flux, HunyuanDiT, Lumina-T2X, Kolors, AuraFlow, Würstchen, DeepFloydIF, PixArt, CogView3-Plus, PlaygroundV2.5, Wav2Lip, LivePortrait, ModelScope, ZeroScope 2, CogVideoX, Latte, StableFast3D, Shap-E, SV34D, Zero123Plus, StableAudio, AudioCraft, AudioLDM 2, SunoBark, RVC, UVR, Demucs, Upscale (Real-ESRGAN), FaceSwap, MetaData-Info, Wiki, Gallery, ModelDownloader, Settings and System. Select the one you need and follow the instructions below 
+#### Interface has forty one sub-tabs (some with their own sub-tabs) in seven main tabs (Text, Image, Video, 3D, Audio, Extras and Interface): LLM, TTS-STT, MMS, SeamlessM4Tv2, LibreTranslate, StableDiffusion, Kandinsky, Flux, HunyuanDiT, Lumina-T2X, Kolors, AuraFlow, Würstchen, DeepFloydIF, PixArt, CogView3-Plus, PlaygroundV2.5, Wav2Lip, LivePortrait, ModelScope, ZeroScope 2, CogVideoX, Latte, StableFast3D, Shap-E, Zero123Plus, StableAudio, AudioCraft, AudioLDM 2, SunoBark, RVC, UVR, Demucs, Upscale (Real-ESRGAN), FaceSwap, MetaData-Info, Wiki, Gallery, ModelDownloader, Settings and System. Select the one you need and follow the instructions below 
 
 # Text:
 
@@ -112,13 +112,6 @@
 2) Select your model
 3) Set up the model according to the parameters you need
 4) Click the `Submit` button to get the upscaled image
-
-#### upscale (SUPIR):
-
-1) Upload the initial image
-2) Set up the model according to the parameters you need
-3) Click the `Submit` button to get the upscaled image
-#### WARNING: You need to download models myself from [Google drive for SUPIR model](https://drive.google.com/file/d/1ohCIBV_RAej1zuiidHph5qXNuD4GRxO3/view?usp=drive_link) and [HuggingFace for best base model](https://huggingface.co/RunDiffusion/Juggernaut-XL-v9/blob/main/Juggernaut-XL_v9_RunDiffusionPhoto_v2.safetensors) and put them along the way: */ThirdPartyRepository/SUPIR/options*
 
 #### refiner (SDXL):
 
@@ -374,12 +367,6 @@
 2) Set up the model according to the parameters you need
 3) Click the `Submit` button to get the generated 3D object
 
-### SV34D:
-
-1) Upload the initial image (for 3D) or video (for 4D)
-2) Set up the model according to the parameters you need
-3) Click the `Submit` button to get the generated 3D video
-
 ### Zero123Plus:
 
 1) Upload the initial image
@@ -493,7 +480,7 @@
 * LLM models can be taken from [HuggingFace](https://huggingface.co/models) or from ModelDownloader inside interface 
 * StableDiffusion, vae, inpaint, embedding and lora models can be taken from [CivitAI](https://civitai.com/models) or from ModelDownloader inside interface
 * RVC models can be taken from [VoiceModels](https://voice-models.com)
-* StableAudio, AudioCraft, AudioLDM 2, TTS, Whisper, MMS, SeamlessM4Tv2, Wav2Lip, LivePortrait, SunoBark, MoonDream2, Upscalers (Latent and Real-ESRGAN), Refiner, GLIGEN, DiffEdit, BLIP-Diffusion, Depth, Marigold, Pix2Pix, Controlnet, AnimateDiff, HotShot-XL, Videos, LDM3D, SD3, Cascade, T2I-IP-ADAPTER, IP-Adapter-FaceID, Riffusion, Rembg, Roop, CodeFormer, DDColor, PixelOE, Real-ESRGAN, StableFast3D, Shap-E, SV34D, Zero123Plus, UVR, Demucs, Kandinsky, Flux, HunyuanDiT, Lumina-T2X, Kolors, AuraFlow, AuraSR, Würstchen, DeepFloydIF, PixArt, CogView3-Plus, PlaygroundV2.5, ModelScope, ZeroScope 2, CogVideoX, MagicPrompt, Latte and Multiband diffusion models are downloads automatically in *inputs* folder when are they used 
+* StableAudio, AudioCraft, AudioLDM 2, TTS, Whisper, MMS, SeamlessM4Tv2, Wav2Lip, LivePortrait, SunoBark, MoonDream2, Upscalers (Latent and Real-ESRGAN), Refiner, GLIGEN, DiffEdit, BLIP-Diffusion, Depth, Marigold, Pix2Pix, Controlnet, AnimateDiff, HotShot-XL, Videos, LDM3D, SD3, Cascade, T2I-IP-ADAPTER, IP-Adapter-FaceID, Riffusion, Rembg, Roop, CodeFormer, DDColor, PixelOE, Real-ESRGAN, StableFast3D, Shap-E, Zero123Plus, UVR, Demucs, Kandinsky, Flux, HunyuanDiT, Lumina-T2X, Kolors, AuraFlow, AuraSR, Würstchen, DeepFloydIF, PixArt, CogView3-Plus, PlaygroundV2.5, ModelScope, ZeroScope 2, CogVideoX, MagicPrompt, Latte and Multiband diffusion models are downloads automatically in *inputs* folder when are they used 
 * You can take voices anywhere. Record yours or take a recording from the Internet. Or just use those that are already in the project. The main thing is that it is pre-processed!
 
 ## Roadmap & Bugtracker:
