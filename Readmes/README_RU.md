@@ -41,7 +41,7 @@
 * Поддержка AudioLDM 2 (Модели: audio и music)
 * Поддержка моделей TTS и Whisper (Для LLM и TTS-STT)
 * Поддержка MMS для преобразования текста в речь и речи в текст
-* Поддержка моделей Lora, Textual inversion (embedding), Vae, MagicPrompt, Img2img, Depth, Marigold, Pix2Pix, Controlnet, Upscalers (latent и SUPIR), Refiner, Inpaint, Outpaint, GLIGEN, DiffEdit, BLIP-Diffusion, AnimateDiff, HotShot-XL, Videos, LDM3D, SD3, Cascade, T2I-IP-ADAPTER, IP-Adapter-FaceID и Riffusion (Для StableDiffusion)
+* Поддержка моделей Lora, Textual inversion (embedding), Vae, MagicPrompt, Img2img, Depth, Marigold, Pix2Pix, Controlnet, Upscale (latent), Refiner, Inpaint, Outpaint, GLIGEN, DiffEdit, BLIP-Diffusion, AnimateDiff, HotShot-XL, Videos, LDM3D, SD3, Cascade, T2I-IP-ADAPTER, IP-Adapter-FaceID и Riffusion (Для StableDiffusion)
 * Поддержка модели Multiband Diffusion (Для AudioCraft)
 * Поддержка LibreTranslate (Локальный API) и SeamlessM4Tv2 для переводов языков
 * Поддержка ModelScope, ZeroScope 2, CogVideoX и Latte для генерации видео
