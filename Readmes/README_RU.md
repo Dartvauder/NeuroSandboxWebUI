@@ -12,17 +12,17 @@
 
 ### Текст: <img width="1114" alt="1ru" src="https://github.com/user-attachments/assets/fa2425e2-2528-44ae-90e0-d22bc9e4960e">
 
-### Изображение: <img width="1112" alt="2ru" src="https://github.com/user-attachments/assets/2586a1b9-5814-4ae0-80e3-11664750f397">
+### Изображение: <img width="1112" alt="2ru" src="https://github.com/user-attachments/assets/feed78ba-df1e-4b89-81b7-a507a3379eb9">
 
 ### Видео: <img width="1115" alt="3ru" src="https://github.com/user-attachments/assets/3557c766-1dec-47dd-b56d-2d8c24dd6aa2">
 
-### 3D: <img width="1112" alt="4ru" src="https://github.com/user-attachments/assets/09f4ecc8-5098-45ce-8dd4-35ecf410ca35">
+### 3D: <img width="1115" alt="4ru" src="https://github.com/user-attachments/assets/14363200-966e-4332-aebc-7254a06a02ea">
 
 ### Аудио: <img width="1111" alt="5ru" src="https://github.com/user-attachments/assets/73144d26-65fe-4a81-8d37-fdcf40757bac">
 
 ### Дополнительно: <img width="1112" alt="6ru" src="https://github.com/user-attachments/assets/5250b26e-67b4-4d6a-a2e9-ce6920459e4f">
 
-### Интерфейс: <img width="1115" alt="7ru" src="https://github.com/user-attachments/assets/48d4a4a7-6ce6-494d-a17d-368ff4bcf368">
+### Интерфейс: <img width="1115" alt="7ru" src="https://github.com/user-attachments/assets/a4a104bd-5142-4032-be96-5f23c8cbe0e2">
 
 ## Функции:
 
