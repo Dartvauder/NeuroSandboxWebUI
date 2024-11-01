@@ -41,7 +41,7 @@ The goal of the project - to create the easiest possible application to use neur
 * Support AudioLDM 2 (Models: audio and music)
 * Supports TTS and Whisper models (For LLM and TTS-STT)
 * Support MMS for text-to-speech and speech-to-text
-* Supports Lora, Textual inversion (embedding), Vae, MagicPrompt, Img2img, Depth, Marigold, Pix2Pix, Controlnet, Upscalers (latent and SUPIR), Refiner, Inpaint, Outpaint, GLIGEN, DiffEdit, BLIP-Diffusion, AnimateDiff, HotShot-XL, Videos, LDM3D, SD3, Cascade, T2I-IP-ADAPTER, IP-Adapter-FaceID and Riffusion models (For StableDiffusion)
+* Supports Lora, Textual inversion (embedding), Vae, MagicPrompt, Img2img, Depth, Marigold, Pix2Pix, Controlnet, Upscale (latent), Refiner, Inpaint, Outpaint, GLIGEN, DiffEdit, BLIP-Diffusion, AnimateDiff, HotShot-XL, Videos, LDM3D, SD3, Cascade, T2I-IP-ADAPTER, IP-Adapter-FaceID and Riffusion models (For StableDiffusion)
 * Support Multiband Diffusion model (For AudioCraft)
 * Support LibreTranslate (Local API) and SeamlessM4Tv2 for language translations
 * Support ModelScope, ZeroScope 2, CogVideoX and Latte for video generation
