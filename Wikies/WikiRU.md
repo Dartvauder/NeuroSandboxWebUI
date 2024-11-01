@@ -1,6 +1,6 @@
 # Как пользоваться:
 
-#### Интерфейс имеет сорок два подраздела (некоторые с собственными подразделами) в семи основных разделах (Текст, Изображение, Видео, 3D, Аудио, Дополнительно и Интерфейс): LLM, TTS-STT, MMS, SeamlessM4Tv2, LibreTranslate, StableDiffusion, Kandinsky, Flux, HunyuanDiT, Lumina-T2X, Kolors, AuraFlow, Würstchen, DeepFloydIF, PixArt, CogView3-Plus, PlaygroundV2.5, Wav2Lip, LivePortrait, ModelScope, ZeroScope 2, CogVideoX, Latte, StableFast3D, Shap-E, SV34D, Zero123Plus, StableAudio, AudioCraft, AudioLDM 2, SunoBark, RVC, UVR, Demucs, Upscale (Real-ESRGAN), FaceSwap, MetaData-Info, Wiki, Gallery, ModelDownloader, Settings и System. Выберите нужный и следуйте инструкциям ниже
+#### Интерфейс имеет сорок один подраздел (некоторые с собственными подразделами) в семи основных разделах (Текст, Изображение, Видео, 3D, Аудио, Дополнительно и Интерфейс): LLM, TTS-STT, MMS, SeamlessM4Tv2, LibreTranslate, StableDiffusion, Kandinsky, Flux, HunyuanDiT, Lumina-T2X, Kolors, AuraFlow, Würstchen, DeepFloydIF, PixArt, CogView3-Plus, PlaygroundV2.5, Wav2Lip, LivePortrait, ModelScope, ZeroScope 2, CogVideoX, Latte, StableFast3D, Shap-E, Zero123Plus, StableAudio, AudioCraft, AudioLDM 2, SunoBark, RVC, UVR, Demucs, Upscale (Real-ESRGAN), FaceSwap, MetaData-Info, Wiki, Gallery, ModelDownloader, Settings и System. Выберите нужный и следуйте инструкциям ниже
 
 # Текст:
 
@@ -112,13 +112,6 @@
 2) Выберите вашу модель
 3) Настройте модель согласно нужным вам параметрам
 4) Нажмите кнопку `Submit`, чтобы получить увеличенное изображение
-
-#### upscale (SUPIR):
-
-1) Загрузите исходное изображение
-2) Настройте модель согласно нужным вам параметрам
-3) Нажмите кнопку `Submit`, чтобы получить увеличенное изображение
-#### ВНИМАНИЕ: Вам нужно самостоятельно скачать модели с [Google drive для модели SUPIR](https://drive.google.com/file/d/1ohCIBV_RAej1zuiidHph5qXNuD4GRxO3/view?usp=drive_link) и [HuggingFace для лучшей базовой модели](https://huggingface.co/RunDiffusion/Juggernaut-XL-v9/blob/main/Juggernaut-XL_v9_RunDiffusionPhoto_v2.safetensors) и поместить их по пути: */ThirdPartyRepository/SUPIR/options*
 
 #### refiner (SDXL):
 
@@ -374,12 +367,6 @@
 2) Настройте модель согласно нужным вам параметрам
 3) Нажмите кнопку `Submit`, чтобы получить сгенерированный 3D объект
 
-### SV34D:
-
-1) Загрузите исходное изображение (для 3D) или видео (для 4D)
-2) Настройте модель согласно нужным вам параметрам
-3) Нажмите кнопку `Submit`, чтобы получить сгенерированное 3D видео
-
 ### Zero123Plus:
 
 1) Загрузите исходное изображение
@@ -493,7 +480,7 @@
 * Модели LLM можно взять с [HuggingFace](https://huggingface.co/models) или из ModelDownloader внутри интерфейса
 * Модели StableDiffusion, vae, inpaint, embedding и lora можно взять с [CivitAI](https://civitai.com/models) или из ModelDownloader внутри интерфейса
 * Модели RVC можно взять с [VoiceModels](https://voice-models.com)
-* Модели StableAudio, AudioCraft, AudioLDM 2, TTS, Whisper, MMS, SeamlessM4Tv2, Wav2Lip, LivePortrait, SunoBark, MoonDream2, Upscalers (Latent и Real-ESRGAN), Refiner, GLIGEN, DiffEdit, BLIP-Diffusion, Depth, Marigold, Pix2Pix, Controlnet, AnimateDiff, HotShot-XL, Videos, LDM3D, SD3, Cascade, T2I-IP-ADAPTER, IP-Adapter-FaceID, Riffusion, Rembg, Roop, CodeFormer, DDColor, PixelOE, Real-ESRGAN, StableFast3D, Shap-E, SV34D, Zero123Plus, UVR, Demucs, Kandinsky, Flux, HunyuanDiT, Lumina-T2X, Kolors, AuraFlow, AuraSR, Würstchen, DeepFloydIF, PixArt, CogView3-Plus, PlaygroundV2.5, ModelScope, ZeroScope 2, CogVideoX, MagicPrompt, Latte и Multiband diffusion загружаются автоматически в папку *inputs* при их использовании
+* Модели StableAudio, AudioCraft, AudioLDM 2, TTS, Whisper, MMS, SeamlessM4Tv2, Wav2Lip, LivePortrait, SunoBark, MoonDream2, Upscalers (Latent и Real-ESRGAN), Refiner, GLIGEN, DiffEdit, BLIP-Diffusion, Depth, Marigold, Pix2Pix, Controlnet, AnimateDiff, HotShot-XL, Videos, LDM3D, SD3, Cascade, T2I-IP-ADAPTER, IP-Adapter-FaceID, Riffusion, Rembg, Roop, CodeFormer, DDColor, PixelOE, Real-ESRGAN, StableFast3D, Shap-E, Zero123Plus, UVR, Demucs, Kandinsky, Flux, HunyuanDiT, Lumina-T2X, Kolors, AuraFlow, AuraSR, Würstchen, DeepFloydIF, PixArt, CogView3-Plus, PlaygroundV2.5, ModelScope, ZeroScope 2, CogVideoX, MagicPrompt, Latte и Multiband diffusion загружаются автоматически в папку *inputs* при их использовании
 * Голоса вы можете взять где угодно. Запишите свой или возьмите запись из Интернета. Или просто используйте те, которые уже есть в проекте. Главное, чтобы они были предварительно обработаны!
 
 ## Дорожная карта и багтрекер:

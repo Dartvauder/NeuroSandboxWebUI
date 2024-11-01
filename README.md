@@ -6,23 +6,23 @@
 
 ## Description:
 
-A simple and convenient interface for using various neural network models. You can communicate with LLM using text, voice and image input; use StableDiffusion, Kandinsky, Flux, HunyuanDiT, Lumina-T2X, Kolors, AuraFlow, Würstchen, DeepFloydIF, PixArt, CogView3-Plus and PlaygroundV2.5, to generate images; ModelScope, ZeroScope 2, CogVideoX and Latte to generate videos; StableFast3D, Shap-E, SV34D and Zero123Plus to generate 3D objects; StableAudioOpen, AudioCraft and AudioLDM 2 to generate music and audio; CoquiTTS, MMS and SunoBark for text-to-speech; OpenAI-Whisper and MMS for speech-to-text; Wav2Lip for lip-sync; LivePortrait for animate an image; Roop to faceswap; Rembg to remove background; CodeFormer for face restore; PixelOE for image pixelization; DDColor for image colorization; LibreTranslate and SeamlessM4Tv2 for text translation; Demucs and UVR for audio file separation; RVC for voice conversion. You can also view files from the outputs directory in gallery, download the LLM and StableDiffusion models, change the application settings inside the interface and check system sensors
+A simple and convenient interface for using various neural network models. You can communicate with LLM using text, voice and image input; use StableDiffusion, Kandinsky, Flux, HunyuanDiT, Lumina-T2X, Kolors, AuraFlow, Würstchen, DeepFloydIF, PixArt, CogView3-Plus and PlaygroundV2.5, to generate images; ModelScope, ZeroScope 2, CogVideoX and Latte to generate videos; StableFast3D, Shap-E, and Zero123Plus to generate 3D objects; StableAudioOpen, AudioCraft and AudioLDM 2 to generate music and audio; CoquiTTS, MMS and SunoBark for text-to-speech; OpenAI-Whisper and MMS for speech-to-text; Wav2Lip for lip-sync; LivePortrait for animate an image; Roop to faceswap; Rembg to remove background; CodeFormer for face restore; PixelOE for image pixelization; DDColor for image colorization; LibreTranslate and SeamlessM4Tv2 for text translation; Demucs and UVR for audio file separation; RVC for voice conversion. You can also view files from the outputs directory in gallery, download the LLM and StableDiffusion models, change the application settings inside the interface and check system sensors
 
 The goal of the project - to create the easiest possible application to use neural network models
 
 ### Text: <img width="1118" alt="1" src="https://github.com/user-attachments/assets/4eb61c69-4368-40a4-bf91-a37f8126043c">
 
-### Image: <img width="1112" alt="2" src="https://github.com/user-attachments/assets/458564bd-0ff6-4779-b7cf-4e85e24442df">
+### Image: <img width="1111" alt="2" src="https://github.com/user-attachments/assets/0dd1cc24-b09d-4b37-b743-087e8c9ada55">
 
 ### Video: <img width="1117" alt="3" src="https://github.com/user-attachments/assets/5745c785-fede-4e11-aa46-73fd6696d032">
 
-### 3D: <img width="1114" alt="4" src="https://github.com/user-attachments/assets/db10b012-e9b8-40b9-95fa-150200ce0f11">
+### 3D: <img width="1115" alt="4" src="https://github.com/user-attachments/assets/311bbbc3-821e-467e-a014-3e3cb576b77d">
 
 ### Audio: <img width="1109" alt="5" src="https://github.com/user-attachments/assets/fac227ec-eb97-498f-8c67-e5304d1e0496">
 
 ### Extras: <img width="1111" alt="6" src="https://github.com/user-attachments/assets/ca3d451f-ca52-47c9-9ee4-e9d1aed0e4cb">
 
-### Interface: <img width="1116" alt="7" src="https://github.com/user-attachments/assets/2adf0118-560f-4040-821f-417fae40645b">
+### Interface: <img width="1114" alt="7" src="https://github.com/user-attachments/assets/507eca7a-991e-4c89-a08a-bb347f548c88">
 
 ## Features:
 
@@ -48,7 +48,7 @@ The goal of the project - to create the easiest possible application to use neur
 * Support SunoBark
 * Support Demucs and UVR for audio file separation
 * Support RVC for voice conversion
-* Support StableFast3D, Shap-E, SV34D and Zero123Plus for 3D generation
+* Support StableFast3D, Shap-E and Zero123Plus for 3D generation
 * Support Wav2Lip
 * Support LivePortrait for animate an image
 * Support Multimodal (Moondream 2, LLaVA-NeXT-Video, Qwen2-Audio), PDF-Parsing (OpenParse), TTS (CoquiTTS), STT (Whisper), LORA and WebSearch (with DuckDuckGo) for LLM
@@ -200,7 +200,6 @@ First of all, I want to thank the developers of [PyCharm](https://www.jetbrains.
 * [Würstchen](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/mit.md)
 * [ModelScope](https://spdx.org/licenses/CC-BY-NC-4.0)
 * [StableFast3D](https://github.com/Stability-AI/stable-fast-3d/blob/main/LICENSE.md)
-* [SV34D](https://huggingface.co/stabilityai/sv4d/blob/main/LICENSE.md)
 * [Zero123Plus](https://huggingface.co/blog/open_rail)
 * [Real-ESRGAN](https://github.com/xinntao/Real-ESRGAN/blob/master/LICENSE)
 * [Refiner](https://huggingface.co/stabilityai/stable-diffusion-xl-base-1.0/blob/main/LICENSE.md)
@@ -218,7 +217,6 @@ First of all, I want to thank the developers of [PyCharm](https://www.jetbrains.
 * [DDColor](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/apache-2.0.md)
 * [PixelOE](https://github.com/KohakuBlueleaf/PixelOE/blob/main/LICENSE)
 * [LivePortrait](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/mit.md)
-* [SUPIR](https://github.com/Fanghua-Yu/SUPIR/blob/master/LICENSE)
 * [MagicPrompt](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/mit.md)
 * [Marigold](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/apache-2.0.md)
 * [BLIP-Diffusion](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/apache-2.0.md)
@@ -228,7 +226,6 @@ First of all, I want to thank the developers of [PyCharm](https://www.jetbrains.
 
 #### These third-party repository codes are also used in my project:
 
-* [Generative-Models for SV34D](https://github.com/Stability-AI/generative-models)
 * [CodeFormer for extras](https://github.com/sczhou/CodeFormer)
 * [Real-ESRGAN for upscale](https://github.com/xinntao/Real-ESRGAN)
 * [HotShot-XL for StableDiffusion](https://github.com/hotshotco/Hotshot-XL)
@@ -237,7 +234,6 @@ First of all, I want to thank the developers of [PyCharm](https://www.jetbrains.
 * [Riffusion for StableDiffusion](https://github.com/riffusion/riffusion-hobby)
 * [DDColor for extras](https://github.com/piddnad/DDColor)
 * [LivePortrait for video](https://github.com/KwaiVGI/LivePortrait)
-* [SUPIR for StableDiffusion](https://github.com/Fanghua-Yu/SUPIR)
 * [TAESD for StableDiffusion and Flux](https://github.com/madebyollin/taesd)
 
 ## Donation

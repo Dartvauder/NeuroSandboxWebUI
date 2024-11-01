@@ -6,23 +6,23 @@
 
 ## Описание:
 
-Простой и удобный интерфейс для использования различных моделей нейронных сетей. Вы можете общаться с LLM, используя текстовый, голосовой и визуальный ввод; использовать StableDiffusion, Kandinsky, Flux, HunyuanDiT, Lumina-T2X, Kolors, AuraFlow, Würstchen, DeepFloydIF, PixArt, CogView3-Plus и PlaygroundV2.5 для генерации изображений; ModelScope, ZeroScope 2, CogVideoX и Latte для генерации видео; StableFast3D, Shap-E, SV34D и Zero123Plus для генерации 3D-объектов; StableAudioOpen, AudioCraft и AudioLDM 2 для генерации музыки и аудио; CoquiTTS, MMS и SunoBark для преобразования текста в речь; OpenAI-Whisper и MMS для преобразования речи в текст; Wav2Lip для синхронизации губ; LivePortrait для анимации изображений; Roop для замены лиц; Rembg для удаления фона; CodeFormer для восстановления лиц; PixelOE для пикселизации изображений; DDColor для раскрашивания изображений; LibreTranslate и SeamlessM4Tv2 для перевода текста; Demucs и UVR для разделения аудиофайлов; RVC для преобразования голоса. Вы также можете просматривать файлы из выходной директории в галерее, загружать модели LLM и StableDiffusion, изменять настройки приложения внутри интерфейса и проверять системные датчики.
+Простой и удобный интерфейс для использования различных моделей нейронных сетей. Вы можете общаться с LLM, используя текстовый, голосовой и визуальный ввод; использовать StableDiffusion, Kandinsky, Flux, HunyuanDiT, Lumina-T2X, Kolors, AuraFlow, Würstchen, DeepFloydIF, PixArt, CogView3-Plus и PlaygroundV2.5 для генерации изображений; ModelScope, ZeroScope 2, CogVideoX и Latte для генерации видео; StableFast3D, Shap-E, и Zero123Plus для генерации 3D-объектов; StableAudioOpen, AudioCraft и AudioLDM 2 для генерации музыки и аудио; CoquiTTS, MMS и SunoBark для преобразования текста в речь; OpenAI-Whisper и MMS для преобразования речи в текст; Wav2Lip для синхронизации губ; LivePortrait для анимации изображений; Roop для замены лиц; Rembg для удаления фона; CodeFormer для восстановления лиц; PixelOE для пикселизации изображений; DDColor для раскрашивания изображений; LibreTranslate и SeamlessM4Tv2 для перевода текста; Demucs и UVR для разделения аудиофайлов; RVC для преобразования голоса. Вы также можете просматривать файлы из выходной директории в галерее, загружать модели LLM и StableDiffusion, изменять настройки приложения внутри интерфейса и проверять системные датчики.
 
 Цель проекта - создать максимально простое в использовании приложение для работы с моделями нейронных сетей.
 
 ### Текст: <img width="1114" alt="1ru" src="https://github.com/user-attachments/assets/fa2425e2-2528-44ae-90e0-d22bc9e4960e">
 
-### Изображение: <img width="1112" alt="2ru" src="https://github.com/user-attachments/assets/2586a1b9-5814-4ae0-80e3-11664750f397">
+### Изображение: <img width="1112" alt="2ru" src="https://github.com/user-attachments/assets/feed78ba-df1e-4b89-81b7-a507a3379eb9">
 
 ### Видео: <img width="1115" alt="3ru" src="https://github.com/user-attachments/assets/3557c766-1dec-47dd-b56d-2d8c24dd6aa2">
 
-### 3D: <img width="1112" alt="4ru" src="https://github.com/user-attachments/assets/09f4ecc8-5098-45ce-8dd4-35ecf410ca35">
+### 3D: <img width="1115" alt="4ru" src="https://github.com/user-attachments/assets/14363200-966e-4332-aebc-7254a06a02ea">
 
 ### Аудио: <img width="1111" alt="5ru" src="https://github.com/user-attachments/assets/73144d26-65fe-4a81-8d37-fdcf40757bac">
 
 ### Дополнительно: <img width="1112" alt="6ru" src="https://github.com/user-attachments/assets/5250b26e-67b4-4d6a-a2e9-ce6920459e4f">
 
-### Интерфейс: <img width="1115" alt="7ru" src="https://github.com/user-attachments/assets/48d4a4a7-6ce6-494d-a17d-368ff4bcf368">
+### Интерфейс: <img width="1115" alt="7ru" src="https://github.com/user-attachments/assets/a4a104bd-5142-4032-be96-5f23c8cbe0e2">
 
 ## Функции:
 
@@ -48,7 +48,7 @@
 * Поддержка SunoBark
 * Поддержка Demucs и UVR для разделения аудиофайлов
 * Поддержка RVC для преобразования голоса
-* Поддержка StableFast3D, Shap-E, SV34D и Zero123Plus для 3D генерации
+* Поддержка StableFast3D, Shap-E и Zero123Plus для 3D генерации
 * Поддержка Wav2Lip
 * Поддержка LivePortrait для анимации изображений
 * Поддержка Multimodal (Moondream 2, LLaVA-NeXT-Video, Qwen2-Audio), PDF-Parsing (OpenParse), TTS (CoquiTTS), STT (Whisper), LORA и WebSearch (с DuckDuckGo) для LLM
@@ -200,7 +200,6 @@
 * [Würstchen](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/mit.md)
 * [ModelScope](https://spdx.org/licenses/CC-BY-NC-4.0)
 * [StableFast3D](https://github.com/Stability-AI/stable-fast-3d/blob/main/LICENSE.md)
-* [SV34D](https://huggingface.co/stabilityai/sv4d/blob/main/LICENSE.md)
 * [Zero123Plus](https://huggingface.co/blog/open_rail)
 * [Real-ESRGAN](https://github.com/xinntao/Real-ESRGAN/blob/master/LICENSE)
 * [Refiner](https://huggingface.co/stabilityai/stable-diffusion-xl-base-1.0/blob/main/LICENSE.md)
@@ -218,7 +217,6 @@
 * [DDColor](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/apache-2.0.md)
 * [PixelOE](https://github.com/KohakuBlueleaf/PixelOE/blob/main/LICENSE)
 * [LivePortrait](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/mit.md)
-* [SUPIR](https://github.com/Fanghua-Yu/SUPIR/blob/master/LICENSE)
 * [MagicPrompt](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/mit.md)
 * [Marigold](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/apache-2.0.md)
 * [BLIP-Diffusion](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/apache-2.0.md)
@@ -228,7 +226,6 @@
 
 #### Эти сторонние репозитории кода также используются в моем проекте:
 
-* [Generative-Models для SV34D](https://github.com/Stability-AI/generative-models)
 * [CodeFormer для extras](https://github.com/sczhou/CodeFormer)
 * [Real-ESRGAN для upscale](https://github.com/xinntao/Real-ESRGAN)
 * [HotShot-XL для StableDiffusion](https://github.com/hotshotco/Hotshot-XL)
@@ -237,7 +234,6 @@
 * [Riffusion для StableDiffusion](https://github.com/riffusion/riffusion-hobby)
 * [DDColor для extras](https://github.com/piddnad/DDColor)
 * [LivePortrait для видео](https://github.com/KwaiVGI/LivePortrait)
-* [SUPIR для StableDiffusion](https://github.com/Fanghua-Yu/SUPIR)
 * [TAESD для StableDiffusion и Flux](https://github.com/madebyollin/taesd)
 
 ## Пожертвование

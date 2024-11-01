@@ -1,6 +1,6 @@
 # 使用方法：
 
-#### 界面有七个主选项卡（文本、图像、视频、3D、音频、附加功能和界面），共四十一个子选项卡（部分带有自己的子选项卡）：LLM、TTS-STT、MMS、SeamlessM4Tv2、LibreTranslate、StableDiffusion、Kandinsky、Flux、HunyuanDiT、Lumina-T2X、Kolors、AuraFlow、Würstchen、DeepFloydIF、PixArt, CogView3-Plus, PlaygroundV2.5、Wav2Lip、LivePortrait、ModelScope、ZeroScope 2、CogVideoX、Latte、StableFast3D、Shap-E、SV34D、Zero123Plus、StableAudio、AudioCraft、AudioLDM 2、SunoBark、RVC、UVR、Demucs、Upscale (Real-ESRGAN)、FaceSwap、MetaData-Info、Wiki、Gallery、ModelDownloader、Settings和System。选择您需要的选项卡并按照以下说明操作
+#### 界面有七个主选项卡（文本、图像、视频、3D、音频、附加功能和界面），共四十一个子选项卡（部分带有自己的子选项卡）：LLM、TTS-STT、MMS、SeamlessM4Tv2、LibreTranslate、StableDiffusion、Kandinsky、Flux、HunyuanDiT、Lumina-T2X、Kolors、AuraFlow、Würstchen、DeepFloydIF、PixArt, CogView3-Plus, PlaygroundV2.5、Wav2Lip、LivePortrait、ModelScope、ZeroScope 2、CogVideoX、Latte、StableFast3D、Shap-E、Zero123Plus、StableAudio、AudioCraft、AudioLDM 2、SunoBark、RVC、UVR、Demucs、Upscale (Real-ESRGAN)、FaceSwap、MetaData-Info、Wiki、Gallery、ModelDownloader、Settings和System。选择您需要的选项卡并按照以下说明操作
 
 # 文本：
 
@@ -112,13 +112,6 @@
 2) 选择您的模型
 3) 根据您需要的参数设置模型
 4) 点击`Submit`按钮获取放大的图像
-
-#### upscale（SUPIR）：
-
-1) 上传初始图像
-2) 根据您需要的参数设置模型
-3) 点击`Submit`按钮获取放大的图像
-#### 警告：您需要自行从[SUPIR模型的Google驱动器](https://drive.google.com/file/d/1ohCIBV_RAej1zuiidHph5qXNuD4GRxO3/view?usp=drive_link)和[最佳基础模型的HuggingFace](https://huggingface.co/RunDiffusion/Juggernaut-XL-v9/blob/main/Juggernaut-XL_v9_RunDiffusionPhoto_v2.safetensors)下载模型，并将它们放在以下路径：*/ThirdPartyRepository/SUPIR/options*
 
 #### refiner（SDXL）：
 
@@ -374,12 +367,6 @@
 2) 根据您需要的参数设置模型
 3) 点击`Submit`按钮获取生成的3D对象
 
-### SV34D：
-
-1) 上传初始图像（用于3D）或视频（用于4D）
-2) 根据您需要的参数设置模型
-3) 点击`Submit`按钮获取生成的3D视频
-
 ### Zero123Plus：
 
 1) 上传初始图像
@@ -493,7 +480,7 @@
 * LLM模型可以从[HuggingFace](https://huggingface.co/models)获取，或者从界面内的ModelDownloader获取
 * StableDiffusion、vae、inpaint、embedding和lora模型可以从[CivitAI](https://civitai.com/models)获取，或者从界面内的ModelDownloader获取
 * RVC模型可以从[VoiceModels](https://voice-models.com)获取
-* StableAudio、AudioCraft、AudioLDM 2、TTS、Whisper、MMS、SeamlessM4Tv2、Wav2Lip、LivePortrait、SunoBark、MoonDream2、Upscalers（Latent和Real-ESRGAN）、Refiner、GLIGEN、DiffEdit、BLIP-Diffusion、Depth、Marigold、Pix2Pix、Controlnet、AnimateDiff、HotShot-XL、Videos、LDM3D、SD3、Cascade、T2I-IP-ADAPTER、IP-Adapter-FaceID、Riffusion、Rembg、Roop、CodeFormer、DDColor、PixelOE、Real-ESRGAN、StableFast3D、Shap-E、SV34D、Zero123Plus、UVR、Demucs、Kandinsky、Flux、HunyuanDiT、Lumina-T2X、Kolors、AuraFlow、AuraSR、Würstchen、DeepFloydIF、PixArt、CogView3-Plus, PlaygroundV2.5、ModelScope、ZeroScope 2、CogVideoX、MagicPrompt、Latte和Multiband diffusion模型在使用时会自动下载到*inputs*文件夹中
+* StableAudio、AudioCraft、AudioLDM 2、TTS、Whisper、MMS、SeamlessM4Tv2、Wav2Lip、LivePortrait、SunoBark、MoonDream2、Upscalers（Latent和Real-ESRGAN）、Refiner、GLIGEN、DiffEdit、BLIP-Diffusion、Depth、Marigold、Pix2Pix、Controlnet、AnimateDiff、HotShot-XL、Videos、LDM3D、SD3、Cascade、T2I-IP-ADAPTER、IP-Adapter-FaceID、Riffusion、Rembg、Roop、CodeFormer、DDColor、PixelOE、Real-ESRGAN、StableFast3D、Shap-E、Zero123Plus、UVR、Demucs、Kandinsky、Flux、HunyuanDiT、Lumina-T2X、Kolors、AuraFlow、AuraSR、Würstchen、DeepFloydIF、PixArt、CogView3-Plus, PlaygroundV2.5、ModelScope、ZeroScope 2、CogVideoX、MagicPrompt、Latte和Multiband diffusion模型在使用时会自动下载到*inputs*文件夹中
 * 您可以从任何地方获取语音。录制您自己的声音或从互联网上获取录音。或者直接使用项目中已有的语音。主要是要经过预处理！
 
 ## 路线图和错误追踪器：

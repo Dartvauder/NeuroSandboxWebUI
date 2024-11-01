@@ -1861,8 +1861,7 @@ def transcribe_mms_stt(audio_file, language, output_format, progress=gr.Progress
 def seamless_m4tv2_process(input_type, input_text, input_audio, src_lang, tgt_lang, dataset_lang,
                            enable_speech_generation, speaker_id, text_num_beams,
                            enable_text_do_sample, enable_speech_do_sample,
-                           speech_temperature, text_temperature,
-                           enable_both_generation, task_type,
+                           speech_temperature, text_temperature, task_type,
                            text_output_format, audio_output_format, progress=gr.Progress()):
 
     MODEL_PATH = os.path.join("inputs", "text", "seamless-m4t-v2")
@@ -1906,8 +1905,7 @@ def seamless_m4tv2_process(input_type, input_text, input_audio, src_lang, tgt_la
         generate_kwargs = {
             "tgt_lang": get_languages()[tgt_lang],
             "generate_speech": enable_speech_generation,
-            "speaker_id": speaker_id,
-            "return_intermediate_token_ids": enable_both_generation
+            "speaker_id": speaker_id
         }
 
         if enable_text_do_sample:
@@ -1935,7 +1933,7 @@ def seamless_m4tv2_process(input_type, input_text, input_audio, src_lang, tgt_la
         outputs = model.generate(**inputs, **generate_kwargs)
 
         progress(0.8, desc="Processing output")
-        if enable_speech_generation or enable_both_generation:
+        if enable_speech_generation:
             audio_output = outputs[0].cpu().numpy().squeeze()
             audio_path = os.path.join('outputs', f"SeamlessM4T_{datetime.now().strftime('%Y%m%d')}",
                                       f"audio_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{audio_output_format}")
@@ -1953,7 +1951,7 @@ def seamless_m4tv2_process(input_type, input_text, input_audio, src_lang, tgt_la
         else:
             audio_path = None
 
-        if not enable_speech_generation or enable_both_generation:
+        if not enable_speech_generation:
             text_output = processor.decode(outputs[0].tolist()[0], skip_special_tokens=True)
             text_path = os.path.join('outputs', f"SeamlessM4T_{datetime.now().strftime('%Y%m%d')}",
                                      f"text_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{text_output_format}")
@@ -3639,63 +3637,6 @@ def generate_image_upscale_latent(prompt, image_path, upscale_factor, seed, num_
     finally:
         if 'upscaler' in locals():
             del upscaler
-        flush()
-
-
-def generate_image_upscale_supir(input_image, model, upscale, min_size, edm_steps, s_stage1, s_churn, s_noise, s_cfg, s_stage2, a_prompt, n_prompt, color_fix_type, enable_linearly, linear_CFG, linear_s_stage2, spt_linear_CFG, spt_linear_s_stage2, output_format):
-    if not input_image:
-        gr.Info("Please upload an image to upscale!")
-        return None, None
-
-    try:
-        today = datetime.now().date()
-        output_dir = os.path.join('outputs', f"SUPIR_{today.strftime('%Y%m%d')}")
-        os.makedirs(output_dir, exist_ok=True)
-
-        output_filename = f"supir_upscaled_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
-        output_path = os.path.join(output_dir, output_filename)
-
-        command = [
-            sys.executable, r"ThirdPartyRepository\SUPIR\test.py",
-            "--img_dir", os.path.dirname(input_image),
-            "--save_dir", output_dir,
-            "--SUPIR_sign", model,
-            "--upscale", str(upscale),
-            "--min_size", str(min_size),
-            "--edm_steps", str(edm_steps),
-            "--s_stage1", str(s_stage1),
-            "--s_churn", str(s_churn),
-            "--s_noise", str(s_noise),
-            "--s_cfg", str(s_cfg),
-            "--s_stage2", str(s_stage2),
-            "--a_prompt", a_prompt,
-            "--n_prompt", n_prompt,
-            "--color_fix_type", color_fix_type
-        ]
-
-        if enable_linearly:
-            command.extend([
-                "--linear_CFG", str(linear_CFG),
-                "--linear_s_stage2", str(linear_s_stage2),
-                "--spt_linear_CFG", str(spt_linear_CFG),
-                "--spt_linear_s_stage2", str(spt_linear_s_stage2)
-            ])
-
-        subprocess.run(command, check=True)
-
-        generated_files = [f for f in os.listdir(output_dir) if f.endswith(f".{output_format}")]
-        if generated_files:
-            latest_file = max(generated_files, key=lambda x: os.path.getctime(os.path.join(output_dir, x)))
-            return os.path.join(output_dir, latest_file), "Image upscaled successfully using SUPIR!"
-        else:
-            gr.Info("No output image found. SUPIR may have failed to generate an image.")
-            return None, None
-
-    except Exception as e:
-        gr.Error(f"An error occurred: {str(e)}")
-        return None, None
-
-    finally:
         flush()
 
 
@@ -9325,87 +9266,6 @@ def generate_3d_shap_e(prompt, init_image, seed, num_inference_steps, guidance_s
         flush()
 
 
-def generate_sv34d(input_file, version, elevation_deg, progress=gr.Progress()):
-    if not input_file:
-        gr.Info("Please upload an input file!")
-        return None, None
-
-    model_files = {
-        "3D-U": "https://huggingface.co/stabilityai/sv3d/resolve/main/sv3d_u.safetensors",
-        "3D-P": "https://huggingface.co/stabilityai/sv3d/resolve/main/sv3d_p.safetensors",
-        "4D": "https://huggingface.co/stabilityai/sv4d/resolve/main/sv4d.safetensors"
-    }
-
-    progress(0.1, desc="Initializing SV34D")
-    checkpoints_dir = "ThirdPartyRepository/checkpoints"
-    os.makedirs(checkpoints_dir, exist_ok=True)
-    model_path = os.path.join(checkpoints_dir, f"sv{version.lower()}.safetensors")
-
-    if not os.path.exists(model_path):
-        progress(0.2, desc=f"Downloading SV34D {version} model...")
-        gr.Info(f"Downloading SV34D {version} model...")
-        try:
-            response = requests.get(model_files[version])
-            response.raise_for_status()
-            with open(model_path, 'wb') as f:
-                f.write(response.content)
-            gr.Info(f"SV34D {version} model downloaded")
-        except Exception as e:
-            gr.Error(f"An error occurred: {str(e)}")
-            return None, None
-
-    progress(0.3, desc="Preparing output directory")
-    today = datetime.now().date()
-    output_dir = os.path.join('outputs', f"SV34D_{today.strftime('%Y%m%d')}")
-    os.makedirs(output_dir, exist_ok=True)
-
-    output_filename = f"sv34d_{version}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
-    output_path = os.path.join(output_dir, output_filename)
-
-    progress(0.4, desc="Constructing command")
-    if version in ["3D-U", "3D-P"]:
-        if not input_file.lower().endswith(('.png', '.jpg', '.jpeg')):
-            gr.Info("Please upload an image file for 3D-U or 3D-P version!")
-            return None, None
-
-        if version == "3D-U":
-            command = f"python ThirdPartyRepository/generative-models/scripts/sampling/simple_video_sample.py --input_path {input_file} --version sv3d_u --output_folder {output_dir}"
-        else:
-            if elevation_deg is None:
-                gr.Info("Please provide elevation degree for 3D-P version!")
-                return None, None
-            command = f"python ThirdPartyRepository/generative-models/scripts/sampling/simple_video_sample.py --input_path {input_file} --version sv3d_p --elevations_deg {elevation_deg} --output_folder {output_dir}"
-    elif version == "4D":
-        if not input_file.lower().endswith('.mp4'):
-            gr.Info("Please upload an MP4 video file for 4D version!")
-            return None, None
-        command = f"python ThirdPartyRepository/generative-models/scripts/sampling/simple_video_sample_4d.py --input_path {input_file} --output_folder {output_dir}"
-    else:
-        gr.Info("Invalid version selected!")
-        return None, None
-
-    try:
-        progress(0.5, desc="Running SV34D")
-        subprocess.run(command, shell=True, check=True)
-
-        progress(0.9, desc="Processing output")
-        for file in os.listdir(output_dir):
-            if file.startswith(output_filename):
-                progress(1.0, desc="SV34D process complete")
-                return output_path
-
-    except subprocess.CalledProcessError as ee:
-        gr.Error(f"An error occurred: {str(ee)}")
-        return None, None
-
-    except Exception as e:
-        gr.Error(f"An error occurred: {str(e)}")
-        return None, None
-
-    finally:
-        flush()
-
-
 def generate_3d_zero123plus(input_image, num_inference_steps, output_format, progress=gr.Progress()):
     if not input_image:
         gr.Info("Please upload an input image!")
@@ -10967,7 +10827,6 @@ seamless_m4tv2_interface = gr.Interface(
         gr.Checkbox(label=_("Enable Speech Sampling", lang)),
         gr.Slider(minimum=0.1, maximum=2, value=0.6, step=0.1, label=_("Speech Temperature", lang)),
         gr.Slider(minimum=0.1, maximum=2, value=0.6, step=0.1, label=_("Text Temperature", lang)),
-        gr.Checkbox(label=_("Enable Both Generation", lang), value=False),
         gr.Radio(choices=["General", "Speech to Speech", "Text to Text", "Speech to Text", "Text to Speech"], label=_("Task Type", lang), value="General", interactive=True),
         gr.Radio(choices=["txt", "json"], label=_("Text Output Format", lang), value="txt", interactive=True),
         gr.Radio(choices=["wav", "mp3", "ogg"], label=_("Audio Output Format", lang), value="wav", interactive=True)
@@ -11263,44 +11122,6 @@ latent_upscale_interface = gr.Interface(
     ],
     title=_("NeuroSandboxWebUI - StableDiffusion (upscale-latent)", lang),
     description=_("This user interface allows you to upload an image and latent-upscale it using x2 or x4 upscale factor", lang),
-    allow_flagging="never",
-    clear_btn=None,
-    stop_btn=_("Stop", lang),
-    submit_btn=_("Upscale", lang)
-)
-
-supir_upscale_interface = gr.Interface(
-    fn=generate_image_upscale_supir,
-    inputs=[
-        gr.Image(label=_("Image to upscale", lang), type="filepath"),
-        gr.Radio(choices=['Q', 'F'], label=_("SUPIR model", lang), value='Q'),
-        gr.Slider(minimum=1, maximum=10, value=4, step=1, label=_("Upscale factor", lang))
-    ],
-    additional_inputs=[
-        gr.Slider(minimum=512, maximum=4096, value=1024, step=64, label=_("Minimum size", lang)),
-        gr.Slider(minimum=1, maximum=100, value=50, step=1, label=_("EDM steps", lang)),
-        gr.Number(label=_("S Stage1", lang), value=-1),
-        gr.Slider(minimum=0, maximum=20, value=5, step=0.1, label=_("S Churn", lang)),
-        gr.Slider(minimum=0, maximum=10, value=1, step=0.1, label=_("S Noise", lang)),
-        gr.Slider(minimum=1, maximum=30, value=7, step=0.1, label=_("S CFG", lang)),
-        gr.Number(label=_("S Stage2", lang), value=1),
-        gr.Textbox(label=_("Prompt", lang), value=""),
-        gr.Textbox(label=_("Negative Prompt", lang), value=""),
-        gr.Radio(choices=['None', 'AdaIn', 'Wavelet'], label=_("Color Fix Type", lang), value='None'),
-        gr.Checkbox(label=_("Enable Linearly (with sigma)", lang), value=False),
-        gr.Slider(minimum=0, maximum=30, value=7, step=0.1, label=_("Linear CFG", lang), visible=True),
-        gr.Slider(minimum=0, maximum=10, value=1, step=0.1, label=_("Linear S Stage2", lang), visible=True),
-        gr.Slider(minimum=0, maximum=10, value=1, step=0.1, label=_("SPT Linear CFG", lang), visible=True),
-        gr.Slider(minimum=0, maximum=10, value=0, step=0.1, label=_("SPT Linear S Stage2", lang), visible=True),
-        gr.Radio(choices=["png", "jpeg"], label=_("Select output format", lang), value="png", interactive=True)
-    ],
-    additional_inputs_accordion=gr.Accordion(label=_("Upscale-SUPIR Settings", lang), open=False),
-    outputs=[
-        gr.Image(type="filepath", label=_("Upscaled image", lang)),
-        gr.Textbox(label=_("Message", lang), type="text")
-    ],
-    title=_("NeuroSandboxWebUI - Upscale (SUPIR)", lang),
-    description=_("This user interface allows you to upscale images using SUPIR (Super-Resolution Plugin). Upload an image and customize the upscaling settings. Try it and see what happens!", lang),
     allow_flagging="never",
     clear_btn=None,
     stop_btn=_("Stop", lang),
@@ -12956,27 +12777,6 @@ shap_e_interface = gr.Interface(
     submit_btn=_("Generate", lang)
 )
 
-sv34d_interface = gr.Interface(
-    fn=generate_sv34d,
-    inputs=[
-        gr.File(label=_("Input file (Image for 3D-U and 3D-P, MP4 video for 4D)", lang), type="filepath"),
-        gr.Radio(choices=["3D-U", "3D-P", "4D"], label=_("Version", lang), value="3D-U"),
-        gr.Slider(minimum=0.0, maximum=90.0, value=10.0, step=0.1, label=_("Elevation Degree (for 3D-P only)", lang)),
-    ],
-    outputs=[
-        gr.Video(label=_("Generated output", lang)),
-        gr.Textbox(label=_("Message", lang), type="text"),
-    ],
-    title=_("NeuroSandboxWebUI - SV34D", lang),
-    description=_("This interface allows you to generate 3D and 4D content using SV34D models. "
-                "Upload an image (PNG, JPG, JPEG) for 3D-U and 3D-P versions, or an MP4 video for 4D version. "
-                "Select the version and customize settings as needed.", lang),
-    allow_flagging="never",
-    clear_btn=None,
-    stop_btn=_("Stop", lang),
-    submit_btn=_("Generate", lang)
-)
-
 zero123plus_interface = gr.Interface(
     fn=generate_3d_zero123plus,
     inputs=[
@@ -13512,11 +13312,11 @@ with gr.TabbedInterface(
         gr.TabbedInterface(
             [
                 gr.TabbedInterface(
-                    [txt2img_interface, img2img_interface, depth2img_interface, marigold_interface, pix2pix_interface, controlnet_interface, latent_upscale_interface, supir_upscale_interface, sdxl_refiner_interface, inpaint_interface, outpaint_interface, gligen_interface, diffedit_interface, blip_diffusion_interface, animatediff_interface, hotshotxl_interface, video_interface, ldm3d_interface,
+                    [txt2img_interface, img2img_interface, depth2img_interface, marigold_interface, pix2pix_interface, controlnet_interface, latent_upscale_interface, sdxl_refiner_interface, inpaint_interface, outpaint_interface, gligen_interface, diffedit_interface, blip_diffusion_interface, animatediff_interface, hotshotxl_interface, video_interface, ldm3d_interface,
                      gr.TabbedInterface([sd3_txt2img_interface, sd3_img2img_interface, sd3_controlnet_interface, sd3_inpaint_interface],
                                         tab_names=[_("txt2img", lang), _("img2img", lang), _("controlnet", lang), _("inpaint", lang)]),
                      cascade_interface, t2i_ip_adapter_interface, ip_adapter_faceid_interface, riffusion_interface],
-                    tab_names=[_("txt2img", lang), _("img2img", lang), _("depth2img", lang), _("marigold", lang), _("pix2pix", lang), _("controlnet", lang), _("upscale(latent)", lang), _("upscale(SUPIR)", lang), _("refiner", lang), _("inpaint", lang), _("outpaint", lang), _("gligen", lang), _("diffedit", lang), _("blip-diffusion", lang), _("animatediff", lang), _("hotshotxl", lang), _("video", lang), _("ldm3d", lang), _("sd3", lang), _("cascade", lang), _("t2i-ip-adapter", lang), _("ip-adapter-faceid", lang), _("riffusion", lang)]
+                    tab_names=[_("txt2img", lang), _("img2img", lang), _("depth2img", lang), _("marigold", lang), _("pix2pix", lang), _("controlnet", lang), _("upscale(latent)", lang), _("refiner", lang), _("inpaint", lang), _("outpaint", lang), _("gligen", lang), _("diffedit", lang), _("blip-diffusion", lang), _("animatediff", lang), _("hotshotxl", lang), _("video", lang), _("ldm3d", lang), _("sd3", lang), _("cascade", lang), _("t2i-ip-adapter", lang), _("ip-adapter-faceid", lang), _("riffusion", lang)]
                 ),
                 kandinsky_interface, flux_interface, hunyuandit_interface, lumina_interface, kolors_interface, auraflow_interface, wurstchen_interface, deepfloyd_if_interface, pixart_interface, cogview3plus_interface, playgroundv2_interface
             ],
@@ -13527,8 +13327,8 @@ with gr.TabbedInterface(
             tab_names=[_("Wav2Lip", lang), _("LivePortrait", lang), _("ModelScope", lang), _("ZeroScope2", lang), _("CogVideoX", lang), _("Latte", lang)]
         ),
         gr.TabbedInterface(
-            [stablefast3d_interface, shap_e_interface, sv34d_interface, zero123plus_interface],
-            tab_names=[_("StableFast3D", lang), _("Shap-E", lang), _("SV34D", lang), _("Zero123Plus", lang)]
+            [stablefast3d_interface, shap_e_interface, zero123plus_interface],
+            tab_names=[_("StableFast3D", lang), _("Shap-E", lang), _("Zero123Plus", lang)]
         ),
         gr.TabbedInterface(
             [stableaudio_interface, audiocraft_interface, audioldm2_interface, bark_interface, rvc_interface, uvr_interface, demucs_interface],
