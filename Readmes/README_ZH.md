@@ -6,7 +6,7 @@
 
 ## 描述：
 
-一个简单方便的界面，用于使用各种神经网络模型。您可以通过文本、语音和图像输入与LLM进行通信；使用StableDiffusion、Kandinsky、Flux、HunyuanDiT、Lumina-T2X、Kolors、AuraFlow、Würstchen、DeepFloydIF、PixArt, CogView3-Plus和PlaygroundV2.5生成图像；使用ModelScope、ZeroScope 2、CogVideoX和Latte生成视频；使用StableFast3D、Shap-E、SV34D和Zero123Plus生成3D对象；使用StableAudioOpen、AudioCraft和AudioLDM 2生成音乐和音频；使用CoquiTTS、MMS和SunoBark进行文本到语音转换；使用OpenAI-Whisper和MMS进行语音到文本转换；使用Wav2Lip进行唇形同步；使用LivePortrait为图像添加动画；使用Roop进行换脸；使用Rembg移除背景；使用CodeFormer修复面部；使用PixelOE进行图像像素化；使用DDColor为图像上色；使用LibreTranslate和SeamlessM4Tv2进行文本翻译；使用Demucs和UVR进行音频文件分离；使用RVC进行语音转换。您还可以在图库中查看输出目录中的文件，下载LLM和StableDiffusion模型，在界面内更改应用程序设置并检查系统传感器。
+一个简单方便的界面，用于使用各种神经网络模型。您可以通过文本、语音和图像输入与LLM进行通信；使用StableDiffusion、Kandinsky、Flux、HunyuanDiT、Lumina-T2X、Kolors、AuraFlow、Würstchen、DeepFloydIF、PixArt, CogView3-Plus和PlaygroundV2.5生成图像；使用ModelScope、ZeroScope 2、CogVideoX和Latte生成视频；使用StableFast3D、Shap-E和Zero123Plus生成3D对象；使用StableAudioOpen、AudioCraft和AudioLDM 2生成音乐和音频；使用CoquiTTS、MMS和SunoBark进行文本到语音转换；使用OpenAI-Whisper和MMS进行语音到文本转换；使用Wav2Lip进行唇形同步；使用LivePortrait为图像添加动画；使用Roop进行换脸；使用Rembg移除背景；使用CodeFormer修复面部；使用PixelOE进行图像像素化；使用DDColor为图像上色；使用LibreTranslate和SeamlessM4Tv2进行文本翻译；使用Demucs和UVR进行音频文件分离；使用RVC进行语音转换。您还可以在图库中查看输出目录中的文件，下载LLM和StableDiffusion模型，在界面内更改应用程序设置并检查系统传感器。
 
 项目目标 - 创建一个尽可能简单易用的神经网络模型应用程序
 
@@ -48,7 +48,7 @@
 * 支持SunoBark
 * 支持Demucs和UVR进行音频文件分离
 * 支持RVC进行语音转换
-* 支持StableFast3D、Shap-E、SV34D和Zero123Plus进行3D生成
+* 支持StableFast3D、Shap-E和Zero123Plus进行3D生成
 * 支持Wav2Lip
 * 支持LivePortrait为图像添加动画
 * 支持LLM的多模态（Moondream 2, LLaVA-NeXT-Video, Qwen2-Audio）、PDF解析（OpenParse）、TTS（CoquiTTS）、STT（Whisper）、LORA和网络搜索（使用DuckDuckGo）
@@ -200,7 +200,6 @@
 * [Würstchen](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/mit.md)
 * [ModelScope](https://spdx.org/licenses/CC-BY-NC-4.0)
 * [StableFast3D](https://github.com/Stability-AI/stable-fast-3d/blob/main/LICENSE.md)
-* [SV34D](https://huggingface.co/stabilityai/sv4d/blob/main/LICENSE.md)
 * [Zero123Plus](https://huggingface.co/blog/open_rail)
 * [Real-ESRGAN](https://github.com/xinntao/Real-ESRGAN/blob/master/LICENSE)
 * [Refiner](https://huggingface.co/stabilityai/stable-diffusion-xl-base-1.0/blob/main/LICENSE.md)
@@ -218,7 +217,6 @@
 * [DDColor](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/apache-2.0.md)
 * [PixelOE](https://github.com/KohakuBlueleaf/PixelOE/blob/main/LICENSE)
 * [LivePortrait](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/mit.md)
-* [SUPIR](https://github.com/Fanghua-Yu/SUPIR/blob/master/LICENSE)
 * [MagicPrompt](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/mit.md)
 * [Marigold](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/apache-2.0.md)
 * [BLIP-Diffusion](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/apache-2.0.md)
@@ -228,7 +226,6 @@
 
 #### 这些第三方仓库代码也在我的项目中使用：
 
-* [Generative-Models for SV34D](https://github.com/Stability-AI/generative-models)
 * [CodeFormer for extras](https://github.com/sczhou/CodeFormer)
 * [Real-ESRGAN for upscale](https://github.com/xinntao/Real-ESRGAN)
 * [HotShot-XL for StableDiffusion](https://github.com/hotshotco/Hotshot-XL)
@@ -237,7 +234,6 @@
 * [Riffusion for StableDiffusion](https://github.com/riffusion/riffusion-hobby)
 * [DDColor for extras](https://github.com/piddnad/DDColor)
 * [LivePortrait for video](https://github.com/KwaiVGI/LivePortrait)
-* [SUPIR for StableDiffusion](https://github.com/Fanghua-Yu/SUPIR)
 * [TAESD for StableDiffusion and Flux](https://github.com/madebyollin/taesd)
 
 ## 捐赠
