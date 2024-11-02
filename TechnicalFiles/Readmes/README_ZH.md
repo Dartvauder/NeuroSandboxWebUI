@@ -2,7 +2,7 @@
 
 # ![主图](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/4ea0d891-8979-45ad-b052-626c41ae991a)
 * 仍在进行中但已稳定！
-* [English](/README.md) | [Русский](/Readmes/README_RU.md) | 漢語
+* [English](/README.md) | [Русский](/TechnicalFiles/Readmes/README_RU.md) | 漢語
 
 ## 描述：
 
