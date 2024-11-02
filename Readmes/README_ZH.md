@@ -64,7 +64,7 @@
 
 * [Python](https://www.python.org/downloads/)（3.10.11）
 * [Git](https://git-scm.com/downloads)
-* [CUDA](https://developer.nvidia.com/cuda-downloads)（12.4）和[cuDNN](https://developer.nvidia.com/cudnn-downloads)（9.1）
+* 仅适用于GPU版本: [CUDA](https://developer.nvidia.com/cuda-downloads)（12.4）和[cuDNN](https://developer.nvidia.com/cudnn-downloads)（9.1）
 * [FFMPEG](https://ffmpeg.org/download.html)
 - C++编译器
   - Windows：[VisualStudio](https://visualstudio.microsoft.com/ru/)、[VisualStudioCode](https://code.visualstudio.com)和[Cmake](https://cmake.org)
