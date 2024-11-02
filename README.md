@@ -2,7 +2,7 @@
 
 # ![main](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/4ea0d891-8979-45ad-b052-626c41ae991a)
 * Work in progress but stable!
-* English | [Русский](/Readmes/README_RU.md) | [漢語](/Readmes/README_ZH.md) 
+* English | [Русский](/TechnicalFiles/Readmes/README_RU.md) | [漢語](/TechnicalFiles/Readmes/README_ZH.md) 
 
 ## Description:
 
