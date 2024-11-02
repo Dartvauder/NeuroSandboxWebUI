@@ -659,5 +659,14 @@
   "GitHub": "GitHub",
   "Hugging Face": "Hugging Face",
   "Welcome to NeuroSandboxWebUI!": "Добро пожаловать в NeuroSandboxWebUI!",
-  "Language": "Язык"
+  "Language": "Язык",
+  "SeamlessM4T Settings": "Настройки SeamlessM4T",
+  "Model Type": "Тип модели",
+  "Max file size": "Максимальный размер файла",
+  "Share server address": "Поделиться адресом сервера",
+  "Text-to-Image": "Текст в изображение",
+  "Image-to-Audio": "Изображение в аудио",
+  "Audio-to-Image": "Аудио в изображение",
+  "Select quantized Flux model (optional if enabled quantize)": "Выберите квантованную модель Flux (необязательно при включенном квантовании)",
+  "Cogview3-plus Settings": "Настройки Cogview3-plus"
 }

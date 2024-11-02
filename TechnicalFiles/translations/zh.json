@@ -659,5 +659,14 @@
   "GitHub": "GitHub",
   "Hugging Face": "Hugging Face",
   "Welcome to NeuroSandboxWebUI!": "欢迎使用NeuroSandboxWebUI！",
-  "Language": "语言"
+  "Language": "语言",
+  "SeamlessM4T Settings": "SeamlessM4T 设置",
+  "Model Type": "模型类型",
+  "Max file size": "最大文件大小",
+  "Share server address": "共享服务器地址",
+  "Text-to-Image": "文本生成图像",
+  "Image-to-Audio": "图像转音频",
+  "Audio-to-Image": "音频转图像",
+  "Select quantized Flux model (optional if enabled quantize)": "选择量化的Flux模型（如果启用量化则可选）",
+  "Cogview3-plus Settings": "Cogview3-plus 设置"
 }
