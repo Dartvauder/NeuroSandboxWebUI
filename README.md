@@ -64,7 +64,7 @@ The goal of the project - to create the easiest possible application to use neur
 
 * [Python](https://www.python.org/downloads/) (3.10.11)
 * [Git](https://git-scm.com/downloads)
-* [CUDA](https://developer.nvidia.com/cuda-downloads) (12.4) and [cuDNN](https://developer.nvidia.com/cudnn-downloads) (9.1)
+* Only for GPU version: [CUDA](https://developer.nvidia.com/cuda-downloads) (12.4) and [cuDNN](https://developer.nvidia.com/cudnn-downloads) (9.1)
 * [FFMPEG](https://ffmpeg.org/download.html)
 - C+ compiler
   - Windows: [VisualStudio](https://visualstudio.microsoft.com/ru/), [VisualStudioCode](https://code.visualstudio.com) and [Cmake](https://cmake.org)
