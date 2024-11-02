@@ -6,8 +6,8 @@ clear
 
 CURRENT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &> /dev/null && pwd)"
 
-if [ -f "$CURRENT_DIR/install_config.txt" ]; then
-    INSTALL_TYPE=$(grep "INSTALL_TYPE=" "$CURRENT_DIR/install_config.txt" | cut -d'=' -f2)
+if [ -f "$CURRENT_DIR/TechnicalFiles/install_config.txt" ]; then
+    INSTALL_TYPE=$(grep "INSTALL_TYPE=" "$CURRENT_DIR/TechnicalFiles/install_config.txt" | cut -d'=' -f2)
 else
     echo "Installation configuration not found. Please run install.sh first."
     read -p "Press enter to exit"
@@ -17,12 +17,12 @@ fi
 source "$CURRENT_DIR/venv/bin/activate"
 
 echo "Setting up local pip cache..."
-mkdir -p "$CURRENT_DIR/pip_cache"
-export PIP_CACHE_DIR="$CURRENT_DIR/pip_cache"
+mkdir -p "$CURRENT_DIR/TechnicalFiles/pip_cache"
+export PIP_CACHE_DIR="$CURRENT_DIR/TechnicalFiles/pip_cache"
 
 echo "Updating dependencies for $INSTALL_TYPE version..."
-mkdir -p "$CURRENT_DIR/logs"
-ERROR_LOG="$CURRENT_DIR/logs/update_errors.log"
+mkdir -p "$CURRENT_DIR/TechnicalFiles/logs"
+ERROR_LOG="$CURRENT_DIR/TechnicalFiles/logs/update_errors.log"
 touch "$ERROR_LOG"
 
 if [ "$INSTALL_TYPE" = "CPU" ]; then
@@ -61,7 +61,7 @@ sleep 3
 clear
 
 echo "Post-installing patches..."
-python3 "$CURRENT_DIR/RequirementsFiles/post_install.py"
+python3 "$CURRENT_DIR/TechnicalFiles/post_install.py"
 sleep 3
 clear
 

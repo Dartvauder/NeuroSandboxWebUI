@@ -2,7 +2,7 @@
 
 # ![主图](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/4ea0d891-8979-45ad-b052-626c41ae991a)
 * 仍在进行中但已稳定！
-* [English](/README.md) | [Русский](/Readmes/README_RU.md) | 漢語
+* [English](/README.md) | [Русский](/TechnicalFiles/Readmes/README_RU.md) | 漢語
 
 ## 描述：
 
@@ -64,7 +64,7 @@
 
 * [Python](https://www.python.org/downloads/)（3.10.11）
 * [Git](https://git-scm.com/downloads)
-* [CUDA](https://developer.nvidia.com/cuda-downloads)（12.4）和[cuDNN](https://developer.nvidia.com/cudnn-downloads)（9.1）
+* 仅适用于GPU版本: [CUDA](https://developer.nvidia.com/cuda-downloads)（12.4）和[cuDNN](https://developer.nvidia.com/cudnn-downloads)（9.1）
 * [FFMPEG](https://ffmpeg.org/download.html)
 - C++编译器
   - Windows：[VisualStudio](https://visualstudio.microsoft.com/ru/)、[VisualStudioCode](https://code.visualstudio.com)和[Cmake](https://cmake.org)

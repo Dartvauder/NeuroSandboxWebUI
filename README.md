@@ -2,7 +2,7 @@
 
 # ![main](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/4ea0d891-8979-45ad-b052-626c41ae991a)
 * Work in progress but stable!
-* English | [Русский](/Readmes/README_RU.md) | [漢語](/Readmes/README_ZH.md) 
+* English | [Русский](/TechnicalFiles/Readmes/README_RU.md) | [漢語](/TechnicalFiles/Readmes/README_ZH.md) 
 
 ## Description:
 
@@ -64,7 +64,7 @@ The goal of the project - to create the easiest possible application to use neur
 
 * [Python](https://www.python.org/downloads/) (3.10.11)
 * [Git](https://git-scm.com/downloads)
-* [CUDA](https://developer.nvidia.com/cuda-downloads) (12.4) and [cuDNN](https://developer.nvidia.com/cudnn-downloads) (9.1)
+* Only for GPU version: [CUDA](https://developer.nvidia.com/cuda-downloads) (12.4) and [cuDNN](https://developer.nvidia.com/cudnn-downloads) (9.1)
 * [FFMPEG](https://ffmpeg.org/download.html)
 - C+ compiler
   - Windows: [VisualStudio](https://visualstudio.microsoft.com/ru/), [VisualStudioCode](https://code.visualstudio.com) and [Cmake](https://cmake.org)

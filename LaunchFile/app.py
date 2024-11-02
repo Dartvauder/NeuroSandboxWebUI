@@ -9,10 +9,10 @@ os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
 os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
 warnings.filterwarnings("ignore")
 logging.getLogger("httpx").setLevel(logging.WARNING)
-cache_dir = os.path.join("cache")
+cache_dir = os.path.join("TechnicalFiles/cache")
 os.makedirs(cache_dir, exist_ok=True)
 os.environ["XDG_CACHE_HOME"] = cache_dir
-temp_dir = os.path.join("temp")
+temp_dir = os.path.join("TechnicalFiles/temp")
 os.makedirs(temp_dir, exist_ok=True)
 os.environ["TMPDIR"] = temp_dir
 sys.modules['triton'] = None
@@ -375,7 +375,7 @@ def add_metadata_to_file(file_path, metadata):
 
 def load_translation(lang):
     try:
-        with open(f"translations/{lang}.json", "r", encoding="utf-8") as f:
+        with open(f"TechnicalFiles/translations/{lang}.json", "r", encoding="utf-8") as f:
             return json.load(f)
     except FileNotFoundError:
         return {}
@@ -10299,7 +10299,7 @@ def display_metadata(file, progress=gr.Progress()):
         return None
 
 
-def get_wiki_content(url, local_file="Wikies/WikiEN.md", progress=gr.Progress()):
+def get_wiki_content(url, local_file="TechnicalFiles/Wikies/WikiEN.md", progress=gr.Progress()):
     progress(0.1, desc="Initializing wiki content retrieval")
     try:
         progress(0.3, desc="Attempting to fetch online content")
@@ -10655,8 +10655,8 @@ def create_footer():
     return gr.Markdown(footer_html)
 
 
-avatar_user = "avatars/user.png"
-avatar_ai = "avatars/ai.png"
+avatar_user = "inputs/text/llm_models/avatars/user.png"
+avatar_ai = "inputs/text/llm_models/avatars/ai.png"
 settings = load_settings()
 lang = settings['language']
 
@@ -13171,9 +13171,9 @@ wiki_interface = gr.Interface(
             "https://github.com/Dartvauder/NeuroSandboxWebUI/wiki/RU‐Wiki"
         ), interactive=False),
         gr.Textbox(label=_("Local Wiki", lang), value=(
-            "Wikies/WikiEN.md" if lang == "EN" else
-            "Wikies/WikiZH.md" if lang == "ZH" else
-            "Wikies/WikiRU.md"
+            "TechnicalFiles/Wikies/WikiEN.md" if lang == "EN" else
+            "TechnicalFiles/Wikies/WikiZH.md" if lang == "ZH" else
+            "TechnicalFiles/Wikies/WikiRU.md"
         ), interactive=False)
     ],
     outputs=gr.HTML(label=_("Wiki Content", lang)),

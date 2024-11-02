@@ -7,8 +7,8 @@ cls
 
 set CURRENT_DIR=%~dp0
 
-if exist "%CURRENT_DIR%install_config.txt" (
-    for /f "tokens=2 delims==" %%a in ('type "%CURRENT_DIR%install_config.txt" ^| findstr "INSTALL_TYPE"') do set INSTALL_TYPE=%%a
+if exist "%CURRENT_DIR%TechnicalFiles\install_config.txt" (
+    for /f "tokens=2 delims==" %%a in ('type "%CURRENT_DIR%TechnicalFiles\install_config.txt" ^| findstr "INSTALL_TYPE"') do set INSTALL_TYPE=%%a
 ) else (
     echo Installation configuration not found. Please run install.bat first.
     pause
@@ -18,12 +18,12 @@ if exist "%CURRENT_DIR%install_config.txt" (
 call "%CURRENT_DIR%venv\Scripts\activate.bat"
 
 echo Setting up local pip cache...
-if not exist "%CURRENT_DIR%pip_cache" mkdir "%CURRENT_DIR%pip_cache"
-set PIP_CACHE_DIR=%CURRENT_DIR%pip_cache
+if not exist "%CURRENT_DIR%TechnicalFiles\pip_cache" mkdir "%CURRENT_DIR%TechnicalFiles\pip_cache"
+set PIP_CACHE_DIR=%CURRENT_DIR%TechnicalFiles\pip_cache
 
 echo Updating dependencies for %INSTALL_TYPE% version...
-if not exist "%CURRENT_DIR%logs" mkdir "%CURRENT_DIR%logs"
-set ERROR_LOG="%CURRENT_DIR%logs\update_errors.log"
+if not exist "%CURRENT_DIR%TechnicalFiles\logs" mkdir "%CURRENT_DIR%TechnicalFiles\logs"
+set ERROR_LOG="%CURRENT_DIR%TechnicalFiles\logs\update_errors.log"
 type nul > %ERROR_LOG%
 
 if "%INSTALL_TYPE%"=="CPU" (
@@ -63,7 +63,7 @@ timeout /t 3 /nobreak >nul
 cls
 
 echo Post-installing patches...
-python "%CURRENT_DIR%RequirementsFiles\post_install.py"
+python "%CURRENT_DIR%TechnicalFiles\post_install.py"
 timeout /t 3 /nobreak >nul
 cls
 

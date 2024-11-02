@@ -2,7 +2,7 @@
 
 # ![main](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/4ea0d891-8979-45ad-b052-626c41ae991a)
 * В процессе разработки, но стабильно!
-* [English](/README.md) | Русский | [漢語](/Readmes/README_ZH.md)
+* [English](/README.md) | Русский | [漢語](/TechnicalFiles/Readmes/README_ZH.md)
 
 ## Описание:
 
@@ -64,7 +64,7 @@
 
 * [Python](https://www.python.org/downloads/) (3.10.11)
 * [Git](https://git-scm.com/downloads)
-* [CUDA](https://developer.nvidia.com/cuda-downloads) (12.4) и [cuDNN](https://developer.nvidia.com/cudnn-downloads) (9.1)
+* Только для версии с GPU: [CUDA](https://developer.nvidia.com/cuda-downloads) (12.4) и [cuDNN](https://developer.nvidia.com/cudnn-downloads) (9.1)
 * [FFMPEG](https://ffmpeg.org/download.html)
 - C+ компилятор
   - Windows: [VisualStudio](https://visualstudio.microsoft.com/ru/), [VisualStudioCode](https://code.visualstudio.com) и [Cmake](https://cmake.org)
