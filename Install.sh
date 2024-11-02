@@ -29,8 +29,8 @@ source "$CURRENT_DIR/venv/bin/activate"
 clear
 
 echo "Setting up local pip cache..."
-mkdir -p "$CURRENT_DIR/pip_cache"
-export PIP_CACHE_DIR="$CURRENT_DIR/pip_cache"
+mkdir -p "$CURRENT_DIR/TechnicalFiles/pip_cache"
+export PIP_CACHE_DIR="$CURRENT_DIR/TechnicalFiles/pip_cache"
 
 echo "Upgrading pip, setuptools and wheel..."
 python -m pip install --upgrade pip setuptools
@@ -39,8 +39,8 @@ sleep 3
 clear
 
 echo "Installing dependencies..."
-mkdir -p "$CURRENT_DIR/logs"
-ERROR_LOG="$CURRENT_DIR/logs/installation_errors.log"
+mkdir -p "$CURRENT_DIR/TechnicalFiles/logs"
+ERROR_LOG="$CURRENT_DIR/TechnicalFiles/logs/installation_errors.log"
 touch "$ERROR_LOG"
 
 if [ "$INSTALL_TYPE" = "CPU" ]; then
@@ -54,7 +54,7 @@ else
     pip install --no-deps -r "$CURRENT_DIR/RequirementsFiles/requirements-llama-cpp.txt" 2>> "$ERROR_LOG"
     pip install --no-deps -r "$CURRENT_DIR/RequirementsFiles/requirements-stable-diffusion-cpp.txt" 2>> "$ERROR_LOG"
 fi
-echo "INSTALL_TYPE=$INSTALL_TYPE" > "$CURRENT_DIR/install_config.txt"
+echo "INSTALL_TYPE=$INSTALL_TYPE" > "$CURRENT_DIR/TechnicalFiles/install_config.txt"
 
 pip install triton==3.0.0 2>> "$ERROR_LOG"
 pip install --no-deps git+https://github.com/daswer123/rvc-python 2>> "$ERROR_LOG"
@@ -69,7 +69,7 @@ sleep 3
 clear
 
 echo "Post-installing patches..."
-python "$CURRENT_DIR/RequirementsFiles/post_install.py"
+python "$CURRENT_DIR/TechnicalFiles/post_install.py"
 sleep 3
 clear
 
