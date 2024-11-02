@@ -1,4 +1,3 @@
-
 .idea/inspectionProfiles/profiles_settings.xml
 .idea/inspectionProfiles/Project_Default.xml
 .idea/misc.xml
@@ -6,5 +5,3 @@
 .idea/NeuroSandboxWebUI.iml
 .idea/vcs.xml
 .idea/workspace.xml
-cache/huggingface/hub/version_diffusers_cache.txt
-cache/huggingface/hub/version.txt
