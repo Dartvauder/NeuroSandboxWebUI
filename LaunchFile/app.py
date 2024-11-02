@@ -1018,7 +1018,7 @@ def load_tts_model():
 
 
 def load_freevc_model():
-    model_path = "inputs/audio/FREEvc24"
+    model_path = "voice_conversion_models/multilingual/vctk/freevc24"
     if not os.path.exists(model_path):
         gr.Info("Downloading FreeVC...")
         os.makedirs(model_path, exist_ok=True)
@@ -1607,7 +1607,7 @@ def generate_tts_stt(text, audio, tts_settings_html, speaker_wav, language, tts_
     tts_output = None
     stt_output = None
 
-    if not text and not audio:
+    if not enable_conversion and not audio and not text:
         gr.Info("Please enter text for TTS or record audio for STT!")
         return None, None
 
@@ -1631,8 +1631,6 @@ def generate_tts_stt(text, audio, tts_settings_html, speaker_wav, language, tts_
             tts.voice_conversion_to_file(source_wav=source_wav, target_wav=target_wav, file_path=conversion_output)
 
             progress(1.0, desc="Voice conversion complete")
-
-            return conversion_output, None
 
         if text:
             progress(0, desc="Processing TTS")
@@ -1701,7 +1699,10 @@ def generate_tts_stt(text, audio, tts_settings_html, speaker_wav, language, tts_
 
             progress(1.0, desc="STT processing complete")
 
-        return tts_output, stt_output
+        if text or audio:
+            return tts_output, stt_output
+        elif enable_conversion:
+            return conversion_output, None
 
     except Exception as e:
         gr.Error(f"An error occurred: {str(e)}")
@@ -10714,8 +10715,8 @@ chat_interface = gr.Interface(
         gr.Slider(minimum=0.01, maximum=1.0, value=0.9, step=0.01, label=_("TTS Top P", lang), interactive=True),
         gr.Slider(minimum=1, maximum=100, value=20, step=1, label=_("TTS Top K", lang), interactive=True),
         gr.Slider(minimum=0.5, maximum=2.0, value=1.0, step=0.1, label=_("TTS Speed", lang), interactive=True),
-        gr.Slider(minimum=0.1, maximum=2.0, value=2.0, step=0.1, label=_("TTS Repetition penalty", lang), interactive=True),
-        gr.Slider(minimum=0.1, maximum=2.0, value=1.0, step=0.1, label=_("TTS Length penalty", lang), interactive=True),
+        gr.Slider(minimum=0.1, maximum=1.9, value=1.1, step=0.1, label=_("TTS Repetition penalty", lang), interactive=True),
+        gr.Slider(minimum=0.1, maximum=1.9, value=1.1, step=0.1, label=_("TTS Length penalty", lang), interactive=True),
         gr.Radio(choices=["wav", "mp3", "ogg"], label=_("Select output format", lang), value="wav", interactive=True),
         gr.State([])
     ],
@@ -10746,9 +10747,8 @@ tts_stt_interface = gr.Interface(
         gr.Slider(minimum=0.01, maximum=1.0, value=0.9, step=0.01, label=_("TTS Top P", lang), interactive=True),
         gr.Slider(minimum=1, maximum=100, value=20, step=1, label=_("TTS Top K", lang), interactive=True),
         gr.Slider(minimum=0.5, maximum=2.0, value=1.0, step=0.1, label=_("TTS Speed", lang), interactive=True),
-        gr.Slider(minimum=0.1, maximum=2.0, value=2.0, step=0.1, label=_("TTS Repetition penalty", lang),
-                  interactive=True),
-        gr.Slider(minimum=0.1, maximum=2.0, value=1.0, step=0.1, label=_("TTS Length penalty", lang), interactive=True),
+        gr.Slider(minimum=0.1, maximum=1.9, value=1.1, step=0.1, label=_("TTS Repetition penalty", lang), interactive=True),
+        gr.Slider(minimum=0.1, maximum=1.9, value=1.1, step=0.1, label=_("TTS Length penalty", lang), interactive=True),
         gr.Checkbox(label=_("Enable Voice Conversion", lang), value=False),
         gr.Audio(label=_("Source wav", lang), type="filepath"),
         gr.Audio(label=_("Target wav", lang), type="filepath"),
