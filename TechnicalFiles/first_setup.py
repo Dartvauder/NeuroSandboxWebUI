@@ -6,7 +6,7 @@ from typing import Dict, Optional, Tuple
 
 def load_settings() -> Dict:
     try:
-        with open('Settings.json', 'r', encoding='utf-8') as f:
+        with open('TechnicalFiles/Settings.json', 'r', encoding='utf-8') as f:
             return json.load(f)
     except FileNotFoundError:
         print("Ошибка: Файл Settings.json не найден!")
@@ -21,7 +21,7 @@ def load_settings() -> Dict:
 
 
 def save_settings(settings: Dict) -> None:
-    with open('Settings.json', 'w', encoding='utf-8') as f:
+    with open('TechnicalFiles/Settings.json', 'w', encoding='utf-8') as f:
         json.dump(settings, f, indent=4, ensure_ascii=False)
 
 
