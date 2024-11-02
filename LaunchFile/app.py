@@ -392,7 +392,7 @@ def _(text, lang="EN"):
 
 
 def load_settings():
-    if not os.path.exists('Settings.json'):
+    if not os.path.exists('TechnicalFiles/Settings.json'):
         default_settings = {
             "language": "EN",
             "share_mode": False,
@@ -422,11 +422,11 @@ def load_settings():
                 "font_mono": "Courier New"
             }
         }
-        with open('Settings.json', 'w') as f:
+        with open('TechnicalFiles/Settings.json', 'w') as f:
             json.dump(default_settings, f, indent=4)
         return default_settings
 
-    with open('Settings.json', 'r') as f:
+    with open('TechnicalFiles/Settings.json', 'r') as f:
         settings = json.load(f)
 
     if settings['share_server_address'] == "":
@@ -439,7 +439,7 @@ def save_settings(settings):
     if settings['share_server_address'] is None:
         settings['share_server_address'] = ""
 
-    with open('Settings.json', 'w') as f:
+    with open('TechnicalFiles/Settings.json', 'w') as f:
         json.dump(settings, f, indent=4)
 
 
@@ -13439,6 +13439,7 @@ with gr.TabbedInterface(
     create_footer()
 
     project_root = os.getcwd()
+    project_image = "TechnicalFiles/project-image.png"
 
     app.queue(api_open=settings['api_open'], max_size=settings['queue_max_size'], status_update_rate=settings['status_update_rate'])
     app.launch(
@@ -13452,7 +13453,7 @@ with gr.TabbedInterface(
         server_port=settings['server_port'],
         max_file_size=settings['max_file_size'] * gr.FileSize.MB,
         share_server_address=settings['share_server_address'] if settings['share_server_address'] else None,
-        favicon_path="project-image.png",
+        favicon_path=project_image,
         allowed_paths=[project_root],
         auth_message=_("Welcome to NeuroSandboxWebUI!", lang)
     )
