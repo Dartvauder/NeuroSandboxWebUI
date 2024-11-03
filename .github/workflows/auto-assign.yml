@@ -7,7 +7,7 @@ on:
     types: [opened]
 
 jobs:
-  auto-assign:
+  add_assignees:
     runs-on: ubuntu-latest
     steps:
       - name: Check out the repository
