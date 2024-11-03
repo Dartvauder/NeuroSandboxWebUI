@@ -5,6 +5,6 @@ title: "🦆 [Issue] - <title>"
 labels: issue
 ---
 
-## 🦆 Issue Description
+## 🦆 Issue Description:
   
-Please provide a clear and concise description of the issue
+### * Please provide a clear and concise description of the issue
