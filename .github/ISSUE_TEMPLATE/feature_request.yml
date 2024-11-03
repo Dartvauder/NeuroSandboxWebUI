@@ -12,7 +12,7 @@ body:
     attributes:
       label: Feature request
       description: |
-        A clear and concise description of the feature proposal
+        Provide a clear and concise description of the feature proposal, including what problem it solves or improvement it introduces.
 
   - type: textarea
     id: motivation
@@ -23,7 +23,6 @@ body:
       description: |
         Please outline the motivation for the proposal. Is your feature request related to a problem?
 
-
   - type: textarea
     id: contribution
     validations:
@@ -31,4 +30,35 @@ body:
     attributes:
       label: Your contribution
       description: |
-        Is there any way that you could help, e.g. by submitting a PR?
+        Is there any way that you could help, e.g., by submitting a PR?
+
+  - type: input
+    id: related-links
+    validations:
+      required: false
+    attributes:
+      label: Related Links
+      description: |
+        Links to any relevant discussions, documents, or issues related to this feature request.
+
+  - type: dropdown
+    id: priority
+    validations:
+      required: false
+    attributes:
+      label: Priority
+      description: |
+        Indicate the urgency of the feature request.
+      options:
+        - Low
+        - Medium
+        - High
+
+  - type: textarea
+    id: expected-outcome
+    validations:
+      required: false
+    attributes:
+      label: Expected Outcome
+      description: |
+        Describe what success looks like if this feature is implemented. How will it improve the user experience or functionality?

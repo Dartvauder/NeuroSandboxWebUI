@@ -1,0 +1,56 @@
+name: "⚡ Performance Issue"
+description: Report a performance issue affecting the system
+title: "⚡ [Performance] - <short description>"
+labels: [
+  "performance"
+]
+body:
+  - type: textarea
+    id: description
+    validations:
+      required: true
+    attributes:
+      label: Description
+      description: |
+        Describe the performance issue, including any symptoms (e.g., slow loading, high memory usage).
+
+  - type: textarea
+    id: steps-to-reproduce
+    validations:
+      required: false
+    attributes:
+      label: Steps to Reproduce
+      description: |
+        If possible, describe how to reproduce the issue.
+
+  - type: textarea
+    id: impact
+    validations:
+      required: true
+    attributes:
+      label: Impact
+      description: |
+        Describe how this issue affects users or the system.
+
+  - type: input
+    id: environment
+    validations:
+      required: false
+    attributes:
+      label: Environment
+      description: |
+        Specify the environment (e.g., OS, app version, hardware) where the issue occurs.
+
+  - type: dropdown
+    id: severity
+    validations:
+      required: false
+    attributes:
+      label: Severity
+      description: |
+        Rate the impact of this performance issue.
+      options:
+        - Low
+        - Medium
+        - High
+        - Critical

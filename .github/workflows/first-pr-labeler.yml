@@ -1,0 +1,36 @@
+name: First PR Labeler
+
+on:
+  pull_request:
+    types: [opened]
+
+jobs:
+  first-pr:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+
+    steps:
+      - name: Check if first contribution
+        id: check
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const creator = context.payload.pull_request.user.login;
+            const pullRequests = await github.rest.pulls.list({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'all',
+              per_page: 100
+            });
+            
+            const creatorPRs = pullRequests.data.filter(pr => pr.user.login === creator);
+            
+            if (creatorPRs.length === 1) {
+              await github.rest.issues.addLabels({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                labels: ['good first PR']
+              });
+            }

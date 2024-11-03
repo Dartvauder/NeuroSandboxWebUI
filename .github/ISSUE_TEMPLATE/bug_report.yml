@@ -1,5 +1,5 @@
 name: "🐛 Bug Report"
-description: Create a new ticket for a bug.
+description: "Create a new ticket for a bug."
 title: "🐛 [BUG] - <title>"
 labels: [
   "bug"
@@ -9,42 +9,51 @@ body:
     id: description
     attributes:
       label: "Description"
-      description: Please enter an explicit description of your issue
-      placeholder: Short and explicit description of your incident...
+      description: "Please describe the issue in detail."
+      placeholder: "Provide a detailed description of the issue..."
     validations:
       required: true
+
+  - type: textarea
+    id: expected_behavior
+    attributes:
+      label: "Expected Behavior"
+      description: "Please describe what you expected to happen."
+      placeholder: "Expected result..."
+    validations:
+      required: true
+
   - type: textarea
     id: reprod
     attributes:
-      label: "Reproduction steps"
-      description: Please enter an explicit description of your issue
-      value:
-      render: bash
+      label: "Reproduction Steps"
+      description: "Please list the steps to reproduce the issue, one step per line."
+      placeholder: "1. Open app\n2. Go to settings\n3. Observe error"
     validations:
       required: true
+
   - type: textarea
     id: screenshot
     attributes:
       label: "Screenshots"
-      description: If applicable, add screenshots to help explain your problem.
-      value: |
-        ![DESCRIPTION](LINK.png)
-      render: bash
+      description: "If applicable, add screenshots to help explain your problem."
+      placeholder: "Attach screenshots here..."
     validations:
       required: false
+
   - type: textarea
     id: logs
     attributes:
       label: "Logs"
-      description: Please copy and paste any relevant log output. This will be automatically formatted into code, so no need for backticks.
-      render: bash
+      description: "Please copy and paste any relevant log output."
     validations:
       required: false
+
   - type: dropdown
     id: browsers
     attributes:
       label: "Browsers"
-      description: What browsers are you seeing the problem on ?
+      description: "What browsers are you seeing the problem on?"
       multiple: true
       options:
         - Firefox
@@ -54,11 +63,12 @@ body:
         - Opera
     validations:
       required: false
+
   - type: dropdown
     id: os
     attributes:
       label: "OS"
-      description: What is the impacted environment ?
+      description: "What is the impacted environment?"
       multiple: true
       options:
         - Windows
@@ -66,3 +76,16 @@ body:
         - Mac
     validations:
       required: false
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: "Priority"
+      description: "How critical is this issue?"
+      options:
+        - Low
+        - Medium
+        - High
+        - Critical
+    validations:
+      required: true

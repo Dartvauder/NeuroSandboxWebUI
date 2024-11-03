@@ -1,0 +1,33 @@
+name: "📚 Documentation Request"
+description: Request improvements or additions to the documentation
+title: "📚 [Docs] - <title>"
+labels: [
+  "documentation"
+]
+body:
+  - type: textarea
+    id: area-of-documentation
+    validations:
+      required: true
+    attributes:
+      label: Area of Documentation
+      description: |
+        Describe the specific part of the documentation you want to address.
+
+  - type: textarea
+    id: improvement-details
+    validations:
+      required: true
+    attributes:
+      label: Details
+      description: |
+        Explain the improvements or additions needed in the documentation.
+
+  - type: input
+    id: related-links
+    validations:
+      required: false
+    attributes:
+      label: Related Links
+      description: |
+        Add any links to relevant code, examples, or additional resources.
