@@ -1,7 +1,7 @@
 ## [Features](/#Features) | [Dependencies](/#Required-Dependencies) | [SystemRequirements](/#Minimum-System-Requirements) | [Install](/#How-to-install) | [Wiki](/#Wiki) | [Acknowledgment](/#Acknowledgment-to-developers) | [Licenses](/#Third-Party-Licenses)
 
 # ![main](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/4ea0d891-8979-45ad-b052-626c41ae991a)
-* Work in progress but stable!
+* Work in progress but stable! [![CodeQL](https://github.com/Dartvauder/NeuroSandboxWebUI/actions/workflows/github-code-scanning/codeql/badge.svg)](https://github.com/Dartvauder/NeuroSandboxWebUI/actions/workflows/github-code-scanning/codeql)
 * English | [Русский](/TechnicalFiles/Readmes/README_RU.md) | [漢語](/TechnicalFiles/Readmes/README_ZH.md) 
 
 ## Description:
