@@ -1,5 +1,4 @@
-name: Auto Assign Author
-
+name: 'Auto Assign'
 on:
   issues:
     types: [opened]
@@ -7,23 +6,7 @@ on:
     types: [opened]
 
 jobs:
-  add_assignees:
+  add-reviews:
     runs-on: ubuntu-latest
     steps:
-      - name: Check out the repository
-        uses: actions/checkout@v3
-
-      - name: Assign author to issue
-        if: github.event_name == 'issues'
-        uses: actions-ecosystem/action-add-assignees@v1
-        with:
-          github_token: ${{ secrets.github_token }}
-          assignees: ${{ github.actor }}
-
-      - name: Assign author to pull request
-        if: github.event_name == 'pull_request'
-        uses: actions-ecosystem/action-add-assignees@v1
-        with:
-          github_token: ${{ secrets.github_token }}
-          assignees: ${{ github.actor }}
-
+      - uses: kentaro-m/auto-assign-action@v2.0.0
