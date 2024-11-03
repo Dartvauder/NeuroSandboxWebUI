@@ -3,8 +3,12 @@ name: Greetings
 on:
   issues:
     types: [opened]
-  pull_request_target:
+  pull_request:
     types: [opened]
+
+permissions:
+  issues: write
+  pull-requests: write
 
 jobs:
   greeting:
@@ -18,7 +22,7 @@ jobs:
           https://api.github.com/repos/${{ github.repository }}/issues/${{ github.event.issue.number }}/comments \
           -d '{"body": "Hello @${{ github.actor }}, 👋 Thank you for creating an issue in our repository. We appreciate your contribution!"}'
       - name: Send greeting for pull requests
-        if: github.event_name == 'pull_request_target'
+        if: github.event_name == 'pull_request'
         run: |
           curl -s -X POST -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
           -H "Accept: application/vnd.github.v3+json" \
