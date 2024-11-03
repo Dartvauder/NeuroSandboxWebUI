@@ -54,7 +54,7 @@ jobs:
           pip install --no-deps -r RequirementsFiles/requirements-cuda-CPU.txt
           pip install --no-deps -r RequirementsFiles/requirements-llama-cpp-CPU.txt
           pip install --no-deps -r RequirementsFiles/requirements-stable-diffusion-cpp-CPU.txt
-        continue-on-error: true  # Some dependencies might fail but we still want to lint
+        continue-on-error: true
 
       - name: Create .pylintrc
         run: |
@@ -64,7 +64,7 @@ jobs:
           persistent=yes
           
           [MESSAGES CONTROL]
-          disable=
+          disable=\
               C0111,  # missing-docstring
               C0103,  # invalid-name
               C0301,  # line-too-long
@@ -105,10 +105,12 @@ jobs:
           mkdir -p ./reports
           pylint LaunchFile/ --output-format=json > ./reports/pylint-report.json || true
           pylint LaunchFile/ --output-format=text > ./reports/pylint-report.txt || true
+        continue-on-error: true
 
       - name: Run flake8
         run: |
           flake8 LaunchFile/ --max-line-length=120 --statistics --tee --output-file=./reports/flake8-report.txt || true
+        continue-on-error: true
 
       - name: Check pylint score
         run: |
@@ -118,6 +120,18 @@ jobs:
             echo "Warning: Pylint score is below 7.0"
             exit 1
           fi
+
+      - name: Run MyPy
+        run: |
+          source venv/bin/activate
+          mypy LaunchFile/
+        continue-on-error: true
+
+      - name: Run tests
+        run: |
+          source venv/bin/activate
+          python -m unittest discover -s tests || true
+        continue-on-error: true
 
       - name: Upload lint results
         if: always()
