@@ -15,12 +15,13 @@ jobs:
 
       - name: Assign author to issue
         if: github.event_name == 'issues'
-        uses: actions-ecosystem/action-assign@v2
+        uses: kentaro-m/assign-issue-to-author-action@v1.0.0
         with:
-          assignees: ${{ github.actor }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Assign author to pull request
         if: github.event_name == 'pull_request'
-        uses: actions-ecosystem/action-assign@v2
+        uses: kentaro-m/assign-issue-to-author-action@v1.0.0
         with:
-          assignees: ${{ github.actor }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
