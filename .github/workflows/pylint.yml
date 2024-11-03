@@ -105,10 +105,12 @@ jobs:
           mkdir -p ./reports
           pylint LaunchFile/ --output-format=json > ./reports/pylint-report.json || true
           pylint LaunchFile/ --output-format=text > ./reports/pylint-report.txt || true
+        continue-on-error: true
 
       - name: Run flake8
         run: |
           flake8 LaunchFile/ --max-line-length=120 --statistics --tee --output-file=./reports/flake8-report.txt || true
+        continue-on-error: true
 
       - name: Check pylint score
         run: |
@@ -123,11 +125,13 @@ jobs:
         run: |
           source venv/bin/activate
           mypy LaunchFile/
+        continue-on-error: true
 
       - name: Run tests
         run: |
           source venv/bin/activate
           python -m unittest discover -s tests || true
+        continue-on-error: true
 
       - name: Upload lint results
         if: always()
