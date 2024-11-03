@@ -18,6 +18,6 @@ jobs:
       - name: Assign issues and pull requests
         uses: gustavofreze/auto-assign@1.0.0
         with:
-          assignees: 'user1,user2'
+          assignees: '${{ github.actor }}'
           github_token: '${{ secrets.GITHUB_TOKEN }}'
           assignment_options: 'ISSUE,PULL_REQUEST'
