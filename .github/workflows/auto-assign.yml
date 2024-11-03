@@ -1,0 +1,26 @@
+name: Auto Assign Author
+
+on:
+  issues:
+    types: [opened]
+  pull_request:
+    types: [opened]
+
+jobs:
+  auto-assign:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v3
+
+      - name: Assign author to issue
+        if: github.event_name == 'issues'
+        uses: actions-ecosystem/action-assign@v2
+        with:
+          assignees: ${{ github.actor }}
+
+      - name: Assign author to pull request
+        if: github.event_name == 'pull_request'
+        uses: actions-ecosystem/action-assign@v2
+        with:
+          assignees: ${{ github.actor }}
