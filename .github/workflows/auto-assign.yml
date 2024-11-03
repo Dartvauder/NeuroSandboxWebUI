@@ -1,13 +1,23 @@
-name: 'Auto Assign'
+name: Auto assign issues and pull requests
+
 on:
   issues:
-    types: [opened]
+    types:
+      - opened
   pull_request:
-    types: [opened]
+    types:
+      - opened
 
 jobs:
-  add-reviews:
+  run:
     runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      pull-requests: write
     steps:
-      - uses: kentaro-m/auto-assign-action@v2.0.0
-        addAssignees: author
+      - name: Assign issues and pull requests
+        uses: gustavofreze/auto-assign@1.0.0
+        with:
+          assignees: 'user1,user2'
+          github_token: '${{ secrets.GITHUB_TOKEN }}'
+          assignment_options: 'ISSUE,PULL_REQUEST'
