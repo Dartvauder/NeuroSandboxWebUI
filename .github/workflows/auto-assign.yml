@@ -15,13 +15,15 @@ jobs:
 
       - name: Assign author to issue
         if: github.event_name == 'issues'
-        uses: actions-ecosystem/action-add-assignees
+        uses: actions-ecosystem/action-add-assignees@v1
         with:
+          github_token: ${{ secrets.github_token }}
           assignees: ${{ github.actor }}
 
       - name: Assign author to pull request
         if: github.event_name == 'pull_request'
-        uses: actions-ecosystem/action-add-assignees
+        uses: actions-ecosystem/action-add-assignees@v1
         with:
+          github_token: ${{ secrets.github_token }}
           assignees: ${{ github.actor }}
 
