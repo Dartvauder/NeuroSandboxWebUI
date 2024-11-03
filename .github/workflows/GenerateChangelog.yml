@@ -1,0 +1,35 @@
+name: Generate Changelog
+
+on:
+  pull_request:
+    branches:
+      - main
+    types: [merged]
+jobs:
+  generate-changelog:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Generate CHANGELOG.md
+        run: |
+          git fetch origin dev
+          commits=$(git log --pretty=format:"* %s" origin/dev..HEAD)
+          
+          echo "# Changelog" > CHANGELOG.md
+          echo "" >> CHANGELOG.md
+          echo "## Unreleased" >> CHANGELOG.md
+          echo "" >> CHANGELOG.md
+          echo "$commits" >> CHANGELOG.md
+
+      - name: Commit and push changes
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add CHANGELOG.md
+          git commit -m "Update CHANGELOG.md"
+          git push origin main
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
