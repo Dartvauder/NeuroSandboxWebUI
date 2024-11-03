@@ -1,7 +1,7 @@
 ## [功能](/#功能) | [依赖](/#必需依赖) | [系统要求](/#最低系统要求) | [安装](/#如何安装) | [Wiki](/#Wiki) | [致谢](/#致开发者的感谢) | [许可证](/#第三方许可证)
 
 # ![主图](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/4ea0d891-8979-45ad-b052-626c41ae991a)
-* 仍在进行中但已稳定！[![CodeQL](https://github.com/Dartvauder/NeuroSandboxWebUI/actions/workflows/github-code-scanning/codeql/badge.svg)](https://github.com/Dartvauder/NeuroSandboxWebUI/actions/workflows/github-code-scanning/codeql)
+* 仍在进行中但已稳定！[![CodeQL](https://github.com/Dartvauder/NeuroSandboxWebUI/actions/workflows/github-code-scanning/codeql/badge.svg)](https://github.com/Dartvauder/NeuroSandboxWebUI/actions/workflows/github-code-scanning/codeql) [![Pylint](https://github.com/Dartvauder/NeuroSandboxWebUI/actions/workflows/pylint.yml/badge.svg)](https://github.com/Dartvauder/NeuroSandboxWebUI/actions/workflows/pylint.yml)
 * [English](/README.md) | [Русский](/TechnicalFiles/Readmes/README_RU.md) | 漢語
 
 ## 描述：
