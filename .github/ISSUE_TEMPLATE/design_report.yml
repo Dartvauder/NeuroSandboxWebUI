@@ -1,0 +1,38 @@
+name: "🎨 Design Feedback"
+description: Provide feedback on UI/UX design
+title: "🎨 [Design] - <title>"
+labels: [
+  "design"
+]
+body:
+  - type: textarea
+    id: description
+    validations:
+      required: true
+    attributes:
+      label: Feedback Description
+      description: |
+        Provide details about the design aspect you are giving feedback on.
+
+  - type: textarea
+    id: suggestion
+    validations:
+      required: false
+    attributes:
+      label: Suggested Improvements
+      description: |
+        Suggest any changes or improvements you think would enhance the design.
+
+  - type: dropdown
+    id: feedback-type
+    validations:
+      required: true
+    attributes:
+      label: Feedback Type
+      description: |
+        Select the type of feedback.
+      options:
+        - Usability
+        - Visual Design
+        - Accessibility
+        - Responsiveness
