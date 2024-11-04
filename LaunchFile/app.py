@@ -10648,7 +10648,8 @@ def create_footer():
         <span style="margin-right: 15px;">🔥 diffusers: 0.31.0</span>
         <span style="margin-right: 15px;">📄 transformers: 4.46.1</span>
         <span style="margin-right: 15px;">🦙 llama-cpp-python: 0.3.1</span>
-        <span style="margin-right: 15px;">🖼️ stable-diffusion-cpp-python: 0.2.0</span>
+        <span style="margin-right: 15px;">🖼️ stable-diffusion-cpp-python: 0.2.1</span>
+        <span style="margin-right: 15px;">🎵 rvc-python: 0.1.5</span>
         <span>ℹ️ gradio: 5.4.0</span>
     </div>
     """

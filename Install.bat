@@ -58,7 +58,6 @@ if "%INSTALL_TYPE%"=="CPU" (
 echo INSTALL_TYPE=%INSTALL_TYPE%> "%CURRENT_DIR%TechnicalFiles\install_config.txt"
 
 pip install --no-deps WinTmp==1.1.0 2>> %ERROR_LOG%
-pip install --no-deps git+https://github.com/daswer123/rvc-python 2>> %ERROR_LOG%
 pip install https://huggingface.co/madbuda/triton-windows-builds/resolve/main/triton-3.0.0-cp310-cp310-win_amd64.whl 2>> %ERROR_LOG%
 pip install --no-build-isolation -e git+https://github.com/PanQiWei/AutoGPTQ.git#egg=auto_gptq@v0.7.1 2>> %ERROR_LOG%
 pip install --no-build-isolation -e git+https://github.com/casper-hansen/AutoAWQ.git#egg=autoawq@v0.2.6 2>> %ERROR_LOG%
