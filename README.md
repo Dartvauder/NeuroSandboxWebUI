@@ -26,7 +26,7 @@ The goal of the project - to create the easiest possible application to use neur
 
 ## Features:
 
-* Easy installation via install.bat (Windows) or install.sh (Linux)
+* Easy installation via install.bat (Windows) or install.sh (Linux & MacOS)
 * You can use the application via your mobile device in localhost (Via IPv4) or anywhere online (Via Share)
 * Flexible and optimized interface (By Gradio)
 * Debug logging to logs from `Install` and `Update` files
@@ -72,7 +72,7 @@ The goal of the project - to create the easiest possible application to use neur
 
 ## Minimum System Requirements:
 
-* System: Windows or Linux
+* System: Windows, Linux or MacOS
 * GPU: 6GB+ or CPU: 8 core 3.6GHZ
 * RAM: 16GB+
 * Disk space: 20GB+
@@ -92,7 +92,7 @@ The goal of the project - to create the easiest possible application to use neur
 To get update, run `Update.bat`
 To work with the virtual environment through the terminal, run `Venv.bat`
 
-### Linux
+### Linux & MacOS
 
 1) First install all [RequiredDependencies](/#Required-Dependencies)
 2) `Git clone https://github.com/Dartvauder/NeuroSandboxWebUI.git` to any location
