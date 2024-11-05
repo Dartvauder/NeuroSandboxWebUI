@@ -1,0 +1,1 @@
+stable-diffusion-cpp-python==0.2.1 -C cmake.args="-DSD_METAL=ON"

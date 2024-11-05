@@ -1,1 +1,1 @@
-llama-cpp-python==0.3.1
+llama-cpp-python==0.3.1 -C cmake.args="-DGGML_BLAS=ON -DGGML_BLAS_VENDOR=OpenBLAS"
