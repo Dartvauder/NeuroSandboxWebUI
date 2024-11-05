@@ -1,1 +1,1 @@
-stable-diffusion-cpp-python==0.2.1
+stable-diffusion-cpp-python==0.2.1 -C cmake.args="-DGGML_OPENBLAS=ON"

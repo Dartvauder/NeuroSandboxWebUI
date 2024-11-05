@@ -28,19 +28,34 @@ touch "$ERROR_LOG"
 if [ "$INSTALL_TYPE" = "CPU" ]; then
     export BUILD_CUDA_EXT=0
     export INSTALL_KERNELS=0
+
+    if system_profiler SPDisplaysDataType | grep -q "Metal"; then
+        echo "MPS is detected. Installing MPS-specific requirements."
+        MPS_MODE=true
+    else
+        MPS_MODE=false
+    fi
 else
     export BUILD_CUDA_EXT=1
     export INSTALL_KERNELS=1
+    MPS_MODE=false
 fi
 
 python3 -m pip install --upgrade pip setuptools
 pip install wheel
 
 if [ "$INSTALL_TYPE" = "CPU" ]; then
-    pip install --no-deps -r "$CURRENT_DIR/RequirementsFiles/requirements-СPU.txt" 2>> "$ERROR_LOG"
-    pip install --no-deps -r "$CURRENT_DIR/RequirementsFiles/requirements-cuda-CPU.txt" 2>> "$ERROR_LOG"
-    pip install --no-deps -r "$CURRENT_DIR/RequirementsFiles/requirements-llama-cpp-CPU.txt" 2>> "$ERROR_LOG"
-    pip install --no-deps -r "$CURRENT_DIR/RequirementsFiles/requirements-stable-diffusion-cpp-CPU.txt" 2>> "$ERROR_LOG"
+    if [ "$MPS_MODE" = true ]; then
+        pip install --no-deps -r "$CURRENT_DIR/RequirementsFiles/requirements-СPU.txt" 2>> "$ERROR_LOG"
+        pip install --no-deps -r "$CURRENT_DIR/RequirementsFiles/requirements-cuda-CPU.txt" 2>> "$ERROR_LOG"
+        pip install --no-deps -r "$CURRENT_DIR/RequirementsFiles/requirements-llama-cpp-MPS.txt" 2>> "$ERROR_LOG"
+        pip install --no-deps -r "$CURRENT_DIR/RequirementsFiles/requirements-stable-diffusion-cpp-MPS.txt" 2>> "$ERROR_LOG"
+    else
+        pip install --no-deps -r "$CURRENT_DIR/RequirementsFiles/requirements-СPU.txt" 2>> "$ERROR_LOG"
+        pip install --no-deps -r "$CURRENT_DIR/RequirementsFiles/requirements-cuda-CPU.txt" 2>> "$ERROR_LOG"
+        pip install --no-deps -r "$CURRENT_DIR/RequirementsFiles/requirements-llama-cpp-CPU.txt" 2>> "$ERROR_LOG"
+        pip install --no-deps -r "$CURRENT_DIR/RequirementsFiles/requirements-stable-diffusion-cpp-CPU.txt" 2>> "$ERROR_LOG"
+    fi
 else
     pip install --no-deps -r "$CURRENT_DIR/RequirementsFiles/requirements.txt" 2>> "$ERROR_LOG"
     pip install --no-deps -r "$CURRENT_DIR/RequirementsFiles/requirements-cuda.txt" 2>> "$ERROR_LOG"

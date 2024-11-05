@@ -4,7 +4,7 @@ CURRENT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &> /dev/null && pwd)"
 
 echo "Select installation type:"
 echo "1. GPU"
-echo "2. CPU"
+echo "2. CPU OR MPS"
 read -n 1 -p "Enter number (1 or 2): " choice
 echo ""
 
@@ -12,10 +12,18 @@ if [ "$choice" = "2" ]; then
     INSTALL_TYPE="CPU"
     export BUILD_CUDA_EXT=0
     export INSTALL_KERNELS=0
+
+    if system_profiler SPDisplaysDataType | grep -q "Metal"; then
+        echo "MPS is detected. Installing MPS-specific requirements."
+        MPS_MODE=true
+    else
+        MPS_MODE=false
+    fi
 else
     INSTALL_TYPE="GPU"
     export BUILD_CUDA_EXT=1
     export INSTALL_KERNELS=1
+    MPS_MODE=false
 fi
 
 clear
@@ -44,10 +52,17 @@ ERROR_LOG="$CURRENT_DIR/TechnicalFiles/logs/installation_errors.log"
 touch "$ERROR_LOG"
 
 if [ "$INSTALL_TYPE" = "CPU" ]; then
-    pip install --no-deps -r "$CURRENT_DIR/RequirementsFiles/requirements-СPU.txt" 2>> "$ERROR_LOG"
-    pip install --no-deps -r "$CURRENT_DIR/RequirementsFiles/requirements-cuda-CPU.txt" 2>> "$ERROR_LOG"
-    pip install --no-deps -r "$CURRENT_DIR/RequirementsFiles/requirements-llama-cpp-CPU.txt" 2>> "$ERROR_LOG"
-    pip install --no-deps -r "$CURRENT_DIR/RequirementsFiles/requirements-stable-diffusion-cpp-CPU.txt" 2>> "$ERROR_LOG"
+    if [ "$MPS_MODE" = true ]; then
+        pip install --no-deps -r "$CURRENT_DIR/RequirementsFiles/requirements-СPU.txt" 2>> "$ERROR_LOG"
+        pip install --no-deps -r "$CURRENT_DIR/RequirementsFiles/requirements-cuda-CPU.txt" 2>> "$ERROR_LOG"
+        pip install --no-deps -r "$CURRENT_DIR/RequirementsFiles/requirements-llama-cpp-MPS.txt" 2>> "$ERROR_LOG"
+        pip install --no-deps -r "$CURRENT_DIR/RequirementsFiles/requirements-stable-diffusion-cpp-MPS.txt" 2>> "$ERROR_LOG"
+    else
+        pip install --no-deps -r "$CURRENT_DIR/RequirementsFiles/requirements-СPU.txt" 2>> "$ERROR_LOG"
+        pip install --no-deps -r "$CURRENT_DIR/RequirementsFiles/requirements-cuda-CPU.txt" 2>> "$ERROR_LOG"
+        pip install --no-deps -r "$CURRENT_DIR/RequirementsFiles/requirements-llama-cpp-CPU.txt" 2>> "$ERROR_LOG"
+        pip install --no-deps -r "$CURRENT_DIR/RequirementsFiles/requirements-stable-diffusion-cpp-CPU.txt" 2>> "$ERROR_LOG"
+    fi
 else
     pip install --no-deps -r "$CURRENT_DIR/RequirementsFiles/requirements.txt" 2>> "$ERROR_LOG"
     pip install --no-deps -r "$CURRENT_DIR/RequirementsFiles/requirements-cuda.txt" 2>> "$ERROR_LOG"

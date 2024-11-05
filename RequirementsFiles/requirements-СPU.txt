@@ -408,3 +408,4 @@ tornado==6.4.1
 traitlets==5.14.3
 widgetsnbextension==4.0.13
 rvc-python==0.1.5
+tensorflow-metal==1.1.0
