@@ -78,6 +78,7 @@ if torch.cuda.is_available():
         import GPUtil
     except ImportError:
         GPUtil = None
+        pass
 
 WinTmp = None
 if sys.platform in ['win32', 'win64']:
@@ -85,6 +86,7 @@ if sys.platform in ['win32', 'win64']:
         import WinTmp
     except ImportError:
         WinTmp = None
+        pass
 
 
 def lazy_import(module_name, fromlist):
