@@ -26,7 +26,7 @@
 
 ## 功能：
 
-* 通过install.bat（Windows）或install.sh（Linux）轻松安装
+* 通过install.bat（Windows）或install.sh（Linux & MacOS）轻松安装
 * 您可以通过移动设备在本地主机（通过IPv4）或在线任何地方（通过Share）使用应用程序
 * 灵活且优化的界面（由Gradio提供）
 * 从`Install`和`Update`文件进行调试日志记录
@@ -72,7 +72,7 @@
 
 ## 最低系统要求：
 
-* 系统：Windows或Linux
+* 系统：Windows, Linux或MacOS
 * GPU：6GB+或CPU：8核3.6GHZ
 * RAM：16GB+
 * 磁盘空间：20GB+
@@ -92,7 +92,7 @@
 要获取更新，请运行`Update.bat`
 要通过终端使用虚拟环境，请运行`Venv.bat`
 
-### Linux
+### Linux & MacOS
 
 1) 首先安装所有[必需依赖](/#必需依赖)
 2) 在任意位置执行`Git clone https://github.com/Dartvauder/NeuroSandboxWebUI.git`
