@@ -56,7 +56,7 @@
 * 界面内的模型设置
 * 在线和离线Wiki
 * 图库
-* 模型下载器（用于LLM和StableDiffusion）
+* 模型下载器
 * 应用程序设置
 * 能够查看系统传感器
 
@@ -84,25 +84,25 @@
 
 1) 首先安装所有[必需依赖](/#必需依赖)
 2) 在任意位置执行`Git clone https://github.com/Dartvauder/NeuroSandboxWebUI.git`
-3) 运行`Install.bat`并等待安装完成
-4) 安装完成后，运行`Start.bat`
-5) 等待应用程序启动
-6) 现在您可以开始生成了！
+3) 运行 `Install.bat`, 选择您的版本并等待安装
+4) 安装完成后, 运行 `Start.bat` 并进行初始设置
+5) 等待应用程序启动并从终端中跟随链接
+6) 现在您可以开始生成了。 请尽情享用!
 
-要获取更新，请运行`Update.bat`
-要通过终端使用虚拟环境，请运行`Venv.bat`
+* 要获取更新，请运行`Update.bat`
+* 要通过终端使用虚拟环境，请运行`Venv.bat`
 
 ### Linux & MacOS
 
 1) 首先安装所有[必需依赖](/#必需依赖)
 2) 在任意位置执行`Git clone https://github.com/Dartvauder/NeuroSandboxWebUI.git`
-3) 在终端中运行`./Install.sh`并等待所有依赖项安装完成
-4) 安装完成后，运行`./Start.sh`
-5) 等待应用程序启动
-6) 现在您可以开始生成了！
+3) 运行 `./Install.sh`, 选择您的版本并等待安装
+4) 安装完成后, 运行 `./Start.sh` 并进行初始设置
+5) 等待应用程序启动并从终端中跟随链接
+6) 现在您可以开始生成了。 请尽情享用!
 
-要获取更新，请运行`./Update.sh`
-要通过终端使用虚拟环境，请运行`./Venv.sh`
+* 要获取更新，请运行`./Update.sh`
+* 要通过终端使用虚拟环境，请运行`./Venv.sh`
 
 ## Wiki
 
