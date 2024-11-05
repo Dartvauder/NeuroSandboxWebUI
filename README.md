@@ -56,7 +56,7 @@ The goal of the project - to create the easiest possible application to use neur
 * Model settings inside the interface
 * Online and offline Wiki
 * Gallery
-* ModelDownloader (For LLM and StableDiffusion)
+* ModelDownloader
 * Application settings
 * Ability to see system sensors
 
@@ -84,25 +84,25 @@ The goal of the project - to create the easiest possible application to use neur
 
 1) First install all [RequiredDependencies](/#Required-Dependencies)
 2) `Git clone https://github.com/Dartvauder/NeuroSandboxWebUI.git` to any location
-3) Run the `Install.bat` and wait for installation
-4) After installation, run `Start.bat`
-5) Wait for the application to launch
-6) Now you can start generating!
+3) Run the `Install.bat`, select your version and wait for installation
+4) After installation, run `Start.bat` and go through the initial setup
+5) Wait for the application to launch and follow the link from the terminal
+6) Now you can start generating. Enjoy!
 
-To get update, run `Update.bat`
-To work with the virtual environment through the terminal, run `Venv.bat`
+* To get update, run `Update.bat`
+* To work with the virtual environment through the terminal, run `Venv.bat`
 
 ### Linux & MacOS
 
 1) First install all [RequiredDependencies](/#Required-Dependencies)
 2) `Git clone https://github.com/Dartvauder/NeuroSandboxWebUI.git` to any location
-3) In the terminal, run the `./Install.sh` and wait for installation of all dependencies
-4) After installation, run `./Start.sh`
-5) Wait for the application to launch
-6) Now you can start generating!
+3) Run the `./Install.sh`, select your version and wait for installation
+4) After installation, run `./Start.sh` and go through the initial setup
+5) Wait for the application to launch and follow the link from the terminal
+6) Now you can start generating. Enjoy!
 
-To get update, run `./Update.sh`
-To work with the virtual environment through the terminal, run `./Venv.sh`
+* To get update, run `./Update.sh`
+* To work with the virtual environment through the terminal, run `./Venv.sh`
 
 ## Wiki
 
