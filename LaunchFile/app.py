@@ -4,9 +4,13 @@ import warnings
 import platform
 import logging
 import importlib
+import torch
 os.chdir(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
-os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
+if torch.backends.mps.is_available():
+    os.environ["PYTORCH_ENABLE_MPS_FALLBACK"] = "1"
+elif torch.cuda.is_available():
+    os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
 warnings.filterwarnings("ignore")
 logging.getLogger("httpx").setLevel(logging.WARNING)
 cache_dir = os.path.join("TechnicalFiles/cache")
@@ -34,7 +38,6 @@ import cv2
 import av
 import subprocess
 import json
-import torch
 from einops import rearrange
 import random
 import tempfile
@@ -684,8 +687,18 @@ def change_audio_format(input_audio, new_format, enable_format_changer):
 
 def load_magicprompt_model():
     model_path = os.path.join("inputs", "image", "sd_models", "MagicPrompt")
-    device = "cuda" if torch.cuda.is_available() else "cpu"
-    torch_dtype = torch.float16 if device == "cuda" else torch.float32
+    if torch.backends.mps.is_available():
+        device = "mps"
+    elif torch.cuda.is_available():
+        device = "cuda"
+    else:
+        device = "cpu"
+
+    if device == "cuda":
+        torch_dtype = torch.float16
+    else:
+        torch_dtype = torch.float32
+        
     if not os.path.exists(model_path):
         gr.Info("Downloading MagicPrompt model...")
         os.makedirs(model_path, exist_ok=True)
@@ -701,7 +714,13 @@ def load_magicprompt_model():
 
 
 def generate_magicprompt(prompt, max_new_tokens):
-    device = "cuda" if torch.cuda.is_available() else "cpu"
+    if torch.backends.mps.is_available():
+        device = "mps"
+    elif torch.cuda.is_available():
+        device = "cuda"
+    else:
+        device = "cpu"
+        
     tokenizer, model = load_magicprompt_model()
     model.to(device)
     model.eval()
@@ -728,8 +747,18 @@ def generate_magicprompt(prompt, max_new_tokens):
 
 
 def load_model(model_name, model_type, n_ctx, n_batch, n_ubatch, freq_base, freq_scale):
-    device = "cuda" if torch.cuda.is_available() else "cpu"
-    torch_dtype = torch.float16 if device == "cuda" else torch.float32
+    if torch.backends.mps.is_available():
+        device = "mps"
+    elif torch.cuda.is_available():
+        device = "cuda"
+    else:
+        device = "cpu"
+
+    if device == "cuda":
+        torch_dtype = torch.float16
+    else:
+        torch_dtype = torch.float32
+        
     if model_name:
         model_path = f"inputs/text/llm_models/{model_name}"
         if model_type == "Transformers":
@@ -817,8 +846,18 @@ def load_lora_model(base_model_name, lora_model_name, model_type):
     lora_model_path = f"inputs/text/llm_models/lora/{lora_model_name}"
 
     try:
-        device = "cuda" if torch.cuda.is_available() else "cpu"
-        torch_dtype = torch.float16 if device == "cuda" else torch.float32
+        if torch.backends.mps.is_available():
+            device = "mps"
+        elif torch.cuda.is_available():
+            device = "cuda"
+        else:
+            device = "cpu"
+            
+        if device == "cuda":
+            torch_dtype = torch.float16
+        else:
+            torch_dtype = torch.float32
+            
         if model_type == "Llama":
             model = Llama().Llama(base_model_path, n_gpu_layers=-1 if device == "cuda" else 0,
                                   lora_path=lora_model_path)
@@ -886,7 +925,13 @@ def load_lora_model(base_model_name, lora_model_name, model_type):
 
 def load_moondream2_model(model_id, revision):
     moondream2_model_path = os.path.join("inputs", "text", model_id)
-    device = "cuda" if torch.cuda.is_available() else "cpu"
+    if torch.backends.mps.is_available():
+        device = "mps"
+    elif torch.cuda.is_available():
+        device = "cuda"
+    else:
+        device = "cpu"
+
     try:
         if not os.path.exists(moondream2_model_path):
             gr.Info(f"Downloading MoonDream2 model...")
@@ -916,8 +961,18 @@ def load_moondream2_model(model_id, revision):
 
 def load_llava_next_video_model():
     model_path = os.path.join("inputs", "text", "LLaVA-NeXT-Video")
-    device = "cuda" if torch.cuda.is_available() else "cpu"
-    torch_dtype = torch.float16 if device == "cuda" else torch.float32
+    if torch.backends.mps.is_available():
+        device = "mps"
+    elif torch.cuda.is_available():
+        device = "cuda"
+    else:
+        device = "cpu"
+
+    if device == "cuda":
+        torch_dtype = torch.float16
+    else:
+        torch_dtype = torch.float32
+
     try:
         if not os.path.exists(model_path):
             gr.Info("Downloading LLaVA-NeXT-Video model...")
@@ -992,7 +1047,13 @@ def get_existing_chats():
 
 
 def transcribe_audio(audio_file_path):
-    device = "cuda" if torch.cuda.is_available() else "cpu"
+    if torch.backends.mps.is_available():
+        device = "mps"
+    elif torch.cuda.is_available():
+        device = "cuda"
+    else:
+        device = "cpu"
+
     whisper_model_path = "inputs/text/whisper-medium"
     if not os.path.exists(whisper_model_path):
         gr.Info("Downloading Whisper...")
@@ -1306,7 +1367,13 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, llm_model_t
                 flush()
 
     elif enable_multimodal and llm_model_name == "LLaVA-NeXT-Video":
-        device = "cuda" if torch.cuda.is_available() else "cpu"
+        if torch.backends.mps.is_available():
+            device = "mps"
+        elif torch.cuda.is_available():
+            device = "cuda"
+        else:
+            device = "cpu"
+
         if llm_model_type == "Llama":
             gr.Info("LLaVA-NeXT-Video is not supported with llama model type.")
             return None, None
@@ -1412,12 +1479,26 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, llm_model_t
                 if not speaker_wav or not language:
                     gr.Info("Please, select a voice and language for TTS!")
                     return None, None
-                device = "cuda" if torch.cuda.is_available() else "cpu"
+
+                if torch.backends.mps.is_available():
+                    device = "mps"
+                elif torch.cuda.is_available():
+                    device = "cuda"
+                else:
+                    device = "cpu"
+
                 tts_model = tts_model.to(device)
             if input_audio:
                 if not whisper_model:
                     whisper_model = load_whisper_model()
-                device = "cuda" if torch.cuda.is_available() else "cpu"
+
+                if torch.backends.mps.is_available():
+                    device = "mps"
+                elif torch.cuda.is_available():
+                    device = "cuda"
+                else:
+                    device = "cpu"
+
                 whisper_model = whisper_model.to(device)
             if llm_model:
                 context = ""
@@ -1428,7 +1509,13 @@ def generate_text_and_speech(input_text, system_prompt, input_audio, llm_model_t
                         context += f"AI: {ai_text}\n"
 
                 if llm_model_type in ["Transformers", "GPTQ", "AWQ", "BNB"]:
-                    device = "cuda" if torch.cuda.is_available() else "cpu"
+
+                    if torch.backends.mps.is_available():
+                        device = "mps"
+                    elif torch.cuda.is_available():
+                        device = "cuda"
+                    else:
+                        device = "cpu"
 
                     tokenizer.pad_token = tokenizer.eos_token
                     tokenizer.padding_side = "left"
@@ -1617,7 +1704,13 @@ def generate_tts_stt(text, audio, tts_settings_html, speaker_wav, language, tts_
                 gr.Info("Please upload source and target files for voice conversion!")
                 return None, None
 
-            device = "cuda" if torch.cuda.is_available() else "cpu"
+            if torch.backends.mps.is_available():
+                device = "mps"
+            elif torch.cuda.is_available():
+                device = "cuda"
+            else:
+                device = "cpu"
+
             progress(0.5, desc="Performing voice conversion")
             freevc_model_path = load_freevc_model()
             tts = TTS().TTS(model_name=freevc_model_path, progress_bar=False).to(device)
@@ -1640,7 +1733,14 @@ def generate_tts_stt(text, audio, tts_settings_html, speaker_wav, language, tts_
             if not speaker_wav or not language:
                 gr.Info("Please select a voice and language for TTS!")
                 return None, None
-            device = "cuda" if torch.cuda.is_available() else "cpu"
+
+            if torch.backends.mps.is_available():
+                device = "mps"
+            elif torch.cuda.is_available():
+                device = "cuda"
+            else:
+                device = "cpu"
+
             tts_model = tts_model.to(device)
 
             progress(0.3, desc="Generating speech")
@@ -1669,7 +1769,14 @@ def generate_tts_stt(text, audio, tts_settings_html, speaker_wav, language, tts_
             if not whisper_model:
                 progress(0.2, desc="Loading STT model")
                 whisper_model = load_whisper_model()
-            device = "cuda" if torch.cuda.is_available() else "cpu"
+
+            if torch.backends.mps.is_available():
+                device = "mps"
+            elif torch.cuda.is_available():
+                device = "cuda"
+            else:
+                device = "cpu"
+
             whisper_model = whisper_model.to(device)
 
             progress(0.5, desc="Transcribing audio")
@@ -2123,9 +2230,20 @@ def generate_image_txt2img(prompt, negative_prompt, style_name, stable_diffusion
 
     else:
         try:
-            device = "cuda" if torch.cuda.is_available() else "cpu"
-            torch_dtype = torch.float16 if device == "cuda" else torch.float32
-            variant = "fp16" if torch_dtype == torch.float16 else "fp32"
+            if torch.backends.mps.is_available():
+                device = "mps"
+            elif torch.cuda.is_available():
+                device = "cuda"
+            else:
+                device = "cpu"
+
+            if device == "cuda":
+                torch_dtype = torch.float16
+                variant = "fp16"
+            else:
+                torch_dtype = torch.float32
+                variant = "fp32"
+
             stable_diffusion_model_path = os.path.join("inputs", "image", "sd_models",
                                                        f"{stable_diffusion_model_name}")
 
@@ -2651,9 +2769,19 @@ def generate_image_img2img(prompt, negative_prompt, init_image, strength, stable
 
     else:
         try:
-            device = "cuda" if torch.cuda.is_available() else "cpu"
-            torch_dtype = torch.float16 if device == "cuda" else torch.float32
-            variant = "fp16" if torch_dtype == torch.float16 else "fp32"
+            if torch.backends.mps.is_available():
+                device = "mps"
+            elif torch.cuda.is_available():
+                device = "cuda"
+            else:
+                device = "cpu"
+
+            if device == "cuda":
+                torch_dtype = torch.float16
+                variant = "fp16"
+            else:
+                torch_dtype = torch.float32
+                variant = "fp32"
             stable_diffusion_model_path = os.path.join("inputs", "image", "sd_models",
                                                        f"{stable_diffusion_model_name}")
 
@@ -2935,9 +3063,19 @@ def generate_image_depth2img(prompt, negative_prompt, init_image, seed, strength
         return None, None
 
     stable_diffusion_model_path = os.path.join("inputs", "image", "sd_models", "depth")
-    device = "cuda" if torch.cuda.is_available() else "cpu"
-    torch_dtype = torch.float16 if device == "cuda" else torch.float32
-    variant = "fp16" if torch_dtype == torch.float16 else "fp32"
+    if torch.backends.mps.is_available():
+        device = "mps"
+    elif torch.cuda.is_available():
+        device = "cuda"
+    else:
+        device = "cpu"
+
+    if device == "cuda":
+        torch_dtype = torch.float16
+        variant = "fp16"
+    else:
+        torch_dtype = torch.float32
+        variant = "fp32"
 
     if not os.path.exists(stable_diffusion_model_path):
         gr.Info("Downloading depth2img model...")
@@ -3029,9 +3167,19 @@ def generate_image_marigold(input_image, num_inference_steps, ensemble_size):
         gr.Info("Marigold Normals model downloaded")
 
     try:
-        device = "cuda" if torch.cuda.is_available() else "cpu"
-        torch_dtype = torch.float16 if device == "cuda" else torch.float32
-        variant = "fp16" if torch_dtype == torch.float16 else "fp32"
+        if torch.backends.mps.is_available():
+            device = "mps"
+        elif torch.cuda.is_available():
+            device = "cuda"
+        else:
+            device = "cpu"
+            
+        if device == "cuda":
+            torch_dtype = torch.float16
+            variant = "fp16"
+        else:
+            torch_dtype = torch.float32
+            variant = "fp32"
 
         depth_pipe = diffusers().diffusers.MarigoldDepthPipeline.from_pretrained(
             depth_model_path, variant=variant, torch_dtype=torch_dtype
@@ -3092,8 +3240,17 @@ def generate_image_pix2pix(prompt, negative_prompt, init_image, seed, num_infere
         gr.Info("Pix2Pix model downloaded")
 
     try:
-        device = "cuda" if torch.cuda.is_available() else "cpu"
-        torch_dtype = torch.float16 if device == "cuda" else torch.float32
+        if torch.backends.mps.is_available():
+            device = "mps"
+        elif torch.cuda.is_available():
+            device = "cuda"
+        else:
+            device = "cpu"
+            
+        if device == "cuda":
+            torch_dtype = torch.float16
+        else:
+            torch_dtype = torch.float32
         pipe = StableDiffusionInstructPix2PixPipeline().StableDiffusionInstructPix2PixPipeline.from_pretrained(pix2pix_model_path, torch_dtype=torch_dtype, safety_checker=None)
         pipe.to(device)
 
@@ -3171,8 +3328,17 @@ def generate_image_controlnet(prompt, negative_prompt, init_image, sd_version, s
 
     stable_diffusion_model_path = os.path.join("inputs", "image", "sd_models",
                                                f"{stable_diffusion_model_name}")
-    device = "cuda" if torch.cuda.is_available() else "cpu"
-    torch_dtype = torch.float16 if device == "cuda" else torch.float32
+    if torch.backends.mps.is_available():
+        device = "mps"
+    elif torch.cuda.is_available():
+        device = "cuda"
+    else:
+        device = "cpu"
+
+    if device == "cuda":
+        torch_dtype = torch.float16
+    else:
+        torch_dtype = torch.float32
 
     if not os.path.exists(stable_diffusion_model_path):
         gr.Info(f"StableDiffusion model not found: {stable_diffusion_model_path}")
@@ -3533,8 +3699,17 @@ def generate_image_upscale_latent(prompt, image_path, upscale_factor, seed, num_
         gr.Info("Please, upload an initial image!")
         return None, None
 
-    device = "cuda" if torch.cuda.is_available() else "cpu"
-    torch_dtype = torch.float16 if device == "cuda" else torch.float32
+    if torch.backends.mps.is_available():
+        device = "mps"
+    elif torch.cuda.is_available():
+        device = "cuda"
+    else:
+        device = "cpu"
+
+    if device == "cuda":
+        torch_dtype = torch.float16
+    else:
+        torch_dtype = torch.float32
 
     if seed == "" or seed is None:
         seed = random.randint(0, 2 ** 32 - 1)
@@ -3656,9 +3831,19 @@ def generate_image_sdxl_refiner(prompt, init_image, output_format):
         gr.Info("SDXL Refiner model downloaded")
 
     try:
-        device = "cuda" if torch.cuda.is_available() else "cpu"
-        torch_dtype = torch.float16 if device == "cuda" else torch.float32
-        variant = "fp16" if torch_dtype == torch.float16 else "fp32"
+        if torch.backends.mps.is_available():
+            device = "mps"
+        elif torch.cuda.is_available():
+            device = "cuda"
+        else:
+            device = "cpu"
+            
+        if device == "cuda":
+            torch_dtype = torch.float16
+            variant = "fp16"
+        else:
+            torch_dtype = torch.float32
+            variant = "fp32"
 
         pipe = StableDiffusionXLImg2ImgPipeline().StableDiffusionXLImg2ImgPipeline.from_pretrained(
             sdxl_refiner_path, torch_dtype=torch_dtype, variant=variant, use_safetensors=True
@@ -3708,9 +3893,19 @@ def generate_image_inpaint(prompt, negative_prompt, init_image, mask_image, blur
     stable_diffusion_model_path = os.path.join("inputs", "image", "sd_models", "inpaint",
                                                f"{stable_diffusion_model_name}")
 
-    device = "cuda" if torch.cuda.is_available() else "cpu"
-    torch_dtype = torch.float16 if device == "cuda" else torch.float32
-    variant = "fp16" if torch_dtype == torch.float16 else "fp32"
+    if torch.backends.mps.is_available():
+        device = "mps"
+    elif torch.cuda.is_available():
+        device = "cuda"
+    else:
+        device = "cpu"
+
+    if device == "cuda":
+        torch_dtype = torch.float16
+        variant = "fp16"
+    else:
+        torch_dtype = torch.float32
+        variant = "fp32"
 
     if not os.path.exists(stable_diffusion_model_path):
         gr.Info(f"StableDiffusion model not found: {stable_diffusion_model_path}")
@@ -3925,9 +4120,19 @@ def generate_image_outpaint(prompt, negative_prompt, init_image, stable_diffusio
     stable_diffusion_model_path = os.path.join("inputs", "image", "sd_models", "inpaint",
                                                f"{stable_diffusion_model_name}")
 
-    device = "cuda" if torch.cuda.is_available() else "cpu"
-    torch_dtype = torch.float16 if device == "cuda" else torch.float32
-    variant = "fp16" if torch_dtype == torch.float16 else "fp32"
+    if torch.backends.mps.is_available():
+        device = "mps"
+    elif torch.cuda.is_available():
+        device = "cuda"
+    else:
+        device = "cpu"
+
+    if device == "cuda":
+        torch_dtype = torch.float16
+        variant = "fp16"
+    else:
+        torch_dtype = torch.float32
+        variant = "fp32"
 
     if not os.path.exists(stable_diffusion_model_path):
         gr.Info(f"StableDiffusion model not found: {stable_diffusion_model_path}")
@@ -4085,9 +4290,19 @@ def generate_image_gligen(prompt, negative_prompt, gligen_phrases, gligen_boxes,
     stable_diffusion_model_path = os.path.join("inputs", "image", "sd_models",
                                                f"{stable_diffusion_model_name}")
 
-    device = "cuda" if torch.cuda.is_available() else "cpu"
-    torch_dtype = torch.float16 if device == "cuda" else torch.float32
-    variant = "fp16" if torch_dtype == torch.float16 else "fp32"
+    if torch.backends.mps.is_available():
+        device = "mps"
+    elif torch.cuda.is_available():
+        device = "cuda"
+    else:
+        device = "cpu"
+
+    if device == "cuda":
+        torch_dtype = torch.float16
+        variant = "fp16"
+    else:
+        torch_dtype = torch.float32
+        variant = "fp32"
 
     if not os.path.exists(stable_diffusion_model_path):
         gr.Info(f"StableDiffusion model not found: {stable_diffusion_model_path}")
@@ -4233,8 +4448,17 @@ def generate_image_diffedit(source_prompt, source_negative_prompt, target_prompt
 
     sd2_1_model_path = os.path.join("inputs", "image", "sd_models", "sd2-1")
 
-    device = "cuda" if torch.cuda.is_available() else "cpu"
-    torch_dtype = torch.float16 if device == "cuda" else torch.float32
+    if torch.backends.mps.is_available():
+        device = "mps"
+    elif torch.cuda.is_available():
+        device = "cuda"
+    else:
+        device = "cpu"
+
+    if device == "cuda":
+        torch_dtype = torch.float16
+    else:
+        torch_dtype = torch.float32
 
     if not os.path.exists(sd2_1_model_path):
         gr.Info("Downloading Stable Diffusion 2.1 model...")
@@ -4242,7 +4466,12 @@ def generate_image_diffedit(source_prompt, source_negative_prompt, target_prompt
         Repo.clone_from("https://huggingface.co/stabilityai/stable-diffusion-2-1", sd2_1_model_path)
         gr.Info("Stable Diffusion 2.1 model downloaded")
 
-    device = "cuda" if torch.cuda.is_available() else "cpu"
+    if torch.backends.mps.is_available():
+        device = "mps"
+    elif torch.cuda.is_available():
+        device = "cuda"
+    else:
+        device = "cpu"
 
     try:
         pipe = StableDiffusionDiffEditPipeline().StableDiffusionDiffEditPipeline.from_pretrained(
@@ -4333,8 +4562,17 @@ def generate_image_blip_diffusion(text_prompt_input, negative_prompt, cond_image
         gr.Info("BlipDiffusion model downloaded")
 
     try:
-        device = "cuda" if torch.cuda.is_available() else "cpu"
-        torch_dtype = torch.float16 if device == "cuda" else torch.float32
+        if torch.backends.mps.is_available():
+            device = "mps"
+        elif torch.cuda.is_available():
+            device = "cuda"
+        else:
+            device = "cpu"
+            
+        if device == "cuda":
+            torch_dtype = torch.float16
+        else:
+            torch_dtype = torch.float32
         blip_diffusion_pipe = BlipDiffusionPipeline().BlipDiffusionPipeline.from_pretrained(
             blip_diffusion_path, torch_dtype=torch_dtype
         ).to(device)
@@ -4382,9 +4620,19 @@ def generate_image_animatediff(prompt, negative_prompt, input_video, strength, m
 
     stable_diffusion_model_path = os.path.join("inputs", "image", "sd_models", f"{stable_diffusion_model_name}")
 
-    device = "cuda" if torch.cuda.is_available() else "cpu"
-    torch_dtype = torch.float16 if device == "cuda" else torch.float32
-    variant = "fp16" if torch_dtype == torch.float16 else "fp32"
+    if torch.backends.mps.is_available():
+        device = "mps"
+    elif torch.cuda.is_available():
+        device = "cuda"
+    else:
+        device = "cpu"
+
+    if device == "cuda":
+        torch_dtype = torch.float16
+        variant = "fp16"
+    else:
+        torch_dtype = torch.float32
+        variant = "fp32"
 
     if not os.path.exists(stable_diffusion_model_path):
         gr.Info(f"StableDiffusion model not found: {stable_diffusion_model_path}")
@@ -4687,9 +4935,19 @@ def generate_video(init_image, output_format, seed, video_settings_html, motion_
             gr.Info(f"StableVideoDiffusion model downloaded")
 
         try:
-            device = "cuda" if torch.cuda.is_available() else "cpu"
-            torch_dtype = torch.float16 if device == "cuda" else torch.float32
-            variant = "fp16" if torch_dtype == torch.float16 else "fp32"
+            if torch.backends.mps.is_available():
+                device = "mps"
+            elif torch.cuda.is_available():
+                device = "cuda"
+            else:
+                device = "cpu"
+
+            if device == "cuda":
+                torch_dtype = torch.float16
+                variant = "fp16"
+            else:
+                torch_dtype = torch.float32
+                variant = "fp32"
             pipe = StableVideoDiffusionPipeline().StableVideoDiffusionPipeline.from_pretrained(
                 pretrained_model_name_or_path=video_model_path,
                 torch_dtype=torch_dtype,
@@ -4738,9 +4996,19 @@ def generate_video(init_image, output_format, seed, video_settings_html, motion_
             gr.Info(f"i2vgen-xl model downloaded")
 
         try:
-            device = "cuda" if torch.cuda.is_available() else "cpu"
-            torch_dtype = torch.float16 if device == "cuda" else torch.float32
-            variant = "fp16" if torch_dtype == torch.float16 else "fp32"
+            if torch.backends.mps.is_available():
+                device = "mps"
+            elif torch.cuda.is_available():
+                device = "cuda"
+            else:
+                device = "cpu"
+
+            if device == "cuda":
+                torch_dtype = torch.float16
+                variant = "fp16"
+            else:
+                torch_dtype = torch.float32
+                variant = "fp32"
             pipe = I2VGenXLPipeline().I2VGenXLPipeline.from_pretrained(video_model_path, torch_dtype=torch_dtype, variant=variant).to(device)
             pipe.enable_model_cpu_offload()
 
@@ -4791,8 +5059,17 @@ def generate_image_ldm3d(prompt, negative_prompt, seed, width, height, num_infer
         gr.Info("LDM3D model downloaded")
 
     try:
-        device = "cuda" if torch.cuda.is_available() else "cpu"
-        torch_dtype = torch.float16 if device == "cuda" else torch.float32
+        if torch.backends.mps.is_available():
+            device = "mps"
+        elif torch.cuda.is_available():
+            device = "cuda"
+        else:
+            device = "cpu"
+            
+        if device == "cuda":
+            torch_dtype = torch.float16
+        else:
+            torch_dtype = torch.float32
         pipe = StableDiffusionLDM3DPipeline().StableDiffusionLDM3DPipeline.from_pretrained(ldm3d_model_path, torch_dtype=torch_dtype).to(device)
 
         if seed == "" or seed is None:
@@ -4854,8 +5131,17 @@ def generate_image_sd3_txt2img(prompt, negative_prompt, model_type, diffusers_ve
     stop_signal = False
     stop_idx = None
 
-    device = "cuda" if torch.cuda.is_available() else "cpu"
-    torch_dtype = torch.bfloat16 if device == "cuda" else torch.bfloat32
+    if torch.backends.mps.is_available():
+        device = "mps"
+    elif torch.cuda.is_available():
+        device = "cuda"
+    else:
+        device = "cpu"
+
+    if device == "cuda":
+        torch_dtype = torch.bfloat16
+    else:
+        torch_dtype = torch.bfloat32
 
     if enable_quantize:
         try:
@@ -5173,8 +5459,17 @@ def generate_image_sd3_img2img(prompt, negative_prompt, init_image, strength, di
 
     else:
         try:
-            device = "cuda" if torch.cuda.is_available() else "cpu"
-            torch_dtype = torch.float16 if device == "cuda" else torch.float32
+            if torch.backends.mps.is_available():
+                device = "mps"
+            elif torch.cuda.is_available():
+                device = "cuda"
+            else:
+                device = "cpu"
+
+            if device == "cuda":
+                torch_dtype = torch.float16
+            else:
+                torch_dtype = torch.float32
 
             if diffusers_version == "3-Medium":
                 sd3_model_path = os.path.join("inputs", "image", "sd_models", "sd3")
@@ -5322,8 +5617,17 @@ def generate_image_sd3_controlnet(prompt, negative_prompt, init_image, diffusers
         gr.Info(f"SD3 ControlNet {controlnet_model} model downloaded")
 
     try:
-        device = "cuda" if torch.cuda.is_available() else "cpu"
-        torch_dtype = torch.float16 if device == "cuda" else torch.float32
+        if torch.backends.mps.is_available():
+            device = "mps"
+        elif torch.cuda.is_available():
+            device = "cuda"
+        else:
+            device = "cpu"
+            
+        if device == "cuda":
+            torch_dtype = torch.float16
+        else:
+            torch_dtype = torch.float32
         controlnet = SD3ControlNetModel().SD3ControlNetModel.from_pretrained(controlnet_path, torch_dtype=torch_dtype)
 
         if diffusers_version == "3-Medium":
@@ -5479,8 +5783,17 @@ def generate_image_sd3_inpaint(prompt, negative_prompt, diffusers_version, init_
         return None, None
 
     try:
-        device = "cuda" if torch.cuda.is_available() else "cpu"
-        torch_dtype = torch.float16 if device == "cuda" else torch.float32
+        if torch.backends.mps.is_available():
+            device = "mps"
+        elif torch.cuda.is_available():
+            device = "cuda"
+        else:
+            device = "cpu"
+            
+        if device == "cuda":
+            torch_dtype = torch.float16
+        else:
+            torch_dtype = torch.float32
 
         if diffusers_version == "3-Medium":
             sd3_model_path = os.path.join("inputs", "image", "sd_models", "sd3")
@@ -5628,9 +5941,20 @@ def generate_image_cascade(prompt, negative_prompt, seed, stop_button, width, he
         gr.Info("Stable Cascade models downloaded")
 
     try:
-        device = "cuda" if torch.cuda.is_available() else "cpu"
-        torch_dtype = torch.bfloat16 if device == "cuda" else torch.bfloat32
-        variant = "bf16" if torch_dtype == torch.float16 else "bf32"
+        if torch.backends.mps.is_available():
+            device = "mps"
+        elif torch.cuda.is_available():
+            device = "cuda"
+        else:
+            device = "cpu"
+
+        if device == "cuda":
+            torch_dtype = torch.bfloat16
+            variant = "bf16"
+        else:
+            torch_dtype = torch.bfloat32
+            variant = "bf32"
+
         prior = StableCascadePriorPipeline().StableCascadePriorPipeline.from_pretrained(os.path.join(stable_cascade_model_path, "prior"),
                                                            variant=variant, torch_dtype=torch_dtype).to(device)
         decoder = StableCascadeDecoderPipeline().StableCascadeDecoderPipeline.from_pretrained(os.path.join(stable_cascade_model_path, "decoder"),
@@ -5734,8 +6058,17 @@ def generate_image_cascade(prompt, negative_prompt, seed, stop_button, width, he
 
 
 def generate_image_t2i_ip_adapter(prompt, negative_prompt, ip_adapter_image, stable_diffusion_model_type, stable_diffusion_model_name, seed, num_inference_steps, guidance_scale, width, height, output_format):
-    device = "cuda" if torch.cuda.is_available() else "cpu"
-    torch_dtype = torch.float16 if device == "cuda" else torch.float32
+    if torch.backends.mps.is_available():
+        device = "mps"
+    elif torch.cuda.is_available():
+        device = "cuda"
+    else:
+        device = "cpu"
+
+    if device == "cuda":
+        torch_dtype = torch.float16
+    else:
+        torch_dtype = torch.float32
 
     if seed == "" or seed is None:
         seed = random.randint(0, 2 ** 32 - 1)
@@ -5870,9 +6203,19 @@ def generate_image_ip_adapter_faceid(prompt, negative_prompt, face_image, s_scal
         ip_ckpt = os.path.join(ip_ckpt_path, "ip-adapter-faceid-plusv2_sdxl.bin")
 
     try:
-        device = "cuda" if torch.cuda.is_available() else "cpu"
-        torch_dtype = torch.float16 if device == "cuda" else torch.float32
-        variant = "fp16" if torch_dtype == torch.float16 else "fp32"
+        if torch.backends.mps.is_available():
+            device = "mps"
+        elif torch.cuda.is_available():
+            device = "cuda"
+        else:
+            device = "cpu"
+
+        if device == "cuda":
+            torch_dtype = torch.float16
+            variant = "fp16"
+        else:
+            torch_dtype = torch.float32
+            variant = "fp32"
 
         app = FaceAnalysis(name="buffalo_l", providers=['CUDAExecutionProvider', 'CPUExecutionProvider'])
         app.prepare(ctx_id=0, det_size=(640, 640))
@@ -5955,8 +6298,17 @@ def generate_riffusion_text2image(prompt, negative_prompt, seed, stop_button, nu
     stop_signal = False
     stop_idx = None
 
-    device = "cuda" if torch.cuda.is_available() else "cpu"
-    torch_dtype = torch.float16 if device == "cuda" else torch.float32
+    if torch.backends.mps.is_available():
+        device = "mps"
+    elif torch.cuda.is_available():
+        device = "cuda"
+    else:
+        device = "cpu"
+
+    if device == "cuda":
+        torch_dtype = torch.float16
+    else:
+        torch_dtype = torch.float32
 
     if seed == "" or seed is None:
         seed = random.randint(0, 2 ** 32 - 1)
@@ -6083,9 +6435,19 @@ def generate_image_kandinsky_txt2img(prompt, negative_prompt, version, seed, sto
     stop_signal = False
     stop_idx = None
 
-    device = "cuda" if torch.cuda.is_available() else "cpu"
-    torch_dtype = torch.float16 if device == "cuda" else torch.float32
-    variant = "fp16" if torch_dtype == torch.float16 else "fp32"
+    if torch.backends.mps.is_available():
+        device = "mps"
+    elif torch.cuda.is_available():
+        device = "cuda"
+    else:
+        device = "cpu"
+
+    if device == "cuda":
+        torch_dtype = torch.float16
+        variant = "fp16"
+    else:
+        torch_dtype = torch.float32
+        variant = "fp32"
 
     if seed == "" or seed is None:
         seed = random.randint(0, 2 ** 32 - 1)
@@ -6250,9 +6612,19 @@ def generate_image_kandinsky_img2img(prompt, negative_prompt, init_image, versio
     stop_signal = False
     stop_idx = None
 
-    device = "cuda" if torch.cuda.is_available() else "cpu"
-    torch_dtype = torch.float16 if device == "cuda" else torch.float32
-    variant = "fp16" if torch_dtype == torch.float16 else "fp32"
+    if torch.backends.mps.is_available():
+        device = "mps"
+    elif torch.cuda.is_available():
+        device = "cuda"
+    else:
+        device = "cpu"
+
+    if device == "cuda":
+        torch_dtype = torch.float16
+        variant = "fp16"
+    else:
+        torch_dtype = torch.float32
+        variant = "fp32"
 
     if seed == "" or seed is None:
         seed = random.randint(0, 2 ** 32 - 1)
@@ -6411,9 +6783,19 @@ def generate_image_kandinsky_inpaint(prompt, negative_prompt, init_image, mask_i
     stop_signal = False
     stop_idx = None
 
-    device = "cuda" if torch.cuda.is_available() else "cpu"
-    torch_dtype = torch.float16 if device == "cuda" else torch.float32
-    variant = "fp16" if torch_dtype == torch.float16 else "fp32"
+    if torch.backends.mps.is_available():
+        device = "mps"
+    elif torch.cuda.is_available():
+        device = "cuda"
+    else:
+        device = "cpu"
+
+    if device == "cuda":
+        torch_dtype = torch.float16
+        variant = "fp16"
+    else:
+        torch_dtype = torch.float32
+        variant = "fp32"
 
     if not init_image or not mask_image:
         gr.Info("Please upload an initial image and provide a mask image!")
@@ -6499,8 +6881,17 @@ def generate_image_flux_txt2img(prompt, model_name, quantize_model_name, enable_
     stop_signal = False
     stop_idx = None
 
-    device = "cuda" if torch.cuda.is_available() else "cpu"
-    torch_dtype = torch.bfloat16 if device == "cuda" else torch.bfloat32
+    if torch.backends.mps.is_available():
+        device = "mps"
+    elif torch.cuda.is_available():
+        device = "cuda"
+    else:
+        device = "cpu"
+
+    if device == "cuda":
+        torch_dtype = torch.bfloat16
+    else:
+        torch_dtype = torch.bfloat32
 
     if seed == "" or seed is None:
         seed = random.randint(0, 2 ** 32 - 1)
@@ -6677,8 +7068,17 @@ def generate_image_flux_img2img(prompt, init_image, model_name, quantize_model_n
         gr.Info("Please upload an initial image!")
         return None, None
 
-    device = "cuda" if torch.cuda.is_available() else "cpu"
-    torch_dtype = torch.bfloat16 if device == "cuda" else torch.bfloat32
+    if torch.backends.mps.is_available():
+        device = "mps"
+    elif torch.cuda.is_available():
+        device = "cuda"
+    else:
+        device = "cpu"
+
+    if device == "cuda":
+        torch_dtype = torch.bfloat16
+    else:
+        torch_dtype = torch.bfloat32
 
     if seed == "" or seed is None:
         seed = random.randint(0, 2 ** 32 - 1)
@@ -6841,8 +7241,17 @@ def generate_image_flux_inpaint(prompt, init_image, mask_image, model_name, seed
     stop_signal = False
     stop_idx = None
 
-    device = "cuda" if torch.cuda.is_available() else "cpu"
-    torch_dtype = torch.bfloat16 if device == "cuda" else torch.bfloat32
+    if torch.backends.mps.is_available():
+        device = "mps"
+    elif torch.cuda.is_available():
+        device = "cuda"
+    else:
+        device = "cpu"
+
+    if device == "cuda":
+        torch_dtype = torch.bfloat16
+    else:
+        torch_dtype = torch.bfloat32
 
     if not init_image or not mask_image:
         gr.Info("Please upload an initial image and provide a mask image!")
@@ -6933,8 +7342,17 @@ def generate_image_flux_controlnet(prompt, init_image, base_model_name, seed, st
     stop_signal = False
     stop_idx = None
 
-    device = "cuda" if torch.cuda.is_available() else "cpu"
-    torch_dtype = torch.bfloat16 if device == "cuda" else torch.bfloat32
+    if torch.backends.mps.is_available():
+        device = "mps"
+    elif torch.cuda.is_available():
+        device = "cuda"
+    else:
+        device = "cpu"
+
+    if device == "cuda":
+        torch_dtype = torch.bfloat16
+    else:
+        torch_dtype = torch.bfloat32
 
     if not init_image:
         gr.Info("Please upload an initial image!")
@@ -7036,8 +7454,17 @@ def generate_image_hunyuandit_txt2img(prompt, negative_prompt, seed, stop_button
     stop_signal = False
     stop_idx = None
 
-    device = "cuda" if torch.cuda.is_available() else "cpu"
-    torch_dtype = torch.float16 if device == "cuda" else torch.float32
+    if torch.backends.mps.is_available():
+        device = "mps"
+    elif torch.cuda.is_available():
+        device = "cuda"
+    else:
+        device = "cpu"
+
+    if device == "cuda":
+        torch_dtype = torch.float16
+    else:
+        torch_dtype = torch.float32
 
     if seed == "" or seed is None:
         seed = random.randint(0, 2 ** 32 - 1)
@@ -7115,8 +7542,17 @@ def generate_image_hunyuandit_controlnet(prompt, negative_prompt, init_image, co
     stop_signal = False
     stop_idx = None
 
-    device = "cuda" if torch.cuda.is_available() else "cpu"
-    torch_dtype = torch.float16 if device == "cuda" else torch.float32
+    if torch.backends.mps.is_available():
+        device = "mps"
+    elif torch.cuda.is_available():
+        device = "cuda"
+    else:
+        device = "cpu"
+
+    if device == "cuda":
+        torch_dtype = torch.float16
+    else:
+        torch_dtype = torch.float32
 
     if not init_image:
         gr.Info("Please upload an initial image!")
@@ -7195,8 +7631,17 @@ def generate_image_hunyuandit_controlnet(prompt, negative_prompt, init_image, co
 
 
 def generate_image_lumina(prompt, negative_prompt, seed, num_inference_steps, guidance_scale, height, width, max_sequence_length, output_format):
-    device = "cuda" if torch.cuda.is_available() else "cpu"
-    torch_dtype = torch.bfloat16 if device == "cuda" else torch.bfloat32
+    if torch.backends.mps.is_available():
+        device = "mps"
+    elif torch.cuda.is_available():
+        device = "cuda"
+    else:
+        device = "cpu"
+
+    if device == "cuda":
+        torch_dtype = torch.bfloat16
+    else:
+        torch_dtype = torch.bfloat32
 
     if seed == "" or seed is None:
         seed = random.randint(0, 2 ** 32 - 1)
@@ -7262,9 +7707,19 @@ def generate_image_lumina(prompt, negative_prompt, seed, num_inference_steps, gu
 
 
 def generate_image_kolors_txt2img(prompt, negative_prompt, seed, lora_model_names, lora_scales, guidance_scale, num_inference_steps, max_sequence_length, output_format):
-    device = "cuda" if torch.cuda.is_available() else "cpu"
-    torch_dtype = torch.float16 if device == "cuda" else torch.float32
-    variant = "fp16" if torch_dtype == torch.float16 else "fp32"
+    if torch.backends.mps.is_available():
+        device = "mps"
+    elif torch.cuda.is_available():
+        device = "cuda"
+    else:
+        device = "cpu"
+
+    if device == "cuda":
+        torch_dtype = torch.float16
+        variant = "fp16"
+    else:
+        torch_dtype = torch.float32
+        variant = "fp32"
 
     if seed == "" or seed is None:
         seed = random.randint(0, 2 ** 32 - 1)
@@ -7355,9 +7810,19 @@ def generate_image_kolors_txt2img(prompt, negative_prompt, seed, lora_model_name
 
 
 def generate_image_kolors_img2img(prompt, negative_prompt, init_image, seed, guidance_scale, num_inference_steps, max_sequence_length, output_format):
-    device = "cuda" if torch.cuda.is_available() else "cpu"
-    torch_dtype = torch.float16 if device == "cuda" else torch.float32
-    variant = "fp16" if torch_dtype == torch.float16 else "fp32"
+    if torch.backends.mps.is_available():
+        device = "mps"
+    elif torch.cuda.is_available():
+        device = "cuda"
+    else:
+        device = "cpu"
+
+    if device == "cuda":
+        torch_dtype = torch.float16
+        variant = "fp16"
+    else:
+        torch_dtype = torch.float32
+        variant = "fp32"
 
     if not init_image:
         gr.Info("Please upload an initial image!")
@@ -7415,9 +7880,19 @@ def generate_image_kolors_img2img(prompt, negative_prompt, init_image, seed, gui
 
 
 def generate_image_kolors_ip_adapter_plus(prompt, negative_prompt, ip_adapter_image, seed, guidance_scale, num_inference_steps, output_format):
-    device = "cuda" if torch.cuda.is_available() else "cpu"
-    torch_dtype = torch.float16 if device == "cuda" else torch.float32
-    variant = "fp16" if torch_dtype == torch.float16 else "fp32"
+    if torch.backends.mps.is_available():
+        device = "mps"
+    elif torch.cuda.is_available():
+        device = "cuda"
+    else:
+        device = "cpu"
+
+    if device == "cuda":
+        torch_dtype = torch.float16
+        variant = "fp16"
+    else:
+        torch_dtype = torch.float32
+        variant = "fp32"
 
     if not ip_adapter_image:
         gr.Info("Please upload an initial image!")
@@ -7496,8 +7971,17 @@ def generate_image_kolors_ip_adapter_plus(prompt, negative_prompt, ip_adapter_im
 
 
 def generate_image_auraflow(prompt, negative_prompt, seed, lora_model_names, lora_scales, num_inference_steps, guidance_scale, height, width, max_sequence_length, enable_aurasr, output_format):
-    device = "cuda" if torch.cuda.is_available() else "cpu"
-    torch_dtype = torch.float16 if device == "cuda" else torch.float32
+    if torch.backends.mps.is_available():
+        device = "mps"
+    elif torch.cuda.is_available():
+        device = "cuda"
+    else:
+        device = "cpu"
+
+    if device == "cuda":
+        torch_dtype = torch.float16
+    else:
+        torch_dtype = torch.float32
 
     if seed == "" or seed is None:
         seed = random.randint(0, 2 ** 32 - 1)
@@ -7610,8 +8094,17 @@ def generate_image_wurstchen(prompt, negative_prompt, seed, stop_button, width, 
     stop_signal = False
     stop_idx = None
 
-    device = "cuda" if torch.cuda.is_available() else "cpu"
-    torch_dtype = torch.float16 if device == "cuda" else torch.float32
+    if torch.backends.mps.is_available():
+        device = "mps"
+    elif torch.cuda.is_available():
+        device = "cuda"
+    else:
+        device = "cpu"
+
+    if device == "cuda":
+        torch_dtype = torch.float16
+    else:
+        torch_dtype = torch.float32
 
     if seed == "" or seed is None:
         seed = random.randint(0, 2 ** 32 - 1)
@@ -7726,9 +8219,19 @@ def generate_image_deepfloyd_txt2img(prompt, negative_prompt, seed, stop_button,
     stop_signal = False
     stop_idx = None
 
-    device = "cuda" if torch.cuda.is_available() else "cpu"
-    torch_dtype = torch.float16 if device == "cuda" else torch.float32
-    variant = "fp16" if torch_dtype == torch.float16 else "fp32"
+    if torch.backends.mps.is_available():
+        device = "mps"
+    elif torch.cuda.is_available():
+        device = "cuda"
+    else:
+        device = "cpu"
+
+    if device == "cuda":
+        torch_dtype = torch.float16
+        variant = "fp16"
+    else:
+        torch_dtype = torch.float32
+        variant = "fp32"
 
     if seed == "" or seed is None:
         seed = random.randint(0, 2 ** 32 - 1)
@@ -7892,9 +8395,19 @@ def generate_image_deepfloyd_img2img(prompt, negative_prompt, init_image, seed, 
     stop_signal = False
     stop_idx = None
 
-    device = "cuda" if torch.cuda.is_available() else "cpu"
-    torch_dtype = torch.float16 if device == "cuda" else torch.float32
-    variant = "fp16" if torch_dtype == torch.float16 else "fp32"
+    if torch.backends.mps.is_available():
+        device = "mps"
+    elif torch.cuda.is_available():
+        device = "cuda"
+    else:
+        device = "cpu"
+
+    if device == "cuda":
+        torch_dtype = torch.float16
+        variant = "fp16"
+    else:
+        torch_dtype = torch.float32
+        variant = "fp32"
 
     if seed == "" or seed is None:
         seed = random.randint(0, 2 ** 32 - 1)
@@ -8055,9 +8568,19 @@ def generate_image_deepfloyd_inpaint(prompt, negative_prompt, init_image, mask_i
     stop_signal = False
     stop_idx = None
 
-    device = "cuda" if torch.cuda.is_available() else "cpu"
-    torch_dtype = torch.float16 if device == "cuda" else torch.float32
-    variant = "fp16" if torch_dtype == torch.float16 else "fp32"
+    if torch.backends.mps.is_available():
+        device = "mps"
+    elif torch.cuda.is_available():
+        device = "cuda"
+    else:
+        device = "cpu"
+
+    if device == "cuda":
+        torch_dtype = torch.float16
+        variant = "fp16"
+    else:
+        torch_dtype = torch.float32
+        variant = "fp32"
 
     if seed == "" or seed is None:
         seed = random.randint(0, 2 ** 32 - 1)
@@ -8221,8 +8744,17 @@ def generate_image_pixart(prompt, negative_prompt, version, seed, stop_button, n
     stop_signal = False
     stop_idx = None
 
-    device = "cuda" if torch.cuda.is_available() else "cpu"
-    torch_dtype = torch.float16 if device == "cuda" else torch.float32
+    if torch.backends.mps.is_available():
+        device = "mps"
+    elif torch.cuda.is_available():
+        device = "cuda"
+    else:
+        device = "cpu"
+
+    if device == "cuda":
+        torch_dtype = torch.float16
+    else:
+        torch_dtype = torch.float32
 
     if seed == "" or seed is None:
         seed = random.randint(0, 2 ** 32 - 1)
@@ -8333,8 +8865,17 @@ def generate_image_cogview3plus(prompt, negative_prompt, seed, stop_button, heig
     stop_signal = False
     stop_idx = None
 
-    device = "cuda" if torch.cuda.is_available() else "cpu"
-    torch_dtype = torch.bfloat16 if device == "cuda" else torch.bfloat32
+    if torch.backends.mps.is_available():
+        device = "mps"
+    elif torch.cuda.is_available():
+        device = "cuda"
+    else:
+        device = "cpu"
+
+    if device == "cuda":
+        torch_dtype = torch.bfloat16
+    else:
+        torch_dtype = torch.bfloat32
 
     if seed == "" or seed is None:
         seed = random.randint(0, 2 ** 32 - 1)
@@ -8415,9 +8956,19 @@ def generate_image_cogview3plus(prompt, negative_prompt, seed, stop_button, heig
 
 
 def generate_image_playgroundv2(prompt, negative_prompt, seed, height, width, num_inference_steps, guidance_scale, output_format):
-    device = "cuda" if torch.cuda.is_available() else "cpu"
-    torch_dtype = torch.float16 if device == "cuda" else torch.float32
-    variant = "fp16" if torch_dtype == torch.float16 else "fp32"
+    if torch.backends.mps.is_available():
+        device = "mps"
+    elif torch.cuda.is_available():
+        device = "cuda"
+    else:
+        device = "cpu"
+
+    if device == "cuda":
+        torch_dtype = torch.float16
+        variant = "fp16"
+    else:
+        torch_dtype = torch.float32
+        variant = "fp32"
 
     if seed == "" or seed is None:
         seed = random.randint(0, 2 ** 32 - 1)
@@ -8594,9 +9145,19 @@ def generate_video_modelscope(prompt, negative_prompt, seed, stop_button, num_in
     stop_signal = False
     stop_idx = None
 
-    device = "cuda" if torch.cuda.is_available() else "cpu"
-    torch_dtype = torch.float16 if device == "cuda" else torch.float32
-    variant = "fp16" if torch_dtype == torch.float16 else "fp32"
+    if torch.backends.mps.is_available():
+        device = "mps"
+    elif torch.cuda.is_available():
+        device = "cuda"
+    else:
+        device = "cpu"
+
+    if device == "cuda":
+        torch_dtype = torch.float16
+        variant = "fp16"
+    else:
+        torch_dtype = torch.float32
+        variant = "fp32"
 
     if seed == "" or seed is None:
         seed = random.randint(0, 2 ** 32 - 1)
@@ -8679,8 +9240,17 @@ def generate_video_zeroscope2(prompt, video_to_enhance, seed, stop_button, stren
     stop_signal = False
     stop_idx = None
 
-    device = "cuda" if torch.cuda.is_available() else "cpu"
-    torch_dtype = torch.float16 if device == "cuda" else torch.float32
+    if torch.backends.mps.is_available():
+        device = "mps"
+    elif torch.cuda.is_available():
+        device = "cuda"
+    else:
+        device = "cpu"
+
+    if device == "cuda":
+        torch_dtype = torch.float16
+    else:
+        torch_dtype = torch.float32
 
     if seed == "" or seed is None:
         seed = random.randint(0, 2 ** 32 - 1)
@@ -8838,8 +9408,17 @@ def generate_video_cogvideox_text2video(prompt, negative_prompt, cogvideox_versi
     stop_signal = False
     stop_idx = None
 
-    device = "cuda" if torch.cuda.is_available() else "cpu"
-    torch_dtype = torch.float16 if device == "cuda" else torch.float32
+    if torch.backends.mps.is_available():
+        device = "mps"
+    elif torch.cuda.is_available():
+        device = "cuda"
+    else:
+        device = "cpu"
+
+    if device == "cuda":
+        torch_dtype = torch.float16
+    else:
+        torch_dtype = torch.float32
 
     if seed == "" or seed is None:
         seed = random.randint(0, 2 ** 32 - 1)
@@ -8923,8 +9502,17 @@ def generate_video_cogvideox_image2video(prompt, negative_prompt, init_image, se
     stop_signal = False
     stop_idx = None
 
-    device = "cuda" if torch.cuda.is_available() else "cpu"
-    torch_dtype = torch.bfloat16 if device == "cuda" else torch.bfloat32
+    if torch.backends.mps.is_available():
+        device = "mps"
+    elif torch.cuda.is_available():
+        device = "cuda"
+    else:
+        device = "cpu"
+
+    if device == "cuda":
+        torch_dtype = torch.bfloat16
+    else:
+        torch_dtype = torch.bfloat32
 
     if not init_image:
         gr.Info("Please, upload an initial image!")
@@ -8990,8 +9578,17 @@ def generate_video_cogvideox_video2video(prompt, negative_prompt, init_video, co
     stop_signal = False
     stop_idx = None
 
-    device = "cuda" if torch.cuda.is_available() else "cpu"
-    torch_dtype = torch.bfloat16 if device == "cuda" else torch.bfloat32
+    if torch.backends.mps.is_available():
+        device = "mps"
+    elif torch.cuda.is_available():
+        device = "cuda"
+    else:
+        device = "cpu"
+
+    if device == "cuda":
+        torch_dtype = torch.bfloat16
+    else:
+        torch_dtype = torch.bfloat32
 
     if not init_video:
         gr.Info("Please, upload an initial video!")
@@ -9067,8 +9664,17 @@ def generate_video_latte(prompt, negative_prompt, seed, stop_button, num_inferen
     stop_signal = False
     stop_idx = None
 
-    device = "cuda" if torch.cuda.is_available() else "cpu"
-    torch_dtype = torch.float16 if device == "cuda" else torch.float32
+    if torch.backends.mps.is_available():
+        device = "mps"
+    elif torch.cuda.is_available():
+        device = "cuda"
+    else:
+        device = "cpu"
+
+    if device == "cuda":
+        torch_dtype = torch.float16
+    else:
+        torch_dtype = torch.float32
 
     if seed == "" or seed is None:
         seed = random.randint(0, 2 ** 32 - 1)
@@ -9178,9 +9784,19 @@ def generate_3d_stablefast3d(image, texture_resolution, foreground_ratio, remesh
 
 
 def generate_3d_shap_e(prompt, init_image, seed, num_inference_steps, guidance_scale, frame_size, progress=gr.Progress()):
-    device = "cuda" if torch.cuda.is_available() else "cpu"
-    torch_dtype = torch.float16 if device == "cuda" else torch.float32
-    variant = "fp16" if torch_dtype == torch.float16 else "fp32"
+    if torch.backends.mps.is_available():
+        device = "mps"
+    elif torch.cuda.is_available():
+        device = "cuda"
+    else:
+        device = "cpu"
+
+    if device == "cuda":
+        torch_dtype = torch.float16
+        variant = "fp16"
+    else:
+        torch_dtype = torch.float32
+        variant = "fp32"
 
     if seed == "" or seed is None:
         seed = random.randint(0, 2 ** 32 - 1)
@@ -9272,8 +9888,17 @@ def generate_3d_zero123plus(input_image, num_inference_steps, output_format, pro
         gr.Info("Please upload an input image!")
         return None, None
 
-    device = "cuda" if torch.cuda.is_available() else "cpu"
-    torch_dtype = torch.float16 if device == "cuda" else torch.float32
+    if torch.backends.mps.is_available():
+        device = "mps"
+    elif torch.cuda.is_available():
+        device = "cuda"
+    else:
+        device = "cpu"
+
+    if device == "cuda":
+        torch_dtype = torch.float16
+    else:
+        torch_dtype = torch.float32
 
     progress(0.1, desc="Initializing Zero123Plus")
     zero123plus_model_path = os.path.join("inputs", "3D", "zero123plus")
@@ -9326,8 +9951,17 @@ def generate_stableaudio(prompt, negative_prompt, seed, stop_button, num_inferen
     stop_signal = False
     stop_idx = None
 
-    device = "cuda" if torch.cuda.is_available() else "cpu"
-    torch_dtype = torch.float16 if device == "cuda" else torch.float32
+    if torch.backends.mps.is_available():
+        device = "mps"
+    elif torch.cuda.is_available():
+        device = "cuda"
+    else:
+        device = "cpu"
+
+    if device == "cuda":
+        torch_dtype = torch.float16
+    else:
+        torch_dtype = torch.float32
 
     if seed == "" or seed is None:
         seed = random.randint(0, 2 ** 32 - 1)
@@ -9559,8 +10193,17 @@ def generate_audio_audioldm2(prompt, negative_prompt, model_name, seed, stop_but
     stop_signal = False
     stop_idx = None
 
-    device = "cuda" if torch.cuda.is_available() else "cpu"
-    torch_dtype = torch.float16 if device == "cuda" else torch.float32
+    if torch.backends.mps.is_available():
+        device = "mps"
+    elif torch.cuda.is_available():
+        device = "cuda"
+    else:
+        device = "cpu"
+
+    if device == "cuda":
+        torch_dtype = torch.float16
+    else:
+        torch_dtype = torch.float32
 
     if seed == "" or seed is None:
         seed = random.randint(0, 2 ** 32 - 1)
@@ -9661,8 +10304,18 @@ def generate_bark_audio(text, voice_preset, max_length, fine_temperature, coarse
 
     try:
         progress(0.3, desc="Setting up device")
-        device = "cuda" if torch.cuda.is_available() else "cpu"
-        torch_dtype = torch.float16 if device == "cuda" else torch.float32
+
+        if torch.backends.mps.is_available():
+            device = "mps"
+        elif torch.cuda.is_available():
+            device = "cuda"
+        else:
+            device = "cpu"
+
+        if device == "cuda":
+            torch_dtype = torch.float16
+        else:
+            torch_dtype = torch.float32
 
         progress(0.4, desc="Loading Bark model")
         processor = AutoProcessor().AutoProcessor.from_pretrained(bark_model_path)
@@ -9732,7 +10385,12 @@ def process_rvc(input_audio, model_folder, f0method, f0up_key, index_rate, filte
         gr.Info("Please upload an audio file!")
         return None, None
 
-    device = "cuda" if torch.cuda.is_available() else "cpu"
+    if torch.backends.mps.is_available():
+        device = "mps"
+    elif torch.cuda.is_available():
+        device = "cuda"
+    else:
+        device = "cpu"
 
     model_path = os.path.join("inputs", "audio", "rvc_models", model_folder)
 
@@ -10019,7 +10677,12 @@ def generate_video_extras(input_video, enable_downscale, downscale_factor, enabl
 
 
 def generate_audio_extras(input_audio, enable_format_changer, new_format, enable_audiosr, steps, guidance_scale, enable_downscale, downscale_factor, progress=gr.Progress()):
-    device = "cuda" if torch.cuda.is_available() else "cpu"
+    if torch.backends.mps.is_available():
+        device = "mps"
+    elif torch.cuda.is_available():
+        device = "cuda"
+    else:
+        device = "cpu"
 
     progress(0.1, desc="Initializing audio processing")
     if not input_audio:

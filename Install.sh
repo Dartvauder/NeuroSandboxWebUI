@@ -4,7 +4,7 @@ CURRENT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &> /dev/null && pwd)"
 
 echo "Select installation type:"
 echo "1. GPU"
-echo "2. CPU"
+echo "2. CPU OR MPS"
 read -n 1 -p "Enter number (1 or 2): " choice
 echo ""
 
