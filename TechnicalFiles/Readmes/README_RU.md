@@ -26,7 +26,7 @@
 
 ## Функции:
 
-* Легкая установка через install.bat (Windows) или install.sh (Linux)
+* Легкая установка через install.bat (Windows) или install.sh (Linux & MacOS)
 * Возможность использования приложения через мобильное устройство в локальной сети (через IPv4) или в интернете (через Share)
 * Гибкий и оптимизированный интерфейс (на основе Gradio)
 * Ведение журнала отладки в логах из файлов `Install` и `Update`
@@ -72,7 +72,7 @@
 
 ## Минимальные системные требования:
 
-* Система: Windows или Linux
+* Система: Windows, Linux или MacOS
 * GPU: 6GB+ или CPU: 8 ядер 3.6GHZ
 * ОЗУ: 16GB+
 * Место на диске: 20GB+
@@ -80,7 +80,7 @@
 
 ## Как установить:
 
-### Windows
+### Windows & MacOS
 
 1) Сначала установите все [Необходимые зависимости](/#Required-Dependencies)
 2) `Git clone https://github.com/Dartvauder/NeuroSandboxWebUI.git` в любое место
