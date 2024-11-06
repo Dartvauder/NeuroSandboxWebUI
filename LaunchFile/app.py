@@ -1058,7 +1058,7 @@ def transcribe_audio(audio_file_path):
     else:
         device = "cpu"
 
-    whisper_model_path = "inputs/text/whisper-medium"
+    whisper_model_path = "inputs/text/whisper-large-v3-turbo"
     if not os.path.exists(whisper_model_path):
         gr.Info("Downloading Whisper...")
         os.makedirs(whisper_model_path, exist_ok=True)
@@ -1096,7 +1096,7 @@ def load_freevc_model():
 
 
 def load_whisper_model():
-    whisper_model_path = "inputs/text/whisper-medium"
+    whisper_model_path = "inputs/text/whisper-large-v3-turbo"
     if not os.path.exists(whisper_model_path):
         gr.Info("Downloading Whisper...")
         os.makedirs(whisper_model_path, exist_ok=True)
@@ -11228,35 +11228,130 @@ def open_outputs_folder():
             os.system(f'open "{outputs_folder}"' if os.name == "darwin" else f'xdg-open "{outputs_folder}"')
 
 
-llm_models_list = [None, "Moondream2-Image", "LLaVA-NeXT-Video", "Qwen2-Audio"] + [model for model in os.listdir("inputs/text/llm_models") if not model.endswith(".txt") and model != "vikhyatk" and model != "lora"]
-llm_lora_models_list = [None] + [model for model in os.listdir("inputs/text/llm_models/lora") if not model.endswith(".txt")]
-speaker_wavs_list = [None] + [wav for wav in os.listdir("inputs/audio/voices") if not wav.endswith(".txt")]
-stable_diffusion_models_list = [None] + [model for model in os.listdir("inputs/image/sd_models")
-                                         if (model.endswith(".safetensors") or model.endswith(".ckpt") or model.endswith(".gguf") or not model.endswith(".txt") and not model.endswith(".py") and not os.path.isdir(os.path.join("inputs/image/sd_models")))]
+def get_llm_models():
+    return [None, "Moondream2-Image", "LLaVA-NeXT-Video", "Qwen2-Audio"] + [
+        model for model in os.listdir("inputs/text/llm_models")
+        if not model.endswith(".txt") and model != "vikhyatk" and model != "lora" and model != "avatars"
+    ]
+
+
+def get_llm_lora_models():
+    return [None] + [
+        model for model in os.listdir("inputs/text/llm_models/lora")
+        if not model.endswith(".txt")
+    ]
+
+
+def get_speaker_wavs():
+    return [None] + [
+        wav for wav in os.listdir("inputs/audio/voices")
+        if not wav.endswith(".txt")
+    ]
+
+
+def get_stable_diffusion_models():
+    return [None] + [
+        model for model in os.listdir("inputs/image/sd_models")
+        if model.endswith((".safetensors", ".ckpt", ".gguf"))
+           or (not model.endswith((".txt", ".py")) and not os.path.isdir(os.path.join("inputs/image/sd_models", model)))
+    ]
+
+
 audiocraft_models_list = [None] + ["musicgen-stereo-medium", "audiogen-medium", "musicgen-stereo-melody", "musicgen-medium", "musicgen-melody", "musicgen-large",
                                    "hybrid-magnet-medium", "magnet-medium-30sec", "magnet-medium-10sec", "audio-magnet-medium"]
-vae_models_list = [None] + [model for model in os.listdir("inputs/image/sd_models/vae") if
-                            model.endswith(".safetensors") or not model.endswith(".txt")]
-flux_vae_models_list = [None] + [model for model in os.listdir("inputs/image/flux/flux-vae") if
-                                model.endswith(".safetensors") or not model.endswith(".txt")]
-lora_models_list = [None] + [model for model in os.listdir("inputs/image/sd_models/lora") if
-                             model.endswith(".safetensors") or model.endswith(".pt")]
-quantized_flux_models_list = [None] + [model for model in os.listdir("inputs/image/flux/quantize-flux") if
-                            model.endswith(".gguf") or model.endswith(".safetensors") or not model.endswith(".txt") and not model.endswith(".safetensors") and not model.endswith(".py")]
-flux_lora_models_list = [None] + [model for model in os.listdir("inputs/image/flux/flux-lora") if
-                             model.endswith(".safetensors")]
-auraflow_lora_models_list = [None] + [model for model in os.listdir("inputs/image/auraflow-lora") if
-                             model.endswith(".safetensors")]
-kolors_lora_models_list = [None] + [model for model in os.listdir("inputs/image/kolors-lora") if
-                             model.endswith(".safetensors")]
-textual_inversion_models_list = [None] + [model for model in os.listdir("inputs/image/sd_models/embedding") if model.endswith(".pt") or model.endswith(".safetensors")]
-inpaint_models_list = [None] + [model for model in
-                                os.listdir("inputs/image/sd_models/inpaint")
-                                if (model.endswith(".safetensors") or model.endswith(".ckpt") or not model.endswith(".txt"))]
+
+
+def get_vae_models():
+    return [None] + [
+        model for model in os.listdir("inputs/image/sd_models/vae")
+        if model.endswith(".safetensors") or not model.endswith(".txt")
+    ]
+
+
+def get_flux_vae_models():
+    return [None] + [
+        model for model in os.listdir("inputs/image/flux/flux-vae")
+        if model.endswith(".safetensors") or not model.endswith(".txt")
+    ]
+
+
+def get_lora_models():
+    return [None] + [
+        model for model in os.listdir("inputs/image/sd_models/lora")
+        if model.endswith((".safetensors", ".pt"))
+    ]
+
+
+def get_quantized_flux_models():
+    return [None] + [
+        model for model in os.listdir("inputs/image/flux/quantize-flux")
+        if model.endswith((".gguf", ".safetensors"))
+           or (not model.endswith((".txt", ".safetensors", ".py")))
+    ]
+
+
+def get_flux_lora_models():
+    return [None] + [
+        model for model in os.listdir("inputs/image/flux/flux-lora")
+        if model.endswith(".safetensors")
+    ]
+
+
+def get_auraflow_lora_models():
+    return [None] + [
+        model for model in os.listdir("inputs/image/auraflow-lora")
+        if model.endswith(".safetensors")
+    ]
+
+
+def get_kolors_lora_models():
+    return [None] + [
+        model for model in os.listdir("inputs/image/kolors-lora")
+        if model.endswith(".safetensors")
+    ]
+
+
+def get_textual_inversion_models():
+    return [None] + [
+        model for model in os.listdir("inputs/image/sd_models/embedding")
+        if model.endswith((".pt", ".safetensors"))
+    ]
+
+
+def get_inpaint_models():
+    return [None] + [
+        model for model in os.listdir("inputs/image/sd_models/inpaint")
+        if model.endswith((".safetensors", ".ckpt")) or not model.endswith(".txt")
+    ]
+
+
 controlnet_models_list = [None, "openpose", "depth", "canny", "lineart", "scribble"]
-rvc_models_list = [model_folder for model_folder in os.listdir("inputs/audio/rvc_models")
-                   if os.path.isdir(os.path.join("inputs/audio/rvc_models", model_folder))
-                   and any(file.endswith('.pth') for file in os.listdir(os.path.join("inputs/audio/rvc_models", model_folder)))]
+
+
+def get_rvc_models():
+    return [
+        model_folder for model_folder in os.listdir("inputs/audio/rvc_models")
+        if os.path.isdir(os.path.join("inputs/audio/rvc_models", model_folder))
+           and any(file.endswith('.pth') for file in os.listdir(os.path.join("inputs/audio/rvc_models", model_folder)))
+    ]
+
+
+model_lists = {
+    "stable_diffusion": get_stable_diffusion_models(),
+    "llm": get_llm_models(),
+    "llm_lora": get_llm_lora_models(),
+    "speaker_wavs": get_speaker_wavs(),
+    "vae": get_vae_models(),
+    "flux_vae": get_flux_vae_models(),
+    "lora": get_lora_models(),
+    "quantized_flux": get_quantized_flux_models(),
+    "flux_lora": get_flux_lora_models(),
+    "auraflow_lora": get_auraflow_lora_models(),
+    "kolors_lora": get_kolors_lora_models(),
+    "textual_inversion": get_textual_inversion_models(),
+    "inpaint": get_inpaint_models(),
+    "rvc": get_rvc_models(),
+}
 
 
 def create_footer():
@@ -11285,8 +11380,8 @@ chat_interface = gr.Interface(
         gr.Textbox(label=_("Enter your system prompt", lang)),
         gr.Audio(type="filepath", label=_("Record your request (optional)", lang)),
         gr.Radio(choices=["Transformers", "GPTQ", "AWQ", "BNB", "Llama", "ExLlamaV2"], label=_("Select model type", lang), value="Transformers"),
-        gr.Dropdown(choices=llm_models_list, label=_("Select LLM model", lang), value=None),
-        gr.Dropdown(choices=llm_lora_models_list, label=_("Select LoRA model (optional)", lang), value=None),
+        gr.Dropdown(choices=model_lists["llm"], label=_("Select LLM model", lang), value=None),
+        gr.Dropdown(choices=model_lists["llm_lora"], label=_("Select LoRA model (optional)", lang), value=None),
         gr.Dropdown(choices=get_existing_chats(), label=_("Select existing chat (optional)", lang), value=None)
     ],
     additional_inputs=[
@@ -11327,7 +11422,7 @@ chat_interface = gr.Interface(
         gr.Slider(minimum=1, maximum=10, value=1, step=1, label=_("Num return sequences", lang)),
         gr.Radio(choices=["txt", "json"], label=_("Select chat history format", lang), value="txt", interactive=True),
         gr.HTML(_("<h3>TTS Settings</h3>", lang)),
-        gr.Dropdown(choices=speaker_wavs_list, label=_("Select voice", lang), interactive=True),
+        gr.Dropdown(choices=model_lists["speaker_wavs"], label=_("Select voice", lang), interactive=True),
         gr.Dropdown(choices=["en", "es", "fr", "de", "it", "pt", "pl", "tr", "ru", "nl", "cs", "ar", "zh-cn", "ja", "hu", "ko", "hi"], label=_("Select language", lang), interactive=True),
         gr.Slider(minimum=0.1, maximum=1.9, value=1.0, step=0.1, label=_("TTS Temperature", lang), interactive=True),
         gr.Slider(minimum=0.01, maximum=1.0, value=0.9, step=0.01, label=_("TTS Top P", lang), interactive=True),
@@ -11359,7 +11454,7 @@ tts_stt_interface = gr.Interface(
     ],
     additional_inputs=[
         gr.HTML(_("<h3>TTS Settings</h3>", lang)),
-        gr.Dropdown(choices=speaker_wavs_list, label=_("Select voice", lang), interactive=True),
+        gr.Dropdown(choices=model_lists["speaker_wavs"], label=_("Select voice", lang), interactive=True),
         gr.Dropdown(choices=["en", "es", "fr", "de", "it", "pt", "pl", "tr", "ru", "nl", "cs", "ar", "zh-cn", "ja", "hu", "ko", "hi"], label=_("Select language", lang), interactive=True),
         gr.Slider(minimum=0.1, maximum=1.9, value=1.0, step=0.1, label=_("TTS Temperature", lang), interactive=True),
         gr.Slider(minimum=0.01, maximum=1.0, value=0.9, step=0.01, label=_("TTS Top P", lang), interactive=True),
@@ -11492,12 +11587,12 @@ txt2img_interface = gr.Interface(
         gr.Textbox(label=_("Enter your prompt", lang), placeholder=_("+ and - for Weighting; ('p', 'p').blend(0.x, 0.x) for Blending; ['p', 'p', 'p'].and() for Conjunction", lang)),
         gr.Textbox(label=_("Enter your negative prompt", lang), value=""),
         gr.Dropdown(choices=list(styles.keys()), label=_("Select Style (optional)", lang), value=None),
-        gr.Dropdown(choices=stable_diffusion_models_list, label=_("Select StableDiffusion model", lang), value=None),
+        gr.Dropdown(choices=model_lists["stable_diffusion"], label=_("Select StableDiffusion model", lang), value=None),
         gr.Checkbox(label=_("Enable Quantize", lang), value=False),
-        gr.Dropdown(choices=vae_models_list, label=_("Select VAE model (optional)", lang), value=None),
-        gr.Dropdown(choices=lora_models_list, label=_("Select LORA models (optional)", lang), value=None, multiselect=True),
+        gr.Dropdown(choices=model_lists["vae"], label=_("Select VAE model (optional)", lang), value=None),
+        gr.Dropdown(choices=model_lists["lora"], label=_("Select LORA models (optional)", lang), value=None, multiselect=True),
         gr.Textbox(label=_("LoRA Scales", lang)),
-        gr.Dropdown(choices=textual_inversion_models_list, label=_("Select Embedding models (optional)", lang), value=None, multiselect=True),
+        gr.Dropdown(choices=model_lists["textual_inversion"], label=_("Select Embedding models (optional)", lang), value=None, multiselect=True),
         gr.HTML(_("<h3>StableDiffusion Settings</h3>", lang)),
         gr.Radio(choices=["SD", "SD2", "SDXL"], label=_("Select model type", lang), value="SD"),
         gr.Dropdown(choices=[
@@ -11564,12 +11659,12 @@ img2img_interface = gr.Interface(
         gr.Image(label=_("Initial image", lang), type="filepath"),
         gr.Slider(minimum=0.0, maximum=1.0, value=0.5, step=0.01, label=_("Strength (Initial image)", lang)),
         gr.Radio(choices=["SD", "SD2", "SDXL"], label=_("Select model type", lang), value="SD"),
-        gr.Dropdown(choices=stable_diffusion_models_list, label=_("Select StableDiffusion model", lang), value=None),
+        gr.Dropdown(choices=model_lists["stable_diffusion"], label=_("Select StableDiffusion model", lang), value=None),
         gr.Checkbox(label=_("Enable Quantize", lang), value=False),
-        gr.Dropdown(choices=vae_models_list, label=_("Select VAE model (optional)", lang), value=None),
-        gr.Dropdown(choices=lora_models_list, label=_("Select LORA models (optional)", lang), value=None, multiselect=True),
+        gr.Dropdown(choices=model_lists["vae"], label=_("Select VAE model (optional)", lang), value=None),
+        gr.Dropdown(choices=model_lists["lora"], label=_("Select LORA models (optional)", lang), value=None, multiselect=True),
         gr.Textbox(label=_("LoRA Scales", lang)),
-        gr.Dropdown(choices=textual_inversion_models_list, label=_("Select Embedding models (optional)", lang), value=None, multiselect=True),
+        gr.Dropdown(choices=model_lists["textual_inversion"], label=_("Select Embedding models (optional)", lang), value=None, multiselect=True),
         gr.Textbox(label=_("Seed (optional)", lang), value=""),
         gr.Button(value=_("Stop generation", lang), interactive=True, variant="stop")
     ],
@@ -11691,7 +11786,7 @@ controlnet_interface = gr.Interface(
             "UniPCMultistepScheduler", "LCMScheduler", "DPMSolverSDEScheduler",
             "TCDScheduler", "DDIMScheduler", "PNDMScheduler", "DDPMScheduler"
         ], label=_("Select scheduler", lang), value="EulerDiscreteScheduler"),
-        gr.Dropdown(choices=stable_diffusion_models_list, label=_("Select StableDiffusion model", lang), value=None),
+        gr.Dropdown(choices=model_lists["stable_diffusion"], label=_("Select StableDiffusion model", lang), value=None),
         gr.Dropdown(choices=controlnet_models_list, label=_("Select ControlNet model", lang), value=None),
         gr.Textbox(label=_("Seed (optional)", lang), value=""),
         gr.Button(value=_("Stop generation", lang), interactive=True, variant="stop")
@@ -11782,8 +11877,8 @@ inpaint_interface = gr.Interface(
             "UniPCMultistepScheduler", "LCMScheduler", "DPMSolverSDEScheduler",
             "TCDScheduler", "DDIMScheduler", "PNDMScheduler", "DDPMScheduler"
         ], label=_("Select scheduler", lang), value="EulerDiscreteScheduler"),
-        gr.Dropdown(choices=inpaint_models_list, label=_("Select Inpaint model", lang), value=None),
-        gr.Dropdown(choices=vae_models_list, label=_("Select VAE model (optional)", lang), value=None),
+        gr.Dropdown(choices=model_lists["inpaint"], label=_("Select Inpaint model", lang), value=None),
+        gr.Dropdown(choices=model_lists["vae"], label=_("Select VAE model (optional)", lang), value=None),
         gr.Textbox(label=_("Seed (optional)", lang), value=""),
         gr.Button(value=_("Stop generation", lang), interactive=True, variant="stop")
     ],
@@ -11816,7 +11911,7 @@ outpaint_interface = gr.Interface(
         gr.Textbox(label=_("Enter your negative prompt", lang), value=""),
         gr.Image(label=_("Initial image", lang), type="filepath"),
         gr.Radio(choices=["SD", "SD2", "SDXL"], label=_("Select model type", lang), value="SD"),
-        gr.Dropdown(choices=inpaint_models_list, label=_("Select StableDiffusion model", lang), value=None),
+        gr.Dropdown(choices=model_lists["inpaint"], label=_("Select StableDiffusion model", lang), value=None),
         gr.Textbox(label=_("Seed (optional)", lang), value="")
     ],
     additional_inputs=[
@@ -11849,7 +11944,7 @@ gligen_interface = gr.Interface(
         gr.Textbox(label=_("Enter GLIGEN phrases", lang), value=""),
         gr.Textbox(label=_("Enter GLIGEN boxes", lang), value=""),
         gr.Radio(choices=["SD", "SD2", "SDXL"], label=_("Select model type", lang), value="SD"),
-        gr.Dropdown(choices=stable_diffusion_models_list, label=_("Select StableDiffusion model", lang), value=None),
+        gr.Dropdown(choices=model_lists["stable_diffusion"], label=_("Select StableDiffusion model", lang), value=None),
         gr.Textbox(label=_("Seed (optional)", lang), value="")
     ],
     additional_inputs=[
@@ -11941,7 +12036,7 @@ animatediff_interface = gr.Interface(
         gr.Image(label=_("Initial GIF", lang), type="filepath"),
         gr.Slider(minimum=0.0, maximum=1.0, value=0.5, step=0.01, label=_("Strength (Initial GIF)", lang)),
         gr.Radio(choices=["sd", "sdxl"], label=_("Select model type", lang), value="sd"),
-        gr.Dropdown(choices=stable_diffusion_models_list, label=_("Select StableDiffusion model", lang), value=None),
+        gr.Dropdown(choices=model_lists["stable_diffusion"], label=_("Select StableDiffusion model", lang), value=None),
         gr.Textbox(label=_("Seed (optional)", lang), value="")
     ],
     additional_inputs=[
@@ -12071,15 +12166,15 @@ sd3_txt2img_interface = gr.Interface(
         gr.Textbox(label=_("Enter your negative prompt", lang), placeholder=_("(prompt:x.x) for Weighting", lang), value=""),
         gr.Radio(choices=["Diffusers", "Safetensors"], label=_("Select model type", lang), value="Diffusers"),
         gr.Radio(choices=["3-Medium", "3.5-Large", "3.5-Large-Turbo"], label=_("Select Diffusers model", lang), value="3-Medium"),
-        gr.Dropdown(choices=stable_diffusion_models_list, label=_("Select StableDiffusion model", lang), value=None),
+        gr.Dropdown(choices=model_lists["stable_diffusion"], label=_("Select StableDiffusion model", lang), value=None),
         gr.Checkbox(label=_("Enable Quantize", lang), value=False),
         gr.Radio(choices=["SD3", "SD3.5"], label=_("Select quantize model type", lang), value="SD3"),
         gr.Textbox(label=_("Seed (optional)", lang), value=""),
         gr.Button(value=_("Stop generation", lang), interactive=True, variant="stop")
     ],
     additional_inputs=[
-        gr.Dropdown(choices=vae_models_list, label=_("Select VAE model (optional)", lang), value=None),
-        gr.Dropdown(choices=lora_models_list, label=_("Select LORA models (optional)", lang), value=None, multiselect=True),
+        gr.Dropdown(choices=model_lists["vae"], label=_("Select VAE model (optional)", lang), value=None),
+        gr.Dropdown(choices=model_lists["lora"], label=_("Select LORA models (optional)", lang), value=None, multiselect=True),
         gr.Textbox(label=_("LoRA Scales", lang)),
         gr.Dropdown(choices=["FlowMatchEulerDiscreteScheduler", "FlowMatchHeunDiscreteScheduler"], label=_("Select scheduler", lang), value="FlowMatchEulerDiscreteScheduler"),
         gr.Slider(minimum=1, maximum=100, value=40, step=1, label=_("Steps", lang)),
@@ -12115,7 +12210,7 @@ sd3_img2img_interface = gr.Interface(
         gr.Image(label=_("Initial image", lang), type="filepath"),
         gr.Slider(minimum=0.0, maximum=1.0, value=0.8, step=0.01, label=_("Strength (Initial image)", lang)),
         gr.Radio(choices=["3-Medium", "3.5-Large", "3.5-Large-Turbo"], label=_("Select Diffusers model", lang), value="3-Medium"),
-        gr.Dropdown(choices=stable_diffusion_models_list, label=_("Select StableDiffusion model", lang), value=None),
+        gr.Dropdown(choices=model_lists["stable_diffusion"], label=_("Select StableDiffusion model", lang), value=None),
         gr.Checkbox(label=_("Enable Quantize", lang), value=False),
         gr.Radio(choices=["SD3", "SD3.5"], label=_("Select quantize model type", lang), value="SD3"),
         gr.Textbox(label=_("Seed (optional)", lang), value=""),
@@ -12266,7 +12361,7 @@ t2i_ip_adapter_interface = gr.Interface(
         gr.Textbox(label=_("Enter your negative prompt", lang), value=""),
         gr.Image(label=_("IP-Adapter Image", lang), type="filepath"),
         gr.Radio(choices=["SD", "SDXL"], label=_("Select model type", lang), value="SD"),
-        gr.Dropdown(choices=stable_diffusion_models_list, label=_("Select StableDiffusion model", lang), value=None),
+        gr.Dropdown(choices=model_lists["stable_diffusion"], label=_("Select StableDiffusion model", lang), value=None),
         gr.Textbox(label=_("Seed (optional)", lang), value="")
     ],
     additional_inputs=[
@@ -12299,7 +12394,7 @@ ip_adapter_faceid_interface = gr.Interface(
         gr.Image(label=_("Face image", lang), type="filepath"),
         gr.Slider(minimum=0.1, maximum=2, value=1, step=0.1, label=_("Scale (Face image)", lang)),
         gr.Radio(choices=["SD", "SDXL"], label=_("Select model type", lang), value="SD"),
-        gr.Dropdown(choices=stable_diffusion_models_list, label=_("Select StableDiffusion model", lang), value=None),
+        gr.Dropdown(choices=model_lists["stable_diffusion"], label=_("Select StableDiffusion model", lang), value=None),
     ],
     additional_inputs=[
         gr.Slider(minimum=1, maximum=100, value=30, step=1, label=_("Steps", lang)),
@@ -12499,14 +12594,14 @@ flux_txt2img_interface = gr.Interface(
     inputs=[
         gr.Textbox(label=_("Enter your prompt", lang)),
         gr.Radio(choices=["FLUX.1-schnell", "FLUX.1-dev"], label=_("Select model type", lang), value="FLUX.1-schnell"),
-        gr.Dropdown(choices=quantized_flux_models_list, label=_("Select safetensors Flux model (GGUF if enabled quantize)", lang), value=None),
+        gr.Dropdown(choices=model_lists["quantized_flux"], label=_("Select safetensors Flux model (GGUF if enabled quantize)", lang), value=None),
         gr.Checkbox(label=_("Enable Quantize", lang), value=False),
         gr.Textbox(label=_("Seed (optional)", lang), value=""),
         gr.Button(value=_("Stop generation", lang), interactive=True, variant="stop")
     ],
     additional_inputs=[
-        gr.Dropdown(choices=flux_vae_models_list, label=_("Select VAE model (optional)", lang), value=None),
-        gr.Dropdown(choices=flux_lora_models_list, label=_("Select LORA models (optional)", lang), value=None, multiselect=True),
+        gr.Dropdown(choices=model_lists["flux_vae"], label=_("Select VAE model (optional)", lang), value=None),
+        gr.Dropdown(choices=model_lists["flux_lora"], label=_("Select LORA models (optional)", lang), value=None, multiselect=True),
         gr.Textbox(label=_("LoRA Scales", lang)),
         gr.Slider(minimum=0.0, maximum=10.0, value=0.0, step=0.1, label=_("Guidance Scale", lang)),
         gr.Slider(minimum=256, maximum=2048, value=768, step=64, label=_("Height", lang)),
@@ -12538,15 +12633,15 @@ flux_img2img_interface = gr.Interface(
         gr.Image(label=_("Initial image", lang), type="filepath"),
         gr.Dropdown(choices=["FLUX.1-schnell", "FLUX.1-dev"], label=_("Select Flux model", lang),
                     value="FLUX.1-schnell"),
-        gr.Dropdown(choices=quantized_flux_models_list,
+        gr.Dropdown(choices=model_lists["quantized_flux"],
                     label=_("Select quantized Flux model (optional if enabled quantize)", lang), value=None),
         gr.Checkbox(label=_("Enable Quantize", lang), value=False),
         gr.Textbox(label=_("Seed (optional)", lang), value=""),
         gr.Button(value=_("Stop generation", lang), interactive=True, variant="stop")
     ],
     additional_inputs=[
-        gr.Dropdown(choices=vae_models_list, label=_("Select VAE model (optional)", lang), value=None),
-        gr.Dropdown(choices=flux_lora_models_list, label=_("Select LORA models (optional)", lang), value=None,
+        gr.Dropdown(choices=model_lists["flux_vae"], label=_("Select VAE model (optional)", lang), value=None),
+        gr.Dropdown(choices=model_lists["flux_lora"], label=_("Select LORA models (optional)", lang), value=None,
                     multiselect=True),
         gr.Textbox(label=_("LoRA Scales", lang)),
         gr.Slider(minimum=1, maximum=100, value=4, step=1, label=_("Steps", lang)),
@@ -12750,7 +12845,7 @@ kolors_txt2img_interface = gr.Interface(
         gr.Textbox(label=_("Seed (optional)", lang), value="")
     ],
     additional_inputs=[
-        gr.Dropdown(choices=kolors_lora_models_list, label=_("Select LORA models (optional)", lang), value=None,
+        gr.Dropdown(choices=model_lists["kolors_lora"], label=_("Select LORA models (optional)", lang), value=None,
                     multiselect=True),
         gr.Textbox(label=_("LoRA Scales", lang)),
         gr.Slider(minimum=1.0, maximum=20.0, value=6.5, step=0.1, label=_("Guidance Scale", lang)),
@@ -12843,7 +12938,7 @@ auraflow_interface = gr.Interface(
         gr.Textbox(label=_("Seed (optional)", lang), value="")
     ],
     additional_inputs=[
-        gr.Dropdown(choices=auraflow_lora_models_list, label=_("Select LORA models (optional)", lang), value=None,
+        gr.Dropdown(choices=model_lists["auraflow_lora"], label=_("Select LORA models (optional)", lang), value=None,
                     multiselect=True),
         gr.Textbox(label=_("LoRA Scales", lang)),
         gr.Slider(minimum=1, maximum=100, value=25, step=1, label=_("Steps", lang)),
@@ -13549,7 +13644,7 @@ rvc_interface = gr.Interface(
     fn=process_rvc,
     inputs=[
         gr.Audio(label=_("Input audio", lang), type="filepath"),
-        gr.Dropdown(choices=rvc_models_list, label=_("Select RVC model", lang), value=None)
+        gr.Dropdown(choices=model_lists["rvc"], label=_("Select RVC model", lang), value=None)
     ],
     additional_inputs=[
         gr.Radio(choices=['harvest', "crepe", "rmvpe", 'pm'], label=_("RVC Method", lang), value="harvest", interactive=True),
