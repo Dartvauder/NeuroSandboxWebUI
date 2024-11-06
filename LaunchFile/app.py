@@ -11354,6 +11354,42 @@ model_lists = {
 }
 
 
+def refresh_model_lists():
+    model_lists["llm"] = get_llm_models()
+    model_lists["llm_lora"] = get_llm_lora_models()
+    model_lists["speaker_wavs"] = get_speaker_wavs()
+    model_lists["stable_diffusion"] = get_stable_diffusion_models()
+    model_lists["vae"] = get_vae_models()
+    model_lists["lora"] = get_lora_models()
+    model_lists["textual_inversion"] = get_textual_inversion_models()
+    model_lists["inpaint"] = get_inpaint_models()
+    model_lists["quantized_flux"] = get_quantized_flux_models()
+    model_lists["flux_vae"] = get_flux_vae_models()
+    model_lists["flux_lora"] = get_flux_lora_models()
+    model_lists["kolors_lora"] = get_kolors_lora_models()
+    model_lists["auraflow_lora"] = get_auraflow_lora_models()
+    model_lists["rvc"] = get_rvc_models()
+
+    updates = [
+        gr.update(choices=model_lists["llm"]),
+        gr.update(choices=model_lists["llm_lora"]),
+        gr.update(choices=model_lists["speaker_wavs"]),
+        gr.update(choices=model_lists["stable_diffusion"]),
+        gr.update(choices=model_lists["vae"]),
+        gr.update(choices=model_lists["lora"]),
+        gr.update(choices=model_lists["textual_inversion"]),
+        gr.update(choices=model_lists["inpaint"]),
+        gr.update(choices=model_lists["quantized_flux"]),
+        gr.update(choices=model_lists["flux_vae"]),
+        gr.update(choices=model_lists["flux_lora"]),
+        gr.update(choices=model_lists["kolors_lora"]),
+        gr.update(choices=model_lists["auraflow_lora"]),
+        gr.update(choices=model_lists["rvc"])
+    ]
+
+    return updates + [gr.update() for _ in range(34 - len(updates))]
+
+
 def create_footer():
     footer_html = """
     <div style="text-align: center; background-color: #f0f0f0; padding: 10px; border-radius: 5px; margin-top: 20px;">
@@ -14090,11 +14126,52 @@ with gr.TabbedInterface(
     stableaudio_interface.input_components[3].click(stop_generation, [], [], queue=False)
     audioldm2_interface.input_components[4].click(stop_generation, [], [], queue=False)
 
+    reload_button = gr.Button(_("Reload interface", lang))
     close_button = gr.Button(_("Close terminal", lang))
     folder_button = gr.Button(_("Outputs", lang))
 
     close_button.click(close_terminal, [], [], queue=False)
     folder_button.click(open_outputs_folder, [], [], queue=False)
+    reload_button.click(
+        fn=refresh_model_lists,
+        inputs=[],
+        outputs=[
+            chat_interface.input_components[4],
+            chat_interface.input_components[5],
+            chat_interface.input_components[6],
+            chat_interface.input_components[44],
+            tts_stt_interface.input_components[3],
+            txt2img_interface.input_components[3],
+            txt2img_interface.input_components[5],
+            txt2img_interface.input_components[6],
+            txt2img_interface.input_components[8],
+            img2img_interface.input_components[5],
+            img2img_interface.input_components[7],
+            img2img_interface.input_components[8],
+            img2img_interface.input_components[10],
+            controlnet_interface.input_components[4],
+            inpaint_interface.input_components[6],
+            inpaint_interface.input_components[7],
+            outpaint_interface.input_components[4],
+            gligen_interface.input_components[5],
+            animatediff_interface.input_components[5],
+            sd3_txt2img_interface.input_components[4],
+            sd3_txt2img_interface.input_components[9],
+            sd3_txt2img_interface.input_components[10],
+            sd3_img2img_interface.input_components[5],
+            t2i_ip_adapter_interface.input_components[4],
+            ip_adapter_faceid_interface.input_components[5],
+            flux_txt2img_interface.input_components[2],
+            flux_txt2img_interface.input_components[6],
+            flux_txt2img_interface.input_components[7],
+            flux_img2img_interface.input_components[3],
+            flux_img2img_interface.input_components[7],
+            flux_img2img_interface.input_components[8],
+            auraflow_interface.input_components[3],
+            kolors_txt2img_interface.input_components[3],
+            rvc_interface.input_components[1]
+        ]
+    )
 
     github_link = gr.HTML(
         '<div style="text-align: center; margin-top: 20px;">'
