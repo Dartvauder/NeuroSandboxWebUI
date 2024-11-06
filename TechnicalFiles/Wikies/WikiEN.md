@@ -473,7 +473,7 @@
 ### Additional Information:
 
 1) All generations are saved in the *outputs* folder. You can open the *outputs* folder using the `Outputs` button
-2) You can turn off the application using the `Close terminal` button and reload models dropdown lists using
+2) You can turn off the application using the `Close terminal` button and reload models dropdown lists using `Reload interface` button
 
 ## Where can i get models and voices?
 
