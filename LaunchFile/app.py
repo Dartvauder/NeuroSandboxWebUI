@@ -19,6 +19,12 @@ os.environ["XDG_CACHE_HOME"] = cache_dir
 temp_dir = os.path.join("TechnicalFiles/temp")
 os.makedirs(temp_dir, exist_ok=True)
 os.environ["TMPDIR"] = temp_dir
+unet_path = os.path.join("inputs/image/sd_models/rembg")
+os.makedirs(unet_path, exist_ok=True)
+os.environ["U2NET_HOME"] = unet_path
+roop_path = os.path.join("ThirdPartyRepository/insightface_models")
+os.makedirs(roop_path, exist_ok=True)
+os.environ["insightface"] = roop_path
 sys.modules['triton'] = None
 from threading import Thread
 import gradio as gr
@@ -512,10 +518,6 @@ def parse_pdf(pdf_path):
 
 
 def remove_bg(src_img_path, out_img_path):
-    model_path = "inputs/image/sd_models/rembg"
-    os.makedirs(model_path, exist_ok=True)
-
-    os.environ["U2NET_HOME"] = model_path
 
     with open(src_img_path, "rb") as input_file:
         input_data = input_file.read()
@@ -6219,7 +6221,7 @@ def generate_image_ip_adapter_faceid(prompt, negative_prompt, face_image, s_scal
             torch_dtype = torch.float32
             variant = "fp32"
 
-        app = FaceAnalysis(name="buffalo_l", providers=['CUDAExecutionProvider', 'CPUExecutionProvider'])
+        app = FaceAnalysis(name="buffalo_l", root=roop_path, providers=['CUDAExecutionProvider', 'CPUExecutionProvider'])
         app.prepare(ctx_id=0, det_size=(640, 640))
 
         image = cv2.imread(face_image)
@@ -11315,7 +11317,7 @@ def create_footer():
         <span style="margin-right: 15px;">🦙 llama-cpp-python: 0.3.1</span>
         <span style="margin-right: 15px;">🖼️ stable-diffusion-cpp-python: 0.2.1</span>
         <span style="margin-right: 15px;">🎵 rvc-python: 0.1.5</span>
-        <span>ℹ️ gradio: 5.4.0</span>
+        <span>ℹ️ gradio: 5.5.0</span>
     </div>
     """
     return gr.Markdown(footer_html)

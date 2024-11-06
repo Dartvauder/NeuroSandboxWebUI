@@ -84,7 +84,7 @@ gitdb==4.0.11
 GitPython==3.1.43
 google-pasta==0.2.0
 gpytoolbox==0.3.2
-gradio==5.4.0
+gradio==5.5.0
 gradio_client==1.4.2
 grpcio==1.62.2
 gruut==2.2.3
