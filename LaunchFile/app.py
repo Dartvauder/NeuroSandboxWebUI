@@ -11394,7 +11394,7 @@ def create_footer():
     footer_html = """
     <div style="text-align: center; background-color: #f0f0f0; padding: 10px; border-radius: 5px; margin-top: 20px;">
         <span style="margin-right: 15px;">🔥 diffusers: 0.31.0</span>
-        <span style="margin-right: 15px;">📄 transformers: 4.46.1</span>
+        <span style="margin-right: 15px;">📄 transformers: 4.46.2</span>
         <span style="margin-right: 15px;">🦙 llama-cpp-python: 0.3.1</span>
         <span style="margin-right: 15px;">🖼️ stable-diffusion-cpp-python: 0.2.1</span>
         <span style="margin-right: 15px;">🎵 rvc-python: 0.1.5</span>

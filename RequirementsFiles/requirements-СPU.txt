@@ -276,14 +276,14 @@ torchsde==0.2.6
 tqdm==4.66.5
 trainer==0.0.36
 trampoline==0.1.2
-transformers==4.46.1
+transformers==4.46.2
 treetable==0.2.5
 trimesh==4.4.7
 trio==0.25.0
 trio-websocket==0.11.1
 trove-classifiers==2024.7.2
-coqui-tts==0.24.2
-coqui-tts-trainer==0.1.4
+coqui-tts==0.24.3
+coqui-tts-trainer==0.1.6
 typeguard==4.2.1
 typer==0.12.5
 typing_extensions==4.11.0
@@ -316,7 +316,7 @@ stopit==1.1.2
 pyworld==0.3.4
 resampy==0.4.3
 torchcrepe==0.0.23
-audio-separator==0.21.2
+audio-separator[cpu]==0.24.1
 beartype==0.18.5
 contextlib2==21.6.0
 diffq==0.2.4
