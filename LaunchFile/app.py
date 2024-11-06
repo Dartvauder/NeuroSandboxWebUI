@@ -11259,56 +11259,6 @@ rvc_models_list = [model_folder for model_folder in os.listdir("inputs/audio/rvc
                    and any(file.endswith('.pth') for file in os.listdir(os.path.join("inputs/audio/rvc_models", model_folder)))]
 
 
-def reload_model_lists():
-    global llm_models_list, llm_lora_models_list, speaker_wavs_list, stable_diffusion_models_list, vae_models_list, lora_models_list, quantized_flux_models_list, flux_lora_models_list, auraflow_lora_models_list, kolors_lora_models_list, textual_inversion_models_list, inpaint_models_list, rvc_models_list
-
-    llm_models_list = [None, "Moondream2-Image", "LLaVA-NeXT-Video", "Qwen2-Audio"] + [model for model in os.listdir("inputs/text/llm_models") if
-                                              not model.endswith(".txt") and model != "vikhyatk" and model != "lora"]
-    llm_lora_models_list = [None] + [model for model in os.listdir("inputs/text/llm_models/lora") if
-                                     not model.endswith(".txt")]
-    speaker_wavs_list = [None] + [wav for wav in os.listdir("inputs/audio/voices") if not wav.endswith(".txt")]
-    stable_diffusion_models_list = [None] + [model for model in os.listdir("inputs/image/sd_models")
-                                             if (model.endswith(".safetensors") or model.endswith(
-            ".ckpt") or model.endswith(".gguf") or not model.endswith(".txt") and not model.endswith(
-            ".py") and not os.path.isdir(os.path.join("inputs/image/sd_models")))]
-    vae_models_list = [None] + [model for model in os.listdir("inputs/image/sd_models/vae") if
-                                model.endswith(".safetensors") or not model.endswith(".txt")]
-    flux_vae_models_list = [None] + [model for model in os.listdir("inputs/image/flux/flux-vae") if
-                                model.endswith(".safetensors") or not model.endswith(".txt")]
-    lora_models_list = [None] + [model for model in os.listdir("inputs/image/sd_models/lora") if
-                                 model.endswith(".safetensors") or model.endswith(".pt")]
-    quantized_flux_models_list = [None] + [model for model in os.listdir("inputs/image/flux/quantize-flux") if
-                                           model.endswith(".gguf") or model.endswith(".safetensors") or not model.endswith(".txt") and not model.endswith(
-                                               ".safetensors") and not model.endswith(".py")]
-    flux_lora_models_list = [None] + [model for model in os.listdir("inputs/image/flux/flux-lora") if
-                                      model.endswith(".safetensors")]
-    auraflow_lora_models_list = [None] + [model for model in os.listdir("inputs/image/auraflow-lora") if
-                                          model.endswith(".safetensors")]
-    kolors_lora_models_list = [None] + [model for model in os.listdir("inputs/image/kolors-lora") if
-                                        model.endswith(".safetensors")]
-    textual_inversion_models_list = [None] + [model for model in os.listdir("inputs/image/sd_models/embedding") if
-                                              model.endswith(".pt") or model.endswith(".safetensors")]
-    inpaint_models_list = [None] + [model for model in
-                                    os.listdir("inputs/image/sd_models/inpaint")
-                                    if (model.endswith(".safetensors") or model.endswith(".ckpt") or not model.endswith(
-            ".txt"))]
-    rvc_models_list = [model_folder for model_folder in os.listdir("inputs/audio/rvc_models")
-                       if os.path.isdir(os.path.join("inputs/audio/rvc_models", model_folder))
-                       and any(
-            file.endswith('.pth') for file in os.listdir(os.path.join("inputs/audio/rvc_models", model_folder)))]
-
-    chat_files = get_existing_chats()
-
-    gallery_files = get_output_files()
-
-    return [llm_models_list, llm_lora_models_list, speaker_wavs_list, stable_diffusion_models_list, vae_models_list, flux_vae_models_list, lora_models_list, quantized_flux_models_list, flux_lora_models_list, auraflow_lora_models_list, kolors_lora_models_list, textual_inversion_models_list, inpaint_models_list, rvc_models_list, chat_files, gallery_files]
-
-
-def reload_interface():
-    updated_lists = reload_model_lists()[:16]
-    return [gr.Dropdown(choices=list) for list in updated_lists]
-
-
 def create_footer():
     footer_html = """
     <div style="text-align: center; background-color: #f0f0f0; padding: 10px; border-radius: 5px; margin-top: 20px;">
@@ -14045,49 +13995,9 @@ with gr.TabbedInterface(
     stableaudio_interface.input_components[3].click(stop_generation, [], [], queue=False)
     audioldm2_interface.input_components[4].click(stop_generation, [], [], queue=False)
 
-    reload_button = gr.Button(_("Reload interface", lang))
     close_button = gr.Button(_("Close terminal", lang))
     folder_button = gr.Button(_("Outputs", lang))
 
-    dropdowns_to_update = [
-        chat_interface.input_components[4],
-        chat_interface.input_components[5],
-        chat_interface.input_components[6],
-        chat_interface.input_components[44],
-        tts_stt_interface.input_components[3],
-        txt2img_interface.input_components[3],
-        txt2img_interface.input_components[5],
-        txt2img_interface.input_components[6],
-        txt2img_interface.input_components[8],
-        img2img_interface.input_components[5],
-        img2img_interface.input_components[7],
-        img2img_interface.input_components[8],
-        img2img_interface.input_components[10],
-        controlnet_interface.input_components[4],
-        inpaint_interface.input_components[6],
-        inpaint_interface.input_components[7],
-        outpaint_interface.input_components[4],
-        gligen_interface.input_components[5],
-        animatediff_interface.input_components[5],
-        sd3_txt2img_interface.input_components[4],
-        sd3_txt2img_interface.input_components[9],
-        sd3_txt2img_interface.input_components[10],
-        sd3_img2img_interface.input_components[6],
-        t2i_ip_adapter_interface.input_components[4],
-        ip_adapter_faceid_interface.input_components[5],
-        flux_txt2img_interface.input_components[2],
-        flux_txt2img_interface.input_components[6],
-        flux_txt2img_interface.input_components[7],
-        flux_img2img_interface.input_components[3],
-        flux_img2img_interface.input_components[7],
-        flux_img2img_interface.input_components[8],
-        auraflow_interface.input_components[3],
-        kolors_txt2img_interface.input_components[3],
-        rvc_interface.input_components[1],
-        gallery_interface.input_components[0]
-    ]
-
-    reload_button.click(reload_interface, outputs=dropdowns_to_update[:16])
     close_button.click(close_terminal, [], [], queue=False)
     folder_button.click(open_outputs_folder, [], [], queue=False)
 
