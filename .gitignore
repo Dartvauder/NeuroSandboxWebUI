@@ -1,9 +1,13 @@
 .idea/
+idea/
 .venv/
+venv/
 .gitignore/
+gitignore/
 TechnicalFiles/pip_cache/
 TechnicalFiles/cache/
 TechnicalFiles/temp/
 TechnicalFiles/logs/
 inputs/
 outputs/
+ThirdPartyRepository/
