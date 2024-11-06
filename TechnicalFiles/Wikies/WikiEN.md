@@ -460,7 +460,7 @@
 
 ### ModelDownloader:
 
-* Here you can download `LLM` and `StableDiffusion` models
+* Here you can download models
 
 ### Settings: 
 
@@ -473,13 +473,13 @@
 ### Additional Information:
 
 1) All generations are saved in the *outputs* folder. You can open the *outputs* folder using the `Outputs` button
-2) You can turn off the application using the `Close terminal` button
+2) You can turn off the application using the `Close terminal` button and reload models dropdown lists using `Reload interface` button
 
 ## Where can i get models and voices?
 
 * LLM models can be taken from [HuggingFace](https://huggingface.co/models) or from ModelDownloader inside interface 
 * StableDiffusion, vae, inpaint, embedding and lora models can be taken from [CivitAI](https://civitai.com/models) or from ModelDownloader inside interface
-* RVC models can be taken from [VoiceModels](https://voice-models.com)
+* RVC models can be taken from [VoiceModels](https://voice-models.com) or from ModelDownloader inside interface
 * StableAudio, AudioCraft, AudioLDM 2, TTS, Whisper, MMS, SeamlessM4Tv2, Wav2Lip, LivePortrait, SunoBark, MoonDream2, Upscalers (Latent and Real-ESRGAN), Refiner, GLIGEN, DiffEdit, BLIP-Diffusion, Depth, Marigold, Pix2Pix, Controlnet, AnimateDiff, HotShot-XL, Videos, LDM3D, SD3, Cascade, T2I-IP-ADAPTER, IP-Adapter-FaceID, Riffusion, Rembg, Roop, CodeFormer, DDColor, PixelOE, Real-ESRGAN, StableFast3D, Shap-E, Zero123Plus, UVR, Demucs, Kandinsky, Flux, HunyuanDiT, Lumina-T2X, Kolors, AuraFlow, AuraSR, Würstchen, DeepFloydIF, PixArt, CogView3-Plus, PlaygroundV2.5, ModelScope, ZeroScope 2, CogVideoX, MagicPrompt, Latte and Multiband diffusion models are downloads automatically in *inputs* folder when are they used 
 * You can take voices anywhere. Record yours or take a recording from the Internet. Or just use those that are already in the project. The main thing is that it is pre-processed!
 

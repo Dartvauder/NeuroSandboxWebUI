@@ -460,7 +460,7 @@
 
 ### ModelDownloader：
 
-* 在这里您可以下载`LLM`和`StableDiffusion`模型
+* 在这里您可以下载模型
 
 ### Settings：
 
@@ -473,13 +473,13 @@
 ### 附加信息：
 
 1) 所有生成的内容都保存在*outputs*文件夹中。您可以使用`Outputs`按钮打开*outputs*文件夹
-2) 您可以使用`Close terminal`按钮关闭应用程序
+2) 您可以使用 `Close terminal` 按钮关闭应用程序，并使用 `Reload interface` 按钮重新加载模型下拉列表。
 
 ## 我在哪里可以获取模型和语音？
 
 * LLM模型可以从[HuggingFace](https://huggingface.co/models)获取，或者从界面内的ModelDownloader获取
 * StableDiffusion、vae、inpaint、embedding和lora模型可以从[CivitAI](https://civitai.com/models)获取，或者从界面内的ModelDownloader获取
-* RVC模型可以从[VoiceModels](https://voice-models.com)获取
+* RVC模型可以从[VoiceModels](https://voice-models.com)获取，或者从界面内的ModelDownloader获取
 * StableAudio、AudioCraft、AudioLDM 2、TTS、Whisper、MMS、SeamlessM4Tv2、Wav2Lip、LivePortrait、SunoBark、MoonDream2、Upscalers（Latent和Real-ESRGAN）、Refiner、GLIGEN、DiffEdit、BLIP-Diffusion、Depth、Marigold、Pix2Pix、Controlnet、AnimateDiff、HotShot-XL、Videos、LDM3D、SD3、Cascade、T2I-IP-ADAPTER、IP-Adapter-FaceID、Riffusion、Rembg、Roop、CodeFormer、DDColor、PixelOE、Real-ESRGAN、StableFast3D、Shap-E、Zero123Plus、UVR、Demucs、Kandinsky、Flux、HunyuanDiT、Lumina-T2X、Kolors、AuraFlow、AuraSR、Würstchen、DeepFloydIF、PixArt、CogView3-Plus, PlaygroundV2.5、ModelScope、ZeroScope 2、CogVideoX、MagicPrompt、Latte和Multiband diffusion模型在使用时会自动下载到*inputs*文件夹中
 * 您可以从任何地方获取语音。录制您自己的声音或从互联网上获取录音。或者直接使用项目中已有的语音。主要是要经过预处理！
 
