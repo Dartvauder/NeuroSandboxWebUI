@@ -11257,10 +11257,6 @@ def get_stable_diffusion_models():
     ]
 
 
-audiocraft_models_list = [None] + ["musicgen-stereo-medium", "audiogen-medium", "musicgen-stereo-melody", "musicgen-medium", "musicgen-melody", "musicgen-large",
-                                   "hybrid-magnet-medium", "magnet-medium-30sec", "magnet-medium-10sec", "audio-magnet-medium"]
-
-
 def get_vae_models():
     return [None] + [
         model for model in os.listdir("inputs/image/sd_models/vae")
@@ -11323,9 +11319,6 @@ def get_inpaint_models():
         model for model in os.listdir("inputs/image/sd_models/inpaint")
         if model.endswith((".safetensors", ".ckpt")) or not model.endswith(".txt")
     ]
-
-
-controlnet_models_list = [None, "openpose", "depth", "canny", "lineart", "scribble"]
 
 
 def get_rvc_models():
@@ -11823,7 +11816,7 @@ controlnet_interface = gr.Interface(
             "TCDScheduler", "DDIMScheduler", "PNDMScheduler", "DDPMScheduler"
         ], label=_("Select scheduler", lang), value="EulerDiscreteScheduler"),
         gr.Dropdown(choices=model_lists["stable_diffusion"], label=_("Select StableDiffusion model", lang), value=None),
-        gr.Dropdown(choices=controlnet_models_list, label=_("Select ControlNet model", lang), value=None),
+        gr.Dropdown(choices=[None, "openpose", "depth", "canny", "lineart", "scribble"], label=_("Select ControlNet model", lang), value=None),
         gr.Textbox(label=_("Seed (optional)", lang), value=""),
         gr.Button(value=_("Stop generation", lang), interactive=True, variant="stop")
     ],
@@ -13584,7 +13577,7 @@ audiocraft_interface = gr.Interface(
     inputs=[
         gr.Textbox(label=_("Enter your prompt", lang)),
         gr.Audio(type="filepath", label=_("Melody audio (optional)", lang), interactive=True),
-        gr.Dropdown(choices=audiocraft_models_list, label=_("Select AudioCraft model", lang), value=None),
+        gr.Dropdown(choices=[None, "musicgen-stereo-medium", "audiogen-medium", "musicgen-stereo-melody", "musicgen-medium", "musicgen-melody", "musicgen-large", "hybrid-magnet-medium", "magnet-medium-30sec", "magnet-medium-10sec", "audio-magnet-medium"], label=_("Select AudioCraft model", lang), value=None),
         gr.Radio(choices=["musicgen", "audiogen", "magnet"], label=_("Select model type", lang), value="musicgen"),
     ],
     additional_inputs=[
