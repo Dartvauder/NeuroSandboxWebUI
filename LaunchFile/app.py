@@ -327,6 +327,8 @@ def flush():
     gc.collect()
     if torch.cuda.is_available():
         torch.cuda.empty_cache()
+    if torch.backends.mps.is_available():
+        torch.mps.empty_cache()
 
 
 def stop_generation():
