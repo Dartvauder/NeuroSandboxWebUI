@@ -2,6 +2,7 @@
 
 # ![main](https://github.com/Dartvauder/NeuroSandboxWebUI/assets/140557322/4ea0d891-8979-45ad-b052-626c41ae991a)
 * Work in progress but stable! [![CodeQL](https://github.com/Dartvauder/NeuroSandboxWebUI/actions/workflows/github-code-scanning/codeql/badge.svg)](https://github.com/Dartvauder/NeuroSandboxWebUI/actions/workflows/github-code-scanning/codeql) [![Pylint](https://github.com/Dartvauder/NeuroSandboxWebUI/actions/workflows/pylint.yml/badge.svg)](https://github.com/Dartvauder/NeuroSandboxWebUI/actions/workflows/pylint.yml)
+<a href='https://github.com/MShawon/github-clone-count-badge'><img alt='GitHub Clones' src='https://img.shields.io/badge/dynamic/json?color=success&label=Clone&query=count&url=https://gist.githubusercontent.com/Dartvauder/1778536089b0454900f63612ffd8b2af/raw/clone.json&logo=github'></a>
 * English | [Русский](/TechnicalFiles/Readmes/README_RU.md) | [漢語](/TechnicalFiles/Readmes/README_ZH.md) 
 
 ## Description:
