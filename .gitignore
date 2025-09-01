@@ -1,7 +1,58 @@
+# IDE and editors
 .idea/
 idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Virtual environments
 .venv/
 venv/
+.env
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+coverage.xml
+.tox/
+.nox/
+.coverage.*
+pytest_cache/
+.cache
+
+# Claude Code settings
+.claude/
+
+# Project specific
 .gitignore/
 gitignore/
 TechnicalFiles/pip_cache/
@@ -11,3 +62,28 @@ TechnicalFiles/logs/
 inputs/
 outputs/
 ThirdPartyRepository/
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Runtime data
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# Temporary files
+*.tmp
+*.temp
+temp/
+tmp/
